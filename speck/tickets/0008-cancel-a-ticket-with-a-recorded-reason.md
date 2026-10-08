@@ -1,7 +1,7 @@
 ---
 id: "0008"
 title: "Cancel a ticket with a recorded reason"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | done
+status: blocked            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T20:00:31.803Z"
 ---
 # 0008 · Cancel a ticket with a recorded reason
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 Once you decide not to build a ticket, the only options are to delete it or leave it as a draft. Either way, there's no lasting record that the idea was considered and turned down, or why, so it can come back later as new work.
@@ -42,7 +42,7 @@ A ticket you decide against can be cancelled with a reason. It's filed away with
 - Update `speck/product.md`, `docs/brief.md`, the status comment in `templates/ticket.md` and the `/speck-status` skill to cover the new status.
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+Round 3 (fresh Codex session, working sandbox) found a real bug the diff-only rounds missed: cancel reasons such as `false`, `0`, `123` or text with quotes and backslashes don't survive the YAML round trip, and `false`/`0` vanish from `speck status` (F1). The review budget is spent (`max_review_rounds: 3`; round 2 was a wasted resume of the old sandbox-less session). Options: (a) allow one more round, fix F1 with string-safe encoding and CLI regression tests, and re-review in a fresh session; (b) ship as is and file F1 as a follow-up ticket. Recommendation: (a).
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -172,6 +172,65 @@ Round 1 (codex, model gpt-6.1-sol, effort default): approved. Four criteria pass
     },
     "escalation_question": "",
     "summary": "Approval stands. Cancellation and reopening remain covered by the eight CLI integration tests, all reported passing. This round adds only ticket bookkeeping and introduces no new implementation concerns. Independent repository inspection and test execution remain unavailable because of the sandbox failure reported in round 1; the verdict relies on the supplied diffs and test results."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c21a70224a6c5f181f2077b9dc709baf828189bd",
+    "saved_at": "2026-10-08T20:14:10.923Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/speck.mjs cmdCancel implements cancellation, date, header and filing; two AC1 integration tests cover ordinary reasons and live statuses. However, independent setField/parseTicket probes show reasons are not reliably preserved: 'false' becomes boolean false, and quoted text containing a colon gains backslashes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdCancel checks blank reasons, done and cancelled before writing. Both AC2 tests exercise the actual CLI and compare ticket contents before and after refusal. Independent execution was attempted but these tests could not create temporary repositories in the read-only filesystem."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet refuses status cancelled with a speck cancel instruction; placeTicket returns revived live statuses to tickets/, and writeField retains cancellation metadata. Both AC3 integration tests exercise these behaviours. The existing done-status archival rule is preserved."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "cmdStatus orders CANCELLED after DONE and nextId includes both folders; both AC4 integration tests cover ordinary cases. However, cmdStatus checks cancel_reason for truthiness, so accepted reasons 'false' and '0', parsed as false and 0, have no reason line."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "cmdCancel passes arbitrary reason text through setField and the minimal YAML parser without a reliable string round trip. Independently verified examples: 'false' becomes boolean false; '123' becomes a number; 'Use option: \"B\"' returns extra backslashes. Reasons 'false' and '0' then disappear from status output because cmdStatus uses a truthiness check. The new tests cover only simple prose and miss these failures.",
+        "suggested_fix": "Store cancellation reasons as strings with encoding and decoding that preserve their exact contents, and display any recorded non-blank reason. Add real CLI regression tests for false, 0, quotes, backslashes and multiline text, asserting both stored reason and status output.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The requested capability and documentation updates are present and within scope, but the promise that cancellation records and displays its reason is inaccurate for accepted inputs such as false and quoted text."
+    },
+    "escalation_question": "",
+    "summary": "Cancellation works for ordinary prose, but some valid reasons are altered or disappear from the status list. Fix reason preservation before merge. I ran git diff main...HEAD -- . ':!speck', inspected the relevant functions and tests, ran npm test, and ran node test/speck.test.mjs plus independent in-memory encoding probes. Test execution failed because temporary directories are read-only; the direct run reported 17 passes and 47 filesystem-related failures. The encoding probes independently confirmed the reported bug."
   }
 }
 ```
