@@ -1,7 +1,7 @@
 ---
 id: "0006"
 title: "Ship approved tickets locally without a pull request"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | done
+status: done            # draft | ready | building | reviewing | blocked | done
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,6 +13,7 @@ source: "speck/ideas/2026-10-08-ship-locally-without-a-pr.md"               # e.
 after: []                # ticket ids that must be done first
 created: 2026-10-08
 started: "2026-10-08T16:09:04.507Z"
+finished: "2026-10-08T16:16:15.245Z"
 
 ---
 
