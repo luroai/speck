@@ -1,7 +1,7 @@
 ---
 id: "0011"
 title: Keep review rounds in the ticket file                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | done
+status: done            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
 started: "2026-10-08T19:29:41.797Z"
+finished: "2026-10-08T19:50:05.798Z"
 
 ---
 # 0011 · Keep review rounds in the ticket file
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Review records live in `speck/reviews/<id>/`, apart from the ticket they belong to. When a ticket is filed into `speck/tickets/done/`, its reviews stay behind, so a ticket's history is split across two places, and the planned board would have to put them back together for every card. speck is meant to be lightweight: one ticket should be one file.
