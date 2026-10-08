@@ -1112,3 +1112,22 @@ test('AC1: cancelling leaves a "cancel_reason:" line in the ticket body byte for
   assert.equal(r.run('cancel', '1', 'Again').status, 0);
   assert.ok(r.read(r.filed(p)).includes(`## Notes\n${body}`), 'and survives a second cancel');
 });
+
+test('AC3: a reason on the last frontmatter line, with a "#" in it, is replaced rather than duplicated', () => {
+  for (const old of ['Old#maybe', 'Old # maybe']) {
+    const r = cancelRepo();
+    const p = r.add('Export bookings');
+    assert.equal(r.run('cancel', '1', old).status, 0);
+    // Put the reason on the last frontmatter line, directly before the closing fence.
+    const f = r.filed(p);
+    const text = r.read(f).replace(/^cancel_reason:.*\n/m, '').replace(/\n+---\n/, `\ncancel_reason: ${JSON.stringify(old)}\n---\n`);
+    fs.writeFileSync(path.join(r.dir, f), text);
+    assert.equal(r.run('set', '1', 'status', 'ready').status, 0);
+    assert.equal(r.run('cancel', '1', 'New').status, 0);
+    const after = r.read(f);
+    assert.equal(after.match(/^cancel_reason:/gm).length, 1, 'exactly one reason field');
+    assert.strictEqual(r.fm(f).cancel_reason, 'New');
+    assert.ok(!after.includes('maybe'), 'no stale reason text');
+    assert.ok(after.includes('## Problem'), 'body kept');
+  }
+});

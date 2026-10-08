@@ -37,6 +37,7 @@ A ticket you decide against can be cancelled with a reason. It's filed away with
 - Cleaning up branches or review rounds for a ticket cancelled mid-build.
 
 ## Notes
+- Round 7 allowed under the user's instruction to finish and ship: `max_review_rounds` raised from 6 to 7. F3 was a boundary bug in the round-5 patch; the fix this time is at the root (`setField` now replaces any existing line, whatever its value holds) and the helper is removed.
 - Round 6 allowed by the user's instruction to finish and ship: `max_review_rounds` raised from 5 to 6 for the F2 fix (the reviewer found a body-text deletion in the previous fix).
 - Round 5 allowed by the user (answer to the round-4 block): `max_review_rounds` raised from 4 to 5; escaped-quote fix re-reviewed in a fresh session.
 - Round 4 allowed by the user (answer to the round-3 block): `max_review_rounds` raised from 3 to 4 in `speck/config.yml`, F1 fixed, re-review in a fresh session.
@@ -360,6 +361,81 @@ Round 1 (codex, model gpt-6.1-sol, effort default): approved. Four criteria pass
     },
     "escalation_question": "",
     "summary": "Cancellation meets the four acceptance criteria, and the earlier reason-storage bug is fixed. Approval is blocked by a separate bug that can silently delete ticket body text. I ran git diff main...HEAD -- . ':!speck', git diff main...HEAD --stat, git status --short, cat/sed/rg inspections, independent Node in-memory parser and body-preservation probes, and selected read-only unit tests. Parser probes and selected tests passed. I inspected the genuine CLI integration tests and supplied 66-test output; I did not rerun the full suite because it creates files and this review is read-only."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 6 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 6,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6b3344dbb9aaebb96a5ca6223c9e8c7ec101d557",
+    "saved_at": "2026-10-08T20:24:54.813Z"
+  },
+  "verdict": {
+    "round": 6,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "cmdCancel implements status, date, header and filing; genuine AC1 CLI tests cover all live statuses. However, an independent in-memory probe found that replacing a cancel_reason on the final frontmatter line can produce duplicate reason fields (F3)."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdCancel checks missing/blank reasons, done and cancelled before writing. The two AC2 CLI tests assert refusal and unchanged ticket contents."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet rejects status cancelled with guidance to speck cancel. placeTicket restores live statuses to tickets/, while writeField retains the reason. AC3 CLI tests exercise rejection, reopening and subsequent cancellation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdStatus places CANCELLED after DONE and prints each reason below its ticket; nextId scans both folders. Genuine AC4 CLI tests cover ordering, reason display and number allocation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The previous reason round-trip failures are fixed. Independent in-memory probes passed for YAML-looking strings, escaped quotes followed by #, backslashes and multiline reasons.",
+        "suggested_fix": "Retain the regression tests.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The previous body deletion is fixed: dropFrontmatterLine confines removal to frontmatter. Independent probes confirmed that a body cancel_reason line survives, including when no frontmatter reason exists. The new CLI regression test exercises first and repeated cancellation.",
+        "suggested_fix": "Retain the body-preservation regression test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:138",
+        "issue": "dropFrontmatterLine requires a trailing newline, but its frontmatter slice excludes the newline immediately before the closing fence. Consequently it never removes a reason on the final frontmatter line. With cancel_reason: \"Old#maybe\" immediately before the fence, replacing it with \"New\" leaves both cancel_reason fields. With \"Old # maybe\", stale reason text is retained as a comment. This creates an ambiguous cancellation record in an otherwise valid ticket. Independent in-memory probes reproduced both cases; existing tests always leave another field or blank line after the reason.",
+        "suggested_fix": "Remove the matching frontmatter line whether it ends in a newline or at the end of the slice. Add a regression test placing an existing hash-containing reason immediately before the closing fence, then reopen and cancel again; assert exactly one reason field, the new value and unchanged body.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated living spec describes the intended cancellation capability and restrictions. F3 is an implementation defect in that capability."
+    },
+    "escalation_question": "",
+    "summary": "Cancellation and the two previous fixes largely work, but approval is blocked by another boundary bug: cancelling again can leave two conflicting reasons in the ticket. I ran git diff main...HEAD -- . ':!speck', additional filtered diffs, git diff --stat, git status --short, cat/sed/rg inspections, and Node in-memory boundary and parser probes. I also invoked selected tests with node --test --test-name-pattern; its output reported only the file-level result, so I do not claim individual tests ran. I inspected the genuine CLI tests and supplied 67-test output; I did not rerun the full suite because it writes files and this review is read-only."
   }
 }
 ```

@@ -127,17 +127,12 @@ export function setField(text, key, value) {
   const rest = text.slice(fmEnd);
   const needsQuotes = typeof value === 'string' && !/^".*"$/.test(value) && (key === 'id' || /[:#]/.test(value) || value === '');
   const v = needsQuotes ? JSON.stringify(value) : value;
-  const re = new RegExp(`^(${key}:\\s*)([^#\\n]*?)(\\s+#.*)?$`, 'm');
-  if (re.test(head)) return head.replace(re, (_, k, _old, comment = '') => `${k}${v}${comment}`) + rest;
+  // Replace the existing line whatever its old value holds (even a "#"), keeping only a trailing comment.
+  const re = new RegExp(`^(${key}:[ \\t]*)(.*)$`, 'm');
+  if (re.test(head)) return head.replace(re, (_, k, old) => `${k}${v}${old.slice(stripComment(old).length)}`) + rest;
   // Keep any blank line before the closing fence (it stops Markdown viewers rendering the frontmatter as a heading).
   const gap = head.match(/\n*$/)[0];
   return `${head.slice(0, head.length - gap.length)}\n${key}: ${v}${gap}${rest}`;
-}
-
-// Removes one key's line from the frontmatter only, leaving the body byte for byte.
-function dropFrontmatterLine(text, key) {
-  const fmEnd = text.indexOf('\n---', 4);
-  return text.slice(0, fmEnd).replace(new RegExp(`^${key}:.*\\n`, 'm'), '') + text.slice(fmEnd);
 }
 
 const blank = v => v === undefined || v === null || String(v).trim() === '';
@@ -813,8 +808,8 @@ function cmdCancel(args) {
   if (blank(reason)) throw new SpeckError(`Give a reason: speck cancel ${t.fm.id} "<reason>".`);
   if (t.fm.status === 'done') throw new SpeckError(`Ticket ${t.fm.id} is done, so it can't be cancelled: delivered work is part of the record.`);
   if (t.fm.status === 'cancelled') throw new SpeckError(`Ticket ${t.fm.id} is already cancelled.`);
-  // Stored as a JSON string, so text like `false`, `0` or `a "quoted" word` reads back exactly as typed. A reason kept from an earlier cancel is replaced.
-  let text = setField(dropFrontmatterLine(t.raw, 'cancel_reason'), 'cancel_reason', JSON.stringify(reason));
+  // Stored as a JSON string, so text like `false`, `0` or `a "quoted" word` reads back exactly as typed. A reason kept from an earlier cancel is replaced in place.
+  let text = setField(t.raw, 'cancel_reason', JSON.stringify(reason));
   text = setField(text, 'cancelled', new Date().toISOString().slice(0, 10));
   fs.writeFileSync(t.file, syncHeader(setField(text, 'status', 'cancelled')));
   placeTicket(repo, t, 'cancelled');
