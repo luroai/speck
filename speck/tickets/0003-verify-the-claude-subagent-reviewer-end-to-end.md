@@ -1,7 +1,7 @@
 ---
 id: "0003"
 title: "Verify the Claude subagent reviewer end to end"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,7 +15,7 @@ started: "2026-10-08T20:46:41.610Z"
 ---
 # 0003 · Verify the Claude subagent reviewer end to end
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The `claude-subagent` reviewer path (speck prompt, Agent tool, SendMessage, speck record) is written but has never been run, so it may not work.
@@ -43,8 +43,17 @@ A ticket can be reviewed end to end with `reviewer: claude-subagent` and `allow_
 ## Blocked question
 
 ## Review log
+Round 1 (codex): changes requested: F1 product.md claimed a plain error for any non-verdict, but a `null` criterion or finding still crashed with a stack trace. Round 2 (codex): changes requested: F1 still open, because entry fields aren't validated, so the claim was still too broad. Round 3 (codex): approved, with the claim narrowed to what the code checks.
 
 ## Delivery log
+- Review rounds: 3 (codex, `gpt-6.1-sol`), with 1,503,830 reviewer tokens. The live `claude-subagent` run on the sample ticket took 2 rounds, using about 23k subagent tokens in round 1.
+- Elapsed: about 8 minutes from start to approval (from `speck pack`).
+- Changed lines: 22 (excluding tests and `speck/`), against a limit of 1,000.
+- Follow-up ideas:
+  - The `speck lint` same-agent guard compares names, so `builder: claude` with `reviewer: claude-subagent` passes with `allow_same_model_review: false`. Treat `claude-subagent` as the same family as `claude`. This is recorded under Known limits in product.md.
+  - Validate the fields inside each criterion and finding against `templates/review-verdict.schema.json`, so a malformed but well-shaped verdict is refused too (Codex round 2).
+  - A `claude-subagent` reviewer is read-only only by instruction. Consider a reviewer agent type with no edit tools.
+  - Consider a `speck prompt <id> --round=N` that prints the round-2+ message (response, diff, tests), so the builder doesn't assemble it by hand for SendMessage.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -169,6 +178,69 @@ A ticket can be reviewed end to end with `reviewer: claude-subagent` and `allow_
     },
     "escalation_question": "",
     "summary": "The original crash is fixed, with meaningful regression coverage. The review loop still meets all three acceptance criteria. One documentation claim remains too broad: malformed verdict objects can still be accepted. Narrow that claim or complete the validation before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "08a1fbad958b5c2577b76e91d57fcf7b3439f614",
+    "thread_id": "01a11d49-50cc-7c42-8d50-16e6a6a6e546",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 661684,
+      "cached_input_tokens": 584192,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2876,
+      "reasoning_output_tokens": 276
+    },
+    "saved_at": "2026-10-08T20:54:59.988Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Previously inspected live sample records show round 1 identifying the deliberate trailing-hyphen bug and recording changes_requested. The unchanged '0003 AC1' CLI test exercises fenced reply recording and next=fix; supplied output reports it passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Previously inspected sample records show round 2 approving fix commit f1996e1 and resolving earlier findings. Ticket Notes document SendMessage continuation of the same agent. The unchanged '0003 AC2' test exercises the fix diff, second recorded round and next=ship; supplied output reports it passing. Actual agent continuity is covered by the manual run."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-review/SKILL.md explains saving fenced replies, retaining the agent id and using SendMessage with the full round-2 record command. The '0003 AC3' instruction test passes in supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/product.md",
+        "issue": "The earlier blanket rejection claim exceeded the implemented verdict validation. The null-entry crash was fixed in round 2, and round 3 now accurately limits the documented guarantee and explicitly states that fields inside entries are not validated.",
+        "suggested_fix": "Completed: product.md and ticket Notes now describe the actual validation limits.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The revised description matches parseReply and validateVerdict, including the limitation on entry-field validation."
+    },
+    "escalation_question": "",
+    "summary": "The sample review caught the deliberate bug and approved its fix. Fenced replies are now accepted, malformed reply handling has regression coverage, and the instructions explain how to continue the same reviewer. The documentation concern is resolved. All criteria pass, with no open blocking findings."
   }
 }
 ```
