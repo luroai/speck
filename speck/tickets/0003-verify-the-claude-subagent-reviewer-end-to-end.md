@@ -45,3 +45,69 @@ A ticket can be reviewed end to end with `reviewer: claude-subagent` and `allow_
 ## Review log
 
 ## Delivery log
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5d93238bb2345bda45198e4add4147d167c7b9db",
+    "thread_id": "01a11d49-50cc-7c42-8d50-16e6a6a6e546",
+    "seconds": 61,
+    "usage": {
+      "input_tokens": 322643,
+      "cached_input_tokens": 267776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1399,
+      "reasoning_output_tokens": 174
+    },
+    "saved_at": "2026-10-08T20:52:47.370Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The live sample at /tmp/speck-0003-smoke-hN7c records round 1 as claude-subagent changes_requested, with the trailing-hyphen bug and weak test identified. Test '0003 AC1: a claude-subagent round 1 records changes_requested from the reply as sent' exercises fenced reply recording."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The sample records round 2 as approve after fix commit f1996e1, resolving F1–F3. Ticket Notes document resuming the same agent through SendMessage. The AC2 CLI test exercises the fix diff, second recorded round and next=ship; agent continuity is supported by the manual run rather than automated coverage."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-review/SKILL.md now explains saving fenced replies and addressing the retained agent id through SendMessage, including the full round-2 record command. The AC3 test checks these instructions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/product.md",
+        "issue": "The new promise that anything other than a JSON verdict receives a plain error is inaccurate. parseReply accepts any JSON object, and validateVerdict crashes on nested malformed entries. Independently calling it with criteria:[null] produced TypeError: Cannot read properties of null (reading 'status'); cmdRecord reaches that function, and the CLI rethrows this error with a stack trace. The new rejection test only covers malformed JSON and non-object values.",
+        "suggested_fix": "Either narrow the product and ticket claims to malformed JSON/non-object replies, or validate nested verdict entries and reject them with SpeckError before recording. Add coverage for a JSON object containing a null criterion or finding if retaining the broader promise.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The loop description matches the available sample records, but the new blanket promise about plain errors for invalid verdicts is false."
+    },
+    "escalation_question": "",
+    "summary": "The sample review caught the deliberate bug, then approved the fix, and fenced replies can now be recorded. The review instructions have been clarified. One claim needs correcting before merge: some malformed verdicts still crash with a technical stack trace despite the product description promising a plain error."
+  }
+}
+```
+
+</details>

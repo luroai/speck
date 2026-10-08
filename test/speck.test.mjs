@@ -1305,6 +1305,15 @@ test('0003 AC1: a reply that is not a verdict gets a plain error, and no round i
     assert.doesNotMatch(rec.stderr, /at JSON\.parse|SyntaxError/, 'no stack trace');
     assert.equal(r.roundFile(1), undefined);
   }
+  // A JSON object with a broken entry in criteria or findings is refused plainly too (round 1 F1).
+  for (const broken of [{ criteria: [null] }, { findings: [null] }, { criteria: ['pass'] }, { findings: [[]] }]) {
+    fs.writeFileSync(v, JSON.stringify({ ...subagentVerdict('changes_requested', 'open'), ...broken }));
+    const rec = r.run('record', '1', v, '--reviewer=claude-subagent');
+    assert.equal(rec.status, 1, JSON.stringify(broken));
+    assert.match(rec.stderr, /Reviewer output is missing or invalid/, JSON.stringify(broken));
+    assert.doesNotMatch(rec.stderr, /TypeError|    at /, 'no stack trace');
+    assert.equal(r.roundFile(1), undefined);
+  }
 });
 
 test('0003 AC3: the review skill says how to save a fenced subagent reply and how to resume it for round 2', () => {

@@ -390,8 +390,9 @@ function reviewDiff(repo, since) {
 export function validateVerdict(v) {
   const problems = [];
   if (!['approve', 'changes_requested', 'escalate'].includes(v.verdict)) problems.push('verdict');
-  if (!Array.isArray(v.criteria)) problems.push('criteria');
-  if (!Array.isArray(v.findings)) problems.push('findings');
+  const entries = a => Array.isArray(a) && a.every(e => e && typeof e === 'object' && !Array.isArray(e));
+  if (!entries(v.criteria)) problems.push('criteria');
+  if (!entries(v.findings)) problems.push('findings');
   if (!v.product_md || typeof v.product_md.accurate !== 'boolean') problems.push('product_md');
   if (typeof v.summary !== 'string') problems.push('summary');
   if (problems.length) throw new SpeckError(`Reviewer output is missing or invalid: ${problems.join(', ')}.`);
