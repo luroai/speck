@@ -31,6 +31,8 @@ OpenSpec showed the value of keeping specs in the repo. speck keeps that idea bu
 idea / conversation
   → /speck-capture        → speck/ideas/<date>-<slug>.md
   → /speck-ticket         → speck/tickets/0007-<slug>.md   (status: draft)
+  → decide against it     → speck cancel 0007 "<reason>"    (status: cancelled,
+                            filed in speck/tickets/done/)
   → you edit and approve  → status: ready                  [GATE 1]
   → /speck-build 0007     → branch speck/0007-<slug>
        tests from acceptance criteria → implementation → tests pass
@@ -110,7 +112,7 @@ speck/
   product.md                 # the living spec: what this product is and does today
   ideas/                     # low-ceremony notes and captured conversations
   tickets/0007-<slug>.md     # numbered tickets; status lives in frontmatter, review rounds at the end
-  tickets/done/0001-<slug>.md # finished tickets, filed away under the same name
+  tickets/done/0001-<slug>.md # closed tickets (done or cancelled), filed away under the same name
   .cache/                    # working files for reviews in progress (ignored by git)
 .claude/skills/speck-*/      # skills for Claude Code
 .agents/skills/speck-*/      # the same skills for Codex, cptr and other agents
@@ -119,7 +121,7 @@ speck/
 
 Every ticket opens with a header rendered from its frontmatter, such as `# 0007 · <title>` followed by `**Status:** 🔍 reviewing`, so previews that hide frontmatter still show the title and status. speck rewrites it whenever it changes the title or status, and `speck lint` warns if it's missing or stale.
 
-`speck/tickets/` holds only work in progress. Setting a ticket to `done` moves its file into `speck/tickets/done/` under the same name, and any other status moves it back. Commands take a ticket id, not a path, so they find it in either folder, and re-running `speck init` files any done ticket left behind by an older version. A move never overwrites: if the same file name is already in the other folder, speck stops and asks you to keep one.
+`speck/tickets/` holds only work in progress; `speck/tickets/done/` holds closed tickets, which means `done` or `cancelled`. Setting a ticket to `done` moves its file into `speck/tickets/done/` under the same name, `speck cancel <id> "<reason>"` sets it to `cancelled` with the reason and the date it was cancelled recorded in the ticket, and any other status moves it back into `speck/tickets/`. Commands take a ticket id, not a path, so they find it in either folder, and re-running `speck init` files any done ticket left behind by an older version. A move never overwrites: if the same file name is already in the other folder, speck stops and asks you to keep one.
 
 ## Skills and commands (v0.1)
 
@@ -129,10 +131,11 @@ Every ticket opens with a header rendered from its frontmatter, such as `# 0007 
 | `speck doctor` | Checks that git, Claude Code and Codex are installed and signed in, with a plain-English fix for each problem. The GitHub CLI is optional. |
 | `/speck-capture` | Turns an idea or the current conversation into `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into a numbered draft ticket. Runs the size checks and proposes splits. |
+| `speck cancel <id> "<reason>"` | Cancels a ticket you've decided against: records the reason and the date, sets it to `cancelled` and files it in `speck/tickets/done/`. Refuses a blank reason, a `done` ticket or an already-cancelled one. |
 | `/speck-build <id>` | Takes a `ready` ticket: branch, tests from acceptance criteria, implementation, then the review loop. Ends at `approved`, with no PR. |
 | `/speck-review <id>` | Runs the review loop on its own (for example, after a manual fix) |
 | `/speck-ship <id>` | Your gate. Runs `speck ship <id>`: checks, marks the ticket done, merges into the base branch, pushes and deletes the branch. Only you start it; in Claude Code the skill can't be started by the agent. |
-| `/speck-status` | Lists tickets by status: approved (waiting for you) first, then blocked with their questions |
+| `/speck-status` | Lists tickets by status: approved (waiting for you) first, then blocked with their questions, then cancelled with their reasons |
 
 Agents never merge or ship unless the user runs `/speck-ship`. Shipping pushes the base branch directly, so it mustn't be protected by a "require a pull request" rule.
 
