@@ -1,0 +1,25 @@
+# speck configuration
+
+base_branch: main
+branch_prefix: speck/
+
+builder: claude
+reviewer: codex                  # codex | claude-subagent
+allow_same_model_review: false   # must be true for builder and reviewer to be the same agent
+
+commands:
+  test: ""                       # e.g. npm test, pytest
+
+limits:
+  max_acceptance_criteria: 5
+  max_changed_lines: 300         # excluding tests and lockfiles; the build stops and proposes a split if exceeded
+  max_review_rounds: 3
+  escalate_after_repeat_disputes: 2
+
+reviewer_options:
+  codex:
+    sandbox: read-only
+  claude-subagent: {}
+
+github:
+  status_check: speck/review

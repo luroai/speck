@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "speck review verdict",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "round",
+    "verdict",
+    "criteria",
+    "findings",
+    "product_md",
+    "escalation_question",
+    "summary"
+  ],
+  "properties": {
+    "round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "verdict": {
+      "enum": [
+        "approve",
+        "changes_requested",
+        "escalate"
+      ]
+    },
+    "criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "status",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "unclear"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "severity",
+          "file",
+          "issue",
+          "suggested_fix",
+          "state"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable across rounds, e.g. F1"
+          },
+          "severity": {
+            "enum": [
+              "blocking",
+              "minor"
+            ]
+          },
+          "file": {
+            "type": "string"
+          },
+          "issue": {
+            "type": "string"
+          },
+          "suggested_fix": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "open",
+              "resolved",
+              "dispute_accepted",
+              "dispute_rejected"
+            ]
+          }
+        }
+      }
+    },
+    "product_md": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accurate",
+        "note"
+      ],
+      "properties": {
+        "accurate": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "escalation_question": {
+      "type": "string",
+      "description": "Empty unless verdict is escalate"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Plain English, readable by a non-coder"
+    }
+  }
+}
