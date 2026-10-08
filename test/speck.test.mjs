@@ -1131,3 +1131,18 @@ test('AC3: a reason on the last frontmatter line, with a "#" in it, is replaced 
     assert.ok(after.includes('## Problem'), 'body kept');
   }
 });
+
+test('setField keeps a trailing comment and the space before it, including on empty fields', () => {
+  const doc = '---\nid: "0001"\nstatus: draft            # draft | ready\nsource: ""               # e.g. speck/ideas/x.md\nreviewer_effort:      # blank: use config\nlast:\n---\nbody\n';
+  let t = setField(doc, 'source', 'speck/ideas/example.md');
+  assert.match(t, /^source: speck\/ideas\/example\.md {15}# e\.g\. speck\/ideas\/x\.md$/m);
+  t = setField(t, 'reviewer_effort', 'high');
+  assert.match(t, /^reviewer_effort: high {6}# blank: use config$/m);
+  t = setField(t, 'status', 'ready');
+  assert.match(t, /^status: ready {12}# draft \| ready$/m);
+  t = setField(t, 'last', 'x');
+  assert.match(t, /^last: x\n---\nbody\n$/m);
+  const parsed = parseTicket(t).fm;
+  assert.deepEqual([parsed.source, parsed.reviewer_effort, parsed.status, parsed.last], ['speck/ideas/example.md', 'high', 'ready', 'x']);
+  assert.equal(setField(doc, 'last', 'x').match(/^last:/gm).length, 1);
+});

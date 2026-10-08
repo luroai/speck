@@ -37,6 +37,7 @@ A ticket you decide against can be cancelled with a reason. It's filed away with
 - Cleaning up branches or review rounds for a ticket cancelled mid-build.
 
 ## Notes
+- Round 8 allowed under the user's instruction to finish and ship: `max_review_rounds` raised from 7 to 8. F4 was a regression in the round-7 `setField` rewrite (lost the space before a trailing comment on empty fields).
 - Round 7 allowed under the user's instruction to finish and ship: `max_review_rounds` raised from 6 to 7. F3 was a boundary bug in the round-5 patch; the fix this time is at the root (`setField` now replaces any existing line, whatever its value holds) and the helper is removed.
 - Round 6 allowed by the user's instruction to finish and ship: `max_review_rounds` raised from 5 to 6 for the F2 fix (the reviewer found a body-text deletion in the previous fix).
 - Round 5 allowed by the user (answer to the round-4 block): `max_review_rounds` raised from 4 to 5; escaped-quote fix re-reviewed in a fresh session.
@@ -436,6 +437,89 @@ Round 1 (codex, model gpt-6.1-sol, effort default): approved. Four criteria pass
     },
     "escalation_question": "",
     "summary": "Cancellation and the two previous fixes largely work, but approval is blocked by another boundary bug: cancelling again can leave two conflicting reasons in the ticket. I ran git diff main...HEAD -- . ':!speck', additional filtered diffs, git diff --stat, git status --short, cat/sed/rg inspections, and Node in-memory boundary and parser probes. I also invoked selected tests with node --test --test-name-pattern; its output reported only the file-level result, so I do not claim individual tests ran. I inspected the genuine CLI tests and supplied 67-test output; I did not rerun the full suite because it writes files and this review is read-only."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 7 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 7,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "83752c699aa615950aac0507cc3d0f3c80e38b4d",
+    "saved_at": "2026-10-08T20:26:58.209Z"
+  },
+  "verdict": {
+    "round": 7,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdCancel records the reason and date, synchronises the cancelled header and calls placeTicket. test/speck.test.mjs exercises cancellation from all six eligible statuses. Independent in-memory probes confirmed awkward reasons survive parsing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdCancel checks blank reasons, done and cancelled before writing. The AC2 CLI tests compare ticket contents before and after each refusal and check that files remain in place."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet rejects cancelled with guidance to speck cancel; placeTicket restores live statuses to the live folder. AC3 tests exercise refusal, reopening with the reason retained, and replacing an earlier reason."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdStatus orders cancelled after done and prints cancel_reason below each ticket. nextId includes both ticket folders. AC4 CLI tests exercise group order, reason placement and number allocation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The previous cancellation-reason round-trip failures are fixed. Independent probes passed for numeric-looking strings, escaped quotes followed by hashes, backslashes and multiline reasons.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The previous body-text deletion is fixed. setField confines replacement to frontmatter, and independent probes confirmed that a body cancel_reason line survives.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The previous last-frontmatter-line replacement failure is fixed. Independent probes replaced both quoted hash-containing reasons with New without duplication or stale text; the new CLI regression test covers this boundary.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "setField corrupts empty fields with trailing comments. Its prefix capture consumes all spaces before the comment, then appends the comment directly to the new value. Independently reproduced on the actual ticket: source:    # keep this comment becomes source:    speck/ideas/example.md# keep this comment; reviewer_effort similarly reads back as high# keep this comment. This affects ordinary speck set operations through the shared helper.",
+        "suggested_fix": "Preserve a whitespace separator before trailing comments when replacing empty values. Add regression tests for empty commented fields, including source and reviewer_effort, and assert both parsed values and retained comments.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec covers cancellation, recorded reasons, closed-ticket filing, reopening and status output accurately."
+    },
+    "escalation_question": "",
+    "summary": "Cancellation meets the four acceptance criteria, and the three previous problems are fixed. One new shared-helper bug can corrupt updates to empty fields with comments, so this needs another fix before merge. Commands run: cat for product.md, brief.md and the review skill; git diff main...HEAD -- . ':!speck'; git diff --stat; git status --short; rg and sed for code, tests and review history; node --input-type=module for independent in-memory probes; node --version; and a filtered node --test command. The filtered test run reported only a file-level result, so I do not count it as independent verification of individual tests. I inspected the CLI tests and supplied 68-test output; I did not rerun filesystem-writing tests under the read-only restriction."
   }
 }
 ```

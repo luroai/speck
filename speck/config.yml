@@ -15,7 +15,7 @@ commands:
 limits:
   max_acceptance_criteria: 10
   max_changed_lines: 1000         # excluding tests and lockfiles; the build stops and proposes a split if exceeded
-  max_review_rounds: 7
+  max_review_rounds: 8
   escalate_after_repeat_disputes: 2
 
 reviewer_options:

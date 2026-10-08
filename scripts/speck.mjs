@@ -128,8 +128,8 @@ export function setField(text, key, value) {
   const needsQuotes = typeof value === 'string' && !/^".*"$/.test(value) && (key === 'id' || /[:#]/.test(value) || value === '');
   const v = needsQuotes ? JSON.stringify(value) : value;
   // Replace the existing line whatever its old value holds (even a "#"), keeping only a trailing comment.
-  const re = new RegExp(`^(${key}:[ \\t]*)(.*)$`, 'm');
-  if (re.test(head)) return head.replace(re, (_, k, old) => `${k}${v}${old.slice(stripComment(old).length)}`) + rest;
+  const re = new RegExp(`^${key}:(.*)$`, 'm');
+  if (re.test(head)) return head.replace(re, (_, old) => `${key}: ${v}${old.slice(stripComment(old).length)}`) + rest;
   // Keep any blank line before the closing fence (it stops Markdown viewers rendering the frontmatter as a heading).
   const gap = head.match(/\n*$/)[0];
   return `${head.slice(0, head.length - gap.length)}\n${key}: ${v}${gap}${rest}`;
