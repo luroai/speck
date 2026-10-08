@@ -42,7 +42,7 @@ idea / conversation
                             merge into main, push, branch deleted
 ```
 
-The `product.md` update is made and reviewed on the ticket branch, and `speck ship` sets the ticket to `done` on that branch just before merging. So merging is the moment the spec becomes true. Until you ship, `main` is unchanged. `speck ship` refuses, changing nothing, unless the ticket is `approved`, the review loop says `ship`, the working tree is clean, nothing outside `speck/` changed after the reviewer approved, and the tests pass. A merge conflict is aborted and leaves everything as it was.
+The `product.md` update is made and reviewed on the ticket branch, and `speck ship` sets the ticket to `done` on that branch just before merging. So merging is the moment the spec becomes true. Until you ship, `main` is unchanged. `speck ship` refuses, changing nothing, unless the ticket is `approved`, the review loop says `ship`, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/`, and `commands.test` is set and passes. A merge conflict is aborted and leaves everything as it was.
 
 ## Ticket size rules
 

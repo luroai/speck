@@ -585,14 +585,16 @@ function shipChecks(repo, cfg, pad, branch) {
   const reviewed = all[all.length - 1].meta.reviewed_sha;
   if (!reviewed || sh('git', ['merge-base', '--is-ancestor', reviewed, branch], { cwd: repo }).status !== 0)
     throw new SpeckError(`The reviewer's approved commit isn't on ${branch}. Run the review again.`);
-  const changed = git(['diff', '--name-only', `${reviewed}..${branch}`], repo).split('\n').filter(f => f && !f.startsWith('speck/'));
+  // Every commit since the approval, not just the end result, so a change that was later reverted still counts.
+  const changed = [...new Set(git(['log', '-m', '--name-only', '--format=', `${reviewed}..${branch}`], repo)
+    .split('\n').filter(f => f && !f.startsWith('speck/')))];
   if (changed.length)
     throw new SpeckError(`These files changed after the reviewer approved: ${changed.join(', ')}. Run the review again so the reviewer sees them.`);
 }
 
 function runTests(repo, cfg) {
   const cmd = (cfg.commands?.test || '').trim();
-  if (!cmd) { console.log('No test command set (commands.test in speck/config.yml): skipping the final test run.'); return true; }
+  if (!cmd) throw new SpeckError('No test command is set, so speck can\'t check the tests pass before shipping. Set commands.test in speck/config.yml (for example `npm test`), commit it, then run this again.');
   console.log(`Running tests: ${cmd}`);
   return sh('sh', ['-c', cmd], { cwd: repo, stdio: 'inherit' }).status === 0;
 }

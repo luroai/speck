@@ -315,7 +315,12 @@ test('AC1: approved is a valid status, listed first by speck status as waiting f
 
 test('AC1: the build ends at approved, with no PR and no GitHub CLI', () => {
   const build = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
-  assert.match(build, /speck set <id> status approved/);
+  const approvedStep = build.split('## 5. Approved')[1].split('\n## ')[0];
+  assert.match(approvedStep, /`## Review log`/);
+  assert.match(approvedStep, /`## Delivery log`/);
+  assert.match(approvedStep, /speck set <id> status approved/);
+  assert.match(approvedStep, /commit the ticket and `speck\/reviews\/<id>\/` \(`speck\(<id>\): approved`\)/);
+  assert.ok(approvedStep.indexOf('Review log') < approvedStep.indexOf('status approved'), 'logs are filled in before approval is committed');
   for (const n of ['speck-build', 'speck-review', 'speck-ship'])
     assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8'), /\bgh\s|pull request|gh pr/i, n);
 });
@@ -341,6 +346,24 @@ test('AC2: speck ship refuses, changing nothing, unless every check passes', () 
   const b = none.state();
   assert.match(none.run('ship', '1').stderr, /review/i);
   assert.deepEqual(none.state(), b);
+  // A code change after the review that was later reverted still counts (F1).
+  const reverted = shipRepo();
+  fs.writeFileSync(path.join(reverted.dir, 'sneaky.js'), '1\n'); reverted.g('add', '-A'); reverted.g('commit', '-qm', 'add');
+  reverted.g('rm', '-q', 'sneaky.js'); reverted.g('commit', '-qm', 'revert');
+  const rb = reverted.state();
+  const rr = reverted.run('ship', '1');
+  assert.notEqual(rr.status, 0);
+  assert.match(rr.stderr, /sneaky\.js/);
+  assert.deepEqual(reverted.state(), rb);
+  // No test command set (F2).
+  const noTests = shipRepo({ test: '' });
+  const nb = noTests.state();
+  const nr = noTests.run('ship', '1');
+  assert.notEqual(nr.status, 0);
+  assert.match(nr.stderr, /commands\.test/);
+  assert.deepEqual(noTests.state(), nb);
+  assert.equal(noTests.status(), 'approved');
+  assert.equal(noTests.g('status', '--porcelain'), '');
   // Failing tests.
   const failing = shipRepo({ test: 'exit 3' });
   const f = failing.state();
