@@ -151,9 +151,18 @@ export function ticketHeader(fm) {
 }
 
 // Splits a ticket body into the header speck wrote (heading and status line, if present) and everything after it.
+// Works line by line and only ever skips empty lines inside the header, so the rest of the body is kept byte for byte.
 function splitHeader(body) {
-  const m = body.match(/^\s*(# \d{4} · [^\n]*)?\s*(\*\*Status:\*\*[^\n]*)?\s*/);
-  return { heading: m[1], status: m[2], rest: body.slice(m[0].length) };
+  const lines = body.split('\n');
+  const isHeading = l => /^# \d{4} · /.test(l);
+  const isStatus = l => /^\*\*Status:\*\*/.test(l);
+  const skipEmpty = i => { while (i < lines.length && lines[i] === '') i++; return i; };
+  let i = skipEmpty(0), heading, status;
+  if (isHeading(lines[i] ?? '')) { heading = lines[i]; i = skipEmpty(i + 1); }
+  if (isStatus(lines[i] ?? '')) { status = lines[i]; i += 1; }
+  else if (heading) i = lines.indexOf(heading) + 1; // no status line: keep any empty lines after the heading as body
+  if (!heading && !status) return { rest: body };
+  return { heading, status, rest: lines.slice(i).join('\n') };
 }
 
 function fmEnd(text) { return text.indexOf('\n---', 4) + 5; }
@@ -162,7 +171,9 @@ function fmEnd(text) { return text.indexOf('\n---', 4) + 5; }
 export function syncHeader(text) {
   const end = fmEnd(text);
   const { rest } = splitHeader(text.slice(end));
-  return `${text.slice(0, end)}${ticketHeader(parseTicket(text).fm)}\n\n${rest}`;
+  // One empty line separates the header from the body; the body's own empty lines and indentation are kept as they are.
+  const sep = rest === '' || rest.startsWith('\n') ? '' : '\n';
+  return `${text.slice(0, end)}${ticketHeader(parseTicket(text).fm)}\n${sep}${rest}`;
 }
 
 function ticketsDir(repo) { return path.join(repo, 'speck', 'tickets'); }

@@ -720,9 +720,25 @@ test('AC4: re-running init adds or corrects every header and changes nothing els
   const after = fs.readFileSync(live, 'utf8');
   assert.equal(headerOf(after), '# 0001 · Export bookings\n\n**Status:** 📝 draft');
   assert.equal(after.slice(0, after.indexOf('\n---', 4)), before.slice(0, before.indexOf('\n---', 4)), 'frontmatter unchanged');
-  assert.equal(after.slice(after.indexOf('## Problem')), before.slice(before.indexOf('## Problem')), 'body unchanged');
+  assert.equal(after.slice(after.indexOf('**Status:**')).split('\n').slice(1).join('\n'), before.slice(before.indexOf('**Status:**')).split('\n').slice(1).join('\n'), 'body after the header unchanged');
   assert.equal(fs.readFileSync(done, 'utf8'), doneText.replace('# 0002 · Wrong\n\n**Status:** 🔍 reviewing', '# 0002 · Old\n\n**Status:** ✅ done'));
   // Running it again changes nothing.
   assert.equal(r.run('init', '--skip-checks').status, 0);
   assert.equal(fs.readFileSync(live, 'utf8'), after);
+});
+
+test('AC2/AC4 (F1): syncing the header keeps the rest of the body byte for byte', () => {
+  const head = '---\nid: "0003"\ntitle: "T"\nstatus: ready\n\n---\n';
+  const header = '# 0003 · T\n\n**Status:** 📋 ready';
+  const bodies = ['\n\n\n    indented code\n\n## Problem\nX.\n', '\n## Problem\n  - nested\n', '    indented first line\n## Problem\n'];
+  for (const body of bodies) {
+    // With no header yet: the header goes on top, and the body is untouched apart from one separating empty line if it had none.
+    const added = syncHeader(head + body);
+    assert.equal(added, head + header + '\n' + (body.startsWith('\n') ? '' : '\n') + body, JSON.stringify(body));
+    // With a stale header: only the header changes.
+    const stale = head + '# 0003 · Old\n\n**Status:** 📝 draft\n' + body;
+    assert.equal(syncHeader(stale), added, JSON.stringify(body));
+    // And syncing again changes nothing.
+    assert.equal(syncHeader(added), added);
+  }
 });
