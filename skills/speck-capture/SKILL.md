@@ -51,4 +51,4 @@ Then ask whether to add to the existing item, go ahead anyway or stop. Write not
    ```
 
 4. Don't invent requirements the user didn't state. List unknowns under Notes as questions.
-5. Reply with the file path and one line on what's needed to turn it into a ticket. Don't commit unless the user asks.
+5. Reply with the file path, the overlap check's one-line result (for example "No overlap with existing ideas, tickets or product.md."), and one line on what's needed to turn it into a ticket. Don't commit unless the user asks.

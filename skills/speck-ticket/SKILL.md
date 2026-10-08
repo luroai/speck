@@ -23,7 +23,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Notes:** constraints and decisions only. No design essays.
    - **Estimate:** `size` S (a small, contained change) or M (several files or one new component). If it feels L, split it. Set `risk: high` if it touches auth, payments, data deletion, migrations, infrastructure or secrets. Set `priority` from 1 to 5 if the user gave one; otherwise use 3.
 5. **Check it:** run `speck lint <id>` for every ticket. Fix every ✗. Address the ! warnings, or keep them deliberately and say why.
-6. **Present the tickets** to the user: id, title, size/risk and acceptance criteria, plus any assumptions you made. Ask only questions that change the acceptance criteria.
+6. **Present the tickets** to the user: the overlap check's one-line result, then each ticket's id, title, size/risk and acceptance criteria, plus any assumptions you made. Ask only questions that change the acceptance criteria.
 7. **Don't mark tickets ready.** Moving a ticket to `ready` is the user's gate (Gate 1). If the user explicitly approves, run `speck set <id> status ready`. That command re-runs the lint and refuses if the ticket fails.
 
 ## Rules

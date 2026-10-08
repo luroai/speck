@@ -1229,4 +1229,7 @@ test('0010 AC4: with no overlap the skill carries on and says so in one line', (
   assert.match(check, /no overlap/i);
   assert.match(check, /one line/i);
   assert.match(check, /carry on|continue/i);
+  assert.match(skillText('speck-capture'), /Reply with the file path, the overlap check's one-line result/, 'capture reports it in its reply');
+  assert.match(skillText('speck-ticket'), /If nothing overlaps, say so in one line and carry on/);
+  assert.match(skillText('speck-ticket'), /Present the tickets\*\* to the user: the overlap check's one-line result/, 'ticket reports it when presenting');
 });
