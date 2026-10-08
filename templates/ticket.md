@@ -1,7 +1,7 @@
 ---
 id: "0000"
 title: ""                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | done
+status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)

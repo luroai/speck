@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATES = path.join(ROOT, 'templates');
-const STATUSES = ['draft', 'ready', 'building', 'reviewing', 'blocked', 'approved', 'done'];
+const STATUSES = ['draft', 'ready', 'building', 'reviewing', 'blocked', 'approved', 'done', 'cancelled'];
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 const LOCKFILES = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|poetry\.lock|uv\.lock|Pipfile\.lock|Cargo\.lock|Gemfile\.lock|go\.sum|composer\.lock)$/;
 const TESTFILES = /(^|\/)(test|tests|__tests__|spec)\/|\.(test|spec)\.[a-z]+$|_test\.[a-z]+$|(^|\/)test_[^/]+$/;
@@ -70,6 +70,7 @@ function stripComment(line) {
   let inS = false, inD = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
+    if (c === '\\' && inD) { i++; continue; } // an escaped character inside double quotes never closes them
     if (c === "'" && !inD) inS = !inS;
     else if (c === '"' && !inS) inD = !inD;
     else if (c === '#' && !inS && !inD && (i === 0 || /\s/.test(line[i - 1]))) return line.slice(0, i).trimEnd();
@@ -82,7 +83,8 @@ function scalar(v) {
   if (v === '[]') return [];
   if (v === '{}') return {};
   if (v.startsWith('[') && v.endsWith(']')) return v.slice(1, -1).split(',').map(s => scalar(s)).filter(s => s !== '');
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v.slice(1, -1);
+  if (v.length > 1 && v.startsWith('"') && v.endsWith('"')) { try { return JSON.parse(v); } catch { return v.slice(1, -1); } }
+  if (v.length > 1 && v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
   if (v === 'true') return true;
   if (v === 'false') return false;
   if (/^-?\d+$/.test(v)) return Number(v);
@@ -125,8 +127,9 @@ export function setField(text, key, value) {
   const rest = text.slice(fmEnd);
   const needsQuotes = typeof value === 'string' && !/^".*"$/.test(value) && (key === 'id' || /[:#]/.test(value) || value === '');
   const v = needsQuotes ? JSON.stringify(value) : value;
-  const re = new RegExp(`^(${key}:\\s*)([^#\\n]*?)(\\s+#.*)?$`, 'm');
-  if (re.test(head)) return head.replace(re, (_, k, _old, comment = '') => `${k}${v}${comment}`) + rest;
+  // Replace the existing line whatever its old value holds (even a "#"), keeping only a trailing comment.
+  const re = new RegExp(`^${key}:(.*)$`, 'm');
+  if (re.test(head)) return head.replace(re, (_, old) => `${key}: ${v}${old.slice(stripComment(old).length)}`) + rest;
   // Keep any blank line before the closing fence (it stops Markdown viewers rendering the frontmatter as a heading).
   const gap = head.match(/\n*$/)[0];
   return `${head.slice(0, head.length - gap.length)}\n${key}: ${v}${gap}${rest}`;
@@ -144,7 +147,7 @@ function settingsMeta(s) { return { reviewer_model: s.model || 'default', review
 
 // ---------- the readable header under the frontmatter ----------
 
-const STATUS_EMOJI = { draft: '📝', ready: '📋', building: '🔨', reviewing: '🔍', blocked: '⛔', approved: '👍', done: '✅' };
+const STATUS_EMOJI = { draft: '📝', ready: '📋', building: '🔨', reviewing: '🔍', blocked: '⛔', approved: '👍', done: '✅', cancelled: '❌' };
 
 // The heading and status line that open every ticket, rendered from the frontmatter (the source of truth).
 export function ticketHeader(fm) {
@@ -209,11 +212,13 @@ function findTicket(repo, id) {
   return { file: found[0], ...parseTicket(fs.readFileSync(found[0], 'utf8')) };
 }
 
-// A ticket lives in speck/tickets/, or in speck/tickets/done/ while it is done. Moves it if the status it is
+// A ticket lives in speck/tickets/, or in speck/tickets/done/ while it is closed. Closed means done or cancelled:
+// both are filed away with finished work, so speck/tickets/ holds only live work. Moves it if the status it is
 // being given says otherwise, and returns where it was found, so the caller can stage the move.
 function placeTicket(repo, t, status) {
   const from = t.file;
-  const to = path.join(status === 'done' ? doneTicketsDir(repo) : ticketsDir(repo), path.basename(from));
+  const closed = status === 'done' || status === 'cancelled';
+  const to = path.join(closed ? doneTicketsDir(repo) : ticketsDir(repo), path.basename(from));
   if (path.resolve(from) === path.resolve(to)) return from;
   // Never overwrite: the same name already in the other folder is a second copy, and losing it would be data loss.
   if (fs.existsSync(to))
@@ -781,6 +786,8 @@ function cmdSet(args) {
   const t = findTicket(repo, id);
   if (key === 'status') {
     if (!STATUSES.includes(value)) throw new SpeckError(`status must be one of ${STATUSES.join(', ')}.`);
+    // Cancelling records why, so it has its own command; `set` would lose the reason.
+    if (value === 'cancelled') throw new SpeckError(`Use \`speck cancel ${t.fm.id} "<reason>"\` instead: cancelling records the reason.`);
     if (value === 'ready') {
       const { errors } = lintTicket(t, cfg);
       if (errors.length) throw new SpeckError(`Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}`);
@@ -797,6 +804,26 @@ function writeField(t, key, value) {
   if (key === 'status' && value === 'building' && !t.fm.started) text = setField(text, 'started', new Date().toISOString());
   if (key === 'status' && value === 'done') text = setField(text, 'finished', new Date().toISOString());
   fs.writeFileSync(t.file, syncHeader(text));
+}
+
+// Cancelling is a status change with a why. The reason and the date are part of the record, so it gets its own
+// command rather than `speck set`. The ticket is filed with the finished ones, where it stays visible as cancelled.
+function cmdCancel(args) {
+  const [id, ...rest] = args;
+  if (!id) throw new SpeckError('Usage: speck cancel <id> "<reason>"');
+  const reason = rest.join(' ').trim();
+  const repo = findRepoRoot();
+  const t = findTicket(repo, id);
+  // Every refusal comes before the first write, so a refused cancel changes nothing.
+  if (blank(reason)) throw new SpeckError(`Give a reason: speck cancel ${t.fm.id} "<reason>".`);
+  if (t.fm.status === 'done') throw new SpeckError(`Ticket ${t.fm.id} is done, so it can't be cancelled: delivered work is part of the record.`);
+  if (t.fm.status === 'cancelled') throw new SpeckError(`Ticket ${t.fm.id} is already cancelled.`);
+  // Stored as a JSON string, so text like `false`, `0` or `a "quoted" word` reads back exactly as typed. A reason kept from an earlier cancel is replaced in place.
+  let text = setField(t.raw, 'cancel_reason', JSON.stringify(reason));
+  text = setField(text, 'cancelled', new Date().toISOString().slice(0, 10));
+  fs.writeFileSync(t.file, syncHeader(setField(text, 'status', 'cancelled')));
+  placeTicket(repo, t, 'cancelled');
+  console.log(`${t.fm.id} cancelled → ${path.relative(repo, t.file)}`);
 }
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
@@ -926,7 +953,7 @@ function cmdStatus() {
   const repo = findRepoRoot();
   const tickets = listTickets(repo);
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
-  const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done'];
+  const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).sort((a, b) => (a.fm.priority ?? 9) - (b.fm.priority ?? 9));
     if (!group.length) continue;
@@ -937,6 +964,7 @@ function cmdStatus() {
         const q = contentLines(t.sections['blocked question']).join(' ');
         if (q) console.log(`        ? ${q}`);
       }
+      if (s === 'cancelled' && !blank(t.fm.cancel_reason)) console.log(`        ❌ ${t.fm.cancel_reason}`);
     }
   }
   const ideas = path.join(repo, 'speck', 'ideas');
@@ -1044,6 +1072,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first)
+  speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status                        tickets by status, blocked first
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
@@ -1056,7 +1085,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck ship <id>                     merge an approved ticket into the base branch (the user's gate)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, status: cmdStatus, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, cancel: cmdCancel, status: cmdStatus, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
