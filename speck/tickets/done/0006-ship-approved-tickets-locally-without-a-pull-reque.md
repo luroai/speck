@@ -16,6 +16,9 @@ started: "2026-10-08T16:09:04.507Z"
 finished: "2026-10-08T16:16:15.245Z"
 
 ---
+# 0006 · Ship approved tickets locally without a pull request
+
+**Status:** ✅ done
 
 ## Problem
 speck's main users are solo builders who want to build things bigger than a single prompt. Today every approved ticket goes through a GitHub PR, which needs the GitHub CLI, a login and branch protection, and runs into GitHub's rule that you can't approve your own PR. For a solo builder the PR is mostly a place to click Merge, and the repo already holds the ticket, the review rounds and `product.md`.

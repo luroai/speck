@@ -13,6 +13,9 @@ created: 2026-10-08
 started: "2026-10-08T16:44:34.053Z"
 
 ---
+# 0004 · Start every ticket with a readable header
+
+**Status:** 🔨 building
 
 ## Problem
 A ticket's title and status exist only in the frontmatter. Markdown previews that hide frontmatter (VS Code, Obsidian, GitHub) show neither, and viewers without frontmatter support show the fields as a run-on paragraph. Either way, you can't open a ticket and see at a glance what it is and where it stands.

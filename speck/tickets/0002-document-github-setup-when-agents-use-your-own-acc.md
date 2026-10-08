@@ -12,6 +12,9 @@ after: []                # ticket ids that must be done first
 created: 2026-10-08
 
 ---
+# 0002 · Document GitHub setup when agents use your own account
+
+**Status:** 📝 draft
 
 ## Problem
 GitHub doesn't let a user approve their own PR. If the builder opens PRs with the owner's own gh login, a 'require 1 approval' rule can't be met, so the documented branch protection doesn't work as written.
