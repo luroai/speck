@@ -1,7 +1,7 @@
 ---
 id: "0005"
 title: "Set the reviewer model per ticket or globally"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: done            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -11,6 +11,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
 started: "2026-10-08T15:41:27.570Z"
+finished: "2026-10-08T15:46:12.280Z"
 
 ---
 
@@ -46,6 +47,12 @@ Teams can set the reviewer model and effort level for a whole repo in `speck/con
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+- Round 1 (codex, model default, effort default): changes requested. F1: the claude-subagent path isn't exercised. F2: `speck record` used the current ticket settings, not the ones a resumed subagent started with.
+- Round 2: changes requested. F2 resolved (settings saved by `reviewer-settings`). F1 dispute rejected: a manual smoke test is needed.
+- Round 3: approved. F1 resolved by a documented smoke test with a real subagent, configured and default.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost, PR link. -->
+- Attempts: 1. Review rounds: 3 (of 3). Reviewer tokens: 351,873. Elapsed: about 5 min of build and review time, plus the review rounds.
+- Changed lines: about 70 (limit 300), excluding tests.
+- Follow-up ideas: Codex sandbox still fails to start here, so the reviewer worked from the diff only (known limit). `speck set` can't clear a field back to blank (an empty value is rejected), so blanking `reviewer_model` means editing the file.
