@@ -1,7 +1,7 @@
 ---
 id: "0004"
 title: "Start every ticket with a readable header"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | done
+status: done            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -11,11 +11,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
 started: "2026-10-08T16:44:34.053Z"
+finished: "2026-10-08T17:16:32.827Z"
 
 ---
 # 0004 · Start every ticket with a readable header
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket's title and status exist only in the frontmatter. Markdown previews that hide frontmatter (VS Code, Obsidian, GitHub) show neither, and viewers without frontmatter support show the fields as a run-on paragraph. Either way, you can't open a ticket and see at a glance what it is and where it stands.
