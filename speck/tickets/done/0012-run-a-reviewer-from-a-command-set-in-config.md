@@ -1,7 +1,7 @@
 ---
 id: "0012"
 title: "Run a reviewer from a command set in config"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
 started: "2026-10-08T21:31:53.751Z"
+finished: "2026-10-08T21:41:10.387Z"
 
 ---
 # 0012 · Run a reviewer from a command set in config
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck review` can only run Codex, and every other reviewer is driven by the builder through skill instructions, with the builder saving the verdict file itself. A Cursor, Gemini or Claude Code user has no reviewer speck can run for them, and outside Codex the builder could record its own approval.
