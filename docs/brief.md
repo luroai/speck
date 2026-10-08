@@ -29,15 +29,15 @@ OpenSpec showed the value of keeping specs in the repo. speck keeps that idea bu
 
 ```
 idea / conversation
-  → /speck:capture        → work/ideas/<date>-<slug>.md
-  → /speck:ticket         → work/tickets/0007-<slug>.md   (status: draft)
+  → /speck-capture        → speck/ideas/<date>-<slug>.md
+  → /speck-ticket         → speck/tickets/0007-<slug>.md   (status: draft)
   → you edit and approve  → status: ready                  [GATE 1]
-  → /speck:build 0007     → branch speck/0007-<slug>
+  → /speck-build 0007     → branch speck/0007-<slug>
        tests from acceptance criteria → implementation → tests pass
        → review loop with reviewer subagent (see below)
-       → approved?  yes → /speck:ship
+       → approved?  yes → /speck-ship
                     no, after max rounds → status: blocked + question for you
-  → /speck:ship 0007      → PR + review pack + `speck/review` check = success
+  → /speck-ship 0007      → PR + review pack + `speck/review` check = success
                             ticket set to done and product.md updated *inside the PR*
   → you approve and merge in GitHub                        [GATE 2]
 ```
@@ -46,7 +46,7 @@ Because the ticket's `done` status and the `product.md` update travel in the sam
 
 ## Ticket size rules
 
-A ticket is ready only if it passes all of these. `/speck:ticket` checks them and offers a split when a ticket fails.
+A ticket is ready only if it passes all of these. `/speck-ticket` checks them and offers a split when a ticket fails.
 
 | Rule | Limit |
 |---|---|
@@ -70,7 +70,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
 
 **Protocol**
 
-1. **Round 1.** The builder spawns the reviewer with the ticket, `work/product.md`, the diff against the base branch and the test output. The reviewer returns a structured verdict (`templates/review-verdict.schema.json`):
+1. **Round 1.** The builder spawns the reviewer with the ticket, `speck/product.md`, the diff against the base branch and the test output. The reviewer returns a structured verdict (`templates/review-verdict.schema.json`):
    - a result for each acceptance criterion: `pass`, `fail` or `unclear`, with evidence;
    - findings, each `blocking` or `minor`;
    - whether the proposed `product.md` change is accurate;
@@ -87,7 +87,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
    - **`needs_pm`:** the ticket becomes `blocked` with that question.
 5. **Minor findings never block.** They're logged in the ticket and offered as new ideas.
 
-**Records:** each round is saved to `work/reviews/0007/round-N.json`, and a short summary goes into the ticket's Review log. The review pack in the PR is built from these files.
+**Records:** each round is saved to `speck/reviews/0007/round-N.json`, and a short summary goes into the ticket's Review log. The review pack in the PR is built from these files.
 
 **Reviewer adapters (v0.1)**
 
@@ -101,34 +101,37 @@ Config rejects `builder` and `reviewer` being the same agent unless `allow_same_
 ## Repo layout (in a project that uses speck)
 
 ```
-AGENTS.md / CLAUDE.md        # points agents at work/product.md first
-work/
+AGENTS.md / CLAUDE.md        # points agents at speck/product.md first
+speck/
   config.yml                 # agents, test command, limits, base branch
   product.md                 # the living spec: what this product is and does today
   ideas/                     # low-ceremony notes and captured conversations
   tickets/0007-<slug>.md     # numbered tickets; status lives in frontmatter
   reviews/0007/round-N.json  # review transcripts
-.claude/skills/speck-*/      # skills (also usable by Codex and other agents)
+.claude/skills/speck-*/      # skills for Claude Code
+.agents/skills/speck-*/      # the same skills for Codex, cptr and other agents
+.speck/                      # the speck command and templates
 ```
 
 ## Skills and commands (v0.1)
 
 | Command | Does |
 |---|---|
-| `speck init` | Creates `work/`, `config.yml`, `product.md` and the skills. Prints the branch-protection settings to apply. |
-| `/speck:capture` | Turns an idea or the current conversation into `work/ideas/` |
-| `/speck:ticket` | Turns an idea into a numbered draft ticket. Runs the size checks and proposes splits. |
-| `/speck:build <id>` | Takes a `ready` ticket: branch, tests from acceptance criteria, implementation, then the review loop |
-| `/speck:review <id>` | Runs the review loop on its own (for example, after a manual fix) |
-| `/speck:ship <id>` | Opens the PR with the review pack, sets the `speck/review` check, and marks the ticket done and updates `product.md` inside the PR |
-| `/speck:status` | Lists tickets by status, with blocked questions first |
+| `npx github:luroai/speck init` | Creates `speck/`, `config.yml` and `product.md`, installs the skills and the `speck` command into the project, and runs `speck doctor`. Re-run it to update. Prints the branch-protection settings to apply. |
+| `speck doctor` | Checks that git, GitHub, Claude Code and Codex are installed and signed in, with a plain-English fix for each problem. |
+| `/speck-capture` | Turns an idea or the current conversation into `speck/ideas/` |
+| `/speck-ticket` | Turns an idea into a numbered draft ticket. Runs the size checks and proposes splits. |
+| `/speck-build <id>` | Takes a `ready` ticket: branch, tests from acceptance criteria, implementation, then the review loop |
+| `/speck-review <id>` | Runs the review loop on its own (for example, after a manual fix) |
+| `/speck-ship <id>` | Opens the PR with the review pack, sets the `speck/review` check, and marks the ticket done and updates `product.md` inside the PR |
+| `/speck-status` | Lists tickets by status, with blocked questions first |
 
 Merge protection that you set up once per repo:
 - Require the `speck/review` status check.
 - Require one approving review from you.
 - Agents have no merge rights.
 
-## The living spec: `work/product.md`
+## The living spec: `speck/product.md`
 
 A single document that a new agent session or a person can read in about five minutes to understand the product. It covers:
 - what the product is and who it's for;
@@ -136,12 +139,12 @@ A single document that a new agent session or a person can read in about five mi
 - key decisions and constraints;
 - known limits.
 
-It's updated only through `/speck:ship`, inside the PR, and the reviewer checks the update. It describes the present, not history; the history lives in tickets.
+It's updated only through `/speck-ship`, inside the PR, and the reviewer checks the update. It describes the present, not history; the history lives in tickets.
 
 ## Two projects
 
 1. **speck (this repo):** the file format, the skills, the review loop and the CLI. It's useful entirely on its own.
-2. **speck board (later):** a local kanban app over `work/`. Columns map to ticket status, and moving a card to Ready for Dev is Gate 1 and starts `/speck:build`. It reads and writes the same files, and merging stays in GitHub. Captured as an idea in `work/ideas/`.
+2. **speck board (later):** a local kanban app over `speck/`. Columns map to ticket status, and moving a card to Ready for Dev is Gate 1 and starts `/speck-build`. It reads and writes the same files, and merging stays in GitHub. Captured as an idea in `speck/ideas/`.
 
 ## v0.1 scope
 

@@ -7,7 +7,7 @@ size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 builder: claude
 reviewer: codex
-source: ""               # e.g. work/ideas/2026-10-08-csv-export.md
+source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 
 ---

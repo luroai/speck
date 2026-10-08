@@ -35,9 +35,9 @@ function git(args, cwd) {
 function findRepoRoot(start = process.cwd()) {
   let dir = start;
   while (true) {
-    if (fs.existsSync(path.join(dir, 'work', 'config.yml'))) return dir;
+    if (fs.existsSync(path.join(dir, 'speck', 'config.yml'))) return dir;
     const parent = path.dirname(dir);
-    if (parent === dir) throw new SpeckError('No work/config.yml found. Run `speck init` in your repo first.');
+    if (parent === dir) throw new SpeckError('No speck/config.yml found. Run `speck init` in your repo first.');
     dir = parent;
   }
 }
@@ -88,7 +88,7 @@ function scalar(v) {
 }
 
 function loadConfig(repo) {
-  const cfg = parseYaml(fs.readFileSync(path.join(repo, 'work', 'config.yml'), 'utf8'));
+  const cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
   const limits = {
     max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3,
     escalate_after_repeat_disputes: 2, max_ticket_body_lines: 40, ...(cfg.limits || {}),
@@ -130,7 +130,7 @@ export function setField(text, key, value) {
   return `${head.slice(0, head.length - gap.length)}\n${key}: ${v}${gap}${rest}`;
 }
 
-function ticketsDir(repo) { return path.join(repo, 'work', 'tickets'); }
+function ticketsDir(repo) { return path.join(repo, 'speck', 'tickets'); }
 
 function listTickets(repo) {
   const dir = ticketsDir(repo);
@@ -144,7 +144,7 @@ function listTickets(repo) {
 function findTicket(repo, id) {
   const pad = String(id).padStart(4, '0');
   const t = listTickets(repo).find(t => path.basename(t.file).startsWith(`${pad}-`));
-  if (!t) throw new SpeckError(`Ticket ${pad} not found in work/tickets/.`);
+  if (!t) throw new SpeckError(`Ticket ${pad} not found in speck/tickets/.`);
   return t;
 }
 
@@ -191,13 +191,13 @@ export function changedLines(repo, base) {
   for (const f of git(['ls-files', '--others', '--exclude-standard'], repo).split('\n').filter(Boolean)) {
     try { rows.push({ file: f, lines: fs.readFileSync(path.join(repo, f), 'utf8').split('\n').length }); } catch { /* binary or unreadable */ }
   }
-  const counted = rows.filter(r => !LOCKFILES.test(r.file) && !TESTFILES.test(r.file) && !r.file.startsWith('work/'));
+  const counted = rows.filter(r => !LOCKFILES.test(r.file) && !TESTFILES.test(r.file) && !r.file.startsWith('speck/'));
   return { total: counted.reduce((n, r) => n + r.lines, 0), files: rows, counted };
 }
 
 // ---------- reviews ----------
 
-function reviewDir(repo, id) { return path.join(repo, 'work', 'reviews', String(id).padStart(4, '0')); }
+function reviewDir(repo, id) { return path.join(repo, 'speck', 'reviews', String(id).padStart(4, '0')); }
 
 function rounds(repo, id) {
   const dir = reviewDir(repo, id);
@@ -253,8 +253,8 @@ function saveRound(repo, id, verdict, meta) {
 
 function reviewerPrompt(repo, ticket, cfg, round, extra) {
   const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8');
-  const productFile = path.join(repo, 'work', 'product.md');
-  const product = fs.existsSync(productFile) ? fs.readFileSync(productFile, 'utf8') : '(no work/product.md)';
+  const productFile = path.join(repo, 'speck', 'product.md');
+  const product = fs.existsSync(productFile) ? fs.readFileSync(productFile, 'utf8') : '(no speck/product.md)';
   if (round === 1) {
     const values = { TICKET: ticket.raw, PRODUCT: product, BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
     return tpl.replace(/\{\{(TICKET|PRODUCT|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
@@ -275,12 +275,12 @@ function runCodexReview(repo, id, opts) {
   const prior = rounds(repo, id);
   const round = prior.length + 1;
   if (round > cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
-  const status = git(['status', '--porcelain'], repo).split('\n').filter(l => l && !l.slice(3).startsWith('work/reviews/'));
+  const status = git(['status', '--porcelain'], repo).split('\n').filter(l => l && !l.slice(3).startsWith('speck/reviews/'));
   if (status.length) throw new SpeckError('Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
   const sinceSha = round === 1 ? base : prior[prior.length - 1].meta.reviewed_sha;
-  const diff = git(['diff', `${sinceSha}..HEAD`, '--', '.', ':(exclude)work/reviews'], repo);
+  const diff = git(['diff', `${sinceSha}..HEAD`, '--', '.', ':(exclude)speck/reviews'], repo);
   const tests = opts.tests ? fs.readFileSync(opts.tests, 'utf8') : '(no test output provided)';
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha });
@@ -352,24 +352,113 @@ export function reviewPack(repo, id) {
   return lines.join('\n');
 }
 
+// ---------- install and doctor ----------
+
+const SKILLS = path.join(ROOT, 'skills');
+const SKILL_DIRS = ['.claude/skills', '.agents/skills']; // Claude Code reads the first; Codex, cptr and others read the second
+const VERSION = (() => {
+  // From the source package, or from the VERSION file written next to an installed copy.
+  try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version; } catch {}
+  try { return fs.readFileSync(path.join(ROOT, 'VERSION'), 'utf8').trim(); } catch {}
+  return 'unknown';
+})();
+
+function copyDir(from, to) {
+  fs.rmSync(to, { recursive: true, force: true });
+  fs.cpSync(from, to, { recursive: true });
+}
+
+function linkDir(target, at) {
+  fs.rmSync(at, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(at), { recursive: true });
+  fs.symlinkSync(path.relative(path.dirname(at), target), at, 'dir');
+}
+
+// Puts the CLI in .speck/ and the skills where agents look for them. Safe to re-run: it refreshes both.
+// Inside speck's own source repo it links instead of copying, so edits show up straight away.
+export function installTooling(repo) {
+  if (!fs.existsSync(SKILLS)) throw new SpeckError('This copy of speck can\'t install itself. Run `npx github:luroai/speck init` instead.');
+  const dev = fs.realpathSync(repo) === fs.realpathSync(ROOT);
+  const place = dev ? linkDir : copyDir;
+  const skills = fs.readdirSync(SKILLS).filter(n => n.startsWith('speck-') && fs.existsSync(path.join(SKILLS, n, 'SKILL.md')));
+  for (const d of ['scripts', 'templates']) place(path.join(ROOT, d), path.join(repo, '.speck', d));
+  fs.writeFileSync(path.join(repo, '.speck', 'VERSION'), VERSION + '\n');
+  for (const dir of SKILL_DIRS) {
+    fs.mkdirSync(path.join(repo, dir), { recursive: true });
+    for (const s of skills) place(path.join(SKILLS, s), path.join(repo, dir, s));
+  }
+  return skills;
+}
+
+function check(name, ok, fix) { return { name, ok, fix }; }
+
+function runs(cmd, args) {
+  try { return sh(cmd, args).status === 0; } catch { return false; }
+}
+
+export function doctorChecks(repo, cfg = {}) {
+  const reviewer = cfg.reviewer || 'codex';
+  const checks = [
+    check('Node.js 20 or newer', Number(process.versions.node.split('.')[0]) >= 20,
+      'Install the latest Node.js LTS from https://nodejs.org, then open a new terminal.'),
+    check('git', runs('git', ['--version']),
+      'Install git from https://git-scm.com/downloads.'),
+    check('This folder is a git repository', runs('git', ['-C', repo, 'rev-parse', '--git-dir']),
+      'Run `git init` here, or run speck from inside your project folder.'),
+    check('Claude Code (builds tickets)', runs('claude', ['--version']),
+      'Install Claude Code: https://claude.com/claude-code'),
+  ];
+  const ghInstalled = runs('gh', ['--version']);
+  checks.push(check('GitHub CLI (opens pull requests)', ghInstalled,
+    'Install the GitHub CLI from https://cli.github.com.'));
+  if (ghInstalled) checks.push(check('Signed in to GitHub', runs('gh', ['auth', 'status']),
+    'Run `gh auth login` and follow the prompts.'));
+  if (reviewer === 'codex') {
+    const codexInstalled = runs('codex', ['--version']);
+    checks.push(check('Codex CLI (reviews tickets)', codexInstalled,
+      'Install it with `npm install -g @openai/codex`, or set `reviewer: claude-subagent` and `allow_same_model_review: true` in speck/config.yml.'));
+    if (codexInstalled) checks.push(check('Signed in to Codex', runs('codex', ['login', 'status']),
+      'Run `codex login` and follow the prompts.'));
+  }
+  return checks;
+}
+
+function printChecks(checks) {
+  for (const c of checks) console.log(`  ${c.ok ? '✓' : '✗'} ${c.name}${c.ok ? '' : `\n      Fix: ${c.fix}`}`);
+  return checks.every(c => c.ok);
+}
+
+function cmdDoctor() {
+  let repo = process.cwd(), cfg = {};
+  try { repo = findRepoRoot(); cfg = loadConfig(repo); } catch {}
+  console.log('Checking what speck needs:');
+  const ok = printChecks(doctorChecks(repo, cfg));
+  console.log(ok ? '\nAll set.' : '\nFix the ✗ items above, then run this again.');
+  if (!ok) throw new SpeckError('', 1);
+}
+
 // ---------- commands ----------
 
 function cmdInit(args) {
   const repo = process.cwd();
   const force = args.includes('--force');
-  for (const d of ['work/ideas', 'work/tickets', 'work/reviews']) fs.mkdirSync(path.join(repo, d), { recursive: true });
-  const copies = [['config.yml', 'work/config.yml'], ['product.md', 'work/product.md']];
+  console.log(`speck ${VERSION}: setting up ${repo}\n`);
+  for (const d of ['speck/ideas', 'speck/tickets', 'speck/reviews']) fs.mkdirSync(path.join(repo, d), { recursive: true });
+  const copies = [['config.yml', 'speck/config.yml'], ['product.md', 'speck/product.md']];
   for (const [from, to] of copies) {
     const dest = path.join(repo, to);
-    if (fs.existsSync(dest) && !force) { console.log(`exists  ${to}`); continue; }
+    if (fs.existsSync(dest) && !force) { console.log(`kept    ${to}`); continue; }
     fs.copyFileSync(path.join(TEMPLATES, from), dest);
     console.log(`created ${to}`);
   }
-  for (const d of ['work/ideas', 'work/tickets', 'work/reviews']) {
+  for (const d of ['speck/ideas', 'speck/tickets', 'speck/reviews']) {
     const keep = path.join(repo, d, '.gitkeep');
     if (!fs.readdirSync(path.join(repo, d)).length) fs.writeFileSync(keep, '');
   }
-  const pointer = '\n## speck\n\nThis repo uses speck. Read `work/product.md` first: it describes what the product is today. Work only from a `ready` ticket in `work/tickets/` (use `/speck:build <id>`). Never merge, and never approve your own work.\n';
+  const skills = installTooling(repo);
+  console.log(`updated .speck/ (the speck command)`);
+  console.log(`updated ${SKILL_DIRS.join(' and ')} (${skills.length} skills)`);
+  const pointer = '\n## speck\n\nThis repo uses speck. Read `speck/product.md` first: it describes what the product is today. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never merge, and never approve your own work.\n';
   const agents = path.join(repo, 'AGENTS.md');
   const agentsText = fs.existsSync(agents) ? fs.readFileSync(agents, 'utf8') : '# Agent guide\n';
   if (!agentsText.includes('This repo uses speck')) { fs.writeFileSync(agents, agentsText + pointer); console.log('updated AGENTS.md'); }
@@ -379,15 +468,25 @@ function cmdInit(args) {
     fs.writeFileSync(claude, claudeText + (claudeText ? '\n' : '') + '@AGENTS.md\n');
     console.log('updated CLAUDE.md (imports AGENTS.md)');
   }
-  const base = loadConfig(repo).base_branch;
+  const cfg = loadConfig(repo);
+  let ready = true;
+  if (!args.includes('--skip-checks')) {
+    console.log('\nChecking what speck needs:');
+    ready = printChecks(doctorChecks(repo, cfg));
+  }
   console.log(`
+${ready ? 'speck is installed.' : 'speck is installed, but fix the ✗ items above before building a ticket. Run `node .speck/scripts/speck.mjs doctor` to check again.'}
+
 Next:
-  1. Set commands.test in work/config.yml.
-  2. Protect ${base} on GitHub (Settings → Branches → Add rule):
+  1. Commit the new files so everyone working on this repo gets speck.
+  2. Set commands.test in speck/config.yml (the command that runs your tests).
+  3. Protect ${cfg.base_branch} on GitHub (Settings → Branches → Add rule):
      - Require a pull request before merging, with 1 approval
      - Require status checks to pass: speck/review
      - Do not give agents merge rights
-  3. Capture an idea with /speck:capture, then /speck:ticket.`);
+  4. Open your coding agent in this folder and type /speck-capture to save your first idea.
+
+To update speck later, run the same install command again.`);
 }
 
 function cmdNew(args) {
@@ -445,7 +544,7 @@ function cmdSet(args) {
 function cmdStatus() {
   const repo = findRepoRoot();
   const tickets = listTickets(repo);
-  if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck:ticket.');
+  if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   const order = ['blocked', 'reviewing', 'building', 'ready', 'draft', 'done'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).sort((a, b) => (a.fm.priority ?? 9) - (b.fm.priority ?? 9));
@@ -459,9 +558,9 @@ function cmdStatus() {
       }
     }
   }
-  const ideas = path.join(repo, 'work', 'ideas');
+  const ideas = path.join(repo, 'speck', 'ideas');
   const n = fs.existsSync(ideas) ? fs.readdirSync(ideas).filter(f => f.endsWith('.md')).length : 0;
-  console.log(`\nIDEAS (${n}) in work/ideas/`);
+  console.log(`\nIDEAS (${n}) in speck/ideas/`);
 }
 
 function cmdDiffstat() {
@@ -469,7 +568,7 @@ function cmdDiffstat() {
   const cfg = loadConfig(repo);
   const { total, counted } = changedLines(repo, cfg.base_branch);
   for (const r of counted) console.log(`  ${String(r.lines).padStart(5)}  ${r.file}`);
-  console.log(`${total} changed lines (limit ${cfg.limits.max_changed_lines}, excluding tests, lockfiles and work/)`);
+  console.log(`${total} changed lines (limit ${cfg.limits.max_changed_lines}, excluding tests, lockfiles and speck/)`);
   if (total > cfg.limits.max_changed_lines) throw new SpeckError('Over the size limit: stop and propose a split.', 2);
 }
 
@@ -527,7 +626,7 @@ function cmdPrompt(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, args[0]);
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
-  const diff = git(['diff', `${base}..HEAD`, '--', '.', ':(exclude)work/reviews'], repo);
+  const diff = git(['diff', `${base}..HEAD`, '--', '.', ':(exclude)speck/reviews'], repo);
   const testsArg = args.find(a => a.startsWith('--tests='));
   const tests = testsArg ? fs.readFileSync(testsArg.slice(8), 'utf8') : '(no test output provided)';
   console.log(reviewerPrompt(repo, t, cfg, 1, { diff, tests }));
@@ -536,7 +635,8 @@ function cmdPrompt(args) {
 
 const HELP = `speck: small tickets, independent review, you merge.
 
-  speck init                          set up work/ in this repo
+  speck init                          set up speck in this repo, or update it (re-run any time)
+  speck doctor                        check that git, GitHub, Claude Code and Codex are ready
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first)
@@ -549,7 +649,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck pack <id>                     print the review pack (PR body)
 `;
 
-const COMMANDS = { init: cmdInit, new: cmdNew, lint: cmdLint, set: cmdSet, status: cmdStatus, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, status: cmdStatus, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, next: cmdNext, pack: cmdPack };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {

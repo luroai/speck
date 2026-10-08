@@ -66,11 +66,12 @@ test('CLI: init, new, lint, set ready, status', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   const run = (...a) => spawnSync('node', [CLI, ...a], { cwd: dir, encoding: 'utf8' });
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
-  assert.equal(run('init').status, 0);
-  assert.ok(fs.existsSync(path.join(dir, 'work', 'config.yml')));
+  assert.equal(run('init', '--skip-checks').status, 0);
+  assert.ok(fs.existsSync(path.join(dir, 'speck', 'config.yml')));
   assert.match(fs.readFileSync(path.join(dir, 'CLAUDE.md'), 'utf8'), /@AGENTS\.md/);
+  assert.match(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8'), /\/speck-build/);
   const file = run('new', 'Export', 'bookings', 'as', 'CSV').stdout.trim();
-  assert.equal(file, path.join('work', 'tickets', '0001-export-bookings-as-csv.md'));
+  assert.equal(file, path.join('speck', 'tickets', '0001-export-bookings-as-csv.md'));
   assert.equal(run('lint', '1').status, 1, 'empty template must fail lint');
   assert.notEqual(run('set', '1', 'status', 'ready').status, 0, 'cannot be ready while lint fails');
   const p = path.join(dir, file);
@@ -78,5 +79,44 @@ test('CLI: init, new, lint, set ready, status', () => {
   assert.equal(run('lint', '1').status, 0);
   assert.equal(run('set', '1', 'status', 'ready').status, 0);
   assert.match(run('status').stdout, /READY \(1\)/);
-  assert.equal(run('new', 'Second').stdout.trim(), path.join('work', 'tickets', '0002-second.md'));
+  assert.equal(run('new', 'Second').stdout.trim(), path.join('speck', 'tickets', '0002-second.md'));
+});
+
+test('init installs the CLI and skills into the project, and re-running refreshes them', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+  const init = () => spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(init().status, 0);
+  const names = fs.readdirSync(path.join(ROOT, 'skills')).filter(n => n.startsWith('speck-'));
+  assert.equal(names.length, 6);
+  for (const base of ['.claude/skills', '.agents/skills']) {
+    for (const n of names) {
+      const md = fs.readFileSync(path.join(dir, base, n, 'SKILL.md'), 'utf8');
+      assert.match(md, new RegExp(`^---\\nname: ${n}\\n`), `${base}/${n} name matches its folder`);
+      assert.doesNotMatch(md, /CLAUDE_PLUGIN_ROOT|\/speck:/);
+      assert.ok(!fs.lstatSync(path.join(dir, base, n)).isSymbolicLink(), 'copied, not linked');
+    }
+  }
+  // The installed CLI works on its own, as the skills call it.
+  const local = (...a) => spawnSync('node', ['.speck/scripts/speck.mjs', ...a], { cwd: dir, encoding: 'utf8' });
+  assert.equal(local('new', 'First').status, 0);
+  assert.equal(local('status').status, 0);
+  assert.notEqual(local('init').status, 0, 'the installed copy points people at the real installer');
+  // Re-running replaces stale skill files but keeps the user's config.
+  fs.writeFileSync(path.join(dir, '.claude/skills/speck-build/SKILL.md'), 'stale');
+  fs.appendFileSync(path.join(dir, 'speck/config.yml'), '# mine\n');
+  assert.equal(init().status, 0);
+  assert.match(fs.readFileSync(path.join(dir, '.claude/skills/speck-build/SKILL.md'), 'utf8'), /name: speck-build/);
+  assert.match(fs.readFileSync(path.join(dir, 'speck/config.yml'), 'utf8'), /# mine/);
+});
+
+test('doctor gives a plain-English fix for anything missing', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-bin-'));
+  fs.symlinkSync(process.execPath, path.join(bin, 'node')); // a PATH with Node and nothing else
+  const r = spawnSync(process.execPath, [CLI, 'doctor'], { cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: bin } });
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /✓ Node\.js 20 or newer/);
+  assert.match(r.stdout, /✗ git\n\s+Fix: Install git/);
+  assert.match(r.stdout, /✗ Codex CLI/);
 });

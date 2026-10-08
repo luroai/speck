@@ -5,18 +5,18 @@ Last updated: 8 October 2026
 ## State
 
 speck v0.1 is built and works end to end on Luro's machine, but nothing is committed yet. Read these first:
-- `work/product.md`: what exists today;
+- `speck/product.md`: what exists today;
 - `docs/brief.md`: the design and its rules;
 - `AGENTS.md`: rules for working in this repo.
 
 | Part | Where | Status |
 |---|---|---|
-| Plugin manifest and marketplace | `.claude-plugin/` | `claude plugin validate .` passes |
-| Skills | `skills/{capture,ticket,build,review,ship,status}/SKILL.md` | Load as `/speck:*` (checked with `claude --plugin-dir`) |
-| CLI | `scripts/speck.mjs` | 8 unit tests pass (`npm test`) |
+| Install | `npx github:luroai/speck init` (`speck init` and `speck doctor` in `scripts/speck.mjs`) | Tested from an `npm pack` tarball into a fresh repo. Not yet tested from GitHub, because the changes aren't pushed |
+| Skills | `skills/speck-{capture,ticket,build,review,ship,status}/SKILL.md` | Installed into `.claude/skills/` and `.agents/skills/`, and found by cptr. The Claude Code plugin was removed |
+| CLI | `scripts/speck.mjs` | 11 unit tests pass (`npm test`) |
 | Codex review loop | `speck review` | Verified end to end (see below) |
-| `claude-subagent` reviewer | `skills/review/SKILL.md`, `speck prompt`, `speck record` | **Not yet tested** (ticket 0003) |
-| `/speck:ship` with `gh` | `skills/ship/SKILL.md` | **Not yet tested** against a real GitHub remote |
+| `claude-subagent` reviewer | `skills/speck-review/SKILL.md`, `speck prompt`, `speck record` | **Not yet tested** (ticket 0003) |
+| `/speck-ship` with `gh` | `skills/speck-ship/SKILL.md` | **Not yet tested** against a real GitHub remote |
 
 ## What was verified
 
@@ -38,10 +38,10 @@ The verdict JSON schema is accepted by Codex's structured output in both the fir
 ## Next steps
 
 1. Luro reviews the repo and makes the initial commit.
-2. Dogfood: Luro marks a ticket `ready` (`node scripts/speck.mjs set 0001 status ready`), then runs `/speck:build 0001` from a Claude Code session started with `claude --plugin-dir .`. From here on, every change goes through speck.
-3. Create the GitHub repo (with Luro's approval only), add branch protection, and test `/speck:ship` for real.
-4. The README worked example: replace the install placeholder `<this repo>` with the real URL, and add actuals from real tickets.
-5. Later, as a separate project: the board (`work/ideas/2026-10-08-speck-board.md`).
+2. Dogfood: Luro marks a ticket `ready` (`node scripts/speck.mjs set 0001 status ready`), then runs `/speck-build 0001` from a Claude Code session in this repo. The skills are linked in by `node scripts/speck.mjs init`. From here on, every change goes through speck.
+3. Create the GitHub repo (with Luro's approval only), add branch protection, and test `/speck-ship` for real.
+4. Once pushed, test `npx github:luroai/speck init` in a fresh repo (the repo must be public, or the user needs access). Add a worked example with actuals from real tickets to the README.
+5. Later, as a separate project: the board (`speck/ideas/2026-10-08-speck-board.md`).
 
 ## Rules
 

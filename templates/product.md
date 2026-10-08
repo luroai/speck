@@ -2,8 +2,8 @@
 
 <!--
 The living spec. A new agent session or a person should understand the product in about five minutes.
-Describe the present, not history; history lives in work/tickets/.
-Updated only by /speck:ship, inside the PR, and checked by the reviewer.
+Describe the present, not history; history lives in speck/tickets/.
+Updated only by /speck-ship, inside the PR, and checked by the reviewer.
 -->
 
 Last updated by ticket: 0000
