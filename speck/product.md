@@ -29,7 +29,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - **Safeguards:**
   - An `approve` with failing criteria or open blocking findings is overridden to `changes_requested`.
   - The loop blocks after the maximum number of rounds, after the same dispute is rejected twice in a row, or on escalation.
-  - Builder and reviewer can't be the same agent without an explicit override.
+  - Builder and reviewer can't be the same agent without an explicit override (`allow_same_model_review: true`). `speck lint` treats a `claude-subagent` reviewer as the same model as a `claude` builder.
 - **Review pack** (`speck pack <id>`): acceptance criteria table, risk flags, review history and actuals.
 
 ## Key decisions and constraints
@@ -49,7 +49,6 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - Claude Code is the only tested builder.
 - An idea's `ticketed (…)` status is only ever added to. Cancelling or finishing one of its tickets doesn't change it.
 - A `claude-subagent` reviewer is read-only only because its prompt says so. Unlike Codex, it runs with no sandbox.
-- `speck lint` only catches a builder and reviewer with the same name, so `builder: claude` with `reviewer: claude-subagent` passes even when `allow_same_model_review` is `false`. The review skill is what checks the setting.
 - If the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer works only from the diff and test output it's given. speck warns about this but can't fix it. Later rounds resume the same Codex session, so a reviewer that has seen the sandbox fail may keep saying so without trying again. Start a fresh session after fixing the host.
 - No PR flow yet. Shipping pushes the base branch directly, so it fails if the branch is protected by a "require a pull request" rule. A PR mode for teams is parked in `speck/ideas/2026-10-08-pr-ship-mode.md`.
 - In Codex and other agents, nothing technically stops the agent from starting `/speck-ship`. Only the skill and agent instructions say not to. Claude Code enforces it with `disable-model-invocation`.

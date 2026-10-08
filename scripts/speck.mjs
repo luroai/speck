@@ -238,6 +238,9 @@ function slugify(s) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'ticket';
 }
 
+// A claude-subagent reviewer is Claude, so it counts as the same model as a claude builder.
+const modelFamily = agent => agent === 'claude-subagent' ? 'claude' : agent;
+
 export function lintTicket(ticket, cfg) {
   const errors = [], warnings = [];
   const { fm, sections } = ticket;
@@ -248,8 +251,10 @@ export function lintTicket(ticket, cfg) {
   if (fm.size === 'L') errors.push('size L can never be ready: split it into sibling tickets.');
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
-  if (fm.builder && fm.builder === fm.reviewer && !cfg.allow_same_model_review)
-    errors.push(`builder and reviewer are both "${fm.builder}". Use a different reviewer or set allow_same_model_review: true.`);
+  if (fm.builder && modelFamily(fm.builder) === modelFamily(fm.reviewer) && !cfg.allow_same_model_review)
+    errors.push(fm.builder === fm.reviewer
+      ? `builder and reviewer are both "${fm.builder}". Use a different reviewer or set allow_same_model_review: true.`
+      : `builder "${fm.builder}" and reviewer "${fm.reviewer}" are the same model. Use a different reviewer or set allow_same_model_review: true.`);
   const top = splitHeader(ticket.raw.slice(fmEnd(ticket.raw)));
   const [wantHeading, , wantStatus] = ticketHeader(fm).split('\n');
   if (!top.heading) warnings.push(`No \`${wantHeading}\` heading at the top. Run \`speck init\` again to add it.`);

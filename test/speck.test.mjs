@@ -43,6 +43,16 @@ test('size L, too many criteria and same-model review are errors', () => {
   assert.equal(r.errors.length, 3);
 });
 
+test('a claude-subagent reviewer counts as the same model as a claude builder', () => {
+  const same = lintTicket(ticket(fm({ reviewer: 'claude-subagent' }), good), cfg).errors;
+  assert.equal(same.length, 1, 'refused without allow_same_model_review');
+  assert.match(same[0], /builder "claude" and reviewer "claude-subagent" are the same model/);
+  assert.match(same[0], /allow_same_model_review: true/);
+  assert.deepEqual(lintTicket(ticket(fm({ reviewer: 'claude-subagent' }), good), { ...cfg, allow_same_model_review: true }).errors, []);
+  assert.deepEqual(lintTicket(ticket(fm({ reviewer: 'codex' }), good), cfg).errors, [], 'a different model is fine');
+  assert.equal(lintTicket(ticket(fm({ builder: 'codex', reviewer: 'codex' }), good), cfg).errors.length, 1, 'identical names still refused');
+});
+
 test('titles joining outcomes get a warning', () => {
   assert.equal(lintTicket(ticket(fm({ title: 'Add search and add filters' }), good), cfg).warnings.filter(w => /two outcomes/.test(w)).length, 1);
   assert.equal(lintTicket(ticket(fm(), good), cfg).warnings.filter(w => /two outcomes/.test(w)).length, 0);
