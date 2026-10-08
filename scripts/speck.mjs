@@ -1007,13 +1007,22 @@ function cmdReview(args) {
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
 
+// A subagent often wraps its JSON verdict in a ```json fence, even when asked not to, so a reply saved as it was sent is accepted.
+function parseReply(text, file) {
+  const body = text.trim().replace(/^```[a-z]*\r?\n([\s\S]*?)\r?\n```$/i, '$1');
+  let v = null;
+  try { v = JSON.parse(body); } catch { /* not JSON: refused below */ }
+  if (v && typeof v === 'object' && !Array.isArray(v)) return v;
+  throw new SpeckError(`${file} isn't a JSON verdict. Save the reviewer's JSON reply (a \`\`\`json fence around it is fine), then run this again.`);
+}
+
 function cmdRecord(args) {
   const [id, file] = args;
   if (!id || !file) throw new SpeckError('Usage: speck record <id> <verdict.json> [--reviewer=name]');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const reviewer = (args.find(a => a.startsWith('--reviewer=')) || '--reviewer=claude-subagent').slice(11);
-  const verdict = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const verdict = parseReply(fs.readFileSync(file, 'utf8'), file);
   // A resumed reviewer keeps the settings it started with, saved by `speck reviewer-settings`.
   const saved = path.join(cacheDir(repo, id), 'reviewer-settings.json');
   const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));

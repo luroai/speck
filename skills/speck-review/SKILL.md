@@ -34,8 +34,8 @@ This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effor
 
 1. Run `speck prompt <id> --tests=/tmp/speck-<id>-tests.txt > /tmp/speck-<id>-prompt.md`.
 2. Run `speck reviewer-settings <id>`. It prints `model: …` and `effort: …`, and saves them so that later rounds are recorded with the settings this reviewer was started with. Run it only when you start a new reviewer.
-3. Spawn a fresh subagent with the Agent tool. If the model isn't `default`, pass it as written as the Agent tool's `model`. If the effort isn't `default`, pass it as `effort`. If a value is `default`, leave that parameter out so the subagent runs on your own model in a fresh session. Its prompt should say: "Read /tmp/speck-<id>-prompt.md and follow it. You are read-only: do not edit files. Return only the JSON verdict." Keep the agent's id.
-4. Save its JSON reply to `/tmp/speck-<id>-verdict.json`, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
+3. Spawn a fresh subagent with the Agent tool. If the model isn't `default`, pass it as written as the Agent tool's `model`. If the effort isn't `default`, pass it as `effort`. If a value is `default`, leave that parameter out so the subagent runs on your own model in a fresh session. Its prompt should say: "Read /tmp/speck-<id>-prompt.md and follow it. You are read-only: do not edit files. Return only the JSON verdict." Keep the agent's id: you'll send round 2 to it with SendMessage.
+4. Save its reply to `/tmp/speck-<id>-verdict.json` as it came back. A subagent often puts the JSON inside a ```` ```json ```` fence, and `speck record` accepts that, so don't edit the reply. Then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
 
 ## Your turn (when NEXT is `fix`)
 
@@ -64,7 +64,7 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 
 This resumes the same Codex session. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
 
-**claude-subagent:** use SendMessage to the same reviewer agent, which keeps the model and effort it started with. Include your response file, the output of `speck diff <id>` (the changes since its last review, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Record it with `speck record`.
+**claude-subagent:** use SendMessage to the agent id you kept in round 1. That resumes the same reviewer, with its earlier findings and the model and effort it started with. Don't spawn a new one. Include your response file, the output of `speck diff <id>` (the changes since its last review, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Save its reply as in round 1, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
 
 ## Ending the loop
 

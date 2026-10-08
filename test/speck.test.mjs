@@ -1233,3 +1233,86 @@ test('0010 AC4: with no overlap the skill carries on and says so in one line', (
   assert.match(skillText('speck-ticket'), /If nothing overlaps, say so in one line and carry on/);
   assert.match(skillText('speck-ticket'), /Present the tickets\*\* to the user: the overlap check's one-line result/, 'ticket reports it when presenting');
 });
+
+// ---------- 0003: the claude-subagent reviewer end to end ----------
+// The live run with a real Claude subagent is described in ticket 0003's Notes. These tests replay that
+// loop through the CLI, with each reply saved the way the subagent actually sent it: inside a ```json fence.
+
+const fenced = v => '```json\n' + JSON.stringify(v, null, 2) + '\n```\n';
+const subagentVerdict = (verdict, state) => ({
+  round: 1, verdict, escalation_question: '', summary: `Round: ${verdict}`, product_md: { accurate: true, note: '' },
+  criteria: [{ id: 1, status: verdict === 'approve' ? 'pass' : 'fail', evidence: 'a.txt' }],
+  findings: [{ id: 'F1', severity: 'blocking', file: 'a.txt', issue: 'Deliberate bug.', suggested_fix: 'Fix it.', state }],
+});
+const subagentRepo = () => reviewRepo({ config: 'allow_same_model_review: true\n', ticketFields: 'reviewer: claude-subagent' });
+
+test('0003 AC1: a claude-subagent round 1 records changes_requested from the reply as sent', () => {
+  const r = subagentRepo();
+  assert.equal(r.run('lint', '1').status, 0);
+  assert.match(r.run('review', '1').stderr, /speck record 1/, 'speck review points a claude-subagent ticket at speck record');
+  const tests = path.join(r.dir, 'tests.txt');
+  fs.writeFileSync(tests, '# pass 1\n');
+  const prompt = r.run('prompt', '1', `--tests=${tests}`).stdout;
+  assert.match(prompt, /Export bookings/);
+  assert.match(prompt, /# pass 1/);
+  assert.match(prompt, /Return ONLY a JSON object/);
+  assert.match(r.run('reviewer-settings', '1').stdout, /model: default\neffort: default/);
+  const v = path.join(r.dir, 'v.json');
+  fs.writeFileSync(v, fenced(subagentVerdict('changes_requested', 'open')));
+  const rec = r.run('record', '1', v, '--reviewer=claude-subagent');
+  assert.equal(rec.status, 10, rec.stderr);
+  assert.match(rec.stdout, /NEXT: fix/);
+  // The same reply with Windows line endings, or with no fence at all, records just the same.
+  for (const reply of [fenced(subagentVerdict('changes_requested', 'open')).replace(/\n/g, '\r\n'), JSON.stringify(subagentVerdict('changes_requested', 'open'))]) {
+    const other = subagentRepo(), w = path.join(other.dir, 'w.json');
+    fs.writeFileSync(w, reply);
+    assert.equal(other.run('record', '1', w, '--reviewer=claude-subagent').status, 10);
+  }
+  const r1 = r.roundFile(1);
+  assert.equal(r1.meta.reviewer, 'claude-subagent');
+  assert.equal(r1.verdict.verdict, 'changes_requested');
+  assert.equal(r1.meta.reviewed_sha, r.git('rev-parse', 'HEAD').stdout.trim());
+  assert.equal(r.run('next', '1').stdout.trim(), 'fix');
+});
+
+test('0003 AC2: round 2 sees only the fix, and an approval from the same reviewer ends the loop at ship', () => {
+  const r = subagentRepo();
+  r.run('reviewer-settings', '1');
+  const v = path.join(r.dir, 'v.json');
+  fs.writeFileSync(v, fenced(subagentVerdict('changes_requested', 'open')));
+  assert.equal(r.run('record', '1', v, '--reviewer=claude-subagent').status, 10);
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fixed\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'review round 1 fixes');
+  const diff = r.run('diff', '1').stdout;
+  assert.match(diff, /^\+fixed$/m, 'speck diff shows the fix');
+  assert.doesNotMatch(diff, /Review rounds/, 'and leaves out the recorded round');
+  fs.writeFileSync(v, fenced(subagentVerdict('approve', 'resolved')));
+  const rec = r.run('record', '1', v, '--reviewer=claude-subagent');
+  assert.equal(rec.status, 0, rec.stderr);
+  assert.equal(r.run('next', '1').stdout.trim(), 'ship');
+  assert.equal(r.roundFile(2).meta.reviewed_sha, r.git('rev-parse', 'HEAD').stdout.trim());
+  assert.match(r.run('pack', '1').stdout, /Round 2 \(claude-subagent, model default, effort default\): \*\*approve\*\*/);
+});
+
+test('0003 AC1: a reply that is not a verdict gets a plain error, and no round is recorded', () => {
+  const r = subagentRepo();
+  const v = path.join(r.dir, 'v.json');
+  for (const reply of ['Looks good to me!', '```json\n{"verdict": \n```\n', '', 'null', '[1]']) {
+    fs.writeFileSync(v, reply);
+    const rec = r.run('record', '1', v, '--reviewer=claude-subagent');
+    assert.equal(rec.status, 1, JSON.stringify(reply));
+    assert.match(rec.stderr, /isn't a JSON verdict/, JSON.stringify(reply));
+    assert.doesNotMatch(rec.stderr, /at JSON\.parse|SyntaxError/, 'no stack trace');
+    assert.equal(r.roundFile(1), undefined);
+  }
+});
+
+test('0003 AC3: the review skill says how to save a fenced subagent reply and how to resume it for round 2', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'skills', 'speck-review', 'SKILL.md'), 'utf8');
+  const sub = md.split('**`claude-subagent`**')[1].split('## Your turn')[0];
+  assert.match(sub, /```json[` ]*fence, and `speck record` accepts that/, 'round 1: a fenced reply can be saved as it is');
+  assert.match(sub, /SendMessage/, 'round 1: says the agent id is for SendMessage in round 2');
+  const r2 = md.split('**claude-subagent:**')[1].split('## Ending the loop')[0];
+  assert.match(r2, /agent id/);
+  assert.match(r2, /speck record <id> \/tmp\/speck-<id>-verdict\.json --reviewer=claude-subagent/);
+});
