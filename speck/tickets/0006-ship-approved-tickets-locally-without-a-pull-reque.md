@@ -1,7 +1,7 @@
 ---
 id: "0006"
 title: "Ship approved tickets locally without a pull request"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | done
+status: reviewing            # draft | ready | building | reviewing | blocked | done
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
