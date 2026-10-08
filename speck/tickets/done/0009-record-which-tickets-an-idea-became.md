@@ -1,7 +1,7 @@
 ---
 id: "0009"
 title: "Record which tickets an idea became"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | done
+status: done            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
 started: "2026-10-08T20:58:38.894Z"
+finished: "2026-10-08T21:05:11.865Z"
 
 ---
 # 0009 · Record which tickets an idea became
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Idea notes have a `Status:` line, but nothing updates it when tickets are made from the idea. You can't tell from `speck/ideas/` which ideas are still waiting and which have already been ticketed, so the same idea can be ticketed twice.
