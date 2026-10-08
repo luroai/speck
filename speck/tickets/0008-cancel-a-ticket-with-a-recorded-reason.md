@@ -525,3 +525,86 @@ Round 1 (codex, model gpt-6.1-sol, effort default): approved. Four criteria pass
 ```
 
 </details>
+
+<details><summary>Round 8 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 8,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6c7269f7bac0f0059c72a91ae8320c14189dee41",
+    "saved_at": "2026-10-08T20:28:49.832Z"
+  },
+  "verdict": {
+    "round": 8,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdCancel, placeTicket and syncHeader implement the recorded reason, cancellation date, status, filing and header. AC1 CLI tests exercise cancellation from all six eligible statuses. Independent in-memory probes passed for 14 awkward reasons and replacement of existing reasons."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdCancel checks missing or blank reasons, done and cancelled before writing. The two AC2 CLI tests assert refusal and unchanged ticket contents and locations; both pass in the supplied test output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet rejects status cancelled with instructions to use speck cancel. writeField preserves cancellation metadata, and placeTicket restores live statuses to the live folder. AC3 CLI tests cover refusal, reopening and repeated cancellation, including awkward reasons."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdStatus orders CANCELLED after DONE and prints each reason below its ticket. nextId uses listTickets across both folders. Both AC4 CLI tests exercise these behaviours and pass in the supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The cancellation-reason round-trip failures are resolved. Independent probes passed for YAML-looking strings, escaped quotes followed by hashes, backslashes and multiline reasons.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The body-text deletion is resolved. Independent probes confirmed that setField preserves a cancel_reason line in the ticket body.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The final-frontmatter-line replacement failure is resolved. Both hash-containing reasons were replaced without duplicate fields or stale text.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The empty-field comment corruption is resolved. Independent probes verified the separator before comments, including an empty reviewer_effort field, and successful parsing after replacement.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec covers cancellation, recorded reasons and dates, closed-ticket filing, reopening, status display and number allocation consistently with the implementation."
+    },
+    "escalation_question": "",
+    "summary": "Cancellation meets all four criteria, and F1–F4 are fixed. No new blocking issue was found. I ran git diff main...HEAD -- . ':!speck', git status --short, git diff --stat, file reads and history searches, the filtered parseYaml/setField test command, and independent Node probes: 192 quoted template-line round trips, 32 unquoted replacements, every ticket field sequentially, 14 awkward reasons, and comment/body preservation checks. The full CLI suite creates temporary repositories, so it was assessed from its source and the supplied 69-pass output rather than rerun under the read-only constraint."
+  }
+}
+```
+
+</details>
