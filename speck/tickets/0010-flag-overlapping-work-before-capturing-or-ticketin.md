@@ -1,7 +1,7 @@
 ---
 id: "0010"
 title: "Flag overlapping work before capturing or ticketing"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T20:37:08.677Z"
 ---
 # 0010 · Flag overlapping work before capturing or ticketing
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `/speck-capture` writes a new idea note without looking at what already exists. `/speck-ticket` only checks the one-line titles in `speck status`. The same work can be captured or ticketed twice, or picked up again after it has shipped or been turned down.
@@ -52,9 +52,15 @@ Before capturing an idea or creating a ticket, the agent checks existing ideas, 
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+- Round 1 (codex, model gpt-6.1-sol, effort default): changes requested. F1: the tests check only the skill wording, and no behavioural smoke test exercises either skill.
+- Round 2: approved. F1 resolved by a recorded seven-scenario smoke test in Notes. It also caught a missing one-line no-overlap reply, which is fixed in both skills.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Attempts: 1. Review rounds: 2 (of 3). Reviewer tokens: 316,749. Elapsed: about 7 min of build and review, plus the smoke-test runs.
+- Changed lines: about 45 (limit 1000), excluding tests and speck/.
+- Built before 0009 (still a draft) even though `after:` lists it, because the user asked for the build. The check reads each idea's existing `Status:` line, so it will report `ticketed (…)` once 0009 lands, with no change needed here.
+- Follow-up ideas: none from the review. The check relies on the agent following the instructions, and there's no CLI support, by design (out of scope).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -121,6 +127,74 @@ Before capturing an idea or creating a ticket, the agent checks existing ideas, 
     },
     "escalation_question": "",
     "summary": "The instructions cover the requested overlap checks and stay within scope. However, the tests only look for words in those instructions. Behavioural smoke tests are needed before approval to show that both skills actually identify existing work and wait for your decision before writing."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9977253b9054c724c5663dcd9b5d1a37dca84af3",
+    "thread_id": "01a11d3e-443c-7c21-8ba8-6685cfce7e31",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 206704,
+      "cached_input_tokens": 154880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1579,
+      "reasoning_output_tokens": 99
+    },
+    "saved_at": "2026-10-08T20:44:18.868Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-capture/SKILL.md requires reading every idea, live and archived ticket, full problem/outcome/criteria and product.md before writing. Ticket 0010 Notes records behavioural scenarios C1–C3 exercising differently worded idea, cancelled-ticket and product overlaps without writes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 2 invokes the shared check before speck new. Recorded scenarios T1 and T2 identify done and ready tickets without creating files; T3 proceeds to speck new only after finding no overlap."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The shared check requires each match's path/id, status, cancellation reason or covering product line, the three choices and no writes pending an answer. Recorded overlap scenarios C1–C3 and T1–T2 exercise reporting and waiting; wording test '0010 AC3' preserves the instruction contract."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Capture step 5 and ticket step 6 now explicitly include the check result in the final reply. Recorded C4 reruns and T3 demonstrate the one-line no-overlap result and normal creation. '0010 AC4' checks both skills' reporting instructions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/speck.test.mjs",
+        "issue": "The original wording tests lacked behavioural smoke-test coverage.",
+        "suggested_fix": "Completed: ticket Notes now records seven behavioural scenarios, including overlap waiting and no-overlap continuation for both skills.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The capability description matches the instructions and accurately states that overlap detection relies on agent judgement."
+    },
+    "escalation_question": "",
+    "summary": "Both skills now check existing work before creating anything and ask for your decision when they find overlap. Recorded smoke tests cover matching and normal creation, and caught a missing reply message that has been fixed. Approved; reliability still depends on the agent following the instructions."
   }
 }
 ```
