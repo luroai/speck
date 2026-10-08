@@ -306,11 +306,14 @@ export function stripRounds(text) {
 export function ticketRounds(text) {
   const { section } = splitRounds(text);
   const rounds = [], errors = [];
-  let n = 0;
-  for (const m of section.matchAll(/```json\n([\s\S]*?)\n```/g)) {
-    n++;
-    try { rounds.push(JSON.parse(m[1])); } catch (e) { errors.push(`Review round ${n} in "${ROUNDS_HEADING}" isn't valid JSON (${e.message}).`); }
-  }
+  // Split on <details> first, so a damaged block can't borrow the next block's code fence and hide a round.
+  const blocks = section.split(/(?=<details>)/).slice(1);
+  blocks.forEach((block, i) => {
+    const m = block.match(/^<details><summary>[^\n]*<\/summary>\n\n```json\n([\s\S]*)\n```\n\n<\/details>\s*$/);
+    if (!m) return errors.push(`Review round ${i + 1} in "${ROUNDS_HEADING}" isn't a complete block (a <details> summary, a \`json\` code block and </details>).`);
+    try { rounds.push(JSON.parse(m[1])); } catch (e) { errors.push(`Review round ${i + 1} in "${ROUNDS_HEADING}" isn't valid JSON (${e.message}).`); }
+  });
+  if (!blocks.length && /```/.test(section)) errors.push(`"${ROUNDS_HEADING}" has a code block outside a <details> round block.`);
   const numbers = rounds.map(r => r?.meta?.round);
   if (!errors.length && numbers.some((r, i) => r !== i + 1))
     errors.push(`Review rounds are numbered ${numbers.join(', ')}, but must be 1, 2, 3… in order.`);
@@ -354,21 +357,25 @@ function onlyRoundsChanged(repo, rel, text) {
   return head.status === 0 && stripRounds(head.stdout) === stripRounds(text);
 }
 
-// What the reviewer sees: every change since `since`, with the ticket's Review rounds section left out.
-function reviewDiff(repo, since, ticketFile) {
-  const rel = posix(path.relative(repo, ticketFile));
-  const rest = git(['diff', `${since}..HEAD`, '--', '.', `:(exclude,literal)${rel}`], repo);
-  const version = rev => { const r = sh('git', ['show', `${rev}:${rel}`], { cwd: repo }); return r.status === 0 ? stripRounds(r.stdout) : ''; };
-  const a = version(since), b = version('HEAD');
-  if (a === b) return rest;
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-diff-'));
-  try {
-    fs.writeFileSync(path.join(tmp, 'a'), a);
-    fs.writeFileSync(path.join(tmp, 'b'), b);
-    const out = sh('git', ['diff', '--no-index', '--no-color', 'a', 'b'], { cwd: tmp }).stdout;
-    const header = { 'diff --git a/a b/b': `diff --git a/${rel} b/${rel}`, '--- a/a': `--- a/${rel}`, '+++ b/b': `+++ b/${rel}` };
-    return rest + out.split('\n').map(l => header[l] ?? l).join('\n');
-  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+// What the reviewer sees: every change since `since`, with every ticket's Review rounds section left out.
+function reviewDiff(repo, since) {
+  const tickets = git(['diff', '--no-renames', '--name-only', `${since}..HEAD`, '--', 'speck/tickets'], repo)
+    .split('\n').filter(f => /\.md$/.test(f));
+  let out = git(['diff', '--no-renames', `${since}..HEAD`, '--', '.', ...tickets.map(f => `:(exclude,literal)${f}`)], repo);
+  for (const rel of tickets) {
+    const version = rev => { const r = sh('git', ['show', `${rev}:${rel}`], { cwd: repo }); return r.status === 0 ? stripRounds(r.stdout) : ''; };
+    const a = version(since), b = version('HEAD');
+    if (a === b) continue;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-diff-'));
+    try {
+      fs.writeFileSync(path.join(tmp, 'a'), a);
+      fs.writeFileSync(path.join(tmp, 'b'), b);
+      const d = sh('git', ['diff', '--no-index', '--no-color', 'a', 'b'], { cwd: tmp }).stdout;
+      const header = { 'diff --git a/a b/b': `diff --git a/${rel} b/${rel}`, '--- a/a': `--- a/${rel}`, '+++ b/b': `+++ b/${rel}` };
+      out += d.split('\n').map(l => header[l] ?? l).join('\n');
+    } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+  }
+  return out;
 }
 
 export function validateVerdict(v) {
@@ -444,7 +451,7 @@ function runCodexReview(repo, id, opts) {
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
   const sinceSha = round === 1 ? base : prior[prior.length - 1].meta.reviewed_sha;
-  const diff = reviewDiff(repo, sinceSha, ticket.file);
+  const diff = reviewDiff(repo, sinceSha);
   const tests = opts.tests ? fs.readFileSync(opts.tests, 'utf8') : '(no test output provided)';
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha });
@@ -998,7 +1005,7 @@ function cmdPrompt(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, args[0]);
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
-  const diff = reviewDiff(repo, base, t.file);
+  const diff = reviewDiff(repo, base);
   const testsArg = args.find(a => a.startsWith('--tests='));
   const tests = testsArg ? fs.readFileSync(testsArg.slice(8), 'utf8') : '(no test output provided)';
   console.log(reviewerPrompt(repo, t, cfg, 1, { diff, tests }));
@@ -1010,10 +1017,9 @@ function cmdDiff(args) {
   if (!args[0]) throw new SpeckError('Usage: speck diff <id>');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
-  const t = findTicket(repo, args[0]);
   const all = rounds(repo, args[0]);
   const since = all.length ? all[all.length - 1].meta.reviewed_sha : git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
-  process.stdout.write(reviewDiff(repo, since, t.file));
+  process.stdout.write(reviewDiff(repo, since));
 }
 
 const HELP = `speck: small tickets, independent review, you merge.

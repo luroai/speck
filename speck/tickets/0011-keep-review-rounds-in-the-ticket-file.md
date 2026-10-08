@@ -52,3 +52,95 @@ Each ticket file holds its own review rounds, so a ticket is the complete record
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b7e4925972d0e8bc30f0f63bfb5839f97b8dbb29",
+    "thread_id": "01a11d02-5937-78c3-b3fe-ae902cdc650c",
+    "seconds": 51,
+    "usage": {
+      "input_tokens": 110437,
+      "cached_input_tokens": 54912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1227,
+      "reasoning_output_tokens": 279
+    },
+    "saved_at": "2026-10-08T19:35:06.867Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveRound and appendRounds store collapsed details blocks in the ticket. Supplied passing AC1 tests exercise Codex and record, sequential numbering and the ticket being the only tracked change."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "rounds reads ticketRounds. The supplied passing AC2 integration test exercises next, pack, ship and preservation of rounds when the ticket moves into done/."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The AC3 test adds ordinary ticket notes but asserts that only a.txt counts towards size. reviewDiff also strips rounds only from the current ticket, leaving other tickets' review sections in the reviewer diff."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "ticketRounds parses only matches of its complete ```json fence pattern. A details block with a missing closing code fence is silently ignored, so lint reports no JSON error. The supplied AC4 test covers malformed JSON inside complete fences only."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "migrateReviews supports live and done tickets, preserves unplaceable histories and continues migration. Supplied passing AC5 tests cover migration, repeat init, missing or unreadable tickets, invalid JSON and existing rounds."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Malformed review blocks can disappear from the parsed history without a lint error. ticketRounds ignores blocks whose JSON fence is incomplete or unrecognised, potentially making next report that no review exists.",
+        "suggested_fix": "Validate every details block in the owned section and report missing or malformed JSON fences. Add regression coverage for a missing closing fence and verify lint and history-reading commands refuse it.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/speck.test.mjs",
+        "issue": "The AC3 size test asserts behaviour contrary to the ticket: ordinary ticket edits are excluded alongside review history. It therefore does not establish that other ticket changes still count.",
+        "suggested_fix": "Count ticket changes after stripping only the review section, and test that ordinary ticket edits increase the count while round-only edits do not.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "reviewDiff filters review history only from the requested ticket. Changes to other tickets, including this branch's migrated histories for 0004–0007, are sent to the reviewer with their full review sections.",
+        "suggested_fix": "Strip review sections from every ticket represented in the diff while preserving their other changes. Add coverage with a second ticket containing both an ordinary edit and appended rounds.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The claims that review sections are excluded from reviewer diffs and that lint detects invalid round blocks are broader than the implementation."
+    },
+    "escalation_question": "",
+    "summary": "The normal storage and migration flows have meaningful passing tests. Before merge, malformed review blocks must be detected, and diff and size filtering must preserve ordinary ticket changes while excluding review history. Independent repository access failed because the sandbox could not start; this assessment uses the supplied code and test output."
+  }
+}
+```
+
+</details>

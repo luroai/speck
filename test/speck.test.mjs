@@ -826,7 +826,40 @@ test('AC3: the reviewer diff and size count leave out the Review rounds section,
   const p = r.run('prompt', '1');
   assert.match(p.stdout, /A builder note/);
   assert.doesNotMatch(p.stdout.split('Return ONLY')[0], /## Review rounds|"thread_id"/, 'the round-1 prompt leaves the section out too');
+  // The size count leaves out all of speck/ by design (tickets, product.md), so neither the rounds nor the notes count.
   assert.match(r.run('diffstat').stdout, /^1 changed lines/m, 'only a.txt counts towards the size limit');
+});
+
+test('AC3 (F3): other tickets in the diff lose their Review rounds sections too, but keep their other edits', () => {
+  const r = reviewRepo();
+  const other = path.join(r.dir, 'speck', 'tickets', 'done', '0002-older.md');
+  const otherText = `---\nid: "0002"\ntitle: "Older"\nstatus: done\n\n---\n## Problem\nX.\n`;
+  fs.writeFileSync(other, otherText);
+  r.git('add', '-A'); r.git('commit', '-qm', 'older ticket');
+  r.git('branch', '-f', 'main');
+  const block = `<details><summary>Round 1 · codex · approve</summary>\n\n\`\`\`json\n{"meta":{"round":1,"thread_id":"OLD"}}\n\`\`\`\n\n</details>`;
+  fs.writeFileSync(other, otherText.replace('X.', 'X, edited.') + `\n## Review rounds\n\n${block}\n`);
+  r.git('add', '-A'); r.git('commit', '-qm', 'migrated');
+  const p = r.run('prompt', '1').stdout.split('Return ONLY')[0];
+  assert.match(p, /\+X, edited\./, 'the ordinary edit is shown');
+  assert.doesNotMatch(p, /## Review rounds|"thread_id"|OLD/, "the other ticket's rounds are left out");
+});
+
+test('AC4 (F1): a damaged round block is an error, not silently dropped', () => {
+  const block = n => `<details><summary>Round ${n} · codex · approve</summary>\n\n\`\`\`json\n{"meta":{"round":${n}}}\n\`\`\`\n\n</details>`;
+  const t = blocks => `---\n${fm()}\n---\n${good}\n## Review rounds\n\n${blocks.join('\n\n')}\n`;
+  const noClose = block(2).replace('}\n```', '}\n');
+  assert.equal(ticketRounds(t([block(1), noClose, block(3)])).errors.length, 1, 'missing closing fence');
+  assert.equal(ticketRounds(t([block(1), block(2).replace('```json', '```')])).errors.length, 1, 'not a json fence');
+  assert.equal(ticketRounds(t([block(1), block(2).replace('</details>', '')])).errors.length, 1, 'missing </details>');
+  assert.equal(ticketRounds(t(['```json\n{}\n```'])).errors.length, 1, 'a code block outside any round');
+  assert.equal(lintTicket(parseTicket(t([block(1), noClose])), cfg).errors.filter(e => /round/i.test(e)).length, 1, 'lint reports it');
+  // Commands that read the history refuse rather than guess.
+  const rr = reviewRepo();
+  fs.writeFileSync(rr.ticketFile, fs.readFileSync(rr.ticketFile, 'utf8') + `\n## Review rounds\n\n${block(1)}\n\n${noClose}\n`);
+  const next = rr.run('next', '1');
+  assert.notEqual(next.status, 0);
+  assert.match(next.stderr, /Review round 2 .*isn't a complete block/);
 });
 
 test('AC4: lint reports an error for a round that is not valid JSON, or rounds out of order', () => {
