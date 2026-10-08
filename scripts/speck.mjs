@@ -141,6 +141,41 @@ export function reviewerSettings(fm = {}, cfg = {}) {
 
 function settingsMeta(s) { return { reviewer_model: s.model || 'default', reviewer_effort: s.effort || 'default' }; }
 
+// ---------- the readable header under the frontmatter ----------
+
+const STATUS_EMOJI = { draft: '📝', ready: '📋', building: '🔨', reviewing: '🔍', blocked: '⛔', approved: '👍', done: '✅' };
+
+// The heading and status line that open every ticket, rendered from the frontmatter (the source of truth).
+export function ticketHeader(fm) {
+  return `# ${fm.id} · ${fm.title}\n\n**Status:** ${[STATUS_EMOJI[fm.status], fm.status].filter(Boolean).join(' ')}`;
+}
+
+// Splits a ticket body into the header speck wrote (heading and status line, if present) and everything after it.
+// Works line by line and only ever skips empty lines inside the header, so the rest of the body is kept byte for byte.
+function splitHeader(body) {
+  const lines = body.split('\n');
+  const isHeading = l => /^# \d{4} · /.test(l);
+  const isStatus = l => /^\*\*Status:\*\*/.test(l);
+  const skipEmpty = i => { while (i < lines.length && lines[i] === '') i++; return i; };
+  let i = skipEmpty(0), heading, status;
+  if (isHeading(lines[i] ?? '')) { heading = lines[i]; i = skipEmpty(i + 1); }
+  if (isStatus(lines[i] ?? '')) { status = lines[i]; i += 1; }
+  else if (heading) i = lines.indexOf(heading) + 1; // no status line: keep any empty lines after the heading as body
+  if (!heading && !status) return { rest: body };
+  return { heading, status, rest: lines.slice(i).join('\n') };
+}
+
+function fmEnd(text) { return text.indexOf('\n---', 4) + 5; }
+
+// Rewrites the header to match the frontmatter, adding it if it's missing. Nothing else changes.
+export function syncHeader(text) {
+  const end = fmEnd(text);
+  const { rest } = splitHeader(text.slice(end));
+  // One empty line separates the header from the body; the body's own empty lines and indentation are kept as they are.
+  const sep = rest === '' || rest.startsWith('\n') ? '' : '\n';
+  return `${text.slice(0, end)}${ticketHeader(parseTicket(text).fm)}\n${sep}${rest}`;
+}
+
 function ticketsDir(repo) { return path.join(repo, 'speck', 'tickets'); }
 // Finished tickets sit in a done/ folder, so speck/tickets/ holds only work in progress.
 function doneTicketsDir(repo) { return path.join(ticketsDir(repo), 'done'); }
@@ -209,6 +244,12 @@ export function lintTicket(ticket, cfg) {
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
   if (fm.builder && fm.builder === fm.reviewer && !cfg.allow_same_model_review)
     errors.push(`builder and reviewer are both "${fm.builder}". Use a different reviewer or set allow_same_model_review: true.`);
+  const top = splitHeader(ticket.raw.slice(fmEnd(ticket.raw)));
+  const [wantHeading, , wantStatus] = ticketHeader(fm).split('\n');
+  if (!top.heading) warnings.push(`No \`${wantHeading}\` heading at the top. Run \`speck init\` again to add it.`);
+  else if (top.heading !== wantHeading) warnings.push(`The heading "${top.heading}" doesn't match the frontmatter title. Run \`speck init\` again to fix it.`);
+  if (!top.status) warnings.push(`No \`${wantStatus}\` status line under the heading. Run \`speck init\` again to add it.`);
+  else if (top.status !== wantStatus) warnings.push(`The status line "${top.status}" doesn't match the frontmatter status. Run \`speck init\` again to fix it.`);
   for (const [where, v] of [['ticket', fm.reviewer_effort], ['config', cfg.reviewer_effort]])
     if (!blank(v) && !EFFORTS.includes(String(v).trim())) errors.push(`reviewer_effort "${v}" in ${where} must be blank or one of ${EFFORTS.join(', ')}.`);
   for (const s of ['problem', 'outcome']) if (!contentLines(sections[s]).length) errors.push(`"${s}" section is empty.`);
@@ -505,6 +546,18 @@ function cmdInit(args) {
   }).filter(t => t.fm.status === 'done');
   for (const t of strays) placeTicket(repo, t, 'done');
   if (strays.length) console.log(`moved   ${strays.length} done ticket${strays.length === 1 ? '' : 's'} into speck/tickets/done/`);
+  // Give every ticket the readable header, or bring it up to date. Unreadable files were reported above (or are in done/) and are left alone.
+  let synced = 0;
+  for (const dir of ticketDirs(repo).filter(d => fs.existsSync(d))) {
+    for (const f of fs.readdirSync(dir).filter(n => /^\d{4}-.*\.md$/.test(n))) {
+      const file = path.join(dir, f);
+      const text = fs.readFileSync(file, 'utf8');
+      let next;
+      try { next = syncHeader(text); } catch { continue; }
+      if (next !== text) { fs.writeFileSync(file, next); synced++; }
+    }
+  }
+  if (synced) console.log(`updated ${synced} ticket header${synced === 1 ? '' : 's'} (title and status)`);
   for (const d of dirs) {
     const keep = path.join(repo, d, '.gitkeep');
     if (!fs.readdirSync(path.join(repo, d)).length) fs.writeFileSync(keep, '');
@@ -558,7 +611,7 @@ function cmdNew(args) {
   text = setField(text, 'reviewer_model', settings.model || '');
   text = setField(text, 'reviewer_effort', settings.effort || '');
   text = setField(text, 'source', JSON.stringify(source));
-  text = setField(text, 'created', new Date().toISOString().slice(0, 10));
+  text = syncHeader(setField(text, 'created', new Date().toISOString().slice(0, 10)));
   const file = path.join(ticketsDir(repo), `${id}-${slugify(title)}.md`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, text);
@@ -600,7 +653,7 @@ function writeField(t, key, value) {
   let text = setField(t.raw, key, /^\d+$/.test(value) && key !== 'id' ? Number(value) : value);
   if (key === 'status' && value === 'building' && !t.fm.started) text = setField(text, 'started', new Date().toISOString());
   if (key === 'status' && value === 'done') text = setField(text, 'finished', new Date().toISOString());
-  fs.writeFileSync(t.file, text);
+  fs.writeFileSync(t.file, syncHeader(text));
 }
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------

@@ -12,6 +12,9 @@ after: []                # ticket ids that must be done first
 created: 2026-10-08
 
 ---
+# 0003 · Verify the Claude subagent reviewer end to end
+
+**Status:** 📝 draft
 
 ## Problem
 The `claude-subagent` reviewer path (speck prompt, Agent tool, SendMessage, speck record) is written but has never been run, so it may not work.

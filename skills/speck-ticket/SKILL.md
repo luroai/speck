@@ -14,7 +14,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 1. **Gather context.** Read the source idea (`speck/ideas/…`) or the conversation, then `speck/product.md` and `speck status` to avoid duplicating existing tickets.
 2. **Find the outcomes.** List the distinct outcomes a user or PM could observe. Each outcome is a candidate ticket. If there's more than one, plan a split and order the tickets with `after:`.
 3. **Create each ticket** with `speck new "<title>" --source=speck/ideas/<file>.md`. This assigns the next number and fills in builder and reviewer from config. Then edit the file:
-   - **Title:** one outcome, imperative, with no "and" joining two outcomes.
+   - **Title:** one outcome, imperative, with no "and" joining two outcomes. Change it with `speck set <id> title "…"` so the ticket's header heading stays in sync. Don't edit the `# <id> · <title>` heading or `**Status:**` line under the frontmatter by hand: speck rewrites them.
    - **Problem:** who is affected and why it matters, in 1–3 sentences.
    - **Outcome:** what is true when it ships.
    - **Acceptance criteria:** 1–5 numbered, testable statements about behaviour, not implementation. Each one will become a test before any code is written, so make it checkable: inputs, expected result and edge cases.

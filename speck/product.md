@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: 0007
+Last updated by ticket: 0004
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents. It's aimed at PMs and founders who write good tickets but don't review code line by line. Ideas become small numbered tickets. One agent builds each ticket, and a second, independent agent reviews it in turns until it approves. The human holds two gates: approving a ticket for development, and shipping it with `/speck-ship`. Everything happens in the local repo, with no PR.
@@ -16,6 +16,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
   - `status` (approved tickets first, as waiting for you), `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `reviewer-settings`, `next` and `pack` (the review pack).
   - `ship`: the user's gate. It refuses, changing nothing, unless the ticket is `approved`, the review loop says ship, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/` (even if later reverted), and `commands.test` is set and passes. If the base branch has a remote, it fetches it first: new remote commits are brought in before merging, and if local and remote have both moved on it refuses and says to `git pull`. Then it sets the ticket to `done` on its branch, merges into the base branch with a merge commit, deletes the local branch and pushes the base branch if it has a remote. Once that push succeeds, it also deletes the ticket branch on the remote if it's there. If the push fails, the remote copy is kept. A merge conflict is aborted and leaves everything as it was.
 - **Finished tickets are filed away:** `speck/tickets/` holds only work in progress, and finished ones sit in `speck/tickets/done/` under the same name. A ticket set to `done` (by `speck set` or by `speck ship`) moves there, and any other status moves it back. Every command that takes a ticket id finds it in either folder, so ids, review transcripts and `after:` links stay valid. `speck status` still lists the finished ones. Moving a ticket never overwrites: if a file of the same name is already in the other folder, speck stops and asks you to keep one.
+- **Readable ticket header:** every ticket opens with `# <id> · <title>` and a `**Status:** <emoji> <status>` line, so Markdown previews that hide frontmatter still show what it is and where it stands. The emoji are 📝 draft, 📋 ready, 🔨 building, 🔍 reviewing, ⛔ blocked, 👍 approved and ✅ done. `speck new` writes the header, any `speck set` or `speck ship` rewrites it from the frontmatter, `speck lint` warns when it's missing or out of date, and re-running `speck init` adds or fixes it in every ticket, including `done/`.
 - **Build ends at `approved`:** once the reviewer approves, `/speck-build` fills in the ticket's review and delivery logs, sets `approved` and stops. No PR is opened, and the GitHub CLI isn't needed.
 - **`/speck-ship <id>`** runs `speck ship`. In Claude Code the skill has `disable-model-invocation: true`, so only the user can start it.
 - **Reviewer model and effort:** `reviewer_model` and `reviewer_effort` in `speck/config.yml` set them for the whole repo. `speck new` copies them into each ticket, where they can be overridden, and a blank ticket value falls back to config. If both are blank, speck passes nothing and the reviewer uses its own default. Codex gets them in every round, and the review skill starts a `claude-subagent` reviewer with them. `speck lint` accepts only a blank effort or `low`, `medium`, `high`, `xhigh` or `max`. Model names aren't checked. Every saved round and the review pack show the model and effort used, or "default".
@@ -27,6 +28,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - **Review pack** (`speck pack <id>`): acceptance criteria table, risk flags, review history and actuals.
 
 ## Key decisions and constraints
+- **The frontmatter is the ticket's source of truth.** The header under it is a rendered copy, and hand edits to the header are overwritten. Change a title with `speck set <id> title …`.
 - **The repo is the source of truth.** All state is Markdown or JSON in `speck/`, so that any UI (such as the future board) is only a view over these files.
 - **Small tickets only:** one agent, one sitting, one branch. `L` tickets must be split.
 - **Builder and reviewer are different agents by default** (Claude builds, Codex reviews).

@@ -14,6 +14,9 @@ started: "2026-10-08T15:41:27.570Z"
 finished: "2026-10-08T15:46:12.280Z"
 
 ---
+# 0005 · Set the reviewer model per ticket or globally
+
+**Status:** ✅ done
 
 ## Problem
 speck is used by other people with their own builders and reviewers, but nobody can choose which model or effort level does the review. The reviewer silently runs on whatever its CLI or session defaults to, and the review pack doesn't say which model approved the change.

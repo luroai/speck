@@ -16,6 +16,9 @@ started: "2026-10-08T16:20:30.921Z"
 finished: "2026-10-08T16:36:38.460Z"
 
 ---
+# 0007 · Move finished tickets into a done folder
+
+**Status:** ✅ done
 
 ## Problem
 Finished tickets stay in `speck/tickets/` next to live work. Anyone browsing the repo or the code editor's file tree has to open each file to see what's still to do.

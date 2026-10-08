@@ -12,6 +12,9 @@ after: []                # ticket ids that must be done first
 created: 2026-10-08
 
 ---
+# 0001 · Warn when the reviewer cannot run commands
+
+**Status:** 📝 draft
 
 ## Problem
 On machines where the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer silently reviews only the diff it's given and can't inspect the repo. Users don't know their review is weaker.
