@@ -1,7 +1,7 @@
 ---
 id: "0011"
 title: Keep review rounds in the ticket file                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | done
+status: reviewing            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T19:29:41.797Z"
 ---
 # 0011 · Keep review rounds in the ticket file
 
-**Status:** ⛔ blocked
+**Status:** 🔍 reviewing
 
 ## Problem
 Review records live in `speck/reviews/<id>/`, apart from the ticket they belong to. When a ticket is filed into `speck/tickets/done/`, its reviews stay behind, so a ticket's history is split across two places, and the planned board would have to put them back together for every card. speck is meant to be lightweight: one ticket should be one file.
@@ -41,12 +41,12 @@ Each ticket file holds its own review rounds, so a ticket is the complete record
 - Risk is high because `speck init` moves existing review history in users' repos.
 - speck owns the `## Review rounds` section. The skills must tell builders never to edit it by hand, as they do for round files today.
 - Working files that aren't history (the Codex thread id, `reviewer-settings.json`, `.round-N.out.json`) must no longer be written to `speck/reviews/`. A gitignored `speck/.cache/` is fine. Each round record already stores `thread_id`.
+- 8 October 2026, after the build was blocked at the 3-round review limit: the user allowed a fourth round. `limits.max_review_rounds` is raised to 4 on this branch for that round and set back to 3 before approval.
 - This repo's own reviews (0004–0007) are migrated on the ticket branch, so the repo matches the new layout as soon as it ships.
 - Update `docs/brief.md`, `speck/product.md` and the skills wherever they mention `speck/reviews/`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
-Can I run one more review round? The loop stopped at the 3-round limit. Rounds 2 and 3 accepted the F2 dispute and resolved F3. The only open findings were F1 (a stray block before the first round wasn't reported) and F4 (an unrelated board idea edit I committed by mistake). Both are now fixed and committed, and all 56 tests pass. Options: (a) yes: I raise `limits.max_review_rounds` to 4 on this branch, run round 4, and set it back to 3 before approval; (b) no: it stays blocked. I recommend (a).
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
