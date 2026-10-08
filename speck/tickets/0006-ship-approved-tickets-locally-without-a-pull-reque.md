@@ -1,7 +1,7 @@
 ---
 id: "0006"
 title: "Ship approved tickets locally without a pull request"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -48,6 +48,10 @@ speck's main users are solo builders who want to build things bigger than a sing
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+- Round 1 (codex, model default, effort default): changes requested. F1: a code change reverted after approval slipped past the check. F2: an empty test command let ship skip the tests. F3: the build close-out wasn't covered by the AC1 test.
+- Round 2: approved. F1–F3 resolved.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost, PR link. -->
+- Attempts: 1. Review rounds: 2 (of 3). Reviewer tokens: 200,603. Elapsed: about 15 min. Changed lines: about 260 (limit 300), excluding tests.
+- Follow-up ideas: the PR ship mode (speck/ideas/2026-10-08-pr-ship-mode.md); `init` doesn't rewrite an AGENTS.md pointer written by an older version, so existing installs keep the old "Never merge" wording; Codex skills have no equivalent of `disable-model-invocation`.
