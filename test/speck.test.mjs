@@ -1534,6 +1534,7 @@ if (mode === 'fenced') console.log('Here is my review.\\n\\n\`\`\`json\\n' + v +
 if (mode === 'envelope') console.log(JSON.stringify({ type: 'result', is_error: false, session_id: 'S1', result: 'Done.\\n\`\`\`json\\n' + v + '\\n\`\`\`', usage: { input_tokens: 100, output_tokens: 20 } }));
 if (mode === 'garbage') { console.log('I looked at it and it seems fine.'); console.error('note one\\nnote two'); }
 if (mode === 'fail') { for (let i = 1; i <= 7; i++) console.error('err line ' + i); process.exit(3); }
+if (mode === 'badshape') { console.log(JSON.stringify({ verdict: 'approve' })); for (let i = 1; i <= 7; i++) console.error('warn line ' + i); }
 `, { mode: 0o755 });
   const r = reviewRepo({ ticketFields: `reviewer: fake\n${ticketFields}` });
   const cfgFile = path.join(r.dir, 'speck', 'config.yml');
@@ -1619,10 +1620,13 @@ test('0012 AC3: anything else, or a non-zero exit, is a plain error quoting the 
   assert.doesNotMatch(res.stderr, /err line 2/);
   assert.equal(fail.roundFile(1), undefined);
 
+  // Valid JSON that isn't a valid verdict also quotes stderr (round 1 F1).
   const shape = commandRepo();
-  res = shape.runEnv({ FAKE_VERDICT: JSON.stringify({ verdict: 'approve' }) }, 'review', '1');
+  res = shape.runEnv({ FAKE_MODE: 'badshape' }, 'review', '1');
   assert.equal(res.status, 1);
   assert.match(res.stderr, /Reviewer output is missing or invalid/);
+  assert.match(res.stderr, /warn line 3\nwarn line 4\nwarn line 5\nwarn line 6\nwarn line 7/);
+  assert.doesNotMatch(res.stderr, /warn line 2/);
   assert.equal(shape.roundFile(1), undefined);
 
   const missing = commandRepo({ command: 'speck-no-such-reviewer-cmd -p' });
@@ -1636,18 +1640,22 @@ test('0012 AC3: anything else, or a non-zero exit, is a plain error quoting the 
 test('0012 AC4: later rounds resend the round-1 prompt, then every earlier verdict and builder response in order, then the new diff', () => {
   const r = commandRepo();
   const resp = n => { const f = path.join(r.dir, '..', `resp-${n}-${path.basename(r.dir)}.md`); fs.writeFileSync(f, `- F1: fixed in round ${n} response.\n`); return f; };
-  assert.equal(r.run('review', '1').status, 10);
+  const testsFile = n => { const f = path.join(r.dir, '..', `tests-${n}-${path.basename(r.dir)}.txt`); fs.writeFileSync(f, `# tests output ${n}\n`); return f; };
+  assert.equal(r.run('review', '1', `--tests=${testsFile(1)}`).status, 10);
   fs.writeFileSync(path.join(r.dir, 'a.txt'), 'second\n');
   r.git('add', '-A'); r.git('commit', '-qm', 'fix 1');
   const v2 = { ...changesVerdict, summary: 'Round two summary.' };
-  assert.equal(r.runEnv({ FAKE_VERDICT: JSON.stringify(v2) }, 'review', '1', `--response=${resp(2)}`).status, 10);
+  assert.equal(r.runEnv({ FAKE_VERDICT: JSON.stringify(v2) }, 'review', '1', `--response=${resp(2)}`, `--tests=${testsFile(2)}`).status, 10);
   const sha2 = r.git('rev-parse', 'HEAD').stdout.trim();
   fs.writeFileSync(path.join(r.dir, 'a.txt'), 'third-line-marker\n');
   r.git('add', '-A'); r.git('commit', '-qm', 'fix 2');
-  assert.equal(r.run('review', '1', `--response=${resp(3)}`).status, 11, 'third round hits the default limit and blocks');
+  assert.equal(r.run('review', '1', `--response=${resp(3)}`, `--tests=${testsFile(3)}`).status, 11, 'third round hits the default limit and blocks');
   const third = r.calls()[2].stdin;
-  const round1Now = r.run('prompt', '1').stdout.trimEnd();
-  assert.ok(third.startsWith(round1Now), 'starts with the full round-1 prompt');
+  const round1Now = r.calls()[0].stdin.trimEnd();
+  assert.ok(third.startsWith(round1Now), 'starts with the round-1 prompt exactly as it was sent (round 1 F2)');
+  assert.match(round1Now, /# tests output 1/);
+  assert.doesNotMatch(round1Now, /third-line-marker/);
+  assert.match(third.slice(round1Now.length), /# tests output 3/, 'the current test output comes after the history');
   const order = ['Round one summary.', 'fixed in round 2 response', 'Round two summary.', 'fixed in round 3 response', `${sha2.slice(0, 8)}..HEAD`, '+third-line-marker'];
   const at = order.map(s => third.indexOf(s, round1Now.length));
   assert.ok(at.every(i => i > 0), JSON.stringify(at));
@@ -1667,4 +1675,21 @@ test('0012 AC5: codex without a command and reviewers with no command behave as 
   assert.equal(res.status, 1);
   assert.match(res.stderr, /speck record 1/);
   assert.equal(other.calls().length, 0);
+});
+
+test('0012 AC4 (F2): without the saved round-1 prompt, later rounds rebuild it from the round-1 commit', () => {
+  const r = commandRepo();
+  assert.equal(r.run('review', '1').status, 10);
+  const sent = r.calls()[0].stdin.trimEnd();
+  fs.rmSync(path.join(r.dir, 'speck', '.cache'), { recursive: true, force: true });
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'later-change-marker\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'fix 1');
+  assert.equal(r.run('review', '1').status, 10);
+  const second = r.calls()[1].stdin;
+  const history = second.indexOf('# Earlier review rounds');
+  const rebuilt = second.slice(0, history);
+  assert.ok(history > 0);
+  assert.equal(rebuilt.replace('(the round-1 test output was not kept)', '(no test output provided)').trimEnd(), sent, 'same as round 1, except the test output');
+  assert.doesNotMatch(rebuilt, /later-change-marker/);
+  assert.match(second.slice(history), /later-change-marker/);
 });

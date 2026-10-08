@@ -52,3 +52,87 @@ Any reviewer agent with a non-interactive mode can be set up in `speck/config.ym
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e6e54ea6c46e1a98c289bc19f230230b7e0492d9",
+    "thread_id": "01a11d72-4aae-79e1-ab7a-59a63e9084ed",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 190627,
+      "cached_input_tokens": 137856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1202,
+      "reasoning_output_tokens": 102
+    },
+    "saved_at": "2026-10-08T21:37:09.659Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: runCommandReview runs from the repo root, supplies fullPrompt on stdin and saves reviewer and reviewed_sha. The 0012 AC1 integration test exercises these behaviours."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "commandArgs resolves placeholders and removes blank placeholders with their preceding flags. The 0012 AC2 integration test covers populated, blank, partially populated and joined arguments, plus values containing shell syntax."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The 0012 AC3 tests exercise the three output formats and process failures. However, structurally invalid JSON verdicts reach saveRound and validateVerdict, whose error omits stderr entirely. The invalid-shape test does not check this required diagnostic."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "historyPrompt rebuilds the initial prompt using the current ticket, product, cumulative diff and current test output. It does not resend the prompt actually supplied in round 1. The AC4 test compares against speck prompt after subsequent changes, so it misses this discrepancy."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdReview retains the built-in Codex path when no command is configured and directs unsupported reviewers to speck record. The 0012 AC5 integration test exercises both paths."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Invalid verdict JSON loses the required stderr diagnostic. For example, stdout containing {\"verdict\":\"approve\"} reaches validateVerdict and fails without quoting the reviewer's last five stderr lines.",
+        "suggested_fix": "Validate command output before recording and wrap validation failures with the same stderr tail used for other command failures. Add an integration test supplying an invalid verdict and seven stderr lines, checking that only the last five appear and no round is recorded.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Later rounds replace the original round-1 context with current context. Earlier findings are therefore presented alongside a different initial diff and test output, which can make their original evidence disappear or appear inconsistent.",
+        "suggested_fix": "Preserve or reconstruct the actual round-1 prompt, including its original test output, and resend it before the ordered history and current incremental diff. Capture round-1 stdin in the integration test and compare subsequent prompt prefixes against that captured text after changing code and test output.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The capability and sandbox limitations are documented, but the claims that later rounds resend the round-1 prompt and invalid output errors include stderr are not fully true yet."
+    },
+    "escalation_question": "",
+    "summary": "Configured reviewer commands work for the main paths, with meaningful integration tests. Two fixes are needed before merge: preserve the original review context in later rounds and include reviewer error output when a JSON verdict is invalid. I inspected the tests and ran read-only checks; I did not rerun the suite because it writes temporary repositories."
+  }
+}
+```
+
+</details>

@@ -370,15 +370,15 @@ function onlyRoundsChanged(repo, rel, text) {
   return head.status === 0 && stripRounds(head.stdout) === stripRounds(text);
 }
 
-// What the reviewer sees: every change since `since`, with every ticket's Review rounds section, and any old speck/reviews/ files, left out.
-function reviewDiff(repo, since) {
-  const tickets = git(['diff', '--no-renames', '--name-only', `${since}..HEAD`, '--', 'speck/tickets'], repo)
+// What the reviewer sees: every change from `since` to `to`, with every ticket's Review rounds section, and any old speck/reviews/ files, left out.
+function reviewDiff(repo, since, to = 'HEAD') {
+  const tickets = git(['diff', '--no-renames', '--name-only', `${since}..${to}`, '--', 'speck/tickets'], repo)
     .split('\n').filter(f => /\.md$/.test(f));
   // Old speck/reviews/ files are history too: removing them when init moves them into tickets isn't a code change.
-  let out = git(['diff', '--no-renames', `${since}..HEAD`, '--', '.', ':(exclude)speck/reviews', ...tickets.map(f => `:(exclude,literal)${f}`)], repo);
+  let out = git(['diff', '--no-renames', `${since}..${to}`, '--', '.', ':(exclude)speck/reviews', ...tickets.map(f => `:(exclude,literal)${f}`)], repo);
   for (const rel of tickets) {
     const version = rev => { const r = sh('git', ['show', `${rev}:${rel}`], { cwd: repo }); return r.status === 0 ? stripRounds(r.stdout) : ''; };
-    const a = version(since), b = version('HEAD');
+    const a = version(since), b = version(to);
     if (a === b) continue;
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-diff-'));
     try {
@@ -439,7 +439,7 @@ function saveRound(repo, id, verdict, meta) {
 function reviewerPrompt(repo, ticket, cfg, round, extra) {
   const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8');
   const productFile = path.join(repo, 'speck', 'product.md');
-  const product = fs.existsSync(productFile) ? fs.readFileSync(productFile, 'utf8') : '(no speck/product.md)';
+  const product = extra.product ?? (fs.existsSync(productFile) ? fs.readFileSync(productFile, 'utf8') : '(no speck/product.md)');
   if (round === 1) {
     const values = { TICKET: stripRounds(ticket.raw), PRODUCT: product, BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
     return tpl.replace(/\{\{(TICKET|PRODUCT|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
@@ -511,8 +511,8 @@ function runCodexReview(repo, id, opts) {
 // ---------- review pack ----------
 
 // The round-1 prompt with the verdict schema: what `speck prompt` prints, and what a command reviewer gets on stdin.
-function fullPrompt(repo, ticket, cfg, diff, tests) {
-  return `${reviewerPrompt(repo, ticket, cfg, 1, { diff, tests })}\n\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`;
+function fullPrompt(repo, ticket, cfg, diff, tests, product) {
+  return `${reviewerPrompt(repo, ticket, cfg, 1, { diff, tests, product })}\n\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`;
 }
 
 // Splits a command into words the way a shell would for plain quoting, so it can run without a shell.
@@ -560,10 +560,22 @@ export function verdictFromOutput(stdout) {
   return { verdict: v, envelope: null };
 }
 
+// The round-1 prompt exactly as it was sent, saved with the review's working files. If that copy is gone (another
+// machine, or a cleared cache), it is rebuilt from the commit round 1 reviewed. Only its test output can't be recovered.
+const roundOneFile = (repo, id) => path.join(cacheDir(repo, id), 'round-1.prompt.md');
+function roundOnePrompt(repo, s, id) {
+  const saved = roundOneFile(repo, id);
+  if (fs.existsSync(saved)) return fs.readFileSync(saved, 'utf8');
+  const sha = s.prior[0].meta.reviewed_sha;
+  const at = rel => { const r = sh('git', ['show', `${sha}:${rel}`], { cwd: repo }); return r.status === 0 ? r.stdout : null; };
+  const ticket = { raw: at(posix(path.relative(repo, s.ticket.file))) ?? s.ticket.raw };
+  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, s.base, sha), '(the round-1 test output was not kept)', at('speck/product.md') ?? '(no speck/product.md)');
+}
+
 // Later rounds give a reviewer with no memory everything it has seen: the round-1 prompt, every earlier verdict and
 // builder response in order, then this round's response, diff and tests.
-function historyPrompt(repo, s) {
-  const parts = [fullPrompt(repo, s.ticket, s.cfg, reviewDiff(repo, s.base), s.tests), '# Earlier review rounds'];
+function historyPrompt(repo, s, id) {
+  const parts = [roundOnePrompt(repo, s, id), '# Earlier review rounds'];
   for (const r of s.prior) {
     if (r.meta.builder_response) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
     parts.push(`## Your round ${r.meta.round} verdict`, '```json', JSON.stringify(r.verdict, null, 2), '```');
@@ -575,7 +587,8 @@ function historyPrompt(repo, s) {
 // Runs a reviewer set up in config as a command. speck reads the verdict from its output, so the builder never handles it.
 function runCommandReview(repo, id, name, command, opts) {
   const s = reviewSetup(repo, id, opts);
-  const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests) : historyPrompt(repo, s);
+  const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests) : historyPrompt(repo, s, id);
+  if (s.round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
   const [cmd, ...args] = commandArgs(command, { model: settings.model, effort: settings.effort });
   if (!cmd) throw new SpeckError(`The command for reviewer "${name}" in speck/config.yml is empty.`);
@@ -587,6 +600,8 @@ function runCommandReview(repo, id, name, command, opts) {
   if (r.status !== 0) throw new SpeckError(`The ${name} reviewer (${cmd}) exited ${r.status}, so no round was recorded.${stderrNote}`);
   const { verdict, envelope } = verdictFromOutput(r.stdout);
   if (!verdict) throw new SpeckError(`The ${name} reviewer (${cmd}) didn't return a verdict: its output wasn't JSON, a \`\`\`json block or a JSON envelope with a "result". No round was recorded.${stderrNote}`);
+  // An invalid verdict is the reviewer's failure too, so it gets the same stderr lines.
+  try { validateVerdict(structuredClone(verdict)); } catch (e) { if (e instanceof SpeckError) throw new SpeckError(`${e.message} The ${name} reviewer's verdict wasn't recorded.${stderrNote}`); throw e; }
   const usage = envelope?.usage && typeof envelope.usage === 'object' ? { usage: envelope.usage } : {};
   return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), reviewed_sha: s.head,
     ...(s.response ? { builder_response: s.response } : {}), seconds: Math.round((Date.now() - started) / 1000), ...usage });
