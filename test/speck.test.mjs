@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { parseYaml, parseTicket, setField, lintTicket, nextAction, validateVerdict } from '../scripts/speck.mjs';
+import { parseYaml, parseTicket, setField, lintTicket, nextAction, validateVerdict, reviewerSettings } from '../scripts/speck.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -119,4 +119,137 @@ test('doctor gives a plain-English fix for anything missing', () => {
   assert.match(r.stdout, /✓ Node\.js 20 or newer/);
   assert.match(r.stdout, /✗ git\n\s+Fix: Install git/);
   assert.match(r.stdout, /✗ Codex CLI/);
+});
+
+// ---------- 0005: reviewer model and effort ----------
+
+const EFFORT_VALUES = ['low', 'medium', 'high', 'xhigh', 'max'];
+const gitIn = (dir, ...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: dir, encoding: 'utf8' });
+
+// A repo with speck installed, one ready ticket on a branch, and a fake `codex` on PATH that logs its arguments.
+function reviewRepo({ config = '', ticketFields = '' } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-bin-'));
+  const log = path.join(bin, 'calls.log');
+  fs.writeFileSync(path.join(bin, 'codex'), `#!${process.execPath}
+const fs = require('fs');
+const args = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
+const out = args[args.indexOf('-o') + 1];
+fs.writeFileSync(out, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 'fine', escalation_question: '' }));
+console.log(JSON.stringify({ type: 'thread.started', thread_id: 'T1' }));
+`, { mode: 0o755 });
+  const env = { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` };
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  gitIn(dir, 'init', '-q', '-b', 'main');
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8') + config);
+  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
+  let text = fs.readFileSync(file, 'utf8').split('## Problem')[0] + good;
+  for (const line of ticketFields.split('\n').filter(Boolean)) { const [k, ...v] = line.split(': '); text = setField(text, k, v.join(': ')); }
+  fs.writeFileSync(file, text);
+  gitIn(dir, 'add', '-A'); gitIn(dir, 'commit', '-qm', 'base');
+  gitIn(dir, 'checkout', '-qb', 'speck/0001-x');
+  fs.writeFileSync(path.join(dir, 'a.txt'), 'change\n');
+  gitIn(dir, 'add', '-A'); gitIn(dir, 'commit', '-qm', 'work');
+  const calls = () => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
+  const roundFile = n => JSON.parse(fs.readFileSync(path.join(dir, 'speck', 'reviews', '0001', `round-${n}.json`), 'utf8'));
+  return { dir, run, calls, roundFile, ticketFile: file };
+}
+
+test('AC1: config and ticket templates have blank reviewer_model and reviewer_effort', () => {
+  const config = parseYaml(fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8'));
+  assert.equal(config.reviewer_model, '');
+  assert.equal(config.reviewer_effort, '');
+  const t = parseTicket(fs.readFileSync(path.join(ROOT, 'templates', 'ticket.md'), 'utf8'));
+  assert.equal(t.fm.reviewer_model, '');
+  assert.equal(t.fm.reviewer_effort, '');
+});
+
+test('AC1: speck new copies the config values into the ticket', () => {
+  const { ticketFile } = reviewRepo({ config: 'reviewer_model: some-model-1\nreviewer_effort: high\n' });
+  const t = parseTicket(fs.readFileSync(ticketFile, 'utf8'));
+  assert.equal(t.fm.reviewer_model, 'some-model-1');
+  assert.equal(t.fm.reviewer_effort, 'high');
+});
+
+test('AC1: a ticket value overrides config and a blank ticket value falls back to config', () => {
+  const c = { reviewer_model: 'cfg-model', reviewer_effort: 'low' };
+  assert.deepEqual(reviewerSettings({ reviewer_model: 'tkt-model', reviewer_effort: 'max' }, c), { model: 'tkt-model', effort: 'max' });
+  assert.deepEqual(reviewerSettings({ reviewer_model: '', reviewer_effort: '' }, c), { model: 'cfg-model', effort: 'low' });
+  assert.deepEqual(reviewerSettings({}, c), { model: 'cfg-model', effort: 'low' });
+  assert.deepEqual(reviewerSettings({ reviewer_model: 'tkt-model' }, { reviewer_model: '', reviewer_effort: '' }), { model: 'tkt-model', effort: null });
+});
+
+test('AC2: with nothing set, no model or effort is passed to codex', () => {
+  assert.deepEqual(reviewerSettings({ reviewer_model: '', reviewer_effort: '' }, { reviewer_model: '', reviewer_effort: '' }), { model: null, effort: null });
+  const { run, calls } = reviewRepo();
+  assert.equal(run('review', '1').status, 10);
+  const args = calls()[0];
+  assert.ok(!args.includes('-m') && !args.includes('--model'), args.join(' '));
+  assert.ok(!args.some(a => /model/.test(a)), args.join(' '));
+});
+
+test('AC2: no model name is hard-coded in speck code, templates or skills', () => {
+  const MODEL = /\b(gpt-[\w.-]+|o[1-9](-mini|-pro)?|claude-(opus|sonnet|haiku|instant)[\w.-]*|(opus|sonnet|haiku)-?\d[\w.-]*|gemini-[\w.-]+|codex-mini[\w.-]*)\b/i;
+  const files = d => fs.readdirSync(path.join(ROOT, d), { recursive: true }).map(f => path.join(ROOT, d, f)).filter(f => fs.statSync(f).isFile());
+  for (const f of [...files('scripts'), ...files('templates'), ...files('skills')]) {
+    const hit = fs.readFileSync(f, 'utf8').match(MODEL);
+    assert.equal(hit, null, `${path.relative(ROOT, f)} names a model: ${hit && hit[0]}`);
+  }
+});
+
+test('AC3: speck review passes the model and effort to codex in round 1 and resumed rounds', () => {
+  const { run, calls } = reviewRepo({ config: 'reviewer_model: cfg-model\nreviewer_effort: low\n', ticketFields: 'reviewer_model: tkt-model-2\nreviewer_effort: xhigh' });
+  assert.equal(run('review', '1').status, 10);
+  assert.equal(run('review', '1').status, 10);
+  const [r1, r2] = calls();
+  assert.deepEqual(r1.slice(0, 1), ['exec']);
+  assert.deepEqual(r2.slice(0, 2), ['exec', 'resume']);
+  for (const args of [r1, r2]) {
+    assert.equal(args[args.indexOf('-m') + 1], 'tkt-model-2');
+    assert.ok(args.includes('model_reasoning_effort="xhigh"'), args.join(' '));
+  }
+});
+
+test('AC3: the review skill starts a claude-subagent reviewer with the model and effort', () => {
+  const skill = fs.readFileSync(path.join(ROOT, 'skills', 'speck-review', 'SKILL.md'), 'utf8');
+  assert.match(skill, /speck reviewer-settings <id>/);
+  assert.match(skill, /`model`/);
+  assert.match(skill, /`effort`/);
+  const { run } = reviewRepo({ ticketFields: 'reviewer_model: tkt-model\nreviewer_effort: medium' });
+  assert.match(run('reviewer-settings', '1').stdout, /model: tkt-model\neffort: medium/);
+  assert.match(reviewRepo().run('reviewer-settings', '1').stdout, /model: default\neffort: default/);
+});
+
+test('AC4: lint rejects an unknown reviewer_effort and passes model names through', () => {
+  for (const e of ['', ...EFFORT_VALUES])
+    assert.deepEqual(lintTicket(ticket(fm({ reviewer_effort: `"${e}"`, reviewer_model: 'Anything at all/9' }), good), cfg).errors, [], e);
+  for (const e of ['huge', 'minimal', 'HIGH'])
+    assert.equal(lintTicket(ticket(fm({ reviewer_effort: e }), good), cfg).errors.length, 1, e);
+  assert.equal(lintTicket(ticket(fm(), good), { ...cfg, reviewer_effort: 'huge' }).errors.length, 1, 'config value is checked too');
+});
+
+test('AC5: saved rounds and the review pack show the reviewer model and effort, or default', () => {
+  const set = reviewRepo({ ticketFields: 'reviewer_model: tkt-model\nreviewer_effort: high' });
+  assert.equal(set.run('review', '1').status, 10);
+  assert.equal(set.roundFile(1).meta.reviewer_model, 'tkt-model');
+  assert.equal(set.roundFile(1).meta.reviewer_effort, 'high');
+  const pack = set.run('pack', '1').stdout;
+  assert.match(pack, /\*\*Verdict:\*\*.*model tkt-model, effort high/);
+  assert.match(pack, /Round 1 \(codex, model tkt-model, effort high\)/);
+
+  const unset = reviewRepo();
+  assert.equal(unset.run('review', '1').status, 10);
+  assert.equal(unset.roundFile(1).meta.reviewer_model, 'default');
+  assert.equal(unset.roundFile(1).meta.reviewer_effort, 'default');
+  assert.match(unset.run('pack', '1').stdout, /Round 1 \(codex, model default, effort default\)/);
+
+  // Rounds recorded from another reviewer carry the settings too.
+  const v = path.join(unset.dir, 'v.json');
+  fs.writeFileSync(v, JSON.stringify({ verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' }));
+  unset.run('record', '1', v, '--reviewer=claude-subagent');
+  assert.equal(unset.roundFile(2).meta.reviewer_model, 'default');
+  assert.equal(unset.roundFile(2).meta.reviewer_effort, 'default');
 });

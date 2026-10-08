@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: none yet (v0.1 bootstrap, built by hand on 8 October 2026)
+Last updated by ticket: 0005
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents. It's aimed at PMs and founders who write good tickets but don't review code line by line. Ideas become small numbered tickets. One agent builds each ticket, and a second, independent agent reviews it in turns until it approves. The human holds two gates: approving a ticket for development, and merging the PR.
@@ -13,7 +13,8 @@ speck is a lightweight, repo-native workflow for building software with AI codin
   - `new`: creates the next numbered ticket.
   - `lint`: checks the size rules.
   - `set`: updates fields. Setting status to `ready` requires a clean lint, and `building` and `done` record timestamps.
-  - `status`, `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `next` and `pack` (PR body).
+  - `status`, `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `reviewer-settings`, `next` and `pack` (PR body).
+- **Reviewer model and effort:** `reviewer_model` and `reviewer_effort` in `speck/config.yml` set them for the whole repo. `speck new` copies them into each ticket, where they can be overridden, and a blank ticket value falls back to config. If both are blank, speck passes nothing and the reviewer uses its own default. Codex gets them in every round, and the review skill starts a `claude-subagent` reviewer with them. `speck lint` accepts only a blank effort or `low`, `medium`, `high`, `xhigh` or `max`. Model names aren't checked. Every saved round and the review pack show the model and effort used, or "default".
 - **Codex review loop:** read-only sandbox, structured verdict (`templates/review-verdict.schema.json`), and the same session resumed across rounds. Every round is saved to `speck/reviews/<id>/round-N.json`.
 - **Safeguards:**
   - An `approve` with failing criteria or open blocking findings is overridden to `changes_requested`.
@@ -28,6 +29,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - **Only the reviewer can approve. Only the human can merge.** Skills never run `gh pr merge`.
 - **Ticket closure and `product.md` updates ship inside the PR**, so merging is what makes them true.
 - **The reviewer reviews commits**, so `speck review` refuses to run on uncommitted changes.
+- **speck never picks a model.** No model name is built into the code, templates or skills. With nothing set, the reviewer runs on its own default: Codex's default, or the builder's model in a fresh session for `claude-subagent`.
 
 ## Known limits
 - One ticket at a time; no parallel runs or dependency scheduling.
@@ -36,6 +38,8 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - GitHub won't let you approve a PR you opened yourself. If agents use your own `gh` login, rely on the required `speck/review` check plus your merge, or give agents a separate bot account.
 - Not yet published to npm (planned package name `speck-dev`). Install runs from GitHub with `npx`, so the repo must be public, or the user needs access to it.
 - No Claude Code plugin: skills are plain project skills, so commands are `/speck-build` rather than `/speck:build`.
+
+- Speck doesn't check whether a model name exists or whether the reviewer supports the chosen effort. For example, Codex may reject `max`.
 
 ## How to run and test
 - Unit tests: `npm test`

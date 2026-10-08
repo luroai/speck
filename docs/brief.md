@@ -98,6 +98,8 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
 
 Config rejects `builder` and `reviewer` being the same agent unless `allow_same_model_review: true` is set.
 
+**Reviewer model and effort.** `reviewer_model` and `reviewer_effort` in `speck/config.yml` set the reviewer's model and effort level for the whole repo. `speck new` copies them into each ticket, and a value on the ticket overrides config. A blank ticket value falls back to config. If both are blank, speck sets nothing: Codex uses its own default, and a `claude-subagent` reviewer runs on the builder's model in a fresh session. Model names are free text in the reviewer's own format and aren't checked. Effort must be blank or one of `low`, `medium`, `high`, `xhigh` or `max`. Codex gets them as `-m` and `model_reasoning_effort` in every round. The review skill passes them to the subagent (`speck reviewer-settings <id>` prints them). Every saved round and the review pack show the model and effort used, or "default".
+
 ## Repo layout (in a project that uses speck)
 
 ```

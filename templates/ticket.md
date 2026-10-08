@@ -7,6 +7,8 @@ size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 builder: claude
 reviewer: codex
+reviewer_model: ""       # blank: use speck/config.yml (blank there too: the reviewer's default)
+reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 
