@@ -40,6 +40,9 @@ Any reviewer agent with a non-interactive mode can be set up in `speck/config.ym
 ## Notes
 - The reviewer prompt template and verdict schema are unchanged; this ticket only adds a way to run them.
 - Update README, `docs/brief.md` (reviewer table) and `product.md` with a worked example for Cursor and for Claude Code (`claude -p --output-format json`). Check each tool's current flags rather than copying these.
+- **Flags checked (2026-10-08).** Claude Code 2.1.294 (`claude --help`): `-p`, `--output-format json`, `--model`, `--effort` and `--permission-mode plan` (read-only). Its JSON output is an envelope with the reply in `result`, plus `session_id` and `usage`. Cursor (`cursor-agent` isn't installed here, so this comes from the CLI docs at cursor.com/docs/cli/reference/output-format): `-p`, `--output-format json`, `--model`, and `--mode ask` for read-only. It gives the same `result` envelope, and on failure it exits non-zero with no JSON. Cursor has no effort flag, so its example leaves `{effort}` out.
+- **Live run.** In a throwaway repo, `reviewer: claude` with `command: "claude -p --output-format json --permission-mode plan --model {model} --effort {effort}"` and `reviewer_model: haiku` reviewed a sample ticket with a planted bug, through this branch's `speck review`. Round 1 found the bug and the missing test and returned `changes_requested`. Round 2 had no session memory and got the full-history prompt with the builder's response; it marked all three findings fixed and approved. Both rounds were recorded as `reviewer: claude, model haiku`, with the envelope's `usage`, and round 2 kept `builder_response`.
+- Claude's `usage.input_tokens` leaves out cached input, so the pack undercounts a Claude reviewer's tokens. This is listed as a follow-up.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

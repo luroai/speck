@@ -462,7 +462,9 @@ function sandboxFailed(events) {
     && /bwrap/i.test(String(e.item.aggregated_output ?? '')));
 }
 
-function runCodexReview(repo, id, opts) {
+// Everything a review round needs, checked before any reviewer runs: the round number, the commit under review,
+// the diff since the last round and the builder's inputs.
+function reviewSetup(repo, id, opts) {
   const cfg = loadConfig(repo);
   const ticket = findTicket(repo, id);
   const prior = rounds(repo, id);
@@ -477,6 +479,11 @@ function runCodexReview(repo, id, opts) {
   const diff = reviewDiff(repo, sinceSha);
   const tests = opts.tests ? fs.readFileSync(opts.tests, 'utf8') : '(no test output provided)';
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
+  return { cfg, ticket, prior, round, head, base, sinceSha, diff, tests, response };
+}
+
+function runCodexReview(repo, id, opts) {
+  const { cfg, ticket, prior, round, head, sinceSha, diff, tests, response } = reviewSetup(repo, id, opts);
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha });
 
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
@@ -502,6 +509,88 @@ function runCodexReview(repo, id, opts) {
 }
 
 // ---------- review pack ----------
+
+// The round-1 prompt with the verdict schema: what `speck prompt` prints, and what a command reviewer gets on stdin.
+function fullPrompt(repo, ticket, cfg, diff, tests) {
+  return `${reviewerPrompt(repo, ticket, cfg, 1, { diff, tests })}\n\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`;
+}
+
+// Splits a command into words the way a shell would for plain quoting, so it can run without a shell.
+export function splitCommand(cmd) {
+  const words = [];
+  let word = null, quote = null;
+  for (const ch of String(cmd)) {
+    if (quote) { if (ch === quote) quote = null; else word += ch; }
+    else if (ch === '"' || ch === "'") { quote = ch; word ??= ''; }
+    else if (/\s/.test(ch)) { if (word !== null) words.push(word); word = null; }
+    else word = (word ?? '') + ch;
+  }
+  if (quote) throw new SpeckError(`The reviewer command has an unclosed ${quote} quote: ${cmd}`);
+  if (word !== null) words.push(word);
+  return words;
+}
+
+// Fills in {model} and {effort}. A blank value removes its word, and the flag just before it when the placeholder stands alone.
+export function commandArgs(cmd, values) {
+  const out = [];
+  for (const word of splitCommand(cmd)) {
+    const keys = [...word.matchAll(/\{(model|effort)\}/g)].map(m => m[1]);
+    if (keys.some(k => !values[k])) {
+      if (/^\{(model|effort)\}$/.test(word) && out.length && out[out.length - 1].startsWith('-')) out.pop();
+      continue;
+    }
+    out.push(word.replace(/\{(model|effort)\}/g, (_, k) => values[k]));
+  }
+  return out;
+}
+
+// A JSON object from text that is JSON, or holds a ```json fenced block.
+function jsonIn(text) {
+  const tries = [text.trim(), ...[...String(text).matchAll(/```[a-z]*\r?\n([\s\S]*?)\r?\n```/gi)].map(m => m[1])];
+  for (const s of tries) {
+    try { const v = JSON.parse(s); if (v && typeof v === 'object' && !Array.isArray(v)) return v; } catch { /* try the next */ }
+  }
+  return null;
+}
+
+// The verdict in a command reviewer's stdout: the whole output, a fenced block, or an envelope whose `result` string holds it.
+export function verdictFromOutput(stdout) {
+  const v = jsonIn(stdout);
+  if (v && !('verdict' in v) && typeof v.result === 'string') return { verdict: jsonIn(v.result), envelope: v };
+  return { verdict: v, envelope: null };
+}
+
+// Later rounds give a reviewer with no memory everything it has seen: the round-1 prompt, every earlier verdict and
+// builder response in order, then this round's response, diff and tests.
+function historyPrompt(repo, s) {
+  const parts = [fullPrompt(repo, s.ticket, s.cfg, reviewDiff(repo, s.base), s.tests), '# Earlier review rounds'];
+  for (const r of s.prior) {
+    if (r.meta.builder_response) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
+    parts.push(`## Your round ${r.meta.round} verdict`, '```json', JSON.stringify(r.verdict, null, 2), '```');
+  }
+  parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha }));
+  return parts.join('\n\n');
+}
+
+// Runs a reviewer set up in config as a command. speck reads the verdict from its output, so the builder never handles it.
+function runCommandReview(repo, id, name, command, opts) {
+  const s = reviewSetup(repo, id, opts);
+  const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests) : historyPrompt(repo, s);
+  const settings = reviewerSettings(s.ticket.fm, s.cfg);
+  const [cmd, ...args] = commandArgs(command, { model: settings.model, effort: settings.effort });
+  if (!cmd) throw new SpeckError(`The command for reviewer "${name}" in speck/config.yml is empty.`);
+  const started = Date.now();
+  const r = spawnSync(cmd, args, { cwd: repo, input: prompt, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: \`${cmd}\` ${r.error.code === 'ENOENT' ? 'isn\'t installed or isn\'t on your PATH' : `failed (${r.error.message})`}. Check reviewer_options.${name}.command in speck/config.yml.`);
+  const tail = r.stderr.trim().split('\n').slice(-5).join('\n');
+  const stderrNote = tail ? `\nLast lines of its error output:\n${tail}` : '';
+  if (r.status !== 0) throw new SpeckError(`The ${name} reviewer (${cmd}) exited ${r.status}, so no round was recorded.${stderrNote}`);
+  const { verdict, envelope } = verdictFromOutput(r.stdout);
+  if (!verdict) throw new SpeckError(`The ${name} reviewer (${cmd}) didn't return a verdict: its output wasn't JSON, a \`\`\`json block or a JSON envelope with a "result". No round was recorded.${stderrNote}`);
+  const usage = envelope?.usage && typeof envelope.usage === 'object' ? { usage: envelope.usage } : {};
+  return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), reviewed_sha: s.head,
+    ...(s.response ? { builder_response: s.response } : {}), seconds: Math.round((Date.now() - started) / 1000), ...usage });
+}
 
 export function reviewPack(repo, id) {
   const cfg = loadConfig(repo);
@@ -1048,8 +1137,12 @@ function cmdReview(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
   const reviewer = t.fm.reviewer || cfg.reviewer;
-  if (reviewer !== 'codex') throw new SpeckError(`speck review runs the codex adapter. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
-  const rec = runCodexReview(repo, id, { tests: opt('tests'), response: opt('response') });
+  const command = cfg.reviewer_options?.[reviewer]?.command;
+  const opts = { tests: opt('tests'), response: opt('response') };
+  let rec;
+  if (typeof command === 'string' && command.trim()) rec = runCommandReview(repo, id, reviewer, command, opts);
+  else if (reviewer === 'codex') rec = runCodexReview(repo, id, opts);
+  else throw new SpeckError(`speck review runs the codex adapter, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
@@ -1107,8 +1200,7 @@ function cmdPrompt(args) {
   const diff = reviewDiff(repo, base);
   const testsArg = args.find(a => a.startsWith('--tests='));
   const tests = testsArg ? fs.readFileSync(testsArg.slice(8), 'utf8') : '(no test output provided)';
-  console.log(reviewerPrompt(repo, t, cfg, 1, { diff, tests }));
-  console.log(`\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`);
+  console.log(fullPrompt(repo, t, cfg, diff, tests));
 }
 
 function cmdDiff(args) {

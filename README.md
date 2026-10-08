@@ -21,7 +21,7 @@ Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremo
 ## Requirements
 
 - [Claude Code](https://claude.com/claude-code) (builder)
-- [Codex CLI](https://github.com/openai/codex) (default reviewer), or allow a Claude subagent reviewer in config
+- [Codex CLI](https://github.com/openai/codex) (default reviewer), or any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
 - Node.js 20+ and git
 
 ## Install
@@ -64,6 +64,19 @@ Every approved ticket has a **review pack** written for someone who doesn't read
 - whether the living spec is accurate;
 - the review history;
 - actuals: review rounds, reviewer tokens and elapsed time.
+
+## Using another reviewer
+
+Any agent that can run non-interactively can review. Give it a name and a command in `speck/config.yml`, and `speck review` runs it and records its verdict:
+
+```yaml
+reviewer: cursor
+reviewer_options:
+  cursor:
+    command: "cursor-agent -p --output-format json --mode ask --model {model}"
+```
+
+For Claude Code, use `"claude -p --output-format json --permission-mode plan --model {model} --effort {effort}"`, and set `allow_same_model_review: true` if Claude is also the builder. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode as above. Flags change, so check your tool's current ones.
 
 ## Repo layout
 

@@ -1512,3 +1512,159 @@ test('auto-ship: the build skill runs speck ship --auto after approval, and the 
   spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir });
   assert.match(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8'), /auto_ship/);
 });
+
+// ---------- 0012: run a reviewer from a command set in config ----------
+
+const changesVerdict = { verdict: 'changes_requested', criteria: [{ id: 1, status: 'fail', evidence: 'a.txt' }], findings: [{ id: 'F1', severity: 'blocking', file: 'a.txt', issue: 'First problem.', suggested_fix: 'Fix it.', state: 'open' }], product_md: { accurate: true, note: '' }, summary: 'Round one summary.', escalation_question: '' };
+
+// A repo whose ticket uses reviewer "fake", run by a command in config. The fake logs its arguments,
+// working folder and stdin, then answers in the format FAKE_MODE asks for.
+function commandRepo({ command = '{bin} --model {model} --effort {effort} --flag "two words"', ticketFields = '', limits = '' } = {}) {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-fake-'));
+  const fake = path.join(bin, 'fake-reviewer');
+  const log = path.join(bin, 'calls.log');
+  fs.writeFileSync(fake, `#!${process.execPath}
+const fs = require('fs');
+const stdin = fs.readFileSync(0, 'utf8');
+fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin }) + '\\n');
+const v = process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(changesVerdict))};
+const mode = process.env.FAKE_MODE || 'raw';
+if (mode === 'raw') console.log(v);
+if (mode === 'fenced') console.log('Here is my review.\\n\\n\`\`\`json\\n' + v + '\\n\`\`\`\\nThanks.');
+if (mode === 'envelope') console.log(JSON.stringify({ type: 'result', is_error: false, session_id: 'S1', result: 'Done.\\n\`\`\`json\\n' + v + '\\n\`\`\`', usage: { input_tokens: 100, output_tokens: 20 } }));
+if (mode === 'garbage') { console.log('I looked at it and it seems fine.'); console.error('note one\\nnote two'); }
+if (mode === 'fail') { for (let i = 1; i <= 7; i++) console.error('err line ' + i); process.exit(3); }
+`, { mode: 0o755 });
+  const r = reviewRepo({ ticketFields: `reviewer: fake\n${ticketFields}` });
+  const cfgFile = path.join(r.dir, 'speck', 'config.yml');
+  let c = fs.readFileSync(cfgFile, 'utf8').replace('reviewer_options:\n', `reviewer_options:\n  fake:\n    command: ${JSON.stringify(command.replace('{bin}', fake))}\n`);
+  if (limits) c = c.replace('limits:\n', `limits:\n${limits}`);
+  fs.writeFileSync(cfgFile, c);
+  r.git('add', '-A'); r.git('commit', '-qm', 'reviewer command');
+  const calls = () => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
+  const runEnv = (env, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: r.dir, encoding: 'utf8', env: { ...process.env, ...env } });
+  return { ...r, fake, calls, runEnv };
+}
+
+test('0012 AC1: speck review runs the configured command from the repo root, sends the speck prompt text on stdin and records the round', () => {
+  const r = commandRepo();
+  const tests = path.join(r.dir, '..', `tests-${path.basename(r.dir)}.txt`);
+  fs.writeFileSync(tests, '# pass 9\n');
+  const sub = path.join(r.dir, 'sub');
+  fs.mkdirSync(sub);
+  const res = spawnSync(process.execPath, [CLI, 'review', '1', `--tests=${tests}`], { cwd: sub, encoding: 'utf8' });
+  assert.equal(res.status, 10, res.stderr);
+  assert.match(res.stdout, /NEXT: fix/);
+  const [call] = r.calls();
+  assert.equal(fs.realpathSync(call.cwd), fs.realpathSync(r.dir), 'runs from the repo root');
+  assert.equal(call.stdin.trimEnd(), r.run('prompt', '1', `--tests=${tests}`).stdout.trimEnd(), 'the same text speck prompt prints');
+  assert.match(call.stdin, /Return ONLY a JSON object matching this schema/);
+  const r1 = r.roundFile(1);
+  assert.equal(r1.meta.reviewer, 'fake');
+  assert.equal(r1.meta.reviewed_sha, r.git('rev-parse', 'HEAD').stdout.trim());
+  assert.equal(r1.verdict.verdict, 'changes_requested');
+  assert.equal(r.calls().length, 1);
+  assert.equal(fs.existsSync(path.join(r.dir, 'speck', 'reviews')), false);
+});
+
+test('0012 AC2: {model} and {effort} are filled in, and a blank one goes with the flag before it', () => {
+  const set = commandRepo({ ticketFields: 'reviewer_model: m-1\nreviewer_effort: high' });
+  assert.equal(set.run('review', '1').status, 10);
+  assert.deepEqual(set.calls()[0].args, ['--model', 'm-1', '--effort', 'high', '--flag', 'two words']);
+  assert.equal(set.roundFile(1).meta.reviewer_model, 'm-1');
+
+  const blank = commandRepo();
+  assert.equal(blank.run('review', '1').status, 10);
+  assert.deepEqual(blank.calls()[0].args, ['--flag', 'two words']);
+
+  const one = commandRepo({ ticketFields: 'reviewer_model: m-2' });
+  assert.equal(one.run('review', '1').status, 10);
+  assert.deepEqual(one.calls()[0].args, ['--model', 'm-2', '--flag', 'two words']);
+
+  const joined = commandRepo({ command: '{bin} --model={model} -x' });
+  assert.equal(joined.run('review', '1').status, 10);
+  assert.deepEqual(joined.calls()[0].args, ['-x'], 'a blank --model={model} disappears');
+
+  // Values are passed as arguments, never through a shell.
+  const odd = commandRepo({ ticketFields: 'reviewer_model: "a b;echo hi"' });
+  assert.equal(odd.run('review', '1').status, 10);
+  assert.deepEqual(odd.calls()[0].args.slice(0, 2), ['--model', 'a b;echo hi']);
+});
+
+test('0012 AC3: the verdict is read from raw JSON, a fenced block or a result envelope', () => {
+  for (const mode of ['raw', 'fenced', 'envelope']) {
+    const r = commandRepo();
+    const res = r.runEnv({ FAKE_MODE: mode }, 'review', '1');
+    assert.equal(res.status, 10, `${mode}: ${res.stderr}`);
+    assert.equal(r.roundFile(1).verdict.findings[0].id, 'F1', mode);
+  }
+  const env = commandRepo();
+  env.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1');
+  assert.deepEqual(env.roundFile(1).meta.usage, { input_tokens: 100, output_tokens: 20 }, 'token use from the envelope is kept');
+});
+
+test('0012 AC3: anything else, or a non-zero exit, is a plain error quoting the last five lines of stderr, and records nothing', () => {
+  const junk = commandRepo();
+  let res = junk.runEnv({ FAKE_MODE: 'garbage' }, 'review', '1');
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /didn't return a verdict/);
+  assert.match(res.stderr, /note one\nnote two/);
+  assert.equal(junk.roundFile(1), undefined);
+
+  const fail = commandRepo();
+  res = fail.runEnv({ FAKE_MODE: 'fail' }, 'review', '1');
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /exited 3/);
+  assert.match(res.stderr, /err line 3\nerr line 4\nerr line 5\nerr line 6\nerr line 7/);
+  assert.doesNotMatch(res.stderr, /err line 2/);
+  assert.equal(fail.roundFile(1), undefined);
+
+  const shape = commandRepo();
+  res = shape.runEnv({ FAKE_VERDICT: JSON.stringify({ verdict: 'approve' }) }, 'review', '1');
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /Reviewer output is missing or invalid/);
+  assert.equal(shape.roundFile(1), undefined);
+
+  const missing = commandRepo({ command: 'speck-no-such-reviewer-cmd -p' });
+  res = missing.run('review', '1');
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /speck-no-such-reviewer-cmd/);
+  assert.doesNotMatch(res.stderr, /    at /);
+  assert.equal(missing.roundFile(1), undefined);
+});
+
+test('0012 AC4: later rounds resend the round-1 prompt, then every earlier verdict and builder response in order, then the new diff', () => {
+  const r = commandRepo();
+  const resp = n => { const f = path.join(r.dir, '..', `resp-${n}-${path.basename(r.dir)}.md`); fs.writeFileSync(f, `- F1: fixed in round ${n} response.\n`); return f; };
+  assert.equal(r.run('review', '1').status, 10);
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'second\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'fix 1');
+  const v2 = { ...changesVerdict, summary: 'Round two summary.' };
+  assert.equal(r.runEnv({ FAKE_VERDICT: JSON.stringify(v2) }, 'review', '1', `--response=${resp(2)}`).status, 10);
+  const sha2 = r.git('rev-parse', 'HEAD').stdout.trim();
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'third-line-marker\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'fix 2');
+  assert.equal(r.run('review', '1', `--response=${resp(3)}`).status, 11, 'third round hits the default limit and blocks');
+  const third = r.calls()[2].stdin;
+  const round1Now = r.run('prompt', '1').stdout.trimEnd();
+  assert.ok(third.startsWith(round1Now), 'starts with the full round-1 prompt');
+  const order = ['Round one summary.', 'fixed in round 2 response', 'Round two summary.', 'fixed in round 3 response', `${sha2.slice(0, 8)}..HEAD`, '+third-line-marker'];
+  const at = order.map(s => third.indexOf(s, round1Now.length));
+  assert.ok(at.every(i => i > 0), JSON.stringify(at));
+  assert.deepEqual([...at].sort((a, b) => a - b), at, 'in order');
+  assert.ok(third.indexOf('"F1"', round1Now.length) > 0, 'earlier verdicts are sent in full, with finding ids');
+  assert.equal(r.roundFile(2).meta.builder_response, '- F1: fixed in round 2 response.\n');
+});
+
+test('0012 AC5: codex without a command and reviewers with no command behave as before', () => {
+  const codex = reviewRepo();
+  assert.equal(codex.run('review', '1').status, 10);
+  assert.equal(codex.calls().length, 1, 'the codex adapter ran');
+  assert.equal(codex.roundFile(1).meta.reviewer, 'codex');
+  assert.equal(codex.roundFile(1).meta.builder_response, undefined);
+  const other = reviewRepo({ ticketFields: 'reviewer: someone' });
+  const res = other.run('review', '1');
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /speck record 1/);
+  assert.equal(other.calls().length, 0);
+});
