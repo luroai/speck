@@ -1,7 +1,7 @@
 ---
 id: "0001"
 title: "Warn when the reviewer cannot run commands"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | done
+status: building            # draft | ready | building | reviewing | blocked | done
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -10,11 +10,12 @@ reviewer: codex
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
+started: "2026-10-08T20:14:21.551Z"
 
 ---
 # 0001 · Warn when the reviewer cannot run commands
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On machines where the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer silently reviews only the diff it's given and can't inspect the repo. Users don't know their review is weaker.
