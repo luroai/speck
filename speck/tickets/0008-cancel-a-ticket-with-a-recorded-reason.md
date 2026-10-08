@@ -1,7 +1,7 @@
 ---
 id: "0008"
 title: "Cancel a ticket with a recorded reason"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | done
+status: reviewing            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T20:00:31.803Z"
 ---
 # 0008 · Cancel a ticket with a recorded reason
 
-**Status:** ⛔ blocked
+**Status:** 🔍 reviewing
 
 ## Problem
 Once you decide not to build a ticket, the only options are to delete it or leave it as a draft. Either way, there's no lasting record that the idea was considered and turned down, or why, so it can come back later as new work.
@@ -37,6 +37,7 @@ A ticket you decide against can be cancelled with a reason. It's filed away with
 - Cleaning up branches or review rounds for a ticket cancelled mid-build.
 
 ## Notes
+- Round 4 allowed by the user (answer to the round-3 block): `max_review_rounds` raised from 3 to 4 in `speck/config.yml`, F1 fixed, re-review in a fresh session.
 - Cancelled tickets sit in `speck/tickets/done/` with finished ones, so `speck/tickets/` holds only live work. That folder now means "closed" rather than strictly "delivered".
 - `speck ship` already refuses anything that isn't `approved`, so it needs no change.
 - Update `speck/product.md`, `docs/brief.md`, the status comment in `templates/ticket.md` and the `/speck-status` skill to cover the new status.

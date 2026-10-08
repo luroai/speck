@@ -82,7 +82,8 @@ function scalar(v) {
   if (v === '[]') return [];
   if (v === '{}') return {};
   if (v.startsWith('[') && v.endsWith(']')) return v.slice(1, -1).split(',').map(s => scalar(s)).filter(s => s !== '');
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v.slice(1, -1);
+  if (v.length > 1 && v.startsWith('"') && v.endsWith('"')) { try { return JSON.parse(v); } catch { return v.slice(1, -1); } }
+  if (v.length > 1 && v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
   if (v === 'true') return true;
   if (v === 'false') return false;
   if (/^-?\d+$/.test(v)) return Number(v);
@@ -805,7 +806,8 @@ function cmdCancel(args) {
   if (blank(reason)) throw new SpeckError(`Give a reason: speck cancel ${t.fm.id} "<reason>".`);
   if (t.fm.status === 'done') throw new SpeckError(`Ticket ${t.fm.id} is done, so it can't be cancelled: delivered work is part of the record.`);
   if (t.fm.status === 'cancelled') throw new SpeckError(`Ticket ${t.fm.id} is already cancelled.`);
-  let text = setField(t.raw, 'cancel_reason', reason);
+  // Stored as a JSON string, so text like `false`, `0` or `a "quoted" word` reads back exactly as typed. A reason kept from an earlier cancel is replaced.
+  let text = setField(t.raw.replace(/^cancel_reason:.*\n/m, ''), 'cancel_reason', JSON.stringify(reason));
   text = setField(text, 'cancelled', new Date().toISOString().slice(0, 10));
   fs.writeFileSync(t.file, syncHeader(setField(text, 'status', 'cancelled')));
   placeTicket(repo, t, 'cancelled');
@@ -950,7 +952,7 @@ function cmdStatus() {
         const q = contentLines(t.sections['blocked question']).join(' ');
         if (q) console.log(`        ? ${q}`);
       }
-      if (s === 'cancelled' && t.fm.cancel_reason) console.log(`        ❌ ${t.fm.cancel_reason}`);
+      if (s === 'cancelled' && !blank(t.fm.cancel_reason)) console.log(`        ❌ ${t.fm.cancel_reason}`);
     }
   }
   const ideas = path.join(repo, 'speck', 'ideas');

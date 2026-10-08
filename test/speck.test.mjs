@@ -1073,3 +1073,29 @@ test('AC4: speck new never reuses a cancelled ticket number', () => {
   assert.equal(r.run('cancel', '1', 'Not now').status, 0);
   assert.equal(r.run('new', 'Second').stdout.trim(), path.join('speck', 'tickets', '0002-second.md'));
 });
+
+// Review round 3 (F1): a reason is stored and shown exactly as typed.
+const AWKWARD = ['false', '0', '123', 'true', 'null', 'Use option: "B"', 'C:\\temp\\x', 'Too costly # revisit later', "it's 'quoted'", 'line one\nline two', '[a, b]'];
+
+test('AC1/AC4: a reason reads back exactly as typed and appears in status, even when it looks like YAML', () => {
+  for (const reason of AWKWARD) {
+    const r = cancelRepo();
+    const p = r.add('Export bookings');
+    const res = r.run('cancel', '1', reason);
+    assert.equal(res.status, 0, `${JSON.stringify(reason)}: ${res.stderr}`);
+    assert.strictEqual(r.fm(r.filed(p)).cancel_reason, reason, `stored: ${JSON.stringify(reason)}`);
+    assert.ok(r.run('status').stdout.includes(`❌ ${reason}`), `shown in status: ${JSON.stringify(reason)}`);
+  }
+});
+
+test('AC3: reopening keeps an awkward reason exactly, and cancelling again replaces it', () => {
+  const r = cancelRepo();
+  const p = r.add('Export bookings');
+  r.run('cancel', '1', 'false');
+  assert.equal(r.run('set', '1', 'status', 'ready').status, 0);
+  assert.strictEqual(r.fm(path.join('speck', 'tickets', path.basename(p))).cancel_reason, 'false');
+  assert.equal(r.run('cancel', '1', 'Later # maybe').status, 0);
+  const text = r.read(r.filed(p));
+  assert.equal(text.match(/^cancel_reason:/gm).length, 1, 'one reason line');
+  assert.strictEqual(r.fm(r.filed(p)).cancel_reason, 'Later # maybe');
+});
