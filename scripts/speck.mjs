@@ -308,13 +308,15 @@ export function ticketRounds(text) {
   const rounds = [], errors = [];
   // Split on <details> at the start of a line first, so a damaged block can't borrow the next block's code fence
   // and hide a round. JSON strings never start a line, so a reviewer quoting "<details>" can't split a round.
-  const blocks = section.split(/^(?=<details>)/m).slice(1);
+  const [prefix, ...blocks] = section.split(/^(?=<details>)/m);
+  // Before the first round only the heading, comments and empty lines are allowed, so nothing there is silently ignored.
+  if (prefix.replace(/^## Review rounds[ \t]*$/m, '').replace(/<!--[\s\S]*?-->/g, '').trim())
+    errors.push(`"${ROUNDS_HEADING}" has something before its first round that isn't a round block. Only speck writes this section.`);
   blocks.forEach((block, i) => {
     const m = block.match(/^<details><summary>[^\n]*<\/summary>\n\n```json\n([\s\S]*)\n```\n\n<\/details>\s*$/);
     if (!m) return errors.push(`Review round ${i + 1} in "${ROUNDS_HEADING}" isn't a complete block (a <details> summary, a \`json\` code block and </details>).`);
     try { rounds.push(JSON.parse(m[1])); } catch (e) { errors.push(`Review round ${i + 1} in "${ROUNDS_HEADING}" isn't valid JSON (${e.message}).`); }
   });
-  if (!blocks.length && /```/.test(section)) errors.push(`"${ROUNDS_HEADING}" has a code block outside a <details> round block.`);
   const numbers = rounds.map(r => r?.meta?.round);
   if (!errors.length && numbers.some((r, i) => r !== i + 1))
     errors.push(`Review rounds are numbered ${numbers.join(', ')}, but must be 1, 2, 3… in order.`);

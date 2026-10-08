@@ -1,7 +1,7 @@
 ---
 id: "0011"
 title: Keep review rounds in the ticket file                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: blocked            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T19:29:41.797Z"
 ---
 # 0011 · Keep review rounds in the ticket file
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 Review records live in `speck/reviews/<id>/`, apart from the ticket they belong to. When a ticket is filed into `speck/tickets/done/`, its reviews stay behind, so a ticket's history is split across two places, and the planned board would have to put them back together for every card. speck is meant to be lightweight: one ticket should be one file.
@@ -46,12 +46,15 @@ Each ticket file holds its own review rounds, so a ticket is the complete record
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+Can I run one more review round? The loop stopped at the 3-round limit. Rounds 2 and 3 accepted the F2 dispute and resolved F3. The only open findings were F1 (a stray block before the first round wasn't reported) and F4 (an unrelated board idea edit I committed by mistake). Both are now fixed and committed, and all 56 tests pass. Options: (a) yes: I raise `limits.max_review_rounds` to 4 on this branch, run round 4, and set it back to 3 before approval; (b) no: it stays blocked. I recommend (a).
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Round 2 was used up without my seeing it. Codex returned and speck saved the round, but printing it failed because my round-1 F1 fix split rounds on any `<details>`, and the reviewer's own text quoted it. Fixed by splitting only on `<details>` at the start of a line, with a regression test.
+- A `git add -A` committed someone else's edit to `speck/ideas/2026-10-08-speck-board.md` onto this branch (round 3, F4). It has been taken off the branch and restored as an uncommitted change in the working tree. From now on I stage files by name.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -228,6 +231,103 @@ Each ticket file holds its own review rounds, so a ticket is the complete record
     },
     "escalation_question": "",
     "summary": "The diff filtering issue is fixed, and retaining the existing size-count rule is reasonable. One validation gap remains: damaged history before a valid round can still be silently ignored. The supplied suite reports 56 passing tests; independent repository access remains unavailable because the sandbox failed to start."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "04bad9854b5fbad9723fcb7bbe0027b9869ea241",
+    "thread_id": "01a11d02-5937-78c3-b3fe-ae902cdc650c",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 244434,
+      "cached_input_tokens": 173568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3039,
+      "reasoning_output_tokens": 403
+    },
+    "saved_at": "2026-10-08T19:38:56.176Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveRound and appendRounds store full records in collapsed ticket blocks. Passing AC1 tests cover review, record, numbering and tracked-file changes. The new quoted-markup regression verifies records containing <details> remain readable."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "rounds reads ticketRounds. The passing AC2 integration test exercises next, pack, ship and preservation of history when filing the ticket into done/."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewDiff strips review sections from all changed tickets and excludes legacy review files. Passing AC3 tests verify ordinary edits remain visible. The established size rule continues to exclude speck/."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "ticketRounds still discards the prefix with split(...).slice(1), and checks stray code blocks only when no details blocks exist. Invalid JSON before a valid round remains undetected. The new test covers quoted markup, not the outstanding prefix case."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests cover live and archived migration, repeat init, old-directory removal, preservation of unplaceable histories and continued migration of other tickets."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The round-2 finding remains unfixed: an invalid stray JSON code block before a valid round-1 details block is silently discarded. Anchoring the split fixes quoted markup inside records but does not validate the discarded prefix.",
+        "suggested_fix": "Validate the prefix before the first details block, permitting only the heading, expected comment and whitespace. Add the specific regression with invalid JSON before a valid round and assert lint and next refuse it.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/speck.test.mjs",
+        "issue": "Retaining the established exclusion of speck/ from the size count is accepted. Ordinary ticket edits remain visible in the reviewer diff.",
+        "suggested_fix": "No change required.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Filtering now covers every changed ticket and deleted legacy review files, with regression coverage preserving ordinary edits.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "speck/ideas/2026-10-08-speck-board.md",
+        "issue": "This round adds unrelated board architecture and remote-access decisions. Ticket 0011 explicitly excludes board or UI work.",
+        "suggested_fix": "Remove this file's changes from the ticket branch and retain them separately for the board work.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The claim that lint detects invalid round blocks remains incomplete because malformed content before a valid details block is ignored."
+    },
+    "escalation_question": "",
+    "summary": "The new fix correctly allows review records to quote markup, but the validation gap reported in round 2 remains. Unrelated board decisions also need removing from this branch. The supplied suite reports 56 passing tests; independent repository access remains unavailable because the sandbox failed to start."
   }
 }
 ```

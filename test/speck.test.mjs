@@ -859,6 +859,10 @@ test('AC4 (F1): a damaged round block is an error, not silently dropped', () => 
   assert.equal(ticketRounds(t([block(1), block(2).replace('```json', '```')])).errors.length, 1, 'not a json fence');
   assert.equal(ticketRounds(t([block(1), block(2).replace('</details>', '')])).errors.length, 1, 'missing </details>');
   assert.equal(ticketRounds(t(['```json\n{}\n```'])).errors.length, 1, 'a code block outside any round');
+  // Round 3 F1: a stray, invalid block before a valid round is reported, not dropped.
+  assert.equal(ticketRounds(t(['```json\n{ not json\n```', block(1)])).errors.length, 1, 'stray invalid block before round 1');
+  assert.equal(ticketRounds(t(['Some text', block(1)])).errors.length, 1, 'stray text before round 1');
+  assert.deepEqual(ticketRounds(t(['<!-- a comment -->', block(1)])).errors, [], 'comments are fine');
   assert.equal(lintTicket(parseTicket(t([block(1), noClose])), cfg).errors.filter(e => /round/i.test(e)).length, 1, 'lint reports it');
   // A reviewer quoting "<details>" or a code fence in its own words doesn't break the round it's in.
   const quoted = { meta: { round: 1 }, verdict: { summary: 'A <details> block with ```json and </details> inside.' } };
@@ -870,6 +874,10 @@ test('AC4 (F1): a damaged round block is an error, not silently dropped', () => 
   const next = rr.run('next', '1');
   assert.notEqual(next.status, 0);
   assert.match(next.stderr, /Review round 2 .*isn't a complete block/);
+  const stray = reviewRepo();
+  fs.writeFileSync(stray.ticketFile, fs.readFileSync(stray.ticketFile, 'utf8') + `\n## Review rounds\n\n\`\`\`json\n{ not json\n\`\`\`\n\n${block(1)}\n`);
+  assert.notEqual(stray.run('next', '1').status, 0, 'next refuses');
+  assert.notEqual(stray.run('lint', '1').status, 0, 'lint refuses');
 });
 
 test('AC4: lint reports an error for a round that is not valid JSON, or rounds out of order', () => {
