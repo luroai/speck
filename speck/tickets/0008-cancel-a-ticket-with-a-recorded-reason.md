@@ -1,7 +1,7 @@
 ---
 id: "0008"
 title: "Cancel a ticket with a recorded reason"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T20:00:31.803Z"
 ---
 # 0008 · Cancel a ticket with a recorded reason
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once you decide not to build a ticket, the only options are to delete it or leave it as a draft. Either way, there's no lasting record that the idea was considered and turned down, or why, so it can come back later as new work.
@@ -47,20 +47,22 @@ A ticket you decide against can be cancelled with a reason. It's filed away with
 - Update `speck/product.md`, `docs/brief.md`, the status comment in `templates/ticket.md` and the `/speck-status` skill to cover the new status.
 
 ## Blocked question
-Round 4 (fresh Codex session, working sandbox) found one more edge case in F1: a reason with an embedded `"` followed by ` #` (for example `say " # later`) was truncated, because `stripComment` didn't skip escaped quotes. The extra round you allowed is used up (`max_review_rounds: 4`). I have fixed `stripComment` (backslash escapes inside double quotes) and added three awkward reasons to the regression test; 66 tests pass, but that fix is unreviewed. Options: (a) allow one more round (limit 5) and re-review in a fresh session; (b) ship as is and accept that the last fix is unreviewed. Recommendation: (a), since each round has found something real and the fix is small.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
-Round 1 (codex, model gpt-6.1-sol, effort default): approved. Four criteria pass and no blocking findings, so `speck next` said ship. Caveat: the Codex sandbox failed to start, so it reviewed the diff and the supplied `npm test` output without inspecting the repo or re-running the tests itself (see the Delivery log).
+Round 1 (codex): approved, but the sandbox failed to start, so the reviewer saw only the diff and the supplied test output. Round 2: resumed that session and repeated the claim without inspecting anything. Round 3 (fresh session, working sandbox): changes requested, F1 cancel reasons like `false`, `0` or text with quotes did not round-trip. Round 4: F1 still lost text for `say " # later` (escaped quotes before a comment). Round 5: F1 resolved; F2 the fix deleted a matching `cancel_reason:` line from the ticket body. Round 6: F2 resolved; F3 a reason on the last frontmatter line was duplicated rather than replaced. Round 7: F3 resolved; F4 the `setField` rewrite lost the space before a trailing comment on empty fields. Round 8 (fresh session): approved, F1 to F4 resolved.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
-- Build: one sitting, one implementation commit plus the ticket commits. 64 tests pass (56 before, 8 new). 49 changed lines excluding tests, lockfiles and `speck/` (limit 1000).
-- Review rounds: 1 of 3. Reviewer tokens: 64,849. Elapsed since build started: 4 min.
+- Build: 69 tests pass (56 before this ticket, 13 new). Changed lines excluding tests and `speck/`: see `speck diffstat` (limit 1000).
+- Review rounds: 8, against a limit of 4. I raised `max_review_rounds` on this branch to 5, 6, 7 and 8 at your request and restored it to 4 before approval. Rounds 1 and 2 ran without a working sandbox (ticket 0001). From round 3 on, each round was a fresh Codex session with a working sandbox.
+- What the later rounds were: round 1's approval was the weak diff-only kind. The sandbox-enabled reviewer found a real reason-storage bug (F1) in round 3. Each later fix then exposed a related edge in the helper it touched (F2 to F4), so the final change also hardens the shared frontmatter helpers `scalar`, `stripComment` and `setField`.
 - Follow-ups, not done here:
-  - The round-1 reviewer reported "repository inspection and independent test execution were unavailable because the sandbox failed to start". It still read the diff and the test output, but a reviewer that can't run anything can't check a claim beyond what the builder hands it. That is ticket 0001, and this round is a live example.
-  - `speck status` prints a cancelled ticket's reason but not the date it was cancelled, though `speck cancel` records both. Worth adding if the date ever matters at a glance.
-  - A ticket cancelled mid-build keeps its branch and any review rounds, as the ticket's Out of scope says. Nothing cleans those up.
+  - `speck status` prints a cancelled ticket's reason but not the date it was cancelled.
+  - A ticket cancelled mid-build keeps its branch and any review rounds. Nothing cleans those up.
+  - Later review rounds resume the first round's Codex session. After a sandbox fix, start a fresh session (see 0001's follow-ups).
+  - `setField` and the frontmatter reader are minimal YAML handling. A real YAML parser would remove this class of edge case, but speck has no dependencies by design.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
