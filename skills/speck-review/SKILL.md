@@ -72,7 +72,7 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 
 This resumes the same Codex session. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
 
-**Reviewer with a `command`:** run the same command as for Codex, with `--response`. A command reviewer has no memory, so speck resends the round-1 prompt, every earlier verdict and response, then your new response and the diff since its last review.
+**Reviewer with a `command`:** run the same command as for Codex, with `--response`. If the reviewer's config has `session_id_path` and `resume_command`, speck continues its session and sends only your response, the new diff and the tests. Otherwise, or if resuming fails, speck says so in one line and resends the round-1 prompt, every earlier verdict and response, then your new response and the diff since its last review. Either way, carry on as normal.
 
 **claude-subagent:** use SendMessage to the agent id you kept in round 1. That resumes the same reviewer, with its earlier findings and the model and effort it started with. Don't spawn a new one. Include your response file, the output of `speck diff <id>` (the changes since its last review, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Save its reply as in round 1, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
 

@@ -530,16 +530,16 @@ export function splitCommand(cmd) {
   return words;
 }
 
-// Fills in {model} and {effort}. A blank value removes its word, and the flag just before it when the placeholder stands alone.
+// Fills in {model}, {effort} and {session}. A blank value removes its word, and the flag just before it when the placeholder stands alone.
 export function commandArgs(cmd, values) {
   const out = [];
   for (const word of splitCommand(cmd)) {
-    const keys = [...word.matchAll(/\{(model|effort)\}/g)].map(m => m[1]);
+    const keys = [...word.matchAll(/\{(model|effort|session)\}/g)].map(m => m[1]);
     if (keys.some(k => !values[k])) {
-      if (/^\{(model|effort)\}$/.test(word) && out.length && out[out.length - 1].startsWith('-')) out.pop();
+      if (/^\{(model|effort|session)\}$/.test(word) && out.length && out[out.length - 1].startsWith('-')) out.pop();
       continue;
     }
-    out.push(word.replace(/\{(model|effort)\}/g, (_, k) => values[k]));
+    out.push(word.replace(/\{(model|effort|session)\}/g, (_, k) => values[k]));
   }
   return out;
 }
@@ -584,27 +584,74 @@ function historyPrompt(repo, s, id) {
   return parts.join('\n\n');
 }
 
+// Runs one reviewer command with the prompt on stdin. Returns the process result, or { error } if it couldn't start.
+function runReviewer(repo, command, values, prompt) {
+  const [cmd, ...args] = commandArgs(command, values);
+  if (!cmd) return { cmd: '', error: 'the command is empty' };
+  const r = spawnSync(cmd, args, { cwd: repo, input: prompt, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (r.error) return { cmd, error: r.error.code === 'ENOENT' ? `\`${cmd}\` isn't installed or isn't on your PATH` : `\`${cmd}\` failed (${r.error.message})` };
+  return { ...r, cmd };
+}
+
+// The value at a dot path such as `session_id` or `meta.session.id`, as a string, or '' if there isn't one.
+function atPath(obj, dotted) {
+  const v = String(dotted).split('.').reduce((o, k) => (o && typeof o === 'object' ? o[k] : undefined), obj);
+  return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
+}
+
 // Runs a reviewer set up in config as a command. speck reads the verdict from its output, so the builder never handles it.
+// If the reviewer can resume a session (session_id_path and resume_command), later rounds continue it with only the new
+// round's prompt. Otherwise, or if resuming fails, a fresh run gets the full history.
 function runCommandReview(repo, id, name, command, opts) {
   const s = reviewSetup(repo, id, opts);
-  const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests) : historyPrompt(repo, s, id);
-  if (s.round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
+  const options = s.cfg.reviewer_options?.[name] || {};
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
-  const [cmd, ...args] = commandArgs(command, { model: settings.model, effort: settings.effort });
-  if (!cmd) throw new SpeckError(`The command for reviewer "${name}" in speck/config.yml is empty.`);
+  const values = { model: settings.model, effort: settings.effort };
+  // Only the latest round's session has seen every round so far. An older one would miss the rounds since.
+  const lastThread = s.prior[s.prior.length - 1]?.meta?.thread_id;
+  const resume = typeof options.resume_command === 'string' && options.resume_command.includes('{session}') ? options.resume_command : '';
   const started = Date.now();
-  const r = spawnSync(cmd, args, { cwd: repo, input: prompt, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: \`${cmd}\` ${r.error.code === 'ENOENT' ? 'isn\'t installed or isn\'t on your PATH' : `failed (${r.error.message})`}. Check reviewer_options.${name}.command in speck/config.yml.`);
+  let r = null, session = 'fresh';
+  if (s.round > 1) {
+    let why = '';
+    if (!resume) why = 'no resume_command with {session} is set for it';
+    else if (!lastThread) why = `no session id was saved from round ${s.round - 1}`;
+    else {
+      const tried = runReviewer(repo, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha }));
+      if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
+      else if (tried.status !== 0) why = `resuming session ${lastThread} exited ${tried.status}`;
+      else { r = tried; session = 'continued'; }
+    }
+    if (!r) console.log(`Started a fresh ${name} session with the full history, because ${why}.`);
+  }
+  if (!r) {
+    const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests) : historyPrompt(repo, s, id);
+    if (s.round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
+    r = runReviewer(repo, command, values, prompt);
+  }
+  if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: ${r.error}. Check reviewer_options.${name} in speck/config.yml.`);
   const tail = r.stderr.trim().split('\n').slice(-5).join('\n');
   const stderrNote = tail ? `\nLast lines of its error output:\n${tail}` : '';
-  if (r.status !== 0) throw new SpeckError(`The ${name} reviewer (${cmd}) exited ${r.status}, so no round was recorded.${stderrNote}`);
+  if (r.status !== 0) throw new SpeckError(`The ${name} reviewer (${r.cmd}) exited ${r.status}, so no round was recorded.${stderrNote}`);
   const { verdict, envelope } = verdictFromOutput(r.stdout);
-  if (!verdict) throw new SpeckError(`The ${name} reviewer (${cmd}) didn't return a verdict: its output wasn't JSON, a \`\`\`json block or a JSON envelope with a "result". No round was recorded.${stderrNote}`);
+  if (!verdict) throw new SpeckError(`The ${name} reviewer (${r.cmd}) didn't return a verdict: its output wasn't JSON, a \`\`\`json block or a JSON envelope with a "result". No round was recorded.${stderrNote}`);
   // An invalid verdict is the reviewer's failure too, so it gets the same stderr lines.
   try { validateVerdict(structuredClone(verdict)); } catch (e) { if (e instanceof SpeckError) throw new SpeckError(`${e.message} The ${name} reviewer's verdict wasn't recorded.${stderrNote}`); throw e; }
   const usage = envelope?.usage && typeof envelope.usage === 'object' ? { usage: envelope.usage } : {};
-  return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), reviewed_sha: s.head,
-    ...(s.response ? { builder_response: s.response } : {}), seconds: Math.round((Date.now() - started) / 1000), ...usage });
+  // A resumed run that doesn't report its session id keeps the one it resumed.
+  const thread = (options.session_id_path ? atPath(envelope ?? jsonIn(r.stdout), options.session_id_path) : '') || (session === 'continued' ? lastThread : '');
+  return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), reviewed_sha: s.head, session,
+    ...(thread ? { thread_id: thread } : {}), ...(s.response ? { builder_response: s.response } : {}),
+    seconds: Math.round((Date.now() - started) / 1000), ...usage });
+}
+
+// Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
+// whenever an earlier round saved a session, so that rule gives theirs.
+function sessionLabel(r, earlier) {
+  if (r.meta.session) return `${r.meta.session} session`;
+  if (r.meta.round === 1) return 'fresh session';
+  if (r.meta.reviewer === 'codex') return earlier.some(p => p.meta.thread_id) ? 'continued session' : 'fresh session';
+  return 'session not recorded';
 }
 
 export function reviewPack(repo, id) {
@@ -636,11 +683,11 @@ export function reviewPack(repo, id) {
     `- Changed lines (excluding tests and lockfiles): ${diff.total} (limit ${cfg.limits.max_changed_lines})`,
     `- product.md update: ${v.product_md.accurate ? 'checked and accurate' : `⚠️ ${v.product_md.note}`}`,
     '', '### Review history',
-    ...all.map(r => {
+    ...all.map((r, i) => {
       const f = r.verdict.findings;
       const open = f.filter(x => x.severity === 'blocking' && ['open', 'dispute_rejected'].includes(x.state)).length;
       const closed = f.filter(x => x.severity === 'blocking').length - open;
-      return `- Round ${r.meta.round} (${who(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor`;
+      return `- Round ${r.meta.round} (${who(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor; ${sessionLabel(r, all.slice(0, i))}`;
     }),
     ...(latest.size ? ['', '<details><summary>Findings</summary>', '',
       ...[...latest.values()].map(f => `- **${f.id}** (${f.severity}, ${f.state}) \`${f.file}\`: ${f.issue}`), '', '</details>'] : []),
