@@ -448,6 +448,14 @@ function reviewerPrompt(repo, ticket, cfg, round, extra) {
   ].join('\n\n');
 }
 
+const NO_INSPECT = '⚠️ Reviewer could not inspect the repo; reviewed the diff only';
+
+// True when a command the reviewer ran failed because its sandbox (bubblewrap) could not start.
+function sandboxFailed(events) {
+  return events.some(e => e.item?.type === 'command_execution' && e.item.status !== 'in_progress' && (e.item.status === 'failed' || (e.item.exit_code ?? 0) !== 0)
+    && /bwrap/i.test(String(e.item.aggregated_output ?? '')));
+}
+
 function runCodexReview(repo, id, opts) {
   const cfg = loadConfig(repo);
   const ticket = findTicket(repo, id);
@@ -484,7 +492,7 @@ function runCodexReview(repo, id, opts) {
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, thread_id: thread, seconds: Math.round((Date.now() - started) / 1000), usage });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage });
 }
 
 // ---------- review pack ----------
@@ -504,10 +512,12 @@ export function reviewPack(repo, id) {
   const latest = new Map(findings.map(f => [f.id, f]));
   const tokens = all.reduce((n, r) => n + (r.meta.usage?.input_tokens || 0) + (r.meta.usage?.output_tokens || 0), 0);
   const started = t.fm.started ? new Date(t.fm.started) : null;
+  const blind = all.filter(r => r.meta.sandbox_ok === false);
   const who = m => `${m.reviewer}, model ${m.reviewer_model || 'default'}, effort ${m.reviewer_effort || 'default'}`;
   const lines = [
     `## ${t.fm.id} · ${t.fm.title}`,
     `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, round ${last.meta.round} of ${cfg.limits.max_review_rounds})`,
+    ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
     '', `**Summary:** ${v.summary}`, '',
     '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
@@ -975,6 +985,7 @@ function printRound(rec, cfg, all) {
   const v = rec.verdict;
   console.log(`Round ${rec.meta.round}: ${v.verdict}`);
   console.log(v.summary);
+  if (rec.meta.sandbox_ok === false) console.log(NO_INSPECT);
   for (const c of v.criteria) console.log(`  AC${c.id} ${c.status}: ${c.evidence}`);
   for (const f of v.findings) console.log(`  ${f.id} [${f.severity}/${f.state}] ${f.file}: ${f.issue}${f.suggested_fix ? ` → ${f.suggested_fix}` : ''}`);
   const next = nextAction(all, cfg);

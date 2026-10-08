@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: 0008
+Last updated by ticket: 0001
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents. It's aimed at PMs and founders who write good tickets but don't review code line by line. Ideas become small numbered tickets. One agent builds each ticket, and a second, independent agent reviews it in turns until it approves. The human holds two gates: approving a ticket for development, and shipping it with `/speck-ship`. Everything happens in the local repo, with no PR.
@@ -23,6 +23,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - **Reviewer model and effort:** `reviewer_model` and `reviewer_effort` in `speck/config.yml` set them for the whole repo. `speck new` copies them into each ticket, where they can be overridden, and a blank ticket value falls back to config. If both are blank, speck passes nothing and the reviewer uses its own default. Codex gets them in every round, and the review skill starts a `claude-subagent` reviewer with them. `speck lint` accepts only a blank effort or `low`, `medium`, `high`, `xhigh` or `max`. Model names aren't checked. Every saved round and the review pack show the model and effort used, or "default".
 - **Codex review loop:** read-only sandbox, structured verdict (`templates/review-verdict.schema.json`), and the same session resumed across rounds, using the thread id recorded with the latest round.
 - **Review rounds live in the ticket:** every round, from any reviewer, is added to a `## Review rounds` section at the end of the ticket file, as a collapsed `<details>` block with a one-line summary (round, reviewer, verdict) and the full record as a `json` code block. After a round, the ticket is the only tracked file that changes, and the round can stay uncommitted until the builder's next commit. `next`, `pack` and `ship` read the rounds from there. The section is left out of the reviewer's diff and prompt and the size count, and `speck lint` reports an error if a round isn't valid JSON or the rounds aren't numbered 1, 2, 3… in order. Working files for a review in progress (raw reviewer output, saved reviewer settings) go in `speck/.cache/`, which git ignores. Re-running `speck init` moves rounds from an older speck's `speck/reviews/<id>/` into their tickets and removes `speck/reviews/`. Anything it can't place, such as rounds for an id with no ticket, is left where it is with the reason.
+- **Sandbox warning:** if a command the Codex reviewer ran failed because its sandbox couldn't start (the error mentions `bwrap`), `speck review` prints "⚠️ Reviewer could not inspect the repo; reviewed the diff only", the round's `meta` records `sandbox_ok: false`, and the review pack shows the same warning for each such round. Rounds without the failure carry no flag.
 - **Safeguards:**
   - An `approve` with failing criteria or open blocking findings is overridden to `changes_requested`.
   - The loop blocks after the maximum number of rounds, after the same dispute is rejected twice in a row, or on escalation.
@@ -44,7 +45,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 ## Known limits
 - One ticket at a time; no parallel runs or dependency scheduling.
 - Claude Code is the only tested builder. The `claude-subagent` reviewer path is written but hasn't been tested end to end.
-- If the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer works only from the diff and test output it's given.
+- If the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer works only from the diff and test output it's given. speck warns about this but can't fix it. Later rounds resume the same Codex session, so a reviewer that has seen the sandbox fail may keep saying so without trying again. Start a fresh session after fixing the host.
 - No PR flow yet. Shipping pushes the base branch directly, so it fails if the branch is protected by a "require a pull request" rule. A PR mode for teams is parked in `speck/ideas/2026-10-08-pr-ship-mode.md`.
 - In Codex and other agents, nothing technically stops the agent from starting `/speck-ship`. Only the skill and agent instructions say not to. Claude Code enforces it with `disable-model-invocation`.
 - If the base branch has moved and conflicts, `speck ship` refuses. There's no automatic rebase.
