@@ -1,12 +1,13 @@
 # speck
 
-Last updated by ticket: 0001
+Last updated by ticket: 0010
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents. It's aimed at PMs and founders who write good tickets but don't review code line by line. Ideas become small numbered tickets. One agent builds each ticket, and a second, independent agent reviews it in turns until it approves. The human holds two gates: approving a ticket for development, and shipping it with `/speck-ship`. Everything happens in the local repo, with no PR.
 
 ## Current capabilities
 - **Six skills**, installed into each project's `.claude/skills/` and `.agents/skills/` so Claude Code, Codex, cptr and other agents find them: `/speck-capture`, `/speck-ticket`, `/speck-build`, `/speck-review`, `/speck-ship` and `/speck-status`.
+- **Overlap check before new work:** before `/speck-capture` writes an idea note, and before `/speck-ticket` runs `speck new`, the agent compares the work with every idea note, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria, not only titles) and `speck/product.md`. If anything has the same, or largely the same, outcome, it names each match: the idea's path and status, the ticket's id and status (with the reason if cancelled) or the line in `product.md` that covers it. It then asks whether to add to the existing item, go ahead anyway or stop, and writes nothing until you answer. If nothing overlaps, it says so in one line. Overlap is the agent's judgement, not a text match, and the check lives in the skill instructions only.
 - **CLI** (`scripts/speck.mjs`, Node 20+, no dependencies):
   - `init`: one-step install and update, run as `npx github:luroai/speck init`. It creates `speck/`, copies the skills and the CLI (into `.speck/`) into the project, points AGENTS.md and CLAUDE.md at it, and runs `doctor`. Re-running it refreshes the skills and CLI and keeps config and tickets, and files any ticket already marked `done` under `speck/tickets/done/`. In speck's own repo it links rather than copies.
   - `doctor`: checks Node, git, Claude Code and Codex (installed and signed in), with a plain-English fix for each problem. The GitHub CLI is reported as optional.

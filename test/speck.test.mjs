@@ -1189,3 +1189,44 @@ test('setField keeps a trailing comment and the space before it, including on em
   assert.deepEqual([parsed.source, parsed.reviewer_effort, parsed.status, parsed.last], ['speck/ideas/example.md', 'high', 'ready', 'x']);
   assert.equal(setField(doc, 'last', 'x').match(/^last:/gm).length, 1);
 });
+
+// Ticket 0010: the overlap check is skill text only, so these tests read the skills.
+const skillText = n => fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8');
+const overlapCheck = md => (md.split('## Check for overlap first')[1] || '').split('\n## ')[0];
+
+test('0010 AC1: /speck-capture checks ideas, every ticket (in full) and product.md before writing a note', () => {
+  const md = skillText('speck-capture');
+  const check = overlapCheck(md);
+  assert.ok(check, 'capture skill has a "Check for overlap first" section');
+  assert.ok(md.indexOf('## Check for overlap first') < md.indexOf('speck/ideas/<YYYY-MM-DD>'), 'the check comes before the note is written');
+  assert.match(check, /every note in `speck\/ideas\/`/);
+  assert.match(check, /every ticket in `speck\/tickets\/` and `speck\/tickets\/done\/`/);
+  assert.match(check, /problem, outcome and acceptance criteria, not only/i);
+  assert.match(check, /`speck\/product\.md`/);
+  assert.match(check, /same, or largely the same, outcome/i, 'overlap is a judgement, not a text match');
+});
+
+test('0010 AC2: /speck-ticket runs the same check before speck new', () => {
+  const md = skillText('speck-ticket');
+  const ref = md.search(/overlap check/i);
+  assert.ok(ref >= 0, 'ticket skill refers to the overlap check');
+  assert.match(md, /`speck-capture` skill/);
+  assert.ok(ref < md.indexOf('speck new "<title>"'), 'the check comes before speck new');
+  assert.doesNotMatch(md, /`speck status` to avoid duplicating/, 'the title-only check is replaced');
+});
+
+test('0010 AC3: on overlap the agent names each match and waits for an answer before writing', () => {
+  const check = overlapCheck(skillText('speck-capture'));
+  assert.match(check, /idea[^\n]*path[^\n]*`Status:`/i, 'ideas: path and status');
+  assert.match(check, /ticket[^\n]*id[^\n]*status[^\n]*cancel_reason|ticket[^\n]*id[^\n]*status[^\n]*reason/i, 'tickets: id, status and cancel reason');
+  assert.match(check, /product\.md`[^\n]*line/i, 'product.md: the covering line');
+  assert.match(check, /add to the existing item, go ahead anyway or stop/);
+  assert.match(check, /write nothing until the user answers/i);
+});
+
+test('0010 AC4: with no overlap the skill carries on and says so in one line', () => {
+  const check = overlapCheck(skillText('speck-capture'));
+  assert.match(check, /no overlap/i);
+  assert.match(check, /one line/i);
+  assert.match(check, /carry on|continue/i);
+});
