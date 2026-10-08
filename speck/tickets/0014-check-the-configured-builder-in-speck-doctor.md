@@ -49,3 +49,74 @@ started: "2026-10-08T21:48:15.075Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f0dea2dea4de4c06db4d5f5c44afc7782d0a455b",
+    "thread_id": "01a11d80-41dc-7791-8d0d-b54f110f4602",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 129852,
+      "cached_input_tokens": 80640,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 800,
+      "reasoning_output_tokens": 12
+    },
+    "saved_at": "2026-10-08T21:52:20.283Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: doctorChecks selects the configured CLI and installation link. Test '0014 AC1' exercises missing and present executables for all four builders and excludes other builder checks."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Test '0014 AC2' covers aider only. Independently calling doctorChecks with constructor, toString or __proto__ throws TypeError because BUILDERS[builder] resolves inherited properties."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "doctorChecks parses configured commands with splitCommand and checks their executable with onPath. Test '0014 AC3' covers missing/present command executables, a Codex command override, and preserved default Codex installation and sign-in checks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "README Requirements and product.md describe configurable builders and skill-reading agents, naming Claude Code, Codex and Cursor. Test '0014 AC4' checks these documentation changes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Unknown builder names matching Object.prototype properties crash doctor instead of producing the required information line. Reproduced with constructor, toString and __proto__ in doctorChecks.",
+        "suggested_fix": "Use Object.hasOwn(BUILDERS, builder), a Map, or a null-prototype lookup. Extend the unknown-builder test to cover inherited property names.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The intended behaviour is documented, but the claim that any unknown builder receives a non-failing information line is currently false for inherited property names."
+    },
+    "escalation_question": "",
+    "summary": "The four supported builders and configured reviewer checks are implemented with meaningful tests. One edge case needs fixing: certain unknown builder names crash doctor rather than showing an information line. I verified this directly; I did not rerun the suite because its tests create files in this read-only environment."
+  }
+}
+```
+
+</details>

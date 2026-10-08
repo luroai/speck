@@ -1839,13 +1839,16 @@ test('0014 AC1: doctor checks only the configured builder, by name, with an inst
 });
 
 test('0014 AC2: an unknown builder gets one information line and is not a failure', () => {
-  const r = doctorRepo({ config: { builder: 'aider', reviewer: 'claude-subagent' } });
-  const lines = r.out.split('\n').filter(l => /aider/.test(l));
-  assert.equal(lines.length, 1, r.out);
-  assert.match(lines[0], /can't check/i);
-  assert.doesNotMatch(r.out, /builds tickets/);
-  assert.equal(r.status, 0, r.out);
-  assert.match(r.out, /All set/);
+  // Names that are also built-in object properties are unknown builders too (round 1 F1).
+  for (const builder of ['aider', 'constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    const r = doctorRepo({ config: { builder, reviewer: 'claude-subagent' } });
+    const lines = r.out.split('\n').filter(l => l.includes(`"${builder}"`));
+    assert.equal(lines.length, 1, `${builder}: ${r.out}${r.stderr}`);
+    assert.match(lines[0], /can't check/i, builder);
+    assert.doesNotMatch(r.out, /builds tickets/, builder);
+    assert.equal(r.status, 0, `${builder}: ${r.out}${r.stderr}`);
+    assert.match(r.out, /All set/, builder);
+  }
 });
 
 test('0014 AC3: a reviewer command is checked by its first word on the PATH, and codex keeps its checks', () => {

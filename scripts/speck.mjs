@@ -773,7 +773,8 @@ export function doctorChecks(repo, cfg = {}) {
       'Run `git init` here, or run speck from inside your project folder.'),
   ];
   // Only the configured builder is checked. speck can't check one it doesn't know, and that isn't a failure.
-  if (BUILDERS[builder]) {
+  // hasOwn, so a name like `constructor` or `toString` is an unknown builder, not a built-in object property.
+  if (Object.hasOwn(BUILDERS, builder)) {
     const [label, cmd, fix] = BUILDERS[builder];
     checks.push(check(`${label} (builds tickets)`, onPath(cmd), fix));
   } else checks.push({ name: `speck can't check builder "${builder}": it only knows ${Object.keys(BUILDERS).join(', ')}. Make sure it reads skills from .agents/skills/ or .claude/skills/.`, ok: true, info: true });
