@@ -848,6 +848,9 @@ test('AC3 (F3): other tickets in the diff lose their Review rounds sections too,
   assert.doesNotMatch(p, /## Review rounds|"thread_id"|OLD|speck\/reviews/, "the other ticket's rounds, and the old review files it replaced, are left out");
 });
 
+// A ticket with one round written the way speck writes it.
+const appendable = (body, rec) => `---\n${fm()}\n---\n${body}\n## Review rounds\n\n<details><summary>Round 1 · codex · approve</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>\n`;
+
 test('AC4 (F1): a damaged round block is an error, not silently dropped', () => {
   const block = n => `<details><summary>Round ${n} · codex · approve</summary>\n\n\`\`\`json\n{"meta":{"round":${n}}}\n\`\`\`\n\n</details>`;
   const t = blocks => `---\n${fm()}\n---\n${good}\n## Review rounds\n\n${blocks.join('\n\n')}\n`;
@@ -857,6 +860,10 @@ test('AC4 (F1): a damaged round block is an error, not silently dropped', () => 
   assert.equal(ticketRounds(t([block(1), block(2).replace('</details>', '')])).errors.length, 1, 'missing </details>');
   assert.equal(ticketRounds(t(['```json\n{}\n```'])).errors.length, 1, 'a code block outside any round');
   assert.equal(lintTicket(parseTicket(t([block(1), noClose])), cfg).errors.filter(e => /round/i.test(e)).length, 1, 'lint reports it');
+  // A reviewer quoting "<details>" or a code fence in its own words doesn't break the round it's in.
+  const quoted = { meta: { round: 1 }, verdict: { summary: 'A <details> block with ```json and </details> inside.' } };
+  const qt = parseTicket(appendable(good, quoted));
+  assert.deepEqual(ticketRounds(qt.raw), { rounds: [quoted], errors: [] });
   // Commands that read the history refuse rather than guess.
   const rr = reviewRepo();
   fs.writeFileSync(rr.ticketFile, fs.readFileSync(rr.ticketFile, 'utf8') + `\n## Review rounds\n\n${block(1)}\n\n${noClose}\n`);

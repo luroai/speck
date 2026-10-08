@@ -306,8 +306,9 @@ export function stripRounds(text) {
 export function ticketRounds(text) {
   const { section } = splitRounds(text);
   const rounds = [], errors = [];
-  // Split on <details> first, so a damaged block can't borrow the next block's code fence and hide a round.
-  const blocks = section.split(/(?=<details>)/).slice(1);
+  // Split on <details> at the start of a line first, so a damaged block can't borrow the next block's code fence
+  // and hide a round. JSON strings never start a line, so a reviewer quoting "<details>" can't split a round.
+  const blocks = section.split(/^(?=<details>)/m).slice(1);
   blocks.forEach((block, i) => {
     const m = block.match(/^<details><summary>[^\n]*<\/summary>\n\n```json\n([\s\S]*)\n```\n\n<\/details>\s*$/);
     if (!m) return errors.push(`Review round ${i + 1} in "${ROUNDS_HEADING}" isn't a complete block (a <details> summary, a \`json\` code block and </details>).`);

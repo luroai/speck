@@ -144,3 +144,92 @@ Each ticket file holds its own review rounds, so a ticket is the complete record
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "97de4eec1ae4e8e15f1f09d018052de8a6bc1650",
+    "thread_id": "01a11d02-5937-78c3-b3fe-ae902cdc650c",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 174086,
+      "cached_input_tokens": 110080,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2190,
+      "reasoning_output_tokens": 403
+    },
+    "saved_at": "2026-10-08T19:37:57.069Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveRound and appendRounds write full records in collapsed details blocks in the ticket. Supplied passing AC1 tests exercise review, record, sequential numbering and the ticket being the only tracked change."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "rounds reads ticketRounds. The passing AC2 integration test exercises next, pack, ship and preservation of history when filing the ticket into done/."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewDiff now strips rounds from every changed ticket and excludes legacy review files. Passing AC3 tests verify ordinary edits remain visible and other tickets' histories disappear. The existing size rule excludes all speck/ files; retaining that rule is accepted."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The new F1 regression covers incomplete details blocks and a standalone stray code block. However, ticketRounds discards everything before the first <details> and checks for stray fences only when there are no details blocks. Invalid JSON in a preceding code block is therefore still silently ignored."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC5 tests cover live and archived migration, idempotence, removal of the old directory, preserving unplaceable histories and continuing with other tickets."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The validation fix still ignores code blocks before the first details block. For example, a Review rounds section containing ```json followed by invalid JSON and a closing fence, then a valid round-1 details block, returns one round and no errors. section.split(...).slice(1) discards the invalid prefix, and the stray-code check runs only when blocks.length is zero.",
+        "suggested_fix": "Validate the prefix before the first details block, allowing only the heading, expected comment and whitespace. Add a regression with an invalid stray JSON block followed by a valid round, checking both lint and next refuse it.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/speck.test.mjs",
+        "issue": "The size count retains the established exclusion of all speck/ files. The builder's explanation distinguishes that existing rule from preserving ordinary ticket edits in the reviewer diff.",
+        "suggested_fix": "No change required; the dispute is accepted in the context of the existing size rule.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "reviewDiff now strips history from all changed tickets and excludes deleted legacy review files. The new regression verifies that another ticket's ordinary edit remains visible.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "Diff filtering now matches the specification, but the claim that lint detects invalid round blocks remains incomplete because malformed content before a valid details block is ignored."
+    },
+    "escalation_question": "",
+    "summary": "The diff filtering issue is fixed, and retaining the existing size-count rule is reasonable. One validation gap remains: damaged history before a valid round can still be silently ignored. The supplied suite reports 56 passing tests; independent repository access remains unavailable because the sandbox failed to start."
+  }
+}
+```
+
+</details>
