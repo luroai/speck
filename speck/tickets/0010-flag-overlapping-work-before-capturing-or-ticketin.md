@@ -1,7 +1,7 @@
 ---
 id: "0010"
 title: "Flag overlapping work before capturing or ticketing"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | done
+status: building            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0008", "0009"]                # ticket ids that must be done first
 created: 2026-10-08
+started: "2026-10-08T20:37:08.677Z"
 
 ---
 # 0010 · Flag overlapping work before capturing or ticketing
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `/speck-capture` writes a new idea note without looking at what already exists. `/speck-ticket` only checks the one-line titles in `speck status`. The same work can be captured or ticketed twice, or picked up again after it has shipped or been turned down.
