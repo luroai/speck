@@ -744,12 +744,28 @@ Read it with \`node .speck/scripts/speck.mjs pack <id>\`, then type /speck-ship 
 To update speck later, run the same install command again.`);
 }
 
+// An idea note's status line, as /speck-capture writes it: `Captured: <date> · Status: <value>`.
+const STATUS_LINE = /^((?:.*·[ \t]*)?Status:[ \t]*)(.*)$/m;
+const ideaStatus = text => (text.match(STATUS_LINE) || [])[2]?.trim() ?? '';
+
+// `ticketed (<ids>)`, with the new id added unless it's already listed. Any other value is replaced.
+export function ticketedStatus(value, id) {
+  const m = value.match(/^ticketed\b\s*(?:\(([^)]*)\))?(.*)$/);
+  const ids = m ? (m[1] || '').split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (!ids.includes(id)) ids.push(id);
+  return `ticketed (${ids.join(', ')})${m ? m[2] : ''}`;
+}
+
 function cmdNew(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const title = args.filter(a => !a.startsWith('--')).join(' ').trim();
   if (!title) throw new SpeckError('Usage: speck new <title> [--source=path]');
   const source = (args.find(a => a.startsWith('--source=')) || '').slice(9);
+  // The source is checked before anything is written, so a mistyped path creates no ticket.
+  const sourceFile = source && path.resolve(repo, source);
+  if (sourceFile && !fs.statSync(sourceFile, { throwIfNoEntry: false })?.isFile())
+    throw new SpeckError(`No idea note at ${source}. Check the path (relative to the repo root), then run this again.`);
   const id = nextId(repo);
   let text = fs.readFileSync(path.join(TEMPLATES, 'ticket.md'), 'utf8');
   text = setField(text, 'id', id);
@@ -764,6 +780,11 @@ function cmdNew(args) {
   const file = path.join(ticketsDir(repo), `${id}-${slugify(title)}.md`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, text);
+  if (sourceFile) {
+    const note = fs.readFileSync(sourceFile, 'utf8');
+    if (STATUS_LINE.test(note)) fs.writeFileSync(sourceFile, note.replace(STATUS_LINE, (_, head, value) => head + ticketedStatus(value, id)));
+    else console.error(`⚠️ ${source} has no \`Status:\` line, so its status couldn't be updated. Add \`Status: ticketed (${id})\` to it by hand.`);
+  }
   console.log(path.relative(process.cwd(), file));
 }
 
@@ -969,8 +990,9 @@ function cmdStatus() {
     }
   }
   const ideas = path.join(repo, 'speck', 'ideas');
-  const n = fs.existsSync(ideas) ? fs.readdirSync(ideas).filter(f => f.endsWith('.md')).length : 0;
-  console.log(`\nIDEAS (${n}) in speck/ideas/`);
+  const notes = fs.existsSync(ideas) ? fs.readdirSync(ideas).filter(f => f.endsWith('.md')) : [];
+  const ticketed = notes.filter(f => ideaStatus(fs.readFileSync(path.join(ideas, f), 'utf8')).startsWith('ticketed')).length;
+  console.log(`\nIDEAS (${notes.length}: ${notes.length - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
 }
 
 function cmdDiffstat() {
