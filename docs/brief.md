@@ -6,23 +6,23 @@ Status: v0.1 brief, implemented · 8 October 2026
 
 **You own two decisions: what gets built and what gets shipped. Everything in between is automated.**
 
-PMs have practised spec-driven development for years. It's called a PRD, and it reaches engineers as a ticket. speck applies the same workflow to AI coding agents. You write, or approve, a small ticket. One agent builds it. A second, independent agent reviews it until it's good enough. Then you merge.
+PMs have practised spec-driven development for years. It's called a PRD, and it reaches engineers as a ticket. speck applies the same workflow to AI coding agents. You write, or approve, a small ticket. One agent builds it. A second, independent agent reviews it until it's good enough. Then you ship it.
 
 OpenSpec showed the value of keeping specs in the repo. speck keeps that idea but swaps the ceremony for small tickets, an adversarial review loop, and one living spec.
 
 ## Who it's for
 
 - **Primary:** PMs and non-technical founders who can write a good ticket but can't review code line by line, and who want to ship personal or small-team projects quickly without giving up quality.
-- **Secondary:** engineers who want a lightweight, auditable loop of ticket, agent build, independent review and PR.
+- **Secondary:** engineers who want a lightweight, auditable loop of ticket, agent build, independent review and merge.
 - **Not for:** large multi-team specification, or work that needs design documents spanning many changes. Use OpenSpec or similar for that.
 
 ## Principles
 
 1. **The repo is the source of truth.** Ideas, tickets, review transcripts and the living spec are Markdown files in the repo. Any tool, including the future board, reads and writes these files and nothing else.
-2. **Small tickets only.** A ticket is one agent, one sitting, one PR. If a ticket is too big for that, it gets split. It never gets stretched.
+2. **Small tickets only.** A ticket is one agent, one sitting, one branch. If a ticket is too big for that, it gets split. It never gets stretched.
 3. **Review is adversarial and independent by default.** The builder never reviews its own work. A separate reviewer, preferably a different model, must approve it.
-4. **Humans hold two gates.** Gate 1 is moving a ticket to `ready`. Gate 2 is merging the PR in GitHub. An agent can never merge.
-5. **Evidence over trust.** Every PR carries a review pack that a non-coder can judge: each acceptance criterion with its result, a plain-English change summary, and flagged risks.
+4. **Humans hold two gates.** Gate 1 is moving a ticket to `ready`. Gate 2 is shipping it with `/speck-ship`, which merges it. Agents never merge or ship unless the user runs `/speck-ship`.
+5. **Evidence over trust.** Every approved ticket has a review pack (`speck pack <id>`) that a non-coder can judge: each acceptance criterion with its result, a plain-English change summary, and flagged risks.
 6. **Measure actuals.** Every ticket records attempts, review rounds, time and cost. That data is the product's proof.
 
 ## The workflow
@@ -35,14 +35,14 @@ idea / conversation
   → /speck-build 0007     → branch speck/0007-<slug>
        tests from acceptance criteria → implementation → tests pass
        → review loop with reviewer subagent (see below)
-       → approved?  yes → /speck-ship
+       → approved?  yes → logs filled in, status: approved (waits on its branch, no PR)
                     no, after max rounds → status: blocked + question for you
-  → /speck-ship 0007      → PR + review pack + `speck/review` check = success
-                            ticket set to done and product.md updated *inside the PR*
-  → you approve and merge in GitHub                        [GATE 2]
+  → you read `speck pack 0007`
+  → /speck-ship 0007      → checks, final test run, ticket set to done,      [GATE 2]
+                            merge into main, push, branch deleted
 ```
 
-Because the ticket's `done` status and the `product.md` update travel in the same PR, merging is the moment the spec becomes true. If you close the PR unmerged, `main` is unchanged.
+The `product.md` update is made and reviewed on the ticket branch, and `speck ship` sets the ticket to `done` on that branch just before merging. So merging is the moment the spec becomes true. Until you ship, `main` is unchanged. `speck ship` refuses, changing nothing, unless the ticket is `approved`, the review loop says `ship`, the working tree is clean, nothing outside `speck/` changed after the reviewer approved, and the tests pass. A merge conflict is aborted and leaves everything as it was.
 
 ## Ticket size rules
 
@@ -87,7 +87,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
    - **`needs_pm`:** the ticket becomes `blocked` with that question.
 5. **Minor findings never block.** They're logged in the ticket and offered as new ideas.
 
-**Records:** each round is saved to `speck/reviews/0007/round-N.json`, and a short summary goes into the ticket's Review log. The review pack in the PR is built from these files.
+**Records:** each round is saved to `speck/reviews/0007/round-N.json`, and a short summary goes into the ticket's Review log. The review pack (`speck pack <id>`) is built from these files.
 
 **Reviewer adapters (v0.1)**
 
@@ -119,19 +119,16 @@ speck/
 
 | Command | Does |
 |---|---|
-| `npx github:luroai/speck init` | Creates `speck/`, `config.yml` and `product.md`, installs the skills and the `speck` command into the project, and runs `speck doctor`. Re-run it to update. Prints the branch-protection settings to apply. |
-| `speck doctor` | Checks that git, GitHub, Claude Code and Codex are installed and signed in, with a plain-English fix for each problem. |
+| `npx github:luroai/speck init` | Creates `speck/`, `config.yml` and `product.md`, installs the skills and the `speck` command into the project, and runs `speck doctor`. Re-run it to update. |
+| `speck doctor` | Checks that git, Claude Code and Codex are installed and signed in, with a plain-English fix for each problem. The GitHub CLI is optional. |
 | `/speck-capture` | Turns an idea or the current conversation into `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into a numbered draft ticket. Runs the size checks and proposes splits. |
-| `/speck-build <id>` | Takes a `ready` ticket: branch, tests from acceptance criteria, implementation, then the review loop |
+| `/speck-build <id>` | Takes a `ready` ticket: branch, tests from acceptance criteria, implementation, then the review loop. Ends at `approved`, with no PR. |
 | `/speck-review <id>` | Runs the review loop on its own (for example, after a manual fix) |
-| `/speck-ship <id>` | Opens the PR with the review pack, sets the `speck/review` check, and marks the ticket done and updates `product.md` inside the PR |
-| `/speck-status` | Lists tickets by status, with blocked questions first |
+| `/speck-ship <id>` | Your gate. Runs `speck ship <id>`: checks, marks the ticket done, merges into the base branch, pushes and deletes the branch. Only you start it; in Claude Code the skill can't be started by the agent. |
+| `/speck-status` | Lists tickets by status: approved (waiting for you) first, then blocked with their questions |
 
-Merge protection that you set up once per repo:
-- Require the `speck/review` status check.
-- Require one approving review from you.
-- Agents have no merge rights.
+Agents never merge or ship unless the user runs `/speck-ship`. Shipping pushes the base branch directly, so it mustn't be protected by a "require a pull request" rule.
 
 ## The living spec: `speck/product.md`
 
@@ -141,12 +138,12 @@ A single document that a new agent session or a person can read in about five mi
 - key decisions and constraints;
 - known limits.
 
-It's updated only through `/speck-ship`, inside the PR, and the reviewer checks the update. It describes the present, not history; the history lives in tickets.
+It's updated on each ticket's branch during the build, the reviewer checks the update, and it reaches `main` when you ship. It describes the present, not history; the history lives in tickets.
 
 ## Two projects
 
 1. **speck (this repo):** the file format, the skills, the review loop and the CLI. It's useful entirely on its own.
-2. **speck board (later):** a local kanban app over `speck/`. Columns map to ticket status, and moving a card to Ready for Dev is Gate 1 and starts `/speck-build`. It reads and writes the same files, and merging stays in GitHub. Captured as an idea in `speck/ideas/`.
+2. **speck board (later):** a local kanban app over `speck/`. Columns map to ticket status, and moving a card to Ready for Dev is Gate 1 and starts `/speck-build`. It reads and writes the same files, and shipping stays with `/speck-ship`. Captured as an idea in `speck/ideas/`.
 
 ## v0.1 scope
 
@@ -174,5 +171,5 @@ Out of scope for v0.1:
 
 - Licence: MIT is set in the manifests as a placeholder. Confirm before publishing.
 - Package name: `speck` is taken on npm and PyPI. `speck-dev` is set in `package.json` (private). It installs a `speck` command.
-- GitHub self-approval: GitHub won't let you approve a PR you opened. If agents use your own `gh` login, require the `speck/review` check and treat your merge as the gate, or give agents a bot account (ticket 0002).
+- PR ship mode for teams: bring back GitHub PRs as an option (`ship: pr`), with the GitHub self-approval question that comes with it (ticket 0002). Parked in `speck/ideas/2026-10-08-pr-ship-mode.md`.
 - Resolved 8 October 2026: `codex exec resume` accepts `--output-schema` and keeps the session's memory. Verified end to end.

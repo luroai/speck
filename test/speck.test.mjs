@@ -268,3 +268,183 @@ test('AC5: recorded subagent rounds keep the settings the reviewer was started w
     assert.equal(r.roundFile(n).meta.reviewer_effort, 'low');
   }
 });
+
+// ---------- 0006: ship approved tickets locally ----------
+
+const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
+const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' };
+
+// A repo with one ticket built on its branch, approved by the reviewer and set to `approved`.
+function shipRepo({ test = 'true', approve = true } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-ship-'));
+  const env = { ...process.env, ...gitEnv };
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
+  g('init', '-q', '-b', 'main');
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8').replace(/^  test: .*$/m, `  test: ${JSON.stringify(test)}`));
+  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').split('## Problem')[0] + good);
+  fs.writeFileSync(path.join(dir, 'shared.txt'), 'base\n');
+  g('add', '-A'); g('commit', '-qm', 'base');
+  g('checkout', '-qb', 'speck/0001-export-bookings');
+  fs.writeFileSync(path.join(dir, 'shared.txt'), 'feature\n');
+  g('add', '-A'); g('commit', '-qm', 'work');
+  if (approve) {
+    const v = path.join(os.tmpdir(), `verdict-${path.basename(dir)}.json`);
+    fs.writeFileSync(v, JSON.stringify(approveVerdict));
+    run('record', '1', v);
+    run('set', '1', 'status', 'approved');
+    g('add', '-A'); g('commit', '-qm', 'approved');
+  }
+  const status = () => parseTicket(fs.readFileSync(path.join(dir, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8')).fm.status;
+  const state = () => ({ branch: g('branch', '--show-current'), main: g('rev-parse', 'main'), feature: g('rev-parse', '--verify', '-q', 'speck/0001-export-bookings') });
+  return { dir, run, g, status, state };
+}
+
+test('AC1: approved is a valid status, listed first by speck status as waiting for the user', () => {
+  const r = shipRepo();
+  assert.equal(r.status(), 'approved');
+  assert.equal(r.run('new', 'Another').status, 0);
+  const out = r.run('status').stdout;
+  assert.match(out, /APPROVED \(1\)/);
+  assert.ok(out.indexOf('APPROVED') < out.indexOf('DRAFT'), out);
+  assert.match(out, /\/speck-ship/);
+});
+
+test('AC1: the build ends at approved, with no PR and no GitHub CLI', () => {
+  const build = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
+  assert.match(build, /speck set <id> status approved/);
+  for (const n of ['speck-build', 'speck-review', 'speck-ship'])
+    assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8'), /\bgh\s|pull request|gh pr/i, n);
+});
+
+test('AC2: speck ship refuses, changing nothing, unless every check passes', () => {
+  const cases = [
+    ['not approved', r => { r.run('set', '1', 'status', 'reviewing'); r.g('commit', '-qam', 'x'); }, /approved/],
+    ['dirty tree', r => fs.writeFileSync(path.join(r.dir, 'shared.txt'), 'dirty\n'), /uncommitted|clean/i],
+    ['code changed after review', r => { fs.writeFileSync(path.join(r.dir, 'later.js'), '1\n'); r.g('add', '-A'); r.g('commit', '-qm', 'late'); }, /later\.js/],
+  ];
+  for (const [name, breakIt, why] of cases) {
+    const r = shipRepo();
+    breakIt(r);
+    const before = r.state();
+    const res = r.run('ship', '1');
+    assert.notEqual(res.status, 0, name);
+    assert.match(res.stderr, why, name);
+    assert.deepEqual(r.state(), before, name);
+  }
+  // No approving review round, so speck next doesn't say ship.
+  const none = shipRepo({ approve: false });
+  none.run('set', '1', 'status', 'approved'); none.g('commit', '-qam', 'x');
+  const b = none.state();
+  assert.match(none.run('ship', '1').stderr, /review/i);
+  assert.deepEqual(none.state(), b);
+  // Failing tests.
+  const failing = shipRepo({ test: 'exit 3' });
+  const f = failing.state();
+  const res = failing.run('ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /test/i);
+  assert.deepEqual(failing.state(), f);
+  assert.equal(failing.status(), 'approved');
+});
+
+test('AC2: changes under speck/ after the review do not block shipping', () => {
+  const r = shipRepo();
+  fs.appendFileSync(path.join(r.dir, 'speck', 'product.md'), '\nnote\n');
+  r.g('commit', '-qam', 'speck only');
+  assert.equal(r.run('ship', '1').status, 0);
+});
+
+test('AC3: speck ship marks the ticket done, merges with a merge commit, deletes the branch and leaves you on main', () => {
+  const r = shipRepo();
+  const res = r.run('ship', '1');
+  assert.equal(res.status, 0, res.stderr);
+  const s = r.state();
+  assert.equal(s.branch, 'main');
+  assert.equal(s.feature, '', 'branch deleted');
+  assert.equal(r.g('rev-list', '--parents', '-n', '1', 'main').split(' ').length, 3, 'merge commit');
+  assert.equal(r.status(), 'done');
+  assert.match(fs.readFileSync(path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8'), /^finished: /m);
+  assert.equal(fs.readFileSync(path.join(r.dir, 'shared.txt'), 'utf8'), 'feature\n');
+  assert.equal(r.g('status', '--porcelain'), '');
+});
+
+test('AC3: a conflicting merge is aborted and leaves main and the branch as they were', () => {
+  const r = shipRepo();
+  r.g('checkout', '-q', 'main');
+  fs.writeFileSync(path.join(r.dir, 'shared.txt'), 'main moved\n');
+  r.g('commit', '-qam', 'main moved');
+  r.g('checkout', '-q', 'speck/0001-export-bookings');
+  const before = r.state();
+  const res = r.run('ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /conflict/i);
+  assert.deepEqual(r.state(), before);
+  assert.equal(r.g('status', '--porcelain'), '');
+  assert.equal(r.status(), 'approved');
+});
+
+test('AC4: speck ship pushes main to its remote, or says why it did not', () => {
+  // With a remote.
+  const r = shipRepo();
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
+  spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare]);
+  r.g('remote', 'add', 'origin', bare);
+  r.g('push', '-q', '-u', 'origin', 'main');
+  const res = r.run('ship', '1');
+  assert.equal(res.status, 0, res.stderr);
+  assert.match(res.stdout, /pushed/i);
+  assert.equal(spawnSync('git', ['rev-parse', 'main'], { cwd: bare, encoding: 'utf8' }).stdout.trim(), r.g('rev-parse', 'main'));
+  // Without a remote.
+  const local = shipRepo();
+  const out = local.run('ship', '1');
+  assert.equal(out.status, 0, out.stderr);
+  assert.match(out.stdout, /no remote/i);
+  // A refused push: the merge stays, and the user is told how to fix it.
+  const refused = shipRepo();
+  const bare2 = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
+  spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare2]);
+  refused.g('remote', 'add', 'origin', bare2);
+  refused.g('push', '-q', '-u', 'origin', 'main');
+  fs.writeFileSync(path.join(bare2, 'hooks', 'pre-receive'), '#!/bin/sh\necho "protected branch" >&2\nexit 1\n', { mode: 0o755 });
+  const p = refused.run('ship', '1');
+  assert.notEqual(p.status, 0);
+  assert.match(p.stderr, /push/i);
+  assert.match(p.stderr, /git push/);
+  assert.equal(refused.state().branch, 'main');
+  assert.equal(refused.status(), 'done');
+});
+
+test('AC4: doctor treats the GitHub CLI as optional', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-bin-'));
+  fs.symlinkSync(process.execPath, path.join(bin, 'node'));
+  const r = spawnSync(process.execPath, [CLI, 'doctor'], { cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: bin } });
+  assert.doesNotMatch(r.stdout, /✗ GitHub CLI/);
+  assert.match(r.stdout, /GitHub CLI.*optional/i);
+});
+
+test('AC5: only the user can ship, and the agent rules say so', () => {
+  const ship = fs.readFileSync(path.join(ROOT, 'skills', 'speck-ship', 'SKILL.md'), 'utf8');
+  assert.match(ship.split('\n---')[0], /^disable-model-invocation: true$/m);
+  assert.match(ship, /speck ship <id>/);
+  for (const n of ['speck-build', 'speck-review'])
+    assert.match(fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8'), /never (merge|ship)[^.]*unless the user runs `\/speck-ship`/i, n);
+  assert.match(fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8'), /unless the user runs `\/speck-ship`/);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+  spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir });
+  assert.match(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8'), /unless the user runs `\/speck-ship`/);
+});
+
+test('AC3: speck ship works when run from main, where the ticket is not yet approved', () => {
+  const r = shipRepo();
+  r.g('checkout', '-q', 'main');
+  const res = r.run('ship', '1');
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(r.status(), 'done');
+  assert.equal(r.state().feature, '');
+});

@@ -1,12 +1,13 @@
 ---
 name: speck-status
-description: Show speck tickets by status, with blocked tickets and their questions first, and suggest the next action. Use when the user asks "speck status", "what's on the board", "what's blocked", or what to work on next.
+description: Show speck tickets by status, with approved tickets waiting to ship and blocked tickets with their questions first, and suggest the next action. Use when the user asks "speck status", "what's on the board", "what's blocked", or what to work on next.
 ---
 
 # speck status
 
 1. Run `node .speck/scripts/speck.mjs status` from the repo root.
 2. Summarise briefly:
+   - **Approved:** these are waiting for the user. Suggest reading `speck pack <id>` and then running `/speck-ship <id>`. Never ship them yourself.
    - **Blocked:** show each question, since these need the user.
    - **Ready:** list by priority, and suggest `/speck-build <id>` for the top one.
    - **Drafts:** list any that need the user's decision to become ready.
