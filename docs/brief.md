@@ -145,7 +145,7 @@ Every ticket opens with a header rendered from its frontmatter, such as `# 0007 
 | Command | Does |
 |---|---|
 | `npx github:luroai/speck init` | Creates `speck/`, `config.yml` and `product.md`, installs the skills and the `speck` command into the project, and runs `speck doctor`. Re-run it to update. |
-| `speck doctor` | Checks that git, Claude Code and Codex are installed and signed in, with a plain-English fix for each problem. The GitHub CLI is optional. |
+| `speck doctor` | Checks Node and git, the builder set in config (`claude`, `cursor`, `codex` or `gemini`; any other builder gets an information line), and the reviewer: a reviewer command's first word on the PATH, or Codex installed and signed in. Each problem comes with a plain-English fix. The GitHub CLI is optional. |
 | `/speck-capture` | Turns an idea or the current conversation into `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into a numbered draft ticket. Runs the size checks and proposes splits. |
 | `speck cancel <id> "<reason>"` | Cancels a ticket you've decided against: records the reason and the date, sets it to `cancelled` and files it in `speck/tickets/done/`. Refuses a blank reason, a `done` ticket or an already-cancelled one. |

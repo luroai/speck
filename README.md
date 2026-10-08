@@ -20,7 +20,7 @@ Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremo
 
 ## Requirements
 
-- [Claude Code](https://claude.com/claude-code) (builder)
+- A builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Claude Code](https://claude.com/claude-code), [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Set it as `builder:` in `speck/config.yml`, so `speck doctor` checks the right tool. Claude Code is the default and the one most tested.
 - [Codex CLI](https://github.com/openai/codex) (default reviewer), or any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
 - Node.js 20+ and git
 
