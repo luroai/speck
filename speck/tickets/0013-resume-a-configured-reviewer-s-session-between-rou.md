@@ -1,7 +1,7 @@
 ---
 id: "0013"
 title: "Resume a configured reviewer's session between rounds"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-08
 ---
 # 0013 · Resume a configured reviewer's session between rounds
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 After 0012, a command reviewer gets the whole history resent every round. That costs tokens, and the reviewer re-reads everything instead of continuing the conversation it already had, which is what Codex does today.

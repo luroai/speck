@@ -1,7 +1,7 @@
 ---
 id: "0014"
 title: "Check the configured builder in speck doctor"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-08
 ---
 # 0014 · Check the configured builder in speck doctor
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck doctor` always checks for Claude Code, whatever `builder:` says, and the README lists Claude Code as a requirement. Someone building with Cursor, Codex or Gemini gets a failed check for a tool they don't use, and may think speck won't work for them.
