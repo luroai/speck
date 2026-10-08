@@ -963,6 +963,12 @@ test('AC1: speck review warns when a command failed because of the sandbox', () 
   assert.match(res.stdout, /⚠️ Reviewer could not inspect the repo; reviewed the diff only/);
 });
 
+test('AC1: a non-zero exit with sandbox output warns whatever the status label says', () => {
+  const r = reviewRepo({ extraEnv: { FAKE_CODEX_EVENT: cmdEvent(BWRAP, { status: 'completed', exit_code: 1 }) } });
+  assert.match(r.run('review', '0001', '--tests=/dev/null').stdout, /could not inspect/);
+  assert.equal(r.roundFile(1).meta.sandbox_ok, false);
+});
+
 test('AC1: no warning when commands ran, or failed for another reason', () => {
   for (const ev of [undefined, cmdEvent('npm: not found'), cmdEvent('ok', { exit_code: 0, status: 'completed' }), cmdEvent(BWRAP, { exit_code: 0, status: 'completed' })]) {
     const r = reviewRepo({ extraEnv: ev ? { FAKE_CODEX_EVENT: ev } : {} });

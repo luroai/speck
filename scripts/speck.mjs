@@ -447,7 +447,7 @@ const NO_INSPECT = '⚠️ Reviewer could not inspect the repo; reviewed the dif
 
 // True when a command the reviewer ran failed because its sandbox (bubblewrap) could not start.
 function sandboxFailed(events) {
-  return events.some(e => e.item?.type === 'command_execution' && e.item.status !== 'in_progress' && e.item.exit_code !== 0 && e.item.status !== 'completed'
+  return events.some(e => e.item?.type === 'command_execution' && e.item.status !== 'in_progress' && (e.item.status === 'failed' || (e.item.exit_code ?? 0) !== 0)
     && /bwrap/i.test(String(e.item.aggregated_output ?? '')));
 }
 
