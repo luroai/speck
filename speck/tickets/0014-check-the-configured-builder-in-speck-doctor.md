@@ -1,7 +1,7 @@
 ---
 id: "0014"
 title: "Check the configured builder in speck doctor"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T21:48:15.075Z"
 ---
 # 0014 · Check the configured builder in speck doctor
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck doctor` always checks for Claude Code, whatever `builder:` says, and the README lists Claude Code as a requirement. Someone building with Cursor, Codex or Gemini gets a failed check for a tool they don't use, and may think speck won't work for them.
@@ -45,10 +45,15 @@ started: "2026-10-08T21:48:15.075Z"
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 builder names like `constructor`, `toString` or `__proto__` crashed doctor, because the lookup found built-in object properties. Round 2 (codex): approved.
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Review rounds: 2 (codex, `gpt-6.1-sol`), with 383,400 reviewer tokens.
+- Elapsed: about 6 minutes from start to approval (from `speck pack`).
+- Changed lines: 40 (excluding tests and `speck/`), against a limit of 1,000.
+- Follow-up ideas:
+  - Doctor could also accept Cursor's newer `agent` name, but only once it can tell Cursor's `agent` apart from other tools with the same name.
+  - Doctor doesn't check that a builder is signed in, apart from Codex as a reviewer. Claude, Cursor and Gemini each have their own sign-in.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -115,6 +120,74 @@ started: "2026-10-08T21:48:15.075Z"
     },
     "escalation_question": "",
     "summary": "The four supported builders and configured reviewer checks are implemented with meaningful tests. One edge case needs fixing: certain unknown builder names crash doctor rather than showing an information line. I verified this directly; I did not rerun the suite because its tests create files in this read-only environment."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5844edc64ec81f5997483386505e0b4e4300ca70",
+    "thread_id": "01a11d80-41dc-7791-8d0d-b54f110f4602",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 251222,
+      "cached_input_tokens": 187776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1526,
+      "reasoning_output_tokens": 12
+    },
+    "saved_at": "2026-10-08T21:53:40.871Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: BUILDERS, onPath and doctorChecks check only the configured builder with its name and install link. Test '0014 AC1' exercises all four tools present and missing; supplied output reports pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doctorChecks now uses Object.hasOwn. Test '0014 AC2' exercises five unknown names through the CLI and checks one information line, no builder check and exit 0; supplied output reports pass. Independent read-only assertions confirmed all five return one non-failing information check without throwing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "doctorChecks uses splitCommand and onPath for configured reviewer commands, retaining default Codex installation and sign-in checks. Test '0014 AC3' covers command presence/absence, Codex command override and default checks; supplied output reports pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "README Requirements and speck/product.md describe configurable builders and agents reading the skills folders, naming Claude Code, Codex and Cursor. Test '0014 AC4' verifies the documentation; supplied output reports pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Unknown builder names matching inherited object properties previously crashed doctor. Object.hasOwn now routes these names to the information line, with regression coverage.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated builder and reviewer descriptions match the implementation."
+    },
+    "escalation_question": "",
+    "summary": "Doctor checks the configured builder and reviewer, and the docs explain support for other skill-reading agents. The unknown-name crash is fixed and covered by meaningful regression tests. All criteria pass with no outstanding findings. The supplied suite reports 111 passes; I independently verified the fix without writing files."
   }
 }
 ```
