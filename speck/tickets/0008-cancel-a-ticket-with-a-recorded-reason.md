@@ -56,7 +56,7 @@ Round 1 (codex): approved, but the sandbox failed to start, so the reviewer saw 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Build: 69 tests pass (56 before this ticket, 13 new). Changed lines excluding tests and `speck/`: see `speck diffstat` (limit 1000).
-- Review rounds: 8, against a limit of 4. I raised `max_review_rounds` on this branch to 5, 6, 7 and 8 at your request and restored it to 4 before approval. Rounds 1 and 2 ran without a working sandbox (ticket 0001). From round 3 on, each round was a fresh Codex session with a working sandbox.
+- Review rounds: 8, against a limit of 3. I raised `max_review_rounds` on this branch to 5, 6, 7 and 8 at your request and restored it to 3 (main's value) before approval. Rounds 1 and 2 ran without a working sandbox (ticket 0001). From round 3 on, each round was a fresh Codex session with a working sandbox.
 - What the later rounds were: round 1's approval was the weak diff-only kind. The sandbox-enabled reviewer found a real reason-storage bug (F1) in round 3. Each later fix then exposed a related edge in the helper it touched (F2 to F4), so the final change also hardens the shared frontmatter helpers `scalar`, `stripComment` and `setField`.
 - Follow-ups, not done here:
   - `speck status` prints a cancelled ticket's reason but not the date it was cancelled.
