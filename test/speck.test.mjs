@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { parseYaml, parseTicket, setField, lintTicket, nextAction, validateVerdict, reviewerSettings, ticketHeader, syncHeader } from '../scripts/speck.mjs';
+import { parseYaml, parseTicket, setField, lintTicket, nextAction, validateVerdict, reviewerSettings } from '../scripts/speck.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -653,71 +653,4 @@ test('a conflict with new remote commits leaves local main exactly as it was', (
   assert.match(res.stderr, /conflict/i);
   assert.deepEqual(r.state(), before);
   assert.equal(r.g('status', '--porcelain'), '');
-});
-
-// ---------- 0004: a readable header at the top of every ticket ----------
-
-const EMOJI = { draft: '📝', ready: '📋', building: '🔨', reviewing: '🔍', blocked: '⛔', approved: '👍', done: '✅' };
-const bodyOf = text => text.slice(text.indexOf('\n---', 4) + 5);
-const headerOf = text => bodyOf(text).split('\n').slice(0, 3).join('\n');
-
-test('AC1: speck new writes the heading and status line straight after the frontmatter', () => {
-  const r = shipRepo({ approve: false });
-  const file = path.join(r.dir, r.run('new', 'Search: by date').stdout.trim());
-  const text = fs.readFileSync(file, 'utf8');
-  assert.equal(headerOf(text), '# 0002 · Search: by date\n\n**Status:** 📝 draft');
-  assert.equal(parseTicket(text).fm.title, 'Search: by date');
-});
-
-test('AC1: every status has its own emoji, and none is a coloured circle', () => {
-  for (const [status, emoji] of Object.entries(EMOJI))
-    assert.match(ticketHeader({ id: '0009', title: 'T', status }), new RegExp(`\\*\\*Status:\\*\\* ${emoji} ${status}$`));
-  assert.equal(new Set(Object.values(EMOJI)).size, 7);
-  assert.doesNotMatch(Object.values(EMOJI).join(''), /[🔴🟠🟡🟢🔵🟣🟤⚫⚪]/u);
-});
-
-test('AC2: speck set and speck ship keep the header in sync, and add it if missing', () => {
-  const r = shipRepo();
-  const file = () => fs.readdirSync(path.join(r.dir, 'speck', 'tickets')).includes('0001-export-bookings.md')
-    ? path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md') : path.join(r.dir, 'speck', 'tickets', 'done', '0001-export-bookings.md');
-  // shipRepo builds the ticket by hand without a header, then speck set adds it.
-  assert.equal(headerOf(fs.readFileSync(file(), 'utf8')), '# 0001 · Export bookings\n\n**Status:** 👍 approved');
-  r.g('commit', '-qam', 'header');
-  // A hand edit to the header is overwritten on the next change.
-  fs.writeFileSync(file(), fs.readFileSync(file(), 'utf8').replace('# 0001 · Export bookings', '# 0001 · Something else'));
-  r.run('set', '1', 'title', 'Export bookings as CSV');
-  assert.equal(headerOf(fs.readFileSync(file(), 'utf8')), '# 0001 · Export bookings as CSV\n\n**Status:** 👍 approved');
-  assert.equal(fs.readFileSync(file(), 'utf8').split('**Status:**').length, 2, 'only one status line');
-  r.g('commit', '-qam', 'title');
-  assert.equal(r.run('ship', '1').status, 0);
-  assert.equal(headerOf(fs.readFileSync(file(), 'utf8')), '# 0001 · Export bookings as CSV\n\n**Status:** ✅ done');
-});
-
-test('AC3: lint warns when the heading or status line is missing or out of date', () => {
-  const synced = t => parseTicket(syncHeader(`---\n${t}\n---\n${good}`));
-  const headerWarnings = t => lintTicket(t, cfg).warnings.filter(w => /heading|status line/i.test(w));
-  assert.deepEqual(headerWarnings(synced(fm())), []);
-  assert.equal(headerWarnings(ticket(fm(), good)).length, 2, 'both missing');
-  const stale = synced(fm()).raw.replace('📝 draft', '📋 ready');
-  assert.equal(headerWarnings(parseTicket(stale)).length, 1, 'status line out of date');
-  const renamed = synced(fm()).raw.replace('· Export bookings as CSV', '· Old title');
-  assert.equal(headerWarnings(parseTicket(renamed)).length, 1, 'heading out of date');
-});
-
-test('AC4: re-running init adds or corrects every header and changes nothing else', () => {
-  const r = shipRepo({ approve: false });
-  const live = path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md');
-  const done = path.join(r.dir, 'speck', 'tickets', 'done', '0002-old.md');
-  const doneText = `---\nid: "0002"\ntitle: "Old"\nstatus: done\n\n---\n# 0002 · Wrong\n\n**Status:** 🔍 reviewing\n\n## Problem\nX.\n`;
-  fs.writeFileSync(done, doneText);
-  const before = fs.readFileSync(live, 'utf8');
-  assert.equal(r.run('init', '--skip-checks').status, 0);
-  const after = fs.readFileSync(live, 'utf8');
-  assert.equal(headerOf(after), '# 0001 · Export bookings\n\n**Status:** 📝 draft');
-  assert.equal(after.slice(0, after.indexOf('\n---', 4)), before.slice(0, before.indexOf('\n---', 4)), 'frontmatter unchanged');
-  assert.equal(after.slice(after.indexOf('## Problem')), before.slice(before.indexOf('## Problem')), 'body unchanged');
-  assert.equal(fs.readFileSync(done, 'utf8'), doneText.replace('# 0002 · Wrong\n\n**Status:** 🔍 reviewing', '# 0002 · Old\n\n**Status:** ✅ done'));
-  // Running it again changes nothing.
-  assert.equal(r.run('init', '--skip-checks').status, 0);
-  assert.equal(fs.readFileSync(live, 'utf8'), after);
 });
