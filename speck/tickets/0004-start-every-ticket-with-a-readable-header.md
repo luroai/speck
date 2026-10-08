@@ -1,7 +1,7 @@
 ---
 id: "0004"
 title: "Start every ticket with a readable header"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,7 +15,7 @@ started: "2026-10-08T16:44:34.053Z"
 ---
 # 0004 · Start every ticket with a readable header
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket's title and status exist only in the frontmatter. Markdown previews that hide frontmatter (VS Code, Obsidian, GitHub) show neither, and viewers without frontmatter support show the fields as a run-on paragraph. Either way, you can't open a ticket and see at a glance what it is and where it stands.
@@ -42,5 +42,11 @@ Every ticket opens with a `# <id> · <title>` heading and a clear status line un
 ## Blocked question
 
 ## Review log
+- Round 1 (codex, gpt-6.1-sol): changes requested. F1: repairing the header could strip empty lines and indentation from the start of the ticket body.
+- Round 2: approved. F1 resolved with line-based parsing and byte-for-byte regression tests.
 
 ## Delivery log
+- Attempts: 1. Review rounds: 2 (of 3). Reviewer tokens: 156,196. Changed lines: about 70 (limit 1,000), excluding tests.
+- Tests: the first draft was written by another agent working in the same folder; they were accidentally committed to main in 3ff2605 and reverted in a1b6bf2, then reused here with one added check (a ticket with no header gets one from `speck set`).
+- This repo's seven tickets were given their headers by re-running `speck init`.
+- Follow-up ideas: none from the review. Hand edits to a ticket's title in the frontmatter leave the heading stale until the next `speck set` or `speck init`; `speck lint` warns about it.
