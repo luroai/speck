@@ -3,6 +3,7 @@
 // Deterministic helpers used by the speck skills. No dependencies.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -252,6 +253,7 @@ export function lintTicket(ticket, cfg) {
   else if (top.status !== wantStatus) warnings.push(`The status line "${top.status}" doesn't match the frontmatter status. Run \`speck init\` again to fix it.`);
   for (const [where, v] of [['ticket', fm.reviewer_effort], ['config', cfg.reviewer_effort]])
     if (!blank(v) && !EFFORTS.includes(String(v).trim())) errors.push(`reviewer_effort "${v}" in ${where} must be blank or one of ${EFFORTS.join(', ')}.`);
+  errors.push(...ticketRounds(ticket.raw).errors);
   for (const s of ['problem', 'outcome']) if (!contentLines(sections[s]).length) errors.push(`"${s}" section is empty.`);
   const ac = contentLines(sections['acceptance criteria']).filter(l => /^\d+\.\s+\S/.test(l));
   if (ac.length === 0) errors.push('No numbered acceptance criteria.');
@@ -280,14 +282,93 @@ export function changedLines(repo, base) {
 
 // ---------- reviews ----------
 
-function reviewDir(repo, id) { return path.join(repo, 'speck', 'reviews', String(id).padStart(4, '0')); }
+// Every review round lives in its ticket, in a `## Review rounds` section at the end that only speck writes.
+// Each round is a collapsed <details> block with a one-line summary and the full record as JSON.
+const ROUNDS_HEADING = '## Review rounds';
+
+// Splits a ticket into the text before the Review rounds section, the section, and anything after it.
+function splitRounds(text) {
+  const m = text.match(/^## Review rounds[ \t]*$/m);
+  if (!m) return { before: text, section: '', after: '' };
+  const from = m.index + m[0].length;
+  const next = text.slice(from).search(/^## /m);
+  const end = next === -1 ? text.length : from + next;
+  return { before: text.slice(0, m.index), section: text.slice(m.index, end), after: text.slice(end) };
+}
+
+// The ticket without its Review rounds section, for the reviewer's diff and prompt.
+export function stripRounds(text) {
+  const { before, after } = splitRounds(text);
+  return (before + after).replace(/\n*$/, '\n');
+}
+
+// The rounds recorded in a ticket, plus any problems with them (bad JSON, or rounds not numbered 1, 2, 3… in order).
+export function ticketRounds(text) {
+  const { section } = splitRounds(text);
+  const rounds = [], errors = [];
+  let n = 0;
+  for (const m of section.matchAll(/```json\n([\s\S]*?)\n```/g)) {
+    n++;
+    try { rounds.push(JSON.parse(m[1])); } catch (e) { errors.push(`Review round ${n} in "${ROUNDS_HEADING}" isn't valid JSON (${e.message}).`); }
+  }
+  const numbers = rounds.map(r => r?.meta?.round);
+  if (!errors.length && numbers.some((r, i) => r !== i + 1))
+    errors.push(`Review rounds are numbered ${numbers.join(', ')}, but must be 1, 2, 3… in order.`);
+  return { rounds, errors };
+}
+
+function roundBlock(rec) {
+  return `<details><summary>Round ${rec.meta.round} · ${rec.meta.reviewer} · ${rec.verdict.verdict}</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>`;
+}
+
+// Adds rounds to the end of the Review rounds section, creating it at the end of the ticket if needed. Nothing else changes.
+function appendRounds(text, recs) {
+  const { before, section, after } = splitRounds(text);
+  const head = section ? before : before.replace(/\n*$/, '\n\n');
+  const body = section ? section.replace(/\n*$/, '\n') : `${ROUNDS_HEADING}\n<!-- Written by speck after each review round. Don't edit it by hand. -->\n`;
+  return head + body + recs.map(r => `\n${roundBlock(r)}\n`).join('') + (after ? `\n${after}` : '');
+}
 
 function rounds(repo, id) {
-  const dir = reviewDir(repo, id);
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter(f => /^round-\d+\.json$/.test(f))
-    .sort((a, b) => parseInt(a.slice(6), 10) - parseInt(b.slice(6), 10))
-    .map(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+  const t = findTicket(repo, id);
+  const { rounds: all, errors } = ticketRounds(t.raw);
+  if (errors.length) throw new SpeckError(`${path.relative(repo, t.file)}: ${errors[0]} Restore that section from git, then run this again.`);
+  return all;
+}
+
+// Working files for a review in progress (raw reviewer output, saved reviewer settings). Not history, so git ignores them.
+function cacheDir(repo, id) {
+  const root = path.join(repo, 'speck', '.cache');
+  const dir = path.join(root, String(id).padStart(4, '0'));
+  fs.mkdirSync(dir, { recursive: true });
+  const ignore = path.join(root, '.gitignore');
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, '# Working files for reviews in progress. Review history is in each ticket.\n*\n');
+  return dir;
+}
+
+const posix = p => p.split(path.sep).join('/');
+
+// True if the ticket's only uncommitted change is to its Review rounds section, so it can't hide unreviewed work.
+function onlyRoundsChanged(repo, rel, text) {
+  const head = sh('git', ['show', `HEAD:${rel}`], { cwd: repo });
+  return head.status === 0 && stripRounds(head.stdout) === stripRounds(text);
+}
+
+// What the reviewer sees: every change since `since`, with the ticket's Review rounds section left out.
+function reviewDiff(repo, since, ticketFile) {
+  const rel = posix(path.relative(repo, ticketFile));
+  const rest = git(['diff', `${since}..HEAD`, '--', '.', `:(exclude,literal)${rel}`], repo);
+  const version = rev => { const r = sh('git', ['show', `${rev}:${rel}`], { cwd: repo }); return r.status === 0 ? stripRounds(r.stdout) : ''; };
+  const a = version(since), b = version('HEAD');
+  if (a === b) return rest;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-diff-'));
+  try {
+    fs.writeFileSync(path.join(tmp, 'a'), a);
+    fs.writeFileSync(path.join(tmp, 'b'), b);
+    const out = sh('git', ['diff', '--no-index', '--no-color', 'a', 'b'], { cwd: tmp }).stdout;
+    const header = { 'diff --git a/a b/b': `diff --git a/${rel} b/${rel}`, '--- a/a': `--- a/${rel}`, '+++ b/b': `+++ b/${rel}` };
+    return rest + out.split('\n').map(l => header[l] ?? l).join('\n');
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 }
 
 export function validateVerdict(v) {
@@ -326,11 +407,10 @@ export function nextAction(all, cfg) {
 }
 
 function saveRound(repo, id, verdict, meta) {
-  const dir = reviewDir(repo, id);
-  fs.mkdirSync(dir, { recursive: true });
+  const t = findTicket(repo, id);
   const round = rounds(repo, id).length + 1;
   const record = { meta: { round, ...meta, saved_at: new Date().toISOString() }, verdict: validateVerdict({ ...verdict, round }) };
-  fs.writeFileSync(path.join(dir, `round-${round}.json`), JSON.stringify(record, null, 2) + '\n');
+  fs.writeFileSync(t.file, appendRounds(t.raw, [record]));
   return record;
 }
 
@@ -339,7 +419,7 @@ function reviewerPrompt(repo, ticket, cfg, round, extra) {
   const productFile = path.join(repo, 'speck', 'product.md');
   const product = fs.existsSync(productFile) ? fs.readFileSync(productFile, 'utf8') : '(no speck/product.md)';
   if (round === 1) {
-    const values = { TICKET: ticket.raw, PRODUCT: product, BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
+    const values = { TICKET: stripRounds(ticket.raw), PRODUCT: product, BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
     return tpl.replace(/\{\{(TICKET|PRODUCT|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
   }
   return [
@@ -358,34 +438,33 @@ function runCodexReview(repo, id, opts) {
   const prior = rounds(repo, id);
   const round = prior.length + 1;
   if (round > cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
-  const status = git(['status', '--porcelain'], repo).split('\n').filter(l => l && !l.slice(3).startsWith('speck/reviews/'));
+  const rel = posix(path.relative(repo, ticket.file));
+  const status = git(['status', '--porcelain'], repo).split('\n').filter(l => l && !(l.slice(3) === rel && onlyRoundsChanged(repo, rel, ticket.raw)));
   if (status.length) throw new SpeckError('Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
   const sinceSha = round === 1 ? base : prior[prior.length - 1].meta.reviewed_sha;
-  const diff = git(['diff', `${sinceSha}..HEAD`, '--', '.', ':(exclude)speck/reviews'], repo);
+  const diff = reviewDiff(repo, sinceSha, ticket.file);
   const tests = opts.tests ? fs.readFileSync(opts.tests, 'utf8') : '(no test output provided)';
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha });
 
-  const dir = reviewDir(repo, id);
-  fs.mkdirSync(dir, { recursive: true });
-  const out = path.join(dir, `.round-${round}.out.json`);
+  const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
   const schema = path.join(TEMPLATES, 'review-verdict.schema.json');
-  const threadFile = path.join(dir, 'codex-thread');
+  // Later rounds resume the Codex session recorded with the most recent round that has one.
+  const lastThread = [...prior].reverse().find(r => r.meta?.thread_id)?.meta.thread_id;
   const sandbox = cfg.reviewer_options?.codex?.sandbox || 'read-only';
   const settings = reviewerSettings(ticket.fm, cfg);
   const common = ['--json', '--output-schema', schema, '-o', out, '-c', `sandbox_mode="${sandbox}"`,
     ...(settings.model ? ['-m', settings.model] : []), ...(settings.effort ? ['-c', `model_reasoning_effort="${settings.effort}"`] : [])];
-  const args = round === 1 || !fs.existsSync(threadFile)
+  const args = round === 1 || !lastThread
     ? ['exec', '--sandbox', sandbox, ...common, '-']
-    : ['exec', 'resume', ...common, fs.readFileSync(threadFile, 'utf8').trim(), '-'];
+    : ['exec', 'resume', ...common, lastThread, '-'];
   const started = Date.now();
   const r = sh('codex', args, { cwd: repo, input: prompt });
   if (r.status !== 0) throw new SpeckError(`codex exited ${r.status}: ${r.stderr.trim().split('\n').slice(-5).join('\n')}`);
   const events = r.stdout.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return {}; } });
-  const thread = events.find(e => e.type === 'thread.started')?.thread_id;
-  if (thread) fs.writeFileSync(threadFile, thread + '\n');
+  const thread = events.find(e => e.type === 'thread.started')?.thread_id || (round > 1 ? lastThread : undefined);
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
@@ -522,13 +601,55 @@ function cmdDoctor() {
   if (!ok) throw new SpeckError('', 1);
 }
 
+// Moves review rounds from an older speck's speck/reviews/<id>/round-N.json files into their tickets.
+// Anything it can't place is left where it is with the reason, and the rest are still moved.
+function migrateReviews(repo) {
+  const root = path.join(repo, 'speck', 'reviews');
+  if (!fs.existsSync(root)) return;
+  let moved = 0;
+  for (const id of fs.readdirSync(root).filter(n => /^\d{4}$/.test(n)).sort()) {
+    const dir = path.join(root, id);
+    try {
+      let t;
+      try { t = findTicket(repo, id); }
+      catch (e) { throw new Error(/not found/.test(e.message) ? `there's no ticket ${id}.` : e.message); }
+      const files = fs.readdirSync(dir).filter(f => /^round-\d+\.json$/.test(f));
+      const recs = files.map(f => {
+        try { return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); }
+        catch (e) { throw new Error(`${f} isn't valid JSON (${e.message}).`); }
+      }).sort((a, b) => (a?.meta?.round ?? 0) - (b?.meta?.round ?? 0));
+      const existing = ticketRounds(t.raw);
+      if (recs.length && (existing.rounds.length || existing.errors.length))
+        throw new Error(`${path.relative(repo, t.file)} already has review rounds.`);
+      if (recs.length) {
+        const next = appendRounds(t.raw, recs);
+        const problems = ticketRounds(next).errors;
+        if (problems.length) throw new Error(problems[0]);
+        fs.writeFileSync(t.file, next);
+        moved++;
+      }
+      for (const f of files) fs.rmSync(path.join(dir, f));
+      fs.rmSync(path.join(dir, 'codex-thread'), { force: true }); // each round records its thread id
+      const settings = path.join(dir, 'reviewer-settings.json');
+      if (fs.existsSync(settings)) fs.renameSync(settings, path.join(cacheDir(repo, id), 'reviewer-settings.json'));
+      const left = fs.readdirSync(dir);
+      if (left.length) console.log(`kept    speck/reviews/${id}/: it still has ${left.join(', ')}. Move or delete them yourself.`);
+      else fs.rmdirSync(dir);
+    } catch (e) {
+      console.log(`skipped speck/reviews/${id}/: ${e.message} Its files are left where they are.`);
+    }
+  }
+  if (moved) console.log(`moved   review rounds for ${moved} ticket${moved === 1 ? '' : 's'} into the ticket files`);
+  if (fs.readdirSync(root).every(n => n === '.gitkeep')) fs.rmSync(root, { recursive: true, force: true });
+}
+
 // ---------- commands ----------
 
 function cmdInit(args) {
   const repo = process.cwd();
   const force = args.includes('--force');
   console.log(`speck ${VERSION}: setting up ${repo}\n`);
-  const dirs = ['speck/ideas', 'speck/tickets', 'speck/tickets/done', 'speck/reviews'];
+  const dirs = ['speck/ideas', 'speck/tickets', 'speck/tickets/done'];
   for (const d of dirs) fs.mkdirSync(path.join(repo, d), { recursive: true });
   const copies = [['config.yml', 'speck/config.yml'], ['product.md', 'speck/product.md']];
   for (const [from, to] of copies) {
@@ -546,6 +667,7 @@ function cmdInit(args) {
   }).filter(t => t.fm.status === 'done');
   for (const t of strays) placeTicket(repo, t, 'done');
   if (strays.length) console.log(`moved   ${strays.length} done ticket${strays.length === 1 ? '' : 's'} into speck/tickets/done/`);
+  migrateReviews(repo);
   // Give every ticket the readable header, or bring it up to date. Unreadable files were reported above (or are in done/) and are left alone.
   let synced = 0;
   for (const dir of ticketDirs(repo).filter(d => fs.existsSync(d))) {
@@ -843,7 +965,7 @@ function cmdRecord(args) {
   const reviewer = (args.find(a => a.startsWith('--reviewer=')) || '--reviewer=claude-subagent').slice(11);
   const verdict = JSON.parse(fs.readFileSync(file, 'utf8'));
   // A resumed reviewer keeps the settings it started with, saved by `speck reviewer-settings`.
-  const saved = path.join(reviewDir(repo, id), 'reviewer-settings.json');
+  const saved = path.join(cacheDir(repo, id), 'reviewer-settings.json');
   const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));
   const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim() });
   const next = printRound(rec, cfg, rounds(repo, id));
@@ -862,9 +984,7 @@ function cmdReviewerSettings(args) {
   // Saved so that `speck record` reports what the running reviewer actually uses, even if the ticket changes later.
   const repo = findRepoRoot();
   const s = settingsMeta(reviewerSettings(findTicket(repo, args[0]).fm, loadConfig(repo)));
-  const dir = reviewDir(repo, args[0]);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'reviewer-settings.json'), JSON.stringify(s, null, 2) + '\n');
+  fs.writeFileSync(path.join(cacheDir(repo, args[0]), 'reviewer-settings.json'), JSON.stringify(s, null, 2) + '\n');
   console.log(`model: ${s.reviewer_model}\neffort: ${s.reviewer_effort}`);
 }
 
@@ -878,11 +998,22 @@ function cmdPrompt(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, args[0]);
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
-  const diff = git(['diff', `${base}..HEAD`, '--', '.', ':(exclude)speck/reviews'], repo);
+  const diff = reviewDiff(repo, base, t.file);
   const testsArg = args.find(a => a.startsWith('--tests='));
   const tests = testsArg ? fs.readFileSync(testsArg.slice(8), 'utf8') : '(no test output provided)';
   console.log(reviewerPrompt(repo, t, cfg, 1, { diff, tests }));
   console.log(`\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`);
+}
+
+function cmdDiff(args) {
+  // The changes since the reviewer last looked (or since the base branch), as a reviewer sees them.
+  if (!args[0]) throw new SpeckError('Usage: speck diff <id>');
+  const repo = findRepoRoot();
+  const cfg = loadConfig(repo);
+  const t = findTicket(repo, args[0]);
+  const all = rounds(repo, args[0]);
+  const since = all.length ? all[all.length - 1].meta.reviewed_sha : git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
+  process.stdout.write(reviewDiff(repo, since, t.file));
 }
 
 const HELP = `speck: small tickets, independent review, you merge.
@@ -898,13 +1029,14 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f]       print the reviewer prompt (for subagent reviewers)
   speck reviewer-settings <id>        print and save the model and effort to start a reviewer with
+  speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck next <id>                     what the builder should do next: review, fix, block or ship
   speck pack <id>                     print the review pack
   speck ship <id>                     merge an approved ticket into the base branch (the user's gate)
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, status: cmdStatus, diffstat: cmdDiffstat,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, next: cmdNext, pack: cmdPack, ship: cmdShip };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [cmd, ...args] = process.argv.slice(2);

@@ -33,7 +33,7 @@ npx github:luroai/speck init
 ```
 
 That's it. This one command:
-- sets up `speck/` (config, living spec, ideas, tickets and reviews);
+- sets up `speck/` (config, living spec, ideas and tickets);
 - adds the speck skills to `.claude/skills/` and `.agents/skills/`, so Claude Code, Codex, cptr and other agents all find them;
 - puts the `speck` command in `.speck/`;
 - checks that git, Claude Code and Codex are installed and signed in, and tells you in plain English how to fix anything that isn't.
@@ -75,8 +75,7 @@ speck/
   config.yml                 # builder, reviewer, test command, limits
   product.md                 # the living spec
   ideas/                     # captured ideas
-  tickets/0007-<slug>.md     # numbered tickets; status in frontmatter
-  reviews/0007/round-N.json  # every review round, kept in git
+  tickets/0007-<slug>.md     # numbered tickets; status in frontmatter, every review round at the end
 ```
 
 ## Design

@@ -43,7 +43,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 
 1. Add one line per review round to the ticket's `## Review log`, for example: `Round 1 (codex): changes requested: F1 missing empty-input case. Round 2: approved.`
 2. Fill in `## Delivery log`: review rounds, the reviewer tokens from `speck pack <id>`, elapsed time, and any follow-up ideas from minor findings.
-3. Run `speck set <id> status approved`, then commit the ticket and `speck/reviews/<id>/` (`speck(<id>): approved`). Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
+3. Run `speck set <id> status approved`, then commit the ticket (`speck(<id>): approved`). Its review rounds are in the ticket file. Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
 4. Stop and tell the user: a one-line summary, anything worth a look (risk flags, follow-up ideas), and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
 
 ## 6. Block
@@ -51,12 +51,12 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 Use this when the review loop says `block`, the size guard trips, or a product question comes up that you can't answer from the ticket or `product.md`:
 
 1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation.
-2. Run `speck set <id> status blocked`, then commit everything, including `speck/reviews/<id>/`.
+2. Run `speck set <id> status blocked`, then commit everything, including the ticket with its review rounds.
 3. Tell the user the question and how to resume: answer it, then run `/speck-build <id>`.
 
 ## Rules
 
 - Never merge or ship unless the user runs `/speck-ship`: don't run `speck ship`, merge into the base branch or push it yourself. Shipping is the user's gate.
 - Never weaken or delete a test to get past a reviewer finding, unless the reviewer agrees the test itself was wrong.
-- Never edit `speck/reviews/` round files by hand.
+- Never edit a ticket's `## Review rounds` section by hand. Only speck writes it.
 - Keep to the ticket. If you find other problems, list them in the Delivery log as follow-up ideas. Don't fix them.
