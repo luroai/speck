@@ -1,0 +1,14 @@
+{
+  "name": "speck",
+  "description": "speck: small tickets, independent review, you merge.",
+  "owner": {
+    "name": "Luro"
+  },
+  "plugins": [
+    {
+      "name": "speck",
+      "source": "./",
+      "description": "Small tickets, independent review, you merge."
+    }
+  ]
+}

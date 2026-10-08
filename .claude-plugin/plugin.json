@@ -1,0 +1,10 @@
+{
+  "name": "speck",
+  "version": "0.1.0",
+  "description": "Small tickets, independent review, you merge. A repo-native ticket workflow for AI coding agents with a cross-model adversarial review loop.",
+  "author": {
+    "name": "Luro"
+  },
+  "license": "MIT",
+  "keywords": ["spec-driven-development", "tickets", "code-review", "codex", "workflow"]
+}
