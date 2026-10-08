@@ -1,7 +1,7 @@
 ---
 id: "0013"
 title: "Resume a configured reviewer's session between rounds"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0012"]                # ticket ids that must be done first
 created: 2026-10-08
+started: "2026-10-08T21:41:33.861Z"
 
 ---
 # 0013 · Resume a configured reviewer's session between rounds
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0012, a command reviewer gets the whole history resent every round. That costs tokens, and the reviewer re-reads everything instead of continuing the conversation it already had, which is what Codex does today.
