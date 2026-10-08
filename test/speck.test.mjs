@@ -1075,7 +1075,7 @@ test('AC4: speck new never reuses a cancelled ticket number', () => {
 });
 
 // Review round 3 (F1): a reason is stored and shown exactly as typed.
-const AWKWARD = ['false', '0', '123', 'true', 'null', 'Use option: "B"', 'C:\\temp\\x', 'Too costly # revisit later', "it's 'quoted'", 'line one\nline two', '[a, b]'];
+const AWKWARD = ['false', '0', '123', 'true', 'null', 'Use option: "B"', 'C:\\temp\\x', 'Too costly # revisit later', "it's 'quoted'", 'line one\nline two', '[a, b]', 'say " # later', 'back\\" # slash', 'ends with backslash\\'];
 
 test('AC1/AC4: a reason reads back exactly as typed and appears in status, even when it looks like YAML', () => {
   for (const reason of AWKWARD) {

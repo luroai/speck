@@ -1,7 +1,7 @@
 ---
 id: "0008"
 title: "Cancel a ticket with a recorded reason"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: blocked            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T20:00:31.803Z"
 ---
 # 0008 · Cancel a ticket with a recorded reason
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 Once you decide not to build a ticket, the only options are to delete it or leave it as a draft. Either way, there's no lasting record that the idea was considered and turned down, or why, so it can come back later as new work.
@@ -43,7 +43,7 @@ A ticket you decide against can be cancelled with a reason. It's filed away with
 - Update `speck/product.md`, `docs/brief.md`, the status comment in `templates/ticket.md` and the `/speck-status` skill to cover the new status.
 
 ## Blocked question
-Round 3 (fresh Codex session, working sandbox) found a real bug the diff-only rounds missed: cancel reasons such as `false`, `0`, `123` or text with quotes and backslashes don't survive the YAML round trip, and `false`/`0` vanish from `speck status` (F1). The review budget is spent (`max_review_rounds: 3`; round 2 was a wasted resume of the old sandbox-less session). Options: (a) allow one more round, fix F1 with string-safe encoding and CLI regression tests, and re-review in a fresh session; (b) ship as is and file F1 as a follow-up ticket. Recommendation: (a).
+Round 4 (fresh Codex session, working sandbox) found one more edge case in F1: a reason with an embedded `"` followed by ` #` (for example `say " # later`) was truncated, because `stripComment` didn't skip escaped quotes. The extra round you allowed is used up (`max_review_rounds: 4`). I have fixed `stripComment` (backslash escapes inside double quotes) and added three awkward reasons to the regression test; 66 tests pass, but that fix is unreviewed. Options: (a) allow one more round (limit 5) and re-review in a fresh session; (b) ship as is and accept that the last fix is unreviewed. Recommendation: (a), since each round has found something real and the fix is small.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -232,6 +232,65 @@ Round 1 (codex, model gpt-6.1-sol, effort default): approved. Four criteria pass
     },
     "escalation_question": "",
     "summary": "Cancellation works for ordinary prose, but some valid reasons are altered or disappear from the status list. Fix reason preservation before merge. I ran git diff main...HEAD -- . ':!speck', inspected the relevant functions and tests, ran npm test, and ran node test/speck.test.mjs plus independent in-memory encoding probes. Test execution failed because temporary directories are read-only; the direct run reported 17 passes and 47 filesystem-related failures. The encoding probes independently confirmed the reported bug."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "dacab3fe539769896cc6da6aa986f68d02cf231c",
+    "saved_at": "2026-10-08T20:19:44.968Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/speck.mjs cmdCancel records and archives cancellations; test/speck.test.mjs exercises all eligible statuses, dates and headers. However, an independent in-memory setField/parseTicket probe with reason 'say \" # later' returned 'say \\\\', losing part of the reason."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdCancel checks blank reasons, done and cancelled before writing. The two AC2 CLI tests verify refusals and unchanged file contents and locations."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet refuses status cancelled and points to speck cancel; placeTicket restores live statuses to the live folder. AC3 CLI tests exercise refusal, reopening and preservation of an awkward recorded reason."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "cmdStatus orders CANCELLED after DONE, and nextId includes both ticket folders; dedicated AC4 CLI tests cover these behaviours. However, cmdStatus reads the corrupted cancel_reason demonstrated by the independent probe, so some reasons are displayed incompletely."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The string round-trip fix is incomplete. stripComment treats escaped double quotes as quote delimiters. A reason containing an odd number of embedded double quotes followed by a whitespace-prefixed #, such as 'say \" # later', is truncated before scalar reaches JSON.parse. Existing regression tests cover quotes and hashes separately but miss this combination.",
+        "suggested_fix": "Make stripComment recognise escaped quotes inside double-quoted strings, including backslash parity. Add a CLI regression test combining an embedded quote and a subsequent #, checking exact stored and displayed text.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec covers the intended cancellation capability and scope. The implementation still has the reason-preservation defect described in F1."
+    },
+    "escalation_question": "",
+    "summary": "Cancellation, refusal checks, reopening and numbering have meaningful CLI tests, but some reasons still lose text, so this is not ready to merge. I ran cat and sed to inspect the spec, review instructions and implementation; git diff main...HEAD -- . ':!speck'; git status --short; npm test; and Node in-memory probes. npm test exited before reporting individual tests, so I could not independently confirm the builder's 66 passing tests. The probes confirmed ordinary config values and the previously failing numeric-looking reasons work, but reproduced the remaining quote-and-hash corruption."
   }
 }
 ```

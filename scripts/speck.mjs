@@ -70,6 +70,7 @@ function stripComment(line) {
   let inS = false, inD = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
+    if (c === '\\' && inD) { i++; continue; } // an escaped character inside double quotes never closes them
     if (c === "'" && !inD) inS = !inS;
     else if (c === '"' && !inS) inD = !inD;
     else if (c === '#' && !inS && !inD && (i === 0 || /\s/.test(line[i - 1]))) return line.slice(0, i).trimEnd();
