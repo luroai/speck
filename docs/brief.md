@@ -117,7 +117,7 @@ speck/
 .speck/                      # the speck command and templates
 ```
 
-`speck/tickets/` holds only work in progress. Setting a ticket to `done` moves its file into `speck/tickets/done/` under the same name, and any other status moves it back. Commands take a ticket id, not a path, so they find it in either folder, and re-running `speck init` files any done ticket left behind by an older version.
+`speck/tickets/` holds only work in progress. Setting a ticket to `done` moves its file into `speck/tickets/done/` under the same name, and any other status moves it back. Commands take a ticket id, not a path, so they find it in either folder, and re-running `speck init` files any done ticket left behind by an older version. A move never overwrites: if the same file name is already in the other folder, speck stops and asks you to keep one.
 
 ## Skills and commands (v0.1)
 

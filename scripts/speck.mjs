@@ -179,6 +179,9 @@ function placeTicket(repo, t, status) {
   const from = t.file;
   const to = path.join(status === 'done' ? doneTicketsDir(repo) : ticketsDir(repo), path.basename(from));
   if (path.resolve(from) === path.resolve(to)) return from;
+  // Never overwrite: the same name already in the other folder is a second copy, and losing it would be data loss.
+  if (fs.existsSync(to))
+    throw new SpeckError(`There are two tickets called ${path.basename(from)}: ${path.relative(repo, to)} and ${path.relative(repo, from)}. Keep one and delete the other, then run this again.`);
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.renameSync(from, to);
   t.file = to;

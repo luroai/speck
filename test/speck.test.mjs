@@ -565,3 +565,26 @@ test('AC3: speck init moves done tickets left in speck/tickets/ and leaves the o
   assert.equal(r.at(path.join('speck', 'tickets', 'done', path.basename(live))), false, 'and is not moved into done/');
   assert.equal(r.fm(live).status, 'draft', 'it was left untouched');
 });
+
+test('AC3: a name clash makes init refuse rather than overwrite an archived ticket (F1)', () => {
+  const r = doneRepo();
+  const live = r.add('Old work');
+  const done = path.join('speck', 'tickets', 'done', path.basename(live));
+  // The same file name in both folders, with different contents.
+  fs.writeFileSync(path.join(r.dir, done), r.read(live).replace('status: draft', 'status: done') + 'ARCHIVED COPY\n');
+  fs.writeFileSync(path.join(r.dir, live), r.read(live).replace('status: draft', 'status: done') + 'LIVE COPY\n');
+  const init = r.run('init', '--skip-checks');
+  assert.notEqual(init.status, 0);
+  assert.match(init.stderr, /two tickets called 0001-old-work\.md/);
+  assert.match(r.read(done), /ARCHIVED COPY/, 'the archived ticket is not overwritten');
+  assert.match(r.read(live), /LIVE COPY/, 'the live ticket is still there');
+});
+
+test('AC2: pack and reviewer-settings find a shipped ticket in the done folder', () => {
+  const r = shipRepo();
+  assert.equal(r.run('ship', '1').status, 0);
+  const pack = r.run('pack', '1');
+  assert.equal(pack.status, 0, pack.stderr);
+  assert.match(pack.stdout, /0001 · Export bookings/);
+  assert.equal(r.run('reviewer-settings', '1').status, 0);
+});

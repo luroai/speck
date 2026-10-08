@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3bad064351ec0e0ad9e680f9e144dfe56116ee50",
+    "thread_id": "01a11c53-81f5-7413-8c76-7111f49891a7",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 54757,
+      "cached_input_tokens": 27136,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 664,
+      "reasoning_output_tokens": 143
+    },
+    "saved_at": "2026-10-08T16:23:49.627Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The supplied diff shows cmdSet and shipTicket calling placeTicket. Tests exercise moving to done, moving back, and committing the move during shipping; the supplied output reports these passing."
+      },
+      {
+        "id": 2,
+        "status": "unclear",
+        "evidence": "Tests exercise archived-ticket lookup through set and lint, status listing, and number allocation. Other commands' lookup paths could not be verified: repository reads failed because the read-only sandbox could not start."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The migration test covers ordinary moves and repeat init. However, cmdInit uses listTickets, which silently chooses the live copy when the same filename exists in both folders, then placeTicket calls renameSync over the archived destination. On Linux this overwrites the archived ticket."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Re-running init can silently destroy an archived ticket when a live done ticket has the same filename. listTickets hides the duplicate, and placeTicket overwrites the destination. The duplicate protection in findTicket is bypassed by this migration.",
+        "suggested_fix": "Check for destination collisions before moving migration files and refuse with a clear error while preserving both copies. Add a regression test with different contents at the same filename in both folders, asserting neither is overwritten.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The supplied documentation accurately describes the intended ordinary behaviour and includes the done folder. Full repository verification was blocked by sandbox startup failure."
+    },
+    "escalation_question": "",
+    "summary": "The supplied tests support the normal filing and reopening flows. However, upgrading with duplicate ticket files can silently overwrite an archived ticket; this needs fixing before merge. I could not independently inspect the repository or run checks because the sandbox failed to start."
+  }
+}
