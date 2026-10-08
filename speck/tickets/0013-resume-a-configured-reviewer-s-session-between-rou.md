@@ -1,7 +1,7 @@
 ---
 id: "0013"
 title: "Resume a configured reviewer's session between rounds"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T21:41:33.861Z"
 ---
 # 0013 · Resume a configured reviewer's session between rounds
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0012, a command reviewer gets the whole history resent every round. That costs tokens, and the reviewer re-reads everything instead of continuing the conversation it already had, which is what Codex does today.
@@ -44,10 +44,15 @@ A command reviewer that supports resuming a session continues the same session i
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 after a fresh fallback round with no session id, the next round could resume an older session that never saw the round in between. Round 2 (codex): approved, with only the latest round's session resumed.
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Review rounds: 2 (codex, `gpt-6.1-sol`), with 527,292 reviewer tokens. The live Claude resume run on a sample ticket took 2 rounds on `haiku`, and round 2 continued the session.
+- Elapsed: about 6 minutes from start to approval (from `speck pack`).
+- Changed lines: 89 (excluding tests and `speck/`), against a limit of 1,000.
+- Follow-up ideas:
+  - After a fresh fallback round whose output has no session id, the next round falls back again even though an earlier session exists. That's deliberate (F1), but a reviewer whose plain runs do report an id would be better served by always setting `session_id_path`. Worth a line in the docs if people hit it.
+  - The pack shows `session not recorded` for `speck record` rounds after round 1. The review skill could pass `--session=continued` when the builder resumes a subagent with SendMessage.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -114,6 +119,74 @@ A command reviewer that supports resuming a session continues the same session i
     },
     "escalation_question": "",
     "summary": "Session resumption and fallback work in the tested two-round cases. One fix is needed: after starting fresh, speck can return to an older session and leave the reviewer unaware of the intervening review. Tests were inspected but not rerun because they create files and this review is read-only."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "dd8c2a38e5fb0b19fcd34481ac422974928b7a38",
+    "thread_id": "01a11d7a-38be-7131-a908-5af5e91f86cd",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 331656,
+      "cached_input_tokens": 258304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1797,
+      "reasoning_output_tokens": 141
+    },
+    "saved_at": "2026-10-08T21:47:04.694Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: atPath and runCommandReview save configured session paths as thread_id. test/speck.test.mjs: 0013 AC1 exercises top-level, nested and missing paths; supplied results show it passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runCommandReview resumes the latest round's session using reviewerPrompt. The 0013 AC2 test checks command arguments and incremental prompt contents; supplied results show it passing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runCommandReview uses historyPrompt and prints one fallback line when resumption is unavailable or fails. The 0013 AC3 and AC2/AC3 (F1) tests cover these cases, including a fresh round without an id; both pass in supplied results."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "reviewPack uses sessionLabel for each history entry. The 0013 AC4 test checks fresh and continued labels for command and Codex reviewers; supplied results show it passing."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:611",
+        "issue": "Resolved: command reviewers now select only the immediately preceding round's thread_id, preventing a return to an older session that missed intervening reviews. The new three-round regression test exercises the original failure scenario.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated session documentation accurately explains the latest-round requirement and full-history fallback. Codex's existing resume logic remains unchanged."
+    },
+    "escalation_question": "",
+    "summary": "Approved. Configured reviewers can continue their sessions, with full-history fallback when needed and clear labels in the review pack. The lost-context bug is fixed and covered by a meaningful regression test. Supplied results show all 107 tests passing; tests were inspected but not rerun in this read-only review."
   }
 }
 ```
