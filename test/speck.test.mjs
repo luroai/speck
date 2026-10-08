@@ -213,7 +213,7 @@ test('AC3: speck review passes the model and effort to codex in round 1 and resu
   }
 });
 
-test('AC3: the review skill starts a claude-subagent reviewer with the model and effort', () => {
+test('AC3: the review skill tells the builder to start a claude-subagent with the resolved model and effort (manual smoke test in ticket 0005 Notes)', () => {
   const skill = fs.readFileSync(path.join(ROOT, 'skills', 'speck-review', 'SKILL.md'), 'utf8');
   assert.match(skill, /speck reviewer-settings <id>/);
   assert.match(skill, /`model`/);

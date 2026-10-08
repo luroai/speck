@@ -36,6 +36,10 @@ Teams can set the reviewer model and effort level for a whole repo in `speck/con
 - Model names are free text in the reviewer's own format, e.g. `claude-opus-5-5`. Effort is a separate field so speck can pass it on reliably.
 - Templates and docs must not suggest a specific model; examples are fine in comments only.
 - Update `docs/brief.md`, the review skill and `templates/config.yml` to describe the fields.
+- **Manual smoke test for the `claude-subagent` path (AC3), 8 October 2026.** A Node test can't start Claude Code's Agent tool, so the builder followed the review skill by hand. To repeat it: in a temporary repo, run `speck init --skip-checks`, then `speck new Configured`, `speck set 1 reviewer_model haiku`, `speck set 1 reviewer_effort low`, then `speck new Unset`.
+  - Ticket 0001: `speck reviewer-settings 1` printed `model: haiku` and `effort: low`. As skill step 3 says, the Agent tool was called with `model: "haiku"` and `effort: "low"`. The subagent started, and when asked its model it replied `claude-haiku-5-5`.
+  - Ticket 0002: `speck reviewer-settings 2` printed `model: default` and `effort: default`. The Agent tool was called with neither parameter. The subagent started on the builder's model and replied `claude-opus-5-5`, so a fresh session on the builder's model, as the Outcome says.
+  - Claude Code accepted the effort, but a subagent can't report its own effort level, so the smoke test shows only that the effort value is accepted.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
