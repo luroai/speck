@@ -38,8 +38,9 @@ idea / conversation
        → approved?  yes → logs filled in, status: approved (waits on its branch, no PR)
                     no, after max rounds → status: blocked + question for you
   → you read `speck pack 0007`
-  → /speck-ship 0007      → checks, final test run, ticket set to done,      [GATE 2]
-                            merge into main, push, branch deleted locally and on the remote
+  → /speck-ship 0007      → checks, final test run, ticket set to done and   [GATE 2]
+                            filed in speck/tickets/done/, merge into main,
+                            push, branch deleted locally and on the remote
 ```
 
 The `product.md` update is made and reviewed on the ticket branch, and `speck ship` sets the ticket to `done` on that branch just before merging. So merging is the moment the spec becomes true. Until you ship, `main` is unchanged. `speck ship` refuses, changing nothing, unless the ticket is `approved`, the review loop says `ship`, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/`, and `commands.test` is set and passes. A merge conflict is aborted and leaves everything as it was.
@@ -109,11 +110,14 @@ speck/
   product.md                 # the living spec: what this product is and does today
   ideas/                     # low-ceremony notes and captured conversations
   tickets/0007-<slug>.md     # numbered tickets; status lives in frontmatter
+  tickets/done/0001-<slug>.md # finished tickets, filed away under the same name
   reviews/0007/round-N.json  # review transcripts
 .claude/skills/speck-*/      # skills for Claude Code
 .agents/skills/speck-*/      # the same skills for Codex, cptr and other agents
 .speck/                      # the speck command and templates
 ```
+
+`speck/tickets/` holds only work in progress. Setting a ticket to `done` moves its file into `speck/tickets/done/` under the same name, and any other status moves it back. Commands take a ticket id, not a path, so they find it in either folder, and re-running `speck init` files any done ticket left behind by an older version. A move never overwrites: if the same file name is already in the other folder, speck stops and asks you to keep one.
 
 ## Skills and commands (v0.1)
 
