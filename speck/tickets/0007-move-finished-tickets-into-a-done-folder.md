@@ -35,6 +35,7 @@ Finished tickets stay in `speck/tickets/` next to live work. Anyone browsing the
 - Built after 0006 because both change how tickets reach `done`. It doesn't depend on local ship otherwise.
 - Tickets refer to each other by id (`after:`), not by path, so moving files doesn't break those links.
 - Update `speck/product.md` and `docs/brief.md` (the repo layout) to show the done folder.
+- Build note: the tickets already `done` in this repo (0005, 0006) were moved into `speck/tickets/done/` on this branch, so the layout matches the outcome once this ships. `speck init` does the same job for anyone upgrading.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

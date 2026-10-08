@@ -142,21 +142,47 @@ export function reviewerSettings(fm = {}, cfg = {}) {
 function settingsMeta(s) { return { reviewer_model: s.model || 'default', reviewer_effort: s.effort || 'default' }; }
 
 function ticketsDir(repo) { return path.join(repo, 'speck', 'tickets'); }
+// Finished tickets sit in a done/ folder, so speck/tickets/ holds only work in progress.
+function doneTicketsDir(repo) { return path.join(ticketsDir(repo), 'done'); }
+function ticketDirs(repo) { return [ticketsDir(repo), doneTicketsDir(repo)]; }
 
 function listTickets(repo) {
-  const dir = ticketsDir(repo);
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter(f => /^\d{4}-.*\.md$/.test(f)).sort().map(f => {
-    const file = path.join(dir, f);
-    return { file, ...parseTicket(fs.readFileSync(file, 'utf8')) };
-  });
+  const seen = new Map();
+  for (const dir of ticketDirs(repo)) {
+    if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir)) {
+      if (!/^\d{4}-.*\.md$/.test(f)) continue;
+      // ticketDirs lists the live folder first, so if a name is in both (which shouldn't happen) the live copy wins.
+      // findTicket reports that clash rather than guessing.
+      if (!seen.has(f)) seen.set(f, path.join(dir, f));
+    }
+  }
+  return [...seen.keys()].sort().map(f => ({ file: seen.get(f), ...parseTicket(fs.readFileSync(seen.get(f), 'utf8')) }));
 }
 
 function findTicket(repo, id) {
   const pad = String(id).padStart(4, '0');
-  const t = listTickets(repo).find(t => path.basename(t.file).startsWith(`${pad}-`));
-  if (!t) throw new SpeckError(`Ticket ${pad} not found in speck/tickets/.`);
-  return t;
+  const found = ticketDirs(repo).flatMap(dir => {
+    if (!fs.existsSync(dir)) return [];
+    const f = fs.readdirSync(dir).find(n => n.startsWith(`${pad}-`) && n.endsWith('.md'));
+    return f ? [path.join(dir, f)] : [];
+  });
+  if (found.length > 1)
+    throw new SpeckError(`Ticket ${pad} is in two places: ${found.map(f => path.relative(repo, f)).join(' and ')}. Keep one copy, then run this again.`);
+  if (!found.length) throw new SpeckError(`Ticket ${pad} not found in speck/tickets/ or speck/tickets/done/.`);
+  return { file: found[0], ...parseTicket(fs.readFileSync(found[0], 'utf8')) };
+}
+
+// A ticket lives in speck/tickets/, or in speck/tickets/done/ while it is done. Moves it if the status it is
+// being given says otherwise, and returns where it was found, so the caller can stage the move.
+function placeTicket(repo, t, status) {
+  const from = t.file;
+  const to = path.join(status === 'done' ? doneTicketsDir(repo) : ticketsDir(repo), path.basename(from));
+  if (path.resolve(from) === path.resolve(to)) return from;
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.renameSync(from, to);
+  t.file = to;
+  return from;
 }
 
 export function nextId(repo) {
@@ -458,7 +484,8 @@ function cmdInit(args) {
   const repo = process.cwd();
   const force = args.includes('--force');
   console.log(`speck ${VERSION}: setting up ${repo}\n`);
-  for (const d of ['speck/ideas', 'speck/tickets', 'speck/reviews']) fs.mkdirSync(path.join(repo, d), { recursive: true });
+  const dirs = ['speck/ideas', 'speck/tickets', 'speck/tickets/done', 'speck/reviews'];
+  for (const d of dirs) fs.mkdirSync(path.join(repo, d), { recursive: true });
   const copies = [['config.yml', 'speck/config.yml'], ['product.md', 'speck/product.md']];
   for (const [from, to] of copies) {
     const dest = path.join(repo, to);
@@ -466,7 +493,11 @@ function cmdInit(args) {
     fs.copyFileSync(path.join(TEMPLATES, from), dest);
     console.log(`created ${to}`);
   }
-  for (const d of ['speck/ideas', 'speck/tickets', 'speck/reviews']) {
+  // Tidy up after a version of speck that kept done tickets in speck/tickets/, so the layout above holds.
+  const strays = listTickets(repo).filter(t => t.fm.status === 'done' && path.dirname(t.file) !== doneTicketsDir(repo));
+  for (const t of strays) placeTicket(repo, t, 'done');
+  if (strays.length) console.log(`moved   ${strays.length} done ticket${strays.length === 1 ? '' : 's'} into speck/tickets/done/`);
+  for (const d of dirs) {
     const keep = path.join(repo, d, '.gitkeep');
     if (!fs.readdirSync(path.join(repo, d)).length) fs.writeFileSync(keep, '');
   }
@@ -552,6 +583,8 @@ function cmdSet(args) {
     }
   }
   writeField(t, key, value);
+  // Setting done moves the ticket into speck/tickets/done/, and any other status brings it back.
+  if (key === 'status') placeTicket(repo, t, value);
   console.log(`${t.fm.id} ${key} → ${value}`);
 }
 
@@ -617,7 +650,7 @@ export function shipTicket(repo, id) {
   // Close the ticket on the branch, so the merge is what makes it done.
   const t = findTicket(repo, pad);
   writeField(t, 'status', 'done');
-  git(['add', t.file], repo);
+  git(['add', '-A', '--', placeTicket(repo, t, 'done'), t.file], repo);
   git(['commit', '-q', '-m', `speck(${pad}): ship`], repo);
   git(['checkout', '-q', base], repo);
   const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: repo });

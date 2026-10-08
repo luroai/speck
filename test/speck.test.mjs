@@ -298,7 +298,10 @@ function shipRepo({ test = 'true', approve = true } = {}) {
     run('set', '1', 'status', 'approved');
     g('add', '-A'); g('commit', '-qm', 'approved');
   }
-  const status = () => parseTicket(fs.readFileSync(path.join(dir, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8')).fm.status;
+  // A shipped ticket moves into speck/tickets/done/, so look in both places.
+  const ticketAt = () => ['speck/tickets/0001-export-bookings.md', 'speck/tickets/done/0001-export-bookings.md']
+    .map(p => path.join(dir, p)).find(p => fs.existsSync(p));
+  const status = () => parseTicket(fs.readFileSync(ticketAt(), 'utf8')).fm.status;
   const state = () => ({ branch: g('branch', '--show-current'), main: g('rev-parse', 'main'), feature: g('rev-parse', '--verify', '-q', 'speck/0001-export-bookings') });
   return { dir, run, g, status, state };
 }
@@ -390,7 +393,7 @@ test('AC3: speck ship marks the ticket done, merges with a merge commit, deletes
   assert.equal(s.feature, '', 'branch deleted');
   assert.equal(r.g('rev-list', '--parents', '-n', '1', 'main').split(' ').length, 3, 'merge commit');
   assert.equal(r.status(), 'done');
-  assert.match(fs.readFileSync(path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8'), /^finished: /m);
+  assert.match(fs.readFileSync(path.join(r.dir, 'speck', 'tickets', 'done', '0001-export-bookings.md'), 'utf8'), /^finished: /m);
   assert.equal(fs.readFileSync(path.join(r.dir, 'shared.txt'), 'utf8'), 'feature\n');
   assert.equal(r.g('status', '--porcelain'), '');
 });
@@ -479,4 +482,86 @@ test('AC3: speck ship works when run from main, where the ticket is not yet appr
   assert.equal(res.status, 0, res.stderr);
   assert.equal(r.status(), 'done');
   assert.equal(r.state().feature, '');
+});
+
+// ---------- 0007: finished tickets move into speck/tickets/done/ ----------
+
+// A repo with speck installed, plus helpers for lint-clean tickets and file paths.
+function doneRepo() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-done-'));
+  const env = { ...process.env, ...gitEnv };
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const at = p => fs.existsSync(path.join(dir, p));
+  const read = p => fs.readFileSync(path.join(dir, p), 'utf8');
+  const fm = p => parseTicket(read(p)).fm;
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir, encoding: 'utf8', env });
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const add = title => {
+    const p = run('new', ...title.split(' ')).stdout.trim();
+    fs.writeFileSync(path.join(dir, p), read(p).split('## Problem')[0] + good);
+    return p;
+  };
+  return { dir, run, add, at, read, fm };
+}
+
+test('AC1: setting a ticket to done moves it into speck/tickets/done/, and out again', () => {
+  const r = doneRepo();
+  const live = r.add('Export bookings');
+  const done = path.join('speck', 'tickets', 'done', path.basename(live));
+  assert.equal(r.run('set', '1', 'status', 'done').status, 0);
+  assert.equal(r.at(live), false, 'no longer in speck/tickets/');
+  assert.equal(r.at(done), true, 'moved into speck/tickets/done/ under the same name');
+  assert.equal(r.fm(done).status, 'done');
+  assert.match(r.read(done), /^finished: /m, 'the finished timestamp survives the move');
+  // A done ticket that goes back to work returns to speck/tickets/.
+  assert.equal(r.run('set', '1', 'status', 'reviewing').status, 0);
+  assert.equal(r.at(live), true);
+  assert.equal(r.at(done), false, 'only one copy is left behind');
+});
+
+test('AC1: speck ship leaves the finished ticket in speck/tickets/done/', () => {
+  const r = shipRepo();
+  const res = r.run('ship', '1');
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(fs.existsSync(path.join(r.dir, 'speck', 'tickets', 'done', '0001-export-bookings.md')), true);
+  assert.equal(fs.existsSync(path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md')), false);
+  assert.equal(r.g('status', '--porcelain'), '', 'the move is committed, not left loose');
+});
+
+test('AC2: commands find a done ticket, status still lists it, and new never reuses its number', () => {
+  const r = doneRepo();
+  r.add('Export bookings');
+  assert.equal(r.run('set', '1', 'status', 'done').status, 0);
+  const done = path.join('speck', 'tickets', 'done', '0001-export-bookings.md');
+  // A command that takes an id finds the ticket in the done folder.
+  assert.equal(r.run('set', '1', 'priority', '1').status, 0);
+  assert.equal(r.fm(done).priority, 1);
+  assert.equal(r.run('lint', '1').status, 0);
+  assert.equal(r.run('set', '1', 'status', 'ready').status, 0, 'lint found the ticket in the done folder too');
+  assert.equal(r.at(path.join('speck', 'tickets', '0001-export-bookings.md')), true, 'a live ticket is back in speck/tickets/');
+  assert.equal(r.run('status').stdout.includes('DONE (1)'), false, 'it is not done any more');
+  assert.equal(r.run('set', '1', 'status', 'done').status, 0);
+  assert.match(r.run('status').stdout, /DONE \(1\)/, 'done tickets are still listed');
+  // The next number skips the one in the done folder.
+  assert.equal(r.run('new', 'Second').stdout.trim(), path.join('speck', 'tickets', '0002-second.md'));
+});
+
+test('AC3: speck init moves done tickets left in speck/tickets/ and leaves the others alone', () => {
+  const r = doneRepo();
+  const oldLayout = r.add('Old work');
+  const live = r.add('New work');
+  assert.equal(r.run('set', '1', 'status', 'done').status, 0);
+  // Put the done ticket back where the previous version of speck kept it.
+  fs.renameSync(path.join(r.dir, 'speck', 'tickets', 'done', path.basename(oldLayout)), path.join(r.dir, oldLayout));
+  assert.equal(r.at(path.join('speck', 'tickets', 'done', path.basename(oldLayout))), false);
+  const first = r.run('init', '--skip-checks');
+  assert.equal(first.status, 0);
+  assert.match(first.stdout, /moved\s+1 done ticket into speck\/tickets\/done\//);
+  // Running it again finds nothing to move and says nothing.
+  assert.doesNotMatch(r.run('init', '--skip-checks').stdout, /moved/);
+  assert.equal(r.at(path.join('speck', 'tickets', 'done', path.basename(oldLayout))), true);
+  assert.equal(r.at(oldLayout), false);
+  assert.equal(r.at(live), true, 'a ticket still in progress stays where it is');
+  assert.equal(r.at(path.join('speck', 'tickets', 'done', path.basename(live))), false, 'and is not moved into done/');
+  assert.equal(r.fm(live).status, 'draft', 'it was left untouched');
 });
