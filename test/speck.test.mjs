@@ -253,3 +253,18 @@ test('AC5: saved rounds and the review pack show the reviewer model and effort, 
   assert.equal(unset.roundFile(2).meta.reviewer_model, 'default');
   assert.equal(unset.roundFile(2).meta.reviewer_effort, 'default');
 });
+
+test('AC5: recorded subagent rounds keep the settings the reviewer was started with', () => {
+  const r = reviewRepo({ ticketFields: 'reviewer_model: first-model\nreviewer_effort: low' });
+  assert.match(r.run('reviewer-settings', '1').stdout, /model: first-model\neffort: low/);
+  const v = path.join(r.dir, 'v.json');
+  fs.writeFileSync(v, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' }));
+  r.run('record', '1', v, '--reviewer=claude-subagent');
+  // The ticket's settings change mid-loop, but the same subagent is resumed for round 2.
+  fs.writeFileSync(r.ticketFile, setField(setField(fs.readFileSync(r.ticketFile, 'utf8'), 'reviewer_model', 'second-model'), 'reviewer_effort', 'max'));
+  r.run('record', '1', v, '--reviewer=claude-subagent');
+  for (const n of [1, 2]) {
+    assert.equal(r.roundFile(n).meta.reviewer_model, 'first-model');
+    assert.equal(r.roundFile(n).meta.reviewer_effort, 'low');
+  }
+});

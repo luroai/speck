@@ -33,7 +33,7 @@ This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effor
 **`claude-subagent`** (only if config allows it, because it's the same model family)
 
 1. Run `speck prompt <id> --tests=/tmp/speck-<id>-tests.txt > /tmp/speck-<id>-prompt.md`.
-2. Run `speck reviewer-settings <id>`. It prints `model: …` and `effort: …`.
+2. Run `speck reviewer-settings <id>`. It prints `model: …` and `effort: …`, and saves them so that later rounds are recorded with the settings this reviewer was started with. Run it only when you start a new reviewer.
 3. Spawn a fresh subagent with the Agent tool. If the model isn't `default`, pass it as written as the Agent tool's `model`. If the effort isn't `default`, pass it as `effort`. If a value is `default`, leave that parameter out so the subagent runs on your own model in a fresh session. Its prompt should say: "Read /tmp/speck-<id>-prompt.md and follow it. You are read-only: do not edit files. Return only the JSON verdict." Keep the agent's id.
 4. Save its JSON reply to `/tmp/speck-<id>-verdict.json`, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
 

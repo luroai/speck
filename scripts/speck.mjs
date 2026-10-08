@@ -623,8 +623,10 @@ function cmdRecord(args) {
   const cfg = loadConfig(repo);
   const reviewer = (args.find(a => a.startsWith('--reviewer=')) || '--reviewer=claude-subagent').slice(11);
   const verdict = JSON.parse(fs.readFileSync(file, 'utf8'));
-  const settings = reviewerSettings(findTicket(repo, id).fm, cfg);
-  const rec = saveRound(repo, id, verdict, { reviewer, ...settingsMeta(settings), reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim() });
+  // A resumed reviewer keeps the settings it started with, saved by `speck reviewer-settings`.
+  const saved = path.join(reviewDir(repo, id), 'reviewer-settings.json');
+  const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));
+  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim() });
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
@@ -637,9 +639,13 @@ function cmdNext(args) {
 }
 
 function cmdReviewerSettings(args) {
-  // The model and effort the reviewer should run with, for reviewers that speck doesn't start itself.
+  // The model and effort to start a reviewer with, for reviewers that speck doesn't start itself.
+  // Saved so that `speck record` reports what the running reviewer actually uses, even if the ticket changes later.
   const repo = findRepoRoot();
   const s = settingsMeta(reviewerSettings(findTicket(repo, args[0]).fm, loadConfig(repo)));
+  const dir = reviewDir(repo, args[0]);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'reviewer-settings.json'), JSON.stringify(s, null, 2) + '\n');
   console.log(`model: ${s.reviewer_model}\neffort: ${s.reviewer_effort}`);
 }
 
@@ -672,7 +678,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f]       print the reviewer prompt (for subagent reviewers)
-  speck reviewer-settings <id>        reviewer model and effort for a ticket ("default" if unset)
+  speck reviewer-settings <id>        print and save the model and effort to start a reviewer with
   speck next <id>                     what the builder should do next: review, fix, block or ship
   speck pack <id>                     print the review pack (PR body)
 `;

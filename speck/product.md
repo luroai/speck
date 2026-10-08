@@ -40,6 +40,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - No Claude Code plugin: skills are plain project skills, so commands are `/speck-build` rather than `/speck:build`.
 
 - Speck doesn't check whether a model name exists or whether the reviewer supports the chosen effort. For example, Codex may reject `max`.
+- Claude Code's Agent tool takes model aliases rather than full model names, so set `reviewer_model` in that form for a `claude-subagent` reviewer.
 
 ## How to run and test
 - Unit tests: `npm test`
