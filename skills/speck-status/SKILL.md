@@ -7,7 +7,7 @@ description: Show speck tickets by status, with approved tickets waiting to ship
 
 1. Run `node .speck/scripts/speck.mjs status` from the repo root.
 2. Summarise briefly:
-   - **Approved:** these are waiting for the user. Suggest reading `speck pack <id>` and then running `/speck-ship <id>`. Never ship them yourself.
+   - **Approved:** these are waiting for the user, because `auto_ship` is off or doesn't cover them. Suggest reading `speck pack <id>` and then running `/speck-ship <id>`. Never ship them yourself.
    - **Blocked:** show each question, since these need the user.
    - **Ready:** list by priority, and suggest `/speck-build <id>` for the top one.
    - **Cancelled:** list them with their reason, so the user can see what was already considered and turned down. Don't suggest reviving one unless they ask.

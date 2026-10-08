@@ -11,7 +11,7 @@ idea → ticket → [you: Ready for Dev] → agent builds → second agent revie
 - **Tickets, not specifications.** Each change is a small numbered ticket in your repo, sized for one agent in one sitting. speck checks the size rules and makes you split anything bigger.
 - **Adversarial review built in.** The building agent (Claude Code) starts an independent reviewer (Codex by default) and they take turns: the builder fixes or disputes each finding, and the reviewer re-checks in the same session. It ends when the reviewer approves or the question comes back to you.
 - **One living spec.** `speck/product.md` tells any new agent session or person what the product is today. It's updated on each ticket's branch and checked by the reviewer.
-- **Two human gates.** You decide what gets built and what gets shipped. Agents never merge or ship unless you run `/speck-ship`.
+- **Two human gates.** You decide what gets built and what gets shipped. Agents never merge or ship unless you run `/speck-ship`, or you turn on `auto_ship` in `speck/config.yml` to ship whatever the reviewer approves.
 - **No GitHub needed.** Everything happens in your local repo. Shipping merges the approved branch into `main` and pushes it if you have a remote.
 
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.

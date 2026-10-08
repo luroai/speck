@@ -98,7 +98,7 @@ function loadConfig(repo) {
     escalate_after_repeat_disputes: 2, max_ticket_body_lines: 40, ...(cfg.limits || {}),
   };
   return { base_branch: 'main', branch_prefix: 'speck/', builder: 'claude', reviewer: 'codex',
-    allow_same_model_review: false, commands: {}, github: { status_check: 'speck/review' }, ...cfg, limits };
+    allow_same_model_review: false, auto_ship: false, auto_ship_risk: ['low'], commands: {}, github: { status_check: 'speck/review' }, ...cfg, limits };
 }
 
 // ---------- tickets ----------
@@ -719,7 +719,7 @@ function cmdInit(args) {
   const skills = installTooling(repo);
   console.log(`updated .speck/ (the speck command)`);
   console.log(`updated ${SKILL_DIRS.join(' and ')} (${skills.length} skills)`);
-  const pointer = '\n## speck\n\nThis repo uses speck. Read `speck/product.md` first: it describes what the product is today. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`.\n';
+  const pointer = '\n## speck\n\nThis repo uses speck. Read `speck/product.md` first: it describes what the product is today. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
   const agents = path.join(repo, 'AGENTS.md');
   const agentsText = fs.existsSync(agents) ? fs.readFileSync(agents, 'utf8') : '# Agent guide\n';
   if (!agentsText.includes('This repo uses speck')) { fs.writeFileSync(agents, agentsText + pointer); console.log('updated AGENTS.md'); }
@@ -971,9 +971,28 @@ function deleteRemoteBranch(repo, remote, branch) {
   else console.log(`Couldn't delete ${branch} on ${remote} (${del.stderr.trim().split('\n').pop()}). Delete it with \`git push ${remote} --delete ${branch}\`.`);
 }
 
+// Why an approved ticket can't ship without the user, or '' if config lets the builder ship it straight after approval.
+function autoShipBlocker(repo, cfg, id) {
+  const pad = String(id).padStart(4, '0');
+  if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
+  const t = findTicket(repo, pad);
+  const allowed = [].concat(cfg.auto_ship_risk ?? []).map(String);
+  if (!allowed.includes(String(t.fm.risk))) return `ticket ${pad} has risk "${t.fm.risk}", and auto_ship_risk only allows ${allowed.length ? allowed.join(', ') : 'none'}`;
+  const blind = rounds(repo, pad).filter(r => r.meta.sandbox_ok === false).map(r => r.meta.round);
+  if (blind.length) return `the reviewer couldn't inspect the repo in round ${blind.join(', ')}, so it only reviewed the diff`;
+  return '';
+}
+
 function cmdShip(args) {
-  if (!args[0]) throw new SpeckError('Usage: speck ship <id>');
-  shipTicket(findRepoRoot(), args[0]);
+  const id = args.find(a => !a.startsWith('--'));
+  if (!id) throw new SpeckError('Usage: speck ship <id> [--auto]');
+  const repo = findRepoRoot();
+  // --auto is how the builder ships straight after approval. It only goes ahead when config allows it for this ticket.
+  if (args.includes('--auto')) {
+    const why = autoShipBlocker(repo, loadConfig(repo), id);
+    if (why) throw new SpeckError(`Not shipping automatically: ${why}. The ticket stays approved, waiting for you to run /speck-ship ${String(id).padStart(4, '0')}.`, 12);
+  }
+  shipTicket(repo, id);
 }
 
 function cmdStatus() {
@@ -1119,7 +1138,8 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck next <id>                     what the builder should do next: review, fix, block or ship
   speck pack <id>                     print the review pack
-  speck ship <id>                     merge an approved ticket into the base branch (the user's gate)
+  speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
+                                      ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, cancel: cmdCancel, status: cmdStatus, diffstat: cmdDiffstat,

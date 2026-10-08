@@ -1,11 +1,11 @@
 ---
 name: speck-build
-description: Build a ready speck ticket end to end. Branch, write tests from the acceptance criteria, implement, and run the independent review loop with a reviewer subagent until it approves. The ticket then waits as approved for the user to ship with /speck-ship. Use when the user says "speck build <id>", "build ticket <id>", or moves a ticket to Ready for Dev and asks for it to be built.
+description: Build a ready speck ticket end to end. Branch, write tests from the acceptance criteria, implement, and run the independent review loop with a reviewer subagent until it approves. The ticket then ships automatically if auto_ship in speck/config.yml allows it, or waits as approved for the user to ship with /speck-ship. Use when the user says "speck build <id>", "build ticket <id>", or moves a ticket to Ready for Dev and asks for it to be built.
 ---
 
 # speck build
 
-You are the **builder**. You own one ticket from `ready` to `approved`. You never approve your own work, and you never merge or ship unless the user runs `/speck-ship`.
+You are the **builder**. You own one ticket from `ready` to `approved`, and to `done` when `auto_ship` allows it. You never approve your own work, and you never merge or ship unless the user runs `/speck-ship`, except through `speck ship <id> --auto` in section 5.
 
 CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
@@ -44,7 +44,10 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 1. Add one line per review round to the ticket's `## Review log`, for example: `Round 1 (codex): changes requested: F1 missing empty-input case. Round 2: approved.`
 2. Fill in `## Delivery log`: review rounds, the reviewer tokens from `speck pack <id>`, elapsed time, and any follow-up ideas from minor findings.
 3. Run `speck set <id> status approved`, then commit the ticket (`speck(<id>): approved`). Its review rounds are in the ticket file. Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
-4. Stop and tell the user: a one-line summary, anything worth a look (risk flags, follow-up ideas), and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
+4. Run `speck ship <id> --auto`. It ships only if `auto_ship` is `true` in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round. Then it runs all of `speck ship`'s usual checks and the tests.
+   - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, and anything worth a look (risk flags, follow-up ideas).
+   - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
+   - If any other check refused, report the reason as the ship skill describes. Don't work around it.
 
 ## 6. Block
 
@@ -56,7 +59,7 @@ Use this when the review loop says `block`, the size guard trips, or a product q
 
 ## Rules
 
-- Never merge or ship unless the user runs `/speck-ship`: don't run `speck ship`, merge into the base branch or push it yourself. Shipping is the user's gate.
+- Never merge or ship unless the user runs `/speck-ship`: don't run `speck ship`, merge into the base branch or push it yourself. Shipping is the user's gate. The one exception is `speck ship <id> --auto` in section 5, which ships only when the user has turned on `auto_ship` in `speck/config.yml`.
 - Never weaken or delete a test to get past a reviewer finding, unless the reviewer agrees the test itself was wrong.
 - Never edit a ticket's `## Review rounds` section by hand. Only speck writes it.
 - Keep to the ticket. If you find other problems, list them in the Delivery log as follow-up ideas. Don't fix them.

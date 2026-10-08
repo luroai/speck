@@ -21,7 +21,7 @@ OpenSpec showed the value of keeping specs in the repo. speck keeps that idea bu
 1. **The repo is the source of truth.** Ideas, tickets, review transcripts and the living spec are Markdown files in the repo. Any tool, including the future board, reads and writes these files and nothing else.
 2. **Small tickets only.** A ticket is one agent, one sitting, one branch. If a ticket is too big for that, it gets split. It never gets stretched.
 3. **Review is adversarial and independent by default.** The builder never reviews its own work. A separate reviewer, preferably a different model, must approve it.
-4. **Humans hold two gates.** Gate 1 is moving a ticket to `ready`. Gate 2 is shipping it with `/speck-ship`, which merges it. Agents never merge or ship unless the user runs `/speck-ship`.
+4. **Humans hold two gates.** Gate 1 is moving a ticket to `ready`. Gate 2 is shipping it with `/speck-ship`, which merges it. Agents never merge or ship unless the user runs `/speck-ship`. The one exception is auto-ship: if you set `auto_ship: true` in `speck/config.yml`, the build ships a ticket as soon as the reviewer approves it, for the risks listed in `auto_ship_risk`. It's off by default.
 5. **Evidence over trust.** Every approved ticket has a review pack (`speck pack <id>`) that a non-coder can judge: each acceptance criterion with its result, a plain-English change summary, and flagged risks.
 6. **Measure actuals.** Every ticket records attempts, review rounds, time and cost. That data is the product's proof.
 
@@ -37,7 +37,8 @@ idea / conversation
   → /speck-build 0007     → branch speck/0007-<slug>
        tests from acceptance criteria → implementation → tests pass
        → review loop with reviewer subagent (see below)
-       → approved?  yes → logs filled in, status: approved (waits on its branch, no PR)
+       → approved?  yes → logs filled in, status: approved (waits on its branch, no PR),
+                          or shipped straight away if auto_ship allows it
                     no, after max rounds → status: blocked + question for you
   → you read `speck pack 0007`
   → /speck-ship 0007      → checks, final test run, ticket set to done and   [GATE 2]
@@ -84,7 +85,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
    - `needs_pm`, for a scope or product question.
 3. **Next round.** The builder resumes the *same* reviewer session, so the reviewer remembers its earlier findings, and sends its responses plus the new diff. The reviewer re-checks, accepts or rejects each dispute, and issues a new verdict.
 4. **Termination.** The loop ends in one of four ways:
-   - **Approve:** no blocking findings and every criterion passes. The builder proceeds to ship.
+   - **Approve:** no blocking findings and every criterion passes. The ticket waits for you to ship it, or ships straight away if `auto_ship` allows it.
    - **Max rounds reached** (default 3): the ticket becomes `blocked`, with a summary and one specific question for you.
    - **Repeated disagreement:** the same finding is disputed in two consecutive rounds. It escalates to you rather than looping.
    - **`needs_pm`:** the ticket becomes `blocked` with that question.
@@ -134,7 +135,7 @@ Every ticket opens with a header rendered from its frontmatter, such as `# 0007 
 | `speck cancel <id> "<reason>"` | Cancels a ticket you've decided against: records the reason and the date, sets it to `cancelled` and files it in `speck/tickets/done/`. Refuses a blank reason, a `done` ticket or an already-cancelled one. |
 | `/speck-build <id>` | Takes a `ready` ticket: branch, tests from acceptance criteria, implementation, then the review loop. Ends at `approved`, with no PR. |
 | `/speck-review <id>` | Runs the review loop on its own (for example, after a manual fix) |
-| `/speck-ship <id>` | Your gate. Runs `speck ship <id>`: checks, marks the ticket done, merges into the base branch, pushes and deletes the branch. Only you start it; in Claude Code the skill can't be started by the agent. |
+| `/speck-ship <id>` | Your gate. Runs `speck ship <id>`: checks, marks the ticket done, merges into the base branch, pushes and deletes the branch. Only you start it; in Claude Code the skill can't be started by the agent. With `auto_ship` on, the build runs `speck ship <id> --auto` itself after approval. |
 | `/speck-status` | Lists tickets by status: approved (waiting for you) first, then blocked with their questions, then cancelled with their reasons |
 
 Agents never merge or ship unless the user runs `/speck-ship`. Shipping pushes the base branch directly, so it mustn't be protected by a "require a pull request" rule.

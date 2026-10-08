@@ -1415,3 +1415,100 @@ test('0009 AC1/AC2: ticketedStatus replaces other values, extends the list and k
   assert.equal(ticketedStatus('ticketed (0011, 0012)', '0011'), 'ticketed (0011, 0012)');
   assert.equal(ticketedStatus('ticketed (0006) and split later', '0013'), 'ticketed (0006, 0013) and split later');
 });
+
+// ---------- auto-ship: ship as soon as the reviewer approves, when config allows it ----------
+
+function autoShipRepo({ config = '', risk = 'low', sandboxFailed = false } = {}) {
+  const r = shipRepo({ approve: false });
+  const cfgFile = path.join(r.dir, 'speck', 'config.yml');
+  let c = fs.readFileSync(cfgFile, 'utf8');
+  for (const line of config.split('\n').filter(Boolean)) {
+    const key = line.split(':')[0];
+    c = new RegExp(`^${key}:`, 'm').test(c) ? c.replace(new RegExp(`^${key}:.*$`, 'm'), line) : c + line + '\n';
+  }
+  fs.writeFileSync(cfgFile, c);
+  const file = path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md');
+  fs.writeFileSync(file, setField(fs.readFileSync(file, 'utf8'), 'risk', risk));
+  const v = path.join(os.tmpdir(), `verdict-${path.basename(r.dir)}.json`);
+  fs.writeFileSync(v, JSON.stringify(approveVerdict));
+  r.run('record', '1', v);
+  if (sandboxFailed) {
+    const t = fs.readFileSync(file, 'utf8');
+    fs.writeFileSync(file, t.replace('"reviewer": "claude-subagent"', '"reviewer": "codex",\n    "sandbox_ok": false'));
+    assert.match(fs.readFileSync(file, 'utf8'), /"sandbox_ok": false/);
+  }
+  r.run('set', '1', 'status', 'approved');
+  r.g('add', '-A'); r.g('commit', '-qm', 'approved');
+  return r;
+}
+
+test('auto-ship: config templates default to off and low risk only', () => {
+  const tpl = fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8');
+  const y = parseYaml(tpl);
+  assert.equal(y.auto_ship, false);
+  assert.deepEqual(y.auto_ship_risk, ['low']);
+});
+
+test('auto-ship: speck ship --auto refuses, changing nothing, while auto_ship is off', () => {
+  const r = autoShipRepo();
+  const before = r.state();
+  const res = r.run('ship', '1', '--auto');
+  assert.equal(res.status, 12, res.stderr);
+  assert.match(res.stderr, /auto_ship is off/);
+  assert.match(res.stderr, /\/speck-ship 0001/);
+  assert.deepEqual(r.state(), before);
+  assert.equal(r.status(), 'approved');
+});
+
+test('auto-ship: speck ship --auto ships an approved ticket whose risk is allowed', () => {
+  const r = autoShipRepo({ config: 'auto_ship: true' });
+  const res = r.run('ship', '1', '--auto');
+  assert.equal(res.status, 0, res.stderr);
+  assert.match(res.stdout, /Shipped 0001/);
+  assert.equal(r.status(), 'done');
+  assert.equal(r.state().feature, '');
+});
+
+test('auto-ship: the risk filter decides which tickets ship on their own', () => {
+  const high = autoShipRepo({ config: 'auto_ship: true', risk: 'high' });
+  const before = high.state();
+  const res = high.run('ship', '1', '--auto');
+  assert.equal(res.status, 12, res.stderr);
+  assert.match(res.stderr, /risk "high"/);
+  assert.match(res.stderr, /auto_ship_risk/);
+  assert.deepEqual(high.state(), before);
+
+  const all = autoShipRepo({ config: 'auto_ship: true\nauto_ship_risk: [low, high]', risk: 'high' });
+  assert.equal(all.run('ship', '1', '--auto').status, 0);
+  assert.equal(all.status(), 'done');
+});
+
+test('auto-ship: never when the reviewer could not inspect the repo', () => {
+  const r = autoShipRepo({ config: 'auto_ship: true\nauto_ship_risk: [low, high]', sandboxFailed: true });
+  const before = r.state();
+  const res = r.run('ship', '1', '--auto');
+  assert.equal(res.status, 12, res.stderr);
+  assert.match(res.stderr, /couldn't inspect the repo/);
+  assert.deepEqual(r.state(), before);
+  // The user can still ship it themselves.
+  assert.equal(r.run('ship', '1').status, 0);
+});
+
+test('auto-ship: plain speck ship ignores the auto-ship settings', () => {
+  const r = autoShipRepo({ risk: 'high' });
+  assert.equal(r.run('ship', '1').status, 0);
+});
+
+test('auto-ship: the build skill runs speck ship --auto after approval, and the rules allow only that', () => {
+  const build = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
+  const approved = build.split('## 5. Approved')[1].split('\n## ')[0];
+  assert.match(approved, /speck ship <id> --auto/);
+  assert.ok(approved.indexOf('status approved') < approved.indexOf('--auto'), 'auto-ship comes after the approval is committed');
+  assert.match(approved, /exit code 12|exits with 12|exits 12/);
+  for (const n of ['speck-build', 'speck-review'])
+    assert.match(fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8'), /auto_ship/, n);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+  spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir });
+  assert.match(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8'), /auto_ship/);
+});

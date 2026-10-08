@@ -69,7 +69,7 @@ This resumes the same Codex session. The reviewer remembers its earlier findings
 ## Ending the loop
 
 Check `speck next <id>` after each round:
-- `ship`: the reviewer approved with every criterion passing and no open blocking findings. Go to the build skill's section 5 (Approved). Never merge or ship unless the user runs `/speck-ship`.
+- `ship`: the reviewer approved with every criterion passing and no open blocking findings. Go to the build skill's section 5 (Approved). Never merge or ship unless the user runs `/speck-ship`, except through `speck ship <id> --auto` in that section, which ships only when `auto_ship` in `speck/config.yml` allows it.
 - `fix`: take another turn.
 - `block`: max rounds reached, repeated disagreement on the same finding, or the reviewer escalated. Block the ticket with the reason as the question, using the build skill's section 6.
 
