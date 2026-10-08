@@ -1,7 +1,7 @@
 ---
 id: "0001"
 title: "Warn when the reviewer cannot run commands"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,7 +15,7 @@ started: "2026-10-08T20:14:21.551Z"
 ---
 # 0001 · Warn when the reviewer cannot run commands
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On machines where the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer silently reviews only the diff it's given and can't inspect the repo. Users don't know their review is weaker.
@@ -36,8 +36,14 @@ speck detects a reviewer that couldn't run commands and says so in the round out
 ## Blocked question
 
 ## Review log
+Round 1 (codex): changes requested: F1 the detector ignored a non-zero exit when the event's status said `completed`. Round 2: approved, with F1 resolved. Both rounds ran with a working sandbox.
 
 ## Delivery log
+- Build: 13 changed lines excluding tests and `speck/` (limit 1000). 61 tests pass (4 new groups covering AC1 to AC3, plus a regression test from the review).
+- Review rounds: 2 of 3. Elapsed since build started: see `speck pack 0001`.
+- Follow-ups, not done here:
+  - Later rounds resume the first round's Codex session. Ticket 0008's round 2 resumed a session that had seen the sandbox fail and simply repeated "inspection unavailable" without trying. A fresh session found a real bug. Consider starting a fresh session when a prior round has `sandbox_ok: false`.
+  - A sandbox failure with no `bwrap` in its output (a different sandbox error) isn't detected.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
