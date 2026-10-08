@@ -1,7 +1,7 @@
 ---
 id: "0011"
 title: Keep review rounds in the ticket file                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T19:29:41.797Z"
 ---
 # 0011 · Keep review rounds in the ticket file
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Review records live in `speck/reviews/<id>/`, apart from the ticket they belong to. When a ticket is filed into `speck/tickets/done/`, its reviews stay behind, so a ticket's history is split across two places, and the planned board would have to put them back together for every card. speck is meant to be lightweight: one ticket should be one file.
@@ -50,10 +50,18 @@ Each ticket file holds its own review rounds, so a ticket is the complete record
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex, gpt-6.1-sol): changes_requested: F1 a damaged round block could be silently ignored; F2 ticket edits not counted in the size limit; F3 other tickets' rounds still in the reviewer diff. Round 2: changes_requested: F2 dispute accepted (speck/ is left out of the size count by design), F3 resolved, F1 still open for stray content before the first round. Round 3: changes_requested: F1 still open; F4 an unrelated board idea edit was on the branch. Round 4 (allowed by the user): approved, F1 and F4 resolved.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- One sitting on `speck/0011-keep-review-rounds-in-the-ticket-file`: tests first from the five acceptance criteria, then the implementation, then this repo's own reviews (0004–0007) migrated with `speck init`. All 9 migrated rounds were checked to be identical to the original files.
+- Review rounds: 4, all codex on `gpt-6.1-sol` (effort default). Blocked once at the 3-round limit; the user allowed a fourth round, and `limits.max_review_rounds` is back to 3.
+- Reviewer tokens: 861,113 (round 1: 110,437 in / 1,227 out, 51s; round 2: 174,086 / 2,190, 34s; round 3: 244,434 / 3,039, 26s; round 4: 321,857 / 3,843, 28s).
+- Wall time: 13 minutes from `building` to `approved`, plus the wait for the decision on the extra round.
+- Changed lines: 219 (limit 1000), excluding tests, lockfiles and `speck/`. Test suite: 56 tests, all passing.
+- The reviewer could not start its sandbox on this machine (the known limit in `speck/product.md`), so every round was judged from the diff and the test output.
 - Round 2 was used up without my seeing it. Codex returned and speck saved the round, but printing it failed because my round-1 F1 fix split rounds on any `<details>`, and the reviewer's own text quoted it. Fixed by splitting only on `<details>` at the start of a line, with a regression test.
+- Follow-up ideas: when `speck review` fails after saving a round, it could still print the saved verdict, so a round is never used up unseen. The missing-Codex-thread case (a fresh session given a round-2 prompt) is still open, as noted in the ticket's out of scope.
 - A `git add -A` committed someone else's edit to `speck/ideas/2026-10-08-speck-board.md` onto this branch (round 3, F4). It has been taken off the branch and restored as an uncommitted change in the working tree. From now on I stage files by name.
 
 ## Review rounds
@@ -328,6 +336,103 @@ Each ticket file holds its own review rounds, so a ticket is the complete record
     },
     "escalation_question": "",
     "summary": "The new fix correctly allows review records to quote markup, but the validation gap reported in round 2 remains. Unrelated board decisions also need removing from this branch. The supplied suite reports 56 passing tests; independent repository access remains unavailable because the sandbox failed to start."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c32129db18092142a9a7387134cb6372bd576b44",
+    "thread_id": "01a11d02-5937-78c3-b3fe-ae902cdc650c",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 321857,
+      "cached_input_tokens": 243712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3843,
+      "reasoning_output_tokens": 431
+    },
+    "saved_at": "2026-10-08T19:42:27.197Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "saveRound and appendRounds store full records in collapsed ticket blocks. Passing AC1 tests exercise review, record, numbering and the ticket being the only tracked change."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "rounds reads ticketRounds. The passing AC2 integration test exercises next, pack, ship and preservation of review history when moving into done/."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewDiff strips review sections from every changed ticket and excludes legacy review files. Passing AC3 tests verify ordinary ticket edits remain visible. The established size rule excludes speck/."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "ticketRounds now validates the prefix and each complete round block, parses JSON and checks sequential numbering. Passing AC4 tests cover invalid JSON, gaps, reordered rounds, damaged fences, stray prefix content, quoted markup, and refusal by lint and next."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests cover live and archived migration, idempotence, old-directory removal, preservation of unplaceable histories and continued migration of other tickets."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Prefix validation closes the remaining silent-ignore gap. Regression tests exercise invalid content before a valid round and command refusal.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/speck.test.mjs",
+        "issue": "Retaining the established exclusion of speck/ from the size count is accepted; ordinary ticket edits remain visible in reviewer diffs.",
+        "suggested_fix": "No change required.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Diff filtering covers every changed ticket and deleted legacy review files, with regression coverage preserving ordinary edits.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "speck/ideas/2026-10-08-speck-board.md",
+        "issue": "The supplied reversal restores the unrelated board note to its base-branch contents.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living specification matches the storage, migration, filtering and validation behaviour."
+    },
+    "escalation_question": "",
+    "summary": "The change is ready for the owner's merge review. Review history stays with each ticket, migration preserves unplaceable records, and malformed history is detected. All findings are resolved or accepted. The supplied suite reports 56 passing tests; independent access remains blocked by sandbox startup failure. Restore the temporarily authorised review limit to 3 during approval close-out, as recorded in the ticket."
   }
 }
 ```
