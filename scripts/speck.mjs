@@ -744,8 +744,26 @@ function runs(cmd, args) {
   try { return sh(cmd, args).status === 0; } catch { return false; }
 }
 
+// The builders doctor knows how to check: the name shown, the command on the PATH, and how to install it.
+// Cursor's installer also provides `agent`, but `cursor-agent` is the name that can't clash with other tools.
+const BUILDERS = {
+  claude: ['Claude Code', 'claude', 'Install Claude Code: https://claude.com/claude-code'],
+  cursor: ['Cursor CLI', 'cursor-agent', 'Install the Cursor CLI: https://cursor.com/docs/cli/installation'],
+  codex: ['Codex CLI', 'codex', 'Install it with `npm install -g @openai/codex`: https://github.com/openai/codex'],
+  gemini: ['Gemini CLI', 'gemini', 'Install it with `npm install -g @google/gemini-cli`: https://github.com/google-gemini/gemini-cli'],
+};
+
+// True if `cmd` is an executable file: a path as given, or a name found on the PATH. Nothing is run.
+function onPath(cmd) {
+  const ok = f => { try { fs.accessSync(f, fs.constants.X_OK); return fs.statSync(f).isFile(); } catch { return false; } };
+  if (cmd.includes('/') || cmd.includes(path.sep)) return ok(cmd);
+  const exts = process.platform === 'win32' ? ['', ...(process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')] : [''];
+  return (process.env.PATH || '').split(path.delimiter).filter(Boolean).some(d => exts.some(e => ok(path.join(d, cmd + e))));
+}
+
 export function doctorChecks(repo, cfg = {}) {
   const reviewer = cfg.reviewer || 'codex';
+  const builder = cfg.builder || 'claude';
   const checks = [
     check('Node.js 20 or newer', Number(process.versions.node.split('.')[0]) >= 20,
       'Install the latest Node.js LTS from https://nodejs.org, then open a new terminal.'),
@@ -753,14 +771,23 @@ export function doctorChecks(repo, cfg = {}) {
       'Install git from https://git-scm.com/downloads.'),
     check('This folder is a git repository', runs('git', ['-C', repo, 'rev-parse', '--git-dir']),
       'Run `git init` here, or run speck from inside your project folder.'),
-    check('Claude Code (builds tickets)', runs('claude', ['--version']),
-      'Install Claude Code: https://claude.com/claude-code'),
   ];
+  // Only the configured builder is checked. speck can't check one it doesn't know, and that isn't a failure.
+  if (BUILDERS[builder]) {
+    const [label, cmd, fix] = BUILDERS[builder];
+    checks.push(check(`${label} (builds tickets)`, onPath(cmd), fix));
+  } else checks.push({ name: `speck can't check builder "${builder}": it only knows ${Object.keys(BUILDERS).join(', ')}. Make sure it reads skills from .agents/skills/ or .claude/skills/.`, ok: true, info: true });
   // speck ships locally with git, so the GitHub CLI is only a convenience.
   const ghInstalled = runs('gh', ['--version']);
   checks.push({ ...check('GitHub CLI (optional)', ghInstalled,
     'Not needed to build or ship. Install it from https://cli.github.com if you want to work with GitHub from the terminal.'), optional: true });
-  if (reviewer === 'codex') {
+  const command = cfg.reviewer_options?.[reviewer]?.command;
+  if (typeof command === 'string' && command.trim()) {
+    let first = '';
+    try { first = splitCommand(command)[0] || ''; } catch { /* an unclosed quote: reported as not found */ }
+    checks.push(check(`Reviewer command for "${reviewer}" (${first || 'empty'})`, Boolean(first) && onPath(first),
+      `Install ${first || 'the reviewer'} so it's on your PATH, or fix reviewer_options.${reviewer}.command in speck/config.yml.`));
+  } else if (reviewer === 'codex') {
     const codexInstalled = runs('codex', ['--version']);
     checks.push(check('Codex CLI (reviews tickets)', codexInstalled,
       'Install it with `npm install -g @openai/codex`, or set `reviewer: claude-subagent` and `allow_same_model_review: true` in speck/config.yml.'));
@@ -771,7 +798,7 @@ export function doctorChecks(repo, cfg = {}) {
 }
 
 function printChecks(checks) {
-  for (const c of checks) console.log(`  ${c.ok ? '✓' : c.optional ? '–' : '✗'} ${c.name}${c.ok ? '' : `\n      ${c.optional ? 'Note' : 'Fix'}: ${c.fix}`}`);
+  for (const c of checks) console.log(c.info ? `  ℹ ${c.name}` : `  ${c.ok ? '✓' : c.optional ? '–' : '✗'} ${c.name}${c.ok ? '' : `\n      ${c.optional ? 'Note' : 'Fix'}: ${c.fix}`}`);
   return checks.every(c => c.ok || c.optional);
 }
 

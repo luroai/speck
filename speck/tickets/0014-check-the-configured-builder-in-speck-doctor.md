@@ -37,6 +37,9 @@ started: "2026-10-08T21:48:15.075Z"
 
 ## Notes
 - After 0012, so AC3 has a reviewer command to check.
+- **Cursor's command name (checked 2026-10-08).** Cursor's install page (cursor.com/docs/cli/installation) now calls the CLI `agent`. Its installer still provides `cursor-agent` as the older name for the same binary, and guides recommend `cursor-agent` in scripts because `agent` can clash with other tools. Doctor checks `cursor-agent`, as this ticket says, and the 0012 reviewer examples stay valid. Gemini installs with `npm install -g @google/gemini-cli` and runs as `gemini`.
+- Doctor finds tools on the PATH rather than running `--version`, so it never starts an agent. Codex's sign-in check is the only exception, kept as it was.
+- The existing guard test 'no model name is hard-coded' matched `gemini-cli`, the npm package name in Gemini's install link. Its pattern now skips `gemini-cli` only, and every model name it caught before is still caught.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

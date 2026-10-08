@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: 0013
+Last updated by ticket: 0014
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents. It's aimed at PMs and founders who write good tickets but don't review code line by line. Ideas become small numbered tickets. One agent builds each ticket, and a second, independent agent reviews it in turns until it approves. The human holds two gates: approving a ticket for development, and shipping it with `/speck-ship`. The second gate can be handed to the reviewer's approval with `auto_ship`. Everything happens in the local repo, with no PR.
@@ -10,7 +10,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - **Overlap check before new work:** before `/speck-capture` writes an idea note, and before `/speck-ticket` runs `speck new`, the agent compares the work with every idea note, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria, not only titles) and `speck/product.md`. If anything has the same, or largely the same, outcome, it names each match: the idea's path and status, the ticket's id and status (with the reason if cancelled) or the line in `product.md` that covers it. It then asks whether to add to the existing item, go ahead anyway or stop, and writes nothing until you answer. If nothing overlaps, it says so in one line. Overlap is the agent's judgement, not a text match, and the check lives in the skill instructions only.
 - **CLI** (`scripts/speck.mjs`, Node 20+, no dependencies):
   - `init`: one-step install and update, run as `npx github:luroai/speck init`. It creates `speck/`, copies the skills and the CLI (into `.speck/`) into the project, points AGENTS.md and CLAUDE.md at it, and runs `doctor`. Re-running it refreshes the skills and CLI and keeps config and tickets, and files any ticket already marked `done` under `speck/tickets/done/`. In speck's own repo it links rather than copies.
-  - `doctor`: checks Node, git, Claude Code and Codex (installed and signed in), with a plain-English fix for each problem. The GitHub CLI is reported as optional.
+  - `doctor`: checks Node and git, then the builder set in `speck/config.yml`: `claude`, `cursor` (`cursor-agent`), `codex` or `gemini` must be on the PATH, with an install link if it's missing. Only that builder is checked. Any other `builder:` value gets one information line saying speck can't check it, which isn't a failure. For the reviewer, a `command` in `reviewer_options` is checked by its first word being on the PATH. `reviewer: codex` with no command keeps the Codex install and sign-in checks. Tools are found on the PATH, not launched. Each problem comes with a plain-English fix, and the GitHub CLI is reported as optional.
   - `new`: creates the next numbered ticket in `speck/tickets/`, skipping numbers already used by finished or cancelled tickets. With `--source=<idea note>` (a path relative to the repo root), it first checks the note exists and refuses, creating nothing, if it doesn't. It then sets the note's `Status:` value to `ticketed (<id>)`, or adds the id to an existing `ticketed (…)` list unless it's already there. Only that value changes. A note with no `Status:` line still gets its ticket, with a warning that its status couldn't be updated.
   - `lint`: checks the size rules.
   - `set`: updates fields. Statuses are `draft`, `ready`, `building`, `reviewing`, `blocked`, `approved`, `done` and `cancelled`. Setting `ready` requires a clean lint, and `building` and `done` record timestamps. Setting `done` or `cancelled` also moves the ticket's file into `speck/tickets/done/`, and setting any other status moves it back into `speck/tickets/`. Setting `cancelled` is refused, because `speck cancel` is the command that records a reason.
@@ -49,7 +49,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 
 ## Known limits
 - One ticket at a time; no parallel runs or dependency scheduling.
-- Claude Code is the only tested builder.
+- Known builders: speck works with any agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as Claude Code, Codex and Cursor. Claude Code is the only builder that has run a ticket end to end so far. Codex and Cursor builders are untested (0016 covers Cursor).
 - An idea's `ticketed (…)` status is only ever added to. Cancelling or finishing one of its tickets doesn't change it.
 - A `claude-subagent` reviewer, or a command reviewer, is read-only only because its prompt says so. Unlike Codex, speck runs it with no sandbox, so a command should use the tool's own read-only mode (for example Cursor's `--mode ask` or Claude Code's `--permission-mode plan`).
 - The Claude Code command reviewer has been run end to end (two rounds, `changes_requested` then `approve`). The Cursor example hasn't been run.

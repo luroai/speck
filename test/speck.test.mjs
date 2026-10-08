@@ -207,7 +207,7 @@ test('AC2: with nothing set, no model or effort is passed to codex', () => {
 });
 
 test('AC2: no model name is hard-coded in speck code, templates or skills', () => {
-  const MODEL = /\b(gpt-[\w.-]+|o[1-9](-mini|-pro)?|claude-(opus|sonnet|haiku|instant)[\w.-]*|(opus|sonnet|haiku)-?\d[\w.-]*|gemini-[\w.-]+|codex-mini[\w.-]*)\b/i;
+  const MODEL = /\b(gpt-[\w.-]+|o[1-9](-mini|-pro)?|claude-(opus|sonnet|haiku|instant)[\w.-]*|(opus|sonnet|haiku)-?\d[\w.-]*|gemini-(?!cli\b)[\w.-]+|codex-mini[\w.-]*)\b/i;
   const files = d => fs.readdirSync(path.join(ROOT, d), { recursive: true }).map(f => path.join(ROOT, d, f)).filter(f => fs.statSync(f).isFile());
   for (const f of [...files('scripts'), ...files('templates'), ...files('skills')]) {
     const hit = fs.readFileSync(f, 'utf8').match(MODEL);
@@ -1796,4 +1796,88 @@ test('0013 AC2/AC3 (F1): a session is only resumed from the latest round, never 
   assert.match(calls[calls.length - 1].stdin, /# Earlier review rounds/);
   assert.match(three.stdout, /fresh .*no session id/i);
   assert.equal(r.roundFile(3).meta.session, 'fresh');
+});
+
+// ---------- 0014: check the configured builder in speck doctor ----------
+
+// A repo with speck installed and the given config lines, plus a PATH holding only node, git and the named fake tools.
+function doctorRepo({ config = {}, tools = [] } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-bin-'));
+  fs.symlinkSync(process.execPath, path.join(bin, 'node'));
+  const gitPath = spawnSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).stdout.trim();
+  fs.symlinkSync(gitPath, path.join(bin, 'git'));
+  for (const t of tools) fs.writeFileSync(path.join(bin, t), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+  gitIn(dir, 'init', '-q', '-b', 'main');
+  assert.equal(spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir }).status, 0);
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  let c = fs.readFileSync(cfgFile, 'utf8');
+  for (const [k, v] of Object.entries(config)) {
+    const entry = `  ${config.reviewer}:\n`;
+    if (k === 'command') c = c.includes(`\n${entry}`)
+      ? c.replace(`\n${entry}`, `\n${entry}    command: ${JSON.stringify(v)}\n`)
+      : c.replace('reviewer_options:\n', `reviewer_options:\n${entry}    command: ${JSON.stringify(v)}\n`);
+    else c = c.replace(new RegExp(`^${k}:.*$`, 'm'), `${k}: ${v}`);
+  }
+  fs.writeFileSync(cfgFile, c);
+  const res = spawnSync(process.execPath, [CLI, 'doctor'], { cwd: dir, encoding: 'utf8', env: { ...process.env, PATH: bin } });
+  return { ...res, out: res.stdout };
+}
+
+const BUILDERS = { claude: ['Claude Code', 'claude'], cursor: ['Cursor CLI', 'cursor-agent'], codex: ['Codex CLI', 'codex'], gemini: ['Gemini CLI', 'gemini'] };
+
+test('0014 AC1: doctor checks only the configured builder, by name, with an install link', () => {
+  for (const [builder, [label, cmd]] of Object.entries(BUILDERS)) {
+    const missing = doctorRepo({ config: { builder, reviewer: 'claude-subagent' } });
+    assert.match(missing.out, new RegExp(`✗ ${label} \\(builds tickets\\)\\n\\s+Fix: .*https://`), builder);
+    for (const [other, [otherLabel]] of Object.entries(BUILDERS))
+      if (other !== builder) assert.doesNotMatch(missing.out, new RegExp(`${otherLabel} \\(builds tickets\\)`), `${builder} checks no other builder`);
+    const present = doctorRepo({ config: { builder, reviewer: 'claude-subagent' }, tools: [cmd] });
+    assert.match(present.out, new RegExp(`✓ ${label} \\(builds tickets\\)`), builder);
+    assert.equal(present.status, 0, `${builder}: ${present.out}`);
+  }
+});
+
+test('0014 AC2: an unknown builder gets one information line and is not a failure', () => {
+  const r = doctorRepo({ config: { builder: 'aider', reviewer: 'claude-subagent' } });
+  const lines = r.out.split('\n').filter(l => /aider/.test(l));
+  assert.equal(lines.length, 1, r.out);
+  assert.match(lines[0], /can't check/i);
+  assert.doesNotMatch(r.out, /builds tickets/);
+  assert.equal(r.status, 0, r.out);
+  assert.match(r.out, /All set/);
+});
+
+test('0014 AC3: a reviewer command is checked by its first word on the PATH, and codex keeps its checks', () => {
+  const cmdCfg = { builder: 'claude', reviewer: 'cursor', command: 'cursor-agent -p --output-format json --model {model}' };
+  const missing = doctorRepo({ config: cmdCfg, tools: ['claude'] });
+  assert.match(missing.out, /✗ Reviewer command for "cursor" \(cursor-agent\)\n\s+Fix: .*reviewer_options\.cursor\.command/);
+  assert.doesNotMatch(missing.out, /Codex CLI|Signed in to Codex/);
+  assert.equal(missing.status, 1);
+  const present = doctorRepo({ config: cmdCfg, tools: ['claude', 'cursor-agent'] });
+  assert.match(present.out, /✓ Reviewer command for "cursor" \(cursor-agent\)/);
+  assert.equal(present.status, 0, present.out);
+  // A command for codex is checked as a command, not with Codex's own checks.
+  const codexCmd = doctorRepo({ config: { builder: 'claude', reviewer: 'codex', command: '/no/such/dir/codex-wrapper exec' }, tools: ['claude'] });
+  assert.match(codexCmd.out, /✗ Reviewer command for "codex" \(\/no\/such\/dir\/codex-wrapper\)/);
+  assert.doesNotMatch(codexCmd.out, /Signed in to Codex/);
+  // reviewer: codex with no command: installed, then signed in, as before.
+  const codex = doctorRepo({ config: { builder: 'claude', reviewer: 'codex' }, tools: ['claude', 'codex'] });
+  assert.match(codex.out, /✓ Codex CLI \(reviews tickets\)/);
+  assert.match(codex.out, /✓ Signed in to Codex/);
+  const noCodex = doctorRepo({ config: { builder: 'claude', reviewer: 'codex' }, tools: ['claude'] });
+  assert.match(noCodex.out, /✗ Codex CLI \(reviews tickets\)/);
+});
+
+test('0014 AC4: the docs describe the builder as any agent that reads speck skills', () => {
+  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+  const req = readme.split('## Requirements')[1].split('\n## ')[0];
+  for (const s of ['`.agents/skills/`', '`.claude/skills/`', 'Claude Code', 'Codex', 'Cursor']) assert.ok(req.includes(s), `README Requirements: ${s}`);
+  const product = fs.readFileSync(path.join(ROOT, 'speck', 'product.md'), 'utf8');
+  const doctor = product.split('\n').find(l => l.includes('`doctor`:'));
+  assert.match(doctor, /builder set in `speck\/config\.yml`/);
+  assert.doesNotMatch(product, /Claude Code is the only tested builder/);
+  const limit = product.split('\n').find(l => /builder/.test(l) && /`\.agents\/skills\/`/.test(l) && /Known|tested/i.test(l));
+  assert.ok(limit, 'a known limit names the skills folders');
+  for (const s of ['Claude Code', 'Codex', 'Cursor']) assert.ok(limit.includes(s), `known limit: ${s}`);
 });
