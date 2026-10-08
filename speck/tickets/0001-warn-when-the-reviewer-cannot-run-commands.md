@@ -1,7 +1,7 @@
 ---
 id: "0001"
 title: "Warn when the reviewer cannot run commands"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | done
+status: approved            # draft | ready | building | reviewing | blocked | done
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,7 +15,7 @@ started: "2026-10-08T20:14:21.551Z"
 ---
 # 0001 · Warn when the reviewer cannot run commands
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On machines where the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer silently reviews only the diff it's given and can't inspect the repo. Users don't know their review is weaker.
@@ -36,11 +36,11 @@ speck detects a reviewer that couldn't run commands and says so in the round out
 ## Blocked question
 
 ## Review log
-Round 1 (codex): changes requested: F1 the detector ignored a non-zero exit when the event's status said `completed`. Round 2: approved, with F1 resolved. Both rounds ran with a working sandbox.
+Round 1 (codex): changes requested: F1 the detector ignored a non-zero exit when the event's status said `completed`. Round 2: approved, with F1 resolved. Round 3: approved again after merging main (ticket 0008 shipped first and conflicted in `speck.mjs`, `product.md` and the tests). All rounds ran with a working sandbox.
 
 ## Delivery log
 - Build: 13 changed lines excluding tests and `speck/` (limit 1000). 61 tests pass (4 new groups covering AC1 to AC3, plus a regression test from the review).
-- Review rounds: 2 of 3. Elapsed since build started: see `speck pack 0001`.
+- Review rounds: 3 of 3 (round 3 re-checked the merge with main). Merge-conflict resolution: kept both sets of tests and both product.md entries; 74 tests pass. Elapsed since build started: see `speck pack 0001`.
 - Follow-ups, not done here:
   - Later rounds resume the first round's Codex session. Ticket 0008's round 2 resumed a session that had seen the sandbox fail and simply repeated "inspection unavailable" without trying. A fresh session found a real bug. Consider starting a fresh session when a prior round has `sandbox_ok: false`.
   - A sandbox failure with no `bwrap` in its output (a different sandbox error) isn't detected.
@@ -168,6 +168,69 @@ Round 1 (codex): changes requested: F1 the detector ignored a non-zero exit when
     },
     "escalation_question": "",
     "summary": "The missed failure case is fixed and covered by a regression test. speck now warns about detected sandbox failures, records them and displays them in the review pack. All three criteria pass, with no blocking concerns remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "54b0c5073cdfdc4f026fcd36834416f8921a1350",
+    "thread_id": "01a11d27-d3de-77e3-ac69-09d12fd41067",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 354465,
+      "cached_input_tokens": 288000,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2064,
+      "reasoning_output_tokens": 124
+    },
+    "saved_at": "2026-10-08T20:31:11.312Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs retains sandboxFailed and printRound's warning after the merge. AC1 CLI tests cover bwrap failures with both failed and completed status labels, plus successful commands and unrelated failures. Supplied merged test output reports all passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runCodexReview still saves sandbox_ok: false in meta for detected sandbox failures. The AC2 test and completed-status regression test check the persisted round metadata; both pass in the supplied merged test output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewPack still filters all rounds with meta.sandbox_ok === false and displays the exact warning with each round number. The AC3 CLI test checks flagged and unflagged output and passes in the supplied merged test output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:455",
+        "issue": "The original detector ignored completed command events with non-zero exit codes and bwrap errors. The corrected detector and regression test remain intact after merging main.",
+        "suggested_fix": "Completed in round 2; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The merged living spec retains both the cancellation capability from main and this ticket's sandbox warning. The diff against current main contains only this ticket's intended changes and review records."
+    },
+    "escalation_question": "",
+    "summary": "The merge preserves the sandbox warning, saved flag and review-pack display alongside the cancellation feature. All three criteria remain satisfied; the supplied results show all 74 tests passing. No blocking concerns remain."
   }
 }
 ```
