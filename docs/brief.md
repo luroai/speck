@@ -88,7 +88,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
    - **`needs_pm`:** the ticket becomes `blocked` with that question.
 5. **Minor findings never block.** They're logged in the ticket and offered as new ideas.
 
-**Records:** each round is saved to `speck/reviews/0007/round-N.json`, and a short summary goes into the ticket's Review log. The review pack (`speck pack <id>`) is built from these files.
+**Records:** each round is saved in the ticket file itself, in a `## Review rounds` section at the end that only speck writes. Each round is a collapsed `<details>` block with a one-line summary (round, reviewer, verdict) and the full record as a `json` code block, so a ticket is one file holding its whole history, and it moves into `done/` with its rounds. The section is left out of the reviewer's diff and prompt, and `speck lint` reports an error if a round isn't valid JSON or the rounds are out of order. A short summary also goes into the ticket's Review log. The review pack (`speck pack <id>`) is built from the recorded rounds. Working files for a review in progress go in `speck/.cache/`, which git ignores.
 
 **Reviewer adapters (v0.1)**
 
@@ -109,9 +109,9 @@ speck/
   config.yml                 # agents, test command, limits, base branch
   product.md                 # the living spec: what this product is and does today
   ideas/                     # low-ceremony notes and captured conversations
-  tickets/0007-<slug>.md     # numbered tickets; status lives in frontmatter
+  tickets/0007-<slug>.md     # numbered tickets; status lives in frontmatter, review rounds at the end
   tickets/done/0001-<slug>.md # finished tickets, filed away under the same name
-  reviews/0007/round-N.json  # review transcripts
+  .cache/                    # working files for reviews in progress (ignored by git)
 .claude/skills/speck-*/      # skills for Claude Code
 .agents/skills/speck-*/      # the same skills for Codex, cptr and other agents
 .speck/                      # the speck command and templates

@@ -5,13 +5,13 @@ description: Run speck's independent, adversarial review loop for a ticket. The 
 
 # speck review loop
 
-The builder (you) and an independent reviewer take turns on the same ticket. **Only the reviewer can approve.** The reviewer is read-only and cannot change code. Every round is recorded in `speck/reviews/<id>/round-N.json`.
+The builder (you) and an independent reviewer take turns on the same ticket. **Only the reviewer can approve.** The reviewer is read-only and cannot change code. Every round is recorded in the ticket file, in a `## Review rounds` section at the end that only speck writes. Never edit it by hand.
 
 CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## Before every round
 
-- All work is committed. The reviewer reviews commits, not uncommitted changes.
+- All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit.
 - The test output is fresh: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 
 ## Reviewer model and effort
@@ -64,7 +64,7 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 
 This resumes the same Codex session. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
 
-**claude-subagent:** use SendMessage to the same reviewer agent, which keeps the model and effort it started with. Include your response file, the output of `git diff <last reviewed sha>..HEAD` and the new test output, and ask for the full verdict JSON again with stable finding ids. Record it with `speck record`.
+**claude-subagent:** use SendMessage to the same reviewer agent, which keeps the model and effort it started with. Include your response file, the output of `speck diff <id>` (the changes since its last review, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Record it with `speck record`.
 
 ## Ending the loop
 

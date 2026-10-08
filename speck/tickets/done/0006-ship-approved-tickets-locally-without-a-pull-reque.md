@@ -59,3 +59,184 @@ speck's main users are solo builders who want to build things bigger than a sing
 <!-- Filled in by speck: attempts, review rounds, wall time, cost, PR link. -->
 - Attempts: 1. Review rounds: 2 (of 3). Reviewer tokens: 200,603. Elapsed: about 15 min. Changed lines: about 260 (limit 300), excluding tests.
 - Follow-up ideas: the PR ship mode (speck/ideas/2026-10-08-pr-ship-mode.md); `init` doesn't rewrite an AGENTS.md pointer written by an older version, so existing installs keep the old "Never merge" wording; Codex skills have no equivalent of `disable-model-invocation`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "default",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a353409c7daa7e636c5939ac34052fbf886f445e",
+    "thread_id": "01a11c49-d29b-7a52-b493-77fbaaa8dedf",
+    "seconds": 41,
+    "usage": {
+      "input_tokens": 76860,
+      "cached_input_tokens": 38144,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1054,
+      "reasoning_output_tokens": 70
+    },
+    "saved_at": "2026-10-08T16:13:23.174Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "unclear",
+        "evidence": "The status test exercises approved status and ordering. skills/speck-build/SKILL.md instructs log completion and committing, but its test checks only the status instruction and absence of PR commands; it does not verify the required logs and commit."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "scripts/speck.mjs: shipChecks uses an endpoint git diff, which misses changes subsequently reverted. runTests returns true when no test command exists. Existing refusal tests cover neither case."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipTicket implements done status, --no-ff merge, branch deletion and conflict rollback. Supplied integration tests exercise successful shipping, conflict recovery and invocation from main."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "shipTicket and doctorChecks implement remote pushing and optional gh. Supplied tests exercise successful and refused pushes, no remote and optional GitHub CLI."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The ship skill invokes speck ship and sets disable-model-invocation: true. The supplied AC5 test checks the skills, brief and generated AGENTS.md pointer."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "shipChecks compares only the reviewed and current trees. A commit changing code followed by a revert passes, although criterion 2 forbids any post-review commit changing files outside speck/.",
+        "suggested_fix": "Inspect changed paths across every commit after the reviewed commit, including merge commits. Add a regression test with a code change followed by its revert.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "runTests treats an unset test command as success and permits shipping without passing tests, contrary to criterion 2.",
+        "suggested_fix": "Refuse shipping when commands.test is empty, explain how to configure it, and test that branch, ticket and working tree remain unchanged.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/speck.test.mjs",
+        "issue": "The AC1 build test does not cover the required review log, delivery log or approval commit. These parts of the criterion remain unverified.",
+        "suggested_fix": "Add appropriate verification of the complete approval close-out procedure, including both logs and the ticket-branch commit.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The claimed mandatory passing tests and protection against post-review code changes are stronger than the implementation."
+    },
+    "escalation_question": "",
+    "summary": "The local shipping workflow has useful integration coverage, including merge conflicts and failed pushes. It needs fixes before merge: shipping can proceed without a test command and overlooks code changes that were later reverted. Build close-out also needs fuller verification. Sandbox startup failed, so this review relies on the supplied diff and test output."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "default",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7295e8f6e159d5b331480915207f0066d7b7f662",
+    "thread_id": "01a11c49-d29b-7a52-b493-77fbaaa8dedf",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 120833,
+      "cached_input_tokens": 76544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1856,
+      "reasoning_output_tokens": 96
+    },
+    "saved_at": "2026-10-08T16:14:19.188Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "STATUSES and cmdStatus support approved and list it first. The passing AC1 tests exercise status handling and verify that the build skill's Approved section requires both logs, setting approved and committing the ticket and review records, without PR commands. This verifies the agent instructions rather than an end-to-end agent run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipChecks checks approval, nextAction, reviewed ancestry and paths from every subsequent commit using git log -m. runTests now refuses an empty command. The passing AC2 refusal test covers unapproved status, dirty files, later code changes, reverted changes, absent approval, missing test configuration and failing tests."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipTicket sets done, creates a --no-ff merge, deletes the ticket branch and leaves the base checked out. Passing AC3 integration tests check successful delivery, conflict rollback and invocation from main."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "shipTicket pushes the configured base-branch remote and reports push failures with recovery instructions. Passing AC4 tests cover successful pushing, refused pushing, no remote and doctor reporting gh as optional."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The ship skill runs speck ship and has disable-model-invocation: true. The passing AC5 test checks user-only shipping instructions in the build and review skills, docs/brief.md and the AGENTS.md pointer generated by init."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The previous endpoint comparison missed post-review code changes that were later reverted.",
+        "suggested_fix": "Implemented: inspect paths across subsequent commits, including merge commits; regression coverage checks a change followed by its revert.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Shipping previously proceeded without a configured test command.",
+        "suggested_fix": "Implemented: refuse an empty commands.test with configuration guidance; regression coverage checks refusal and unchanged state.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/speck.test.mjs",
+        "issue": "The build skill test previously omitted the required logs and approval commit.",
+        "suggested_fix": "Implemented: verify the Approved section requires both logs before setting approved and explicitly requires committing the ticket and review records. This is appropriate coverage of the skill instructions.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated specification matches the mandatory test configuration and commit-by-commit approval safeguard."
+    },
+    "escalation_question": "",
+    "summary": "The three earlier findings are resolved. Approved tickets now wait for the user, and shipping checks approval and tests before merging locally and optionally pushing. The supplied suite reports all 31 tests passing. Approval is based on the supplied diffs and test output; sandbox startup prevented independent command execution."
+  }
+}
+```
+
+</details>
