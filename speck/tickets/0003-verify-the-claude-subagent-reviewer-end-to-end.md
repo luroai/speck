@@ -1,7 +1,7 @@
 ---
 id: "0003"
 title: "Verify the Claude subagent reviewer end to end"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | done
+status: reviewing            # draft | ready | building | reviewing | blocked | done
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,7 +15,7 @@ started: "2026-10-08T20:46:41.610Z"
 ---
 # 0003 · Verify the Claude subagent reviewer end to end
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The `claude-subagent` reviewer path (speck prompt, Agent tool, SendMessage, speck record) is written but has never been run, so it may not work.
