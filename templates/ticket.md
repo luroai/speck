@@ -37,4 +37,4 @@ after: []                # ticket ids that must be done first
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost, PR link. -->
+<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->

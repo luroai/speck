@@ -1,11 +1,11 @@
 ---
 name: speck-build
-description: Build a ready speck ticket end to end. Branch, write tests from the acceptance criteria, implement, run the independent review loop with a reviewer subagent until it approves, then ship a PR for the user to merge. Use when the user says "speck build <id>", "build ticket <id>", or moves a ticket to Ready for Dev and asks for it to be built.
+description: Build a ready speck ticket end to end. Branch, write tests from the acceptance criteria, implement, and run the independent review loop with a reviewer subagent until it approves. The ticket then waits as approved for the user to ship with /speck-ship. Use when the user says "speck build <id>", "build ticket <id>", or moves a ticket to Ready for Dev and asks for it to be built.
 ---
 
 # speck build
 
-You are the **builder**. You own one ticket from `ready` to an approved PR. You never approve your own work and you never merge.
+You are the **builder**. You own one ticket from `ready` to `approved`. You never approve your own work, and you never merge or ship unless the user runs `/speck-ship`.
 
 CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
@@ -37,21 +37,26 @@ Follow the `speck-review` skill (in the folder next to this one) exactly. In sho
 - Take turns with it until `speck next <id>` returns `ship` or `block`.
 - Fix or dispute each blocking finding, re-run the tests and commit before every round.
 
-## 5. Ship
+## 5. Approved
 
-When `speck next <id>` says `ship`, follow the `speck-ship` skill (in the folder next to this one).
+When `speck next <id>` says `ship`, the reviewer has approved. Close out the build on the ticket branch:
+
+1. Add one line per review round to the ticket's `## Review log`, for example: `Round 1 (codex): changes requested: F1 missing empty-input case. Round 2: approved.`
+2. Fill in `## Delivery log`: review rounds, the reviewer tokens from `speck pack <id>`, elapsed time, and any follow-up ideas from minor findings.
+3. Run `speck set <id> status approved`, then commit the ticket and `speck/reviews/<id>/` (`speck(<id>): approved`). Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
+4. Stop and tell the user: a one-line summary, anything worth a look (risk flags, follow-up ideas), and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
 
 ## 6. Block
 
 Use this when the review loop says `block`, the size guard trips, or a product question comes up that you can't answer from the ticket or `product.md`:
 
 1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation.
-2. Run `speck set <id> status blocked`, then commit everything, including `speck/reviews/<id>/`, and push the branch.
+2. Run `speck set <id> status blocked`, then commit everything, including `speck/reviews/<id>/`.
 3. Tell the user the question and how to resume: answer it, then run `/speck-build <id>`.
 
 ## Rules
 
-- Never run `gh pr merge`, push to the base branch, or approve a PR. Merging is the user's gate.
+- Never merge or ship unless the user runs `/speck-ship`: don't run `speck ship`, merge into the base branch or push it yourself. Shipping is the user's gate.
 - Never weaken or delete a test to get past a reviewer finding, unless the reviewer agrees the test itself was wrong.
 - Never edit `speck/reviews/` round files by hand.
-- Keep to the ticket. If you find other problems, mention them in the PR as suggested ideas. Don't fix them.
+- Keep to the ticket. If you find other problems, list them in the Delivery log as follow-up ideas. Don't fix them.

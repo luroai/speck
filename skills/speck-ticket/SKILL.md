@@ -5,7 +5,7 @@ description: Turn an idea, a conversation or a request into one or more small, n
 
 # speck ticket
 
-Turn an idea into small tickets. **A ticket is one agent, one sitting, one PR.** If it's bigger than that, split it. Never stretch a ticket to fit.
+Turn an idea into small tickets. **A ticket is one agent, one sitting, one branch.** If it's bigger than that, split it. Never stretch a ticket to fit.
 
 CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 

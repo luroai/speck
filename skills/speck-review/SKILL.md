@@ -50,7 +50,7 @@ Respond to **every blocking finding** in a response file, `/tmp/speck-<id>-respo
 - **Fix** whenever the reviewer is right. That's the default.
 - **Dispute** only with a concrete, checkable reason, such as "the ticket puts X out of scope" or "test Y covers that path". Don't dispute to save effort.
 - **needs_pm** if the finding depends on a product decision. Then stop the loop and block the ticket using the build skill's section 6.
-- Minor findings don't block. Fix them if they're trivial; otherwise list them as follow-up ideas in the PR.
+- Minor findings don't block. Fix them if they're trivial; otherwise list them as follow-up ideas in the ticket's Delivery log.
 
 Then re-run the tests, commit (`speck(<id>): review round N fixes`), and run the next round.
 
@@ -69,7 +69,7 @@ This resumes the same Codex session. The reviewer remembers its earlier findings
 ## Ending the loop
 
 Check `speck next <id>` after each round:
-- `ship`: the reviewer approved with every criterion passing and no open blocking findings. Go to ship.
+- `ship`: the reviewer approved with every criterion passing and no open blocking findings. Go to the build skill's section 5 (Approved). Never merge or ship unless the user runs `/speck-ship`.
 - `fix`: take another turn.
 - `block`: max rounds reached, repeated disagreement on the same finding, or the reviewer escalated. Block the ticket with the reason as the question, using the build skill's section 6.
 

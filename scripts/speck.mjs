@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATES = path.join(ROOT, 'templates');
-const STATUSES = ['draft', 'ready', 'building', 'reviewing', 'blocked', 'done'];
+const STATUSES = ['draft', 'ready', 'building', 'reviewing', 'blocked', 'approved', 'done'];
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 const LOCKFILES = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|poetry\.lock|uv\.lock|Pipfile\.lock|Cargo\.lock|Gemfile\.lock|go\.sum|composer\.lock)$/;
 const TESTFILES = /(^|\/)(test|tests|__tests__|spec)\/|\.(test|spec)\.[a-z]+$|_test\.[a-z]+$|(^|\/)test_[^/]+$/;
@@ -322,7 +322,7 @@ function runCodexReview(repo, id, opts) {
   return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, thread_id: thread, seconds: Math.round((Date.now() - started) / 1000), usage });
 }
 
-// ---------- review pack (PR body) ----------
+// ---------- review pack ----------
 
 export function reviewPack(repo, id) {
   const cfg = loadConfig(repo);
@@ -424,11 +424,10 @@ export function doctorChecks(repo, cfg = {}) {
     check('Claude Code (builds tickets)', runs('claude', ['--version']),
       'Install Claude Code: https://claude.com/claude-code'),
   ];
+  // speck ships locally with git, so the GitHub CLI is only a convenience.
   const ghInstalled = runs('gh', ['--version']);
-  checks.push(check('GitHub CLI (opens pull requests)', ghInstalled,
-    'Install the GitHub CLI from https://cli.github.com.'));
-  if (ghInstalled) checks.push(check('Signed in to GitHub', runs('gh', ['auth', 'status']),
-    'Run `gh auth login` and follow the prompts.'));
+  checks.push({ ...check('GitHub CLI (optional)', ghInstalled,
+    'Not needed to build or ship. Install it from https://cli.github.com if you want to work with GitHub from the terminal.'), optional: true });
   if (reviewer === 'codex') {
     const codexInstalled = runs('codex', ['--version']);
     checks.push(check('Codex CLI (reviews tickets)', codexInstalled,
@@ -440,8 +439,8 @@ export function doctorChecks(repo, cfg = {}) {
 }
 
 function printChecks(checks) {
-  for (const c of checks) console.log(`  ${c.ok ? '✓' : '✗'} ${c.name}${c.ok ? '' : `\n      Fix: ${c.fix}`}`);
-  return checks.every(c => c.ok);
+  for (const c of checks) console.log(`  ${c.ok ? '✓' : c.optional ? '–' : '✗'} ${c.name}${c.ok ? '' : `\n      ${c.optional ? 'Note' : 'Fix'}: ${c.fix}`}`);
+  return checks.every(c => c.ok || c.optional);
 }
 
 function cmdDoctor() {
@@ -474,7 +473,7 @@ function cmdInit(args) {
   const skills = installTooling(repo);
   console.log(`updated .speck/ (the speck command)`);
   console.log(`updated ${SKILL_DIRS.join(' and ')} (${skills.length} skills)`);
-  const pointer = '\n## speck\n\nThis repo uses speck. Read `speck/product.md` first: it describes what the product is today. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never merge, and never approve your own work.\n';
+  const pointer = '\n## speck\n\nThis repo uses speck. Read `speck/product.md` first: it describes what the product is today. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`.\n';
   const agents = path.join(repo, 'AGENTS.md');
   const agentsText = fs.existsSync(agents) ? fs.readFileSync(agents, 'utf8') : '# Agent guide\n';
   if (!agentsText.includes('This repo uses speck')) { fs.writeFileSync(agents, agentsText + pointer); console.log('updated AGENTS.md'); }
@@ -496,11 +495,10 @@ ${ready ? 'speck is installed.' : 'speck is installed, but fix the ✗ items abo
 Next:
   1. Commit the new files so everyone working on this repo gets speck.
   2. Set commands.test in speck/config.yml (the command that runs your tests).
-  3. Protect ${cfg.base_branch} on GitHub (Settings → Branches → Add rule):
-     - Require a pull request before merging, with 1 approval
-     - Require status checks to pass: speck/review
-     - Do not give agents merge rights
-  4. Open your coding agent in this folder and type /speck-capture to save your first idea.
+  3. Open your coding agent in this folder and type /speck-capture to save your first idea.
+
+Each ticket is built and reviewed on its own branch and then waits as "approved".
+Read it with \`node .speck/scripts/speck.mjs pack <id>\`, then type /speck-ship <id> to merge it into ${cfg.base_branch}.
 
 To update speck later, run the same install command again.`);
 }
@@ -553,22 +551,105 @@ function cmdSet(args) {
       if (errors.length) throw new SpeckError(`Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}`);
     }
   }
+  writeField(t, key, value);
+  console.log(`${t.fm.id} ${key} → ${value}`);
+}
+
+function writeField(t, key, value) {
   let text = setField(t.raw, key, /^\d+$/.test(value) && key !== 'id' ? Number(value) : value);
   if (key === 'status' && value === 'building' && !t.fm.started) text = setField(text, 'started', new Date().toISOString());
   if (key === 'status' && value === 'done') text = setField(text, 'finished', new Date().toISOString());
   fs.writeFileSync(t.file, text);
-  console.log(`${t.fm.id} ${key} → ${value}`);
+}
+
+// ---------- ship (the user's gate: merge an approved ticket locally) ----------
+
+function ticketBranch(repo, cfg, id) {
+  const pad = String(id).padStart(4, '0');
+  const names = git(['for-each-ref', '--format=%(refname:short)', `refs/heads/${cfg.branch_prefix}${pad}-*`], repo).split('\n').filter(Boolean);
+  if (names.length !== 1) throw new SpeckError(names.length
+    ? `Found ${names.length} branches for ticket ${pad} (${names.join(', ')}). Delete the extra ones, then run this again.`
+    : `No branch called ${cfg.branch_prefix}${pad}-… found. Has the ticket been built?`);
+  return names[0];
+}
+
+// Every reason not to ship, checked with the ticket branch checked out and before anything changes.
+function shipChecks(repo, cfg, pad, branch) {
+  const t = findTicket(repo, pad);
+  if (t.fm.status !== 'approved')
+    throw new SpeckError(`Ticket ${pad} is "${t.fm.status}" on ${branch}, not "approved". Only a ticket the reviewer approved can be shipped.`);
+  const all = rounds(repo, pad);
+  const next = nextAction(all, cfg);
+  if (next.action !== 'ship')
+    throw new SpeckError(`The review loop says "${next.action}", not "ship"${next.reason ? `: ${next.reason}` : ''}. Finish the review first.`);
+  const reviewed = all[all.length - 1].meta.reviewed_sha;
+  if (!reviewed || sh('git', ['merge-base', '--is-ancestor', reviewed, branch], { cwd: repo }).status !== 0)
+    throw new SpeckError(`The reviewer's approved commit isn't on ${branch}. Run the review again.`);
+  // Every commit since the approval, not just the end result, so a change that was later reverted still counts.
+  const changed = [...new Set(git(['log', '-m', '--name-only', '--format=', `${reviewed}..${branch}`], repo)
+    .split('\n').filter(f => f && !f.startsWith('speck/')))];
+  if (changed.length)
+    throw new SpeckError(`These files changed after the reviewer approved: ${changed.join(', ')}. Run the review again so the reviewer sees them.`);
+}
+
+function runTests(repo, cfg) {
+  const cmd = (cfg.commands?.test || '').trim();
+  if (!cmd) throw new SpeckError('No test command is set, so speck can\'t check the tests pass before shipping. Set commands.test in speck/config.yml (for example `npm test`), commit it, then run this again.');
+  console.log(`Running tests: ${cmd}`);
+  return sh('sh', ['-c', cmd], { cwd: repo, stdio: 'inherit' }).status === 0;
+}
+
+export function shipTicket(repo, id) {
+  const cfg = loadConfig(repo);
+  const pad = String(id).padStart(4, '0');
+  const base = cfg.base_branch;
+  const branch = ticketBranch(repo, cfg, pad);
+  if (git(['status', '--porcelain'], repo).trim())
+    throw new SpeckError('You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.');
+  const start = git(['branch', '--show-current'], repo).trim() || git(['rev-parse', 'HEAD'], repo).trim();
+  const branchSha = git(['rev-parse', branch], repo).trim();
+  git(['checkout', '-q', branch], repo);
+  const back = () => git(['checkout', '-q', start], repo);
+  try {
+    shipChecks(repo, cfg, pad, branch);
+    if (!runTests(repo, cfg)) throw new SpeckError('Tests failed on the approved branch, so nothing was shipped.');
+  } catch (e) { back(); throw e; }
+  // Close the ticket on the branch, so the merge is what makes it done.
+  const t = findTicket(repo, pad);
+  writeField(t, 'status', 'done');
+  git(['add', t.file], repo);
+  git(['commit', '-q', '-m', `speck(${pad}): ship`], repo);
+  git(['checkout', '-q', base], repo);
+  const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: repo });
+  if (merge.status !== 0) {
+    sh('git', ['merge', '--abort'], { cwd: repo });
+    git(['update-ref', `refs/heads/${branch}`, branchSha], repo);
+    back();
+    throw new SpeckError(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
+  }
+  git(['branch', '-d', branch], repo);
+  console.log(`Shipped ${pad}: merged ${branch} into ${base} and deleted the branch.`);
+  const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
+  if (!remote) { console.log(`No remote set for ${base}, so nothing was pushed.`); return; }
+  const push = sh('git', ['push', remote, base], { cwd: repo });
+  if (push.status !== 0) throw new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\nIf ${base} is protected on GitHub, allow direct pushes (turn off "Require a pull request before merging"), then run \`git push ${remote} ${base}\`.`);
+  console.log(`Pushed ${base} to ${remote}.`);
+}
+
+function cmdShip(args) {
+  if (!args[0]) throw new SpeckError('Usage: speck ship <id>');
+  shipTicket(findRepoRoot(), args[0]);
 }
 
 function cmdStatus() {
   const repo = findRepoRoot();
   const tickets = listTickets(repo);
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
-  const order = ['blocked', 'reviewing', 'building', 'ready', 'draft', 'done'];
+  const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).sort((a, b) => (a.fm.priority ?? 9) - (b.fm.priority ?? 9));
     if (!group.length) continue;
-    console.log(`\n${s.toUpperCase()} (${group.length})`);
+    console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' ? ': waiting for you. Read `speck pack <id>`, then run /speck-ship <id>' : ''}`);
     for (const t of group) {
       console.log(`  ${t.fm.id}  P${t.fm.priority ?? '-'}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
       if (s === 'blocked') {
@@ -680,11 +761,12 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck prompt <id> [--tests=f]       print the reviewer prompt (for subagent reviewers)
   speck reviewer-settings <id>        print and save the model and effort to start a reviewer with
   speck next <id>                     what the builder should do next: review, fix, block or ship
-  speck pack <id>                     print the review pack (PR body)
+  speck pack <id>                     print the review pack
+  speck ship <id>                     merge an approved ticket into the base branch (the user's gate)
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, status: cmdStatus, diffstat: cmdDiffstat,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, next: cmdNext, pack: cmdPack };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [cmd, ...args] = process.argv.slice(2);
