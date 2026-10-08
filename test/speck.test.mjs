@@ -835,14 +835,17 @@ test('AC3 (F3): other tickets in the diff lose their Review rounds sections too,
   const other = path.join(r.dir, 'speck', 'tickets', 'done', '0002-older.md');
   const otherText = `---\nid: "0002"\ntitle: "Older"\nstatus: done\n\n---\n## Problem\nX.\n`;
   fs.writeFileSync(other, otherText);
+  fs.mkdirSync(path.join(r.dir, 'speck', 'reviews', '0002'), { recursive: true });
+  fs.writeFileSync(path.join(r.dir, 'speck', 'reviews', '0002', 'round-1.json'), '{"meta":{"round":1,"thread_id":"OLD"}}\n');
   r.git('add', '-A'); r.git('commit', '-qm', 'older ticket');
   r.git('branch', '-f', 'main');
   const block = `<details><summary>Round 1 · codex · approve</summary>\n\n\`\`\`json\n{"meta":{"round":1,"thread_id":"OLD"}}\n\`\`\`\n\n</details>`;
   fs.writeFileSync(other, otherText.replace('X.', 'X, edited.') + `\n## Review rounds\n\n${block}\n`);
+  fs.rmSync(path.join(r.dir, 'speck', 'reviews'), { recursive: true }); // as init does when it migrates them
   r.git('add', '-A'); r.git('commit', '-qm', 'migrated');
   const p = r.run('prompt', '1').stdout.split('Return ONLY')[0];
   assert.match(p, /\+X, edited\./, 'the ordinary edit is shown');
-  assert.doesNotMatch(p, /## Review rounds|"thread_id"|OLD/, "the other ticket's rounds are left out");
+  assert.doesNotMatch(p, /## Review rounds|"thread_id"|OLD|speck\/reviews/, "the other ticket's rounds, and the old review files it replaced, are left out");
 });
 
 test('AC4 (F1): a damaged round block is an error, not silently dropped', () => {

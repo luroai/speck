@@ -357,11 +357,12 @@ function onlyRoundsChanged(repo, rel, text) {
   return head.status === 0 && stripRounds(head.stdout) === stripRounds(text);
 }
 
-// What the reviewer sees: every change since `since`, with every ticket's Review rounds section left out.
+// What the reviewer sees: every change since `since`, with every ticket's Review rounds section, and any old speck/reviews/ files, left out.
 function reviewDiff(repo, since) {
   const tickets = git(['diff', '--no-renames', '--name-only', `${since}..HEAD`, '--', 'speck/tickets'], repo)
     .split('\n').filter(f => /\.md$/.test(f));
-  let out = git(['diff', '--no-renames', `${since}..HEAD`, '--', '.', ...tickets.map(f => `:(exclude,literal)${f}`)], repo);
+  // Old speck/reviews/ files are history too: removing them when init moves them into tickets isn't a code change.
+  let out = git(['diff', '--no-renames', `${since}..HEAD`, '--', '.', ':(exclude)speck/reviews', ...tickets.map(f => `:(exclude,literal)${f}`)], repo);
   for (const rel of tickets) {
     const version = rev => { const r = sh('git', ['show', `${rev}:${rel}`], { cwd: repo }); return r.status === 0 ? stripRounds(r.stdout) : ''; };
     const a = version(since), b = version('HEAD');
