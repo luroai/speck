@@ -1,7 +1,7 @@
 ---
 id: "0002"
 title: "Document GitHub setup when agents use your own account"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | done
+status: cancelled            # draft | ready | building | reviewing | blocked | done
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -10,11 +10,13 @@ reviewer: codex
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
+cancel_reason: "No longer needed"
+cancelled: 2026-10-08
 
 ---
 # 0002 · Document GitHub setup when agents use your own account
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 GitHub doesn't let a user approve their own PR. If the builder opens PRs with the owner's own gh login, a 'require 1 approval' rule can't be met, so the documented branch protection doesn't work as written.
