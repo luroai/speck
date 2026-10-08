@@ -950,3 +950,126 @@ test('AC5: rounds init cannot place are left where they are with a reason, and t
   assert.match(again.stdout, /skipped speck\/reviews\/0001\/: .*already has review rounds/);
   assert.equal(r.read('speck/tickets/0001-live-work.md'), t1);
 });
+
+// ---------- 0008: cancel a ticket with a recorded reason ----------
+
+// A repo with speck installed, plus helpers for lint-clean tickets and file paths.
+function cancelRepo() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cancel-'));
+  const env = { ...process.env, ...gitEnv };
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const at = p => fs.existsSync(path.join(dir, p));
+  const read = p => fs.readFileSync(path.join(dir, p), 'utf8');
+  const fm = p => parseTicket(read(p)).fm;
+  const filed = p => path.join('speck', 'tickets', 'done', path.basename(p));
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir, encoding: 'utf8', env });
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const add = title => {
+    const p = run('new', ...title.split(' ')).stdout.trim();
+    fs.writeFileSync(path.join(dir, p), read(p).split('## Problem')[0] + good);
+    return p;
+  };
+  return { dir, run, add, at, read, fm, filed };
+}
+
+test('AC1: speck cancel records the reason and the date, files the ticket under done/ and rewrites the header', () => {
+  const r = cancelRepo();
+  const live = r.add('Export bookings');
+  const res = r.run('cancel', '1', 'Superseded by the new export work');
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(r.at(live), false, 'no longer in speck/tickets/');
+  assert.equal(r.at(r.filed(live)), true, 'filed away with finished work, under the same name');
+  const f = r.fm(r.filed(live));
+  assert.equal(f.status, 'cancelled');
+  assert.equal(f.cancel_reason, 'Superseded by the new export work', 'the reason is stored');
+  assert.match(String(f.cancelled), /^\d{4}-\d{2}-\d{2}$/, 'the date it was cancelled is stored');
+  assert.match(r.read(r.filed(live)), /^\*\*Status:\*\* ❌ cancelled$/m, 'the header says so');
+});
+
+test('AC1: cancel works from every status except done', () => {
+  for (const status of ['draft', 'ready', 'building', 'reviewing', 'blocked', 'approved']) {
+    const r = cancelRepo();
+    const live = r.add('Export bookings');
+    if (status !== 'draft') assert.equal(r.run('set', '1', 'status', status).status, 0, status);
+    const res = r.run('cancel', '1', 'Not needed after all');
+    assert.equal(res.status, 0, `${status}: ${res.stderr}`);
+    assert.equal(r.fm(r.filed(live)).status, 'cancelled', `from ${status}`);
+  }
+});
+
+test('AC2: cancel refuses a missing or blank reason and changes nothing', () => {
+  for (const [name, args] of [['a missing reason', ['cancel', '1']], ['a blank reason', ['cancel', '1', '   ']]]) {
+    const r = cancelRepo();
+    const live = r.add('Export bookings');
+    const before = r.read(live);
+    const res = r.run(...args);
+    assert.notEqual(res.status, 0, `${name} is refused`);
+    assert.match(res.stderr + res.stdout, /reason/i, name);
+    assert.equal(r.read(live), before, `${name}: the ticket is untouched`);
+    assert.equal(r.at(r.filed(live)), false, `${name}: nothing moved`);
+  }
+});
+
+test('AC2: cancel refuses a done ticket and an already-cancelled one, and changes nothing', () => {
+  const r = cancelRepo();
+  const live = r.add('Export bookings');
+  assert.equal(r.run('set', '1', 'status', 'done').status, 0);
+  const before = r.read(r.filed(live));
+  const res = r.run('cancel', '1', 'Changed my mind');
+  assert.notEqual(res.status, 0, 'delivered work cannot be cancelled');
+  assert.match(res.stderr, /done/i);
+  assert.equal(r.read(r.filed(live)), before, 'nothing changed');
+
+  const c = cancelRepo();
+  const cancelled = c.add('Export bookings');
+  assert.equal(c.run('cancel', '1', 'First reason').status, 0);
+  const filed = c.read(c.filed(cancelled));
+  const again = c.run('cancel', '1', 'A second reason');
+  assert.notEqual(again.status, 0, 'an already-cancelled ticket is refused');
+  assert.match(again.stderr + again.stdout, /already cancelled/i);
+  assert.equal(c.read(c.filed(cancelled)), filed, 'nothing changed');
+});
+
+test('AC3: set status cancelled refuses and points at speck cancel', () => {
+  const r = cancelRepo();
+  const live = r.add('Export bookings');
+  const res = r.run('set', '1', 'status', 'cancelled');
+  assert.notEqual(res.status, 0, 'it refuses');
+  assert.match(res.stderr, /speck cancel/, 'and points at the command that records a reason');
+  assert.equal(r.fm(live).status, 'draft', 'nothing changed');
+  assert.equal(r.at(live), true, 'nothing moved');
+});
+
+test('AC3: reviving a cancelled ticket moves it back to speck/tickets/ and keeps the reason', () => {
+  const r = cancelRepo();
+  const live = r.add('Export bookings');
+  assert.equal(r.run('cancel', '1', 'Superseded by 0007').status, 0);
+  assert.equal(r.run('set', '1', 'status', 'ready').status, 0);
+  assert.equal(r.at(live), true, 'back in speck/tickets/');
+  assert.equal(r.at(r.filed(live)), false, 'only one copy is left behind');
+  assert.equal(r.fm(live).status, 'ready');
+  assert.equal(r.fm(live).cancel_reason, 'Superseded by 0007', 'the recorded reason is kept');
+});
+
+test('AC4: status lists cancelled tickets in a CANCELLED group after DONE, with the reason below', () => {
+  const r = cancelRepo();
+  r.add('Export bookings');
+  r.add('Old idea');
+  assert.equal(r.run('set', '1', 'status', 'done').status, 0);
+  assert.equal(r.run('cancel', '2', 'Superseded by 0007').status, 0);
+  const out = r.run('status').stdout;
+  assert.match(out, /DONE \(1\)/);
+  assert.match(out, /CANCELLED \(1\)/);
+  assert.ok(out.indexOf('DONE') < out.indexOf('CANCELLED'), 'CANCELLED comes after DONE');
+  const lines = out.split('\n');
+  const head = lines.findIndex(l => /CANCELLED \(1\)/.test(l));
+  assert.match(lines[head + 1], /0002/, 'the ticket follows its group heading');
+  assert.match(lines[head + 2], /Superseded by 0007/, 'its reason is on the line below it');
+});
+
+test('AC4: speck new never reuses a cancelled ticket number', () => {
+  const r = cancelRepo();
+  r.add('Export bookings');
+  assert.equal(r.run('cancel', '1', 'Not now').status, 0);
+  assert.equal(r.run('new', 'Second').stdout.trim(), path.join('speck', 'tickets', '0002-second.md'));
+});
