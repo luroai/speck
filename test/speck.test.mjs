@@ -588,3 +588,17 @@ test('AC2: pack and reviewer-settings find a shipped ticket in the done folder',
   assert.match(pack.stdout, /0001 · Export bookings/);
   assert.equal(r.run('reviewer-settings', '1').status, 0);
 });
+
+test('init skips a ticket file it cannot read, and still updates speck', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+  const init = () => spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(init().status, 0);
+  fs.writeFileSync(path.join(dir, 'speck', 'tickets', '0003-broken.md'), 'no frontmatter here\n');
+  fs.writeFileSync(path.join(dir, '.claude', 'skills', 'speck-build', 'SKILL.md'), 'stale');
+  const r = init();
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /skipped speck\/tickets\/0003-broken\.md/);
+  assert.ok(fs.existsSync(path.join(dir, 'speck', 'tickets', '0003-broken.md')), 'left where it was');
+  assert.match(fs.readFileSync(path.join(dir, '.claude', 'skills', 'speck-build', 'SKILL.md'), 'utf8'), /name: speck-build/, 'skills still refreshed');
+});

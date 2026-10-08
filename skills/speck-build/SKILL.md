@@ -11,7 +11,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## 1. Pre-flight
 
-1. Read `speck/product.md`, `speck/config.yml`, the ticket (`speck/tickets/<id>-*.md`) and the repo's AGENTS.md or CLAUDE.md.
+1. Read `speck/product.md`, `speck/config.yml`, the ticket (`speck/tickets/<id>-*.md`, or `speck/tickets/done/<id>-*.md` once it's done) and the repo's AGENTS.md or CLAUDE.md.
 2. The ticket must be `ready`. If it's `draft`, stop and tell the user that it needs their approval (Gate 1). If it's `building`, `reviewing` or `blocked`, you're resuming: check the branch and `speck next <id>`, then continue from the right step. If it's `blocked` and the user has answered the question, record the answer in the ticket's Notes before continuing.
 3. Make sure the working tree is clean and you're up to date with `base_branch`. Create the branch `<branch_prefix><id>-<slug>` from it.
 4. Run `speck set <id> status building` and commit (`speck(<id>): start`).

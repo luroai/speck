@@ -497,7 +497,12 @@ function cmdInit(args) {
     console.log(`created ${to}`);
   }
   // Tidy up after a version of speck that kept done tickets in speck/tickets/, so the layout above holds.
-  const strays = listTickets(repo).filter(t => t.fm.status === 'done' && path.dirname(t.file) !== doneTicketsDir(repo));
+  // A ticket file speck can't read is left where it is with a warning, so it can't stop an update.
+  const strays = fs.readdirSync(ticketsDir(repo)).filter(f => /^\d{4}-.*\.md$/.test(f)).flatMap(f => {
+    const file = path.join(ticketsDir(repo), f);
+    try { return [{ file, ...parseTicket(fs.readFileSync(file, 'utf8')) }]; }
+    catch (e) { console.log(`skipped speck/tickets/${f}: ${e.message} Fix it, then run init again to file it if it's done.`); return []; }
+  }).filter(t => t.fm.status === 'done');
   for (const t of strays) placeTicket(repo, t, 'done');
   if (strays.length) console.log(`moved   ${strays.length} done ticket${strays.length === 1 ? '' : 's'} into speck/tickets/done/`);
   for (const d of dirs) {
