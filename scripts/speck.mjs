@@ -134,6 +134,12 @@ export function setField(text, key, value) {
   return `${head.slice(0, head.length - gap.length)}\n${key}: ${v}${gap}${rest}`;
 }
 
+// Removes one key's line from the frontmatter only, leaving the body byte for byte.
+function dropFrontmatterLine(text, key) {
+  const fmEnd = text.indexOf('\n---', 4);
+  return text.slice(0, fmEnd).replace(new RegExp(`^${key}:.*\\n`, 'm'), '') + text.slice(fmEnd);
+}
+
 const blank = v => v === undefined || v === null || String(v).trim() === '';
 
 // The reviewer model and effort for a ticket: a ticket value wins, a blank one falls back to config, null means "reviewer's default".
@@ -808,7 +814,7 @@ function cmdCancel(args) {
   if (t.fm.status === 'done') throw new SpeckError(`Ticket ${t.fm.id} is done, so it can't be cancelled: delivered work is part of the record.`);
   if (t.fm.status === 'cancelled') throw new SpeckError(`Ticket ${t.fm.id} is already cancelled.`);
   // Stored as a JSON string, so text like `false`, `0` or `a "quoted" word` reads back exactly as typed. A reason kept from an earlier cancel is replaced.
-  let text = setField(t.raw.replace(/^cancel_reason:.*\n/m, ''), 'cancel_reason', JSON.stringify(reason));
+  let text = setField(dropFrontmatterLine(t.raw, 'cancel_reason'), 'cancel_reason', JSON.stringify(reason));
   text = setField(text, 'cancelled', new Date().toISOString().slice(0, 10));
   fs.writeFileSync(t.file, syncHeader(setField(text, 'status', 'cancelled')));
   placeTicket(repo, t, 'cancelled');

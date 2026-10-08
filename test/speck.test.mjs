@@ -1099,3 +1099,16 @@ test('AC3: reopening keeps an awkward reason exactly, and cancelling again repla
   assert.equal(text.match(/^cancel_reason:/gm).length, 1, 'one reason line');
   assert.strictEqual(r.fm(r.filed(p)).cancel_reason, 'Later # maybe');
 });
+
+test('AC1: cancelling leaves a "cancel_reason:" line in the ticket body byte for byte', () => {
+  const r = cancelRepo();
+  const p = r.add('Export bookings');
+  const body = 'cancel_reason: an example field in the documentation\n';
+  fs.writeFileSync(path.join(r.dir, p), `${r.read(p).trimEnd()}\n\n## Notes\n${body}`);
+  assert.equal(r.run('cancel', '1', 'Not needed').status, 0);
+  assert.ok(r.read(r.filed(p)).includes(`## Notes\n${body}`), 'the body line survives');
+  assert.strictEqual(r.fm(r.filed(p)).cancel_reason, 'Not needed');
+  assert.equal(r.run('set', '1', 'status', 'ready').status, 0);
+  assert.equal(r.run('cancel', '1', 'Again').status, 0);
+  assert.ok(r.read(r.filed(p)).includes(`## Notes\n${body}`), 'and survives a second cancel');
+});
