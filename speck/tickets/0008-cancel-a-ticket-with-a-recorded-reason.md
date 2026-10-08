@@ -1,7 +1,7 @@
 ---
 id: "0008"
 title: "Cancel a ticket with a recorded reason"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | done
+status: ready            # draft | ready | building | reviewing | blocked | done
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-08
 ---
 # 0008 · Cancel a ticket with a recorded reason
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Once you decide not to build a ticket, the only options are to delete it or leave it as a draft. Either way, there's no lasting record that the idea was considered and turned down, or why, so it can come back later as new work.
