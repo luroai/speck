@@ -1,7 +1,7 @@
 ---
 id: "0012"
 title: "Run a reviewer from a command set in config"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-08T21:31:53.751Z"
 ---
 # 0012 · Run a reviewer from a command set in config
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck review` can only run Codex, and every other reviewer is driven by the builder through skill instructions, with the builder saving the verdict file itself. A Cursor, Gemini or Claude Code user has no reviewer speck can run for them, and outside Codex the builder could record its own approval.
@@ -48,10 +48,17 @@ Any reviewer agent with a non-interactive mode can be set up in `speck/config.ym
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 a well-formed JSON reply that wasn't a valid verdict failed without quoting stderr; F2 later rounds rebuilt the round-1 prompt from current code instead of resending what was sent. Round 2 (codex): approved.
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Review rounds: 2 (codex, `gpt-6.1-sol`), with 521,841 reviewer tokens. The live Claude command-reviewer run on a sample ticket took 2 rounds on `haiku`.
+- Elapsed: about 9 minutes from start to approval (from `speck pack`).
+- Changed lines: 166 (excluding tests and `speck/`), against a limit of 1,000.
+- During the build, `/tmp` ran out of inodes because of about 8,600 leftover test fixture folders, and the suite failed until they were deleted.
+- Follow-up ideas:
+  - The test suite never removes the temporary repos it makes in `/tmp`. Add cleanup, because over many runs they fill the inode table.
+  - Claude's envelope reports `usage.input_tokens` without cached input, so the pack undercounts a Claude command reviewer's tokens. Add `cache_read_input_tokens` and `cache_creation_input_tokens` when they're present.
+  - `speck doctor` doesn't check that a reviewer's command is installed. 0014 covers this.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +138,87 @@ Any reviewer agent with a non-interactive mode can be set up in `speck/config.ym
     },
     "escalation_question": "",
     "summary": "Configured reviewer commands work for the main paths, with meaningful integration tests. Two fixes are needed before merge: preserve the original review context in later rounds and include reviewer error output when a JSON verdict is invalid. I inspected the tests and ran read-only checks; I did not rerun the suite because it writes temporary repositories."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "eb83f2a45b4e98d395b1b1ea67c6b89553990782",
+    "thread_id": "01a11d72-4aae-79e1-ab7a-59a63e9084ed",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 328033,
+      "cached_input_tokens": 257024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1979,
+      "reasoning_output_tokens": 102
+    },
+    "saved_at": "2026-10-08T21:40:33.155Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "runCommandReview supplies fullPrompt on stdin from the repo root and records reviewer and reviewed_sha. The 0012 AC1 integration test exercises these behaviours and passes in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "commandArgs substitutes resolved settings and removes blank placeholders with their flags. The 0012 AC2 integration test covers populated, blank, joined and shell-sensitive arguments and passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "verdictFromOutput handles JSON, fenced verdicts and result envelopes. runCommandReview now catches verdict validation errors before recording and includes the stderr tail. The AC3 tests cover formats, invalid output, invalid verdict shape and non-zero exits; all pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "roundOnePrompt reads the saved original prompt, and historyPrompt appends earlier verdicts and responses in order followed by the current incremental diff. The revised AC4 test compares against captured round-1 stdin while changing code and test output. A separate passing test covers reconstruction when the cache is missing."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdReview retains the built-in Codex adapter without a configured command and directs unsupported reviewers to speck record. The passing 0012 AC5 integration test covers both."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Invalid verdict JSON previously omitted the required stderr diagnostic. This is fixed by validation before recording with the stderr tail appended to validation errors.",
+        "suggested_fix": "Completed; the regression test checks the final five stderr lines and that no round is recorded.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Later rounds previously substituted current context for the original round-1 prompt. They now resend the saved original prompt.",
+        "suggested_fix": "Completed; the revised regression test compares later stdin against the captured original prompt.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "Documents command reviewers, error handling, history replay and sandbox limitations accurately, including the loss of original test output if the prompt cache must be reconstructed."
+    },
+    "escalation_question": "",
+    "summary": "Both blocking findings are fixed, and the change is ready for the owner's merge decision. Configured reviewers receive the prompt and review history, and failed reviews report useful errors without recording a round. The supplied suite reports 102 passing tests; I verified the code and regression tests without rerunning the write-producing suite."
   }
 }
 ```
