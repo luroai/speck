@@ -48,3 +48,74 @@ A command reviewer that supports resuming a session continues the same session i
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2511b8da89446adc79464cc8beea459124203a21",
+    "thread_id": "01a11d7a-38be-7131-a908-5af5e91f86cd",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 192719,
+      "cached_input_tokens": 136448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1120,
+      "reasoning_output_tokens": 141
+    },
+    "saved_at": "2026-10-08T21:45:51.910Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: atPath and runCommandReview extract and save thread_id. The 0013 AC1 test exercises top-level, nested, missing and unconfigured paths; builder reports it passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runCommandReview substitutes the saved session and uses reviewerPrompt for resumed rounds. The 0013 AC2 test checks actual command arguments, response, diff and absence of full history; builder reports it passing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runCommandReview falls back to historyPrompt with one explanatory line. The 0013 AC3 test exercises missing configuration, missing session and non-zero resume exit; builder reports it passing."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "reviewPack and sessionLabel render session labels. The 0013 AC4 test checks fresh and continued labels for command and Codex rounds; builder reports it passing."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:610",
+        "issue": "Session selection can cross a fresh-session boundary and silently lose review context. If round 1 saves S1, round 2 falls back to a fresh command whose valid verdict has no session id, and round 3 resumes successfully, the reverse search selects S1 again. That session never saw round 2, but receives only the round-3 response and diff since round 2. Findings and changes from the intervening review are omitted. A read-only check of the selection expression confirms this; the new tests stop after two rounds.",
+        "suggested_fix": "For command reviewers, resume only the session associated with the latest round. Continued rounds already preserve their resumed id, so a latest fresh round without an id should force full-history fallback. Add a three-round regression test covering failed resume, fresh output without an id, and the next round. Leave Codex's existing logic unchanged.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The new capability is documented and changes stay within scope. The stale-session correctness issue is recorded separately."
+    },
+    "escalation_question": "",
+    "summary": "Session resumption and fallback work in the tested two-round cases. One fix is needed: after starting fresh, speck can return to an older session and leave the reviewer unaware of the intervening review. Tests were inspected but not rerun because they create files and this review is read-only."
+  }
+}
+```
+
+</details>

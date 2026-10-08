@@ -607,14 +607,15 @@ function runCommandReview(repo, id, name, command, opts) {
   const options = s.cfg.reviewer_options?.[name] || {};
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
   const values = { model: settings.model, effort: settings.effort };
-  const lastThread = [...s.prior].reverse().find(r => r.meta?.thread_id)?.meta.thread_id;
+  // Only the latest round's session has seen every round so far. An older one would miss the rounds since.
+  const lastThread = s.prior[s.prior.length - 1]?.meta?.thread_id;
   const resume = typeof options.resume_command === 'string' && options.resume_command.includes('{session}') ? options.resume_command : '';
   const started = Date.now();
   let r = null, session = 'fresh';
   if (s.round > 1) {
     let why = '';
     if (!resume) why = 'no resume_command with {session} is set for it';
-    else if (!lastThread) why = 'no session id was saved from an earlier round';
+    else if (!lastThread) why = `no session id was saved from round ${s.round - 1}`;
     else {
       const tried = runReviewer(repo, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha }));
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;

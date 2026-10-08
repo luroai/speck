@@ -1775,3 +1775,25 @@ test('0013 AC4: the review pack says whether each round continued a session or s
   assert.match(cpack, /- Round 1 \(codex[^)]*\): .*fresh session/);
   assert.match(cpack, /- Round 2 \(codex[^)]*\): .*continued session/);
 });
+
+test('0013 AC2/AC3 (F1): a session is only resumed from the latest round, never across a fresh run', () => {
+  const r = commandRepo({ options: resumeOptions });
+  const resp = n => { const f = path.join(r.dir, '..', `resp3-${n}-${path.basename(r.dir)}.md`); fs.writeFileSync(f, `- round ${n} response\n`); return f; };
+  const commit = n => { fs.writeFileSync(path.join(r.dir, 'a.txt'), `change ${n}\n`); r.git('add', '-A'); r.git('commit', '-qm', `fix ${n}`); };
+  assert.equal(r.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1').status, 10);
+  assert.equal(r.roundFile(1).meta.thread_id, 'S1');
+  commit(1);
+  // Resuming fails, and the fresh run reports no session id.
+  const two = r.runEnv({ FAKE_MODE: 'raw', FAKE_RESUME_FAIL: '1' }, 'review', '1', `--response=${resp(2)}`);
+  assert.equal(two.status, 10, two.stderr);
+  assert.equal(r.roundFile(2).meta.session, 'fresh');
+  assert.equal(r.roundFile(2).meta.thread_id, undefined);
+  commit(2);
+  const three = r.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1', `--response=${resp(3)}`);
+  assert.equal(three.status, 11, three.stderr);
+  const calls = r.calls();
+  assert.ok(!calls[calls.length - 1].args.includes('--resume'), 'S1 never saw round 2, so it is not resumed');
+  assert.match(calls[calls.length - 1].stdin, /# Earlier review rounds/);
+  assert.match(three.stdout, /fresh .*no session id/i);
+  assert.equal(r.roundFile(3).meta.session, 'fresh');
+});
