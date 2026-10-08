@@ -1,0 +1,17 @@
+{
+  "name": "speck-dev",
+  "version": "0.1.0",
+  "description": "Small tickets, independent review, you merge. A repo-native ticket workflow for AI coding agents.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "speck": "scripts/speck.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
