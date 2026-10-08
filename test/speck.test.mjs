@@ -128,7 +128,7 @@ const EFFORT_VALUES = ['low', 'medium', 'high', 'xhigh', 'max'];
 const gitIn = (dir, ...a) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...a], { cwd: dir, encoding: 'utf8' });
 
 // A repo with speck installed, one ready ticket on a branch, and a fake `codex` on PATH that logs its arguments.
-function reviewRepo({ config = '', ticketFields = '' } = {}) {
+function reviewRepo({ config = '', ticketFields = '', extraEnv = {} } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-bin-'));
   const log = path.join(bin, 'calls.log');
@@ -140,9 +140,10 @@ fs.appendFileSync(${JSON.stringify(log + '.prompts')}, JSON.stringify(fs.readFil
 const out = args[args.indexOf('-o') + 1];
 fs.writeFileSync(out, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 'fine', escalation_question: '' }));
 console.log(JSON.stringify({ type: 'thread.started', thread_id: 'T1' }));
+if (process.env.FAKE_CODEX_EVENT) console.log(process.env.FAKE_CODEX_EVENT);
 `, { mode: 0o755 });
   const env = { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` };
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...env, ...extraEnv } });
   gitIn(dir, 'init', '-q', '-b', 'main');
   assert.equal(run('init', '--skip-checks').status, 0);
   const cfgFile = path.join(dir, 'speck', 'config.yml');
@@ -949,4 +950,40 @@ test('AC5: rounds init cannot place are left where they are with a reason, and t
   const again = r.run('init', '--skip-checks');
   assert.match(again.stdout, /skipped speck\/reviews\/0001\/: .*already has review rounds/);
   assert.equal(r.read('speck/tickets/0001-live-work.md'), t1);
+});
+
+// ---------- 0001: warn when the reviewer cannot run commands ----------
+
+const cmdEvent = (output, extra = {}) => JSON.stringify({ type: 'item.completed', item: { id: 'item_1', type: 'command_execution', command: 'git diff', aggregated_output: output, exit_code: 1, status: 'failed', ...extra } });
+const BWRAP = 'bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted';
+
+test('AC1: speck review warns when a command failed because of the sandbox', () => {
+  const r = reviewRepo({ extraEnv: { FAKE_CODEX_EVENT: cmdEvent(BWRAP) } });
+  const res = r.run('review', '0001', '--tests=/dev/null');
+  assert.match(res.stdout, /⚠️ Reviewer could not inspect the repo; reviewed the diff only/);
+});
+
+test('AC1: no warning when commands ran, or failed for another reason', () => {
+  for (const ev of [undefined, cmdEvent('npm: not found'), cmdEvent('ok', { exit_code: 0, status: 'completed' }), cmdEvent(BWRAP, { exit_code: 0, status: 'completed' })]) {
+    const r = reviewRepo({ extraEnv: ev ? { FAKE_CODEX_EVENT: ev } : {} });
+    assert.doesNotMatch(r.run('review', '0001', '--tests=/dev/null').stdout, /could not inspect/);
+  }
+});
+
+test('AC2: the round stores sandbox_ok: false in meta only when the sandbox failed', () => {
+  const bad = reviewRepo({ extraEnv: { FAKE_CODEX_EVENT: cmdEvent(BWRAP) } });
+  bad.run('review', '0001', '--tests=/dev/null');
+  assert.equal(bad.roundFile(1).meta.sandbox_ok, false);
+  const good = reviewRepo();
+  good.run('review', '0001', '--tests=/dev/null');
+  assert.notEqual(good.roundFile(1).meta.sandbox_ok, false);
+});
+
+test('AC3: the review pack flags each round where the reviewer could not inspect the repo', () => {
+  const bad = reviewRepo({ extraEnv: { FAKE_CODEX_EVENT: cmdEvent(BWRAP) } });
+  bad.run('review', '0001', '--tests=/dev/null');
+  assert.match(bad.run('pack', '0001').stdout, /⚠️ Reviewer could not inspect the repo; reviewed the diff only \(round 1\)/);
+  const good = reviewRepo();
+  good.run('review', '0001', '--tests=/dev/null');
+  assert.doesNotMatch(good.run('pack', '0001').stdout, /could not inspect/);
 });
