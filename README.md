@@ -76,7 +76,7 @@ reviewer_options:
     command: "cursor-agent -p --output-format json --mode ask --model {model}"
 ```
 
-For Claude Code, use `"claude -p --output-format json --permission-mode plan --model {model} --effort {effort}"`, and set `allow_same_model_review: true` if Claude is also the builder. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode as above. Flags change, so check your tool's current ones.
+For Claude Code, use `"claude -p --output-format json --permission-mode plan --model {model} --effort {effort}"`, and set `allow_same_model_review: true` if Claude is also the builder. To let later rounds continue the reviewer's own session instead of resending everything, add `session_id_path: session_id` and `resume_command: "claude -p --output-format json --permission-mode plan --resume {session} --model {model} --effort {effort}"`. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode as above. Flags change, so check your tool's current ones.
 
 ## Repo layout
 

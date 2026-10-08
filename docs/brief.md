@@ -99,7 +99,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
 |---|---|---|
 | `codex` (default when the builder is Claude) | `codex exec --sandbox read-only --output-schema …`, then `codex exec resume <session>` for later rounds | Cross-model by default |
 | `claude-subagent` | A fresh-context Claude Code subagent using the review skill | Fallback; same model family, so config must allow it explicitly |
-| Any name with a `command` | `speck review` runs the command from `reviewer_options.<name>.command` in `speck/config.yml`, with the prompt on stdin, and reads the verdict from its output | For any agent with a non-interactive mode (Cursor, Claude Code, Gemini…). Every round resends the full history, because the reviewer keeps no session |
+| Any name with a `command` | `speck review` runs the command from `reviewer_options.<name>.command` in `speck/config.yml`, with the prompt on stdin, and reads the verdict from its output | For any agent with a non-interactive mode (Cursor, Claude Code, Gemini…). Later rounds resume the reviewer's session if `session_id_path` and `resume_command` are set, and otherwise resend the full history |
 
 **Command reviewers.** Set `reviewer: <name>` and give that name a `command` under `reviewer_options`. `{model}` and `{effort}` in the command are filled in from the ticket's `reviewer_model` and `reviewer_effort`. When a value is blank, the placeholder and the flag just before it are dropped, so the reviewer uses its own default. The command runs from the repo root without a shell, gets the round-1 prompt (the same text `speck prompt <id>` prints, schema included) on stdin, and must print the verdict as JSON, in a ```` ```json ```` block, or in a JSON envelope whose `result` string holds it. Later rounds resend the round-1 prompt exactly as it was sent (kept in `speck/.cache/`, or rebuilt from the round-1 commit if that copy is gone), every earlier verdict and builder response in order, then the new response, diff and test output. A non-zero exit, output with no verdict or an invalid verdict is a plain error quoting the last five lines of stderr, and nothing is recorded. speck records the round itself, so the builder never handles the verdict. Read-only is only an instruction in the prompt: speck doesn't sandbox a command reviewer, so pick the tool's own read-only mode in the command. Check each tool's current flags; for example:
 
@@ -110,7 +110,11 @@ reviewer_options:
     command: "cursor-agent -p --output-format json --mode ask --model {model}"
   claude:   # Claude reviewing Claude's build also needs allow_same_model_review: true
     command: "claude -p --output-format json --permission-mode plan --model {model} --effort {effort}"
+    session_id_path: session_id   # where the session id is in the output
+    resume_command: "claude -p --output-format json --permission-mode plan --resume {session} --model {model} --effort {effort}"
 ```
+
+**Resuming a command reviewer.** With `session_id_path` set, speck saves the session id from each round's output as `thread_id`. With `resume_command` (containing `{session}`) as well, later rounds continue that session with only the new round's prompt, as Codex does. If there's no saved id, no `resume_command`, or the resume exits non-zero, speck falls back to a fresh run with the full history and says why in one line. The review pack marks each round as a continued or fresh session.
 
 Config rejects `builder` and `reviewer` being the same agent unless `allow_same_model_review: true` is set.
 

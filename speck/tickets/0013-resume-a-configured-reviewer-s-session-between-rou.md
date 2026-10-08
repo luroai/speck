@@ -37,6 +37,8 @@ A command reviewer that supports resuming a session continues the same session i
 
 ## Notes
 - After 0012.
+- **Live run (2026-10-08).** In a throwaway repo, `reviewer: claude` had `session_id_path: session_id` and `resume_command: "claude -p --output-format json --permission-mode plan --resume {session} --model {model} --effort {effort}"` on `haiku`. A two-round review of a sample ticket ran through this branch's `speck review`. Round 1 started fresh and saved Claude's `session_id`. Round 2 ran the resume command with that id and only the round-2 prompt, with no fallback line. The reviewer referred back to its round-1 findings and approved. The pack shows round 1 as `fresh session` and round 2 as `continued session`. Claude Code 2.1.294's `--help` confirms `-r, --resume <session id>` works in print mode.
+- Every review history line in the pack now ends with the session label, for example `; fresh session`. Rounds recorded with `speck record` (a `claude-subagent`, for instance) show `session not recorded` after round 1, because speck can't see whether the builder resumed the same subagent.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

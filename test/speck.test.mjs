@@ -1519,7 +1519,7 @@ const changesVerdict = { verdict: 'changes_requested', criteria: [{ id: 1, statu
 
 // A repo whose ticket uses reviewer "fake", run by a command in config. The fake logs its arguments,
 // working folder and stdin, then answers in the format FAKE_MODE asks for.
-function commandRepo({ command = '{bin} --model {model} --effort {effort} --flag "two words"', ticketFields = '', limits = '' } = {}) {
+function commandRepo({ command = '{bin} --model {model} --effort {effort} --flag "two words"', ticketFields = '', limits = '', options = {} } = {}) {
   const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-fake-'));
   const fake = path.join(bin, 'fake-reviewer');
   const log = path.join(bin, 'calls.log');
@@ -1531,14 +1531,16 @@ const v = process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(changesVer
 const mode = process.env.FAKE_MODE || 'raw';
 if (mode === 'raw') console.log(v);
 if (mode === 'fenced') console.log('Here is my review.\\n\\n\`\`\`json\\n' + v + '\\n\`\`\`\\nThanks.');
-if (mode === 'envelope') console.log(JSON.stringify({ type: 'result', is_error: false, session_id: 'S1', result: 'Done.\\n\`\`\`json\\n' + v + '\\n\`\`\`', usage: { input_tokens: 100, output_tokens: 20 } }));
+if (process.env.FAKE_RESUME_FAIL && process.argv.includes('--resume')) { for (let i = 1; i <= 3; i++) console.error('resume err ' + i); process.exit(4); }
+if (mode === 'envelope') console.log(JSON.stringify({ type: 'result', is_error: false, session_id: process.env.FAKE_SESSION || 'S1', meta: { sid: 'N1' }, result: 'Done.\\n\`\`\`json\\n' + v + '\\n\`\`\`', usage: { input_tokens: 100, output_tokens: 20 } }));
 if (mode === 'garbage') { console.log('I looked at it and it seems fine.'); console.error('note one\\nnote two'); }
 if (mode === 'fail') { for (let i = 1; i <= 7; i++) console.error('err line ' + i); process.exit(3); }
 if (mode === 'badshape') { console.log(JSON.stringify({ verdict: 'approve' })); for (let i = 1; i <= 7; i++) console.error('warn line ' + i); }
 `, { mode: 0o755 });
   const r = reviewRepo({ ticketFields: `reviewer: fake\n${ticketFields}` });
   const cfgFile = path.join(r.dir, 'speck', 'config.yml');
-  let c = fs.readFileSync(cfgFile, 'utf8').replace('reviewer_options:\n', `reviewer_options:\n  fake:\n    command: ${JSON.stringify(command.replace('{bin}', fake))}\n`);
+  const extra = Object.entries(options).map(([k, v]) => `    ${k}: ${JSON.stringify(String(v).replace('{bin}', fake))}\n`).join('');
+  let c = fs.readFileSync(cfgFile, 'utf8').replace('reviewer_options:\n', `reviewer_options:\n  fake:\n    command: ${JSON.stringify(command.replace('{bin}', fake))}\n${extra}`);
   if (limits) c = c.replace('limits:\n', `limits:\n${limits}`);
   fs.writeFileSync(cfgFile, c);
   r.git('add', '-A'); r.git('commit', '-qm', 'reviewer command');
@@ -1692,4 +1694,84 @@ test('0012 AC4 (F2): without the saved round-1 prompt, later rounds rebuild it f
   assert.equal(rebuilt.replace('(the round-1 test output was not kept)', '(no test output provided)').trimEnd(), sent, 'same as round 1, except the test output');
   assert.doesNotMatch(rebuilt, /later-change-marker/);
   assert.match(second.slice(history), /later-change-marker/);
+});
+
+// ---------- 0013: resume a configured reviewer's session between rounds ----------
+
+const resumeOptions = { session_id_path: 'session_id', resume_command: '{bin} --resume {session} --model {model}' };
+function twoRounds(r, env = {}) {
+  const env1 = { FAKE_MODE: 'envelope', ...env };
+  assert.equal(r.runEnv(env1, 'review', '1').status, 10);
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'resume-fix-marker\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'fix 1');
+  const resp = path.join(r.dir, '..', `resp-${path.basename(r.dir)}.md`);
+  fs.writeFileSync(resp, '- F1: fixed for the resumed round.\n');
+  return r.runEnv({ ...env1, FAKE_SESSION: 'S2' }, 'review', '1', `--response=${resp}`);
+}
+
+test('0013 AC1: session_id_path picks the session id out of the output and saves it as thread_id', () => {
+  const top = commandRepo({ options: { session_id_path: 'session_id' } });
+  assert.equal(top.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1').status, 10);
+  assert.equal(top.roundFile(1).meta.thread_id, 'S1');
+  const nested = commandRepo({ options: { session_id_path: 'meta.sid' } });
+  assert.equal(nested.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1').status, 10);
+  assert.equal(nested.roundFile(1).meta.thread_id, 'N1');
+  const none = commandRepo();
+  assert.equal(none.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1').status, 10);
+  assert.equal(none.roundFile(1).meta.thread_id, undefined, 'nothing saved without session_id_path');
+  const missing = commandRepo({ options: { session_id_path: 'no.such.path' } });
+  assert.equal(missing.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1').status, 10);
+  assert.equal(missing.roundFile(1).meta.thread_id, undefined);
+});
+
+test('0013 AC2: later rounds run resume_command with the saved session and send only the round-2 prompt', () => {
+  const r = commandRepo({ ticketFields: 'reviewer_model: m-9', options: resumeOptions });
+  const res = twoRounds(r);
+  assert.equal(res.status, 10, res.stderr);
+  const [first, second] = r.calls();
+  assert.ok(!first.args.includes('--resume'));
+  assert.deepEqual(second.args, ['--resume', 'S1', '--model', 'm-9']);
+  assert.match(second.stdin, /^# Review round 2/);
+  assert.match(second.stdin, /fixed for the resumed round/);
+  assert.match(second.stdin, /\+resume-fix-marker/);
+  assert.doesNotMatch(second.stdin, /You are the speck reviewer|# Earlier review rounds/, 'no round-1 prompt or history');
+  assert.equal(r.roundFile(2).meta.thread_id, 'S2', 'the session id from the resumed run is saved');
+  assert.equal(r.roundFile(2).meta.session, 'continued');
+  assert.doesNotMatch(res.stdout, /fresh/i);
+});
+
+test('0013 AC3: with no session, no resume_command or a failed resume, speck sends the full history to a fresh run and says so in one line', () => {
+  const cases = [
+    ['no resume_command', { session_id_path: 'session_id' }, {}, /no resume_command/],
+    ['no saved session', { resume_command: resumeOptions.resume_command }, {}, /no session id/],
+    ['resume failed', resumeOptions, { FAKE_RESUME_FAIL: '1' }, /exited 4/],
+  ];
+  for (const [name, options, env, why] of cases) {
+    const r = commandRepo({ options });
+    const res = twoRounds(r, env);
+    assert.equal(res.status, 10, `${name}: ${res.stderr}`);
+    const plain = r.calls().filter(c => !c.args.includes('--resume'));
+    assert.equal(plain.length, 2, `${name}: round 2 ran the plain command`);
+    assert.match(plain[1].stdin, /# Earlier review rounds/, name);
+    const notes = res.stdout.split('\n').filter(l => /fresh/i.test(l));
+    assert.equal(notes.length, 1, `${name}: one line says so`);
+    assert.match(notes[0], why, name);
+    assert.equal(r.roundFile(2).meta.session, 'fresh', name);
+  }
+});
+
+test('0013 AC4: the review pack says whether each round continued a session or started fresh', () => {
+  const r = commandRepo({ options: resumeOptions });
+  twoRounds(r);
+  const pack = r.run('pack', '1').stdout;
+  assert.match(pack, /- Round 1 \(fake[^)]*\): .*fresh session/);
+  assert.match(pack, /- Round 2 \(fake[^)]*\): .*continued session/);
+
+  const codex = reviewRepo();
+  assert.equal(codex.run('review', '1').status, 10);
+  codex.git('add', '-A'); codex.git('commit', '-qm', 'round 1');
+  assert.equal(codex.run('review', '1').status, 10);
+  const cpack = codex.run('pack', '1').stdout;
+  assert.match(cpack, /- Round 1 \(codex[^)]*\): .*fresh session/);
+  assert.match(cpack, /- Round 2 \(codex[^)]*\): .*continued session/);
 });
