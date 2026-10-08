@@ -30,6 +30,14 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt
 
 This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, `product.md`, the diff and the test output. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
 
+**Any reviewer with a `command`** under `reviewer_options` in `speck/config.yml`
+
+```
+speck review <id> --tests=/tmp/speck-<id>-tests.txt
+```
+
+speck runs the command, sends it the prompt, reads the verdict from its output and records the round, just as for Codex. You never handle the verdict. Exit codes are the same. If it fails, it says why and records nothing: fix the command or the reviewer's setup, then run it again.
+
 **`claude-subagent`** (only if config allows it, because it's the same model family)
 
 1. Run `speck prompt <id> --tests=/tmp/speck-<id>-tests.txt > /tmp/speck-<id>-prompt.md`.
@@ -63,6 +71,8 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 ```
 
 This resumes the same Codex session. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
+
+**Reviewer with a `command`:** run the same command as for Codex, with `--response`. A command reviewer has no memory, so speck resends the round-1 prompt, every earlier verdict and response, then your new response and the diff since its last review.
 
 **claude-subagent:** use SendMessage to the agent id you kept in round 1. That resumes the same reviewer, with its earlier findings and the model and effort it started with. Don't spawn a new one. Include your response file, the output of `speck diff <id>` (the changes since its last review, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Save its reply as in round 1, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
 
