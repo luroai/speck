@@ -627,13 +627,27 @@ export function shipTicket(repo, id) {
     back();
     throw new SpeckError(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
   }
-  git(['branch', '-d', branch], repo);
-  console.log(`Shipped ${pad}: merged ${branch} into ${base} and deleted the branch.`);
   const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
+  const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: repo }).stdout.trim() || remote;
+  // -d would compare against the branch's upstream, which lacks the ship commit, so check against the base ourselves.
+  if (sh('git', ['merge-base', '--is-ancestor', branch, base], { cwd: repo }).status !== 0)
+    throw new SpeckError(`${branch} isn't fully in ${base} after the merge, so it wasn't deleted. Check it with \`git log ${base}..${branch}\`.`);
+  git(['branch', '-D', branch], repo);
+  console.log(`Shipped ${pad}: merged ${branch} into ${base} and deleted the local branch.`);
   if (!remote) { console.log(`No remote set for ${base}, so nothing was pushed.`); return; }
   const push = sh('git', ['push', remote, base], { cwd: repo });
-  if (push.status !== 0) throw new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\nIf ${base} is protected on GitHub, allow direct pushes (turn off "Require a pull request before merging"), then run \`git push ${remote} ${base}\`.`);
+  if (push.status !== 0) throw new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\nIf ${base} is protected on GitHub, allow direct pushes (turn off "Require a pull request before merging"), then run \`git push ${remote} ${base}\`.${branchRemote ? ` ${branch} is kept on ${branchRemote} until then.` : ''}`);
   console.log(`Pushed ${base} to ${remote}.`);
+  deleteRemoteBranch(repo, branchRemote, branch);
+}
+
+// Only once the base branch is safely pushed: until then, the remote copy is the backup.
+function deleteRemoteBranch(repo, remote, branch) {
+  const found = sh('git', ['ls-remote', '--exit-code', '--heads', remote, branch], { cwd: repo });
+  if (found.status === 2) return;
+  const del = found.status === 0 ? sh('git', ['push', remote, '--delete', branch], { cwd: repo }) : found;
+  if (del.status === 0) console.log(`Deleted ${branch} on ${remote}.`);
+  else console.log(`Couldn't delete ${branch} on ${remote} (${del.stderr.trim().split('\n').pop()}). Delete it with \`git push ${remote} --delete ${branch}\`.`);
 }
 
 function cmdShip(args) {

@@ -417,10 +417,15 @@ test('AC4: speck ship pushes main to its remote, or says why it did not', () => 
   spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare]);
   r.g('remote', 'add', 'origin', bare);
   r.g('push', '-q', '-u', 'origin', 'main');
+  r.g('push', '-q', '-u', 'origin', 'speck/0001-export-bookings');
   const res = r.run('ship', '1');
   assert.equal(res.status, 0, res.stderr);
   assert.match(res.stdout, /pushed/i);
   assert.equal(spawnSync('git', ['rev-parse', 'main'], { cwd: bare, encoding: 'utf8' }).stdout.trim(), r.g('rev-parse', 'main'));
+  // The ticket branch is deleted on the remote as well as locally.
+  const remoteHeads = () => spawnSync('git', ['for-each-ref', '--format=%(refname:short)', 'refs/heads'], { cwd: bare, encoding: 'utf8' }).stdout.trim();
+  assert.equal(remoteHeads(), 'main');
+  assert.match(res.stdout, /Deleted speck\/0001-export-bookings on origin/);
   // Without a remote.
   const local = shipRepo();
   const out = local.run('ship', '1');
@@ -432,6 +437,7 @@ test('AC4: speck ship pushes main to its remote, or says why it did not', () => 
   spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare2]);
   refused.g('remote', 'add', 'origin', bare2);
   refused.g('push', '-q', '-u', 'origin', 'main');
+  refused.g('push', '-q', '-u', 'origin', 'speck/0001-export-bookings');
   fs.writeFileSync(path.join(bare2, 'hooks', 'pre-receive'), '#!/bin/sh\necho "protected branch" >&2\nexit 1\n', { mode: 0o755 });
   const p = refused.run('ship', '1');
   assert.notEqual(p.status, 0);
@@ -439,6 +445,9 @@ test('AC4: speck ship pushes main to its remote, or says why it did not', () => 
   assert.match(p.stderr, /git push/);
   assert.equal(refused.state().branch, 'main');
   assert.equal(refused.status(), 'done');
+  // The push failed, so the remote copy of the branch is kept as the backup.
+  assert.match(spawnSync('git', ['for-each-ref', '--format=%(refname:short)', 'refs/heads'], { cwd: bare2, encoding: 'utf8' }).stdout, /speck\/0001-export-bookings/);
+  assert.match(p.stderr, /kept on origin/);
 });
 
 test('AC4: doctor treats the GitHub CLI as optional', () => {

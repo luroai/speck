@@ -39,7 +39,7 @@ idea / conversation
                     no, after max rounds → status: blocked + question for you
   → you read `speck pack 0007`
   → /speck-ship 0007      → checks, final test run, ticket set to done,      [GATE 2]
-                            merge into main, push, branch deleted
+                            merge into main, push, branch deleted locally and on the remote
 ```
 
 The `product.md` update is made and reviewed on the ticket branch, and `speck ship` sets the ticket to `done` on that branch just before merging. So merging is the moment the spec becomes true. Until you ship, `main` is unchanged. `speck ship` refuses, changing nothing, unless the ticket is `approved`, the review loop says `ship`, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/`, and `commands.test` is set and passes. A merge conflict is aborted and leaves everything as it was.
