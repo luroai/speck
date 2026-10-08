@@ -14,6 +14,10 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 - All work is committed. The reviewer reviews commits, not uncommitted changes.
 - The test output is fresh: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 
+## Reviewer model and effort
+
+The reviewer's model and effort come from the ticket's `reviewer_model` and `reviewer_effort` fields. A blank ticket value falls back to the same fields in `speck/config.yml`. If both are blank, speck passes nothing and the reviewer runs on its own default. Model names are passed through exactly as written. Effort must be blank or one of `low`, `medium`, `high`, `xhigh` or `max` (`speck lint` checks this). Every saved round and the review pack record the model and effort used, or `default`.
+
 ## Round 1
 
 Check the ticket's `reviewer:` field.
@@ -24,13 +28,14 @@ Check the ticket's `reviewer:` field.
 speck review <id> --tests=/tmp/speck-<id>-tests.txt
 ```
 
-This runs Codex in a read-only sandbox with the ticket, `product.md`, the diff and the test output. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
+This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, `product.md`, the diff and the test output. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
 
 **`claude-subagent`** (only if config allows it, because it's the same model family)
 
 1. Run `speck prompt <id> --tests=/tmp/speck-<id>-tests.txt > /tmp/speck-<id>-prompt.md`.
-2. Spawn a fresh subagent with the Agent tool. Its prompt should say: "Read /tmp/speck-<id>-prompt.md and follow it. You are read-only: do not edit files. Return only the JSON verdict." Keep the agent's id.
-3. Save its JSON reply to `/tmp/speck-<id>-verdict.json`, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
+2. Run `speck reviewer-settings <id>`. It prints `model: …` and `effort: …`, and saves them so that later rounds are recorded with the settings this reviewer was started with. Run it only when you start a new reviewer.
+3. Spawn a fresh subagent with the Agent tool. If the model isn't `default`, pass it as written as the Agent tool's `model`. If the effort isn't `default`, pass it as `effort`. If a value is `default`, leave that parameter out so the subagent runs on your own model in a fresh session. Its prompt should say: "Read /tmp/speck-<id>-prompt.md and follow it. You are read-only: do not edit files. Return only the JSON verdict." Keep the agent's id.
+4. Save its JSON reply to `/tmp/speck-<id>-verdict.json`, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
 
 ## Your turn (when NEXT is `fix`)
 
@@ -59,7 +64,7 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 
 This resumes the same Codex session. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
 
-**claude-subagent:** use SendMessage to the same reviewer agent. Include your response file, the output of `git diff <last reviewed sha>..HEAD` and the new test output, and ask for the full verdict JSON again with stable finding ids. Record it with `speck record`.
+**claude-subagent:** use SendMessage to the same reviewer agent, which keeps the model and effort it started with. Include your response file, the output of `git diff <last reviewed sha>..HEAD` and the new test output, and ask for the full verdict JSON again with stable finding ids. Record it with `speck record`.
 
 ## Ending the loop
 

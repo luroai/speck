@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TEMPLATES = path.join(ROOT, 'templates');
 const STATUSES = ['draft', 'ready', 'building', 'reviewing', 'blocked', 'done'];
+const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 const LOCKFILES = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|poetry\.lock|uv\.lock|Pipfile\.lock|Cargo\.lock|Gemfile\.lock|go\.sum|composer\.lock)$/;
 const TESTFILES = /(^|\/)(test|tests|__tests__|spec)\/|\.(test|spec)\.[a-z]+$|_test\.[a-z]+$|(^|\/)test_[^/]+$/;
 const RISKY = /(auth|login|password|session|token|secret|\.env|payment|billing|stripe|migration|migrate|schema\.sql|terraform|\.tf$|dockerfile|docker-compose|\.github\/workflows|infra\/|deploy)/i;
@@ -130,6 +131,16 @@ export function setField(text, key, value) {
   return `${head.slice(0, head.length - gap.length)}\n${key}: ${v}${gap}${rest}`;
 }
 
+const blank = v => v === undefined || v === null || String(v).trim() === '';
+
+// The reviewer model and effort for a ticket: a ticket value wins, a blank one falls back to config, null means "reviewer's default".
+export function reviewerSettings(fm = {}, cfg = {}) {
+  const pick = k => !blank(fm[k]) ? String(fm[k]).trim() : !blank(cfg[k]) ? String(cfg[k]).trim() : null;
+  return { model: pick('reviewer_model'), effort: pick('reviewer_effort') };
+}
+
+function settingsMeta(s) { return { reviewer_model: s.model || 'default', reviewer_effort: s.effort || 'default' }; }
+
 function ticketsDir(repo) { return path.join(repo, 'speck', 'tickets'); }
 
 function listTickets(repo) {
@@ -169,6 +180,8 @@ export function lintTicket(ticket, cfg) {
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
   if (fm.builder && fm.builder === fm.reviewer && !cfg.allow_same_model_review)
     errors.push(`builder and reviewer are both "${fm.builder}". Use a different reviewer or set allow_same_model_review: true.`);
+  for (const [where, v] of [['ticket', fm.reviewer_effort], ['config', cfg.reviewer_effort]])
+    if (!blank(v) && !EFFORTS.includes(String(v).trim())) errors.push(`reviewer_effort "${v}" in ${where} must be blank or one of ${EFFORTS.join(', ')}.`);
   for (const s of ['problem', 'outcome']) if (!contentLines(sections[s]).length) errors.push(`"${s}" section is empty.`);
   const ac = contentLines(sections['acceptance criteria']).filter(l => /^\d+\.\s+\S/.test(l));
   if (ac.length === 0) errors.push('No numbered acceptance criteria.');
@@ -291,7 +304,9 @@ function runCodexReview(repo, id, opts) {
   const schema = path.join(TEMPLATES, 'review-verdict.schema.json');
   const threadFile = path.join(dir, 'codex-thread');
   const sandbox = cfg.reviewer_options?.codex?.sandbox || 'read-only';
-  const common = ['--json', '--output-schema', schema, '-o', out, '-c', `sandbox_mode="${sandbox}"`];
+  const settings = reviewerSettings(ticket.fm, cfg);
+  const common = ['--json', '--output-schema', schema, '-o', out, '-c', `sandbox_mode="${sandbox}"`,
+    ...(settings.model ? ['-m', settings.model] : []), ...(settings.effort ? ['-c', `model_reasoning_effort="${settings.effort}"`] : [])];
   const args = round === 1 || !fs.existsSync(threadFile)
     ? ['exec', '--sandbox', sandbox, ...common, '-']
     : ['exec', 'resume', ...common, fs.readFileSync(threadFile, 'utf8').trim(), '-'];
@@ -304,7 +319,7 @@ function runCodexReview(repo, id, opts) {
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', reviewed_sha: head, thread_id: thread, seconds: Math.round((Date.now() - started) / 1000), usage });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, thread_id: thread, seconds: Math.round((Date.now() - started) / 1000), usage });
 }
 
 // ---------- review pack (PR body) ----------
@@ -324,9 +339,10 @@ export function reviewPack(repo, id) {
   const latest = new Map(findings.map(f => [f.id, f]));
   const tokens = all.reduce((n, r) => n + (r.meta.usage?.input_tokens || 0) + (r.meta.usage?.output_tokens || 0), 0);
   const started = t.fm.started ? new Date(t.fm.started) : null;
+  const who = m => `${m.reviewer}, model ${m.reviewer_model || 'default'}, effort ${m.reviewer_effort || 'default'}`;
   const lines = [
     `## ${t.fm.id} · ${t.fm.title}`,
-    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${last.meta.reviewer}, round ${last.meta.round} of ${cfg.limits.max_review_rounds})`,
+    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, round ${last.meta.round} of ${cfg.limits.max_review_rounds})`,
     '', `**Summary:** ${v.summary}`, '',
     '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
@@ -339,7 +355,7 @@ export function reviewPack(repo, id) {
       const f = r.verdict.findings;
       const open = f.filter(x => x.severity === 'blocking' && ['open', 'dispute_rejected'].includes(x.state)).length;
       const closed = f.filter(x => x.severity === 'blocking').length - open;
-      return `- Round ${r.meta.round} (${r.meta.reviewer}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor`;
+      return `- Round ${r.meta.round} (${who(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor`;
     }),
     ...(latest.size ? ['', '<details><summary>Findings</summary>', '',
       ...[...latest.values()].map(f => `- **${f.id}** (${f.severity}, ${f.state}) \`${f.file}\`: ${f.issue}`), '', '</details>'] : []),
@@ -501,6 +517,9 @@ function cmdNew(args) {
   text = setField(text, 'title', JSON.stringify(title));
   text = setField(text, 'builder', cfg.builder);
   text = setField(text, 'reviewer', cfg.reviewer);
+  const settings = reviewerSettings({}, cfg);
+  text = setField(text, 'reviewer_model', settings.model || '');
+  text = setField(text, 'reviewer_effort', settings.effort || '');
   text = setField(text, 'source', JSON.stringify(source));
   text = setField(text, 'created', new Date().toISOString().slice(0, 10));
   const file = path.join(ticketsDir(repo), `${id}-${slugify(title)}.md`);
@@ -604,7 +623,10 @@ function cmdRecord(args) {
   const cfg = loadConfig(repo);
   const reviewer = (args.find(a => a.startsWith('--reviewer=')) || '--reviewer=claude-subagent').slice(11);
   const verdict = JSON.parse(fs.readFileSync(file, 'utf8'));
-  const rec = saveRound(repo, id, verdict, { reviewer, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim() });
+  // A resumed reviewer keeps the settings it started with, saved by `speck reviewer-settings`.
+  const saved = path.join(reviewDir(repo, id), 'reviewer-settings.json');
+  const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));
+  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim() });
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
@@ -614,6 +636,17 @@ function cmdNext(args) {
   const cfg = loadConfig(repo);
   const next = nextAction(rounds(repo, args[0]), cfg);
   console.log(`${next.action}${next.reason ? `: ${next.reason}` : ''}`);
+}
+
+function cmdReviewerSettings(args) {
+  // The model and effort to start a reviewer with, for reviewers that speck doesn't start itself.
+  // Saved so that `speck record` reports what the running reviewer actually uses, even if the ticket changes later.
+  const repo = findRepoRoot();
+  const s = settingsMeta(reviewerSettings(findTicket(repo, args[0]).fm, loadConfig(repo)));
+  const dir = reviewDir(repo, args[0]);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'reviewer-settings.json'), JSON.stringify(s, null, 2) + '\n');
+  console.log(`model: ${s.reviewer_model}\neffort: ${s.reviewer_effort}`);
 }
 
 function cmdPack(args) {
@@ -645,12 +678,13 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f]       print the reviewer prompt (for subagent reviewers)
+  speck reviewer-settings <id>        print and save the model and effort to start a reviewer with
   speck next <id>                     what the builder should do next: review, fix, block or ship
   speck pack <id>                     print the review pack (PR body)
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, status: cmdStatus, diffstat: cmdDiffstat,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, next: cmdNext, pack: cmdPack };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, next: cmdNext, pack: cmdPack };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [cmd, ...args] = process.argv.slice(2);
