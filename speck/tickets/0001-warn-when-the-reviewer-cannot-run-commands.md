@@ -104,3 +104,66 @@ speck detects a reviewer that couldn't run commands and says so in the round out
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fbc2beb1d62c7bb7dc8d972e37a1fb31dcabfe05",
+    "thread_id": "01a11d27-d3de-77e3-ac69-09d12fd41067",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 226777,
+      "cached_input_tokens": 181376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1589,
+      "reasoning_output_tokens": 124
+    },
+    "saved_at": "2026-10-08T20:16:50.736Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs sandboxFailed now detects bwrap failures with either failed status or a non-zero exit code; printRound prints the required warning. The AC1 CLI tests cover both failed and completed status labels and report passing. Independent read-only evaluation confirmed both are detected."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runCodexReview saves meta.sandbox_ok: false when sandboxFailed detects a failure. The AC2 test and new completed-status regression test inspect the saved round metadata; both report passing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewPack selects every round with meta.sandbox_ok === false and renders the required warning with its round number. The AC3 CLI test checks the warning for a flagged round and its absence for an unflagged round; it reports passing."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:450",
+        "issue": "The previous detector ignored completed command events with non-zero exit codes and bwrap errors.",
+        "suggested_fix": "Implemented: detect non-zero terminal command failures regardless of the completed status label, with regression coverage for the warning and saved metadata.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The sandbox warning description now matches the implementation, including saved metadata and warnings in the review pack."
+    },
+    "escalation_question": "",
+    "summary": "The missed failure case is fixed and covered by a regression test. speck now warns about detected sandbox failures, records them and displays them in the review pack. All three criteria pass, with no blocking concerns remaining."
+  }
+}
+```
+
+</details>
