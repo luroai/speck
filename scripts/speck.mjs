@@ -640,6 +640,26 @@ function runTests(repo, cfg) {
   return sh('sh', ['-c', cmd], { cwd: repo, stdio: 'inherit' }).status === 0;
 }
 
+const isAncestor = (repo, a, b) => sh('git', ['merge-base', '--is-ancestor', a, b], { cwd: repo }).status === 0;
+
+// Checks the remote's base branch before anything changes. Returns the commit to fast-forward the local base to, if any.
+function remoteBaseCatchUp(repo, remote, base) {
+  if (!remote) return null;
+  const fetched = sh('git', ['fetch', '-q', remote, base], { cwd: repo });
+  if (fetched.status !== 0) {
+    console.log(`Couldn't reach ${remote} to check for new commits on ${base} (${fetched.stderr.trim().split('\n').pop()}). Carrying on with your local ${base}.`);
+    return null;
+  }
+  const theirs = git(['rev-parse', 'FETCH_HEAD'], repo).trim();
+  const ours = git(['rev-parse', base], repo).trim();
+  if (isAncestor(repo, theirs, ours)) return null; // up to date, or only ahead
+  if (isAncestor(repo, ours, theirs)) {
+    console.log(`${remote} has new commits on ${base}: bringing your ${base} up to date before merging.`);
+    return theirs;
+  }
+  throw new SpeckError(`Your ${base} and ${remote}'s ${base} each have commits the other doesn't, so nothing was shipped. Combine them with \`git checkout ${base} && git pull\`, then ship again.`);
+}
+
 export function shipTicket(repo, id) {
   const cfg = loadConfig(repo);
   const pad = String(id).padStart(4, '0');
@@ -647,8 +667,11 @@ export function shipTicket(repo, id) {
   const branch = ticketBranch(repo, cfg, pad);
   if (git(['status', '--porcelain'], repo).trim())
     throw new SpeckError('You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.');
+  const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
+  const catchUp = remoteBaseCatchUp(repo, remote, base);
   const start = git(['branch', '--show-current'], repo).trim() || git(['rev-parse', 'HEAD'], repo).trim();
   const branchSha = git(['rev-parse', branch], repo).trim();
+  const baseSha = git(['rev-parse', base], repo).trim();
   git(['checkout', '-q', branch], repo);
   const back = () => git(['checkout', '-q', start], repo);
   try {
@@ -661,14 +684,15 @@ export function shipTicket(repo, id) {
   git(['add', '-A', '--', placeTicket(repo, t, 'done'), t.file], repo);
   git(['commit', '-q', '-m', `speck(${pad}): ship`], repo);
   git(['checkout', '-q', base], repo);
+  if (catchUp) git(['merge', '-q', '--ff-only', catchUp], repo);
   const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: repo });
   if (merge.status !== 0) {
     sh('git', ['merge', '--abort'], { cwd: repo });
+    git(['reset', '-q', '--hard', baseSha], repo); // undo any catch-up, so the base is exactly as it was
     git(['update-ref', `refs/heads/${branch}`, branchSha], repo);
     back();
     throw new SpeckError(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
   }
-  const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
   const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: repo }).stdout.trim() || remote;
   // -d would compare against the branch's upstream, which lacks the ship commit, so check against the base ourselves.
   if (sh('git', ['merge-base', '--is-ancestor', branch, base], { cwd: repo }).status !== 0)
@@ -677,7 +701,13 @@ export function shipTicket(repo, id) {
   console.log(`Shipped ${pad}: merged ${branch} into ${base} and deleted the local branch.`);
   if (!remote) { console.log(`No remote set for ${base}, so nothing was pushed.`); return; }
   const push = sh('git', ['push', remote, base], { cwd: repo });
-  if (push.status !== 0) throw new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\nIf ${base} is protected on GitHub, allow direct pushes (turn off "Require a pull request before merging"), then run \`git push ${remote} ${base}\`.${branchRemote ? ` ${branch} is kept on ${branchRemote} until then.` : ''}`);
+  if (push.status !== 0) {
+    const behind = /\((fetch first|non-fast-forward)\)/.test(push.stderr);
+    const fix = behind
+      ? `${remote} got new commits on ${base} while you were shipping. Run \`git pull\`, then \`git push ${remote} ${base}\`.`
+      : `If ${base} is protected on GitHub, allow direct pushes (turn off "Require a pull request before merging"), then run \`git push ${remote} ${base}\`.`;
+    throw new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\n${fix}${branchRemote ? ` ${branch} is kept on ${branchRemote} until then.` : ''}`);
+  }
   console.log(`Pushed ${base} to ${remote}.`);
   deleteRemoteBranch(repo, branchRemote, branch);
 }

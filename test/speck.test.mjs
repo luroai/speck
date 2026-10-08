@@ -602,3 +602,55 @@ test('init skips a ticket file it cannot read, and still updates speck', () => {
   assert.ok(fs.existsSync(path.join(dir, 'speck', 'tickets', '0003-broken.md')), 'left where it was');
   assert.match(fs.readFileSync(path.join(dir, '.claude', 'skills', 'speck-build', 'SKILL.md'), 'utf8'), /name: speck-build/, 'skills still refreshed');
 });
+
+// A ticket ready to ship, with main on a bare remote that someone else has pushed to.
+function shipWithRemoteMoved(file, content) {
+  const r = shipRepo();
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
+  spawnSync('git', ['init', '-q', '--bare', '-b', 'main', bare]);
+  r.g('remote', 'add', 'origin', bare);
+  r.g('push', '-q', '-u', 'origin', 'main');
+  const other = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-other-'));
+  const o = (...a) => spawnSync('git', a, { cwd: other, encoding: 'utf8', env: { ...process.env, ...gitEnv } });
+  o('clone', '-q', bare, '.');
+  fs.writeFileSync(path.join(other, file), content);
+  o('add', '-A'); o('commit', '-qm', 'someone else'); o('push', '-q', 'origin', 'main');
+  const remoteMain = () => spawnSync('git', ['rev-parse', 'main'], { cwd: bare, encoding: 'utf8' }).stdout.trim();
+  return { ...r, bare, remoteMain, theirs: o('rev-parse', 'HEAD').stdout.trim() };
+}
+
+test('ship catches up with new commits on the remote before merging, then pushes', () => {
+  const r = shipWithRemoteMoved('other.txt', 'from elsewhere\n');
+  const res = r.run('ship', '1');
+  assert.equal(res.status, 0, res.stderr);
+  assert.match(res.stdout, /bringing your main up to date/);
+  assert.equal(spawnSync('git', ['merge-base', '--is-ancestor', r.theirs, 'main'], { cwd: r.dir }).status, 0, 'remote commit is in main');
+  assert.ok(fs.existsSync(path.join(r.dir, 'other.txt')));
+  assert.equal(r.remoteMain(), r.g('rev-parse', 'main'), 'pushed');
+  assert.equal(r.status(), 'done');
+});
+
+test('ship refuses, changing nothing, when local and remote main have both moved on', () => {
+  const r = shipWithRemoteMoved('other.txt', 'from elsewhere\n');
+  r.g('checkout', '-q', 'main');
+  fs.writeFileSync(path.join(r.dir, 'local.txt'), 'local\n');
+  r.g('add', '-A'); r.g('commit', '-qm', 'local only');
+  const before = r.state();
+  const remoteBefore = r.remoteMain();
+  const res = r.run('ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /git pull/);
+  assert.doesNotMatch(res.stderr, /protected/);
+  assert.deepEqual(r.state(), before);
+  assert.equal(r.remoteMain(), remoteBefore);
+});
+
+test('a conflict with new remote commits leaves local main exactly as it was', () => {
+  const r = shipWithRemoteMoved('shared.txt', 'changed elsewhere\n');
+  const before = r.state();
+  const res = r.run('ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /conflict/i);
+  assert.deepEqual(r.state(), before);
+  assert.equal(r.g('status', '--porcelain'), '');
+});
