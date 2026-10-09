@@ -45,16 +45,24 @@ The full ticket pane shows each section's Markdown formatted, the way a Markdown
 - Headings: "smaller than the section's own heading" is built as ranking below it: `#` is an `h5`, `##` and `###` are `h6` (classes `md-h1` to `md-h3`), under the section's `h4`, no larger than body text.
 - Three older assertions expected the raw `- Not this.` / `- A note.` / `- A new note.` in the pane (`test/panel-0054.test.mjs`, `test/panel.test.mjs`). AC1 makes those list items, so they now look for the item text.
 - Self-check: a list starting `0.` showed as starting at 1, lists nested 2000 deep overflowed the stack, and long runs of unmatched `[`, `*`, `**` or `_` took seconds; fixed with `start` kept as written, nesting capped at 16 levels, closer searches remembered per call and code spans found once, with a test for each.
-- Blocked answer (2026-10-09): the user allowed one more review round to check the round 3 fix (F3). `max_review_rounds` is raised to 4 on this branch for that round only, and put back to 3 before close.
+- Blocked answer (2026-10-09): the user allowed one more review round to check the round 3 fix (F3). `max_review_rounds` is raised to 4 on this branch for that round only, and put back to 3 before close, and it is back to 3.
 
 ## Blocked question
-The reviewer hit the 3-round limit with one open finding (F3: text after a multi-line HTML element's closing tag stayed unformatted). It's now fixed with a regression test, committed but not yet reviewed. Allow one more review round to check the F3 fix (yes/no)? Recommendation: yes. Rounds 1 and 2 were also about HTML edge cases inside AC3, and every criterion other than this one passed in round 3.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Blocked once at the 3-round limit. The user allowed a fourth round, which approved. `limits.max_review_rounds` was 4 on this branch for that round only and is back to 3.
+- Known limits of the pane's parser (no follow-up ticket needed):
+  - A link inside another link's text keeps only the inner link.
+  - Setext headings (`Title` over `===`) stay as text.
+  - An indented paragraph after a blank line inside a list item shows as its own paragraph after the list.
+  - A line starting with an HTML tag that never closes stays literal up to the next blank line, as a CommonMark HTML block does. A tag that never closes mid-line keeps only the tag literal.
+- Follow-ups:
+  - Inbox: `speck/ideas/2026-10-09-allow-one-more-review-round-without-editing-config.md`. Checked against the ideas, the tickets and `product.md`: nothing covers it. The only matches are notes in done tickets 0008 and 0011 that used the same workaround.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -289,6 +297,90 @@ The reviewer hit the 3-round limit with one open finding (F3: text after a multi
     },
     "escalation_question": "",
     "summary": "Both earlier findings are fixed. The latest fix introduces one formatting regression: text after a multiline HTML element's closing tag stays unformatted. That needs correcting before merge; link safety and selection preservation remain covered."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "eb08eab582d203c074eb44f81f2b38d33e458117",
+    "thread_id": "01a1223b-625f-79c3-8eb3-adfc141efabc",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 1260874,
+      "cached_input_tokens": 1063680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3762,
+      "reasoning_output_tokens": 267
+    },
+    "saved_at": "2026-10-09T20:09:43.926Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "markdown(), fullTicket() and mdBlocks() format the listed Markdown in every section. AC1 tests cover sections, criteria and nesting. The new review F3 regression test passes; independently verified bold, code and links after a multiline closing tag."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "inline() permits clickable HTTP/HTTPS links only; mdInline() opens them in a new tab with noopener noreferrer. AC2 unit and browser tests pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "keptSpans(), elementEnd() and literal block handling preserve unsupported constructs and HTML contents. AC3 tests cover raw HTML, unsupported Markdown and literal code. Independently verified the previous script example remains entirely literal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The pane retains its nodes while its ticket signature is unchanged. AC4 node-retention and real-browser selection tests pass in the supplied output; refresh handling remains unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:keptSpans and elementEnd",
+        "issue": "Resolved: unsupported constructs and complete HTML elements remain literal, with regression coverage.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:markdown",
+        "issue": "Resolved: blank lines preserve list context and indentation-based nesting.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "templates/panel.html:markdown",
+        "issue": "Resolved: literal multiline HTML ends at the closing tag, and the remaining text is parsed for inline Markdown. The regression test exercises bold, code and a permitted link.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living specification accurately describes the formatting, literal-content handling and local parser. The temporary review-limit increase is documented as authorised review administration and should be restored to 3 before close as promised."
+    },
+    "escalation_question": "",
+    "summary": "The full ticket pane now formats the requested Markdown, preserves unsupported content as literal text, restricts links safely and keeps selections through refreshes. All three findings are resolved. The supplied test run passes all 437 tests. Approved; restore the temporary review limit before closing the ticket."
   }
 }
 ```
