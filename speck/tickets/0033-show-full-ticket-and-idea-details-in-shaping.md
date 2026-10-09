@@ -42,6 +42,7 @@ Shaping shows tickets and ideas separately, with a clear colour for each, and op
 - Design reference: the expanded ticket and readiness list in `docs/panel-mockup.html`.
 - Builds before 0034 and 0035, which change the same page.
 - No external facts: everything comes from files speck already reads.
+- Self-check: no changes. Checked empty and comment-only sections, a `Self-check:` line with nothing after it (gives `null`), a frontmatter field sharing a new field's name, non-array `after:`/`lint_messages`, and that every new text (sections, lint messages, idea notes) renders as text. The 0031 tests that expected ideas mixed in with drafts, ticketed ideas left out and ideas without `body` now expect this ticket's behaviour. Also dropped the header's "read-only" label so it shows only repo, base branch and connection status.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -248,7 +248,7 @@ test('0031 AC3: the model sorts tickets into Shaping, the Queue and Shipped, and
   const ids = list => list.map(t => t.id);
   assert.deepEqual(ids(m.drafts), ['0001', '0010']);
   assert.deepEqual(m.drafts[0].acceptance_criteria, ['One.', 'Two.']);
-  assert.deepEqual(m.ideas.map(i => i.title), ['A', 'C'], 'ticketed ideas are left out');
+  assert.deepEqual(m.ideas.map(i => i.title), ['A', 'C', 'B'], 'every idea, ticketed ones last (0033)');
   assert.deepEqual(ids(m.needsYou), ['0002', '0003']);
   assert.deepEqual(ids(m.running), ['0004', '0005']);
   assert.equal(m.running[0].round, null);
@@ -350,12 +350,12 @@ test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every 
   const evil = '<b>x</b>';
   const state = {
     tickets: [
-      T('0001', 'draft', { title: evil, acceptance_criteria: ['<img src=x onerror=alert(1)>'] }),
+      T('0001', 'draft', { title: evil, acceptance_criteria: ['<img src=x onerror=alert(1)>'], problem: '<u>problem</u>', notes: '<u>notes</u>', lint_messages: { errors: ['<u>lint</u>'], warnings: [] } }),
       T('0002', 'blocked', { title: evil, blocked_question: '<script>alert(1)</script>' }),
       T('0003', 'building', { title: evil }), T('0004', 'ready', { title: evil }),
       T('0005', 'done', { title: evil, finished: '2026-10-01T10:00:00Z' }),
     ],
-    ideas: [{ path: 'speck/ideas/a.md', title: '<i>idea</i>', status: 'idea' }],
+    ideas: [{ path: 'speck/ideas/a.md', title: '<i>idea</i>', status: 'idea', body: '<s>body</s>' }],
   };
   const p = fakePage([state]);
   await p.settle();
@@ -364,13 +364,19 @@ test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every 
     assert.ok(p.byId(area).textContent.includes(evil), `${area} shows the title literally`);
     assert.ok(!nodes.some(n => n.tagName === 'b' && n.textContent === 'x'), `${area} made no <b> from the title`);
   }
-  assert.ok(p.byId('shaping').textContent.includes('<i>idea</i>'));
   assert.ok(p.byId('needs').textContent.includes('<script>alert(1)</script>'));
-  // Open the draft: its criteria are text too.
+  // Open the draft: its criteria, sections and lint messages are text too (0033).
   const draft = p.all(p.byId('shaping')).find(n => n.listeners.click);
   draft.listeners.click();
-  assert.ok(p.byId('shaping').textContent.includes('<img src=x onerror=alert(1)>'));
-  assert.ok(!p.all(p.byId('shaping')).some(n => n.tagName === 'img'));
+  for (const s of ['<img src=x onerror=alert(1)>', '<u>problem</u>', '<u>notes</u>', '<u>lint</u>'])
+    assert.ok(p.byId('shaping').textContent.includes(s), s);
+  assert.ok(!p.all(p.byId('shaping')).some(n => ['img', 'u'].includes(n.tagName)));
+  // Ideas are behind the Ideas toggle (0033): title and note are text.
+  p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click)[1].listeners.click();
+  assert.ok(p.byId('shaping').textContent.includes('<i>idea</i>'));
+  p.all(p.byId('shaping')).find(n => n.listeners.click).listeners.click();
+  assert.ok(p.byId('shaping').textContent.includes('<s>body</s>'));
+  assert.ok(!p.all(p.byId('shaping')).some(n => ['i', 's'].includes(n.tagName)));
 });
 
 test('0031 AC4: the page shows when it is disconnected, keeps polling and recovers by itself', async () => {
@@ -453,4 +459,135 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
   await p.settle();
   assert.match(p.byId('running').textContent, /0001/);
   assert.doesNotMatch(p.byId('next').textContent, /0001/);
+});
+
+// ---------- 0033: everything needed for Gate 1 in Shaping ----------
+
+const full = (id, o = {}) => T(id, 'draft', { problem: `Problem of ${id}.`, outcome: `Outcome of ${id}.`, out_of_scope: '- Not this.', notes: '- A note.\n- Self-check: no changes',
+  self_check: 'no changes', lint_messages: { errors: [], warnings: [] }, after: [], ...o });
+const idea = (name, status, body = `# ${name}\n\nStatus: ${status}\n\nSome <b>text</b>.\n`) => ({ path: `speck/ideas/${name}.md`, title: name, status, body });
+const click = n => n.listeners.click({ stopPropagation() {} });
+const toggles = p => p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click);
+const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test(n.className));
+
+test('0033 AC2: the page header shows the repo, base branch and connection status only, with no counts', async () => {
+  const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
+  assert.match(header, /\{\{repo\}\}/);
+  assert.match(header, /\{\{base\}\}/);
+  assert.match(header, /id="pills"/);
+  const state = { tickets: [T('0001', 'draft'), T('0002', 'blocked'), T('0003', 'ready'), T('0004', 'done')], ideas: [idea('A', 'idea')] };
+  const p = fakePage([state, new Error('down')]);
+  await p.settle();
+  const pills = p.byId('pills');
+  assert.equal(pills.children.length, 1, 'only the connection status');
+  assert.match(pills.textContent, /^live/);
+  assert.doesNotMatch(pills.textContent, /needs you|running|up next|draft|idea|shipped/i);
+  p.timers.shift()(); await p.settle();
+  assert.equal(pills.children.length, 1);
+  assert.match(pills.textContent, /disconnected/);
+});
+
+test('0033 AC3: Shaping has a Tickets / Ideas toggle, Tickets first, one list at a time, kept through refreshes', async () => {
+  const state = { tickets: [full('0001'), full('0002')], ideas: [idea('Board', 'idea')] };
+  const p = fakePage([state, state, state]);
+  await p.settle();
+  const [tickets, ideas] = toggles(p);
+  assert.match(tickets.textContent, /^Tickets/);
+  assert.match(ideas.textContent, /^Ideas/);
+  assert.match(tickets.className, /\bon\b/, 'Tickets selected on load');
+  assert.doesNotMatch(ideas.className, /\bon\b/);
+  assert.match(p.byId('shaping-section').className, /\btickets\b/);
+  assert.deepEqual(items(p).map(n => /\bticket\b/.test(n.className)), [true, true], 'only tickets');
+  assert.doesNotMatch(p.byId('shaping').textContent, /Board/);
+
+  click(ideas);
+  assert.match(p.byId('shaping-section').className, /\bideas\b/);
+  assert.match(toggles(p)[1].className, /\bon\b/);
+  assert.deepEqual(items(p).map(n => /\bidea\b/.test(n.className)), [true], 'only ideas');
+  assert.doesNotMatch(p.byId('shaping').textContent, /0001/);
+
+  p.timers.shift()(); await p.settle(); // the 2-second refresh
+  assert.match(p.byId('shaping-section').className, /\bideas\b/, 'still on Ideas after a refresh');
+  assert.match(p.byId('shaping').textContent, /Board/);
+  click(toggles(p)[0]);
+  assert.match(p.byId('shaping').textContent, /0001/);
+  p.timers.shift()(); await p.settle();
+  assert.match(p.byId('shaping-section').className, /\btickets\b/);
+});
+
+test('0033 AC3: tickets and ideas each have their own accent colour on the toggle, the section top edge and each item', () => {
+  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const colourOf = selector => {
+    const rule = css.split('\n').find(l => l.trim().startsWith(selector + ' {') || l.trim().startsWith(selector + ','));
+    assert.ok(rule, `a rule for ${selector}`);
+    return (rule.match(/var\(--(accent|idea)\)/) || [])[1];
+  };
+  const pairs = [['.toggle.tickets.on', '.toggle.ideas.on'], ['#shaping-section.tickets', '#shaping-section.ideas'], ['.item.ticket', '.item.idea']];
+  for (const [t, i] of pairs) {
+    assert.equal(colourOf(t), 'accent', t);
+    assert.equal(colourOf(i), 'idea', i);
+  }
+  assert.match(css, /#shaping-section\.tickets \{[^}]*border-top:[^}]*var\(--accent\)/);
+  assert.match(css, /\.item\.ticket \{[^}]*border-left:[^}]*var\(--accent\)/);
+  assert.match(css, /\.item\.idea \{[^}]*border-left:[^}]*var\(--idea\)/);
+});
+
+test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket shows everything needed to judge it', async () => {
+  const lint = { errors: ['size L can never be ready: split it into sibling tickets.'], warnings: ['"Out of scope" is empty. Say what this ticket will not do.'] };
+  const state = {
+    tickets: [
+      full('0003', { title: 'Third', priority: 1, size: 'M', risk: 'high', lint: { errors: 1, warnings: 1 }, lint_messages: lint, after: ['0002', '0009'], waiting_on: ['0009'] }),
+      T('0002', 'done'),
+      full('0001', { title: 'First', acceptance_criteria: ['One.', 'Two.', 'Three.'], problem: null, notes: null }),
+      T('0004', 'ready'),
+    ],
+    ideas: [],
+  };
+  const p = fakePage([state, state, state]);
+  await p.settle();
+  const list = items(p);
+  assert.deepEqual(list.map(n => n.textContent.slice(0, 4)), ['0003', '0001'], 'drafts only, in JSON order');
+  const first = list[0].textContent;
+  for (const s of ['Third', 'P1', 'M', 'high', '2 criteria', 'lint: 1 error', '1 warning']) assert.ok(first.includes(s), s);
+  assert.ok(list[1].textContent.includes('3 criteria') && list[1].textContent.includes('lint passes'));
+
+  click(list[0]);
+  let open = items(p)[0].textContent;
+  for (const s of ['Problem', 'Problem of 0003.', 'Outcome', 'Outcome of 0003.', 'Acceptance criteria', 'One.', 'Two.', 'Out of scope', '- Not this.',
+    'Notes', '- A note.', 'Readiness', 'Size M, risk high', '2 criteria', lint.errors[0], lint.warnings[0], '0002 done', '0009 not done'])
+    assert.ok(open.includes(s), s);
+  const ol = p.all(items(p)[0]).find(n => n.tagName === 'ol');
+  assert.deepEqual(ol.children.map(li => li.textContent), ['One.', 'Two.'], 'numbered criteria');
+  assert.ok(!items(p)[1].textContent.includes('Readiness'), 'only the clicked ticket opens');
+
+  p.timers.shift()(); await p.settle();
+  assert.ok(items(p)[0].textContent.includes('Readiness'), 'stays open through a refresh');
+  click(items(p)[1]);
+  open = items(p)[1].textContent;
+  assert.ok(open.includes('lint passes'), 'no lint messages');
+  assert.ok(!open.includes('Problem of'), 'a missing section is not filled in');
+  click(items(p)[0]);
+  assert.ok(!items(p)[0].textContent.includes('Readiness'), 'clicking again closes it');
+  p.timers.shift()(); await p.settle();
+  assert.ok(!items(p)[0].textContent.includes('Readiness'), 'stays closed');
+  assert.ok(items(p)[1].textContent.includes('Readiness'));
+});
+
+test('0033 AC5: the Ideas list shows every idea, not-ticketed first, and clicking one shows its note as text', async () => {
+  const state = { tickets: [], ideas: [idea('Done one', 'ticketed (0001)'), idea('Fresh', 'idea'), idea('No status', null, 'Just <i>text</i>.\n'), idea('Later', 'ticketed')] };
+  const p = fakePage([state, state]);
+  await p.settle();
+  click(toggles(p)[1]);
+  const list = items(p);
+  const titles = list.map(n => n.children[0].textContent);
+  assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'No status', 'Done one', 'Later']);
+  assert.ok(list[0].textContent.includes('idea') && list[2].textContent.includes('ticketed (0001)'), 'each with its status');
+  assert.ok(!list[1].textContent.includes('Just'), 'closed by default');
+  click(list[1]);
+  assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');
+  assert.ok(!p.all(items(p)[1]).some(n => n.tagName === 'i'));
+  p.timers.shift()(); await p.settle();
+  assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'still open after a refresh');
+  click(items(p)[1]);
+  assert.ok(!items(p)[1].textContent.includes('Just'), 'clicking again closes it');
 });
