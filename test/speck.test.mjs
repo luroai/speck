@@ -3043,3 +3043,38 @@ test('0025 AC3: speck ship still refuses an untracked file in the ticket\'s tree
   assert.deepEqual(r.state(), before);
   assert.equal(r.status(), 'approved');
 });
+
+test('0025 AC2 (F1): a ticket edit that is staged, with the working copy put back, still refuses review and record', () => {
+  const stageHidden = d => {
+    const rel = path.relative(d.dir, d.ticketFile);
+    const original = fs.readFileSync(d.ticketFile, 'utf8');
+    fs.writeFileSync(d.ticketFile, original.replace('Users cannot export.', 'Users cannot export at all.'));
+    d.git('add', rel);
+    fs.writeFileSync(d.ticketFile, original); // the working copy matches HEAD again; the index doesn't
+    assert.match(d.git('status', '--porcelain').stdout, /^MM /m);
+  };
+  const r = reviewRepo();
+  stageHidden(r);
+  const res = r.run('review', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /Commit your work before review/);
+  assert.equal(r.calls().length, 0, "the reviewer didn't run");
+
+  const s = subagentRepo();
+  const w = path.join(s.dir, 'w.json');
+  fs.writeFileSync(w, fenced(subagentVerdict('changes_requested', 'open')));
+  stageHidden(s);
+  const before = fs.readFileSync(s.ticketFile, 'utf8');
+  const out = s.run('record', '1', w, '--reviewer=claude-subagent');
+  assert.notEqual(out.status, 0);
+  assert.match(out.stderr, /Commit your work/);
+  assert.equal(fs.readFileSync(s.ticketFile, 'utf8'), before, 'nothing recorded');
+
+  // A staged copy holding only a recorded round and the status change is still fine.
+  const ok = subagentRepo();
+  const v = path.join(ok.dir, 'v.json');
+  fs.writeFileSync(v, fenced(subagentVerdict('changes_requested', 'open')));
+  assert.equal(ok.run('record', '1', v, '--reviewer=claude-subagent').status, 10);
+  ok.git('add', path.relative(ok.dir, ok.ticketFile));
+  assert.equal(ok.run('record', '1', v, '--reviewer=claude-subagent').status, 10, 'staged round 1, round 2 recorded');
+});

@@ -477,8 +477,11 @@ function sandboxFailed(events) {
 // part of what the reviewer reviews.
 function requireCommitted(repo, ticket, message) {
   const rel = posix(path.relative(repo, ticket.file));
+  // Both the ticket's working copy and its staged copy must differ from HEAD only by those, so a staged edit can't hide.
+  const staged = sh('git', ['show', `:${rel}`], { cwd: repo });
+  const ticketOk = () => onlyRoundsChanged(repo, rel, ticket.raw) && staged.status === 0 && onlyRoundsChanged(repo, rel, staged.stdout);
   const status = git(['status', '--porcelain', '--untracked-files=no'], repo).split('\n')
-    .filter(l => l && !(l.slice(3) === rel && onlyRoundsChanged(repo, rel, ticket.raw)));
+    .filter(l => l && !(l.slice(3) === rel && ticketOk()));
   if (status.length) throw new SpeckError(`${message} Uncommitted: ${status.map(l => l.slice(3)).join(', ')}. Untracked files are fine.`);
 }
 

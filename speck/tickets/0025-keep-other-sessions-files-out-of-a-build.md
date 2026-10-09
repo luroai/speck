@@ -1,7 +1,7 @@
 ---
 id: "0025"
 title: "Keep other sessions' files out of a build"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T11:57:27.546Z"
 ---
 # 0025 · Keep other sessions' files out of a build
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Other sessions sometimes work in the same checkout during a build. Twice in recent builds their files appeared mid-build, and one `git add -A` committed and pushed five draft tickets that the builder hadn't written. Untracked files from elsewhere also make `speck review` refuse to run, though they aren't part of what's reviewed.
@@ -47,3 +47,69 @@ A build commits only the files it changed, and other sessions' untracked files d
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: `speck close` still refuses when any untracked file is outside the ticket, so another session's file in the ticket's tree would block closing a build. The ticket only covers review and record, so it's unchanged.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "dce4fff4aa42f4b007205a1dede1051d98d60c1b",
+    "thread_id": "01a1208c-ab32-7603-ae13-2b4439e3c0dc",
+    "seconds": 43,
+    "usage": {
+      "input_tokens": 223000,
+      "cached_input_tokens": 158208,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 891,
+      "reasoning_output_tokens": 73
+    },
+    "saved_at": "2026-10-09T12:04:55.208Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both skills explicitly require staging by name, prohibit all three broad staging commands, and require leaving unknown files alone and mentioning them. The 0025 AC1 test checks these instructions."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "requireCommitted in scripts/speck.mjs ignores untracked files and the 0025 AC2 tests exercise ordinary modified and staged files. However, its ticket exception checks only working-tree content against HEAD, allowing unrelated ticket edits staged in the index when the working copy is restored."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipTicket retains its full git status --porcelain check. The 0025 AC3 test verifies an untracked file blocks shipping without changing state."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "requireCommitted exempts the ticket based solely on onlyRoundsChanged(ticket.raw), without checking its staged content. Edit the ticket's problem or criteria, stage it, then restore the working copy from HEAD without resetting the index: the ticket has staged substantive changes, but onlyRoundsChanged returns true and both review and record proceed. This violates the requirement to refuse staged uncommitted changes beyond recorded rounds and the status transition.",
+        "suggested_fix": "Check the ticket's index version as well as its working-tree version before exempting it. Add regression tests for both review and record with a substantive ticket edit staged and the working copy restored to HEAD; assert refusal and no round recorded.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The updated description correctly captures the intended behaviour, but its promise to reject staged tracked changes is not fully enforced for the ticket itself."
+    },
+    "escalation_question": "",
+    "summary": "The staging instructions and handling of other sessions' untracked files are implemented, and shipping retains its clean-tree safeguard. One loophole remains: staged changes to the ticket can escape the review checks when its visible copy has been restored. Fix that check and add regression coverage before merging."
+  }
+}
+```
+
+</details>
