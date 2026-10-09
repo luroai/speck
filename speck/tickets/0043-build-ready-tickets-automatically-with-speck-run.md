@@ -1,7 +1,7 @@
 ---
 id: "0043"
 title: "Build ready tickets automatically with speck run"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T14:27:46.963Z"
 
 ---
 # 0043 · Build ready tickets automatically with speck run
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Setting a ticket to ready is meant to start the pipeline, but someone still has to open a session and type `/speck-build <id>` for every ticket. With worktrees, builds can run side by side, but only if someone starts each one.
