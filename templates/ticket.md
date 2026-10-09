@@ -5,6 +5,7 @@ status: draft            # draft | ready | building | reviewing | blocked | appr
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
+type: ""                 # blank | bug (a ticket that fixes a defect)
 builder: claude
 reviewer: codex
 reviewer_model: ""       # blank: use speck/config.yml (blank there too: the reviewer's default)

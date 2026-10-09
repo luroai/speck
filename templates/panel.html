@@ -42,6 +42,9 @@
   .tag { font-size: 11px; padding: 0 6px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 17px; display: inline-block; }
   .tag.p1 { color: var(--accent); border-color: #3b4a66; }
   .tag.high { color: var(--bad); border-color: #5c3330; }
+  :root { --bug: #e07bb5; } /* the bug tag's own colour */
+  .tag.bug { color: var(--bug); border-color: #5c3550; }
+  #shipped .tag.bug { margin-left: 8px; }
   .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .title { color: var(--text); }
   .sub { font-size: 12px; color: var(--muted); }
@@ -284,8 +287,10 @@ function chainIcon(t) {
   if (icon) icon.title = t.chain ? `Starts a chain: unlocks ${t.unlocks.join(', ')}` : `Waiting on ${t.waiting_on.join(', ')}`;
   return icon;
 }
+// A "bug" tag for a bug ticket, or nothing.
+const bugTag = t => (t.type === 'bug' ? el('span', 'tag bug', 'bug') : null);
 function tags(t, icon) {
-  const row = el('div', 'row', null, el('span', 'id', t.id), icon, el('span', 'title', t.title));
+  const row = el('div', 'row', null, el('span', 'id', t.id), bugTag(t), icon, el('span', 'title', t.title));
   if (t.priority !== undefined && t.priority !== null && t.priority !== '') row.appendChild(el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`));
   if (t.size) row.appendChild(el('span', 'tag', t.size));
   if (t.risk) row.appendChild(el('span', t.risk === 'high' ? 'tag high' : 'tag', t.risk));
@@ -498,7 +503,7 @@ function render() {
 
   fill('shipped', m.shipped.map(t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
-    const name = el('td', null, null, el('span', 'id', t.id), document.createTextNode('\u00a0 ' + (t.title ?? '')));
+    const name = el('td', null, null, el('span', 'id', t.id), bugTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
     return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when));
   }), 'Nothing shipped yet.');
   const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),

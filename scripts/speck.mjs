@@ -138,6 +138,15 @@ export function setField(text, key, value) {
 }
 
 const blank = v => v === undefined || v === null || String(v).trim() === '';
+// A ticket's type: null when it's missing or blank, otherwise its value ("bug" is the only valid one).
+// A bare `type:` parses as an empty mapping, just like `type: {}`, so the frontmatter line itself says which it was.
+function ticketType(ticket) {
+  const v = ticket.fm.type;
+  if (v === undefined || v === null || (typeof v === 'string' && !v.trim())) return null;
+  const line = ticket.raw.slice(0, fmEnd(ticket.raw)).match(/^type:(.*)$/m);
+  const empty = v && typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length;
+  return empty && line && stripComment(line[1]).trim() === '' ? null : v;
+}
 
 // The reviewer model and effort for a ticket: a ticket value wins, a blank one falls back to config, null means "reviewer's default".
 export function reviewerSettings(fm = {}, cfg = {}) {
@@ -252,6 +261,7 @@ export function lintTicket(ticket, cfg) {
   if (!['S', 'M', 'L'].includes(fm.size)) errors.push(`size must be S or M (got "${fm.size}").`);
   if (fm.size === 'L') errors.push('size L can never be ready: split it into sibling tickets.');
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
+  if (ticketType(ticket) !== null && fm.type !== 'bug') errors.push(`type must be blank or bug (got "${fm.type}").`);
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
   if (fm.builder && modelFamily(fm.builder) === modelFamily(fm.reviewer) && !cfg.allow_same_model_review)
     errors.push(fm.builder === fm.reviewer
@@ -1010,8 +1020,13 @@ function cmdNew(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const title = args.filter(a => !a.startsWith('--')).join(' ').trim();
-  if (!title) throw new SpeckError('Usage: speck new <title> [--source=path]');
+  if (!title) throw new SpeckError('Usage: speck new <title> [--source=path] [--type=bug]');
   const source = (args.find(a => a.startsWith('--source=')) || '').slice(9);
+  // Every --type must be --type=bug, so a mistyped or second value creates nothing.
+  const types = args.filter(a => a === '--type' || a.startsWith('--type=')).map(a => a.slice(7));
+  const badType = types.find(v => v !== 'bug');
+  if (badType !== undefined) throw new SpeckError(`--type must be --type=bug (got "${badType}"). Leave it out for any other ticket.`);
+  const type = types.length ? 'bug' : '';
   // The source is checked before anything is written, so a mistyped path creates no ticket.
   const sourceFile = source && path.resolve(repo, source);
   if (sourceFile && !fs.statSync(sourceFile, { throwIfNoEntry: false })?.isFile())
@@ -1026,6 +1041,7 @@ function cmdNew(args) {
   text = setField(text, 'reviewer_model', settings.model || '');
   text = setField(text, 'reviewer_effort', settings.effort || '');
   text = setField(text, 'source', JSON.stringify(source));
+  if (type) text = setField(text, 'type', type);
   text = syncHeader(setField(text, 'created', new Date().toISOString().slice(0, 10)));
   const file = path.join(ticketsDir(repo), `${id}-${slugify(title)}.md`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -1538,6 +1554,7 @@ export function statusData(repo) {
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     return {
       ...t.fm,
+      type: ticketType(t),
       path: posix(path.relative(t.at || repo, t.file)),
       worktree: t.at || null,
       acceptance_criteria: criteriaText(t.sections['acceptance criteria']),
@@ -1582,7 +1599,7 @@ function cmdStatus(args = []) {
     if (!group.length) continue;
     console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' ? ': waiting for you. Read `speck pack <id>`, then run /speck-ship <id>' : ''}`);
     for (const t of group) {
-      console.log(`  ${t.fm.id}  P${t.fm.priority ?? '-'}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
+      console.log(`  ${t.fm.id}${t.fm.type === 'bug' ? ' bug' : ''}  P${t.fm.priority ?? '-'}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
       if (s === 'blocked') {
         const q = contentLines(t.sections['blocked question']).join(' ');

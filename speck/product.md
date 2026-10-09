@@ -33,7 +33,9 @@ Everything happens in the local repo, with no PR.
     It then sets the note's `Status:` value to `ticketed (<id>)`, or adds the id to an existing `ticketed (…)` list unless it's already there.
     Only that value changes.
     A note with no `Status:` line still gets its ticket, with a warning that its status couldn't be updated.
+    With `--type=bug` it sets `type: bug` in the ticket's frontmatter, and any other `--type` value is refused, creating nothing.
   - `lint`: checks the size rules.
+    It also accepts a ticket's `type` only when it's missing, blank or `bug`, and gives an error naming the field for any other value.
   - `set`: updates fields.
     Statuses are `draft`, `ready`, `building`, `reviewing`, `blocked`, `approved`, `done` and `cancelled`.
     Setting `ready` requires a clean lint, and `building` and `done` record timestamps.
@@ -55,11 +57,13 @@ Everything happens in the local repo, with no PR.
     Setting a cancelled ticket to any other status moves it back into `speck/tickets/` and keeps the recorded reason, so a cancelled idea can come back later as new work.
   - `status` (approved tickets first, as waiting for you, and cancelled tickets last, each with its reason, then ideas counted as waiting or ticketed, for example `IDEAS (3: 2 waiting, 1 ticketed)`; an idea is ticketed when its `Status:` value starts with `ticketed`.
     A ticket whose branch is checked out in another worktree is shown once, under the status in that worktree's copy (so an in-progress build no longer reads `ready` from the main checkout), with `↳ being built in <path>` on the line below.
+    A bug ticket shows `bug` after its id.
     With no other worktrees, the output is unchanged), `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `reviewer-settings`, `diff` (the changes since the reviewer's last round, or the whole change after merging the base branch, as the reviewer sees them), `next` and `pack` (the review pack).
   - `status --json`: prints everything `status` knows as one JSON object, `{"tickets": [...], "ideas": [...]}`, with nothing else on stdout, for programs such as the control panel.
     Tickets are the same ones the text output shows, each once (a ticket being built in another worktree comes from that worktree's copy), sorted by `priority` (no priority last) then id.
     Each has every frontmatter field under its own name, plus `path` (relative to the checkout it was read from), `worktree` (that worktree's absolute path, or `null`), `acceptance_criteria` (each criterion's full text without its number, including wrapped lines and nested lists under it), `blocked_question` (or `null`), `lint` (`{errors, warnings}` counts from the same checks as `speck lint`), `lint_messages` (`{errors, warnings}` with the text of each message `speck lint` prints), `problem`, `outcome`, `out_of_scope` and `notes` (each section's text without template comments or leading and trailing empty lines, or `null` when nothing else is in it), `self_check` (the text after `Self-check:` on the first line of Notes that starts with it, a list marker such as `- ` allowed before it, or `null` if there's no such line or nothing after it), `rounds` (one `{round, reviewer, verdict, seconds, tokens}` per review round, with `seconds` `null` if not recorded and `tokens` the input plus output tokens, or `0`) `waiting_on` (the `after:` ids that aren't a `done` ticket, including ids with no ticket) and `build_exit` (how a build launched by `speck run` ended: `{at, code, message}` with `at` and `code` from its run record's `exited` and `exit_code`, and `message` the last 50 lines of its log with trailing blank lines dropped, or `null` when the log is missing or empty; `build_exit` itself is `null` when there's no run record, it can't be read or it has no `exited`).
     Run records and logs are read from the main checkout's `speck/.cache/runs/`, wherever the command runs.
+    `type` is `"bug"` for a bug ticket, or `null` when it's missing or blank.
     Ideas are each `.md` note in `speck/ideas/`, sorted by file name, with `path`, `title` (its first `# ` heading, or the file name) and `status` (its `Status:` value, or `null`) and `body` (the note's full text).
     A frontmatter field that shares a name with one of these added fields is replaced by it.
     These field names are a contract for the panel.
@@ -85,6 +89,7 @@ Everything happens in the local repo, with no PR.
     **Ideas** lists every idea, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
     Clicking or selecting text in the note leaves it open.
     More than one ticket or idea can be open at once.
+    A ticket whose `type` is `bug` shows a "bug" tag beside its id in Shaping, the queue and Shipped, in a pink used for nothing else.
     A ticket starts a chain when its `waiting_on` is empty and at least one ticket that isn't `done` or `cancelled` lists its id in `after:`.
     In the Tickets list and among the queue's `ready` tickets, such a ticket shows a chain icon in the accent colour after its id, and "unlocks <ids>" (those tickets, in the JSON's order) in its line under the title: the criteria line in Shaping and the "Queued" line in the queue.
     A ticket whose `waiting_on` isn't empty shows a dimmed padlock there instead, with "waiting on <ids>" in the same line.
