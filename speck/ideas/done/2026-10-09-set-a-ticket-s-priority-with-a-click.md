@@ -1,6 +1,6 @@
 # Set a ticket's priority with a click
 
-Captured: 2026-10-09 · Status: idea
+Captured: 2026-10-09 · Status: ticketed (0076, 0077)
 
 ## What
 A clickable priority on each ticket in the panel, so the user can set or change it there and triage fast.
