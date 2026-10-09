@@ -44,6 +44,8 @@ An open ticket in Shaping shows a short view, and one click shows the whole tick
 - Side pane, not popup, and the full view shows today's sections rather than the raw file: defaults chosen while ticketing, to confirm before ready.
 - What's open in the pane survives the refresh and is never sent to the server, like what's open in the lists.
 - product.md's Shaping description needs updating.
+- Older panel tests (0031 AC5, 0033 AC4, 0039 AC4, 0040) that read criteria or notes in the open ticket now read them in the side pane, or select problem and outcome text instead, as AC1 moves those sections out of the short view.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

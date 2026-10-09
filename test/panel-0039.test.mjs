@@ -87,10 +87,9 @@ test('0039 AC4: the click a selecting drag ends with, on a ticket\'s details or 
   const p = fakePage([state]);
   await p.settle();
   press(top(items(p)[0]));
-  // Across two criteria the click lands on their list; across Problem and the readiness list, on the details themselves.
-  const ol = p.all(items(p)[0]).find(n => n.tagName === 'ol');
-  press(ol);
-  assert.ok(isOpen(items(p)[0]), 'selecting across criteria');
+  // Within a section the click lands on its text; across Problem and the readiness list, on the details themselves.
+  press(p.all(items(p)[0]).find(n => n.tagName === 'p'));
+  assert.ok(isOpen(items(p)[0]), 'selecting within a section');
   press(detailOf(items(p)[0]));
   assert.ok(isOpen(items(p)[0]), 'selecting across sections');
   click(toggles(p)[1]);
@@ -138,8 +137,8 @@ test('0039 AC4: in a real browser, dragging to select text in a ticket\'s detail
     assert.equal(await b.js('getSelection().toString()'), 'Reading a long probl', 'the drag selected text');
     assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`), 'the ticket stays open');
     await b.js('getSelection().removeAllRanges()'); // a drag that starts in a selection would move it, not make a new one
-    await b.drag(await b.js(charAt(`${item} .detail p.text`, 3)), await b.js(charAt(`${item} .detail ol li:nth-child(2)`, 8)));
-    assert.match(await b.js('getSelection().toString()'), /long problem[\s\S]*A second/, 'a selection across sections');
+    await b.drag(await b.js(charAt(`${item} .detail p.text`, 3)), await b.js(charAt(`${item} .detail p.text:nth-of-type(2)`, 8)));
+    assert.match(await b.js('getSelection().toString()'), /long problem[\s\S]*Users ca/, 'a selection across sections');
     assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`), 'still open');
 
     await b.js(`document.querySelectorAll('#shaping-toggle button')[1].click()`);
