@@ -1583,6 +1583,42 @@ function selfCheck(lines) {
   return null;
 }
 
+// A build log as people read it. With `--output-format stream-json`, Claude Code writes one JSON event per line as it
+// works: these become the agent's text and one line per tool call ("→ Bash: run the tests"), and the rest (tool output,
+// session and rate-limit events) are left out. Any other line, such as plain `claude -p` output or an error, is kept as is.
+const LOG_DETAIL = 200;
+export function readableLog(text) {
+  const out = [];
+  let last = null; // the agent's latest text, so the result that repeats it isn't shown twice
+  const short = s => { s = String(s).replace(/\s+/g, ' ').trim(); return s.length > LOG_DETAIL ? `${s.slice(0, LOG_DETAIL - 1)}…` : s; };
+  for (const line of String(text ?? '').split('\n')) {
+    let e = null;
+    if (line.startsWith('{')) { try { e = JSON.parse(line); } catch { /* not an event */ } }
+    if (!e || typeof e !== 'object' || typeof e.type !== 'string') { out.push(line); continue; }
+    if (e.type === 'assistant' && Array.isArray(e.message?.content)) {
+      for (const b of e.message.content) {
+        if (b?.type === 'text' && typeof b.text === 'string' && b.text.trim()) { out.push(b.text.trim(), ''); last = b.text.trim(); }
+        else if (b?.type === 'tool_use') {
+          const i = b.input && typeof b.input === 'object' ? b.input : {};
+          const what = i.description || i.command || i.file_path || i.path || i.pattern || i.url || i.query || i.prompt || i.skill || '';
+          out.push(`→ ${b.name || 'tool'}${what ? `: ${short(what)}` : ''}`);
+        }
+      }
+    } else if (e.type === 'user' && Array.isArray(e.message?.content)) {
+      for (const b of e.message.content) {
+        if (b?.type !== 'tool_result' || b.is_error !== true) continue;
+        const c = typeof b.content === 'string' ? b.content : Array.isArray(b.content) ? b.content.map(x => x?.text || '').join(' ') : '';
+        out.push(`  ✗ ${short(c) || 'failed'}`);
+      }
+    } else if (e.type === 'result') {
+      const r = typeof e.result === 'string' ? e.result.trim() : '';
+      if (r && r !== last) out.push(r);
+      if (e.is_error === true || (e.subtype && e.subtype !== 'success')) out.push(`Build ended: ${e.subtype || 'error'}`);
+    }
+  }
+  return out.join('\n');
+}
+
 // How a build launched by `speck run` ended, from its run record and log in the main checkout's speck/.cache/runs/
 // (where speck run keeps them): {at, code, message}, or null when there's no record, it can't be read or the build
 // hasn't exited. message is the last 50 lines of the log, trailing blank lines dropped, or null when it's missing or empty.
@@ -1594,7 +1630,7 @@ function buildExit(runs, id) {
   try { rec = JSON.parse(fs.readFileSync(path.join(dir, `${id}.json`), 'utf8')); } catch { return null; }
   if (!rec || typeof rec !== 'object' || !Object.hasOwn(rec, 'exited')) return null;
   let message = null;
-  try { message = fs.readFileSync(path.join(dir, `${id}.log`), 'utf8').replace(/\s+$/, '').split('\n').slice(-50).join('\n') || null; } catch { /* no log */ }
+  try { message = readableLog(fs.readFileSync(path.join(dir, `${id}.log`), 'utf8')).replace(/\s+$/, '').split('\n').slice(-50).join('\n') || null; } catch { /* no log */ }
   return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
 }
 
@@ -1740,7 +1776,7 @@ function panelLog(repo, id) {
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   let text;
-  try { text = fs.readFileSync(path.join(main, 'speck', '.cache', 'runs', `${padId(id)}.log`), 'utf8'); }
+  try { text = readableLog(fs.readFileSync(path.join(main, 'speck', '.cache', 'runs', `${padId(id)}.log`), 'utf8')); }
   catch (e) { if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return { text: '', truncated: false }; throw e; }
   const lines = text.split('\n');
   while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
@@ -1810,7 +1846,7 @@ function cmdPanel(args) {
 
 const RUN_POLL_MS = 5000;
 const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
-const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --dangerously-skip-permissions';
+const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
 
 // The folder for speck run's records and logs, inside speck/.cache/, which git ignores.
 function runsDir(repo) {
@@ -1921,7 +1957,7 @@ function cmdRun() {
     try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { /* unreadable: nothing to say */ }
     if (status !== 'ready') return;
     let tail = '';
-    try { tail = fs.readFileSync(log, 'utf8').replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
+    try { tail = readableLog(fs.readFileSync(log, 'utf8')).replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
     console.log(`${id} is still ready, so the build never started it. speck run won't launch it again. Last lines of ${path.relative(repo, log)}:\n${tail}`);
   };
 

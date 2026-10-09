@@ -102,7 +102,7 @@ test('0043 AC2: a blank or missing build_command stops speck run with a plain me
 
 test('0043 AC2: the config template has the default build_command and max_parallel_builds', () => {
   const cfg = fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8');
-  assert.match(cfg, /^build_command: 'claude -p "\/speck-build \{id\}" --session-id \{session\} --dangerously-skip-permissions'/m);
+  assert.match(cfg, /^build_command: 'claude -p "\/speck-build \{id\}" --session-id \{session\} --output-format stream-json --verbose --dangerously-skip-permissions'/m);
   assert.match(cfg, /^max_parallel_builds: 1\b/m);
 });
 
