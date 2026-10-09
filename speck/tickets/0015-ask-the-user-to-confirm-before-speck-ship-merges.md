@@ -2,7 +2,7 @@
 id: "0015"
 title: "Ask the user to confirm before speck ship merges"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 2              # 1 (highest) to 5
+priority: 4              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 builder: claude
