@@ -1,7 +1,7 @@
 ---
 id: "0055"
 title: "Show motion on an in-flight ticket's progress bar"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-09-show-motion-on-queue-progress-bars.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:08:34.622Z"
 
 ---
 # 0055 · Show motion on an in-flight ticket's progress bar
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The bars in the panel's Queue only change when a ticket moves to another step, which can take many minutes. Meanwhile the panel looks frozen, so the user can't tell a build is still working.
