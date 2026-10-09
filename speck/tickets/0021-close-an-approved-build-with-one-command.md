@@ -1,7 +1,7 @@
 ---
 id: "0021"
 title: "Close an approved build with one command"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T10:31:46.814Z"
 ---
 # 0021 · Close an approved build with one command
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the reviewer approves, the builder closes out by hand every time. It writes one review log line per round, copies the rounds, tokens and elapsed time from `speck pack` into the delivery log, counts changed lines, sets `approved` and commits. Nearly all of that is data speck already has, and doing it by hand is slow and easy to get wrong.
@@ -45,9 +45,15 @@ One command closes out an approved build: it writes the review log and delivery 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The dirty-tree guard ignores the source of a rename or copy.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 835,942
+- Elapsed since build started: 10 min
+- Changed lines: 116 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -128,6 +134,87 @@ One command closes out an approved build: it writes the review log and delivery 
     },
     "escalation_question": "",
     "summary": "The command automates the logs and approval commit, and the normal paths have meaningful tests. A rename can bypass its required clean-tree check, so that guard needs fixing before merge. I inspected the tests and supplied results; I did not rerun the write-producing suite in this read-only review. The apparent unrelated idea-note difference comes from main advancing, not this ticket."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ac82756ecbc47f6c2436262cc769085f9bf717c5",
+    "thread_id": "01a1203d-e3db-7fb2-953e-3604f448756a",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 493748,
+      "cached_input_tokens": 413312,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2112,
+      "reasoning_output_tokens": 85
+    },
+    "saved_at": "2026-10-09T10:41:34.323Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cmdClose checks nextAction and changesOutside before writing. Existing AC1 integration tests cover refusal without changes; the new rename/copy test exercises pathsOutside, which now checks both paths. Independent read-only parser checks passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewLogLines and replaceSection replace the review log with round, reviewer, verdict and first sentences of newly appearing blocking findings. Both 0021 AC2 tests cover replacement and findings carried between rounds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdClose uses the same reviewTotals, who and changedLines data as reviewPack, preserving existing delivery content. The 0021 AC3 tests compare pack figures, retain follow-up ideas and cover an absent start timestamp."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The 0021 AC4 integration test verifies approved status, header, exact commit message and ticket-only commit. The new rejecting-hook test covers restoration of staged and unstaged ticket edits after failure. Supplied results show both passing."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md instructs the builder to add follow-up ideas, run close, then ship --auto. The 0021 AC5 test checks this ordering."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:1482",
+        "issue": "The dirty-tree guard previously ignored rename source paths. pathsOutside now checks both paths, with regression coverage.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "scripts/speck.mjs:1528",
+        "issue": "Failed commits previously discarded the ticket's staged state. cmdClose now saves and restores its index entry; a rejecting-hook test covers staged and unstaged edits.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The close capability and approved build workflow match the current implementation."
+    },
+    "escalation_question": "",
+    "summary": "Approved. The command fills in the logs, preserves follow-up ideas and commits the approved ticket. Both previous findings are fixed, with meaningful regression tests. All 151 supplied tests passed; I independently checked the rename parser but did not rerun the write-producing suite in this read-only review."
   }
 }
 ```
