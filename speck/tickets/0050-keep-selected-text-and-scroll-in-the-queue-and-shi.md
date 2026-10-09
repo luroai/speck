@@ -1,7 +1,7 @@
 ---
 id: "0050"
 title: Keep unchanged rows outside Shaping through the panel refresh                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T17:29:40.760Z"
 
 ---
 # 0050 · Keep unchanged rows outside Shaping through the panel refresh
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel still rebuilds every queue row and Shipped row on each 2-second refresh, so text you select there, such as a blocked ticket's question or a stopped build's last message, is lost within 2 seconds. A long build message scrolls in its own box, and that box jumps back to the top on every refresh, so you can't read or copy the end of it. 0040 fixed this only for open items in Shaping.
