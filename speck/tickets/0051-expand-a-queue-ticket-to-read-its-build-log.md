@@ -1,7 +1,7 @@
 ---
 id: "0051"
 title: "Expand a queue ticket to read its build log"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:15:53.316Z"
 
 ---
 # 0051 · Expand a queue ticket to read its build log
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A build runs for tens of minutes and the queue shows only its five-step bar, so you can't tell whether it's working or stuck without leaving the panel. `speck run` already writes everything the build prints to `speck/.cache/runs/<id>.log` (0043), and the panel uses only the last 50 lines of it, and only once the build has exited (0045).
