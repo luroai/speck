@@ -1,7 +1,7 @@
 ---
 id: "0070"
 title: "Pause a running build from the CLI until it's played"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T21:44:55.448Z"
 ---
 # 0070 · Pause a running build from the CLI until it's played
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once `speck run` has launched a build, the only way to halt it is to kill its process by hand, which ends it for good. The user sometimes wants a build to hold still for a while (to free the machine, or to look at what it has done so far) and then carry on as if nothing happened.
@@ -52,9 +52,16 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Processes started by a build can escape pause after their immediate parent exits.; F2 cmdPlay removes the paused marker before signalBuild enumerates or resumes processes.
+Round 2 (codex): changes requested: F3 After SIGCONT, the build can finish before cmdPlay saves its record.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,721,078
+- Elapsed since build started: 21 min
+- Changed lines: 141 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (no inbox notes: each is a known limit or a tidy-up, and the panel icon and stopping a build for good are already 0071 and 0072):
 - Known limit: a real Claude Code build was checked carrying on after a 10½-minute pause, not after pauses of hours.
