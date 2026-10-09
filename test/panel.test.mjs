@@ -578,7 +578,7 @@ test('0034 AC4: a ready ticket shows Queued and an empty bar, plus waiting on <i
   assert.ok(b.textContent.includes('Queued') && b.textContent.includes('waiting on 0009, 0004'));
 });
 
-test('0034 AC5: an in-flight ticket shows its worktree path and the whole minutes since started', async () => {
+test('0034 AC5: an in-flight ticket shows the whole minutes since started (its worktree path is in the open ticket, 0053)', async () => {
   const ago = ms => new Date(Date.now() - ms).toISOString();
   const state = { tickets: [
     T('0001', 'building', { worktree: '/tmp/wt/0001', started: ago(7.9 * 60000) }),
@@ -591,7 +591,8 @@ test('0034 AC5: an in-flight ticket shows its worktree path and the whole minute
   const p = fakePage([state]);
   await p.settle();
   const [a, b, c, d] = queueRows(p);
-  assert.ok(a.textContent.includes('/tmp/wt/0001') && a.textContent.includes('7 min'));
+  // 0053: the worktree path shows only in the open ticket (test/panel-0053.test.mjs), so the closed row leaves it out.
+  assert.ok(!a.textContent.includes('/tmp/wt/0001') && a.textContent.includes('7 min'));
   assert.ok(b.textContent.includes('0 min') && !b.textContent.includes('worktree'));
   assert.ok(!c.textContent.includes('min') && !c.textContent.includes('worktree'));
   assert.ok(!d.textContent.includes('/tmp/wt/0004') && !d.textContent.includes('min'), 'not for a ready ticket');

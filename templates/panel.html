@@ -156,11 +156,16 @@
   .item.hl, .q.hl { background: #262c38; }
   .item.dim, .q.dim { opacity: .35; }
 
-  /* The full ticket, in a side pane over the right of the page */
+  /* The full ticket, in a side pane over the right of the page. While it's open, the page behind it holds still and a
+     backdrop over the rest of the page takes every click outside it. */
+  html.held { overflow: hidden; }
+  #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(0, 0, 0, .35); touch-action: none; }
+  #full-backdrop[hidden] { display: none; }
   .full-open { font: inherit; font-size: 12px; margin: 10px 0 0 8px; padding: 3px 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
-  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(0, 0, 0, .4); }
+  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(0, 0, 0, .4); }
   #full-ticket[hidden] { display: none; }
+  #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .close { margin-left: auto; font: inherit; font-size: 11px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover { color: var(--text); }
@@ -193,7 +198,8 @@
     <table><tbody id="shipped"></tbody></table>
   </section>
 </main>
-<aside id="full-ticket" hidden></aside>
+<div id="full-backdrop" hidden></div>
+<aside id="full-ticket" tabindex="-1" hidden></aside>
 
 <script>
 'use strict';
@@ -466,7 +472,13 @@ function setReadyButton(t, lintErrors) {
 function fullButton(t) {
   const b = el('button', 'full-open', 'Full ticket');
   b.type = 'button';
-  b.addEventListener('click', e => { e.stopPropagation(); fullId = String(t.id); render(); });
+  b.addEventListener('click', e => {
+    e.stopPropagation();
+    fullId = String(t.id);
+    render();
+    const pane = $('full-ticket');
+    if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
+  });
   return b;
 }
 // The side pane: the ticket's id and title, then each of its sections that has something in it, as text.
@@ -496,11 +508,25 @@ function renderFull(drafts) {
   if (!t) fullId = null;
   const sig = t ? signature([fullId, ownData(t)]) : null;
   pane.hidden = !t;
+  $('full-backdrop').hidden = !t;
+  holdPage(!!t);
   if (sig === fullBuilt) return;
   fullBuilt = sig;
   pane.replaceChildren(...(t ? fullTicket(t) : []));
 }
 function closeFull() { fullId = null; render(); }
+// While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
+let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
+function holdPage(on) {
+  const root = document.documentElement;
+  if (!root || (heldAt !== null) === on) return;
+  if (on) heldAt = [scrollX, scrollY];
+  root.classList.toggle('held', on);
+  for (const n of document.querySelectorAll('header, #offline, main')) n.inert = on; // Tab can't reach, press or scroll to it
+  if (!on) { scrollTo(...heldAt); heldAt = null; }
+}
+// A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
+$('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && fullId !== null) closeFull(); });
 async function setReady(id) {
   refused.delete(id);
@@ -570,8 +596,10 @@ function queueItem(t) {
     if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
   }
   q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
-  if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
-  if (isOpen) q.appendChild(logBox(id));
+  if (isOpen) {
+    if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
+    q.appendChild(logBox(id));
+  }
   return q;
 }
 // An open queue ticket's log, as text in a box with its own scrollbar.
