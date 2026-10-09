@@ -1,7 +1,7 @@
 ---
 id: "0027"
 title: "Ship a ticket whose branch is in another worktree"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0027 · Ship a ticket whose branch is in another worktree
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Several sessions often share one checkout. Today `speck ship` checks out the base branch in the folder it runs in, and git refuses to check out a branch that's already checked out in another worktree. So once builds run in their own worktrees (0028), shipping would fail while your main checkout sits on the base branch.
