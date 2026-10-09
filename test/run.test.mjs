@@ -19,7 +19,7 @@ const fm = (o = {}) => Object.entries({ id: '"0001"', title: 'Export bookings as
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 // A fake builder: records its arguments, folder and pid in <out>/<id>.<n>.json, prints a line to stdout and one to
-// stderr, then stays alive for FAKE_MS (default 0) and exits with FAKE_EXIT (default 0).
+// stderr, then stays alive for FAKE_MS (default 0) and exits with FAKE_EXIT (default 0), or is stopped by the signal FAKE_SIGNAL.
 const FAKE = `
 const fs = require('fs'), path = require('path');
 const [out, ...args] = process.argv.slice(2);
@@ -36,7 +36,7 @@ if (process.env.FAKE_BLOCK) {
   spawnSync(process.execPath, [process.env.FAKE_BLOCK, 'set', id, 'status', 'blocked'], { cwd: wt, encoding: 'utf8' });
   spawnSync('git', ['commit', '-qam', 'blocked'], { cwd: wt });
 }
-setTimeout(() => process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
+setTimeout(() => process.env.FAKE_SIGNAL ? process.kill(process.pid, process.env.FAKE_SIGNAL) : process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
 `;
 
 // A repo with speck installed, the given tickets committed and build_command pointing at the fake builder.
@@ -343,5 +343,124 @@ test('0043 AC3 (round 1 F3): a run record that cannot be written stops that buil
     assert.ok(!r.calls().some(c => c.args[0] === '0001'), 'no build without a record');
     assert.equal(run.child.exitCode, null, 'still running');
     assert.doesNotMatch(run.out(), /at .*\.mjs:\d+/);
+  } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
+});
+
+// ---------- 0045: flag a build that finished without shipping ----------
+
+const runsPath = (dir, f) => path.join(dir, 'speck', '.cache', 'runs', f);
+
+test('0045 AC1: when a build exits, speck run adds exited and exit_code to its run file, keeping the fields already there', async () => {
+  const r = runRepo({ tickets: [['0001', {}]] });
+  const run = startRun(r.dir, { FAKE_EXIT: '3' });
+  try {
+    assert.ok(await until(() => { try { return 'exited' in record(r.dir, '0001'); } catch { return false; } }), run.out());
+    const [call] = r.calls();
+    const rec = record(r.dir, '0001');
+    assert.equal(rec.exit_code, 3);
+    assert.ok(!Number.isNaN(Date.parse(rec.exited)) && /T.*Z$/.test(rec.exited), 'an ISO exit time');
+    assert.ok(Date.parse(rec.exited) >= Date.parse(rec.started));
+    assert.equal(rec.session, call.args[1]);
+    assert.equal(rec.pid, call.pid);
+    assert.equal(rec.id, '0001');
+    assert.equal(fs.realpathSync(rec.cwd), fs.realpathSync(r.dir));
+    assert.ok(Array.isArray(rec.command) && rec.command.length > 0);
+    assert.equal(r.g('status', '--porcelain'), '', 'nothing for git to see');
+  } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
+});
+
+test('0045 AC1: a build stopped by a signal gets exit_code null', async () => {
+  const r = runRepo({ tickets: [['0001', {}]] });
+  const run = startRun(r.dir, { FAKE_SIGNAL: 'SIGTERM' });
+  try {
+    assert.ok(await until(() => { try { return 'exited' in record(r.dir, '0001'); } catch { return false; } }), run.out());
+    const rec = record(r.dir, '0001');
+    assert.equal(rec.exit_code, null);
+    assert.ok(!Number.isNaN(Date.parse(rec.exited)));
+  } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
+});
+
+test('0045 AC1: a later launch of the same ticket replaces the run file, so an old exit never sticks to a new build', async () => {
+  const r = runRepo({ tickets: [['0001', {}]] });
+  fs.mkdirSync(runsPath(r.dir, ''), { recursive: true });
+  fs.writeFileSync(runsPath(r.dir, '0001.json'), JSON.stringify({ id: '0001', session: 'old', started: '2026-01-01T00:00:00.000Z', exited: '2026-01-01T00:01:00.000Z', exit_code: 1, extra: 'stale' }));
+  const run = startRun(r.dir, { FAKE_MS: '5000' });
+  try {
+    assert.ok(await until(() => r.calls().length === 1 && record(r.dir, '0001').pid === r.calls()[0].pid), run.out());
+    const rec = record(r.dir, '0001');
+    assert.ok(!('exited' in rec) && !('exit_code' in rec) && !('extra' in rec), JSON.stringify(rec));
+    assert.notEqual(rec.session, 'old');
+  } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
+});
+
+const buildExit = (dir, id) => {
+  const res = spawnSync(process.execPath, [CLI, 'status', '--json'], { cwd: dir, encoding: 'utf8', env });
+  assert.equal(res.status, 0, res.stderr);
+  return JSON.parse(res.stdout).tickets.find(t => t.id === id);
+};
+
+test('0045 AC2: status --json gives build_exit from the run file and the last 50 lines of the log, trailing blank lines dropped', () => {
+  const r = runRepo({ tickets: [['0001', {}], ['0002', {}]] });
+  const before = buildExit(r.dir, '0001');
+  assert.ok('build_exit' in before, 'every ticket has build_exit');
+  assert.equal(before.build_exit, null, 'no run file');
+  fs.mkdirSync(runsPath(r.dir, ''), { recursive: true });
+  fs.writeFileSync(runsPath(r.dir, '0001.json'), JSON.stringify({ id: '0001', session: 's', started: '2026-10-09T10:00:00.000Z', exited: '2026-10-09T10:05:00.000Z', exit_code: 0 }));
+  const lines = Array.from({ length: 60 }, (_, i) => `line ${i + 1}`);
+  fs.writeFileSync(runsPath(r.dir, '0001.log'), `${lines.join('\n')}\n\n  \n\n`);
+  const t = buildExit(r.dir, '0001');
+  assert.deepEqual(t.build_exit, { at: '2026-10-09T10:05:00.000Z', code: 0, message: lines.slice(10).join('\n') });
+  // Every existing field is unchanged: the same ticket without the new field matches what it was.
+  const { build_exit: _a, ...rest } = t, { build_exit: _b, ...restBefore } = before;
+  assert.deepEqual(rest, restBefore);
+  assert.equal(buildExit(r.dir, '0002').build_exit, null);
+});
+
+test('0045 AC2: build_exit is null with no exited, an unreadable run file or one that is not JSON, and message is null with a missing or empty log', () => {
+  const r = runRepo({ tickets: [['0001', {}]] });
+  fs.mkdirSync(runsPath(r.dir, ''), { recursive: true });
+  const write = rec => fs.writeFileSync(runsPath(r.dir, '0001.json'), typeof rec === 'string' ? rec : JSON.stringify(rec));
+  write({ id: '0001', started: '2026-10-09T10:00:00.000Z', pid: 5 });
+  assert.equal(buildExit(r.dir, '0001').build_exit, null, 'still running: no exited');
+  write('{not json');
+  assert.equal(buildExit(r.dir, '0001').build_exit, null, 'not JSON');
+  write('null');
+  assert.equal(buildExit(r.dir, '0001').build_exit, null, 'JSON but not an object');
+  fs.rmSync(runsPath(r.dir, '0001.json'));
+  fs.mkdirSync(runsPath(r.dir, '0001.json'));
+  assert.equal(buildExit(r.dir, '0001').build_exit, null, 'unreadable');
+  fs.rmSync(runsPath(r.dir, '0001.json'), { recursive: true });
+  write({ id: '0001', exited: '2026-10-09T10:05:00.000Z', exit_code: null });
+  assert.deepEqual(buildExit(r.dir, '0001').build_exit, { at: '2026-10-09T10:05:00.000Z', code: null, message: null }, 'no log');
+  fs.writeFileSync(runsPath(r.dir, '0001.log'), '\n \n\n');
+  assert.deepEqual(buildExit(r.dir, '0001').build_exit, { at: '2026-10-09T10:05:00.000Z', code: null, message: null }, 'an empty log');
+  fs.writeFileSync(runsPath(r.dir, '0001.log'), 'Ship refused: uncommitted change in speck/config.yml.\n');
+  assert.equal(buildExit(r.dir, '0001').build_exit.message, 'Ship refused: uncommitted change in speck/config.yml.');
+});
+
+test('0045 AC2: status --json run inside a ticket\'s worktree reads the run files speck run keeps in the main checkout', () => {
+  const r = runRepo({ tickets: [['0001', {}]], worktrees: 'true' });
+  const started = spawnSync(process.execPath, [CLI, 'start', '0001'], { cwd: r.dir, encoding: 'utf8', env });
+  assert.equal(started.status, 0, started.stderr);
+  const wt = started.stdout.trim().split('\n').pop();
+  fs.mkdirSync(runsPath(r.dir, ''), { recursive: true });
+  fs.writeFileSync(runsPath(r.dir, '0001.json'), JSON.stringify({ id: '0001', exited: '2026-10-09T10:05:00.000Z', exit_code: 1 }));
+  fs.writeFileSync(runsPath(r.dir, '0001.log'), 'Stopped.\n');
+  const expected = { at: '2026-10-09T10:05:00.000Z', code: 1, message: 'Stopped.' };
+  assert.deepEqual(buildExit(r.dir, '0001').build_exit, expected);
+  assert.deepEqual(buildExit(wt, '0001').build_exit, expected);
+});
+
+test('0045 AC1 (self-check): a run record that cannot be updated at exit is reported plainly, leaves no temporary file, and speck run keeps going', async () => {
+  const r = runRepo({ tickets: [['0001', {}]] });
+  const run = startRun(r.dir, { FAKE_MS: '1500' });
+  try {
+    assert.ok(await until(() => r.calls().length === 1 && record(r.dir, '0001').pid), run.out());
+    fs.writeFileSync(runsPath(r.dir, '0001.json'), '{broken');
+    assert.ok(await until(() => /0001[^\n]*couldn't save its exit/.test(run.out())), run.out());
+    assert.equal(run.child.exitCode, null, 'still running');
+    assert.doesNotMatch(run.out(), /at .*\.mjs:\d+/);
+    assert.deepEqual(fs.readdirSync(runsPath(r.dir, '')).filter(f => f.endsWith('.tmp')), []);
+    assert.equal(fs.readFileSync(runsPath(r.dir, '0001.json'), 'utf8'), '{broken', 'left as it was');
   } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
 });
