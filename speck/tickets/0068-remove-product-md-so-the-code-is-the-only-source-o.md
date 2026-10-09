@@ -1,7 +1,7 @@
 ---
 id: "0068"
 title: "Remove product.md so the code is the only source of truth"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T20:42:50.070Z"
 ---
 # 0068 · Remove product.md so the code is the only source of truth
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck/product.md` has grown to about 400 lines that restate in prose what the code already does, and almost every ticket has to edit it. That costs each build and review round time on wording, and because every branch touches the same file, an uncommitted edit to it in the base checkout blocks ships (as it did for 0058).
@@ -49,9 +49,15 @@ speck no longer has a living spec. The code, the tickets and the tests are the r
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Updating speck during an existing review leaves the old cached round-1 prompt active.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 880,782
+- Elapsed since build started: 8 min
+- Changed lines: 155 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Existing projects keep an AGENTS.md speck section that says to read `speck/product.md` first, because `speck init` doesn't rewrite a section an older version wrote. Saved to the inbox: `speck/ideas/2026-10-09-refresh-an-old-speck-pointer-in-agents-md.md`.
