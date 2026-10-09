@@ -50,11 +50,13 @@
   .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .run { color: var(--run); }
 
   /* Shaping */
-  .item { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .item { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
+  .item .head { margin: -10px -14px -10px -12px; padding: 10px 14px 10px 12px; } /* the item's padding opens and closes it too */
   .item:last-child { border-bottom: 0; }
   .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
   .item.open { background: #26282d; border-left: 2px solid var(--accent); padding-left: 12px; }
-  .detail { grid-column: 1 / -1; margin-top: 6px; border-top: 1px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
+  .detail { margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
   .detail h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
   .detail p { margin: 0 0 8px; color: #bfc2c9; }
   .detail ol { margin: 0; padding-left: 18px; color: #bfc2c9; }
@@ -113,8 +115,8 @@
   .toggle.ideas.on { color: var(--idea); border-color: var(--idea); position: relative; z-index: 1; }
   #shaping-section.tickets { border-top: 2px solid var(--accent); }
   #shaping-section.ideas { border-top: 2px solid var(--idea); }
-  .item.ticket { border-left: 2px solid var(--accent); padding-left: 12px; cursor: pointer; }
-  .item.idea { border-left: 2px solid var(--idea); padding-left: 12px; cursor: pointer; }
+  .item.ticket { border-left: 2px solid var(--accent); padding-left: 12px; }
+  .item.idea { border-left: 2px solid var(--idea); padding-left: 12px; }
   .item.ticket:hover, .item.idea:hover { background: #26282d; }
   .item.idea.open { border-left-color: var(--idea); }
   .note { margin: 0; font: 12px/1.5 "Liberation Mono", monospace; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -252,7 +254,7 @@ const list = v => (Array.isArray(v) ? v : []);
 
 function ticketItem(t) {
   const isOpen = open.has(t.id);
-  const item = el('div', `item ticket${isOpen ? ' open' : ''}`, null, tags(t), el('span'));
+  const head = el('div', 'head', null, tags(t), el('span'));
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
   const checks = el('div', 'checks');
@@ -260,10 +262,10 @@ function ticketItem(t) {
   if (lint.errors) checks.appendChild(check('bad', false, `lint: ${plural(lint.errors, 'error')}`));
   else checks.appendChild(check('ok', true, 'lint passes'));
   if (lint.warnings) checks.appendChild(check('warn', false, plural(lint.warnings, 'warning')));
-  item.appendChild(checks);
-  if (isOpen) item.appendChild(ticketDetail(t, criteria));
-  item.addEventListener('click', () => flip(open, t.id));
-  return item;
+  head.appendChild(checks);
+  // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
+  head.addEventListener('click', () => flip(open, t.id));
+  return el('div', `item ticket${isOpen ? ' open' : ''}`, null, head, isOpen ? ticketDetail(t, criteria) : null);
 }
 // An open ticket: its sections, then a readiness list from what speck can check.
 function ticketDetail(t, criteria) {
@@ -310,7 +312,7 @@ function setReadyButton(t, lintErrors) {
   b.disabled = pending || lintErrors > 0;
   if (lintErrors > 0) b.title = `Fix the lint ${lintErrors === 1 ? 'error' : 'errors'} first: a ticket that fails lint can't be ready.`;
   b.addEventListener('click', e => {
-    e.stopPropagation(); // the click is for the button, not the row that opens and closes the ticket
+    e.stopPropagation(); // the click is for the button, not the ticket
     if (b.disabled) return;
     setReady(t.id);
   });
@@ -335,11 +337,10 @@ async function setReady(id) {
 }
 function ideaItem(i) {
   const isOpen = openIdeas.has(i.path);
-  const item = el('div', `item idea${isOpen ? ' open' : ''}`, null, el('div', 'row', null, el('span', 'id', 'idea'), el('span', 'title', i.title)), el('span'),
+  const head = el('div', 'head', null, el('div', 'row', null, el('span', 'id', 'idea'), el('span', 'title', i.title)), el('span'),
     el('div', 'checks', null, el('span', null, i.status ? i.status : 'no status'), el('span', 'mono', i.path)));
-  if (isOpen) item.appendChild(el('div', 'detail', null, el('pre', 'note', typeof i.body === 'string' ? i.body : '')));
-  item.addEventListener('click', () => flip(openIdeas, i.path));
-  return item;
+  head.addEventListener('click', () => flip(openIdeas, i.path));
+  return el('div', `item idea${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, el('pre', 'note', typeof i.body === 'string' ? i.body : '')) : null);
 }
 function shapingToggle(m) {
   const button = (view, label, n) => {

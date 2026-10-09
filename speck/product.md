@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: 0045
+Last updated by ticket: 0039
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents.
@@ -79,11 +79,14 @@ Everything happens in the local repo, with no PR.
     The server writes nothing else.
     The page, in the dark style of `docs/panel-mockup.html`, has a header with the repo, the base branch and the connection status, and shows **Shaping**, with a Tickets / Ideas toggle (Tickets when the page loads) that shows one list at a time, tickets in blue and ideas in purple on the toggle, the section's top edge and each item's left edge.
     **Tickets** lists drafts in the JSON's order with their id, title, priority, size, risk, criteria count and lint result.
-    Clicking one opens it: its problem, outcome, numbered acceptance criteria, out of scope and notes (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors.
+    Clicking that top row opens it: its problem, outcome, numbered acceptance criteria, out of scope and notes (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors.
     Clicking the button doesn't close the ticket.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
-    Clicking the ticket again closes it.
-    **Ideas** lists every idea, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking one shows its note text under it.
+    Clicking the top row again closes it.
+    Clicking or selecting text in an open ticket's details leaves it open.
+    **Ideas** lists every idea, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
+    Clicking or selecting text in the note leaves it open.
+    More than one ticket or idea can be open at once.
     The list showing and what's open survive the refresh and are never sent to the server.
     Then the **Queue**, one list with no groups: in-flight tickets (`building`, `reviewing`, `blocked`, `approved`) first, then `ready` ones, each in the JSON's order.
     Every ticket in it has a five-step bar, Build, Self-check, Review, Approve and Ship: Build is done once `self_check` is set or the ticket has a review round, Self-check once it has a review round or has `self_check` while `reviewing`, Review and Approve once it's `approved` (Ship is then the current step, whatever else is done), and otherwise the current step is the first one not done.

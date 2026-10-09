@@ -94,8 +94,8 @@ export function fakePage(responses) {
       get: () => n._text + n.children.map(c => c.textContent).join(''),
       set: v => { n.children = []; n._text = String(v); },
     });
-    n.appendChild = c => { n.children.push(c); return c; };
-    n.replaceChildren = (...cs) => { n._text = ''; n.children = cs; };
+    n.appendChild = c => { c.parentNode = n; n.children.push(c); return c; };
+    n.replaceChildren = (...cs) => { n._text = ''; for (const c of cs) c.parentNode = n; n.children = cs; };
     n.addEventListener = (type, fn) => { n.listeners[type] = fn; };
     return n;
   };
@@ -130,6 +130,7 @@ export const idea = (name, status, body = `# ${name}\n\nStatus: ${status}\n\nSom
 export const click = n => n.listeners.click({ stopPropagation() {} });
 export const toggles = p => p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click);
 export const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test(n.className));
+export const top = item => item.children.find(n => /\bhead\b/.test(n.className)); // an item's top row, which opens and closes it (0039)
 
 export const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
 export const stagesOf = row => (function find(n) { if (/\bstages\b/.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);

@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, stagesOf, stepText, stepState, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, nowStep, findText } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, stagesOf, stepText, stepState, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, nowStep, findText, top } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -430,7 +430,7 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
   for (const s of ['Third', 'P1', 'M', 'high', '2 criteria', 'lint: 1 error', '1 warning']) assert.ok(first.includes(s), s);
   assert.ok(list[1].textContent.includes('3 criteria') && list[1].textContent.includes('lint passes'));
 
-  click(list[0]);
+  click(top(list[0]));
   let open = items(p)[0].textContent;
   for (const s of ['Problem', 'Problem of 0003.', 'Outcome', 'Outcome of 0003.', 'Acceptance criteria', 'One.', 'Two.', 'Out of scope', '- Not this.',
     'Notes', '- A note.', 'Readiness', 'Size M, risk high', '2 criteria', lint.errors[0], lint.warnings[0], '0002 done', '0009 not done'])
@@ -441,11 +441,11 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
 
   p.timers.shift()(); await p.settle();
   assert.ok(items(p)[0].textContent.includes('Readiness'), 'stays open through a refresh');
-  click(items(p)[1]);
+  click(top(items(p)[1]));
   open = items(p)[1].textContent;
   assert.ok(open.includes('lint passes'), 'no lint messages');
   assert.ok(!open.includes('Problem of'), 'a missing section is not filled in');
-  click(items(p)[0]);
+  click(top(items(p)[0]));
   assert.ok(!items(p)[0].textContent.includes('Readiness'), 'clicking again closes it');
   p.timers.shift()(); await p.settle();
   assert.ok(!items(p)[0].textContent.includes('Readiness'), 'stays closed');
@@ -458,16 +458,16 @@ test('0033 AC5: the Ideas list shows every idea, not-ticketed first, and clickin
   await p.settle();
   click(toggles(p)[1]);
   const list = items(p);
-  const titles = list.map(n => n.children[0].textContent);
+  const titles = list.map(n => top(n).children[0].textContent);
   assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'No status', 'Done one', 'Later']);
   assert.ok(list[0].textContent.includes('idea') && list[2].textContent.includes('ticketed (0001)'), 'each with its status');
   assert.ok(!list[1].textContent.includes('Just'), 'closed by default');
-  click(list[1]);
+  click(top(list[1]));
   assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');
   assert.ok(!p.all(items(p)[1]).some(n => n.tagName === 'i'));
   p.timers.shift()(); await p.settle();
   assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'still open after a refresh');
-  click(items(p)[1]);
+  click(top(items(p)[1]));
   assert.ok(!items(p)[1].textContent.includes('Just'), 'clicking again closes it');
 });
 
@@ -699,7 +699,7 @@ test('0042 AC1: an open draft has a Set ready button, disabled with the reason w
   const p = fakePage([state, state]);
   await p.settle();
   assert.equal(button(items(p)[0]), null, 'no button while closed');
-  click(items(p)[0]); click(items(p)[1]);
+  click(top(items(p)[0])); click(top(items(p)[1]));
   const [a, b] = items(p).map(button);
   assert.ok(a && b);
   assert.equal(a.textContent, 'Set ready');
@@ -714,7 +714,7 @@ test('0042 AC2: clicking Set ready posts with the token, keeps the ticket open, 
   const ready = { tickets: [T('0002', 'ready')], ideas: [] };
   const p = fakePage([draft, { ok: true, id: '0002' }, ready]);
   await p.settle();
-  click(items(p)[0]);
+  click(top(items(p)[0]));
   let stopped = false;
   button(items(p)[0]).listeners.click({ stopPropagation() { stopped = true; } });
   await p.settle();
@@ -733,7 +733,7 @@ test('0042 AC3: a refusal shows its reason under the button, and it stays throug
   const reason = 'Not ready:\n  ✗ size L can never be ready: split it into sibling tickets.';
   const p = fakePage([draft, { status: 422, body: { error: reason } }, draft]);
   await p.settle();
-  click(items(p)[0]);
+  click(top(items(p)[0]));
   click(button(items(p)[0]));
   await p.settle();
   assert.ok(items(p)[0].textContent.includes(reason));
