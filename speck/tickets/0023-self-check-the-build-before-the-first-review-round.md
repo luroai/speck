@@ -1,7 +1,7 @@
 ---
 id: "0023"
 title: "Self-check the build before the first review round"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0023 · Self-check the build before the first review round
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 In 0012, 0013 and 0014, the first review round always came back with one blocking finding, and each was an edge case the builder could have found: input that's built in rather than missing (`constructor`), state carried between rounds, an error that dropped part of the output, a docs claim wider than the code. Each round costs 200k–500k reviewer tokens and several minutes.
