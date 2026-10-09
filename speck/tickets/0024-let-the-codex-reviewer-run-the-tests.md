@@ -2,7 +2,7 @@
 id: "0024"
 title: "Let the Codex reviewer run the tests"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 2              # 1 (highest) to 5
+priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 builder: claude

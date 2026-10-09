@@ -139,15 +139,24 @@ export function setField(text, key, value) {
 }
 
 const blank = v => v === undefined || v === null || String(v).trim() === '';
-// A ticket's type: null when it's missing or blank, otherwise its value ("bug" is the only valid one).
-// A bare `type:` parses as an empty mapping, just like `type: {}`, so the frontmatter line itself says which it was.
-function ticketType(ticket) {
-  const v = ticket.fm.type;
+// A frontmatter field's value: null when it's missing or blank, otherwise its value.
+// A bare `key:` parses as an empty mapping, just like `key: {}`, so the frontmatter line itself says which it was.
+function fieldValue(ticket, key) {
+  const v = ticket.fm[key];
   if (v === undefined || v === null || (typeof v === 'string' && !v.trim())) return null;
-  const line = ticket.raw.slice(0, fmEnd(ticket.raw)).match(/^type:(.*)$/m);
+  const line = ticket.raw.slice(0, fmEnd(ticket.raw)).match(new RegExp(`^${key}:(.*)$`, 'm'));
   const empty = v && typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length;
   return empty && line && stripComment(line[1]).trim() === '' ? null : v;
 }
+// A ticket's type: null or its value ("bug" is the only valid one).
+const ticketType = ticket => fieldValue(ticket, 'type');
+// A ticket's priority: null (none) or its value, which is valid only as a whole number from 1 to 5.
+const ticketPriority = ticket => fieldValue(ticket, 'priority');
+const validPriority = v => v === null || (Number.isInteger(v) && v >= 1 && v <= 5);
+// Lowest priority number first, no priority (or an invalid one) last, then by id. Takes { priority, id }.
+// (Infinity - Infinity is NaN, which falls through to the id.)
+const priorityRank = p => (Number.isInteger(p) ? p : Infinity);
+const byPriority = (a, b) => (priorityRank(a.priority) - priorityRank(b.priority)) || padId(a.id).localeCompare(padId(b.id));
 
 // The reviewer model and effort for a ticket: a ticket value wins, a blank one falls back to config, null means "reviewer's default".
 export function reviewerSettings(fm = {}, cfg = {}) {
@@ -267,6 +276,7 @@ export function lintTicket(ticket, cfg) {
   if (fm.size === 'L') errors.push('size L can never be ready: split it into sibling tickets.');
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
   if (ticketType(ticket) !== null && fm.type !== 'bug') errors.push(`type must be blank or bug (got "${fm.type}").`);
+  if (!validPriority(ticketPriority(ticket))) errors.push(`priority must be blank or a whole number from 1 to 5 (got ${JSON.stringify(fm.priority)}).`);
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
   if (fm.builder && modelFamily(fm.builder) === modelFamily(fm.reviewer) && !cfg.allow_same_model_review)
     errors.push(fm.builder === fm.reviewer
@@ -1120,7 +1130,10 @@ function cmdLint(args) {
 function cmdSet(args) {
   const [id, key, ...rest] = args;
   const value = rest.join(' ');
-  if (!id || !key || !value) throw new SpeckError('Usage: speck set <id> <field> <value>');
+  // priority is the one field that can be cleared, with `speck set <id> priority ""`.
+  if (!id || !key || (!value && !(key === 'priority' && rest.length))) throw new SpeckError('Usage: speck set <id> <field> <value>');
+  if (key === 'priority' && value !== '' && !/^[1-5]$/.test(value))
+    throw new SpeckError(`priority must be a whole number from 1 to 5, or "" to clear it (got ${JSON.stringify(value)}).`);
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
@@ -1667,6 +1680,17 @@ function buildPaused(runs, id) {
     && Number.isInteger(rec.pid) && rec.pid > 0 && mark.pid === rec.pid && mark.session === rec.session && pidAlive(rec.pid);
 }
 
+// True while a build launched by `speck run` is running, as `speck pause` sees it: its run record has no exit, and its
+// pid is alive and leads its own process group (`leads`).
+function buildRunning(runs, id, leads) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return false;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return false; }
+  return !!rec && typeof rec === 'object' && !Array.isArray(rec) && !Object.hasOwn(rec, 'exited')
+    && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid) && leads(rec.pid);
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
@@ -1676,6 +1700,9 @@ export function statusData(repo) {
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   const runs = path.join(main, 'speck', '.cache', 'runs');
+  // Whether a pid leads its own process group, as a build speck run launched does. ps runs once, and only if needed.
+  let rows = null;
+  const leads = pid => { try { rows ??= processRows(); } catch { rows = []; } return rows.some(([p, , g]) => p === pid && g === pid); };
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const question = contentLines(t.sections['blocked question']).join('\n');
@@ -1684,6 +1711,7 @@ export function statusData(repo) {
     return {
       ...t.fm,
       type: ticketType(t),
+      priority: ticketPriority(t),
       path: posix(path.relative(t.at || repo, t.file)),
       worktree: t.at || null,
       acceptance_criteria: criteriaText(t.sections['acceptance criteria']),
@@ -1706,11 +1734,10 @@ export function statusData(repo) {
       build_exit: buildExit(runs, t.fm.id),
       session: buildSession(runs, t.fm.id),
       paused: buildPaused(runs, t.fm.id),
+      build_running: buildRunning(runs, t.fm.id, leads),
     };
   });
-  // Lowest priority number first, no priority last, then by id. (Infinity - Infinity is NaN, which falls through to the id.)
-  const rank = e => (typeof e.priority === 'number' && Number.isFinite(e.priority) ? e.priority : Infinity);
-  entries.sort((a, b) => (rank(a) - rank(b)) || padId(a.id).localeCompare(padId(b.id)));
+  entries.sort(byPriority);
   const dir = path.join(repo, 'speck', 'ideas');
   const ideas = (fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.md')).sort() : []).map(f => {
     const text = fs.readFileSync(path.join(dir, f), 'utf8');
@@ -1728,11 +1755,11 @@ function cmdStatus(args = []) {
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
-    const group = tickets.filter(t => t.fm.status === s).sort((a, b) => (a.fm.priority ?? 9) - (b.fm.priority ?? 9));
+    const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, priority: ticketPriority(t) })).sort(byPriority);
     if (!group.length) continue;
     console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' ? ': waiting for you. Read `speck pack <id>`, then run /speck-ship <id>' : ''}`);
-    for (const t of group) {
-      console.log(`  ${t.fm.id}${t.fm.type === 'bug' ? ' bug' : ''}  P${t.fm.priority ?? '-'}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
+    for (const { t, priority } of group) {
+      console.log(`  ${t.fm.id}${t.fm.type === 'bug' ? ' bug' : ''}  P${priority === null ? '-' : typeof priority === 'object' ? JSON.stringify(priority) : priority}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
       if (s === 'blocked') {
         const q = contentLines(t.sections['blocked question']).join(' ');
@@ -1782,6 +1809,14 @@ function panelSetReady(repo, id) {
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   return { status: 200, body: { ok: true, id: pad } };
+}
+
+// The panel's pause and play icon: pauses or plays a build exactly as `speck pause <id>` or `speck play <id>` does,
+// refusing for the same reasons with the same words.
+function panelPausePlay(repo, id, what) {
+  try { findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
+  try { return { status: 200, body: { ok: true, message: (what === 'pause' ? pauseBuild : playBuild)(repo, [id]) } }; }
+  catch (e) { if (e instanceof SpeckError) return { status: 409, body: { error: e.message } }; throw e; }
 }
 
 // The panel's other write: set a draft ticket's priority, as `speck set <id> priority <n>` does, and commit only that
@@ -1884,8 +1919,8 @@ function codeHash() {
   return h.digest('hex');
 }
 
-// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the two writes,
-// POST /api/tickets/<id>/ready and POST /api/tickets/<id>/priority/<n>. Every request reads the files afresh, the page
+// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the writes,
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n> and POST /api/tickets/<id>/pause or /play. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -1940,6 +1975,15 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelSetPriority(repo, priority[1], priority[2]);
+        return send(res, out.status, 'application/json', JSON.stringify(out.body));
+      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    const toggle = where.match(/^\/api\/tickets\/(\d{1,4})\/(pause|play)$/);
+    if (req.method === 'POST' && toggle) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      try {
+        const out = panelPausePlay(repo, toggle[1], toggle[2]);
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
@@ -2333,9 +2377,10 @@ function saveRecord(file, rec) {
   catch (e) { fs.rmSync(tmp, { force: true }); throw e; }
 }
 
-// Stops the build, then marks it paused. If either fails, whatever it stopped is carried on again.
-function cmdPause(args) {
-  const b = runRecord(findRepoRoot(), args, 'pause');
+// Stops the build, then marks it paused. If either fails, whatever it stopped is carried on again. Returns what it
+// did, for `speck pause` to print and the panel's pause icon to answer with.
+function pauseBuild(repo, args) {
+  const b = runRecord(repo, args, 'pause');
   if (!b.running) throw new SpeckError(`${b.id} has no running build launched by speck run, so there's nothing to pause.`);
   if (b.paused) throw new SpeckError(`${b.id} is already paused. Run \`speck play ${b.id}\` to carry it on.`);
   const { sent, error } = signalBuild(b, 'SIGSTOP');
@@ -2344,20 +2389,22 @@ function cmdPause(args) {
     carryOn(sent);
     throw new SpeckError(`Couldn't mark ${b.id} paused in ${b.mark} (${e.message}), so it's still running.`);
   }
-  console.log(`${b.id} paused (session ${b.rec.session ?? 'unknown'}). Run \`speck play ${b.id}\` to carry it on.`);
+  return `${b.id} paused (session ${b.rec.session ?? 'unknown'}). Run \`speck play ${b.id}\` to carry it on.`;
 }
+function cmdPause(args) { console.log(pauseBuild(findRepoRoot(), args)); }
 
 // Carries the build on, then drops the paused mark. Until both have worked it stays marked paused, so play can be run again.
-function cmdPlay(args) {
-  const b = runRecord(findRepoRoot(), args, 'play');
+function playBuild(repo, args) {
+  const b = runRecord(repo, args, 'play');
   if (!b.paused) throw new SpeckError(`${b.id} isn't paused, so there's nothing to play.`);
   const { error } = signalBuild(b, 'SIGCONT');
   if (error) throw new SpeckError(`Couldn't play ${b.id}: ${error} It may be only partly playing, so it's still marked paused. Run \`speck play ${b.id}\` again.`);
   try { fs.rmSync(b.mark, { force: true }); } catch (e) {
     throw new SpeckError(`${b.id} is playing, but its paused mark ${b.mark} couldn't be removed (${e.message}). Run \`speck play ${b.id}\` again.`);
   }
-  console.log(`${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`);
+  return `${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`;
 }
+function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
 
 // ---------- stop (end a build speck run launched for good, and block its ticket) ----------
 
@@ -2674,7 +2721,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck doctor                        check that git, GitHub, Claude Code and Codex are ready
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
-  speck set <id> <field> <value>      update a ticket field (status ready runs lint first)
+  speck set <id> <field> <value>      update a ticket field (status ready runs lint first; priority "" clears it)
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)

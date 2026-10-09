@@ -1,7 +1,7 @@
 ---
 id: "0073"
 title: "Stop a build from its open queue row"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0073 · Stop a build from its open queue row
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Stopping a build for good with `speck stop` (0072) means leaving the panel for a terminal. It's also the one control that ends a build, so it shouldn't sit where a stray click hits it.
