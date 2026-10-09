@@ -1,7 +1,7 @@
 ---
 id: "0026"
 title: "Pre-check every ticket before it goes ready"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T09:41:07.148Z"
 ---
 # 0026 · Pre-check every ticket before it goes ready
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Two kinds of ticket problem cost review rounds and builder time. A criterion that can be read two ways leads to a dispute: 0012's "send the full round-1 prompt again" did. An external fact written into a ticket can be stale by build time: 0014 named Cursor's CLI `cursor-agent`, and its docs now call it `agent`.
@@ -40,10 +40,15 @@ Before a ticket is presented for approval, the agent checks it for criteria with
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 recording a checked fact edited the ticket before the clean-tree check, so the build would trip over its own change. Round 2 (codex): approved, with checks recorded on the branch in the start commit.
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Review rounds: 2 (codex, `gpt-6.1-sol`), with 360,208 reviewer tokens.
+- Elapsed: about 4 minutes from start to approval (from `speck pack`).
+- Changed lines: 14 (excluding tests and `speck/`), against a limit of 5,000.
+- The self-check (0023) caught one claim narrower than AC3 before review. It didn't catch F1, an ordering problem between steps; "State over time" covers it in spirit, but an explicit "do the steps still work in the order written?" item may be worth adding.
+- Follow-up ideas:
+  - Add "steps in order: does each step leave the state the next one expects?" to the self-check list.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -105,6 +110,69 @@ Before a ticket is presented for approval, the agent checks it for criteria with
     },
     "escalation_question": "",
     "summary": "The ticket adds the requested ambiguity and external-fact checks, with tests covering the instructions. One workflow defect needs fixing: recording a successful fact check changes the ticket before the build requires a clean working tree. Move that recording onto the ticket branch so a successful check can proceed into development."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "aa8f093fb24e0ab6ad5cb200c44a5f39fc16426a",
+    "thread_id": "01a1200b-a98c-76f0-bd2e-e6f5a503d26d",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 235318,
+      "cached_input_tokens": 177024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1413,
+      "reasoning_output_tokens": 59
+    },
+    "saved_at": "2026-10-09T09:45:06.858Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 6 checks each criterion for differing builder/reviewer interpretations and requires rewriting or asking the user before presentation. Test '0026 AC1' covers the instructions and ordering; supplied test output reports pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 6 lists external fact categories, requires checking against current documentation or the installed tool where possible, and records dated Checked or Unverified entries in Notes. Test '0026 AC2' covers these requirements; supplied test output reports pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md pre-flight step 3 rechecks Unverified facts without edits and stops to inform the user if any are wrong. Steps 4–5 create the branch before recording checks in the start commit. Updated test '0026 AC3' covers the stop requirement and recording order; supplied test output reports pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-build/SKILL.md:16",
+        "issue": "Resolved: verification now leaves the checkout untouched, and successful checks are recorded only after creating the ticket branch, in the start commit.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The ticket pre-check capability matches the revised skills and accurately describes checking as instruction-based rather than CLI automation."
+    },
+    "escalation_question": "",
+    "summary": "Tickets now receive ambiguity and external-fact checks before presentation, and builds recheck unverified facts before proceeding. The workflow ordering problem is fixed. All acceptance criteria pass, with no blocking concerns remaining."
   }
 }
 ```
