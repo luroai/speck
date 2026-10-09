@@ -1054,3 +1054,74 @@ test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and s
   assert.match(p.byId('shipped').textContent, /Nothing shipped yet/);
   assert.match(page().match(/<style>([\s\S]*?)<\/style>/)[1], /\.stats\[hidden\] \{ display: none; \}/, 'hidden wins over display: flex');
 });
+
+// ---------- 0045: flag a build that finished without shipping ----------
+
+const exitOf = (message = 'speck ship refused: speck/config.yml has an uncommitted change.') => ({ build_exit: { at: '2026-10-09T14:55:00.000Z', code: 0, message } });
+const isRed = n => /\b(bad|blocked)\b/.test(n.className || '');
+const nowStep = row => stagesOf(row).children.find(s => /\bnow\b/.test(s.className));
+const findText = (p, row, text) => p.all(row).find(n => n._text === text);
+
+test('0045 AC3: an approved ticket with a build_exit is red on its left edge and current step, with the label and message as text', async () => {
+  const message = 'Line one\n<b>not bold</b>\nShip refused.';
+  const state = { tickets: [T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(message) }), T('0002', 'approved', { rounds: [round(1, 1)], build_exit: null })], ideas: [] };
+  const m = panelModel()(state);
+  assert.deepEqual(m.queue.map(t => t.red), [true, false]);
+  assert.deepEqual(m.queue.map(t => t.exit_label), ['Build finished without shipping', null]);
+  const p = fakePage([state]);
+  await p.settle();
+  const [a, b] = queueRows(p);
+  assert.match(a.className, /\bblocked\b/);
+  assert.equal(nowStep(a).textContent, 'Ship');
+  assert.match(nowStep(a).className, /\bbad\b/);
+  assert.equal(stagesOf(a).children.filter(isRed).length, 1, 'only the current step');
+  assert.ok(findText(p, a, 'Build finished without shipping'), 'the label');
+  assert.ok(findText(p, a, message), 'the message, as one text node with the HTML left as text');
+  const text = a.textContent;
+  assert.ok(text.indexOf('Build finished without shipping') < text.indexOf(message), 'the message is under the label');
+  // AC3: an approved ticket with no build_exit looks as it does now.
+  assert.ok(!p.all(b).some(isRed));
+  assert.ok(!b.textContent.includes('without shipping'));
+});
+
+test('0045 AC3: a build_exit with no message shows just the label', async () => {
+  const state = { tickets: [T('0001', 'approved', exitOf(null))], ideas: [] };
+  const p = fakePage([state]);
+  await p.settle();
+  const [a] = queueRows(p);
+  assert.match(a.className, /\bblocked\b/);
+  assert.ok(a.textContent.includes('Build finished without shipping'));
+  assert.ok(!a.textContent.includes('null'));
+});
+
+test('0045 AC4: a building or reviewing ticket with a build_exit says the build stopped before finishing', async () => {
+  const state = { tickets: [T('0001', 'building', exitOf('Stopped here.')), T('0002', 'reviewing', { self_check: 'x', rounds: [round(1, 1)], ...exitOf('Out of turns.') })], ideas: [] };
+  const m = panelModel()(state);
+  assert.deepEqual(m.queue.map(t => t.red), [true, true]);
+  assert.deepEqual(m.queue.map(t => t.exit_label), ['Build stopped before finishing', 'Build stopped before finishing']);
+  const p = fakePage([state]);
+  await p.settle();
+  const [a, b] = queueRows(p);
+  for (const [row, msg, step] of [[a, 'Stopped here.', 'Build'], [b, 'Out of turns.', 'Review 1']]) {
+    assert.match(row.className, /\bblocked\b/);
+    assert.equal(nowStep(row).textContent, step);
+    assert.match(nowStep(row).className, /\bbad\b/);
+    assert.ok(findText(p, row, 'Build stopped before finishing'));
+    assert.ok(findText(p, row, msg));
+    assert.ok(!row.textContent.includes('without shipping'));
+  }
+});
+
+test('0045 AC5: blocked, ready and tickets with no build_exit look as they do now', async () => {
+  const plain = { tickets: [T('0001', 'blocked', { blocked_question: 'A or B?' }), T('0002', 'ready'), T('0003', 'building'), T('0004', 'reviewing'), T('0005', 'approved')], ideas: [] };
+  const withExit = { tickets: plain.tickets.map((t, i) => (i < 2 ? { ...t, ...exitOf('Should not show.') } : { ...t, build_exit: null })), ideas: [] };
+  const model = panelModel();
+  const strip = m => m.queue.map(({ build_exit, ...t }) => t);
+  assert.deepEqual(strip(model(withExit)), strip(model(plain)), 'the same model, apart from the build_exit field itself');
+  assert.deepEqual(model(withExit).queue.map(t => t.red), [true, false, false, false, false]);
+  const render = async state => { const p = fakePage([state]); await p.settle(); return queueRows(p).map(r => ({ cls: r.className, text: r.textContent, red: p.all(r).filter(isRed).length })); };
+  assert.deepEqual(await render(withExit), await render(plain));
+  const rows = await render(withExit);
+  assert.ok(!rows.some(r => /Should not show|without shipping|before finishing/.test(r.text)));
+  assert.ok(rows[0].text.includes('A or B?'), 'a blocked ticket still shows its question');
+});

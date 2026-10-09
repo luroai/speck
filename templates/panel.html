@@ -83,6 +83,7 @@
   .act b { color: #a9adb6; font-weight: 400; }
   .q.blocked { border-left: 2px solid var(--bad); padding-left: 12px; }
   .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
+  .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: ui-monospace, monospace; font-size: 12px; }
   .q .tag.high { color: var(--warn); border-color: #5a4529; }
   .next { color: var(--ok); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #36513d; padding: 0 5px; }
 
@@ -199,7 +200,12 @@ function panelModel(state) {
     // One list: in-flight tickets, then ready ones, each group in JSON order.
     queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(t => {
       const inFlight = t.status !== 'ready', start = time(t.started);
-      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked', waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [],
+      // A build from speck run that has exited while its ticket is still in hand needs you, as a blocked ticket does.
+      const exited = t.build_exit && typeof t.build_exit === 'object' && t.status !== 'blocked';
+      const exit_label = !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+        : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
+      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label,
+        exit_message: exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null, waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [],
         minutes: inFlight && start !== null ? Math.max(0, Math.floor((Date.now() - start) / 60000)) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
@@ -345,7 +351,7 @@ function shapingToggle(m) {
   $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length));
   $('shaping-section').className = `shaping ${shapingView}`;
 }
-// A queue row: the ticket, its five-step bar, then what's under it. Only a blocked ticket is red.
+// A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t), el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : '')));
@@ -356,8 +362,12 @@ function queueItem(t) {
     q.appendChild(el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : '')));
     return q;
   }
-  if (t.red && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
-  q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.red ? ` · answer the question, then run /speck-build ${t.id}` : '')));
+  if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
+  if (t.exit_label) {
+    q.appendChild(el('div', 'act bad', t.exit_label));
+    if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
+  }
+  q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
   if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
   return q;
 }

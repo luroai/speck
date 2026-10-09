@@ -44,6 +44,8 @@ When a build from `speck run` has finished but its ticket hasn't shipped, the pa
 - With text output, `claude -p` prints only its final message, so the end of the log is the build's own summary of what happened.
 - Uses the run files from 0043. 0044 reads the same files, for a different field.
 - No external facts beyond the above, which was seen in 0035's log on this machine.
+- Run records are read from the main checkout's `speck/.cache/runs/` (where `speck run` keeps them), so `status --json` gives the same `build_exit` from a ticket's worktree.
+- Self-check: a failed exit write now removes its temporary file (test added); product.md now says a build that exits after its `speck run` has stopped is never flagged.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
