@@ -54,6 +54,9 @@ The full ticket pane holds the page still while it's open, and a click anywhere 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: `speck/ideas/2026-10-09-return-focus-after-the-full-ticket-pane-closes.md`: when the pane closes, the focus goes to the page body rather than back to the **Full ticket** button, so a keyboard user starts again from the top.
+- Known limit: the scroll lock is tested in headless Chromium only; touch scrolling in iOS Safari, which doesn't always honour `overflow: hidden` on the root, is untested.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +128,79 @@ The full ticket pane holds the page still while it's open, and a click anywhere 
     },
     "escalation_question": "",
     "summary": "Outside clicks, text selection and the usual closing methods are well covered. One keyboard gap remains: Tab can reach buttons behind the pane and move the background page. Fix that before merging. I inspected the code and tests; I did not rerun tests in the read-only environment."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8e315a402b1066c940b217a9fb97e78fdda10d69",
+    "thread_id": "01a1222b-b836-7701-ac1a-7721192b9f81",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 545273,
+      "cached_input_tokens": 424320,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1667,
+      "reasoning_output_tokens": 225
+    },
+    "saved_at": "2026-10-09T19:40:58.220Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: holdPage disables root scrolling and makes all background content inert; fullButton focuses the scrollable pane, whose overscroll-behavior prevents chaining. test/panel-0060.test.mjs exercises wheel, touch, scrolling keys, Tab and Shift+Tab in a real browser. Supplied output reports it passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "holdPage saves the opening scroll coordinates and restores them when released. The browser test verifies restoration after backdrop, Close, Escape and automatic closure when the ticket leaves the list."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The fixed backdrop intercepts outside clicks. The browser test clicks over a ticket row and the Ideas toggle, verifying closure without changing background state and leaving the list ticket open."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The backdrop listener closes only for clicks targeting the backdrop itself. The browser test verifies an inside click and a real text-selection drag ending outside both leave the pane open."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "closeFull, the Escape handler and renderFull preserve existing closure and refresh behaviour. Browser tests cover Close, Escape and two refreshes without closure or page movement; supplied output reports all tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Keyboard focus previously escaped into background controls, potentially scrolling or activating the page behind the pane.",
+        "suggested_fix": "Implemented: holdPage makes the header, offline banner and main inert while open and clears inert on closure. The browser regression test exercises repeated Tab and Shift+Tab navigation and checks focus, scroll position and background state.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated description matches the scroll lock, background focus isolation, outside-click closure and preserved refresh behaviour."
+    },
+    "escalation_question": "",
+    "summary": "The keyboard gap is fixed. The pane now holds the background still, blocks interaction behind it and closes safely on outside clicks while preserving the page position. All five criteria have meaningful test coverage, and the supplied run passed all 417 tests. Code inspected; tests were not rerun in the read-only environment."
   }
 }
 ```
