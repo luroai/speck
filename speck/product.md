@@ -16,6 +16,13 @@ Everything happens in the local repo, with no PR.
   It then asks whether to add to the existing item, go ahead anyway or stop, and writes nothing until you answer.
   If nothing overlaps, it says so in one line.
   Overlap is the agent's judgement, not a text match, and the check lives in the skill instructions only.
+- **Follow-ups to the inbox:** when a build writes follow-up ideas to the ticket's Delivery log (`/speck-build` section 5 step 1), it also writes each one that would need its own ticket (a behaviour change, a bug or a missing check) as its own inbox note, `speck/ideas/<YYYY-MM-DD>-<slug>.md`.
+  Each note uses the `/speck-capture` format, with `Captured: <date> · Status: inbox` and a `From ticket: <id>` line after its heading.
+  Tidy-ups and notes on known limits stay in the Delivery log only.
+  The build skips any follow-up that clearly duplicates an idea note, a ticket or a line in `product.md`, without asking, and lists each one it skipped with its match in the Delivery log.
+  It commits the notes on the ticket branch before `speck close`, so they ship with the ticket, and its final report says how many went to the inbox.
+  `/speck-review` sends minor findings that aren't fixed through the same step.
+  This lives in the skill instructions only.
 - **CLI** (`scripts/speck.mjs`, Node 20+, no dependencies):
   - `init`: one-step install and update, run as `npx github:luroai/speck init`.
     It creates `speck/`, copies the skills and the CLI (into `.speck/`) into the project, points AGENTS.md and CLAUDE.md at it, and runs `doctor`.
@@ -59,9 +66,10 @@ Everything happens in the local repo, with no PR.
     A ticket whose branch is checked out in another worktree is shown once, under the status in that worktree's copy (so an in-progress build no longer reads `ready` from the main checkout), with `↳ being built in <path>` on the line below.
     A bug ticket shows `bug` after its id.
     With no other worktrees, the output is unchanged), `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `reviewer-settings`, `diff` (the changes since the reviewer's last round, or the whole change after merging the base branch, as the reviewer sees them), `next` and `pack` (the review pack).
-  - `status --json`: prints everything `status` knows as one JSON object, `{"tickets": [...], "ideas": [...]}`, with nothing else on stdout, for programs such as the control panel.
+  - `status --json`: prints everything `status` knows as one JSON object, `{"tickets": [...], "ideas": [...], "resume_command": "..."}`, with nothing else on stdout, for programs such as the control panel.
     Tickets are the same ones the text output shows, each once (a ticket being built in another worktree comes from that worktree's copy), sorted by `priority` (no priority last) then id.
-    Each has every frontmatter field under its own name, plus `path` (relative to the checkout it was read from), `worktree` (that worktree's absolute path, or `null`), `acceptance_criteria` (each criterion's full text without its number, including wrapped lines and nested lists under it), `blocked_question` (or `null`), `lint` (`{errors, warnings}` counts from the same checks as `speck lint`), `lint_messages` (`{errors, warnings}` with the text of each message `speck lint` prints), `problem`, `outcome`, `out_of_scope` and `notes` (each section's text without template comments or leading and trailing empty lines, or `null` when nothing else is in it), `self_check` (the text after `Self-check:` on the first line of Notes that starts with it, a list marker such as `- ` allowed before it, or `null` if there's no such line or nothing after it), `rounds` (one `{round, reviewer, verdict, seconds, tokens}` per review round, with `seconds` `null` if not recorded and `tokens` the input plus output tokens, or `0`) `waiting_on` (the `after:` ids that aren't a `done` ticket, including ids with no ticket) and `build_exit` (how a build launched by `speck run` ended: `{at, code, message}` with `at` and `code` from its run record's `exited` and `exit_code`, and `message` the last 50 lines of its log with trailing blank lines dropped, or `null` when the log is missing or empty; `build_exit` itself is `null` when there's no run record, it can't be read or it has no `exited`).
+    Each has every frontmatter field under its own name, plus `path` (relative to the checkout it was read from), `worktree` (that worktree's absolute path, or `null`), `acceptance_criteria` (each criterion's full text without its number, including wrapped lines and nested lists under it), `blocked_question` (or `null`), `lint` (`{errors, warnings}` counts from the same checks as `speck lint`), `lint_messages` (`{errors, warnings}` with the text of each message `speck lint` prints), `problem`, `outcome`, `out_of_scope` and `notes` (each section's text without template comments or leading and trailing empty lines, or `null` when nothing else is in it), `self_check` (the text after `Self-check:` on the first line of Notes that starts with it, a list marker such as `- ` allowed before it, or `null` if there's no such line or nothing after it), `rounds` (one `{round, reviewer, verdict, seconds, tokens}` per review round, with `seconds` `null` if not recorded and `tokens` the input plus output tokens, or `0`) `waiting_on` (the `after:` ids that aren't a `done` ticket, including ids with no ticket) and `build_exit` (how a build launched by `speck run` ended: `{at, code, message}` with `at` and `code` from its run record's `exited` and `exit_code`, and `message` the last 50 lines of its log with trailing blank lines dropped, or `null` when the log is missing or empty; `build_exit` itself is `null` when there's no run record, it can't be read or it has no `exited`) and `session` (`{id, cwd}`, the session id and folder from the ticket's run record, or `null` when there's no run record, it can't be read or it lacks either).
+    `resume_command` is the setting from `speck/config.yml`, trimmed: `claude --resume {session}` when the setting is missing, and `""` when it's blank.
     Run records and logs are read from the main checkout's `speck/.cache/runs/`, wherever the command runs.
     `type` is `"bug"` for a bug ticket, or `null` when it's missing or blank.
     Ideas are each `.md` note in `speck/ideas/`, sorted by file name, with `path`, `title` (its first `# ` heading, or the file name) and `status` (its `Status:` value, or `null`) and `body` (the note's full text).
@@ -104,6 +112,10 @@ Everything happens in the local repo, with no PR.
     Every ticket in it has a five-step bar, Build, Self-check, Review, Approve and Ship: Build is done once `self_check` is set or the ticket has a review round, Self-check once it has a review round or has `self_check` while `reviewing`, Review and Approve once it's `approved` (Ship is then the current step, whatever else is done), and otherwise the current step is the first one not done.
     While a ticket has review rounds, the Review step reads "Review <n>", its latest round number.
     Red, on its left edge and its current step, marks a ticket that needs you: a `blocked` ticket, with its blocked question under it, and an `approved`, `building` or `reviewing` ticket with a `build_exit`, with "Build finished without shipping" (approved) or "Build stopped before finishing" (building or reviewing) and the build's last message under it, as text.
+    A `blocked` ticket with a `session` shows, under its question, the command that reopens its build's session, `cd <cwd> && <resume_command>`, with `{session}` replaced by the session id and the folder and id each in single quotes for a POSIX shell when they contain anything other than letters, digits, `/`, `.`, `_` and `-`.
+      A Copy button beside it copies that exact text and says "Copied" for 2 seconds, or says it couldn't copy when the browser refuses.
+      With `resume_command` blank it shows only "session <id>", with no button.
+      A blocked ticket with no `session` shows nothing extra.
     Nothing else is red: a `blocked` or `ready` ticket with a `build_exit` looks as it would without one.
     A `ready` ticket shows "Queued", a bar with no step done or current and "waiting on <ids>" when it's waiting on any, or "unlocks <ids>" when it starts a chain.
     In-flight tickets show their worktree path, when they have one, and the whole minutes since `started`, when it's set.
@@ -124,7 +136,7 @@ Everything happens in the local repo, with no PR.
     It refuses if the ticket has no `## Review log` or `## Delivery log` heading.
     It never merges or pushes.
   - `ship`: the user's gate.
-    It refuses, changing nothing, unless the ticket is `approved`, the review loop says ship, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/` (even if later reverted), and `commands.test` is set and passes.
+    It refuses, changing nothing, unless the ticket is `approved`, the review loop says ship, the ticket's folder is clean, no commit after the reviewer's approval touched files outside `speck/` (even if later reverted), and `commands.test` is set and passes.
     If the base branch has a remote, it fetches it first: new remote commits are brought in before merging, and if local and remote have both moved on it refuses and says to `git pull`.
     Then it sets the ticket to `done` on its branch, merges into the base branch with a merge commit, deletes the local branch and pushes the base branch if it has a remote.
     Once that push succeeds, it also deletes the ticket branch on the remote if it's there.
@@ -132,7 +144,6 @@ Everything happens in the local repo, with no PR.
     A merge conflict is aborted and leaves everything as it was, and speck names the conflicting files and exits with 13.
     It also names what to merge into the ticket branch: the base branch, or its remote copy (for example `origin/main`) when it had just fetched new commits from the remote, since the undo leaves the local base branch without them.
     Every other refusal keeps its own code.
-    If tracked files in the base branch's checkout gain uncommitted changes while the tests run, it refuses before merging, names them and leaves them as they were.
     A merge that would overwrite uncommitted changes is reported as that, naming the files, not as a conflict.
     When a merge fails, the undo puts back any uncommitted changes to tracked files in the base checkout and the ticket's worktree, staged or not.
     If they can't go back in place, they're saved in git's stash and speck says to run `git stash pop --index` in that folder.
@@ -140,7 +151,9 @@ Everything happens in the local repo, with no PR.
     If not, it changes nothing, says why and exits with 12.
   - **Shipping across worktrees:** when the ticket branch is checked out in another git worktree, `ship` works from either folder.
     The checks, tests and ship commit happen in the ticket's worktree, and the merge happens where the base branch is checked out, so that checkout ends up with the merged files.
-    It refuses, changing nothing, if that checkout has uncommitted changes to tracked files, if the ticket's worktree isn't clean, or if its folder is missing (with a hint to run `git worktree prune`).
+    It refuses, changing nothing, if the ticket's worktree isn't clean, or if its folder is missing (with a hint to run `git worktree prune`).
+    Uncommitted edits in the base checkout don't block it, so you can keep editing ideas and tickets there while builds ship: they stay there, uncommitted and out of the merge.
+    It refuses only when that checkout has staged changes (git won't merge over them, even in other files) or uncommitted edits to a file the ticket's branch changes, checked before and again after the tests, naming each file and why, and leaving them as they were.
     Untracked files in the base checkout only block it when the merge would overwrite them, and speck names them.
     If the base branch isn't checked out anywhere, the merge happens in the ticket's worktree.
     After shipping, the ticket's worktree is removed; if ship ran from inside it, it says so and prints where the base branch is checked out.
@@ -168,6 +181,7 @@ Everything happens in the local repo, with no PR.
   `speck run` checks the tickets every 5 seconds and launches a build for each `ready` ticket whose `waiting_on` is empty, in `speck status` order (priority, then id), while fewer than `max_parallel_builds` (in `speck/config.yml`, default 1, a whole number of at least 1) of the builds it launched or found running are still running.
   Each build runs `build_command` from `speck/config.yml` from the repo root, without a shell and with stdin empty, with `{id}` replaced by the ticket id and `{session}` by a fresh UUID.
   The config template's default is `claude -p "/speck-build {id}" --session-id {session} --dangerously-skip-permissions`.
+  `resume_command` in `speck/config.yml` (`claude --resume {session}` in the config template) is what the panel shows to reopen a blocked build's session, run from the folder `speck run` launched it from, since Claude Code keeps sessions by the folder they started in.
   For each build it writes `speck/.cache/runs/<id>.json` (session id, the folder the command ran from, start time, process id and the command) and sends the build's stdout and stderr to `speck/.cache/runs/<id>.log`, and it prints a line when it launches a build and one when it exits, with the exit code.
   When a build exits, it adds `exited` (the ISO time) and `exit_code` (a number, or `null` when a signal stopped it) to the run record, keeping its other fields; a later launch of the same ticket replaces the record, so an old exit never sticks to a new build.
   When it starts, it reads each run record with no `exited`, so a restarted `speck run` doesn't launch a second build of a ticket an earlier one is still building.
@@ -276,7 +290,7 @@ Everything happens in the local repo, with no PR.
   Shipping is a local merge plus a push, so no GitHub PR, `gh` login or branch protection is needed.
 - **The reviewer reviews commits**, so `speck review` and `speck record` refuse, recording nothing, while a tracked file is modified or staged and not committed (apart from the ticket's own recorded rounds and round 1's status change), and name those files.
   Untracked files don't stop them: they may belong to another session, and they aren't part of what's reviewed.
-  `speck ship` still needs a fully clean tree, untracked files included.
+  `speck ship` still needs the ticket's own folder fully clean, untracked files included.
 - **speck never picks a model.**
   No model name is built into the code, templates or skills.
   With nothing set, the reviewer runs on its own default: Codex's default, or the builder's model in a fresh session for `claude-subagent`.

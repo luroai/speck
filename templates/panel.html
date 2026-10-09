@@ -89,6 +89,10 @@
   .q.blocked { border-left: 2px solid var(--bad); padding-left: 12px; }
   .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: ui-monospace, monospace; font-size: 12px; }
+  .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px 34px; }
+  .resume .cmd { font-family: ui-monospace, monospace; font-size: 12px; color: #ddd3c4; background: #1f2126; padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
+  .resume .copy { font: inherit; font-size: 11px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
+  .resume .copy:hover { color: var(--text); }
   .q .tag.high { color: var(--warn); border-color: #5a4529; }
   .next { color: var(--ok); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #36513d; padding: 0 5px; }
 
@@ -217,6 +221,17 @@ function chains(tickets) {
   }
   return { unlocks: id => unlocks.get(String(id)) || [], linked: id => linked.get(String(id)) || [String(id)] };
 }
+// A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
+const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);
+// How to reopen a blocked build's session: `cd <folder> && <resume_command>` with {session} put in, or only
+// "session <id>" when resume_command is blank. null for a ticket that isn't blocked or has no session.
+function resumeOf(t, resumeCommand) {
+  const s = t.session;
+  if (t.status !== 'blocked' || !s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id || typeof s.cwd !== 'string' || !s.cwd) return null;
+  const cmd = typeof resumeCommand === 'string' ? resumeCommand.trim() : '';
+  if (!cmd) return { text: `session ${s.id}`, command: false };
+  return { text: `cd ${shellWord(s.cwd)} && ${cmd.split('{session}').join(shellWord(s.id))}`, command: true };
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const links = chains(tickets);
@@ -251,7 +266,7 @@ function panelModel(state) {
       const exited = t.build_exit && typeof t.build_exit === 'object' && t.status !== 'blocked';
       const exit_label = !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
-      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label,
+      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label, resume: resumeOf(t, state.resume_command),
         exit_message: exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         minutes: inFlight && start !== null ? Math.max(0, Math.floor((Date.now() - start) / 60000)) : null };
     }),
@@ -302,6 +317,8 @@ const open = new Set(); // ids of the open tickets
 const openIdeas = new Set(); // paths of the open ideas
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
 const refused = new Map(); // id → why the server refused to set it ready
+const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
+let copies = 0;
 const flip = (set, key) => { if (set.has(key)) set.delete(key); else set.add(key); render(); };
 const list = v => (Array.isArray(v) ? v : []);
 
@@ -432,6 +449,7 @@ function queueItem(t) {
     return q;
   }
   if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
+  if (t.resume) q.appendChild(resumeLine(t));
   if (t.exit_label) {
     q.appendChild(el('div', 'act bad', t.exit_label));
     if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
@@ -473,6 +491,25 @@ function queueUpdate(q, t) {
   }
   const act = child(q, 'act'), line = queuedLine(t);
   if (act.textContent !== line.textContent) { q.insertBefore(line, act); q.removeChild(act); }
+}
+// Under a blocked question: the command that reopens the build's session, with a button that copies it.
+function resumeLine(t) {
+  const line = el('div', 'resume', null, el('code', 'cmd', t.resume.text));
+  if (!t.resume.command) return line;
+  const shown = copied.get(t.id);
+  const b = el('button', 'copy', shown ? shown[1] : 'Copy');
+  b.type = 'button';
+  b.addEventListener('click', e => { e.stopPropagation(); copy(t.id, t.resume.text); });
+  line.appendChild(b);
+  return line;
+}
+async function copy(id, text) {
+  const mine = ++copies;
+  let said = 'Copied';
+  try { await navigator.clipboard.writeText(text); } catch { said = "Couldn't copy: select the command instead"; }
+  copied.set(id, [mine, said]);
+  render();
+  setTimeout(() => { if (copied.has(id) && copied.get(id)[0] === mine) { copied.delete(id); render(); } }, 2000);
 }
 // Hovering a ticket in Shaping or a ready one in the queue lights it and every ticket linked to it through after:, and dims the rest.
 // The classes are set on the nodes in place, so a Shaping item keeps its node (and any text selected in it).
@@ -530,8 +567,9 @@ function render() {
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
 
-  // The minutes come from the clock, not the ticket, so they are put right on a kept row.
-  fill('queue', keptItems('queue', m.queue, t => String(t.id), () => null, queueItem,
+  // The minutes come from the clock, not the ticket, so they are put right on a kept row. A blocked ticket's
+  // Copy button label isn't in the ticket either, so a change to it rebuilds the row.
+  fill('queue', keptItems('queue', m.queue, t => String(t.id), t => copied.get(t.id)?.[1] ?? null, queueItem,
     { own: t => { const { minutes, ...own } = ownData(t); return own; }, derived: t => [t.minutes, t.chain, t.unlocks], update: queueUpdate }), 'Nothing in flight or ready.');
   linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
   lightUp();

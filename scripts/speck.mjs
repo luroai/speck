@@ -1291,6 +1291,8 @@ function shipFolders(repo, branch, base) {
 
 // Tracked files with uncommitted changes, staged or not.
 const changedFiles = dir => git(['status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(Boolean).map(l => l.slice(3));
+// Tracked files with changes in the index.
+const stagedFiles = dir => git(['status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(l => l && l[0] !== ' ').map(l => l.slice(3));
 
 // The files git lists, one per line and indented, after the line that says why it refused.
 function listedIn(r, why) {
@@ -1315,8 +1317,22 @@ export function shipTicket(repo, id) {
     throw new SpeckError(work === here
       ? 'You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.'
       : `The ticket's worktree at ${work} has uncommitted or untracked changes. Commit or remove them there, then run this again.`);
-  if (mergeAt !== work && git(['status', '--porcelain', '--untracked-files=no'], mergeAt).trim())
-    throw new SpeckError(`${base} is checked out at ${mergeAt}, and it has uncommitted changes. Commit or stash them there so the merge can update it, then run this again.`);
+  // Uncommitted edits in the base checkout can stay through the merge, so you can keep working there while
+  // builds ship, unless they're staged (git won't merge over a changed index) or in a file the ticket changes.
+  const clash = when => {
+    // Without a worktree, the ship runs in this folder, which was clean before the tests, so any change at all stops it.
+    if (mergeAt === work) {
+      const changed = changedFiles(work);
+      if (changed.length) throw new SpeckError(`These files in ${work} have uncommitted changes${when}: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
+      return;
+    }
+    const staged = new Set(stagedFiles(mergeAt));
+    const touched = new Set(git(['diff', '--name-only', `${base}...${branch}`], repo).split('\n').filter(Boolean));
+    const why = changedFiles(mergeAt).flatMap(f => staged.has(f) ? [`${f} (staged)`] : touched.has(f) ? [`${f} (the ticket changes it too)`] : []);
+    if (why.length)
+      throw new SpeckError(`These files in ${mergeAt}, where ${base} is checked out, have uncommitted changes${when} that stop the merge: ${why.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them (git won't merge over staged changes, even in other files), then ship again.`);
+  };
+  clash('');
   const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
   const catchUp = remoteBaseCatchUp(repo, remote, base);
   const start = git(['branch', '--show-current'], work).trim() || git(['rev-parse', 'HEAD'], work).trim();
@@ -1327,9 +1343,7 @@ export function shipTicket(repo, id) {
   try {
     shipChecks(work, cfg, pad, branch);
     if (!runTests(work, cfg)) throw new SpeckError('Tests failed on the approved branch, so nothing was shipped.');
-    // The base checkout was clean before the tests, so anything changed there now was changed while they ran.
-    const changed = changedFiles(mergeAt);
-    if (changed.length) throw new SpeckError(`These files in ${mergeAt} have uncommitted changes, made while the tests ran: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
+    clash(', made while the tests ran');
   } catch (e) { back(); throw e; }
   // Close the ticket on the branch, so the merge is what makes it done.
   const t = findTicket(work, pad);
@@ -1538,6 +1552,17 @@ function buildExit(runs, id) {
   return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
 }
 
+// The session a build launched by `speck run` ran in, from its run record: {id, cwd}, where cwd is the folder the build
+// started from (where its session is kept), or null when there's no record, it can't be read or it lacks either.
+function buildSession(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return null;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
+  const text = v => typeof v === 'string' && v !== '';
+  return rec && typeof rec === 'object' && text(rec.session) && text(rec.cwd) ? { id: rec.session, cwd: rec.cwd } : null;
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
@@ -1575,6 +1600,7 @@ export function statusData(repo) {
       })),
       waiting_on: after.filter(id => !done.has(padId(id))),
       build_exit: buildExit(runs, t.fm.id),
+      session: buildSession(runs, t.fm.id),
     };
   });
   // Lowest priority number first, no priority last, then by id. (Infinity - Infinity is NaN, which falls through to the id.)
@@ -1585,7 +1611,9 @@ export function statusData(repo) {
     const text = fs.readFileSync(path.join(dir, f), 'utf8');
     return { path: `speck/ideas/${f}`, title: (text.match(/^# (.+)$/m) || [])[1]?.trim() || f, status: ideaStatus(text) || null, body: text };
   });
-  return { tickets: entries, ideas };
+  // The command that reopens a build's session, for the panel. A config without the setting gets the default.
+  const resume = !Object.hasOwn(cfg, 'resume_command') ? DEFAULT_RESUME_COMMAND : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
+  return { tickets: entries, ideas, resume_command: resume };
 }
 
 function cmdStatus(args = []) {
@@ -1709,6 +1737,7 @@ function cmdPanel(args) {
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
 const RUN_POLL_MS = 5000;
+const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
 const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --dangerously-skip-permissions';
 
 // The folder for speck run's records and logs, inside speck/.cache/, which git ignores.

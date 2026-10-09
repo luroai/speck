@@ -1,7 +1,7 @@
 ---
 id: "0037"
 title: "Triage the inbox from chat"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0037 · Triage the inbox from chat
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Follow-ups from builds pile up in the inbox (0036). Reading every one would overwhelm the user, who wants to decide only what's worth a ticket, from their single shaping chat.
