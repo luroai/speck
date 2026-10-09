@@ -1377,14 +1377,73 @@ function ticketsElsewhere(repo, cfg) {
   });
 }
 
-function cmdStatus() {
-  const repo = findRepoRoot();
+// Every ticket once. A ticket being built elsewhere replaces this checkout's copy of it, so it shows under its real status.
+function statusTickets(repo, cfg) {
   const tickets = listTickets(repo);
-  // A ticket being built elsewhere replaces this checkout's copy of it, so it shows once, under its real status.
-  for (const t of ticketsElsewhere(repo, loadConfig(repo))) {
+  for (const t of ticketsElsewhere(repo, cfg)) {
     const i = tickets.findIndex(x => x.fm.id === t.fm.id);
     if (i >= 0) tickets[i] = t; else tickets.push(t);
   }
+  return tickets;
+}
+
+const padId = id => String(id ?? '').padStart(4, '0');
+
+// Each acceptance criterion's full text without its number: a numbered line at the start of a line begins one, and
+// the lines under it (wrapped text, nested lists) belong to it, so a multi-line criterion comes through whole.
+function criteriaText(lines = []) {
+  const items = [];
+  for (const line of lines.join('\n').replace(/<!--[\s\S]*?-->/g, '').split('\n')) {
+    const m = line.match(/^\d+\.\s+(\S.*)$/);
+    if (m) items.push([m[1]]);
+    else if (items.length) items[items.length - 1].push(line);
+  }
+  return items.map(l => l.join('\n').replace(/\s+$/, ''));
+}
+
+// What `speck status --json` prints: everything status knows, for programs such as the control panel.
+// The field names are a contract (0030); don't rename them.
+export function statusData(repo) {
+  const cfg = loadConfig(repo);
+  const tickets = statusTickets(repo, cfg);
+  const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
+  const entries = tickets.map(t => {
+    const lint = lintTicket(t, cfg);
+    const question = contentLines(t.sections['blocked question']).join('\n');
+    const after = Array.isArray(t.fm.after) ? t.fm.after : [];
+    const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    return {
+      ...t.fm,
+      path: posix(path.relative(t.at || repo, t.file)),
+      worktree: t.at || null,
+      acceptance_criteria: criteriaText(t.sections['acceptance criteria']),
+      blocked_question: question || null,
+      lint: { errors: lint.errors.length, warnings: lint.warnings.length },
+      rounds: ticketRounds(t.raw).rounds.map(r => ({
+        round: r?.meta?.round ?? null,
+        reviewer: r?.meta?.reviewer ?? null,
+        verdict: r?.verdict?.verdict ?? null,
+        seconds: num(r?.meta?.seconds),
+        tokens: (num(r?.meta?.usage?.input_tokens) || 0) + (num(r?.meta?.usage?.output_tokens) || 0),
+      })),
+      waiting_on: after.filter(id => !done.has(padId(id))),
+    };
+  });
+  // Lowest priority number first, no priority last, then by id. (Infinity - Infinity is NaN, which falls through to the id.)
+  const rank = e => (typeof e.priority === 'number' && Number.isFinite(e.priority) ? e.priority : Infinity);
+  entries.sort((a, b) => (rank(a) - rank(b)) || padId(a.id).localeCompare(padId(b.id)));
+  const dir = path.join(repo, 'speck', 'ideas');
+  const ideas = (fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.md')).sort() : []).map(f => {
+    const text = fs.readFileSync(path.join(dir, f), 'utf8');
+    return { path: `speck/ideas/${f}`, title: (text.match(/^# (.+)$/m) || [])[1]?.trim() || f, status: ideaStatus(text) || null };
+  });
+  return { tickets: entries, ideas };
+}
+
+function cmdStatus(args = []) {
+  const repo = findRepoRoot();
+  if (args.includes('--json')) return console.log(JSON.stringify(statusData(repo), null, 2));
+  const tickets = statusTickets(repo, loadConfig(repo));
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
@@ -1607,7 +1666,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first)
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
-  speck status                        tickets by status, blocked first
+  speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
