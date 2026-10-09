@@ -1,6 +1,6 @@
 # speck control panel (was: speck board)
 
-Captured: 8 October 2026 · Reframed: 9 October 2026 · Status: ticketed (0030, 0031, 0033, 0034, 0035, 0039, 0040, 0041, 0042, 0043, 0044)
+Captured: 8 October 2026 · Reframed: 9 October 2026 · Status: ticketed (0030, 0031, 0033, 0034, 0035, 0039, 0040, 0041, 0042, 0043, 0044, 0050, 0051, 0052, 0053)
 
 A local control panel over a repo's `speck/` folder. It isn't a kanban board. Everything between Ready and shipped is an agent pipeline that runs in minutes, so there's no work passing between people to track in columns. The panel is a CI pipeline whose trigger is a ticket being set to `ready`, with a space around the two places that need a human: shaping work before Gate 1, and answering the pipeline when it asks.
 
@@ -34,7 +34,7 @@ Shaping and Queue are the two main areas, side by side, with Shipped as a compac
 ## Stages
 1. **Read-only.** Every area is a view over the ticket files, so version 1 needs no writes. Built on a JSON form of `speck status` that already includes tickets in other worktrees (0029).
 2. **Writes, in this order:** set a ticket to `ready` (Gate 1), reorder the queue, answer a blocked question.
-3. **Later:** the panel runs the queue itself (see below), a diff view beside the review rounds, live agent activity via agent hooks.
+3. **Later:** the panel runs the queue itself (see below), a diff view beside the review rounds, live agent activity via agent hooks (seeing a running build's log, from the file `speck run` already writes, is ticketed as 0051 and 0052).
 
 ## Kept from the board decisions (8 October 2026)
 - **Web app, not a TUI.** A zero-dependency `node:http` server serving one plain HTML/JS page. Version 1 can poll for updates. Server-sent events come later, with a heartbeat around every 30 seconds and automatic reconnects, because Cloudflare drops idle connections.
