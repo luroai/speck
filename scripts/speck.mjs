@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -1499,7 +1500,7 @@ function cmdStatus(args = []) {
   console.log(`\nIDEAS (${notes.length}: ${notes.length - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
 }
 
-// ---------- panel (a read-only view in the browser) ----------
+// ---------- panel (a view in the browser, with one write: Set ready) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -1512,13 +1513,49 @@ function panelPort(args) {
   return +v;
 }
 
-// Serves the panel page and /api/state, read-only, to this machine only. Every request reads the files afresh.
+// The panel's one write: set a draft ticket to ready, as `speck set <id> status ready` does, and commit only that
+// ticket, since `speck start` needs it committed. Every refusal comes before the first write. Returns
+// { status, body } for the server to send.
+function panelSetReady(repo, id) {
+  const cfg = loadConfig(repo);
+  let t;
+  try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
+  const pad = t.fm.id;
+  if (t.fm.status !== 'draft') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so it can't be set ready from here.` } };
+  const { errors } = lintTicket(t, cfg);
+  if (errors.length) return { status: 422, body: { error: `Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}` } };
+  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
+  if (branch !== cfg.base_branch)
+    return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
+  const rel = path.relative(repo, t.file);
+  writeField(t, 'status', 'ready');
+  const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): ready`);
+  if (commit.status !== 0)
+    return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
+  return { status: 200, body: { ok: true, id: pad } };
+}
+
+// True only for the token this server made, compared in constant time.
+// Compared as bytes, since a header with non-ASCII characters can match in length but not in bytes.
+function sameToken(given, token) {
+  if (typeof given !== 'string') return false;
+  const a = Buffer.from(given), b = Buffer.from(token);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// Serves the panel page and /api/state to this machine only, plus the one write, POST /api/tickets/<id>/ready.
+// Every request reads the files afresh.
 function cmdPanel(args) {
   const repo = findRepoRoot();
   const port = panelPort(args);
   const cfg = loadConfig(repo);
   const page = fs.readFileSync(path.join(TEMPLATES, 'panel.html'), 'utf8')
     .replace('{{repo}}', htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo))).replace('{{base}}', htmlEscape(cfg.base_branch));
+  // Made afresh on each start and put only in the page. A web page elsewhere can send a POST here (the Host check
+  // doesn't stop a form post to 127.0.0.1), but can't read this token, and its Origin gives it away.
+  const token = crypto.randomBytes(32).toString('hex');
+  const served = page.replace('{{token}}', token);
+  const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`]);
   // Only these Host headers are served, so a web page on another name that resolves here (DNS rebinding) gets nothing.
   const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
   const send = (res, status, type, body) => {
@@ -1528,9 +1565,18 @@ function cmdPanel(args) {
   };
   const server = http.createServer((req, res) => {
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return send(res, 403, 'text/plain', 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
-    if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed: the panel is read-only.\n');
     const where = req.url.split('?')[0];
-    if (where === '/') return send(res, 200, 'text/html', page);
+    const ready = where.match(/^\/api\/tickets\/(\d{1,4})\/ready$/);
+    if (req.method === 'POST' && ready) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      try {
+        const out = panelSetReady(repo, ready[1]);
+        return send(res, out.status, 'application/json', JSON.stringify(out.body));
+      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed.\n');
+    if (where === '/') return send(res, 200, 'text/html', served);
     if (where === '/api/state') {
       try { return send(res, 200, 'application/json', JSON.stringify(statusData(repo))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
@@ -1543,7 +1589,7 @@ function cmdPanel(args) {
       : `The panel couldn't start on port ${port}: ${e.message}`);
     process.exit(1);
   });
-  server.listen(port, '127.0.0.1', () => console.log(`speck panel: http://127.0.0.1:${port}/ (read-only; press Ctrl+C to stop)`));
+  server.listen(port, '127.0.0.1', () => console.log(`speck panel: http://127.0.0.1:${port}/ (press Ctrl+C to stop)`));
 }
 
 function cmdDiffstat() {
@@ -1650,6 +1696,22 @@ export function pathsOutside(porcelain, rel) {
 
 const changesOutside = (repo, rel) => pathsOutside(git(['status', '--porcelain', '-z', '--untracked-files=all'], repo), rel);
 
+// Commits only the ticket file, already written, as `message`. Anything else staged stays staged and uncommitted.
+// If the commit fails, the file goes back to `original` and its index entry back exactly as it was (staged
+// content kept, or out of the index if it was never added). Returns the failing git result, or { status: 0 }.
+function commitTicketOnly(repo, file, original, message) {
+  const rel = path.relative(repo, file);
+  const entry = git(['ls-files', '-s', '--', rel], repo).trim().split('\t')[0].split(' ');
+  const staged = sh('git', ['add', '--', rel], { cwd: repo });
+  const commit = staged.status === 0 ? sh('git', ['commit', '-q', '-m', message, '--', rel], { cwd: repo }) : staged;
+  if (commit.status !== 0) {
+    fs.writeFileSync(file, original);
+    if (entry.length === 3) sh('git', ['update-index', '--cacheinfo', `${entry[0]},${entry[1]},${rel}`], { cwd: repo });
+    else sh('git', ['reset', '-q', '--', rel], { cwd: repo });
+  }
+  return commit;
+}
+
 function cmdClose(args) {
   const id = args.find(a => !a.startsWith('--'));
   if (!id) throw new SpeckError('Usage: speck close <id>');
@@ -1682,17 +1744,10 @@ function cmdClose(args) {
   const original = t.raw;
   t.raw = text;
   writeField(t, 'status', 'approved');
-  // The ticket's own staged state, so a failed commit puts it back exactly as it was.
-  const entry = git(['ls-files', '-s', '--', rel], repo).trim().split('\t')[0].split(' ');
   // Only the ticket file is committed, so nothing else can ride along with the approval.
-  const staged = sh('git', ['add', '--', rel], { cwd: repo });
-  const commit = staged.status === 0 ? sh('git', ['commit', '-q', '-m', `speck(${pad}): approved`, '--', rel], { cwd: repo }) : staged;
-  if (commit.status !== 0) {
-    fs.writeFileSync(t.file, original);
-    if (entry.length === 3) sh('git', ['update-index', '--cacheinfo', `${entry[0]},${entry[1]},${rel}`], { cwd: repo });
-    else sh('git', ['reset', '-q', '--', rel], { cwd: repo });
+  const commit = commitTicketOnly(repo, t.file, original, `speck(${pad}): approved`);
+  if (commit.status !== 0)
     throw new SpeckError(`Couldn't commit the ticket, so nothing was changed.\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}`);
-  }
   console.log(`${pad} approved, committed as speck(${pad}): approved. Next: speck ship ${pad} --auto (or /speck-ship ${pad}).`);
 }
 
@@ -1748,7 +1803,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
-  speck panel [--port <n>]           a read-only control panel in your browser, at http://127.0.0.1:4777
+  speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
