@@ -35,6 +35,8 @@ A build commits only the files it changed, and other sessions' untracked files d
 
 ## Notes
 - Pre-check: no ambiguities found, and no external facts.
+- `speck record` had no clean-tree check before, so AC2's "still refuse" is new for it: it now shares `speck review`'s check (tracked changes only). Three older tests recorded rounds with tracked edits uncommitted (the reply file swept into a commit by `git add -A`, then rewritten; or ticket and config edits not yet committed). Their setup now commits by name first; what each one checks is unchanged.
+- Self-check: my own record test never applied its dirty states (the loop skipped the call), so it passed for the wrong reason; fixed so each case really is dirty. No code changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -44,3 +46,4 @@ A build commits only the files it changed, and other sessions' untracked files d
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: `speck close` still refuses when any untracked file is outside the ticket, so another session's file in the ticket's tree would block closing a build. The ticket only covers review and record, so it's unchanged.

@@ -279,6 +279,7 @@ test('AC5: recorded subagent rounds keep the settings the reviewer was started w
   r.run('record', '1', v, '--reviewer=claude-subagent');
   // The ticket's settings change mid-loop, but the same subagent is resumed for round 2.
   fs.writeFileSync(r.ticketFile, setField(setField(fs.readFileSync(r.ticketFile, 'utf8'), 'reviewer_model', 'second-model'), 'reviewer_effort', 'max'));
+  r.git('add', path.relative(r.dir, r.ticketFile)); r.git('commit', '-qm', 'settings changed'); // record needs tracked changes committed (0025)
   r.run('record', '1', v, '--reviewer=claude-subagent');
   for (const n of [1, 2]) {
     assert.equal(r.roundFile(n).meta.reviewer_model, 'first-model');
@@ -1294,7 +1295,7 @@ test('0003 AC2: round 2 sees only the fix, and an approval from the same reviewe
   fs.writeFileSync(v, fenced(subagentVerdict('changes_requested', 'open')));
   assert.equal(r.run('record', '1', v, '--reviewer=claude-subagent').status, 10);
   fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fixed\n');
-  r.git('add', '-A'); r.git('commit', '-qm', 'review round 1 fixes');
+  r.git('add', 'a.txt', path.relative(r.dir, r.ticketFile)); r.git('commit', '-qm', 'review round 1 fixes');
   const diff = r.run('diff', '1').stdout;
   assert.match(diff, /^\+fixed$/m, 'speck diff shows the fix');
   assert.doesNotMatch(diff, /Review rounds/, 'and leaves out the recorded round');
@@ -1431,6 +1432,7 @@ function autoShipRepo({ config = '', risk = 'low', sandboxFailed = false } = {})
   fs.writeFileSync(cfgFile, c);
   const file = path.join(r.dir, 'speck', 'tickets', '0001-export-bookings.md');
   fs.writeFileSync(file, setField(fs.readFileSync(file, 'utf8'), 'risk', risk));
+  r.g('add', 'speck/config.yml', 'speck/tickets/0001-export-bookings.md'); r.g('commit', '-qm', 'config and risk'); // record needs tracked changes committed (0025)
   const v = path.join(os.tmpdir(), `verdict-${path.basename(r.dir)}.json`);
   fs.writeFileSync(v, JSON.stringify(approveVerdict));
   r.run('record', '1', v);
@@ -2960,4 +2962,84 @@ test('0032 AC4: the brief no longer puts parallel tickets out of scope, but depe
   const out = brief.split('Out of scope for v0.1:')[1].split('\n\n')[0];
   assert.doesNotMatch(out, /parallel/i);
   assert.match(out, /dependency graphs/i);
+});
+
+// ---------- 0025: keep other sessions' files out of a build ----------
+
+test('0025 AC1: the build and review skills say to stage files by name, never all at once, and to leave unknown files alone', () => {
+  for (const n of ['speck-build', 'speck-review']) {
+    const md = fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8');
+    assert.match(md, /stage[^.]*by name/i, n);
+    for (const banned of ['`git add -A`', '`git add .`', '`git commit -a`']) assert.ok(md.includes(banned), `${n} names ${banned}`);
+    assert.match(md, /never[^.]*`git add -A`/i, n);
+    assert.match(md, /didn't (create|write) or change[^.]*leave them alone[^.]*(tell|mention)[^.]*user/i, n);
+    assert.doesNotMatch(md, /commit everything/i, `${n} no longer says to commit everything`);
+  }
+});
+
+test('0025 AC2: speck review runs with untracked files present, but still refuses modified or staged tracked files', () => {
+  const r = reviewRepo();
+  fs.writeFileSync(path.join(r.dir, 'other-session.md'), 'not mine\n');
+  fs.mkdirSync(path.join(r.dir, 'speck', 'ideas'), { recursive: true });
+  fs.writeFileSync(path.join(r.dir, 'speck', 'ideas', 'draft.md'), '# Someone else\n');
+  const res = r.run('review', '1');
+  assert.equal(res.status, 10, res.stderr);
+  assert.equal(r.roundFile(1).meta.round, 1);
+  assert.ok(fs.existsSync(path.join(r.dir, 'other-session.md')), 'left alone');
+  assert.match(r.git('status', '--porcelain').stdout, /\?\? other-session\.md/, 'still untracked, not committed');
+
+  for (const [name, dirty] of [
+    ['modified', d => fs.writeFileSync(path.join(d.dir, 'a.txt'), 'uncommitted\n')],
+    ['staged new file', d => { fs.writeFileSync(path.join(d.dir, 'b.txt'), 'staged\n'); d.git('add', 'b.txt'); }],
+    ['staged edit', d => { fs.writeFileSync(path.join(d.dir, 'a.txt'), 'staged\n'); d.git('add', 'a.txt'); }],
+  ]) {
+    const d = reviewRepo();
+    dirty(d);
+    const out = d.run('review', '1');
+    assert.notEqual(out.status, 0, name);
+    assert.match(out.stderr, /Commit your work before review/, name);
+    assert.equal(d.calls().length, 0, `${name}: the reviewer didn't run`);
+  }
+});
+
+test('0025 AC2: speck record records with untracked files present, but refuses modified or staged tracked files', () => {
+  const r = subagentRepo();
+  const v = path.join(r.dir, 'v.json'); // the reply file itself is untracked, as the review skill writes it
+  fs.writeFileSync(v, fenced(subagentVerdict('changes_requested', 'open')));
+  fs.writeFileSync(path.join(r.dir, 'other-session.md'), 'not mine\n');
+  const ok = r.run('record', '1', v, '--reviewer=claude-subagent');
+  assert.equal(ok.status, 10, ok.stderr);
+  assert.equal(r.roundFile(1).meta.round, 1);
+  // The recorded round itself is left uncommitted in the ticket, and the next round can still be recorded.
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fixed\n');
+  r.git('add', 'a.txt'); r.git('commit', '-qm', 'fix');
+  assert.equal(r.run('record', '1', v, '--reviewer=claude-subagent').status, 10);
+  assert.equal(r.roundFile(2).meta.round, 2);
+
+  for (const [name, dirty] of [
+    ['modified', d => fs.writeFileSync(path.join(d.dir, 'a.txt'), 'uncommitted\n')],
+    ['staged new file', d => { fs.writeFileSync(path.join(d.dir, 'b.txt'), 'staged\n'); d.git('add', 'b.txt'); }],
+    ['ticket edited beyond its rounds', d => fs.writeFileSync(d.ticketFile, fs.readFileSync(d.ticketFile, 'utf8').replace('Users cannot export.', 'Users cannot export at all.'))],
+  ]) {
+    const d = subagentRepo();
+    const w = path.join(d.dir, 'w.json');
+    fs.writeFileSync(w, fenced(subagentVerdict('changes_requested', 'open')));
+    dirty(d);
+    const before = fs.readFileSync(d.ticketFile, 'utf8');
+    const out = d.run('record', '1', w, '--reviewer=claude-subagent');
+    assert.notEqual(out.status, 0, name);
+    assert.match(out.stderr, /Commit your work/, name);
+    assert.equal(fs.readFileSync(d.ticketFile, 'utf8'), before, `${name}: nothing recorded`);
+  }
+});
+
+test('0025 AC3: speck ship still refuses an untracked file in the ticket\'s tree', () => {
+  const r = shipRepo();
+  fs.writeFileSync(path.join(r.dir, 'other-session.md'), 'not mine\n');
+  const before = r.state();
+  const res = r.run('ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /untracked/);
+  assert.deepEqual(r.state(), before);
+  assert.equal(r.status(), 'approved');
 });

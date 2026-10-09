@@ -472,6 +472,16 @@ function sandboxFailed(events) {
     && /bwrap/i.test(String(e.item.aggregated_output ?? '')));
 }
 
+// Refuses if a tracked file is modified or staged and not committed, apart from the ticket's own recorded rounds and
+// the status change round 1 makes. Untracked files don't count: they may be another session's, and they aren't
+// part of what the reviewer reviews.
+function requireCommitted(repo, ticket, message) {
+  const rel = posix(path.relative(repo, ticket.file));
+  const status = git(['status', '--porcelain', '--untracked-files=no'], repo).split('\n')
+    .filter(l => l && !(l.slice(3) === rel && onlyRoundsChanged(repo, rel, ticket.raw)));
+  if (status.length) throw new SpeckError(`${message} Uncommitted: ${status.map(l => l.slice(3)).join(', ')}. Untracked files are fine.`);
+}
+
 // Everything a review round needs, checked before any reviewer runs: the round number, the commit under review,
 // the diff since the last round and the builder's inputs.
 function reviewSetup(repo, id, opts) {
@@ -480,9 +490,7 @@ function reviewSetup(repo, id, opts) {
   const prior = rounds(repo, id);
   const round = prior.length + 1;
   if (round > cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
-  const rel = posix(path.relative(repo, ticket.file));
-  const status = git(['status', '--porcelain'], repo).split('\n').filter(l => l && !(l.slice(3) === rel && onlyRoundsChanged(repo, rel, ticket.raw)));
-  if (status.length) throw new SpeckError('Commit your work before review: the reviewer reviews commits, not the working tree.');
+  requireCommitted(repo, ticket, 'Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
   const sinceSha = round === 1 ? base : prior[prior.length - 1].meta.reviewed_sha;
@@ -1569,6 +1577,7 @@ function cmdRecord(args) {
   const cfg = loadConfig(repo);
   const reviewer = (args.find(a => a.startsWith('--reviewer=')) || '--reviewer=claude-subagent').slice(11);
   const verdict = parseReply(fs.readFileSync(file, 'utf8'), file);
+  requireCommitted(repo, findTicket(repo, id), 'Commit your work before recording a round: the round is saved against the latest commit.');
   // A resumed reviewer keeps the settings it started with, saved by `speck reviewer-settings`.
   const saved = path.join(cacheDir(repo, id), 'reviewer-settings.json');
   const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));

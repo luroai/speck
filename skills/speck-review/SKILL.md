@@ -12,6 +12,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 ## Before every round
 
 - All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit, and so can the status change from `building` to `reviewing` that round 1 makes.
+- You stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back. Untracked files don't stop `speck review` or `speck record`; modified or staged tracked files that aren't committed do.
 - The test output is fresh: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 
 ## Reviewer model and effort
