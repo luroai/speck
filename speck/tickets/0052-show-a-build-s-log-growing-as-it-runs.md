@@ -47,6 +47,8 @@ An open log keeps up with the build by itself: the newest lines slide in at the 
 - The update re-pins by setting `scrollTop`, with no smooth animation. A short smooth scroll is the alternative if the jump looks harsh; the user hasn't asked for one.
 - Fetching the whole tail again each second is a small local request, and keeps the endpoint stateless: no byte offsets, no `Range` header.
 - The log's own timer and box update must be kept out of `render()`, so a state refresh doesn't restart or duplicate it.
+- The 0051 test that the `.log` rule has `max-height` still holds: the rule now has both `height` and `max-height` at 24em.
+- Self-check: an open ticket that has left the queue (shipped) is no longer asked for, with a test; a request still waiting when the next is due is aborted so slow answers can't pile up; the message for a failure before any log arrived now says it's trying again, since "close and open" no longer applied.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

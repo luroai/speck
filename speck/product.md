@@ -150,13 +150,18 @@ Everything happens in the local repo, with no PR.
     Nothing else is red: a `blocked` or `ready` ticket with a `build_exit` looks as it would without one.
     A `ready` ticket shows "Queued", a bar with no step done or current and "waiting on <ids>" when it's waiting on any, or "unlocks <ids>" when it starts a chain.
     In-flight tickets show their worktree path, when they have one, and the whole minutes since `started`, when it's set.
-    Clicking a queue ticket's top row opens it and asks the server for its build log, once, and clicking that top row again closes it.
-    More than one can be open at once, and a log is asked for only when a ticket is opened, never for closed ones.
-    The open ticket shows the log in a monospace box with a fixed maximum height and its own scrollbar, as text, with ANSI escape sequences removed and each run of blank lines shown as one.
+    Clicking a queue ticket's top row opens it and asks the server for its build log at once and then once a second, and clicking that top row again closes it and stops the requests.
+    More than one can be open at once, and a log is asked for only while its ticket is open and in the queue, never for closed ones.
+    The log has its own 1-second timer, apart from the 2-second state poll, and a request still waiting when the next is due is aborted.
+    The open ticket shows the log in a monospace box with a fixed height and its own scrollbar, as text, with ANSI escape sequences removed and each run of blank lines shown as one.
     When the log was cut short, a first line says earlier lines aren't shown, and a ticket with no log shows "No log yet.".
+    Each new log goes into the same box in place, so the newest lines appear at the bottom and the oldest move up out of the 200-line tail.
+    A box at the bottom (within 8 pixels) stays pinned to the bottom on every update, with no animation; one the reader has scrolled up stays where they left it, and text selected in it stays selected unless its lines drop out of the tail.
+    An opened ticket's box starts at the bottom, and a rebuilt row's box keeps the old one's place.
+    A log replaced by a new build's (one not cut short where the last was cut short or doesn't run on into it) shows only the new log, at the bottom.
     Clicking or selecting text in the log leaves it open, and a click that ends selecting text in the top row neither opens nor closes it.
-    A log request that fails leaves the last log on screen.
-    The open log isn't kept up to date while the build runs: close and open the ticket to read it again.
+    A log request that fails leaves the last log on screen, and the next one that succeeds shows the new text; a failure before any log has arrived says it's trying again every second.
+    The requests carry on after a build has ended, until the ticket is closed or leaves the queue.
     Then **Shipped**: above the list, a stats row with the tickets shipped today (`finished` on today's date in the browser's time zone) and the median minutes from `started` to `finished`, median review rounds and median tokens, each saying how many tickets it covers (every `done` ticket with both times, with at least one review round, or with tokens recorded, respectively) and showing a dash when it covers none.
     The list has the latest 5 `done` tickets by `finished` time, newest first, with review rounds, tokens, the minutes from `started` to `finished` and when it shipped, from `finished` in the browser's time zone (`HH:MM` today, otherwise `D Mon HH:MM`, for example `8 Oct 14:02`, with no year); done tickets with no `finished` time come after those, within the 5, and show a dash for when they shipped.
     With no `done` tickets it says nothing has shipped yet and shows no stats.

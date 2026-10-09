@@ -87,7 +87,8 @@ export const round = (n, tokens) => ({ round: n, reviewer: 'codex', verdict: 'ap
 
 // Runs the whole page script against a minimal DOM, fetch and timer, so the view can be checked without a browser.
 // `globals` replaces what the page sees, for example a `Date` whose clock the test moves (0040).
-export function fakePage(responses, globals = {}) {
+// `made`, when given, is called with each element the page creates, for example to give it a browser's sizes (0052).
+export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
   const nodes = new Map();
   const make = tag => {
     const n = { tagName: tag, className: '', hidden: false, children: [], listeners: {}, _text: '' };
@@ -105,7 +106,7 @@ export function fakePage(responses, globals = {}) {
     return n;
   };
   const document = {
-    createElement: make,
+    createElement: tag => { const n = make(tag); made(n); return n; },
     createTextNode: t => ({ tagName: '#text', children: [], textContent: String(t) }),
     getElementById: id => { if (!nodes.has(id)) nodes.set(id, make('div')); return nodes.get(id); },
     listeners: {},

@@ -76,7 +76,7 @@
   .q { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
   .q:last-child { border-bottom: 0; }
   .q .top { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: baseline; cursor: pointer; }
-  .q .log { margin: 6px 0 4px 34px; padding: 6px 10px; max-height: 24em; overflow-y: auto; background: #1f2126; border-left: 2px solid var(--line-soft);
+  .q .log { margin: 6px 0 4px 34px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: #1f2126; border-left: 2px solid var(--line-soft);
     font: 12px/1.5 "Liberation Mono", monospace; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
   .q .rank { font-family: "Liberation Mono", monospace; color: var(--accent); font-size: 12px; }
   .q.wait { opacity: .5; }
@@ -320,6 +320,7 @@ function panelModel(state) {
 // escape with intermediate bytes such as a character set (ESC ( B), any other two-byte escape, a lone ESC, and the
 // one-byte control sequence introducer.
 const ANSI = /\x1b\[[0-?]*[ -\/]*[@-~]|\x1b[\]PX^_][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[ -\/]+[0-~]?|\x1b[0-~]?|\x9b[0-?]*[ -\/]*[@-~]/g;
+const TRUNCATED = "Earlier lines aren't shown: this is the last 200 lines of the log.";
 function logText(log) {
   const raw = log && typeof log.text === 'string' ? log.text : '';
   const out = [];
@@ -330,12 +331,13 @@ function logText(log) {
   }
   while (out.length && out[out.length - 1] === '') out.pop();
   if (!out.length) return 'No log yet.';
-  return (log.truncated === true ? ["Earlier lines aren't shown: this is the last 200 lines of the log.", ...out] : out).join('\n');
+  return (log.truncated === true ? [TRUNCATED, ...out] : out).join('\n');
 }
 // ---- end model ----
 
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
+const LOG_MS = 1000; // how often an open queue ticket's log is asked for
 const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
@@ -371,6 +373,11 @@ const openInbox = new Set(); // paths of the open inbox notes
 const openQueue = new Set(); // ids of the open queue tickets
 const logs = new Map(); // id → the last log received for an open queue ticket, or { failed: true } before any arrived
 const logAsks = new Map(); // id → the number of its latest log request, so only the latest answer is used
+const logPending = new Map(); // id → the AbortController of its log request still waiting for an answer
+const logBoxes = new Map(); // id → the log box last built for an open queue ticket, which each new log updates in place
+const logScroll = new Map(); // a log box built by this render → where to scroll it once it's on the page (null: the bottom)
+let queueIds = new Set(); // ids in the queue at the last render, so a ticket that has left it isn't asked for
+let logTimer = false; // whether the log timer is set
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
 const refused = new Map(); // id → why the server refused to set it ready
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
@@ -568,30 +575,86 @@ function queueItem(t) {
   return q;
 }
 // An open queue ticket's log, as text in a box with its own scrollbar.
+const logShown = log => (!log ? 'Loading the log…' : log.failed ? "Couldn't load the log yet. Trying again every second…" : logText(log));
+// A box built afresh, when the ticket opens or its row is rebuilt, goes to the bottom once it's on the page, or where
+// the reader had scrolled the box it replaces.
 function logBox(id) {
-  const log = logs.get(id);
-  return el('pre', 'log', !log ? 'Loading the log…' : log.failed ? "Couldn't load the log. Close and open the ticket to try again." : logText(log));
+  const old = logBoxes.get(id), box = el('pre', 'log', logShown(logs.get(id)));
+  logBoxes.set(id, box);
+  logScroll.set(box, old && !atBottom(old) ? old.scrollTop : null);
+  return box;
 }
-// Opens or closes a queue ticket. Opening it asks for its log; a closed ticket's log is never asked for.
+// Within a few pixels of the bottom, as scrollTop rarely lands exactly on it.
+const atBottom = box => !(box.scrollHeight - box.clientHeight - box.scrollTop > 8);
+// Opens or closes a queue ticket. Opening it asks for its log at once and then every second; a closed ticket's log is
+// never asked for.
 function toggleLog(id) {
   flip(openQueue, id);
-  if (openQueue.has(id)) loadLog(id);
+  if (openQueue.has(id)) { loadLog(id); startLogTimer(); return; }
+  logBoxes.delete(id);
+  if (logPending.has(id)) { logPending.get(id).abort(); logPending.delete(id); }
 }
-// A request that fails leaves the last log on screen.
+// The log timer runs apart from the state poll and render(), so a refresh never restarts or doubles it. It stops once
+// nothing is open.
+function startLogTimer() {
+  if (logTimer || !openQueue.size) return;
+  logTimer = true;
+  setTimeout(logTick, LOG_MS);
+}
+function logTick() {
+  logTimer = false;
+  for (const id of openQueue) if (queueIds.has(id)) loadLog(id);
+  startLogTimer();
+}
+// A request that fails leaves the last log on screen. A request still waiting when the next is due is aborted, so slow
+// answers can't pile up.
 async function loadLog(id) {
-  const mine = (logAsks.get(id) || 0) + 1;
+  const mine = (logAsks.get(id) || 0) + 1, ctl = new AbortController();
   logAsks.set(id, mine);
+  if (logPending.has(id)) logPending.get(id).abort();
+  logPending.set(id, ctl);
   let log = null;
   try {
-    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/log`, { cache: 'no-store' });
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/log`, { cache: 'no-store', signal: ctl.signal });
     const body = res.ok ? await res.json() : null;
     if (body && typeof body.text === 'string') log = { text: body.text, truncated: body.truncated === true };
   } catch { /* the server is down: keep what's shown */ }
+  if (logPending.get(id) === ctl) logPending.delete(id);
   if (logAsks.get(id) !== mine || !openQueue.has(id)) return; // a newer request has taken over, or it's closed
+  const old = logs.get(id);
   if (log) logs.set(id, log);
-  else if (!logs.has(id)) logs.set(id, { failed: true });
+  else if (!old) logs.set(id, { failed: true });
   else return;
-  render();
+  showLog(id, !!log && replaced(old, log));
+}
+// A new build of the ticket starts its log afresh: the new one isn't cut short, and the old one was, or doesn't run on
+// into it.
+const replaced = (old, log) => !!old && !old.failed && !log.truncated && (old.truncated || !log.text.startsWith(old.text));
+// Puts the newest log in its box in place, without render(). A box at the bottom stays there, so the newest line is in
+// view, and so does a box whose log was replaced by a new build's. Otherwise the box stays where the reader left it.
+function showLog(id, toBottom) {
+  const box = logBoxes.get(id);
+  if (!box) return;
+  const follow = toBottom || atBottom(box);
+  setLogText(box, logShown(logs.get(id)));
+  if (follow) box.scrollTop = box.scrollHeight;
+}
+// Puts a newer log in its box. When the old text runs on into the new one once its oldest lines have dropped out of
+// the tail, only those lines are taken out at the top and the rest added at the bottom, so text selected in what stays
+// stays selected. Anything else goes to setText.
+function setLogText(node, text) {
+  const t = node.firstChild;
+  if (t && t === node.lastChild && t.nodeType === 3) {
+    const old = t.data, head = old.startsWith(`${TRUNCATED}\n`) && text.startsWith(`${TRUNCATED}\n`) ? TRUNCATED.length + 1 : 0;
+    const body = text.slice(head);
+    for (let i = old.indexOf('\n', head); i >= 0 && i < old.length - 1; i = old.indexOf('\n', i + 1)) {
+      if (!body.startsWith(old.slice(i + 1))) continue;
+      t.deleteData(head, i + 1 - head);
+      t.appendData(text.slice(t.data.length));
+      return;
+    }
+  }
+  setText(node, text);
 }
 const queueMinutes = t => (t.minutes !== null ? `${t.minutes} min` : '');
 const queuedLine = t => el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : ''));
@@ -711,8 +774,12 @@ function render() {
   renderFull(m.drafts);
 
   // The minutes come from the clock, not the ticket, so they are put right on a kept row.
-  fill('queue', keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), logs.get(String(t.id)) ?? null], queueItem,
+  // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
+  fill('queue', keptItems('queue', m.queue, t => String(t.id), t => openQueue.has(String(t.id)), queueItem,
     { own: t => { const { minutes, ...own } = ownData(t); return own; }, derived: t => [t.minutes, t.chain, t.unlocks], update: queueUpdate }), 'Nothing in flight or ready.');
+  for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
+  logScroll.clear();
+  queueIds = new Set(m.queue.map(t => String(t.id)));
   linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
   lightUp();
   const flying = m.queue.filter(t => t.inFlight).length;
