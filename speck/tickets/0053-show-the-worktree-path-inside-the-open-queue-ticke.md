@@ -1,7 +1,7 @@
 ---
 id: "0053"
 title: "Show the worktree path inside the open queue ticket"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:33:00.275Z"
 ---
 # 0053 · Show the worktree path inside the open queue ticket
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 An in-flight ticket's row prints its worktree's absolute path, for example `~/projects/speck.worktrees/speck/0052-show-a-build-s-log-growing-as-it-runs`, which is longer than everything else in the row put together. It's useful only now and then, when you want to look in the build's folder.
@@ -51,7 +51,74 @@ A closed queue row stays short, and the worktree's full path is shown inside the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 214,950
+- Elapsed since build started: 5 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2d495a6f2c8a0246fb4d1980b427375e744b9049",
+    "thread_id": "01a1222b-4104-7192-b70d-26ca7a7afc40",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 214214,
+      "cached_input_tokens": 137344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 736,
+      "reasoning_output_tokens": 55
+    },
+    "saved_at": "2026-10-09T19:37:27.565Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html queueItem renders the path only when isOpen. test/panel-0053.test.mjs AC1 checks closed rows contain neither the label nor path; supplied test output passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "queueItem uses el with textContent and the existing monospace .act style. The AC2 tests exercise opening, full-path rendering, HTML-like input and closing again; supplied output passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueItem guards path rendering with t.worktree. AC1 and AC3 tests cover null worktrees in closed and open rows; supplied output passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The production change only moves path rendering inside the existing open-state condition. AC4 checks status, minutes, chain and padlock icons, dependency text and child order; supplied output passes."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated queue description accurately places the full worktree path beneath the status line only in open in-flight tickets."
+    },
+    "escalation_question": "",
+    "summary": "Closed queue tickets now hide the worktree path; opening one shows the full path in monospace text. Other row information stays in place. All four criteria have meaningful passing tests, and the product description matches the code. Repository inspection found no blocking concerns. Tests were assessed from their source and supplied results, rather than rerun."
+  }
+}
+```
+
+</details>
