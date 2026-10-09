@@ -41,6 +41,9 @@ Asking the agent to triage the inbox clears it down to at most three decisions, 
 - The builder decides whether this lives in `/speck-ticket` or a new skill installed with the others. `speck/product.md` and the skill count must match either way.
 - Mostly skill instructions. Where nothing can be tested automatically, the builder says so in Notes and the reviewer checks it by reading the skill.
 - No external facts: everything is in this repo.
+- Triage lives in `/speck-ticket` (a "Triage the inbox" section), so the skill count stays at six.
+- Testing: the criteria are skill instructions, so `test/triage-0037.test.mjs` checks the skill text and `product.md` say each rule. Whether an agent follows them can only be checked by reading the "Triage the inbox" section of `skills/speck-ticket/SKILL.md`.
+- Self-check: made explicit that notes with any other status are left alone, that a note the user doesn't answer for stays `inbox` (and is counted), and recorded in `product.md` that `speck status` counts `dropped` ideas as waiting.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
