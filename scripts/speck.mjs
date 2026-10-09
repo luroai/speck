@@ -1248,6 +1248,19 @@ function shipFolders(repo, branch, base) {
   return { main, work, mergeAt: baseAt || work, linked: branchAt && branchAt !== main ? branchAt : null };
 }
 
+// Tracked files with uncommitted changes, staged or not.
+const changedFiles = dir => git(['status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(Boolean).map(l => l.slice(3));
+
+// The files git lists, one per line and indented, after the line that says why it refused.
+function listedIn(r, why) {
+  const lines = r.stderr.split('\n');
+  const at = lines.findIndex(l => l.includes(why));
+  if (at < 0) return [];
+  const files = [];
+  for (const l of lines.slice(at + 1)) { if (!/^\s+\S/.test(l)) break; files.push(l.trim()); }
+  return files;
+}
+
 export function shipTicket(repo, id) {
   const cfg = loadConfig(repo);
   const pad = String(id).padStart(4, '0');
@@ -1273,39 +1286,69 @@ export function shipTicket(repo, id) {
   try {
     shipChecks(work, cfg, pad, branch);
     if (!runTests(work, cfg)) throw new SpeckError('Tests failed on the approved branch, so nothing was shipped.');
+    // The base checkout was clean before the tests, so anything changed there now was changed while they ran.
+    const changed = changedFiles(mergeAt);
+    if (changed.length) throw new SpeckError(`These files in ${mergeAt} have uncommitted changes, made while the tests ran: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
   } catch (e) { back(); throw e; }
   // Close the ticket on the branch, so the merge is what makes it done.
   const t = findTicket(work, pad);
   writeField(t, 'status', 'done');
   git(['add', '-A', '--', placeTicket(work, t, 'done'), t.file], work);
   git(['commit', '-q', '-m', `speck(${pad}): ship`], work);
-  // From the ship commit on, any failure puts back the base branch, the ticket branch and both folders.
+  if (mergeAt === work) {
+    const out = sh('git', ['checkout', '-q', base], { cwd: work });
+    if (out.status !== 0) { // something changed a file in the folder since the check above: undo the ship commit, keeping it
+      git(['reset', '-q', '--keep', branchSha], work);
+      sh('git', ['checkout', '-q', start], { cwd: work }); // back where it started, if the changes allow it
+      const files = listedIn(out, 'Your local changes');
+      throw new SpeckError(`Couldn't switch ${work} to ${base}${files.length ? ` over uncommitted changes to ${files.join(', ')}` : `: ${out.stderr.trim().split('\n').pop()}`}. Nothing was shipped. Commit or stash them, then ship again.`);
+    }
+  }
+  // Uncommitted changes to tracked files, just before anything moves, so the undo can put them back exactly.
+  const kept = { [mergeAt]: git(['stash', 'create'], mergeAt).trim() };
+  if (mergeAt !== work) kept[work] = git(['stash', 'create'], work).trim();
+  const lost = [];
+  const putBack = dir => {
+    if (!kept[dir] || sh('git', ['stash', 'apply', '-q', '--index', kept[dir]], { cwd: dir }).status === 0) return;
+    sh('git', ['reset', '-q', '--hard'], { cwd: dir }); // drop the half-applied copy: the stash holds it all
+    sh('git', ['stash', 'store', '-m', `speck ship ${pad}: uncommitted changes in ${dir}`, kept[dir]], { cwd: dir });
+    lost.push(` Your uncommitted changes in ${dir} couldn't be put back in place, so they're saved in git's stash: run \`git stash pop --index\` there.`);
+  };
+  // From the ship commit on, any failure puts back the base branch, the ticket branch, both folders and their uncommitted changes.
   const undo = () => {
     sh('git', ['merge', '--abort'], { cwd: mergeAt });
     git(['reset', '-q', '--hard', baseSha], mergeAt); // undo any catch-up, so the base is exactly as it was
     if (mergeAt === work) { git(['update-ref', `refs/heads/${branch}`, branchSha], work); back(); }
-    else git(['reset', '-q', '--hard', branchSha], work); // the branch is checked out there, so undo the ship commit in place
+    else { git(['reset', '-q', '--hard', branchSha], work); putBack(work); } // the branch is checked out there, so undo the ship commit in place
+    putBack(mergeAt);
   };
-  // Git refuses to overwrite untracked files, listing them one per line, indented.
-  const untrackedIn = r => /untracked working tree files would be overwritten/.test(r.stderr)
-    ? r.stderr.split('\n').filter(l => /^\s+\S/.test(l)).map(l => l.trim()) : [];
-  const overwriteError = (what, files) => new SpeckError(`${what} would overwrite untracked files in ${mergeAt}: ${files.join(', ')}. Nothing was shipped. Move or remove them, then ship again.`);
-  if (mergeAt === work) git(['checkout', '-q', base], work);
+  const fail = message => new SpeckError(message + lost.join(''));
+  const overwriteError = (what, files, kind) => fail(kind === 'untracked'
+    ? `${what} would overwrite untracked files in ${mergeAt}: ${files.join(', ')}. Nothing was shipped. Move or remove them, then ship again.`
+    : `${what} would overwrite uncommitted changes in ${mergeAt}: ${files.join(', ')}. Nothing was shipped and your changes are untouched. Commit or stash them, then ship again.`);
+  // Git refuses to overwrite untracked files or uncommitted changes, listing them.
+  const refused = r => {
+    const untracked = listedIn(r, 'untracked working tree files would be overwritten');
+    if (untracked.length) return [untracked, 'untracked'];
+    const local = listedIn(r, 'Your local changes to the following files would be overwritten');
+    return local.length ? [local, 'local'] : null;
+  };
   if (catchUp) {
     const ff = sh('git', ['merge', '-q', '--ff-only', catchUp], { cwd: mergeAt });
     if (ff.status !== 0) {
+      const why = refused(ff);
       undo();
-      const files = untrackedIn(ff);
-      throw files.length ? overwriteError(`Bringing ${base} up to date with ${remote}`, files)
-        : new SpeckError(`Couldn't bring ${base} up to date with ${remote}, so nothing was shipped: ${ff.stderr.trim().split('\n').pop()}`);
+      throw why ? overwriteError(`Bringing ${base} up to date with ${remote}`, ...why)
+        : fail(`Couldn't bring ${base} up to date with ${remote}, so nothing was shipped: ${ff.stderr.trim().split('\n').pop()}`);
     }
   }
   const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: mergeAt });
   if (merge.status !== 0) {
+    const why = refused(merge);
+    const conflicts = sh('git', ['diff', '--name-only', '--diff-filter=U'], { cwd: mergeAt }).stdout.split('\n').filter(Boolean);
     undo();
-    const files = untrackedIn(merge);
-    throw files.length ? overwriteError(`Merging ${branch} into ${base}`, files)
-      : new SpeckError(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
+    throw why ? overwriteError(`Merging ${branch} into ${base}`, ...why)
+      : fail(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged.${conflicts.length ? ` Conflicting files: ${conflicts.join(', ')}.` : ''} Rebuild the ticket on the latest ${base}, then ship again.`);
   }
   // From here on, run git from the main checkout, which always survives: the ticket's worktree is about to go.
   const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: main }).stdout.trim() || remote;

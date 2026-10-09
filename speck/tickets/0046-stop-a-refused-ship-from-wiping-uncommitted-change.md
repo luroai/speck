@@ -41,6 +41,8 @@ A refused ship never discards changes it didn't make, and says plainly when your
 - The undo is in `shipTicket` in `scripts/speck.mjs` (`git reset -q --hard baseSha` in the base checkout, and `branchSha` in the ticket's worktree).
 - A test can make the edit happen at the right moment by setting `commands.test` to a command that edits a tracked file in the base checkout.
 - No external facts: everything is in this repo.
+- Git refuses any merge over staged changes in the base checkout, so AC2's staged state is tested in the ticket's worktree; the base checkout's case is tested with unstaged changes.
+- Self-check: without a worktree, a change that stops ship switching to the base branch now undoes the ship commit, keeping the change, instead of leaving the ship commit on the branch; and the fallback that saves changes to git's stash, when they can't go back in place, got a test.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: 0039
+Last updated by ticket: 0046
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents.
@@ -113,7 +113,11 @@ Everything happens in the local repo, with no PR.
     Then it sets the ticket to `done` on its branch, merges into the base branch with a merge commit, deletes the local branch and pushes the base branch if it has a remote.
     Once that push succeeds, it also deletes the ticket branch on the remote if it's there.
     If the push fails, the remote copy is kept.
-    A merge conflict is aborted and leaves everything as it was.
+    A merge conflict is aborted and leaves everything as it was, and speck names the conflicting files.
+    If tracked files in the base branch's checkout gain uncommitted changes while the tests run, it refuses before merging, names them and leaves them as they were.
+    A merge that would overwrite uncommitted changes is reported as that, naming the files, not as a conflict.
+    When a merge fails, the undo puts back any uncommitted changes to tracked files in the base checkout and the ticket's worktree, staged or not.
+    If they can't go back in place, they're saved in git's stash and speck says to run `git stash pop --index` in that folder.
     With `--auto`, it first checks that `auto_ship` allows the ticket (see below), reading the ticket where its branch is checked out.
     If not, it changes nothing, says why and exits with 12.
   - **Shipping across worktrees:** when the ticket branch is checked out in another git worktree, `ship` works from either folder.
