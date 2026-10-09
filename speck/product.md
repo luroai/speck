@@ -23,6 +23,16 @@ Everything happens in the local repo, with no PR.
   It commits the notes on the ticket branch before `speck close`, so they ship with the ticket, and its final report says how many went to the inbox.
   `/speck-review` sends minor findings that aren't fixed through the same step.
   This lives in the skill instructions only.
+- **Triage the inbox from chat:** asking the agent to "triage the inbox" runs the triage section of `/speck-ticket` on every note whose `Status:` is `inbox`.
+  If there are none, it says the inbox is empty in one line.
+  Without asking, it sets to `dropped` each inbox note that's already done or covered by another idea note, a ticket or `product.md`, keeps one of any inbox notes that duplicate each other, and names each one dropped with the reason.
+  It then puts at most three of the rest to you, each with its title, its `From ticket:` and a one-line reason, and asks whether to ticket it or drop it.
+  "Ticket it" makes a draft ticket with the note as `--source`, which sets the note to `ticketed (<id>)`, and "drop it" sets the note to `dropped`.
+  Triage never sets a ticket to `ready`.
+  At the end, each note still `inbox` gets a `Triaged: <n>` line, added or raised by one, and a note that reaches `Triaged: 2` is set to `dropped` instead and listed, so follow-ups nobody picks drop out by themselves.
+  It commits the notes it changed, and any tickets it made, staged by name, as `speck: triage inbox`.
+  `dropped` is an idea status only triage sets.
+  This lives in the skill instructions only.
 - **CLI** (`scripts/speck.mjs`, Node 20+, no dependencies):
   - `init`: one-step install and update, run as `npx github:luroai/speck init`.
     It creates `speck/`, copies the skills and the CLI (into `.speck/`) into the project, points AGENTS.md and CLAUDE.md at it, and runs `doctor`.
@@ -87,15 +97,18 @@ Everything happens in the local repo, with no PR.
     It then sets the ticket ready exactly as `speck set <id> status ready` does and commits only that ticket's file as `speck(<id>): ready` (`speck start` needs it committed), leaving everything else in the checkout, staged or not, as it was.
     It refuses, changing and committing nothing, with the reason as JSON: a ticket that fails lint (422, with the same messages as `speck lint`), one that isn't a draft (409), an id with no ticket (404) and a checkout that isn't on `base_branch` (409).
     The server writes nothing else.
-    The page, in the dark style of `docs/panel-mockup.html`, has a header with the repo, the base branch and the connection status, and shows **Shaping**, with a Tickets / Ideas toggle (Tickets when the page loads) that shows one list at a time, tickets in blue and ideas in purple on the toggle, the section's top edge and each item's left edge.
+    The page, in the dark style of `docs/panel-mockup.html`, has a header with the repo, the base branch and the connection status, and shows **Shaping**, with a Tickets / Ideas / Inbox toggle, each with its count (`Tickets · <n>`), that shows one list at a time (Tickets when the page loads), tickets in blue, ideas in purple and the inbox in teal on the toggle, the section's top edge and each item's left edge.
     **Tickets** lists drafts in the JSON's order with their id, title, priority, size, risk, criteria count and lint result.
     Clicking that top row opens it: its problem, outcome, numbered acceptance criteria, out of scope and notes (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors.
     Clicking the button doesn't close the ticket.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
     Clicking the top row again closes it.
     Clicking or selecting text in an open ticket's details leaves it open.
-    **Ideas** lists every idea, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
+    **Ideas** lists the user's own ideas, leaving out those whose status is `inbox` or `dropped`, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
     Clicking or selecting text in the note leaves it open.
+    **Inbox** lists every idea whose status is `inbox`, in the JSON's order, with title, path and "from <id>" from its `From ticket:` line (left out when it has none), and opens and closes to show its note text the same way.
+    An empty inbox says "Inbox is empty."
+    `dropped` notes show nowhere in the panel.
     More than one ticket or idea can be open at once.
     A ticket whose `type` is `bug` shows a "bug" tag beside its id in Shaping, the queue and Shipped, in a pink used for nothing else.
     A ticket starts a chain when its `waiting_on` is empty and at least one ticket that isn't `done` or `cancelled` lists its id in `after:`.
@@ -316,6 +329,7 @@ Everything happens in the local repo, with no PR.
 - `speck run` tells a build is still running only by its process id, so a reused process id can make it treat a finished build as still running.
 - An idea's `ticketed (…)` status is only ever added to.
   Cancelling or finishing one of its tickets doesn't change it.
+- `speck status` counts a `dropped` idea as waiting, because it counts every idea that isn't ticketed as waiting.
 - A `claude-subagent` reviewer, or a command reviewer, is read-only only because its prompt says so.
   Unlike Codex, speck runs it with no sandbox, so a command should use the tool's own read-only mode (for example Cursor's `--mode ask` or Claude Code's `--permission-mode plan`).
 - The Claude Code command reviewer has been run end to end (two rounds, `changes_requested` then `approve`).

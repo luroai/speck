@@ -70,6 +70,7 @@
   .set-ready:disabled { color: var(--muted); border-color: var(--line); cursor: not-allowed; }
   .ready div.refused { white-space: pre-wrap; }
   .item.idea .id { color: var(--idea); }
+  .item.inbox .id { color: var(--inbox); }
 
   /* Queue */
   .q { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
@@ -115,17 +116,22 @@
   .detail ol li, .detail p.text, .question, .title { white-space: pre-wrap; overflow-wrap: anywhere; }
   .ready div { overflow-wrap: anywhere; }
 
-  /* Shaping: tickets and ideas, one list at a time, each with its own accent colour */
+  /* Shaping: tickets, ideas and the inbox, one list at a time, each with its own accent colour */
+  :root { --inbox: #4cc4b4; } /* the inbox's own colour */
   .toggles { display: flex; }
   .toggle { font: inherit; font-size: 12px; padding: 1px 10px; background: transparent; border: 1px solid var(--line); margin-left: -1px; color: var(--muted); cursor: pointer; }
   .toggle.tickets.on { color: var(--accent); border-color: var(--accent); position: relative; z-index: 1; }
   .toggle.ideas.on { color: var(--idea); border-color: var(--idea); position: relative; z-index: 1; }
+  .toggle.inbox.on { color: var(--inbox); border-color: var(--inbox); position: relative; z-index: 1; }
   #shaping-section.tickets { border-top: 2px solid var(--accent); }
   #shaping-section.ideas { border-top: 2px solid var(--idea); }
+  #shaping-section.inbox { border-top: 2px solid var(--inbox); }
   .item.ticket { border-left: 2px solid var(--accent); padding-left: 12px; }
   .item.idea { border-left: 2px solid var(--idea); padding-left: 12px; }
-  .item.ticket:hover, .item.idea:hover { background: #26282d; }
+  .item.inbox { border-left: 2px solid var(--inbox); padding-left: 12px; }
+  .item.ticket:hover, .item.idea:hover, .item.inbox:hover { background: #26282d; }
   .item.idea.open { border-left-color: var(--idea); }
+  .item.inbox.open { border-left-color: var(--inbox); }
   .note { margin: 0; font: 12px/1.5 "Liberation Mono", monospace; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
   .path { overflow-wrap: anywhere; }
@@ -240,7 +246,10 @@ function panelModel(state) {
     const waiting_on = Array.isArray(t.waiting_on) ? t.waiting_on : [], unlocks = links.unlocks(t.id);
     return { ...t, waiting_on, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id) };
   };
-  const ideas = state && Array.isArray(state.ideas) ? state.ideas : [];
+  const ideas = (state && Array.isArray(state.ideas) ? state.ideas : []).filter(i => i);
+  const statusOf = i => String(i.status || '').trim();
+  // The id on an inbox note's `From ticket:` line (0036), or null when it has none.
+  const fromTicket = body => ((typeof body === 'string' ? body : '').match(/^From ticket:[ \t]*(\S+)/m) || [])[1] || null;
   const is = (...statuses) => t => statuses.includes(t.status);
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
@@ -257,8 +266,10 @@ function panelModel(state) {
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
   return {
     drafts: tickets.filter(is('draft')).map(chain),
-    // Every idea: those not yet ticketed first, then the rest, each group in JSON order.
-    ideas: [false, true].flatMap(t => ideas.filter(i => i && String(i.status || '').startsWith('ticketed') === t)),
+    // The user's own ideas, leaving out inbox and dropped notes: those not yet ticketed first, then the rest, each group in JSON order.
+    ideas: [false, true].flatMap(t => ideas.filter(i => !['inbox', 'dropped'].includes(statusOf(i)) && String(i.status || '').startsWith('ticketed') === t)),
+    // Follow-ups waiting in the inbox, in JSON order.
+    inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
     // One list: in-flight tickets, then ready ones, each group in JSON order.
     queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(chain).map(t => {
       const inFlight = t.status !== 'ready', start = time(t.started);
@@ -312,9 +323,10 @@ function tags(t, icon) {
   return row;
 }
 // View state only, kept across refreshes and never sent to the server.
-let shapingView = 'tickets'; // which Shaping list is showing: 'tickets' or 'ideas'
+let shapingView = 'tickets'; // which Shaping list is showing: 'tickets', 'ideas' or 'inbox'
 const open = new Set(); // ids of the open tickets
 const openIdeas = new Set(); // paths of the open ideas
+const openInbox = new Set(); // paths of the open inbox notes
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
 const refused = new Map(); // id → why the server refused to set it ready
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
@@ -426,6 +438,13 @@ function ideaItem(i) {
   head.addEventListener('click', () => flip(openIdeas, i.path));
   return el('div', `item idea${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, el('pre', 'note', typeof i.body === 'string' ? i.body : '')) : null);
 }
+function inboxItem(i) {
+  const isOpen = openInbox.has(i.path);
+  const head = el('div', 'head', null, el('div', 'row', null, el('span', 'id', 'inbox'), el('span', 'title', i.title)), el('span'),
+    el('div', 'checks', null, i.from ? el('span', null, `from ${i.from}`) : null, el('span', 'mono', i.path)));
+  head.addEventListener('click', () => flip(openInbox, i.path));
+  return el('div', `item inbox${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, el('pre', 'note', typeof i.body === 'string' ? i.body : '')) : null);
+}
 function shapingToggle(m) {
   const button = (view, label, n) => {
     const b = el('button', `toggle ${view}${shapingView === view ? ' on' : ''}`, `${label} · ${n}`);
@@ -433,7 +452,7 @@ function shapingToggle(m) {
     b.addEventListener('click', () => { shapingView = view; render(); });
     return b;
   };
-  $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length));
+  $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length), button('inbox', 'Inbox', m.inbox.length));
   $('shaping-section').className = `shaping ${shapingView}`;
 }
 // A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
@@ -570,7 +589,8 @@ function render() {
   if (!state) return;
   const m = panelModel(state);
   shapingToggle(m);
-  if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
+  if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
+  else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
 

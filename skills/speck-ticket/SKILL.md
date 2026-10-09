@@ -1,6 +1,6 @@
 ---
 name: speck-ticket
-description: Turn an idea, a conversation or a request into one or more small, numbered speck tickets in speck/tickets/, checked against the size rules. Use when the user says "make a ticket", "speck ticket", "ticket this", or wants an idea ready for development.
+description: Turn an idea, a conversation or a request into one or more small, numbered speck tickets in speck/tickets/, checked against the size rules. Use when the user says "make a ticket", "speck ticket", "ticket this", or wants an idea ready for development. Also use when the user asks to triage the inbox (for example "triage the inbox").
 ---
 
 # speck ticket
@@ -28,6 +28,18 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **External facts:** list what the ticket relies on outside this repo: tool and command names, flags, file formats, URLs and versions. Check each against current documentation or the installed tool where you can. Record each in Notes as `Checked <YYYY-MM-DD>: <fact> (<source>)`, or as `Unverified: <fact> (<why it couldn't be checked>)`. Fix any fact that turns out wrong before presenting the ticket.
 7. **Present the tickets** to the user: the overlap check's one-line result, then each ticket's id, title, size/risk and acceptance criteria, plus any assumptions you made. Ask only questions that change the acceptance criteria.
 8. **Don't mark tickets ready.** Moving a ticket to `ready` is the user's gate (Gate 1). If the user explicitly approves, run `speck set <id> status ready`. That command re-runs the lint and refuses if the ticket fails.
+
+## Triage the inbox
+
+When the user asks to triage the inbox (for example "triage the inbox"), clear it down to at most three decisions. Builds write inbox notes for their follow-ups (`/speck-build` section 5 step 1). Never set a ticket to `ready` during triage: tickets it makes stay `draft` for the user's Gate 1.
+
+1. **Read the inbox.** Read every note in `speck/ideas/` whose `Status:` value is `inbox`. If there are none, say the inbox is empty in one line and stop.
+2. **Drop what's covered.** Without asking, set the `Status:` value to `dropped` on each inbox note that's already done or covered by another idea note, a ticket in `speck/tickets/` or `speck/tickets/done/` (problem, outcome and acceptance criteria) or `speck/product.md`, judged as in the overlap check in the `speck-capture` skill. Of any inbox notes that duplicate each other, keep one and drop the rest. Name each one dropped, with the reason, in one line (for example "Dropped `speck/ideas/2026-10-09-x.md`: covered by 0041").
+3. **Put up to three to the user.** Of the notes left, pick at most three, the most worth doing first. For each, give its title, the ticket it came from (its `From ticket:` line) and a one-line reason it's worth doing, and ask whether to "ticket it" or "drop it". Leave the rest as they are for the next triage.
+4. **Act on each answer.** "Ticket it" makes a draft ticket from the note with the steps above, running `speck new "<title>" --source=<the note>`, which sets the note's `Status:` to `ticketed (<id>)`. "Drop it" sets the note's `Status:` value to `dropped`. A note the user doesn't answer for stays `inbox`.
+5. **Count and commit.** At the end of each triage, give every note still `inbox` a `Triaged: <n>` line on its own line after the `Captured:` line: add `Triaged: 1` if it has none, or raise its number by one. A note that would reach `Triaged: 2` is set to `dropped` instead (its line still records `Triaged: 2`), and you list those in your reply. Commit every note you changed, and any tickets you made, staging each file by name, as `speck: triage inbox`.
+
+`dropped` is an idea status only triage sets. Notes with any other status (`idea`, `ticketed (…)`, `dropped`) are left alone.
 
 ## Rules
 
