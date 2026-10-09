@@ -326,3 +326,29 @@ test('0052 AC1-AC5: in a real browser, the log grows by itself in a fixed box, f
     await stop(panel);
   }
 });
+
+test('0052 AC3: in a real browser, a selection in repeated lines stays through unchanged and growing logs (review round 1, F1)', chrome, async () => {
+  const r = panelRepo();
+  writeLog(r.dir, '0001', 'working\nworking\n');
+  const port = await freePort();
+  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const b = await browserPage(`http://127.0.0.1:${port}/`);
+  try {
+    await b.until(`${row('0001')}`, 'the queue');
+    await b.js(`${row('0001')}.querySelector('.top').click()`);
+    await b.until(`(${box} || {}).textContent === 'working\\nworking'`, 'the log');
+    await b.js(`(() => { const t = ${box}.firstChild, r = document.createRange(); r.setStart(t, 0); r.setEnd(t, 7);
+      getSelection().removeAllRanges(); getSelection().addRange(r); window.mark = t; })()`);
+    const selected = `getSelection().toString() === 'working' && getSelection().anchorNode === window.mark && getSelection().anchorOffset === 0`;
+    await b.js(`window.asks = 0; const f = window.fetch; window.fetch = (...a) => { if (/\\/log$/.test(a[0])) window.asks++; return f(...a); }`);
+    await b.until('window.asks >= 2', 'two more log requests, with the same answer');
+    await new Promise(res => setTimeout(res, 200));
+    assert.ok(await b.js(selected), 'unchanged: the selection in the first line stays');
+    writeLog(r.dir, '0001', 'working\nworking\nworking\n');
+    await b.until(`${box}.textContent === 'working\\nworking\\nworking'`, 'a repeated line added');
+    assert.ok(await b.js(selected), 'grown: the selection in the first line stays');
+  } finally {
+    await b.close();
+    await stop(panel);
+  }
+});

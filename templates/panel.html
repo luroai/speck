@@ -639,13 +639,15 @@ function showLog(id, toBottom) {
   setLogText(box, logShown(logs.get(id)));
   if (follow) box.scrollTop = box.scrollHeight;
 }
-// Puts a newer log in its box. When the old text runs on into the new one once its oldest lines have dropped out of
-// the tail, only those lines are taken out at the top and the rest added at the bottom, so text selected in what stays
-// stays selected. Anything else goes to setText.
+// Puts a newer log in its box. New text after the old is added at the bottom. When the old text runs on into the new
+// one once its oldest lines have dropped out of the tail, only the fewest lines that makes it fit are taken out at the
+// top and the rest added at the bottom, so text selected in what stays stays selected. Anything else goes to setText.
 function setLogText(node, text) {
   const t = node.firstChild;
   if (t && t === node.lastChild && t.nodeType === 3) {
-    const old = t.data, head = old.startsWith(`${TRUNCATED}\n`) && text.startsWith(`${TRUNCATED}\n`) ? TRUNCATED.length + 1 : 0;
+    const old = t.data;
+    if (text.startsWith(old)) { if (text.length > old.length) t.appendData(text.slice(old.length)); return; }
+    const head = old.startsWith(`${TRUNCATED}\n`) && text.startsWith(`${TRUNCATED}\n`) ? TRUNCATED.length + 1 : 0;
     const body = text.slice(head);
     for (let i = old.indexOf('\n', head); i >= 0 && i < old.length - 1; i = old.indexOf('\n', i + 1)) {
       if (!body.startsWith(old.slice(i + 1))) continue;

@@ -1,7 +1,7 @@
 ---
 id: "0052"
 title: "Show a build's log growing as it runs"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:33:06.309Z"
 ---
 # 0052 · Show a build's log growing as it runs
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 An open log is a snapshot from the moment the ticket was opened: the ticket file changes only at a status or a review round, so the 2-second state refresh leaves the log standing still while the build prints. Reloading the page is the only way to see the newest lines, and a build's most useful output is always its last few lines.
@@ -58,3 +58,79 @@ An open log keeps up with the build by itself: the newest lines slide in at the 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e968dcd497a09cd2cd718b53b62d7b25e7397eaa",
+    "thread_id": "01a1222f-12a7-72c3-aff9-ca912a3f7c94",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 225859,
+      "cached_input_tokens": 148352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 891,
+      "reasoning_output_tokens": 79
+    },
+    "saved_at": "2026-10-09T19:41:40.070Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: toggleLog, startLogTimer and logTick implement independent one-second polling. AC1 tests cover unopened, closed and departed tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The .log CSS fixes height at 24em with overflow-y:auto. AC2 tests and the supplied passing browser test exercise tail updates and constant height."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "showLog implements bottom following, but setLogText deletes retained text for repeated lines, even on an unchanged response. Existing selection tests use unique numbered lines and miss this case."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "loadLog preserves the existing log on failure. Both AC4 tests exercise failure and subsequent recovery."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "replaced and showLog reset shorter replacement logs to the bottom. AC5 tests cover truncated, different and empty replacement logs."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:645",
+        "issue": "setLogText mistakes repeated lines for a shifted tail. Verified with an unchanged 'working\\nworking' response: it deletes the first eight characters and appends them again. A browser selection in the first line consequently collapses, although that line has not left the tail. Similar ambiguity occurs when repeated lines are appended.",
+        "suggested_fix": "Return immediately for identical text and handle ordinary prefix growth before attempting tail overlap detection. Add browser selection tests with repeated lines for unchanged responses and appended output.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The update otherwise describes the implementation accurately, but its selection-preservation promise is violated by F1."
+    },
+    "escalation_question": "",
+    "summary": "The log updates automatically in a fixed scrolling box, follows the latest output and recovers from failed requests. However, repeated output can erase the reader's selection even when nothing changed. Fix that selection bug before merging."
+  }
+}
+```
+
+</details>
