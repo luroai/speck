@@ -1,7 +1,7 @@
 ---
 id: "0061"
 title: "Show the full ticket's text as formatted Markdown"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0060"]               # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:42:48.053Z"
 
 ---
 # 0061 · Show the full ticket's text as formatted Markdown
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The full ticket pane shows each section as plain text, so Markdown such as `**bold**`, `` `code` `` and `- ` lists shows its raw symbols. Long notes and criteria with code and lists are harder to read than in a Markdown viewer.
