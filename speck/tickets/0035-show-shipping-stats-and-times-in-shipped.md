@@ -1,7 +1,7 @@
 ---
 id: "0035"
 title: Show shipping performance in Shipped                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T14:49:25.220Z"
 ---
 # 0035 · Show shipping performance in Shipped
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Shipped lists the latest tickets, but not when each one shipped or how the pipeline is performing overall, which is the proof data speck is meant to collect.
@@ -44,9 +44,14 @@ Shipped shows overall stats above the list, and each row shows when its ticket s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 309,874
+- Elapsed since build started: 7 min
+- Changed lines: 36 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: a ticket whose `finished` is earlier than `started` gives negative minutes, both on its row and in the median. Consider leaving such tickets out.
 - Follow-up idea: ship times from an earlier year show no year (`D Mon HH:MM` as the ticket asks), so they could be mistaken for this year's.
