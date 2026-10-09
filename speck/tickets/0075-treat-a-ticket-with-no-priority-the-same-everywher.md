@@ -1,7 +1,7 @@
 ---
 id: "0075"
 title: "Treat a ticket with no priority the same everywhere"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T22:28:44.275Z"
 ---
 # 0075 · Treat a ticket with no priority the same everywhere
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck doesn't handle a ticket with no priority consistently. `speck status` lists `priority: ""` as `P` above P1 tickets and a bare `priority:` as `P[object Object]`, while `status --json` (and so `speck run` and the panel) puts both last. Nothing checks the value either: `speck set <id> priority high` is accepted, and there's no way to clear a priority with `speck set`. It still matters for tickets edited by hand.
@@ -46,9 +46,14 @@ A ticket's priority is always a whole number from 1 to 5 or none, and a ticket w
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 386,483
+- Elapsed since build started: 7 min
+- Changed lines: 38 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, no inbox notes):
 - Known limit: a draft with no priority shows no tag in the panel, so it can't be given one there. 0077 puts that out of scope on purpose (new tickets start at P3), so no idea note.
