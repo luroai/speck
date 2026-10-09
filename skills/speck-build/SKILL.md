@@ -56,7 +56,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
    - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, and anything worth a look (risk flags, follow-up ideas).
    - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
    - If it exits with 13, merging into the base branch hit a conflict (it names the conflicting files) and nothing changed. Bring the branch up to date and get it re-reviewed, without asking the user:
-     1. In the ticket's worktree, merge the base branch into the ticket branch (`git merge <base_branch>`, no rebase or squash, so the reviewed commits stay as they are).
+     1. In the ticket's worktree, merge the base branch into the ticket branch: merge the ref ship's message names, which is `<base_branch>`, or `<remote>/<base_branch>` when ship had just fetched new commits from the remote (`git merge <ref>`, no rebase or squash, so the reviewed commits stay as they are).
      2. Resolve each conflict keeping the intent of both sides: the base branch's change and this ticket's. Stage each resolved file by name.
      3. Run the tests (`<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`) and fix anything the merge broke.
      4. Commit the merge (`speck(<id>): merge <base_branch>`).

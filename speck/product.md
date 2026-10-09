@@ -121,6 +121,7 @@ Everything happens in the local repo, with no PR.
     Once that push succeeds, it also deletes the ticket branch on the remote if it's there.
     If the push fails, the remote copy is kept.
     A merge conflict is aborted and leaves everything as it was, and speck names the conflicting files and exits with 13.
+    It also names what to merge into the ticket branch: the base branch, or its remote copy (for example `origin/main`) when it had just fetched new commits from the remote, since the undo leaves the local base branch without them.
     Every other refusal keeps its own code.
     If tracked files in the base branch's checkout gain uncommitted changes while the tests run, it refuses before merging, names them and leaves them as they were.
     A merge that would overwrite uncommitted changes is reported as that, naming the files, not as a conflict.
@@ -220,7 +221,7 @@ Everything happens in the local repo, with no PR.
   `speck review` and `speck record` also set an `approved` ticket back to `reviewing` the same way, in any round, for a re-review after a merge, so `speck review` accepts an `approved` ticket.
   Tickets in any other status, and later rounds on a `building` ticket, are left alone.
   The change stays uncommitted alongside the round, and the next round accepts both as the ticket's only uncommitted changes.
-- **Re-review after merging the base branch:** when the ticket branch has merged the base branch in since the last round (its merge base with the base branch has moved), the reviewer's diff is the branch's whole change against the base branch as merged, which is what would ship, not the diff since its last review.
+- **Re-review after merging the base branch:** when the ticket branch has merged the base branch in since the last round (its merge base with the base branch has moved; the base branch's remote copy as last fetched counts as the base branch when it's ahead of the local one), the reviewer's diff is the branch's whole change against the base branch as merged, which is what would ship, not the diff since its last review.
   The round's prompt says it follows a merge and asks the reviewer to check each resolved file keeps the intent of both sides, and `speck diff` shows the same diff.
   A round 1 prompt rebuilt from git uses the base branch as it was when round 1 ran.
   `speck close` replaces the figures an earlier close wrote in `## Delivery log` rather than adding a second set, keeping everything else there.

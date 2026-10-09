@@ -1,7 +1,7 @@
 ---
 id: "0048"
 title: Resolve a ship conflict without stopping the build                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T16:36:57.265Z"
 ---
 # 0048 · Resolve a ship conflict without stopping the build
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Builds run in parallel, so a ticket often finishes after another has changed the same files on the base branch. Then `speck ship --auto` refuses with a conflict and the build stops, leaving an approved ticket that someone has to merge by hand and get re-reviewed. That happened to 0039 on 9 October, and it will keep happening as more builds run at once.
@@ -53,3 +53,79 @@ When a build's ship hits a conflict, the build brings its branch up to date with
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3d89d9652c9fd4e697fd4d897d11720bb5840cc8",
+    "thread_id": "01a1218d-0ae4-7072-8f56-fb4ca95eb833",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 221249,
+      "cached_input_tokens": 139264,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 975,
+      "reasoning_output_tokens": 89
+    },
+    "saved_at": "2026-10-09T16:44:54.076Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs shipTicket assigns code 13 only when unmerged files exist, after undoing the ship. test/ship-0048.test.mjs covers conflicts, unchanged snapshots, other refusal codes and failing merge hooks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "startReviewing and reviewRound accept approved tickets and restore their original contents on failure. AC2 tests exercise review, failed review and record."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewSince detects a moved merge base; reviewerPrompt supplies the whole diff and merge explanation. AC3 tests inspect the actual command reviewer's prompt and speck diff, including exclusion of base-only changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 5 contains the required sequence and two-merge limit. The AC4 instruction test checks these requirements; the integration test exercises merge, re-review, close and ship."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "speck/product.md describes exit 13 and merge-and-re-review recovery; the AC5 test checks those descriptions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-build/SKILL.md",
+        "issue": "Recovery cannot resolve a conflict introduced by newly fetched remote commits. shipTicket's undo resets the local base to baseSha, undoing its remote catch-up. Section 5 then tells the builder to merge that unchanged local base. That merge can report already up to date, leaving the remote conflict unresolved; the next ship fetches the same commits and conflicts again. Existing recovery tests advance local main and miss this case.",
+        "suggested_fix": "Make recovery incorporate the fetched remote base as well as the local base without weakening ship's rollback guarantee. Ensure reviewSince recognises that merge and supplies the whole shipping diff. Add an integration test where only the remote base advances, the first ship exits 13, and recovery, review, close and the second auto-ship succeed.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The documented recovery works for local base changes, but its general claim omits the remote catch-up case where recovery repeatedly merges an outdated local base."
+    },
+    "escalation_question": "",
+    "summary": "The change handles local branch conflicts and correctly sends the merged result for review. However, a conflict caused by new remote changes cannot be recovered using the supplied instructions. That gap needs fixing before merge. Tests were inspected but not rerun in this read-only review."
+  }
+}
+```
+
+</details>

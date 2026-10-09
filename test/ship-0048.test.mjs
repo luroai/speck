@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { shipRepo, runIn, gIn, BRANCH, env } from './support/ship.mjs';
+import { shipRepo, remoteMoves, runIn, gIn, BRANCH, env } from './support/ship.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TICKET = 'speck/tickets/0001-export-bookings.md';
@@ -18,7 +18,7 @@ const noTrace = res => assert.doesNotMatch(res.stderr, /^\s+at /m, 'no stack tra
 // An approved ticket whose ship conflicts: main changes shared.txt (as the ticket does) and adds mainonly.txt.
 // The ticket uses reviewer "fake", a command that logs its stdin and answers with FAKE_VERDICT (approve by default).
 // Its Delivery log already has the figures an earlier `speck close` wrote, and a follow-up idea.
-function conflictRepo() {
+function conflictRepo({ remote = false } = {}) {
   const r = shipRepo();
   const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-fake-'));
   const fake = path.join(bin, 'fake-reviewer');
@@ -36,15 +36,19 @@ console.log(process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(approve)
     .replace(/^## Review rounds$/m, '## Review log\nRound 1 (claude-subagent): approve.\n\n## Delivery log\n- Review rounds: 1\n- Reviewer: fake, model default, effort default\n- Reviewer tokens: 0\n- Elapsed: not recorded\n- Changed lines: 1 (limit 5000)\n- Follow-up: keep this idea\n\n## Review rounds'));
   gIn(r.wt, 'add', 'speck/config.yml', TICKET);
   gIn(r.wt, 'commit', '-qm', 'reviewer fake');
-  fs.writeFileSync(path.join(r.dir, 'shared.txt'), 'main side\n');
-  fs.writeFileSync(path.join(r.dir, 'mainonly.txt'), 'from main\n');
-  r.g('add', 'shared.txt', 'mainonly.txt');
-  r.g('commit', '-qm', 'main moves on');
+  // With `remote`, only the remote's main moves on (shared.txt), and local main stays where the ticket branched from it.
+  if (remote) remoteMoves(r, 'shared.txt', 'main side\n');
+  else {
+    fs.writeFileSync(path.join(r.dir, 'shared.txt'), 'main side\n');
+    fs.writeFileSync(path.join(r.dir, 'mainonly.txt'), 'from main\n');
+    r.g('add', 'shared.txt', 'mainonly.txt');
+    r.g('commit', '-qm', 'main moves on');
+  }
   const prompts = () => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
   const wtRun = (extraEnv, ...a) => spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'speck.mjs'), ...a], { cwd: r.wt, encoding: 'utf8', env: { ...env, ...extraEnv } });
-  // Merges main into the ticket branch in its worktree and resolves shared.txt keeping both sides.
-  const mergeMain = () => {
-    assert.notEqual(gIn(r.wt, 'merge', '-q', 'main').status, 0, 'the merge conflicts');
+  // Merges main (or the ref ship named) into the ticket branch in its worktree and resolves shared.txt keeping both sides.
+  const mergeMain = (ref = 'main') => {
+    assert.notEqual(gIn(r.wt, 'merge', '-q', ref).status, 0, 'the merge conflicts');
     fs.writeFileSync(path.join(r.wt, 'shared.txt'), 'feature\nmain side\n');
     gIn(r.wt, 'add', 'shared.txt');
     assert.equal(gIn(r.wt, 'commit', '-q', '--no-edit').status, 0);
@@ -195,6 +199,37 @@ test('0048 AC2/AC4: after the merge, the re-review, speck close and a second shi
   assert.equal(gIn(r.dir, 'branch', '--list', BRANCH).stdout.trim(), '');
 });
 
+test('0048 round 1 F1: a conflict with commits only on the remote names the remote copy to merge, and the merge is re-reviewed and auto-ships', () => {
+  const r = conflictRepo({ remote: true });
+  const cfg = path.join(r.wt, 'speck', 'config.yml');
+  fs.writeFileSync(cfg, read(r.wt, 'speck/config.yml').replace(/^auto_ship: .*$/m, 'auto_ship: true'));
+  gIn(r.wt, 'commit', '-qm', 'auto ship on', '--', 'speck/config.yml');
+  const before = r.snapshot();
+  const first = runIn(r.wt, 'ship', '1', '--auto');
+  assert.equal(first.status, 13, first.stderr + first.stdout);
+  assert.match(first.stderr, /shared\.txt/);
+  assert.match(first.stderr, /Merge origin\/main into /);
+  assert.deepEqual(r.snapshot(), before, 'local main is back where it was');
+  // Merging the local main does nothing: it doesn't have the remote's commits.
+  assert.match(gIn(r.wt, 'merge', 'main').stdout, /Already up to date/);
+  r.mergeMain('origin/main');
+  const diff = r.wtRun({}, 'diff', '1');
+  assert.match(diff.stdout, /^\+feature$/m);
+  assert.doesNotMatch(diff.stdout, /^-main side$/m, "the remote's change isn't shown as reverted");
+  assert.equal(r.wtRun({}, 'review', '1').status, 0);
+  const prompt = r.prompts()[0];
+  const round = prompt.slice(prompt.lastIndexOf('# Review round 2'));
+  assert.match(round, /follows a merge of main/);
+  assert.ok(round.includes(diff.stdout.trim()), 'the same diff as speck diff');
+  gIn(r.wt, 'add', TICKET);
+  gIn(r.wt, 'commit', '-qm', 'round 2');
+  assert.equal(runIn(r.wt, 'close', '1').status, 0);
+  const ship = runIn(r.wt, 'ship', '1', '--auto');
+  assert.equal(ship.status, 0, ship.stderr + ship.stdout);
+  assert.equal(read(r.dir, 'shared.txt'), 'feature\nmain side\n');
+  assert.equal(gIn(r.dir, 'rev-parse', 'main').stdout, gIn(r.dir, 'rev-parse', 'origin/main').stdout, 'pushed');
+});
+
 // The section of the build skill between `## 5.` and the next `## `.
 const section5 = () => read(ROOT, 'skills/speck-build/SKILL.md').split(/^## 5\./m)[1].split(/^## /m)[0];
 
@@ -202,6 +237,7 @@ test('0048 AC4: /speck-build section 5 says how to merge, resolve, re-review and
   const s = section5();
   assert.match(s, /exits with 13/);
   assert.match(s, /merge the base branch into the ticket branch/i);
+  assert.match(s, /`<remote>\/<base_branch>`/, 'the remote copy when ship names it');
   assert.match(s, /in its worktree|in the ticket's worktree/i);
   assert.match(s, /keeping the intent of both sides/);
   assert.match(s, /run the tests/i);

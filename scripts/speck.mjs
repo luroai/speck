@@ -489,14 +489,23 @@ function requireCommitted(repo, ticket, message) {
   if (status.length) throw new SpeckError(`${message} Uncommitted: ${status.map(l => l.slice(3)).join(', ')}. Untracked files are fine.`);
 }
 
+// The base branch as ship would merge into it: its remote copy as last fetched, when that is ahead of the local
+// branch (ship catches up with it first), otherwise the local branch. No fetch: it reads what's already there.
+function shipBase(repo, base) {
+  const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
+  const theirs = remote && sh('git', ['rev-parse', '--verify', '-q', `refs/remotes/${remote}/${base}`], { cwd: repo }).stdout.trim();
+  return theirs && isAncestor(repo, base, theirs) ? `${remote}/${base}` : base;
+}
+
 // Where the reviewer's diff starts: the base branch's merge base in round 1, otherwise the commit the last round
 // reviewed. If the branch has merged the base branch in since then (its merge base moved), it starts at the new merge
 // base instead, so the reviewer sees the branch's whole change against the base as merged: what would ship.
 function reviewSince(repo, cfg, prior) {
-  const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
+  const target = shipBase(repo, cfg.base_branch);
+  const base = git(['merge-base', target, 'HEAD'], repo).trim();
   const last = prior[prior.length - 1]?.meta?.reviewed_sha;
   if (!last) return { base, sinceSha: base, merged: false };
-  const was = sh('git', ['merge-base', cfg.base_branch, last], { cwd: repo });
+  const was = sh('git', ['merge-base', target, last], { cwd: repo });
   const merged = was.status === 0 && was.stdout.trim() !== base;
   return { base, sinceSha: merged ? base : last, merged };
 }
@@ -1370,7 +1379,9 @@ export function shipTicket(repo, id) {
     if (why) throw overwriteError(`Merging ${branch} into ${base}`, ...why);
     if (!conflicts.length) throw fail(`Merging ${branch} into ${base} failed, so nothing was shipped and ${base} is unchanged: ${merge.stderr.trim().split('\n').pop()}`);
     // A conflict has its own exit code, so a build can merge the base branch in, get it re-reviewed and ship again.
-    const e = fail(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Conflicting files: ${conflicts.join(', ')}. Merge ${base} into ${branch}, resolve the conflicts, get the result reviewed, then ship again.`);
+    // After catching up with the remote, the conflict is with the remote's commits, which the local base no longer has.
+    const target = catchUp ? `${remote}/${base}` : base;
+    const e = fail(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Conflicting files: ${conflicts.join(', ')}. Merge ${target} into ${branch}, resolve the conflicts, get the result reviewed, then ship again.`);
     e.code = 13;
     throw e;
   }
