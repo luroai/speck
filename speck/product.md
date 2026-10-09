@@ -97,15 +97,18 @@ Everything happens in the local repo, with no PR.
     It then sets the ticket ready exactly as `speck set <id> status ready` does and commits only that ticket's file as `speck(<id>): ready` (`speck start` needs it committed), leaving everything else in the checkout, staged or not, as it was.
     It refuses, changing and committing nothing, with the reason as JSON: a ticket that fails lint (422, with the same messages as `speck lint`), one that isn't a draft (409), an id with no ticket (404) and a checkout that isn't on `base_branch` (409).
     The server writes nothing else.
-    The page, in the dark style of `docs/panel-mockup.html`, has a header with the repo, the base branch and the connection status, and shows **Shaping**, with a Tickets / Ideas toggle (Tickets when the page loads) that shows one list at a time, tickets in blue and ideas in purple on the toggle, the section's top edge and each item's left edge.
+    The page, in the dark style of `docs/panel-mockup.html`, has a header with the repo, the base branch and the connection status, and shows **Shaping**, with a Tickets / Ideas / Inbox toggle, each with its count (`Tickets · <n>`), that shows one list at a time (Tickets when the page loads), tickets in blue, ideas in purple and the inbox in teal on the toggle, the section's top edge and each item's left edge.
     **Tickets** lists drafts in the JSON's order with their id, title, priority, size, risk, criteria count and lint result.
     Clicking that top row opens it: its problem, outcome, numbered acceptance criteria, out of scope and notes (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors.
     Clicking the button doesn't close the ticket.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
     Clicking the top row again closes it.
     Clicking or selecting text in an open ticket's details leaves it open.
-    **Ideas** lists every idea, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
+    **Ideas** lists the user's own ideas, leaving out those whose status is `inbox` or `dropped`, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
     Clicking or selecting text in the note leaves it open.
+    **Inbox** lists every idea whose status is `inbox`, in the JSON's order, with title, path and "from <id>" from its `From ticket:` line (left out when it has none), and opens and closes to show its note text the same way.
+    An empty inbox says "Inbox is empty."
+    `dropped` notes show nowhere in the panel.
     More than one ticket or idea can be open at once.
     A ticket whose `type` is `bug` shows a "bug" tag beside its id in Shaping, the queue and Shipped, in a pink used for nothing else.
     A ticket starts a chain when its `waiting_on` is empty and at least one ticket that isn't `done` or `cancelled` lists its id in `after:`.
