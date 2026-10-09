@@ -78,7 +78,7 @@ test('0061 AC1: problem, outcome, out of scope and notes show their Markdown for
   const p = await showPane(full('0001', { problem: SAMPLE, outcome: SAMPLE, out_of_scope: SAMPLE, notes: SAMPLE }));
   for (const h of ['Problem', 'Outcome', 'Out of scope', 'Notes']) checkSample(p, section(p, h), h);
   // The headings inside a section rank below the section's own heading (h4).
-  assert.deepEqual(p.all(pane(p)).filter(n => /^h[1-4]$/.test(n.tagName)).map(n => n.textContent), ['Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']);
+  assert.deepEqual(p.all(pane(p)).filter(n => /^h[1-4]$/.test(n.tagName)).map(n => n.textContent), ['Readiness', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']); // Readiness: 0062
 });
 
 test('0061 AC1: each acceptance criterion shows its Markdown formatted, and the criteria stay numbered', async () => {

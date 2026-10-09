@@ -111,7 +111,9 @@ Everything happens in the local repo, with no PR.
     **Tickets** lists drafts in the JSON's order with their id, title, priority, size, risk, criteria count and lint result.
     Clicking that top row opens a short view: its problem and outcome (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors, and a **Full ticket** button.
     Clicking either button doesn't close the ticket.
-    **Full ticket** opens a side pane over the right of the page with that ticket's id, title, problem, outcome, numbered acceptance criteria, out of scope and notes, leaving out any section with nothing in it.
+    **Full ticket** opens a side pane over the right of the page with that ticket's id and title, then the same readiness list and buttons as the open ticket except **Full ticket** (today **Set ready**), then its problem, outcome, numbered acceptance criteria, out of scope and notes, leaving out any section with nothing in it.
+    The pane's **Set ready** is disabled with the same hover text as the list's, and both show "Setting ready…" while a request for that ticket is in progress, whichever of them sent it.
+    Clicking it leaves the pane open, and a refusal's reason shows under both buttons until the next click on either.
     Each section's Markdown shows formatted: bold, italic (`*` or `_`), code spans, fenced code blocks keeping their spacing, `- `, `* ` and `1. ` lists nested by indentation (at most 16 levels, and a blank line between items keeps the list), `#` to `###` headings ranked below the section's own heading, and paragraphs split by blank lines.
     A link shows as a link opening in a new tab only when its URL starts `http://` or `https://`; any other link shows as its text alone.
     Everything else, including raw HTML, tables, images, blockquotes, rules and backslash escapes, shows as literal text, with any Markdown inside it unformatted, and so does Markdown inside code.
@@ -122,6 +124,7 @@ Everything happens in the local repo, with no PR.
     Clicking in the pane, or selecting text that starts in it and ends outside it, leaves it open.
     It also closes with its **Close** button or the Escape key, leaving the open ticket in the list open, and however it closes, the page is where it was when the pane opened.
     Through the refresh it keeps showing the same ticket (the first one with that id), shows the new content when that ticket's data changes, and closes when the ticket leaves the Tickets list, for example once it's ready.
+    When only its readiness list or **Set ready** state changes, only that list is replaced, so text selected elsewhere in the pane stays selected.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
     Clicking the top row again closes it.
     Clicking or selecting text in an open ticket's details leaves it open.
