@@ -43,6 +43,8 @@ An idea note is filed in `speck/ideas/done/` once it's ticketed, so `speck/ideas
 - Folder name `speck/ideas/done/`, and filing on the first ticket rather than when all its tickets are done, are defaults chosen while ticketing, to confirm before ready. An idea still being split, such as `speck/ideas/2026-10-08-speck-board.md`, moves on its first ticket and is ticketed from `done/` after that (criterion 2).
 - Touches the CLI (`new`, `init`, `status`) and the skill text in `skills/`; product.md and `docs/brief.md` need updating.
 - Related inbox note: `speck/ideas/2026-10-09-speck-status-counts-dropped-ideas-as-waiting.md`.
+- The 0009 tests' note reader now follows a ticketed note into `speck/ideas/done/`, since AC1 moves it; their content checks are unchanged.
+- Self-check: added a test for the product.md claim that a build's follow-up check reads `speck/ideas/done/`; refusing a name already taken in `speck/ideas/done/` (in `new`) and leaving it with a message (in `init`) came from checking repeated names.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

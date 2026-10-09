@@ -13,7 +13,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`). I
 
 Before you write anything, check whether the idea is already covered. `/speck-ticket` runs this same check before it creates a ticket. Read:
 
-- every note in `speck/ideas/`, with its `Status:` value;
+- every note in `speck/ideas/` and `speck/ideas/done/` (where notes are filed once ticketed), with its `Status:` value;
 - every ticket in `speck/tickets/` and `speck/tickets/done/`, including done and cancelled ones. Read each ticket's problem, outcome and acceptance criteria, not only its title;
 - `speck/product.md`, which says what the product already does.
 
