@@ -36,6 +36,7 @@ Several sessions often share one checkout. Today `speck ship` checks out the bas
 - Creating worktrees (0028).
 
 ## Notes
+- Self-check: added a plain error for a worktree folder that was deleted by hand (git still thinks the branch is checked out there). A worktree that can't be removed (locked) no longer stops the ship before the push. A test also showed `--auto` reads `auto_ship` from the folder it runs in, so from the ticket's own branch the builder could switch it on; that predates this ticket and is logged as a follow-up.
 - Pre-check: AC2 didn't say what happens when the base branch isn't checked out anywhere. It now does.
 - Checked 2026-10-09: git 2.53.0 here. Git refuses to check out a branch that's already checked out in another worktree (the reason for this ticket), and has `git worktree remove`.
 - Comes before 0028, so builds only move into worktrees once they can ship from one.

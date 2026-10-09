@@ -47,7 +47,7 @@ idea / conversation
                             push, branch deleted locally and on the remote
 ```
 
-The `product.md` update is made and reviewed on the ticket branch, and `speck ship` sets the ticket to `done` on that branch just before merging. So merging is the moment the spec becomes true. Until you ship, `main` is unchanged. `speck ship` refuses, changing nothing, unless the ticket is `approved`, the review loop says `ship`, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/`, and `commands.test` is set and passes. A merge conflict is aborted and leaves everything as it was.
+The `product.md` update is made and reviewed on the ticket branch, and `speck ship` sets the ticket to `done` on that branch just before merging. So merging is the moment the spec becomes true. Until you ship, `main` is unchanged. `speck ship` refuses, changing nothing, unless the ticket is `approved`, the review loop says `ship`, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/`, and `commands.test` is set and passes. A merge conflict is aborted and leaves everything as it was. If the ticket branch is checked out in another git worktree, ship does the branch steps there and the merge where the base branch is checked out, then removes the ticket's worktree.
 
 ## Ticket size rules
 

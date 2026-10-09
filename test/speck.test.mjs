@@ -1978,3 +1978,163 @@ test('0026 AC3: the build pre-flight re-checks unverified facts and stops if one
   assert.ok(record > pre.indexOf('Create the branch'), 'checked facts are recorded after the branch exists');
   assert.ok(record < pre.indexOf('speck(<id>): start') || pre.slice(record).includes('speck(<id>): start'), 'and committed with the start commit');
 });
+
+// ---------- 0027: ship a ticket whose branch is in another worktree ----------
+
+// An approved ticket whose branch is checked out in its own worktree, with main checked out in the main folder.
+function worktreeShipRepo({ addFile = false, autoShip = false, remote = false, test = 'true' } = {}) {
+  const r = shipRepo({ approve: false, test });
+  const env = { ...process.env, ...gitEnv };
+  const gIn = (cwd, ...a) => spawnSync('git', a, { cwd, encoding: 'utf8', env });
+  const runIn = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env });
+  if (addFile) { fs.writeFileSync(path.join(r.dir, 'new.txt'), 'from the branch\n'); r.g('add', '-A'); r.g('commit', '-qm', 'new file'); }
+  if (autoShip) {
+    const c = path.join(r.dir, 'speck', 'config.yml');
+    fs.writeFileSync(c, fs.readFileSync(c, 'utf8').replace(/^auto_ship:.*$/m, 'auto_ship: true'));
+    r.g('add', '-A'); r.g('commit', '-qm', 'auto ship on');
+  }
+  const v = path.join(os.tmpdir(), `verdict-${path.basename(r.dir)}.json`);
+  fs.writeFileSync(v, JSON.stringify(approveVerdict));
+  r.run('record', '1', v);
+  r.run('set', '1', 'status', 'approved');
+  r.g('add', '-A'); r.g('commit', '-qm', 'approved');
+  let bare = null;
+  if (remote) {
+    bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
+    gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+    r.g('remote', 'add', 'origin', bare);
+    r.g('push', '-q', '-u', 'origin', 'main');
+    r.g('push', '-q', '-u', 'origin', 'speck/0001-export-bookings');
+  }
+  r.g('checkout', '-q', 'main');
+  if (autoShip) { // in real use, auto_ship is set on main and the branch inherits it
+    const c = path.join(r.dir, 'speck', 'config.yml');
+    fs.writeFileSync(c, fs.readFileSync(c, 'utf8').replace(/^auto_ship:.*$/m, 'auto_ship: true'));
+    r.g('commit', '-qam', 'auto ship on, on main');
+  }
+  const wt = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-wt-')), 'wt');
+  assert.equal(gIn(r.dir, 'worktree', 'add', '-q', wt, 'speck/0001-export-bookings').status, 0);
+  const sha = ref => gIn(r.dir, 'rev-parse', '--verify', '-q', ref).stdout.trim();
+  const worktrees = () => gIn(r.dir, 'worktree', 'list', '--porcelain').stdout.split('\n').filter(l => l.startsWith('worktree ')).length;
+  const statusIn = cwd => parseTicket(fs.readFileSync(path.join(cwd, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8')).fm.status;
+  const snapshot = () => ({ main: sha('main'), branch: sha('speck/0001-export-bookings'), wt: fs.existsSync(wt) && gIn(wt, 'rev-parse', 'HEAD').stdout.trim(),
+    dirBranch: gIn(r.dir, 'branch', '--show-current').stdout.trim(), dirStatus: gIn(r.dir, 'status', '--porcelain').stdout, wtStatus: fs.existsSync(wt) && gIn(wt, 'status', '--porcelain').stdout });
+  return { ...r, wt, bare, gIn, runIn, sha, worktrees, statusIn, snapshot };
+}
+
+test('0027 AC1/AC3: ship from the main checkout merges the worktree branch, pushes, deletes the branch everywhere and removes the worktree', () => {
+  const r = worktreeShipRepo({ remote: true });
+  const res = r.runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  assert.match(r.g('log', '-1', '--format=%s', 'main'), /speck\(0001\): Export bookings/);
+  assert.equal(r.g('rev-list', '--count', '--min-parents=2', '-1', 'main'), '1', 'a merge commit');
+  assert.ok(fs.existsSync(path.join(r.dir, 'speck', 'tickets', 'done', '0001-export-bookings.md')), 'the main checkout has the merged files');
+  assert.equal(fs.readFileSync(path.join(r.dir, 'shared.txt'), 'utf8'), 'feature\n');
+  assert.equal(r.g('branch', '--show-current'), 'main');
+  assert.equal(r.g('status', '--porcelain'), '');
+  assert.equal(fs.existsSync(r.wt), false, 'worktree removed');
+  assert.equal(r.worktrees(), 1);
+  assert.equal(r.sha('speck/0001-export-bookings'), '', 'branch deleted');
+  assert.equal(r.gIn(r.bare, 'rev-parse', 'main').stdout.trim(), r.sha('main'), 'pushed');
+  assert.equal(r.gIn(r.bare, 'rev-parse', '--verify', '-q', 'speck/0001-export-bookings').stdout.trim(), '', 'remote branch deleted');
+});
+
+test('0027 AC1/AC3: ship --auto run from inside the worktree ships, removes it and says where main is', () => {
+  const r = worktreeShipRepo({ autoShip: true });
+  const res = r.runIn(r.wt, 'ship', '1', '--auto');
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  assert.match(r.g('log', '-1', '--format=%s', 'main'), /speck\(0001\): Export bookings/);
+  assert.equal(fs.existsSync(r.wt), false);
+  assert.ok(res.stdout.includes(r.wt), 'names the removed folder');
+  assert.ok(res.stdout.includes(fs.realpathSync(r.dir)), 'prints where the base branch is checked out');
+  assert.match(res.stdout, /removed/i);
+});
+
+test('0027 AC2: tracked changes in the base checkout refuse; untracked files only block when the merge would overwrite them', () => {
+  const dirty = worktreeShipRepo();
+  fs.writeFileSync(path.join(dirty.dir, 'shared.txt'), 'local edit\n');
+  let before = dirty.snapshot();
+  let res = dirty.runIn(dirty.wt, 'ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /uncommitted/i);
+  assert.ok(res.stderr.includes(fs.realpathSync(dirty.dir)), 'names the checkout');
+  assert.deepEqual(dirty.snapshot(), before);
+  assert.equal(dirty.statusIn(dirty.wt), 'approved');
+
+  const clash = worktreeShipRepo({ addFile: true });
+  fs.writeFileSync(path.join(clash.dir, 'new.txt'), 'mine, untracked\n');
+  before = clash.snapshot();
+  res = clash.runIn(clash.dir, 'ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /new\.txt/);
+  assert.doesNotMatch(res.stderr, /    at /);
+  assert.deepEqual(clash.snapshot(), before);
+  assert.equal(fs.readFileSync(path.join(clash.dir, 'new.txt'), 'utf8'), 'mine, untracked\n');
+  assert.equal(clash.statusIn(clash.wt), 'approved');
+
+  const harmless = worktreeShipRepo({ addFile: true });
+  fs.writeFileSync(path.join(harmless.dir, 'notes.txt'), 'mine\n');
+  res = harmless.runIn(harmless.dir, 'ship', '1');
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(fs.readFileSync(path.join(harmless.dir, 'notes.txt'), 'utf8'), 'mine\n');
+  assert.equal(fs.readFileSync(path.join(harmless.dir, 'new.txt'), 'utf8'), 'from the branch\n');
+});
+
+test('0027 AC2: with the base branch checked out nowhere, ship still merges and removes the worktree', () => {
+  const r = worktreeShipRepo();
+  r.g('checkout', '-q', '-b', 'dashboard');
+  const res = r.runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  assert.match(r.g('log', '-1', '--format=%s', 'main'), /speck\(0001\): Export bookings/);
+  assert.equal(r.g('branch', '--show-current'), 'dashboard', 'the folder it ran in keeps its branch');
+  assert.equal(fs.existsSync(r.wt), false);
+  assert.equal(r.sha('speck/0001-export-bookings'), '');
+});
+
+test('0027 AC4: a conflict or a failed check leaves the worktree, both branches and both folders as they were', () => {
+  const r = worktreeShipRepo();
+  fs.writeFileSync(path.join(r.dir, 'shared.txt'), 'main side\n');
+  r.g('commit', '-qam', 'main moves on');
+  const before = r.snapshot();
+  const res = r.runIn(r.dir, 'ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /conflict/i);
+  assert.deepEqual(r.snapshot(), before);
+  assert.equal(r.statusIn(r.wt), 'approved');
+  assert.equal(r.worktrees(), 2);
+
+  const failing = worktreeShipRepo({ test: 'false' });
+  const was = failing.snapshot();
+  const f = failing.runIn(failing.dir, 'ship', '1');
+  assert.notEqual(f.status, 0);
+  assert.match(f.stderr, /Tests failed/);
+  assert.deepEqual(failing.snapshot(), was);
+  assert.equal(failing.statusIn(failing.wt), 'approved');
+});
+
+test('0027 (self-check): a missing worktree folder gets a plain error, and a worktree that cannot be removed still ships and pushes', () => {
+  const gone = worktreeShipRepo();
+  fs.rmSync(gone.wt, { recursive: true, force: true });
+  const before = gone.sha('main');
+  let res = gone.runIn(gone.dir, 'ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /git worktree prune/);
+  assert.doesNotMatch(res.stderr, /    at /);
+  assert.equal(gone.sha('main'), before);
+
+  const locked = worktreeShipRepo({ remote: true });
+  locked.g('worktree', 'lock', locked.wt);
+  res = locked.runIn(locked.dir, 'ship', '1');
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  assert.match(res.stdout, /Couldn't remove the worktree/);
+  assert.ok(res.stdout.includes(`git worktree remove ${locked.wt}`), 'says how to finish');
+  assert.equal(locked.gIn(locked.bare, 'rev-parse', 'main').stdout.trim(), locked.sha('main'), 'still pushed');
+  assert.match(locked.g('log', '-1', '--format=%s', 'main'), /speck\(0001\): Export bookings/);
+});
+
+test('0027 AC1: ship --auto from the main checkout reads the approved ticket from its worktree', () => {
+  const r = worktreeShipRepo({ autoShip: true });
+  const res = r.runIn(r.dir, 'ship', '1', '--auto');
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  assert.equal(fs.existsSync(r.wt), false);
+});

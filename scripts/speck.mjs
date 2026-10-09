@@ -1089,47 +1089,97 @@ function remoteBaseCatchUp(repo, remote, base) {
   throw new SpeckError(`Your ${base} and ${remote}'s ${base} each have commits the other doesn't, so nothing was shipped. Combine them with \`git checkout ${base} && git pull\`, then ship again.`);
 }
 
+// Every checkout of this repo, the main one first, with the branch each one has (null when detached).
+function worktreeList(repo) {
+  return git(['worktree', 'list', '--porcelain'], repo).split('\n\n').filter(b => b.trim()).map(block => {
+    const lines = block.split('\n');
+    const at = lines.find(l => l.startsWith('worktree '))?.slice(9);
+    const ref = lines.find(l => l.startsWith('branch '))?.slice(7);
+    return { path: fs.existsSync(at) ? fs.realpathSync(at) : at, branch: ref ? ref.replace(/^refs\/heads\//, '') : null };
+  });
+}
+
+// Where shipping happens. The ticket-branch steps run where the branch is checked out (or in this folder if it
+// isn't checked out anywhere, as before worktrees). The merge runs where the base branch is checked out, or in
+// that same folder if it isn't checked out anywhere. `linked` is the ticket's own worktree, removed after shipping.
+function shipFolders(repo, branch, base) {
+  const list = worktreeList(repo);
+  const main = list[0].path;
+  const at = b => list.find(w => w.branch === b)?.path || null;
+  const branchAt = at(branch), baseAt = at(base);
+  const work = branchAt || fs.realpathSync(repo);
+  return { main, work, mergeAt: baseAt || work, linked: branchAt && branchAt !== main ? branchAt : null };
+}
+
 export function shipTicket(repo, id) {
   const cfg = loadConfig(repo);
   const pad = String(id).padStart(4, '0');
   const base = cfg.base_branch;
   const branch = ticketBranch(repo, cfg, pad);
-  if (git(['status', '--porcelain'], repo).trim())
-    throw new SpeckError('You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.');
+  const { main, work, mergeAt, linked } = shipFolders(repo, branch, base);
+  const here = fs.realpathSync(repo);
+  if (!fs.existsSync(work))
+    throw new SpeckError(`${branch} is checked out in a worktree at ${work}, but that folder is missing. Run \`git worktree prune\` so git forgets it, then ship again.`);
+  if (git(['status', '--porcelain'], work).trim())
+    throw new SpeckError(work === here
+      ? 'You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.'
+      : `The ticket's worktree at ${work} has uncommitted or untracked changes. Commit or remove them there, then run this again.`);
+  if (mergeAt !== work && git(['status', '--porcelain', '--untracked-files=no'], mergeAt).trim())
+    throw new SpeckError(`${base} is checked out at ${mergeAt}, and it has uncommitted changes. Commit or stash them there so the merge can update it, then run this again.`);
   const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
   const catchUp = remoteBaseCatchUp(repo, remote, base);
-  const start = git(['branch', '--show-current'], repo).trim() || git(['rev-parse', 'HEAD'], repo).trim();
+  const start = git(['branch', '--show-current'], work).trim() || git(['rev-parse', 'HEAD'], work).trim();
   const branchSha = git(['rev-parse', branch], repo).trim();
   const baseSha = git(['rev-parse', base], repo).trim();
-  git(['checkout', '-q', branch], repo);
-  const back = () => git(['checkout', '-q', start], repo);
+  git(['checkout', '-q', branch], work);
+  const back = () => git(['checkout', '-q', start], work);
   try {
-    shipChecks(repo, cfg, pad, branch);
-    if (!runTests(repo, cfg)) throw new SpeckError('Tests failed on the approved branch, so nothing was shipped.');
+    shipChecks(work, cfg, pad, branch);
+    if (!runTests(work, cfg)) throw new SpeckError('Tests failed on the approved branch, so nothing was shipped.');
   } catch (e) { back(); throw e; }
   // Close the ticket on the branch, so the merge is what makes it done.
-  const t = findTicket(repo, pad);
+  const t = findTicket(work, pad);
   writeField(t, 'status', 'done');
-  git(['add', '-A', '--', placeTicket(repo, t, 'done'), t.file], repo);
-  git(['commit', '-q', '-m', `speck(${pad}): ship`], repo);
-  git(['checkout', '-q', base], repo);
-  if (catchUp) git(['merge', '-q', '--ff-only', catchUp], repo);
-  const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: repo });
+  git(['add', '-A', '--', placeTicket(work, t, 'done'), t.file], work);
+  git(['commit', '-q', '-m', `speck(${pad}): ship`], work);
+  if (mergeAt === work) git(['checkout', '-q', base], work);
+  if (catchUp) git(['merge', '-q', '--ff-only', catchUp], mergeAt);
+  const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: mergeAt });
   if (merge.status !== 0) {
-    sh('git', ['merge', '--abort'], { cwd: repo });
-    git(['reset', '-q', '--hard', baseSha], repo); // undo any catch-up, so the base is exactly as it was
-    git(['update-ref', `refs/heads/${branch}`, branchSha], repo);
-    back();
-    throw new SpeckError(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
+    sh('git', ['merge', '--abort'], { cwd: mergeAt });
+    git(['reset', '-q', '--hard', baseSha], mergeAt); // undo any catch-up, so the base is exactly as it was
+    if (mergeAt === work) { git(['update-ref', `refs/heads/${branch}`, branchSha], work); back(); }
+    else git(['reset', '-q', '--hard', branchSha], work); // the branch is checked out there, so undo the ship commit in place
+    // Git refuses to overwrite untracked files, listing them one per line, indented.
+    const blocked = /untracked working tree files would be overwritten/.test(merge.stderr)
+      ? merge.stderr.split('\n').filter(l => /^\s+\S/.test(l)).map(l => l.trim()) : [];
+    throw new SpeckError(blocked.length
+      ? `Merging ${branch} into ${base} would overwrite untracked files in ${mergeAt}: ${blocked.join(', ')}. Nothing was shipped. Move or remove them, then ship again.`
+      : `Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
   }
-  const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: repo }).stdout.trim() || remote;
+  // From here on, run git from the main checkout, which always survives: the ticket's worktree is about to go.
+  const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: main }).stdout.trim() || remote;
   // -d would compare against the branch's upstream, which lacks the ship commit, so check against the base ourselves.
-  if (sh('git', ['merge-base', '--is-ancestor', branch, base], { cwd: repo }).status !== 0)
+  if (sh('git', ['merge-base', '--is-ancestor', branch, base], { cwd: main }).status !== 0)
     throw new SpeckError(`${branch} isn't fully in ${base} after the merge, so it wasn't deleted. Check it with \`git log ${base}..${branch}\`.`);
-  git(['branch', '-D', branch], repo);
-  console.log(`Shipped ${pad}: merged ${branch} into ${base} and deleted the local branch.`);
+  // The worktree was clean before the tests, and the ship commit holds everything since, so --force only drops what the test run left behind.
+  // If it can't be removed (a locked worktree, say), the ship still completes, and the branch stays until it's gone.
+  const removed = linked ? sh('git', ['worktree', 'remove', '--force', linked], { cwd: main }) : null;
+  if (!removed || removed.status === 0) {
+    git(['branch', '-D', branch], main);
+    console.log(`Shipped ${pad}: merged ${branch} into ${base} and deleted the local branch.`);
+  } else {
+    console.log(`Shipped ${pad}: merged ${branch} into ${base}.`);
+    console.log(`Couldn't remove the worktree at ${linked} (${removed.stderr.trim().split('\n').pop()}), so ${branch} is kept. Run \`git worktree remove ${linked}\`, then \`git branch -D ${branch}\`.`);
+  }
+  if (linked && removed.status === 0) {
+    console.log(`Removed the ticket's worktree at ${linked}.`);
+    if (here === linked) console.log(mergeAt !== linked
+      ? `You ran this from that folder, which is gone now. ${base} is checked out at ${mergeAt}.`
+      : `You ran this from that folder, which is gone now. ${base} isn't checked out anywhere; your main checkout is at ${main}.`);
+  }
   if (!remote) { console.log(`No remote set for ${base}, so nothing was pushed.`); return; }
-  const push = sh('git', ['push', remote, base], { cwd: repo });
+  const push = sh('git', ['push', remote, base], { cwd: main });
   if (push.status !== 0) {
     const behind = /\((fetch first|non-fast-forward)\)/.test(push.stderr);
     const fix = behind
@@ -1138,7 +1188,7 @@ export function shipTicket(repo, id) {
     throw new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\n${fix}${branchRemote ? ` ${branch} is kept on ${branchRemote} until then.` : ''}`);
   }
   console.log(`Pushed ${base} to ${remote}.`);
-  deleteRemoteBranch(repo, branchRemote, branch);
+  deleteRemoteBranch(main, branchRemote, branch);
 }
 
 // Only once the base branch is safely pushed: until then, the remote copy is the backup.
@@ -1168,7 +1218,11 @@ function cmdShip(args) {
   const repo = findRepoRoot();
   // --auto is how the builder ships straight after approval. It only goes ahead when config allows it for this ticket.
   if (args.includes('--auto')) {
-    const why = autoShipBlocker(repo, loadConfig(repo), id);
+    // Read the ticket where its branch is checked out, so the checks see the approved copy, not the base branch's.
+    const cfg = loadConfig(repo);
+    let folder = repo;
+    try { folder = shipFolders(repo, ticketBranch(repo, cfg, id), cfg.base_branch).work; } catch { /* no branch: shipTicket says so */ }
+    const why = autoShipBlocker(folder, cfg, id);
     if (why) throw new SpeckError(`Not shipping automatically: ${why}. The ticket stays approved, waiting for you to run /speck-ship ${String(id).padStart(4, '0')}.`, 12);
   }
   shipTicket(repo, id);
