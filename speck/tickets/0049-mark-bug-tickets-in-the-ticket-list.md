@@ -1,7 +1,7 @@
 ---
 id: "0049"
 title: "Mark bug tickets in the ticket list"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T17:03:46.145Z"
 ---
 # 0049 · Mark bug tickets in the ticket list
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Bugs and features look the same in the ticket list, so a bug that loses work (such as 0046) doesn't stand out from routine features when you choose what to set ready or build next.
@@ -46,9 +46,17 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 An ordinary blank frontmatter field (`type:` or `type: # comment`) is parsed as {}, rejected by lint and emitted as {} in status JSON.
+Round 2 (codex): changes requested: F2 Type validation accepts explicit empty collections (`type: {}` and `type: []`) despite the requirement to reject every value other than blank or bug.
+Round 3 (codex): changes requested.
+Round 4 (codex): approve.
 
 ## Delivery log
+- Review rounds: 4
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 2,816,311
+- Elapsed since build started: 22 min
+- Changed lines: 33 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -283,6 +291,87 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
     },
     "escalation_question": "",
     "summary": "Bug creation and the visible tags work, and the earlier blank-field issue is fixed. One validation gap remains: a nested set of values is mistaken for a blank type and accepted. Rejecting that case will complete the requested validation."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "261fd0aa918b29a2dd12bf5ded28255fbe8e3e58",
+    "thread_id": "01a121a4-73de-7d13-bc7e-1646d5ff5205",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 1192503,
+      "cached_input_tokens": 897152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4066,
+      "reasoning_output_tokens": 134
+    },
+    "saved_at": "2026-10-09T17:25:23.054Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs ticketType and lintTicket accept missing and blank types or bug, and reject other values. Independently verified bare blanks, inline collections and nested mappings. AC1 tests cover these cases and the blank template field with its values comment; supplied output passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdNew validates every --type argument before writing. The AC2 CLI test exercises bug creation and invalid-value refusals with nothing created, including bare and repeated flags; supplied output passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdStatus prints bug after the id; statusData uses ticketType to normalise missing and blank values to null. The AC3 CLI test covers bug, missing, quoted blank and bare blanks with and without comments; supplied output passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html bugTag is placed beside the id in Shaping, the queue and Shipped. AC4 tests execute the page script and verify placement, absence on ordinary tickets and a distinct pink colour; supplied output passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 4 instructs adding --type=bug when fixing a defect. The AC5 test checks this instruction; supplied output passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Bare blank type fields now pass lint and become null in status JSON, with regression coverage.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Explicit empty collections and non-empty nested mappings now produce lint errors naming type. Independently verified both nested-mapping cases while confirming bare blanks still pass; regression tests cover them.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec accurately describes bug creation, validation, CLI output, JSON values and panel tags. Changes remain within the ticket's scope."
+    },
+    "escalation_question": "",
+    "summary": "Tickets can now be marked as bugs and show a distinct pink bug tag throughout the panel, plus a bug label in CLI status. Both validation issues are fixed and covered by meaningful tests. All five criteria pass, with no outstanding blocking findings."
   }
 }
 ```
