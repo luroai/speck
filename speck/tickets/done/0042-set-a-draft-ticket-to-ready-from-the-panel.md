@@ -1,7 +1,7 @@
 ---
 id: "0042"
 title: "Set a draft ticket to ready from the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T14:00:42.783Z"
+finished: "2026-10-09T14:17:22.936Z"
 
 ---
 # 0042 · Set a draft ticket to ready from the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Gate 1 now happens in the panel, but setting a ticket to ready still means leaving it for a terminal, running `speck set <id> status ready` and committing the ticket. That breaks the flow from reading a ticket to approving it.
