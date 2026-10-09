@@ -1972,4 +1972,9 @@ test('0026 AC3: the build pre-flight re-checks unverified facts and stops if one
   assert.match(line, /check/i);
   assert.match(line, /If one turns out to be wrong, stop and tell the user/i, 'stops for any wrong fact, with no extra conditions');
   assert.ok(pre.indexOf(line) < pre.indexOf('Create the branch'), 'before any branch is created');
+  // Round 1 F1: checking must not edit the ticket before the clean-tree check; checked facts are recorded on the branch.
+  assert.doesNotMatch(line, /record it as/i, 'the check itself changes nothing');
+  const record = pre.indexOf('`Checked <YYYY-MM-DD>: …`');
+  assert.ok(record > pre.indexOf('Create the branch'), 'checked facts are recorded after the branch exists');
+  assert.ok(record < pre.indexOf('speck(<id>): start') || pre.slice(record).includes('speck(<id>): start'), 'and committed with the start commit');
 });

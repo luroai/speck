@@ -44,3 +44,69 @@ Before a ticket is presented for approval, the agent checks it for criteria with
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "70531772ab6ca311c9efbbcdb1e4f00b83877130",
+    "thread_id": "01a1200b-a98c-76f0-bd2e-e6f5a503d26d",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 122686,
+      "cached_input_tokens": 76672,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 791,
+      "reasoning_output_tokens": 33
+    },
+    "saved_at": "2026-10-09T09:43:55.173Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 6 checks every criterion for differing interpretations and requires rewriting or asking the user before presentation. test/speck.test.mjs '0026 AC1' checks these instructions and their ordering."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 6 lists the required external facts, verification sources and dated Checked or Unverified Notes entries. '0026 AC2' tests these instruction requirements."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md pre-flight step 3 requires rechecking Unverified facts and stopping for any wrong fact. '0026 AC3' checks this wording. The surrounding workflow has the separate ordering defect in F1."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-build/SKILL.md:16",
+        "issue": "When an unverified fact proves correct, step 3 instructs the builder to edit the ticket's Notes before step 4 requires a clean working tree and creates the ticket branch. Following these instructions dirties the working tree on the base branch and prevents the next pre-flight requirement from being satisfied. The new tests check wording but miss this workflow contradiction.",
+        "suggested_fix": "Check cleanliness before making changes. Verify facts without editing the ticket, stop if any are wrong, then create the ticket branch and record successful checks there in the start commit. Add an instruction-order test covering this successful verification path.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The added capability description accurately reflects the skill instructions and correctly states that checking is confined to skills."
+    },
+    "escalation_question": "",
+    "summary": "The ticket adds the requested ambiguity and external-fact checks, with tests covering the instructions. One workflow defect needs fixing: recording a successful fact check changes the ticket before the build requires a clean working tree. Move that recording onto the ticket branch so a successful check can proceed into development."
+  }
+}
+```
+
+</details>
