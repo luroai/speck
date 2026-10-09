@@ -35,6 +35,7 @@ Before the first review round, the builder checks its own work against a short a
 
 ## Notes
 - The checklist comes from the round-1 findings in 0003, 0012, 0013 and 0014. Keep it short enough to run in a few minutes.
+- Self-check: the AC1 test matched loose keywords (for example `/rounds?|re-runs?/`) that almost any text would pass. It now requires each checklist item by its bold label, with the substance the ticket asks for.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

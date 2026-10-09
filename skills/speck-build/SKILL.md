@@ -28,7 +28,15 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 2. Run the tests until they pass. Keep the full output: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 3. **Size guard:** run `speck diffstat`. If it exits 2 (over the limit), stop. Don't push on. Block the ticket (see section 6) and give a proposed split as the question.
 4. **Living spec:** if the change adds, removes or alters something a user can do, update `speck/product.md` in the same branch: change "Current capabilities", and record any key decisions or known limits. Set `Last updated by ticket: <id>`. Describe the present, not history.
-5. Commit (`speck(<id>): <summary>`), then run `speck set <id> status reviewing` and commit again.
+5. **Self-check.** Before the first review round, go over your change the way an adversarial reviewer would. This is not a review or an approval: it catches what you can, and the reviewer still decides. Check:
+   - **Unusual input:** empty, missing, malformed or repeated values, and names that are built in rather than missing (for example `constructor` or `__proto__` used as a key).
+   - **State over time:** anything kept between review rounds, runs or re-runs. Can a later run pick up something stale or out of date that an earlier one left?
+   - **Error paths:** every failure gives a plain error message saying what to do, changes nothing it shouldn't, and never ends in a stack trace.
+   - **Claims:** every sentence you added to docs, skills or `product.md` matches the code, and a test covers it. Narrow any claim the code doesn't fully back.
+   - **Scope:** nothing outside the ticket changed, and nothing it puts out of scope was touched.
+
+   For each problem you find, add a test that fails, fix it, and re-run the tests. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
+6. Commit (`speck(<id>): <summary>`), then run `speck set <id> status reviewing` and commit again.
 
 ## 4. Review loop
 
