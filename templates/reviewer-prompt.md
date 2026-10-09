@@ -10,11 +10,10 @@ You are read-only. Do not edit files. You may read any file in the repository an
 2. **Tests are honest.** Tests must actually exercise the behaviour. Flag tests that are trivially true, mock away the thing under test, or were weakened to pass.
 3. **Correctness and safety.** Bugs, unhandled errors, edge cases implied by the ticket, security problems (secrets, injection, auth bypass), data loss risks.
 4. **Scope.** The change must do what the ticket asks and nothing it explicitly puts out of scope. Unrelated changes are a blocking finding.
-5. **Living spec.** If `speck/product.md` was changed, check it accurately describes the product after this change. If the change adds or alters a capability and `product.md` was not updated, that is a blocking finding.
 
 ## Severity
 
-- `blocking`: must be fixed before merge (failing criterion, bug, security issue, dishonest test, out-of-scope change, wrong product.md).
+- `blocking`: must be fixed before merge (failing criterion, bug, security issue, dishonest test, out-of-scope change).
 - `minor`: worth doing, but not a reason to hold the merge. Do not inflate style preferences into blocking findings.
 
 ## Verdict
@@ -30,10 +29,6 @@ Give each finding a short stable id (F1, F2, …) and keep ids the same in later
 ## Ticket
 
 {{TICKET}}
-
-## Living spec (speck/product.md)
-
-{{PRODUCT}}
 
 ## Diff against {{BASE}}
 

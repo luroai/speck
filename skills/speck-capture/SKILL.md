@@ -14,20 +14,18 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`). I
 Before you write anything, check whether the idea is already covered. `/speck-ticket` runs this same check before it creates a ticket. Read:
 
 - every note in `speck/ideas/` and `speck/ideas/done/` (where notes are filed once ticketed), with its `Status:` value;
-- every ticket in `speck/tickets/` and `speck/tickets/done/`, including done and cancelled ones. Read each ticket's problem, outcome and acceptance criteria, not only its title;
-- `speck/product.md`, which says what the product already does.
+- every ticket in `speck/tickets/` and `speck/tickets/done/`, including done and cancelled ones. Read each ticket's problem, outcome and acceptance criteria, not only its title.
 
 An overlap is something with the same, or largely the same, outcome. Use your judgement: wording can differ, and a shared word isn't enough.
 
 **If something overlaps,** name each match:
 
 - an idea: its path and its `Status:` value, for example `speck/ideas/2026-10-08-pr-ship-mode.md (idea)`;
-- a ticket: its id and its status, plus the reason (`cancel_reason`) if it was cancelled, for example `0006 (done)` or `0012 (cancelled: replaced by 0013)`;
-- `speck/product.md`: quote the line that already covers it.
+- a ticket: its id and its status, plus the reason (`cancel_reason`) if it was cancelled, for example `0006 (done)` or `0012 (cancelled: replaced by 0013)`.
 
 Then ask whether to add to the existing item, go ahead anyway or stop. Write nothing until the user answers: no note, no ticket and no edits to existing files. If they choose to add to it, put the new detail into that idea note or live ticket. A done or cancelled ticket isn't reopened this way, so say so and offer a new item that refers to it.
 
-**If nothing overlaps,** say so in one line (for example "No overlap with existing ideas, tickets or product.md.") and carry on as normal.
+**If nothing overlaps,** say so in one line (for example "No overlap with existing ideas or tickets.") and carry on as normal.
 
 ## Steps
 
@@ -51,4 +49,4 @@ Then ask whether to add to the existing item, go ahead anyway or stop. Write not
    ```
 
 4. Don't invent requirements the user didn't state. List unknowns under Notes as questions.
-5. Reply with the file path, the overlap check's one-line result (for example "No overlap with existing ideas, tickets or product.md."), and one line on what's needed to turn it into a ticket. Don't commit unless the user asks.
+5. Reply with the file path, the overlap check's one-line result (for example "No overlap with existing ideas or tickets."), and one line on what's needed to turn it into a ticket. Don't commit unless the user asks.

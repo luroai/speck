@@ -425,7 +425,6 @@ export function validateVerdict(v) {
   const entries = a => Array.isArray(a) && a.every(e => e && typeof e === 'object' && !Array.isArray(e));
   if (!entries(v.criteria)) problems.push('criteria');
   if (!entries(v.findings)) problems.push('findings');
-  if (!v.product_md || typeof v.product_md.accurate !== 'boolean') problems.push('product_md');
   if (typeof v.summary !== 'string') problems.push('summary');
   if (problems.length) throw new SpeckError(`Reviewer output is missing or invalid: ${problems.join(', ')}.`);
   // An approval is only valid with no open blocking findings and every criterion passing.
@@ -466,11 +465,9 @@ function saveRound(repo, id, verdict, meta) {
 
 function reviewerPrompt(repo, ticket, cfg, round, extra) {
   const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8');
-  const productFile = path.join(repo, 'speck', 'product.md');
-  const product = extra.product ?? (fs.existsSync(productFile) ? fs.readFileSync(productFile, 'utf8') : '(no speck/product.md)');
   if (round === 1) {
-    const values = { TICKET: stripRounds(ticket.raw), PRODUCT: product, BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
-    return tpl.replace(/\{\{(TICKET|PRODUCT|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
+    const values = { TICKET: stripRounds(ticket.raw), BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
+    return tpl.replace(/\{\{(TICKET|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
   }
   return [
     `# Review round ${round}`,
@@ -581,8 +578,8 @@ function runCodexReview(repo, id, s) {
 // ---------- review pack ----------
 
 // The round-1 prompt with the verdict schema: what `speck prompt` prints, and what a command reviewer gets on stdin.
-function fullPrompt(repo, ticket, cfg, diff, tests, product) {
-  return `${reviewerPrompt(repo, ticket, cfg, 1, { diff, tests, product })}\n\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`;
+function fullPrompt(repo, ticket, cfg, diff, tests) {
+  return `${reviewerPrompt(repo, ticket, cfg, 1, { diff, tests })}\n\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`;
 }
 
 // Splits a command into words the way a shell would for plain quoting, so it can run without a shell.
@@ -632,16 +629,25 @@ export function verdictFromOutput(stdout) {
 
 // The round-1 prompt exactly as it was sent, saved with the review's working files. If that copy is gone (another
 // machine, or a cleared cache), it is rebuilt from the commit round 1 reviewed. Only its test output can't be recovered.
+// A copy saved by a speck that still sent speck/product.md is rebuilt the same way, keeping the test output it holds.
 const roundOneFile = (repo, id) => path.join(cacheDir(repo, id), 'round-1.prompt.md');
+const LEGACY_SPEC = '## Living spec (speck/product.md)';
+function savedTests(text) {
+  const head = '## Test output (from the builder)\n\n```\n';
+  const from = text.indexOf(head);
+  const to = text.lastIndexOf('\n```', text.lastIndexOf('Return ONLY a JSON object'));
+  return from >= 0 && to >= from + head.length ? text.slice(from + head.length, to) : '(the round-1 test output was not kept)';
+}
 function roundOnePrompt(repo, s, id) {
-  const saved = roundOneFile(repo, id);
-  if (fs.existsSync(saved)) return fs.readFileSync(saved, 'utf8');
+  const file = roundOneFile(repo, id);
+  const saved = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+  if (saved !== null && !saved.includes(LEGACY_SPEC)) return saved;
   const sha = s.prior[0].meta.reviewed_sha;
   const at = rel => { const r = sh('git', ['show', `${sha}:${rel}`], { cwd: repo }); return r.status === 0 ? r.stdout : null; };
   const ticket = { raw: at(posix(path.relative(repo, s.ticket.file))) ?? s.ticket.raw };
   // Against the base as it was then: the branch may have merged a newer base since.
   const base = git(['merge-base', s.cfg.base_branch, sha], repo).trim();
-  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), '(the round-1 test output was not kept)', at('speck/product.md') ?? '(no speck/product.md)');
+  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), saved === null ? '(the round-1 test output was not kept)' : savedTests(saved));
 }
 
 // Later rounds give a reviewer with no memory everything it has seen: the round-1 prompt, every earlier verdict and
@@ -762,7 +768,6 @@ export function reviewPack(repo, id) {
     '', '### Risk', `- Ticket risk: **${t.fm.risk}**`,
     risky.length ? `- Sensitive files touched: ${risky.map(f => `\`${f}\``).join(', ')}` : '- No sensitive file patterns touched',
     `- Changed lines (excluding tests and lockfiles): ${diff.total} (limit ${cfg.limits.max_changed_lines})`,
-    `- product.md update: ${v.product_md.accurate ? 'checked and accurate' : `⚠️ ${v.product_md.note}`}`,
     '', '### Review history',
     ...all.map((r, i) => {
       const f = r.verdict.findings;
@@ -972,7 +977,7 @@ function cmdInit(args) {
   console.log(`speck ${VERSION}: setting up ${repo}\n`);
   const dirs = ['speck/ideas', 'speck/tickets', 'speck/tickets/done'];
   for (const d of dirs) fs.mkdirSync(path.join(repo, d), { recursive: true });
-  const copies = [['config.yml', 'speck/config.yml'], ['product.md', 'speck/product.md']];
+  const copies = [['config.yml', 'speck/config.yml']];
   for (const [from, to] of copies) {
     const dest = path.join(repo, to);
     if (fs.existsSync(dest) && !force) { console.log(`kept    ${to}`); continue; }
@@ -1009,7 +1014,7 @@ function cmdInit(args) {
   const skills = installTooling(repo);
   console.log(`updated .speck/ (the speck command)`);
   console.log(`updated ${SKILL_DIRS.join(' and ')} (${skills.length} skills)`);
-  const pointer = '\n## speck\n\nThis repo uses speck. Read `speck/product.md` first: it describes what the product is today. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
+  const pointer = '\n## speck\n\nThis repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
   const agents = path.join(repo, 'AGENTS.md');
   const agentsText = fs.existsSync(agents) ? fs.readFileSync(agents, 'utf8') : '# Agent guide\n';
   if (!agentsText.includes('This repo uses speck')) { fs.writeFileSync(agents, agentsText + pointer); console.log('updated AGENTS.md'); }

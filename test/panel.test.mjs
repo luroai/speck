@@ -617,7 +617,7 @@ test('0042 AC2: setting ready from the panel sets the status and commits only th
   try {
     // Another change, staged, and another, not staged, that the commit must leave alone.
     fs.writeFileSync(path.join(r.dir, 'staged.txt'), 'staged\n'); r.g('add', 'staged.txt');
-    fs.appendFileSync(path.join(r.dir, 'speck', 'product.md'), '\nunstaged edit\n');
+    fs.appendFileSync(path.join(r.dir, 'speck', 'config.yml'), '\n# unstaged edit\n');
     const before = headOf(r);
     const res = await post(port, readyPath('0002'), { token });
     assert.equal(res.status, 200, res.body);
@@ -628,7 +628,7 @@ test('0042 AC2: setting ready from the panel sets the status and commits only th
     assert.equal(r.g('show', '--name-only', '--format=', 'HEAD'), 'speck/tickets/0002-two.md');
     assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets/0002-two.md'), '', 'the ticket is fully committed');
     assert.equal(r.g('diff', '--cached', '--name-only'), 'staged.txt', 'the staged change is still staged');
-    assert.equal(r.g('diff', '--name-only'), 'speck/product.md', 'the unstaged change is still unstaged');
+    assert.equal(r.g('diff', '--name-only'), 'speck/config.yml', 'the unstaged change is still unstaged');
     // It's ready by speck's own reading, so the next /api/state has it out of Shaping.
     const state = JSON.parse((await request(port, { pathName: '/api/state' })).body);
     assert.equal(state.tickets.find(t => t.id === '0002').status, 'ready');
@@ -748,14 +748,6 @@ test('0042 AC3: a refusal shows its reason under the button, and it stays throug
   p.timers.shift()(); await p.settle();
   assert.ok(items(p)[0].textContent.includes(reason), 'kept through the refresh');
   assert.ok(items(p)[0].textContent.includes('Readiness'), 'still open');
-});
-
-test('0042 AC5: product.md says the panel has this one write and how it is protected', () => {
-  const product = fs.readFileSync(path.join(ROOT, 'speck', 'product.md'), 'utf8');
-  assert.match(product, /Set ready/);
-  assert.match(product, /`Origin`/);
-  assert.match(product, /token/);
-  assert.doesNotMatch(product, /It never writes to the repo/);
 });
 
 test('0042 AC4 (self-check): a token with non-ASCII characters of the right length gets 403 and the server keeps running', async () => {

@@ -44,7 +44,7 @@ test('0037 AC2: without asking, it drops done, covered and duplicate notes, keep
   const s = step(2);
   assert.match(s, /[Ww]ithout asking/, 'without asking');
   assert.match(s, /already done/, 'drops notes already done');
-  for (const where of ['idea note', 'ticket', '`speck/product.md`']) assert.ok(s.includes(where), `drops notes covered by ${where}`);
+  for (const where of ['idea note', '`speck/ideas/done/`', 'ticket']) assert.ok(s.includes(where), `drops notes covered by ${where}`);
   assert.match(s, /duplicate each other/, 'handles inbox notes that duplicate each other');
   assert.match(s, /[Kk]eep one/, 'keeps one of them');
   assert.match(s, /`Status:` (value )?to `dropped`/, 'drops by setting the status to dropped');
@@ -87,14 +87,6 @@ test('0037 AC5: notes still inbox get Triaged: <n>, those reaching 2 are dropped
   assert.match(s, /[Ll]ist/, 'and the agent lists those');
   assert.match(s, /by name/, 'staged by name');
   assert.match(s, /`speck: triage inbox`/, 'committed as speck: triage inbox');
-});
-
-test('0037: product.md describes triage and the dropped status, and the skill count is unchanged', () => {
-  const product = read('speck/product.md');
-  assert.match(product, /\*\*Six skills\*\*/, 'still six skills');
-  assert.match(product, /[Tt]riage the inbox/, 'describes triage');
-  assert.match(product, /`dropped`/, 'names the dropped status');
-  assert.match(product, /`Triaged: <n>`/, 'names the Triaged line');
 });
 
 test('0037: the installed skill copies match the source skill', () => {

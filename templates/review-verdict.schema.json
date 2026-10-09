@@ -8,7 +8,6 @@
     "verdict",
     "criteria",
     "findings",
-    "product_md",
     "escalation_question",
     "summary"
   ],
@@ -92,22 +91,6 @@
               "dispute_rejected"
             ]
           }
-        }
-      }
-    },
-    "product_md": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "accurate",
-        "note"
-      ],
-      "properties": {
-        "accurate": {
-          "type": "boolean"
-        },
-        "note": {
-          "type": "string"
         }
       }
     },
