@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { parseYaml, parseTicket, setField, lintTicket, nextAction, validateVerdict, reviewerSettings, ticketHeader, syncHeader, ticketRounds, ticketedStatus } from '../scripts/speck.mjs';
+import { parseYaml, parseTicket, setField, lintTicket, nextAction, validateVerdict, reviewerSettings, ticketHeader, syncHeader, ticketRounds, ticketedStatus, pathsOutside } from '../scripts/speck.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -2563,4 +2563,28 @@ test('0021 AC5: the build skill closes with speck close, then speck ship --auto'
   assert.ok(approved.indexOf('follow-up') < approved.indexOf('speck close'), 'follow-up ideas come first');
   assert.ok(approved.indexOf('speck close') < approved.indexOf('speck ship <id> --auto'));
   assert.match(spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' }).stdout, /speck close <id>/);
+});
+
+test('0021 AC1: a rename or copy counts both of its paths as changes outside the ticket', () => {
+  const rel = 'speck/tickets/0001-x.md';
+  assert.deepEqual(pathsOutside(`R  ${rel}\0other.md\0`, rel), ['other.md'], 'the old path of a rename into the ticket');
+  assert.deepEqual(pathsOutside(`C  new.md\0${rel}\0`, rel), ['new.md']);
+  assert.deepEqual(pathsOutside(` M ${rel}\0?? constructor\0`.replace('?? ', '?? '), rel), ['constructor']);
+  assert.deepEqual(pathsOutside(`M  ${rel}\0`, rel), []);
+  assert.deepEqual(pathsOutside('', rel), []);
+});
+
+test('0021 AC4: a rejected commit puts the ticket back exactly as it was, staged changes included', () => {
+  const r = closeRepo();
+  fs.writeFileSync(r.file, r.text().replace('## Review log', 'Staged note.\n\n## Review log'));
+  r.g('add', r.file);
+  fs.writeFileSync(r.file, r.text().replace('## Review log', 'Unstaged note.\n\n## Review log'));
+  const hook = path.join(r.dir, '.git', 'hooks', 'pre-commit');
+  fs.writeFileSync(hook, '#!/bin/sh\necho rejected >&2\nexit 1\n', { mode: 0o755 });
+  const snap = [r.text(), r.g('rev-parse', 'HEAD'), r.g('diff', '--cached', '--stat'), r.g('diff', '--stat')];
+  const res = r.run('close', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /nothing was changed/);
+  assert.deepEqual([r.text(), r.g('rev-parse', 'HEAD'), r.g('diff', '--cached', '--stat'), r.g('diff', '--stat')], snap);
+  assert.equal(r.status(), 'reviewing');
 });

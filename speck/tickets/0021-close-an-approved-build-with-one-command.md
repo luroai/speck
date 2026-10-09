@@ -49,3 +49,87 @@ One command closes out an approved build: it writes the review log and delivery 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "86f10930d6953a810eee9125011e5d713b64c4b3",
+    "thread_id": "01a1203d-e3db-7fb2-953e-3604f448756a",
+    "seconds": 55,
+    "usage": {
+      "input_tokens": 338767,
+      "cached_input_tokens": 274944,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1315,
+      "reasoning_output_tokens": 85
+    },
+    "saved_at": "2026-10-09T10:39:03.778Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "cmdClose uses nextAction and checks dirty files; test '0021 AC1' exercises ordinary refusals. However, changesOutside (scripts/speck.mjs:1482) discards rename source paths. Evaluating its actual parser with a rename from other.md into the ticket returned [], allowing changes outside the ticket."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewLogLines and replaceSection implement replacement, first sentences and deduplication. Both '0021 AC2' tests exercise these behaviours with recorded rounds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdClose shares reviewTotals, who and changedLines with reviewPack and retains existing delivery content. '0021 AC3' tests compare pack figures and cover missing start time."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "'0021 AC4: it sets approved and commits only the ticket file' verifies status, rendered header, commit message, changed paths and subsequent shipping. cmdClose never merges or pushes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md approved step adds follow-up ideas before close, then ship --auto. '0021 AC5' checks that ordering."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:1482",
+        "issue": "The dirty-tree guard ignores the source of a rename or copy. When its destination is the ticket file, changesOutside returns no outside changes even though another tracked path was removed or changed. This violates AC1 and can leave an outside deletion staged after approval.",
+        "suggested_fix": "Check both paths in rename records, and add a regression test proving that a rename from another tracked file into the ticket refuses without changing the ticket, HEAD or index.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "scripts/speck.mjs:1528",
+        "issue": "Failed commits restore the ticket contents but reset its index entry to HEAD. Any ticket changes staged before close become unstaged, despite the message claiming nothing changed. There is no close-specific failed-commit test.",
+        "suggested_fix": "Preserve and restore the ticket's original index entry on failure, and test a rejecting commit hook with pre-existing staged ticket changes.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The capability description otherwise matches the implementation, but its claim that all outside staged changes prevent close is false for rename source paths."
+    },
+    "escalation_question": "",
+    "summary": "The command automates the logs and approval commit, and the normal paths have meaningful tests. A rename can bypass its required clean-tree check, so that guard needs fixing before merge. I inspected the tests and supplied results; I did not rerun the write-producing suite in this read-only review. The apparent unrelated idea-note difference comes from main advancing, not this ticket."
+  }
+}
+```
+
+</details>

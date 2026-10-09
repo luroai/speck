@@ -1478,16 +1478,19 @@ function reviewLogLines(all) {
   });
 }
 
-// Paths with uncommitted changes (staged, unstaged or untracked), other than the ticket itself.
-function changesOutside(repo, rel) {
-  const parts = git(['status', '--porcelain', '-z', '--untracked-files=all'], repo).split('\0').filter(Boolean);
+// Paths named in `git status --porcelain -z` output, other than the ticket itself. A rename or copy names two paths
+// (the new one, then the old one), and both count: the old one may be a change outside the ticket.
+export function pathsOutside(porcelain, rel) {
+  const parts = porcelain.split('\0').filter(Boolean);
   const paths = [];
   for (let i = 0; i < parts.length; i++) {
     paths.push(parts[i].slice(3));
-    if (/[RC]/.test(parts[i].slice(0, 2))) i++; // a rename lists its old name next
+    if (/[RC]/.test(parts[i].slice(0, 2)) && i + 1 < parts.length) paths.push(parts[++i]);
   }
-  return paths.filter(p => p !== rel);
+  return [...new Set(paths.filter(p => p !== rel))];
 }
+
+const changesOutside = (repo, rel) => pathsOutside(git(['status', '--porcelain', '-z', '--untracked-files=all'], repo), rel);
 
 function cmdClose(args) {
   const id = args.find(a => !a.startsWith('--'));
@@ -1521,13 +1524,15 @@ function cmdClose(args) {
   const original = t.raw;
   t.raw = text;
   writeField(t, 'status', 'approved');
-  const undo = () => fs.writeFileSync(t.file, original);
+  // The ticket's own staged state, so a failed commit puts it back exactly as it was.
+  const entry = git(['ls-files', '-s', '--', rel], repo).trim().split('\t')[0].split(' ');
   // Only the ticket file is committed, so nothing else can ride along with the approval.
   const staged = sh('git', ['add', '--', rel], { cwd: repo });
   const commit = staged.status === 0 ? sh('git', ['commit', '-q', '-m', `speck(${pad}): approved`, '--', rel], { cwd: repo }) : staged;
   if (commit.status !== 0) {
-    sh('git', ['reset', '-q', '--', rel], { cwd: repo });
-    undo();
+    fs.writeFileSync(t.file, original);
+    if (entry.length === 3) sh('git', ['update-index', '--cacheinfo', `${entry[0]},${entry[1]},${rel}`], { cwd: repo });
+    else sh('git', ['reset', '-q', '--', rel], { cwd: repo });
     throw new SpeckError(`Couldn't commit the ticket, so nothing was changed.\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}`);
   }
   console.log(`${pad} approved, committed as speck(${pad}): approved. Next: speck ship ${pad} --auto (or /speck-ship ${pad}).`);
