@@ -271,7 +271,7 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     window.Date = class extends R { constructor(...a) { super(...(a.length ? a : [R.now() + window.shift])); } static now() { return R.now() + window.shift; } }; })()`);
   const select = (sel1, from, sel2, to) => b.js(`(() => { const r = document.createRange(); r.setStart(document.querySelector(${JSON.stringify(sel1)}).firstChild, ${from});
     r.setEnd(document.querySelector(${JSON.stringify(sel2)}).firstChild, ${to}); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
-  const sub = '#queue .q .sub', when = '#shipped tr td:last-child';
+  const sub = '#queue .q .sub', when = '#shipped tr td:nth-child(3)'; // the time: Full ticket (0063) comes after it
   try {
     await b.until(`!!document.querySelector('${sub}')`, 'the page');
     await clock(late);

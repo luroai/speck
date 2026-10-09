@@ -106,5 +106,5 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   assert.ok(p.all(topOf(chain)).some(n => n.className === 'chain'), 'the chain icon in the top row');
   // Opened, the path goes between the status line and the log, and the rest keeps its place.
   await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'stages', 'act', 'act path', 'log']);
+  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'stages', 'act', 'act path', 'full-open', 'log']); // Full ticket: 0063
 });

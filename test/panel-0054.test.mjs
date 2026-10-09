@@ -87,12 +87,13 @@ test('0054 AC3: one ticket at a time; Close or Escape shuts the pane and leaves 
   assert.ok(isOpen(itemOf(p, '0001')), 'Escape with no pane changes nothing');
 });
 
-test('0054 AC4: the pane stays through the refresh, shows new data, and closes when the ticket leaves the Tickets list', async () => {
+// Since 0063 the pane stays open on a ticket set ready, as it shows in the queue, and closes when it shows nowhere.
+test('0054 AC4: the pane stays through the refresh, shows new data, and closes when the ticket leaves the panel', async () => {
   const s = base();
   const next = clone(s);
   next.tickets[0].acceptance_criteria = ['First criterion, reworded.'];
   const third = clone(next);
-  third.tickets[0].status = 'ready';
+  third.tickets[0].status = 'cancelled';
   const p = fakePage([s, clone(s), next, third, clone(third)]);
   await p.settle();
   openTicket(p, '0001');
@@ -105,7 +106,7 @@ test('0054 AC4: the pane stays through the refresh, shows new data, and closes w
   await refresh(p);
   assert.ok(pane(p).textContent.includes('First criterion, reworded.') && !pane(p).textContent.includes('Second criterion.'), 'the new content shows');
   await refresh(p);
-  assert.ok(!paneOpen(p), 'set ready: the pane closes');
+  assert.ok(!paneOpen(p), 'cancelled: the pane closes');
   assert.ok(!itemOf(p, '0001'), 'and the ticket has left Shaping');
   await refresh(p);
   assert.ok(!paneOpen(p), 'and stays closed');
