@@ -1,7 +1,7 @@
 ---
 id: "0026"
 title: "Pre-check every ticket before it goes ready"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T09:41:07.148Z"
 
 ---
 # 0026 · Pre-check every ticket before it goes ready
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Two kinds of ticket problem cost review rounds and builder time. A criterion that can be read two ways leads to a dispute: 0012's "send the full round-1 prompt again" did. An external fact written into a ticket can be stale by build time: 0014 named Cursor's CLI `cursor-agent`, and its docs now call it `agent`.
