@@ -2127,7 +2127,14 @@ test('0027 (self-check): a missing worktree folder gets a plain error, and a wor
   res = locked.runIn(locked.dir, 'ship', '1');
   assert.equal(res.status, 0, res.stderr + res.stdout);
   assert.match(res.stdout, /Couldn't remove the worktree/);
-  assert.ok(res.stdout.includes(`git worktree remove ${locked.wt}`), 'says how to finish');
+  assert.ok(res.stdout.includes(`git worktree unlock ${locked.wt}`), 'unlocks first (F2)');
+  assert.ok(res.stdout.indexOf(`git worktree unlock ${locked.wt}`) < res.stdout.indexOf(`git worktree remove ${locked.wt}`));
+  // The printed steps actually finish the job.
+  assert.equal(locked.g('worktree', 'unlock', locked.wt), '');
+  locked.g('worktree', 'remove', locked.wt);
+  locked.g('branch', '-D', 'speck/0001-export-bookings');
+  assert.equal(locked.worktrees(), 1);
+  assert.equal(locked.sha('speck/0001-export-bookings'), '');
   assert.equal(locked.gIn(locked.bare, 'rev-parse', 'main').stdout.trim(), locked.sha('main'), 'still pushed');
   assert.match(locked.g('log', '-1', '--format=%s', 'main'), /speck\(0001\): Export bookings/);
 });
@@ -2137,4 +2144,21 @@ test('0027 AC1: ship --auto from the main checkout reads the approved ticket fro
   const res = r.runIn(r.dir, 'ship', '1', '--auto');
   assert.equal(res.status, 0, res.stderr + res.stdout);
   assert.equal(fs.existsSync(r.wt), false);
+});
+
+test('0027 AC2/AC4 (F1): a remote catch-up blocked by an untracked file leaves everything as it was', () => {
+  const r = worktreeShipRepo({ remote: true });
+  const other = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-other-'));
+  r.gIn(other, 'clone', '-q', r.bare, '.');
+  fs.writeFileSync(path.join(other, 'remote.txt'), 'from the remote\n');
+  r.gIn(other, 'add', '-A'); r.gIn(other, 'commit', '-qm', 'remote adds a file'); r.gIn(other, 'push', '-q', 'origin', 'main');
+  fs.writeFileSync(path.join(r.dir, 'remote.txt'), 'mine, untracked\n');
+  const before = r.snapshot();
+  const res = r.runIn(r.dir, 'ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /remote\.txt/);
+  assert.doesNotMatch(res.stderr, /    at /);
+  assert.deepEqual(r.snapshot(), before);
+  assert.equal(r.statusIn(r.wt), 'approved');
+  assert.equal(fs.readFileSync(path.join(r.dir, 'remote.txt'), 'utf8'), 'mine, untracked\n');
 });

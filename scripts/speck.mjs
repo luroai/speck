@@ -1142,20 +1142,33 @@ export function shipTicket(repo, id) {
   writeField(t, 'status', 'done');
   git(['add', '-A', '--', placeTicket(work, t, 'done'), t.file], work);
   git(['commit', '-q', '-m', `speck(${pad}): ship`], work);
-  if (mergeAt === work) git(['checkout', '-q', base], work);
-  if (catchUp) git(['merge', '-q', '--ff-only', catchUp], mergeAt);
-  const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: mergeAt });
-  if (merge.status !== 0) {
+  // From the ship commit on, any failure puts back the base branch, the ticket branch and both folders.
+  const undo = () => {
     sh('git', ['merge', '--abort'], { cwd: mergeAt });
     git(['reset', '-q', '--hard', baseSha], mergeAt); // undo any catch-up, so the base is exactly as it was
     if (mergeAt === work) { git(['update-ref', `refs/heads/${branch}`, branchSha], work); back(); }
     else git(['reset', '-q', '--hard', branchSha], work); // the branch is checked out there, so undo the ship commit in place
-    // Git refuses to overwrite untracked files, listing them one per line, indented.
-    const blocked = /untracked working tree files would be overwritten/.test(merge.stderr)
-      ? merge.stderr.split('\n').filter(l => /^\s+\S/.test(l)).map(l => l.trim()) : [];
-    throw new SpeckError(blocked.length
-      ? `Merging ${branch} into ${base} would overwrite untracked files in ${mergeAt}: ${blocked.join(', ')}. Nothing was shipped. Move or remove them, then ship again.`
-      : `Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
+  };
+  // Git refuses to overwrite untracked files, listing them one per line, indented.
+  const untrackedIn = r => /untracked working tree files would be overwritten/.test(r.stderr)
+    ? r.stderr.split('\n').filter(l => /^\s+\S/.test(l)).map(l => l.trim()) : [];
+  const overwriteError = (what, files) => new SpeckError(`${what} would overwrite untracked files in ${mergeAt}: ${files.join(', ')}. Nothing was shipped. Move or remove them, then ship again.`);
+  if (mergeAt === work) git(['checkout', '-q', base], work);
+  if (catchUp) {
+    const ff = sh('git', ['merge', '-q', '--ff-only', catchUp], { cwd: mergeAt });
+    if (ff.status !== 0) {
+      undo();
+      const files = untrackedIn(ff);
+      throw files.length ? overwriteError(`Bringing ${base} up to date with ${remote}`, files)
+        : new SpeckError(`Couldn't bring ${base} up to date with ${remote}, so nothing was shipped: ${ff.stderr.trim().split('\n').pop()}`);
+    }
+  }
+  const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: mergeAt });
+  if (merge.status !== 0) {
+    undo();
+    const files = untrackedIn(merge);
+    throw files.length ? overwriteError(`Merging ${branch} into ${base}`, files)
+      : new SpeckError(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Rebuild the ticket on the latest ${base}, then ship again.`);
   }
   // From here on, run git from the main checkout, which always survives: the ticket's worktree is about to go.
   const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: main }).stdout.trim() || remote;
@@ -1170,7 +1183,8 @@ export function shipTicket(repo, id) {
     console.log(`Shipped ${pad}: merged ${branch} into ${base} and deleted the local branch.`);
   } else {
     console.log(`Shipped ${pad}: merged ${branch} into ${base}.`);
-    console.log(`Couldn't remove the worktree at ${linked} (${removed.stderr.trim().split('\n').pop()}), so ${branch} is kept. Run \`git worktree remove ${linked}\`, then \`git branch -D ${branch}\`.`);
+    const unlock = /locked/i.test(removed.stderr) ? `\`git worktree unlock ${linked}\`, then ` : '';
+    console.log(`Couldn't remove the worktree at ${linked} (${removed.stderr.trim().split('\n').pop()}), so ${branch} is kept. Run ${unlock}\`git worktree remove ${linked}\`, then \`git branch -D ${branch}\`.`);
   }
   if (linked && removed.status === 0) {
     console.log(`Removed the ticket's worktree at ${linked}.`);
