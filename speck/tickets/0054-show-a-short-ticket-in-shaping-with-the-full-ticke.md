@@ -52,12 +52,13 @@ An open ticket in Shaping shows a short view, and one click shows the whole tick
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 304,327
-- Elapsed since build started: 7 min
+- Reviewer tokens: 831,128
+- Elapsed since build started: 12 min
 - Changed lines: 80 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -122,6 +123,70 @@ Round 1 (codex): approve.
     },
     "escalation_question": "",
     "summary": "Shaping now shows a shorter ticket, with the full details available in a side pane. The pane updates correctly, preserves selected text during unchanged refreshes and closes when the ticket becomes ready. The tests exercise the requested behaviour, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8754ae828a2e0a434d1dd98d5c750f3fdf946a58",
+    "thread_id": "01a12216-4894-7f32-9f69-f6c9fe1b5ff9",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 525086,
+      "cached_input_tokens": 412032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1715,
+      "reasoning_output_tokens": 47
+    },
+    "saved_at": "2026-10-09T19:19:31.549Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html ticketDetail still shows problem, outcome, readiness and Set ready while omitting criteria, out of scope and notes. test/panel-0054.test.mjs AC1 exercises this behaviour and passes in the supplied results."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fullButton preserves the open list ticket; fullTicket renders the required fields as text, uses an ordered criteria list and omits empty sections. The AC2 test covers these behaviours and passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fullId identifies a single pane ticket; closeFull and the Escape handler close the pane without altering open list tickets. The AC3 test covers replacement and both close controls and passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "renderFull retains the selected draft through refreshes, rebuilds changed content and closes when that draft leaves the list. The AC4 test exercises these transitions and passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "renderFull preserves existing nodes while the canonical ownData signature is unchanged. The AC5 node-retention test and browser selection test both pass in the supplied results."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "Verified that only the pane wording and ticket records changed since round 1. The revised sentence preserves the correct meaning and avoids the existing 0032 AC3 phrase check; implementation and tests are unchanged."
+    },
+    "escalation_question": "",
+    "summary": "Approval stands. The documentation wording now avoids the unrelated test failure while accurately describing the pane. All five requirements remain met, and the supplied full-suite results show 373 passing tests with none skipped."
   }
 }
 ```
