@@ -115,6 +115,7 @@ Everything happens in the local repo, with no PR.
     Each section's Markdown shows formatted: bold, italic (`*` or `_`), code spans, fenced code blocks keeping their spacing, `- `, `* ` and `1. ` lists nested by indentation (at most 16 levels, and a blank line between items keeps the list), `#` to `###` headings ranked below the section's own heading, and paragraphs split by blank lines.
     A link shows as a link opening in a new tab only when its URL starts `http://` or `https://`; any other link shows as its text alone.
     Everything else, including raw HTML, tables, images, blockquotes, rules and backslash escapes, shows as literal text, with any Markdown inside it unformatted, and so does Markdown inside code.
+    Raw HTML stays literal with everything inside the element, even over several lines, and a line starting an element that never closes stays literal up to the next blank line.
     The parser is a small one in the page itself, so nothing is loaded from the network.
     While it's open, the rest of the page is dimmed and holds still: the wheel, touch and keys (the pane takes the focus) scroll only the pane, even at its top or bottom, and Tab can't reach the page behind.
     A click anywhere outside the pane closes it and does nothing else, so showing another ticket's full text takes two clicks: one to close the pane, then that ticket's **Full ticket**.

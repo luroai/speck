@@ -234,7 +234,7 @@ test('0061 AC2-AC4: in a real browser, the pane formats Markdown, runs no HTML a
 
 test('0061 self-check: odd input shows as written or plainly formatted, quickly, and never breaks the pane', async () => {
   const deep = Array.from({ length: 2000 }, (_, i) => `${' '.repeat(i)}- level ${i}`).join('\n');
-  const heavy = ['!['.repeat(10000), '<!--'.repeat(10000), '<a '.repeat(10000), '['.repeat(20000), '*a '.repeat(10000), '**a '.repeat(10000), '_a '.repeat(10000), '`a``'.repeat(5000), `${'*a '.repeat(3000)}x${' a*'.repeat(3000)}`].join('\n\n');
+  const heavy = ['<a>'.repeat(10000), '<div>\n'.repeat(5000), '!['.repeat(10000), '<!--'.repeat(10000), '<a '.repeat(10000), '['.repeat(20000), '*a '.repeat(10000), '**a '.repeat(10000), '_a '.repeat(10000), '`a``'.repeat(5000), `${'*a '.repeat(3000)}x${' a*'.repeat(3000)}`].join('\n\n');
   const started = Date.now();
   const p = await showPane(full('0001', { problem: '0. zero\n1. one', outcome: '[](https://x.y) and [x]() and __proto__ and constructor', out_of_scope: deep, notes: heavy }));
   assert.ok(Date.now() - started < 2000, 'quick on long, odd text');
@@ -285,4 +285,36 @@ test('0061 AC1 (review F2): a blank line between list items keeps the list and i
   assert.deepEqual(kids(ul).map(li => kids(li)[0].textContent), ['first', 'second']);
   assert.ok(kids(kids(ul)[0]).some(x => x.tagName === 'ul' && x.textContent === 'child'), 'child is nested in first');
   assert.deepEqual(kids(kids(n)[1]).map(li => li.textContent), ['one', 'two'], 'one numbered list');
+});
+
+test('0061 AC3 (review round 2 F1): an HTML element stays as written with everything inside it, over lines and blank lines too', async () => {
+  const notes = [
+    '<script>**bold** `code` [link](https://x.y)</script> then *after*.',
+    '',
+    'Mid <b>a <b>**inner**</b> _c_</b> and <span title="x">',
+    '**two** lines</span> end.',
+    '',
+    '<div>',
+    '**x** and [l](https://x.y)',
+    '',
+    '- not a list',
+    '</div>',
+    '',
+    '<p>open **never** `closes`',
+    'still _inside_',
+    '',
+    'Back to **bold**.',
+  ].join('\n');
+  const p = await showPane(full('0001', { notes }));
+  const n = section(p, 'Notes');
+  assert.deepEqual(kids(n).map(x => x.textContent), [
+    '<script>**bold** `code` [link](https://x.y)</script> then after.',
+    'Mid <b>a <b>**inner**</b> _c_</b> and <span title="x">\n**two** lines</span> end.',
+    '<div>\n**x** and [l](https://x.y)\n\n- not a list\n</div>',
+    '<p>open **never** `closes`\nstill _inside_',
+    'Back to bold.',
+  ]);
+  assert.deepEqual(tags(p, n, 'em').map(x => x.textContent), ['after'], 'only the text outside the HTML is formatted');
+  assert.deepEqual(tags(p, n, 'strong').map(x => x.textContent), ['bold']);
+  assert.ok(kids(n).every(k => k.tagName === 'p' && p.all(k).slice(1).every(x => ['#text', 'em', 'strong'].includes(x.tagName))), 'paragraphs, with nothing else made from the HTML');
 });

@@ -133,3 +133,79 @@ The full ticket pane shows each section's Markdown formatted, the way a Markdown
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0e6f6d27f61ca325dd9c8958cef95859128dde21",
+    "thread_id": "01a1223b-625f-79c3-8eb3-adfc141efabc",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 552397,
+      "cached_input_tokens": 430464,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2075,
+      "reasoning_output_tokens": 226
+    },
+    "saved_at": "2026-10-09T19:59:24.322Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "markdown(), fullTicket() and mdBlocks() format all sections. The AC1 tests cover the listed formatting; the new '0061 AC1 (review F2)' test covers nesting across blank lines. Independently reproduced the corrected nested-list structure."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "inline() permits only HTTP/HTTPS targets; mdInline() opens them in a new tab with noopener noreferrer. The AC2 unit and browser tests exercise permitted and rejected links and pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "keptSpans() now preserves HTML tags and attributes, images and comments, but does not preserve HTML element contents. Independently reproduced '<script>**bold** [link](https://x.y)</script>': markdown() still creates strong and clickable link nodes, removing literal Markdown symbols inside the raw HTML."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The pane's unchanged-signature guard retains its formatted nodes. The AC4 node-retention and real-browser selection tests exercise refresh preservation and pass in the supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:keptSpans",
+        "issue": "The literal-content fix is incomplete: it protects HTML tags, but Markdown between opening and closing tags is still formatted. For example, '<script>**bold** [link](https://x.y)</script>' loses its ** symbols and gains a clickable link. No script executes, but AC3 requires this raw HTML to remain literal.",
+        "suggested_fix": "Preserve complete raw HTML constructs, including their contents, from Markdown parsing. Add regression coverage for paired HTML containing bold, code and links, including multiline content.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:markdown",
+        "issue": "Resolved: blank lines now retain list context, and subsequent items nest by indentation. The new review F2 test honestly exercises both nested and numbered lists across blank lines.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The list description is now accurate. The claim that Markdown inside raw HTML remains unformatted is still broader than the implementation; F1 remains open."
+    },
+    "escalation_question": "",
+    "summary": "Nested lists now survive blank lines correctly. Formatting, restricted links and selection preservation remain covered. One literal-text gap remains: Markdown inside paired HTML tags is still formatted, so the change needs another fix before merge."
+  }
+}
+```
+
+</details>

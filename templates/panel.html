@@ -353,18 +353,21 @@ function logText(log) {
 }
 // A ticket section's Markdown as blocks for the full ticket pane: paragraphs, `#` to `###` headings, fenced code blocks
 // and `- `, `* ` or `1. ` lists nested by indentation, at most MAX_NEST deep (deeper items stay at that depth). A blank
-// line between list items keeps the list going. Blockquotes, tables and rules are kept as written, unformatted, and so
-// is anything else not listed here, raw HTML included.
+// line between list items keeps the list going. Blockquotes, tables, rules, HTML elements over several lines and a line
+// starting an element that never closes (to the next blank line) are kept as written, unformatted, and so is anything
+// else not listed here.
 const MAX_NEST = 16;
 const FENCE = /^([ \t]*)(`{3,})[^`]*$/;
 const ITEM = /^([ \t]*)([-*]|\d{1,9}\.)[ \t]+(.*)$/;
 const HEADING = /^ {0,3}(#{1,3})[ \t]+(\S.*?)[ \t]*$/;
 const QUOTE = /^[ \t]*>/, RULE = /^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/, PIPE = /^[ \t]*\|/;
 const DELIM = /^[ \t]*\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/; // a table's second row
+const BLOCK_TAG = /^[ \t]*<([A-Za-z][A-Za-z0-9-]*)(?:\s[^<>]*)?\/?>/; // a line starting with an HTML tag
 const indentOf = s => s.replace(/\t/g, '    ').length;
 function markdown(text) {
-  const lines = String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
-  const blocks = [];
+  const all = String(text ?? '').replace(/\r\n?/g, '\n'), lines = all.split('\n');
+  const blocks = [], misses = new Map(), starts = [0]; // starts: where each line begins in `all`
+  for (const line of lines) starts.push(starts[starts.length - 1] + line.length + 1);
   let para = null, lists = [], gap = false; // the paragraph being read, the open lists (outermost first), and a blank line just read
   const end = () => { para = null; lists = []; };
   for (let i = 0; i < lines.length; i++) {
@@ -373,7 +376,20 @@ function markdown(text) {
     const afterGap = gap;
     gap = false;
     const tableStart = line.includes('|') && next.includes('|') && DELIM.test(next);
-    if (fence) {
+    const open = line.match(BLOCK_TAG);
+    const closed = open ? elementEnd(all, starts[i] + open[0].length, open, misses) : -1;
+    if (closed > starts[i + 1]) { // an HTML element over more than one line, its contents and all, as written
+      end();
+      const last = starts.findIndex(at => at >= closed) - 1;
+      blocks.push({ type: 'paragraph', literal: true, text: lines.slice(i, last + 1) });
+      i = last;
+    } else if (closed === -2) { // an element that never closes: as written, up to the next blank line
+      end();
+      const body = [];
+      for (; i < lines.length && lines[i].trim() !== ''; i++) body.push(lines[i]);
+      blocks.push({ type: 'paragraph', literal: true, text: body });
+      i--;
+    } else if (fence) {
       end();
       const cut = indentOf(fence[1]), body = [];
       const close = new RegExp(`^[ \\t]*\`{${fence[2].length},}[ \\t]*$`);
@@ -478,7 +494,7 @@ function inline(s, links = true, depth = 0) {
   return out;
 }
 // What in `s` is kept from inline formatting, by where it starts: the index after it, and its node. Code spans become
-// code; raw HTML tags, images and backslash escapes stay as written. A code span opens at a run of backticks and closes
+// code; raw HTML (a whole element when it closes), images and backslash escapes stay as written. A code span opens at a run of backticks and closes
 // at the next run of the same length, read left to right.
 const TAG = /<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/y;
 function keptSpans(s) {
@@ -498,12 +514,16 @@ function keptSpans(s) {
   }
   const keep = (at, end) => spans.set(at, { end, node: { type: 'text', text: s.slice(at, end) } });
   let noBracket = Infinity, noComment = Infinity; // from where no ']' or '-->' was found, so it isn't looked for again
+  const elements = new Map(); // tag name → from where its closing tag wasn't found
   for (let i = 0; i < s.length; i++) {
     if (spans.has(i)) { i = spans.get(i).end - 1; continue; }
     if (s[i] === '\\' && /[!-\/:-@[-`{-~]/.test(s[i + 1] || '')) { keep(i, i + 2); i++; continue; }
     TAG.lastIndex = i;
     const tag = s[i] === '<' && TAG.exec(s);
-    if (tag) { keep(i, i + tag[0].length); i += tag[0].length - 1; continue; }
+    if (tag) { // a tag, or a whole element when it closes, as written
+      const end = Math.max(i + tag[0].length, elementEnd(s, i + tag[0].length, tag, elements));
+      keep(i, end); i = end - 1; continue;
+    }
     if (s.startsWith('<!--', i) && i < noComment) {
       const end = s.indexOf('-->', i + 4);
       if (end < 0) noComment = i;
@@ -518,6 +538,23 @@ function keptSpans(s) {
     }
   }
   return spans;
+}
+// The index after the closing tag that ends the element an opening `tag` match starts, counting nested ones of the same
+// name; -1 for a closing, self-closing or void tag; or -2 for one that never closes. `misses` (tag name → from where no
+// closing tag was found) saves looking again.
+const VOID = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i;
+function elementEnd(s, from, tag, misses) {
+  const name = (tag[0].match(/^[ \t]*<([A-Za-z][A-Za-z0-9-]*)/) || [])[1];
+  if (!name || tag[0].endsWith('/>') || VOID.test(name)) return -1;
+  const key = name.toLowerCase();
+  if (from >= (misses.get(key) ?? Infinity)) return -2;
+  const re = new RegExp(`<(\\/?)${name}(?:\\s[^<>]*)?\\/?>`, 'gi');
+  re.lastIndex = from;
+  for (let m, depth = 1; (m = re.exec(s));) {
+    if (m[1]) { if (--depth === 0) return re.lastIndex; } else if (!m[0].endsWith('/>')) depth++;
+  }
+  misses.set(key, Math.min(from, misses.get(key) ?? Infinity));
+  return -2;
 }
 // The URL in `(url)` at `from`, with no spaces and any parentheses in it paired, or null.
 function linkTarget(s, from) {
