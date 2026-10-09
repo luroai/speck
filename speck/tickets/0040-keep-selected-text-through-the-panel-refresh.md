@@ -53,6 +53,7 @@ Text you select in an open ticket or idea stays selected through refreshes until
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: the queue and Shipped lists are still rebuilt on every refresh, so text selected there is lost (out of scope here).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +125,79 @@ Text you select in an open ticket or idea stays selected through refreshes until
     },
     "escalation_question": "",
     "summary": "The change preserves selected text during ordinary refreshes and keeps the rest of the panel updating. One edge case needs fixing: rearranging a ticket’s fields without changing their values still clears its selection, contrary to the agreed requirement."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d0909107825cf0caa8808c90b0fc2e623ab17dfe",
+    "thread_id": "01a12151-0dfa-7ab2-9d99-08af6fd49825",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 527128,
+      "cached_input_tokens": 430592,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2493,
+      "reasoning_output_tokens": 215
+    },
+    "saved_at": "2026-10-09T15:41:59.986Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html signature() sorts object keys recursively; shapingItems() preserves unchanged ticket nodes. AC1 and the new field-order regression test pass in the supplied output. Independent read-only verification confirmed reordered ticket and nested fields preserve attached nodes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/panel-0040.test.mjs AC2 verifies preserved detail nodes alongside immediate draft, queue review-round and shipped-ticket updates. The passing real-browser test confirms actual selection survives unrelated additions."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "AC3 and the passing real-browser test cover unchanged idea selections during unrelated changes. The new regression test and independent verification confirm reordered idea fields also preserve attached nodes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 tests verify updated ticket criteria and notes and updated idea body and status appear immediately. The passing real-browser test verifies changed criteria and note content."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "AC5 verifies advancing queue minutes, disconnected status and message, and recovery while the selected detail node remains attached. render() continues rebuilding queue and connection indicators independently of cached Shaping items."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Object property order previously caused unchanged ticket data to replace the selected detail node. Recursive key sorting now removes this dependency, with an honest regression test covering ticket, nested and idea fields.",
+        "suggested_fix": "Completed; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The selection-preservation and immediate-content-update descriptions now match the implementation and tests."
+    },
+    "escalation_question": "",
+    "summary": "Selected ticket and idea text survives refreshes while its data stays unchanged, and the rest of the panel continues updating. The field-order bug is fixed and verified. All five criteria pass, with no remaining blocking findings."
   }
 }
 ```
