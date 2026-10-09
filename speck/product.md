@@ -11,7 +11,7 @@ Everything happens in the local repo, with no PR.
 
 ## Current capabilities
 - **Six skills**, installed into each project's `.claude/skills/` and `.agents/skills/` so Claude Code, Codex, cptr and other agents find them: `/speck-capture`, `/speck-ticket`, `/speck-build`, `/speck-review`, `/speck-ship` and `/speck-status`.
-- **Overlap check before new work:** before `/speck-capture` writes an idea note, and before `/speck-ticket` runs `speck new`, the agent compares the work with every idea note, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria, not only titles) and `speck/product.md`.
+- **Overlap check before new work:** before `/speck-capture` writes an idea note, and before `/speck-ticket` runs `speck new`, the agent compares the work with every idea note in `speck/ideas/` and `speck/ideas/done/`, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria, not only titles) and `speck/product.md`.
   If anything has the same, or largely the same, outcome, it names each match: the idea's path and status, the ticket's id and status (with the reason if cancelled) or the line in `product.md` that covers it.
   It then asks whether to add to the existing item, go ahead anyway or stop, and writes nothing until you answer.
   If nothing overlaps, it says so in one line.
@@ -37,6 +37,8 @@ Everything happens in the local repo, with no PR.
   - `init`: one-step install and update, run as `npx github:luroai/speck init`.
     It creates `speck/`, copies the skills and the CLI (into `.speck/`) into the project, points AGENTS.md and CLAUDE.md at it, and runs `doctor`.
     Re-running it refreshes the skills and CLI and keeps config and tickets, and files any ticket already marked `done` under `speck/tickets/done/`.
+    It also files every note in `speck/ideas/` whose `Status:` value starts with `ticketed` under `speck/ideas/done/`, and points the `source:` of every ticket (in `speck/tickets/` or `speck/tickets/done/`) that named a filed note's old path at its new one.
+    A note whose name is already taken in `speck/ideas/done/` is left where it is, with a message.
     In speck's own repo it links rather than copies.
   - `doctor`: checks Node and git, then the builder set in `speck/config.yml`: `claude`, `cursor` (`cursor-agent`), `codex` or `gemini` must be on the PATH, with an install link if it's missing.
     Only that builder is checked.
@@ -49,7 +51,10 @@ Everything happens in the local repo, with no PR.
     With `--source=<idea note>` (a path relative to the repo root), it first checks the note exists and refuses, creating nothing, if it doesn't.
     It then sets the note's `Status:` value to `ticketed (<id>)`, or adds the id to an existing `ticketed (…)` list unless it's already there.
     Only that value changes.
-    A note with no `Status:` line still gets its ticket, with a warning that its status couldn't be updated.
+    A note in `speck/ideas/` is then filed in `speck/ideas/done/` under the same name, and the ticket's `source:` is that new path.
+    A note already in `speck/ideas/done/` stays there, and a `speck/ideas/` path to a note that has moved finds it there, so an idea split into several tickets can be ticketed from either path.
+    If a note's name is already taken in `speck/ideas/done/`, it refuses, creating nothing.
+    A note with no `Status:` line still gets its ticket, with a warning that its status couldn't be updated, and stays where it is.
     With `--type=bug` it sets `type: bug` in the ticket's frontmatter, and any other `--type` value is refused, creating nothing.
   - `lint`: checks the size rules.
     It also accepts a ticket's `type` only when it's missing, blank or `bug`, and gives an error naming the field for any other value.
@@ -72,7 +77,7 @@ Everything happens in the local repo, with no PR.
     It records the reason and the date in the ticket, sets the status to `cancelled` and files it in `speck/tickets/done/` with the finished ones, so `speck/tickets/` holds only live work.
     It refuses, changing nothing, when the reason is missing or blank, when the ticket is already `done` (delivered work can't be cancelled) or when it's already `cancelled`; it works from any other status.
     Setting a cancelled ticket to any other status moves it back into `speck/tickets/` and keeps the recorded reason, so a cancelled idea can come back later as new work.
-  - `status` (approved tickets first, as waiting for you, and cancelled tickets last, each with its reason, then ideas counted as waiting or ticketed, for example `IDEAS (3: 2 waiting, 1 ticketed)`; an idea is ticketed when its `Status:` value starts with `ticketed`.
+  - `status` (approved tickets first, as waiting for you, and cancelled tickets last, each with its reason, then ideas counted as waiting or ticketed, for example `IDEAS (3: 2 waiting, 1 ticketed)`; an idea is ticketed when its `Status:` value starts with `ticketed`, or when it's filed in `speck/ideas/done/`.
     A ticket whose branch is checked out in another worktree is shown once, under the status in that worktree's copy (so an in-progress build no longer reads `ready` from the main checkout), with `↳ being built in <path>` on the line below.
     A bug ticket shows `bug` after its id.
     With no other worktrees, the output is unchanged), `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `reviewer-settings`, `diff` (the changes since the reviewer's last round, or the whole change after merging the base branch, as the reviewer sees them), `next` and `pack` (the review pack).
@@ -82,7 +87,7 @@ Everything happens in the local repo, with no PR.
     `resume_command` is the setting from `speck/config.yml`, trimmed: `claude --resume {session}` when the setting is missing, and `""` when it's blank.
     Run records and logs are read from the main checkout's `speck/.cache/runs/`, wherever the command runs.
     `type` is `"bug"` for a bug ticket, or `null` when it's missing or blank.
-    Ideas are each `.md` note in `speck/ideas/`, sorted by file name, with `path`, `title` (its first `# ` heading, or the file name) and `status` (its `Status:` value, or `null`) and `body` (the note's full text).
+    Ideas are each `.md` note in `speck/ideas/` (not those filed in `speck/ideas/done/`), sorted by file name, with `path`, `title` (its first `# ` heading, or the file name) and `status` (its `Status:` value, or `null`) and `body` (the note's full text).
     A frontmatter field that shares a name with one of these added fields is replaced by it.
     These field names are a contract for the panel.
   - `panel`: a control panel in the browser, with one write (Set ready).
@@ -176,6 +181,9 @@ Everything happens in the local repo, with no PR.
     After shipping, the ticket's worktree is removed; if ship ran from inside it, it says so and prints where the base branch is checked out.
     A worktree that can't be removed (a locked one, say) doesn't stop the ship or the push, and speck prints the commands to finish tidying up.
     A conflict, a failed check or failed tests leave the worktree, both branches and both folders as they were.
+- **Ticketed ideas are filed away:** once an idea note is ticketed, `speck new` files it in `speck/ideas/done/` under the same name, so `speck/ideas/` holds only ideas still waiting.
+  The panel's ideas list and `speck status --json` show only `speck/ideas/`.
+  `/speck-capture`'s overlap check, `/speck-ticket`, inbox triage and a build's follow-up check read both folders.
 - **Closed tickets are filed away:** `speck/tickets/` holds only work in progress, and closed ones sit in `speck/tickets/done/` under the same name.
   "Closed" means `done` or `cancelled`.
   A ticket set to `done` (by `speck set` or by `speck ship`), or cancelled with `speck cancel`, moves there, and any other status moves it back.
@@ -332,7 +340,8 @@ Everything happens in the local repo, with no PR.
   A build that exits after the `speck run` that launched it has stopped is only flagged once `speck run` is started again, with no exit code.
 - `speck run` tells a build is still running only by its process id, so a reused process id can make it treat a finished build as still running.
 - An idea's `ticketed (…)` status is only ever added to.
-  Cancelling or finishing one of its tickets doesn't change it.
+  Cancelling or finishing one of its tickets doesn't change it, and doesn't move its note back out of `speck/ideas/done/`.
+- `dropped` notes stay in `speck/ideas/`.
 - `speck status` counts a `dropped` idea as waiting, because it counts every idea that isn't ticketed as waiting.
 - A `claude-subagent` reviewer, or a command reviewer, is read-only only because its prompt says so.
   Unlike Codex, speck runs it with no sandbox, so a command should use the tool's own read-only mode (for example Cursor's `--mode ask` or Claude Code's `--permission-mode plan`).

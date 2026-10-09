@@ -195,6 +195,10 @@ function ticketsDir(repo) { return path.join(repo, 'speck', 'tickets'); }
 // Finished tickets sit in a done/ folder, so speck/tickets/ holds only work in progress.
 function doneTicketsDir(repo) { return path.join(ticketsDir(repo), 'done'); }
 function ticketDirs(repo) { return [ticketsDir(repo), doneTicketsDir(repo)]; }
+function ideasDir(repo) { return path.join(repo, 'speck', 'ideas'); }
+// Idea notes are filed here once ticketed, as done tickets are in speck/tickets/done/.
+function doneIdeasDir(repo) { return path.join(ideasDir(repo), 'done'); }
+const repoPath = (repo, file) => path.relative(repo, file).split(path.sep).join('/');
 
 function listTickets(repo) {
   const seen = new Map();
@@ -930,6 +934,35 @@ function migrateReviews(repo) {
   if (fs.readdirSync(root).every(n => n === '.gitkeep')) fs.rmSync(root, { recursive: true, force: true });
 }
 
+// File each ticketed note in speck/ideas/ in speck/ideas/done/, for a repo from before notes were filed when ticketed.
+// Then point every ticket whose source is a filed note's old path at its new one.
+function fileTicketedIdeas(repo) {
+  const from = ideasDir(repo), to = doneIdeasDir(repo);
+  const notes = fs.readdirSync(from).filter(f => f.endsWith('.md') && fs.statSync(path.join(from, f)).isFile());
+  let moved = 0;
+  for (const f of notes) {
+    if (!ideaStatus(fs.readFileSync(path.join(from, f), 'utf8')).startsWith('ticketed')) continue;
+    if (fs.existsSync(path.join(to, f))) { console.log(`kept    speck/ideas/${f}: speck/ideas/done/${f} already exists. Rename one, then run init again to file it.`); continue; }
+    fs.mkdirSync(to, { recursive: true });
+    fs.renameSync(path.join(from, f), path.join(to, f));
+    moved++;
+  }
+  if (moved) console.log(`moved   ${moved} ticketed idea note${moved === 1 ? '' : 's'} into speck/ideas/done/`);
+  for (const dir of ticketDirs(repo).filter(d => fs.existsSync(d))) {
+    for (const f of fs.readdirSync(dir).filter(n => /^\d{4}-.*\.md$/.test(n))) {
+      const file = path.join(dir, f);
+      const text = fs.readFileSync(file, 'utf8');
+      let source;
+      try { source = parseTicket(text).fm.source; } catch { continue; }
+      if (typeof source !== 'string' || !source) continue;
+      const at = path.resolve(repo, source);
+      const filed = path.join(to, path.basename(at));
+      if (path.dirname(at) !== from || fs.existsSync(at) || !fs.existsSync(filed)) continue;
+      fs.writeFileSync(file, setField(text, 'source', JSON.stringify(repoPath(repo, filed))));
+    }
+  }
+}
+
 // ---------- commands ----------
 
 function cmdInit(args) {
@@ -955,6 +988,7 @@ function cmdInit(args) {
   for (const t of strays) placeTicket(repo, t, 'done');
   if (strays.length) console.log(`moved   ${strays.length} done ticket${strays.length === 1 ? '' : 's'} into speck/tickets/done/`);
   migrateReviews(repo);
+  fileTicketedIdeas(repo);
   // Give every ticket the readable header, or bring it up to date. Unreadable files were reported above (or are in done/) and are left alone.
   let synced = 0;
   for (const dir of ticketDirs(repo).filter(d => fs.existsSync(d))) {
@@ -1028,9 +1062,17 @@ function cmdNew(args) {
   if (badType !== undefined) throw new SpeckError(`--type must be --type=bug (got "${badType}"). Leave it out for any other ticket.`);
   const type = types.length ? 'bug' : '';
   // The source is checked before anything is written, so a mistyped path creates no ticket.
-  const sourceFile = source && path.resolve(repo, source);
-  if (sourceFile && !fs.statSync(sourceFile, { throwIfNoEntry: false })?.isFile())
+  // A note in speck/ideas/ that has already been filed in speck/ideas/done/ is found there.
+  let sourceFile = source && path.resolve(repo, source);
+  const isFile = f => fs.statSync(f, { throwIfNoEntry: false })?.isFile();
+  const inInbox = sourceFile && path.dirname(sourceFile) === ideasDir(repo);
+  if (inInbox && !isFile(sourceFile) && isFile(path.join(doneIdeasDir(repo), path.basename(sourceFile))))
+    sourceFile = path.join(doneIdeasDir(repo), path.basename(sourceFile));
+  if (sourceFile && !isFile(sourceFile))
     throw new SpeckError(`No idea note at ${source}. Check the path (relative to the repo root), then run this again.`);
+  const filed = inInbox && path.join(doneIdeasDir(repo), path.basename(sourceFile));
+  if (filed && filed !== sourceFile && fs.existsSync(filed))
+    throw new SpeckError(`${repoPath(repo, filed)} already exists, so ${source} can't be filed there once it's ticketed. Rename one of them, then run this again.`);
   const id = nextId(repo);
   let text = fs.readFileSync(path.join(TEMPLATES, 'ticket.md'), 'utf8');
   text = setField(text, 'id', id);
@@ -1040,16 +1082,20 @@ function cmdNew(args) {
   const settings = reviewerSettings({}, cfg);
   text = setField(text, 'reviewer_model', settings.model || '');
   text = setField(text, 'reviewer_effort', settings.effort || '');
-  text = setField(text, 'source', JSON.stringify(source));
+  // A note that gets a status is filed in speck/ideas/done/, so the ticket points at it there.
+  const note = sourceFile && fs.readFileSync(sourceFile, 'utf8');
+  const target = note && STATUS_LINE.test(note) && filed ? filed : sourceFile;
+  text = setField(text, 'source', JSON.stringify(target && target !== path.resolve(repo, source) ? repoPath(repo, target) : source));
   if (type) text = setField(text, 'type', type);
   text = syncHeader(setField(text, 'created', new Date().toISOString().slice(0, 10)));
   const file = path.join(ticketsDir(repo), `${id}-${slugify(title)}.md`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, text);
   if (sourceFile) {
-    const note = fs.readFileSync(sourceFile, 'utf8');
-    if (STATUS_LINE.test(note)) fs.writeFileSync(sourceFile, note.replace(STATUS_LINE, (_, head, value) => head + ticketedStatus(value, id)));
-    else console.error(`⚠️ ${source} has no \`Status:\` line, so its status couldn't be updated. Add \`Status: ticketed (${id})\` to it by hand.`);
+    if (STATUS_LINE.test(note)) {
+      fs.writeFileSync(sourceFile, note.replace(STATUS_LINE, (_, head, value) => head + ticketedStatus(value, id)));
+      if (target !== sourceFile) { fs.mkdirSync(doneIdeasDir(repo), { recursive: true }); fs.renameSync(sourceFile, target); }
+    } else console.error(`⚠️ ${source} has no \`Status:\` line, so its status couldn't be updated. Add \`Status: ticketed (${id})\` to it by hand.`);
   }
   console.log(path.relative(process.cwd(), file));
 }
@@ -1636,10 +1682,12 @@ function cmdStatus(args = []) {
       if (s === 'cancelled' && !blank(t.fm.cancel_reason)) console.log(`        ❌ ${t.fm.cancel_reason}`);
     }
   }
-  const ideas = path.join(repo, 'speck', 'ideas');
-  const notes = fs.existsSync(ideas) ? fs.readdirSync(ideas).filter(f => f.endsWith('.md')) : [];
-  const ticketed = notes.filter(f => ideaStatus(fs.readFileSync(path.join(ideas, f), 'utf8')).startsWith('ticketed')).length;
-  console.log(`\nIDEAS (${notes.length}: ${notes.length - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
+  // Notes filed in speck/ideas/done/ count as ticketed, whatever their status says.
+  const mdIn = d => (fs.existsSync(d) ? fs.readdirSync(d).filter(f => f.endsWith('.md')) : []);
+  const notes = mdIn(ideasDir(repo)), filed = mdIn(doneIdeasDir(repo)).length;
+  const ticketed = filed + notes.filter(f => ideaStatus(fs.readFileSync(path.join(ideasDir(repo), f), 'utf8')).startsWith('ticketed')).length;
+  const total = notes.length + filed;
+  console.log(`\nIDEAS (${total}: ${total - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
 }
 
 // ---------- panel (a view in the browser, with one write: Set ready) ----------
