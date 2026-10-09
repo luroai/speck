@@ -1,7 +1,7 @@
 ---
 id: "0074"
 title: "Keep a title with an apostrophe from swallowing its comment"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T20:57:51.730Z"
 ---
 # 0074 · Keep a title with an apostrophe from swallowing its comment
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck set <id> title "…"` writes the title without quotes when it has no `:` or `#`. A title with an odd number of apostrophes, such as "Pause a running build until it's played", then reads back with the template's trailing comment (`# one outcome, no "and"`) on the end, in the ticket's heading, `speck status`, the panel and everywhere else the title shows. It happened on 0070 and had to be fixed by hand.
@@ -45,9 +45,15 @@ Every value `speck set` writes reads back exactly as given, whatever quotes it c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 writeField exempts every bracket-shaped value from quoting, including text fields.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 933,989
+- Elapsed since build started: 6 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -111,6 +117,70 @@ Every value `speck set` writes reads back exactly as given, whatever quotes it c
     ],
     "escalation_question": "",
     "summary": "The six requested examples work, and the tests genuinely exercise the CLI. However, a title containing an apostrophe inside square brackets still absorbs its trailing comment. Fix that remaining case before merging. Tests were inspected; independent verification used the actual writer in memory because this review is read-only."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "aab877ad3fe241f2a70fc226d426cf088dbfd501",
+    "thread_id": "01a12278-9c6c-7a23-9070-9c3b338ab3e7",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 583463,
+      "cached_input_tokens": 463360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1938,
+      "reasoning_output_tokens": 77
+    },
+    "saved_at": "2026-10-09T21:04:14.820Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/set-0074.test.mjs runs the real CLI for all six specified titles and checks status --json, plain status and the exact heading. All six tests pass in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests exercise all six values for source and reviewer_model, plus lone quotes, padding, backslashes and bracketed text. All pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The title and source tests assert that template comments remain after the value. scripts/speck.mjs setField preserves the comment suffix; independent in-memory checks also confirmed preservation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Each of the six AC1 title tests runs speck lint and asserts exit status zero. All pass in the supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Bracket-shaped text previously bypassed quoting, causing comment absorption or conversion into an array. Resolved: writeField now reserves list handling for after and quotes bracketed text in other fields.",
+        "suggested_fix": "Implemented and covered by the new real CLI bracketed-title/source regression test. Independent execution of the current writer confirmed exact text round-trips and preservation of after lists.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Titles and other tested text fields retain their quotes and trailing comments, including the bracketed cases that failed the first review. All acceptance criteria pass, and the supplied suite reports 517 passing tests. No blocking concerns remain."
   }
 }
 ```
