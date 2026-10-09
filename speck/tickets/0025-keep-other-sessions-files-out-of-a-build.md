@@ -1,7 +1,7 @@
 ---
 id: "0025"
 title: "Keep other sessions' files out of a build"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0025 · Keep other sessions' files out of a build
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Other sessions sometimes work in the same checkout during a build. Twice in recent builds their files appeared mid-build, and one `git add -A` committed and pushed five draft tickets that the builder hadn't written. Untracked files from elsewhere also make `speck review` refuse to run, though they aren't part of what's reviewed.
