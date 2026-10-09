@@ -1,7 +1,7 @@
 ---
 id: "0030"
 title: "Print speck status as JSON"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T10:47:45.752Z"
 ---
 # 0030 · Print speck status as JSON
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The control panel (0031) needs everything `speck status` knows in a form a program can read. Today `speck status` only prints text for people, so any tool would have to scrape it.
@@ -47,9 +47,15 @@ The control panel (0031) needs everything `speck status` knows in a form a progr
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 acceptance_criteria silently loses parts of multiline criteria.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 678,593
+- Elapsed since build started: 7 min
+- Changed lines: 69 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: `parseYaml` silently drops a frontmatter key named `__proto__`, so it never reaches `--json` (or any command). Low priority.
 
