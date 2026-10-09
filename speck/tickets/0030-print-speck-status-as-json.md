@@ -41,6 +41,7 @@ The control panel (0031) needs everything `speck status` knows in a form a progr
 - Field names in the criteria are the contract 0031 builds on. Don't rename them.
 - Priority 1: the panel waits on this.
 - No external facts: everything comes from files speck already reads.
+- Self-check: no changes. Checked empty and missing folders, tickets with no `after`, no priority or a non-list `after` (treated as none), malformed review rounds (counted by lint, listed as parsed), ideas with no heading or no `Status:` line, and built-in names (`constructor` comes through as a field, `__proto__` is dropped by the existing YAML parser).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
