@@ -1,7 +1,7 @@
 ---
 id: "0046"
 title: "Stop a refused ship from wiping uncommitted changes"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 type: bug                # blank, or bug
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T15:41:25.661Z"
+finished: "2026-10-09T16:31:11.408Z"
 
 ---
 # 0046 · Stop a refused ship from wiping uncommitted changes
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck ship` checks that the base branch's checkout is clean, then runs the tests (over a minute here) before it merges. If anything edits a tracked file in that checkout during the tests and the merge then fails, ship's undo runs `git reset --hard` there and silently throws the edit away. On 9 October this wiped an uncommitted `speck/product.md` edit three times while 0045 tried to ship, and each failure was reported as a "conflict", which hid the real cause.
