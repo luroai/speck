@@ -318,6 +318,7 @@ const openIdeas = new Set(); // paths of the open ideas
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
 const refused = new Map(); // id → why the server refused to set it ready
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
+const copyButtons = new Map(); // id → the Copy button last built for it
 let copies = 0;
 const flip = (set, key) => { if (set.has(key)) set.delete(key); else set.add(key); render(); };
 const list = v => (Array.isArray(v) ? v : []);
@@ -500,6 +501,7 @@ function resumeLine(t) {
   const b = el('button', 'copy', shown ? shown[1] : 'Copy');
   b.type = 'button';
   b.addEventListener('click', e => { e.stopPropagation(); copy(t.id, t.resume.text); });
+  copyButtons.set(t.id, b);
   line.appendChild(b);
   return line;
 }
@@ -508,8 +510,13 @@ async function copy(id, text) {
   let said = 'Copied';
   try { await navigator.clipboard.writeText(text); } catch { said = "Couldn't copy: select the command instead"; }
   copied.set(id, [mine, said]);
-  render();
-  setTimeout(() => { if (copied.has(id) && copied.get(id)[0] === mine) { copied.delete(id); render(); } }, 2000);
+  copyLabel(id);
+  setTimeout(() => { if (copied.has(id) && copied.get(id)[0] === mine) { copied.delete(id); copyLabel(id); } }, 2000);
+}
+// The label is put right on the button, so the row it's in, and any text selected there, stays.
+function copyLabel(id) {
+  const b = copyButtons.get(id);
+  if (b) b.textContent = copied.has(id) ? copied.get(id)[1] : 'Copy';
 }
 // Hovering a ticket in Shaping or a ready one in the queue lights it and every ticket linked to it through after:, and dims the rest.
 // The classes are set on the nodes in place, so a Shaping item keeps its node (and any text selected in it).
@@ -567,9 +574,8 @@ function render() {
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
 
-  // The minutes come from the clock, not the ticket, so they are put right on a kept row. A blocked ticket's
-  // Copy button label isn't in the ticket either, so a change to it rebuilds the row.
-  fill('queue', keptItems('queue', m.queue, t => String(t.id), t => copied.get(t.id)?.[1] ?? null, queueItem,
+  // The minutes come from the clock, not the ticket, so they are put right on a kept row.
+  fill('queue', keptItems('queue', m.queue, t => String(t.id), () => null, queueItem,
     { own: t => { const { minutes, ...own } = ownData(t); return own; }, derived: t => [t.minutes, t.chain, t.unlocks], update: queueUpdate }), 'Nothing in flight or ready.');
   linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
   lightUp();

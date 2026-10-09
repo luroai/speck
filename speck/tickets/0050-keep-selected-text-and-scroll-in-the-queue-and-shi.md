@@ -1,7 +1,7 @@
 ---
 id: "0050"
 title: Keep unchanged rows outside Shaping through the panel refresh                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T17:29:40.760Z"
 ---
 # 0050 · Keep unchanged rows outside Shaping through the panel refresh
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel still rebuilds every queue row and Shipped row on each 2-second refresh, so text you select there, such as a blocked ticket's question or a stopped build's last message, is lost within 2 seconds. A long build message scrolls in its own box, and that box jumps back to the top on every refresh, so you can't read or copy the end of it. 0040 fixed this only for open items in Shaping.
@@ -203,6 +203,87 @@ Round 2 (codex): approve.
     },
     "escalation_question": "",
     "summary": "Selected text and build-message scrolling now survive unchanged-row refreshes, including selections involving updating times. Changed tickets still update promptly. The previous issue is fixed, and all five criteria pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6342198b5cbe0ae2a6deb6235fb63775b98d8b63",
+    "thread_id": "01a121bb-3369-72f3-a50f-ae0b405c2d7b",
+    "seconds": 47,
+    "usage": {
+      "input_tokens": 1196556,
+      "cached_input_tokens": 960768,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3456,
+      "reasoning_output_tokens": 433
+    },
+    "saved_at": "2026-10-09T18:33:36.568Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "Ordinary refresh coverage in test/panel-0050.test.mjs still passes, but render now includes the Copy label in the row signature. copy's two-second reset replaces an unchanged blocked row, removing any selection made after clicking Copy. A read-only reproduction using fakePage confirmed the previous row is detached."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Unchanged build-message boxes remain attached through polling. The AC2 test and real-browser scrollTop assertions pass on the supplied merged-suite results."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Shipped retention is unaffected by the merge. The AC3 test and actual browser selection checks pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "queueUpdate and the Shipped updater retain setText. The real-browser AC4 test covers selected minutes, midnight and selection spanning title and minutes; it passes in the merged-suite results."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "keptItems still rebuilds rows when ticket data changes. AC5 tests cover questions, messages, titles, rounds and status; browser checks pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clock updates previously discarded selections involving minutes or shipped-time text.",
+        "suggested_fix": "Completed: the merged code retains setText and its real-browser regression coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The Copy-label interaction fix rebuilds the entire blocked row when feedback expires after two seconds. Someone who selects the question or resume command during that interval loses their selection although the ticket data is unchanged. This is particularly problematic after clipboard failure, when the button explicitly tells them to select the command instead. Existing Copy tests check labels and text, but not retained selection.",
+        "suggested_fix": "Update the Copy button label in place on the retained row rather than adding it to the rebuild signature. Add a browser regression test that selects the question or command after clipboard failure, expires the feedback and refreshes, and verifies selection survives while the label resets.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The unchanged-row selection guarantee is contradicted by the Copy feedback timer rebuilding a blocked row."
+    },
+    "escalation_question": "",
+    "summary": "The merge preserves the time and scrolling fixes and keeps the Copy button working. However, resetting its feedback now removes the whole blocked row and loses text selected there. Update only the button before merging."
   }
 }
 ```
