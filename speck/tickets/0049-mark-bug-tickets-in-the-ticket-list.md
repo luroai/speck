@@ -39,6 +39,7 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
 ## Notes
 - 0046 and 0047 already have `type: bug` in their frontmatter, ahead of this ticket.
 - No external facts: everything is in this repo.
+- Self-check: `speck new` now refuses a bare `--type` and a second `--type` with any value but bug, which it had let through.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
