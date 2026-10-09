@@ -1,7 +1,7 @@
 ---
 id: "0038"
 title: "Show the inbox in Shaping"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0036"]            # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T18:29:39.619Z"
+finished: "2026-10-09T18:34:40.149Z"
 
 ---
 # 0038 · Show the inbox in Shaping
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Inbox notes (0036) are idea notes, so without a change they'd crowd the panel's Ideas list and bury the user's own ideas. The user wants to see how many follow-ups are waiting without being shown them all.
