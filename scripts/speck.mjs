@@ -1685,8 +1685,22 @@ function sameToken(given, token) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// Serves the panel page and /api/state to this machine only, plus the one write, POST /api/tickets/<id>/ready.
-// Every request reads the files afresh.
+// The tail of a build's log from `speck run`, for the panel: its last 200 lines, from the main checkout, with trailing
+// blank lines dropped, and whether it has more. A ticket with no log gets empty text. Reads only, writing nothing.
+const PANEL_LOG_LINES = 200;
+function panelLog(repo, id) {
+  let main = repo;
+  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
+  let text;
+  try { text = fs.readFileSync(path.join(main, 'speck', '.cache', 'runs', `${padId(id)}.log`), 'utf8'); }
+  catch (e) { if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return { text: '', truncated: false }; throw e; }
+  const lines = text.split('\n');
+  while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+  return { text: lines.slice(-PANEL_LOG_LINES).join('\n'), truncated: lines.length > PANEL_LOG_LINES };
+}
+
+// Serves the panel page, /api/state and each build's log to this machine only, plus the one write,
+// POST /api/tickets/<id>/ready. Every request reads the files afresh.
 function cmdPanel(args) {
   const repo = findRepoRoot();
   const port = panelPort(args);
@@ -1722,6 +1736,11 @@ function cmdPanel(args) {
     if (where === '/api/state') {
       try { return send(res, 200, 'application/json', JSON.stringify(statusData(repo))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log$/);
+    if (log) {
+      try { return send(res, 200, 'application/json', JSON.stringify(panelLog(repo, log[1]))); }
+      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
     }
     return send(res, 404, 'text/plain', 'Not found.\n');
   });

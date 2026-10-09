@@ -46,6 +46,7 @@ Clicking a queue ticket's top row opens it and shows the tail of its build's log
 - A request failing (the server is down) leaves the last log on screen; the page's existing disconnect handling applies.
 - The page's kept-item rule from 0050 takes the open set in `viewOf`, as Shaping does, so an open row and its scroll position stay put across the refresh.
 - product.md's panel section needs the new endpoint and the open row.
+- Self-check: a click that ends selecting text in a queue ticket's top row now neither opens nor closes it, so the selection stays (0055's browser test caught it dropping the selection), with a test; no other changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
