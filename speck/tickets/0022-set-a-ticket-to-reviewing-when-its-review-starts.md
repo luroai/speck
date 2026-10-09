@@ -36,6 +36,9 @@ Starting a ticket's first review round sets it to `reviewing`, with no separate 
 
 ## Notes
 - Pre-check: no ambiguities found, and no external facts. Note that `speck review` already lets the ticket's Review rounds section stay uncommitted. The status change will be committed with the builder's next fix commit.
+- Round 2's clean-tree check now also accepts the uncommitted building → reviewing change (and its header line) next to round 1, so a builder who commits only code between rounds isn't refused. Any other uncommitted ticket edit is still refused.
+- The 0023 self-check test anchored on the removed `speck set <id> status reviewing` sentence. It now anchors on the sentence that replaces it, with the same check.
+- Self-check: no changes. Known gap: if `speck review` is interrupted (Ctrl-C) while the reviewer runs, the ticket stays `reviewing` with no round. Re-running the review, or `speck set <id> status building`, puts it right.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
