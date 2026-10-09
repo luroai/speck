@@ -1,7 +1,7 @@
 ---
 id: "0063"
 title: "Open the full ticket pane from any ticket in the panel"               # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0052", "0053", "0062"]               # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T20:28:37.503Z"
+finished: "2026-10-09T20:42:38.610Z"
 
 ---
 # 0063 · Open the full ticket pane from any ticket in the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full ticket pane opens only from a draft in Shaping. Once a ticket is in the queue or has shipped, the user can't read what it was meant to do without opening its file, which is when they most often want a reminder: watching a build, or checking what just shipped.
