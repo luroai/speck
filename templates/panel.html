@@ -273,8 +273,8 @@ function panelModel(state) {
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
   return {
     drafts: tickets.filter(is('draft')).map(chain),
-    // The user's own ideas, leaving out inbox and dropped notes: those not yet ticketed first, then the rest, each group in JSON order.
-    ideas: [false, true].flatMap(t => ideas.filter(i => !['inbox', 'dropped'].includes(statusOf(i)) && String(i.status || '').startsWith('ticketed') === t)),
+    // The user's own ideas still to shape, in JSON order: inbox, dropped and ticketed notes are left out.
+    ideas: ideas.filter(i => !['inbox', 'dropped'].includes(statusOf(i)) && !String(i.status || '').startsWith('ticketed')),
     // Follow-ups waiting in the inbox, in JSON order.
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
     // One list: in-flight tickets, then ready ones, each group in JSON order.
@@ -599,7 +599,7 @@ function render() {
   const m = panelModel(state);
   shapingToggle(m);
   if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
-  else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
+  else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
 

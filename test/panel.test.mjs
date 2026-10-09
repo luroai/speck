@@ -174,7 +174,7 @@ test('0031 AC3: the model sorts tickets into Shaping, the Queue and Shipped, and
   const ids = list => list.map(t => t.id);
   assert.deepEqual(ids(m.drafts), ['0001', '0010']);
   assert.deepEqual(m.drafts[0].acceptance_criteria, ['One.', 'Two.']);
-  assert.deepEqual(m.ideas.map(i => i.title), ['A', 'C', 'B'], 'every idea, ticketed ones last (0033)');
+  assert.deepEqual(m.ideas.map(i => i.title), ['A', 'C'], 'every idea not yet ticketed (0056)');
   assert.deepEqual(ids(m.queue), ['0002', '0003', '0004', '0005', '0006', '0007'], 'one list: in flight, then ready (0034)');
   assert.deepEqual(m.queue.map(t => t.waiting_on), [[], [], [], [], ['0009', '0004'], []]);
   const shown = [...m.drafts, ...m.queue, ...m.shipped];
@@ -452,15 +452,15 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
   assert.ok(items(p)[1].textContent.includes('Readiness'));
 });
 
-test('0033 AC5: the Ideas list shows every idea, not-ticketed first, and clicking one shows its note as text', async () => {
+test('0033 AC5: the Ideas list shows every idea not yet ticketed (0056), and clicking one shows its note as text', async () => {
   const state = { tickets: [], ideas: [idea('Done one', 'ticketed (0001)'), idea('Fresh', 'idea'), idea('No status', null, 'Just <i>text</i>.\n'), idea('Later', 'ticketed')] };
   const p = fakePage([state, state]);
   await p.settle();
   click(toggles(p)[1]);
   const list = items(p);
   const titles = list.map(n => top(n).children[0].textContent);
-  assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'No status', 'Done one', 'Later']);
-  assert.ok(list[0].textContent.includes('idea') && list[2].textContent.includes('ticketed (0001)'), 'each with its status');
+  assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'No status']);
+  assert.ok(list[0].textContent.includes('idea') && list[1].textContent.includes('no status'), 'each with its status');
   assert.ok(!list[1].textContent.includes('Just'), 'closed by default');
   click(top(list[1]));
   assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');
