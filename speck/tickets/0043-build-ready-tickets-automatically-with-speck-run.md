@@ -54,6 +54,9 @@ Setting a ticket to ready is meant to start the pipeline, but someone still has 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: `SPECK_RUN_POLL_MS` (used by the tests to shorten the 5-second wait) also works for users but isn't documented. Either document it or make it test-only.
+- Follow-up idea: a lock whose pid has since been reused by an unrelated process is treated as a live `speck run`. The message says which file to delete, but speck can't tell the difference itself.
+- Follow-up idea: `speck run` reports only to its own terminal. Showing its launches, logs and exits in the panel would make it visible (0044 covers sessions for blocked tickets only).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +144,95 @@ Setting a ticket to ready is meant to start the pipeline, but someone still has 
     },
     "escalation_question": "",
     "summary": "Automatic builds work on the normal paths, and the tests exercise real processes. Three fixes are needed: read completion status from the build's worktree, prevent simultaneous runners from bypassing the lock, and handle failures to save a running build's session record. Tests were inspected; I did not rerun them because this review environment permits no filesystem writes."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0179e625b183e6c1628e5f3e5afbe93a644f0d40",
+    "thread_id": "01a1211a-37b2-7452-8c81-edc2dc666587",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 378091,
+      "cached_input_tokens": 211200,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2306,
+      "reasoning_output_tokens": 132
+    },
+    "saved_at": "2026-10-09T14:44:55.770Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdRun/tick defaults to 5000 ms polling, uses statusData ordering and waiting_on, and enforces running.size against max_parallel_builds. test/run.test.mjs AC1 tests exercise ordering, concurrency, continued operation and stopping without killing builds; all pass in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdRun/launch splits build_command and invokes spawn without a shell, from the repo root, with UUID and ticket substitutions and empty stdin. AC2 tests verify actual child arguments, cwd, unique UUIDs, missing or blank commands and template defaults; all reported passing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "launch writes the session record before spawning, updates its PID afterwards, and redirects stdout and stderr to the log. AC3 verifies record fields, both streams and unchanged tickets. The F3 regression verifies an unwritable record prevents that build starting while another proceeds; both reported passing."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The launched Set prevents repeat launches. finished now reads authoritative status through statusData and prints the last five log lines for tickets remaining ready. AC4 tests cover no retry and log tails; the F1 regression creates a real worktree and blocks the ticket there, verifying no false ready report. All reported passing."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdRun rejects checkouts off base_branch. takeRunLock atomically publishes a complete PID file and serialises stale-lock removal with a recovery lock. AC5 tests cover branch refusal, existing runners and stale recovery; new F2 tests race six runners against fresh and stale locks and verify exactly one launches. All reported passing."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Completion reporting previously read the stale main-checkout ticket instead of the build's worktree copy.",
+        "suggested_fix": "Implemented: finished uses statusData; a real-worktree regression verifies blocked status is recognised.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Concurrent startup and stale-lock recovery previously allowed multiple runners to acquire the lock.",
+        "suggested_fix": "Implemented: atomic hard-link publication and serialised recovery, with concurrent regression tests.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "A record-write failure previously crashed the runner after leaving an unrecorded detached build running.",
+        "suggested_fix": "Implemented: pre-write the record before spawning and handle subsequent PID-write failures without terminating the runner; regression verifies record conflicts prevent launch.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated spec accurately describes scheduling, records, worktree-aware reporting and permissions bypass risks. Auto-ship settings remain unchanged."
+    },
+    "escalation_question": "",
+    "summary": "The three blocking issues are fixed, with meaningful regression tests. Automatic builds now meet the ticket's requirements, and no blocking concerns remain. The supplied results show all 233 tests passing; I inspected the code and tests but could not rerun tests in this read-only environment."
   }
 }
 ```
