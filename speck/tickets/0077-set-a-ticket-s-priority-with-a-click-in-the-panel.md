@@ -1,7 +1,7 @@
 ---
 id: "0077"
 title: "Set a ticket's priority with a click in the panel"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0077 · Set a ticket's priority with a click in the panel
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Setting or changing a ticket's priority means editing its file or running `speck set`. When sorting through many tickets in the panel, the user wants to change priorities there, at a click.
