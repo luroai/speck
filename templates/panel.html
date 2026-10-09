@@ -563,8 +563,10 @@ function queueItem(t) {
     if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
   }
   q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
-  if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
-  if (isOpen) q.appendChild(logBox(id));
+  if (isOpen) {
+    if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
+    q.appendChild(logBox(id));
+  }
   return q;
 }
 // An open queue ticket's log, as text in a box with its own scrollbar.

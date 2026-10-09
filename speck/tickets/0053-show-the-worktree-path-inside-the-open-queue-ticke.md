@@ -43,6 +43,9 @@ A closed queue row stays short, and the worktree's full path is shown inside the
 - The panel gets the path from `worktree` in `/api/state` (0030). Nothing in the JSON changes.
 - product.md says in-flight tickets show their worktree path, in the panel's queue section: it needs to say the path is inside the open ticket.
 - A shortened path in the row instead of hiding it is the other option here; the user picked hiding it, with the full path in the open ticket.
+- The 0034 AC5 test in `test/panel.test.mjs` asserted the path in the closed row, which AC1 reverses: that one assertion now checks the closed row leaves it out, and the path's own checks are in `test/panel-0053.test.mjs`.
+- AC3 held before the change (a `null` worktree was never shown); its test keeps it so, open or closed.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

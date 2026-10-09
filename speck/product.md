@@ -149,9 +149,10 @@ Everything happens in the local repo, with no PR.
       A blocked ticket with no `session` shows nothing extra.
     Nothing else is red: a `blocked` or `ready` ticket with a `build_exit` looks as it would without one.
     A `ready` ticket shows "Queued", a bar with no step done or current and "waiting on <ids>" when it's waiting on any, or "unlocks <ids>" when it starts a chain.
-    In-flight tickets show their worktree path, when they have one, and the whole minutes since `started`, when it's set.
+    In-flight tickets show the whole minutes since `started`, when it's set.
     Clicking a queue ticket's top row opens it and asks the server for its build log, once, and clicking that top row again closes it.
     More than one can be open at once, and a log is asked for only when a ticket is opened, never for closed ones.
+    An open in-flight ticket shows its worktree's full path, when it has one, as text in a monospace line under its status line, and a closed one leaves it out so the row stays short.
     The open ticket shows the log in a monospace box with a fixed maximum height and its own scrollbar, as text, with ANSI escape sequences removed and each run of blank lines shown as one.
     When the log was cut short, a first line says earlier lines aren't shown, and a ticket with no log shows "No log yet.".
     Clicking or selecting text in the log leaves it open, and a click that ends selecting text in the top row neither opens nor closes it.
