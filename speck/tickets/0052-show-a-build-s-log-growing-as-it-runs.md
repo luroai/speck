@@ -58,6 +58,11 @@ An open log keeps up with the build by itself: the newest lines slide in at the 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Stop asking for a log once its build has ended: `speck/ideas/2026-10-09-stop-asking-for-a-log-once-its-build-has-ended.md`.
+- Keep a scrolled-up reader's place as lines drop out of the tail: `speck/ideas/2026-10-09-keep-a-scrolled-up-log-reader-s-place.md`.
+- Known limit: in a cut-short log made of repeated lines, which lines dropped out is ambiguous, so a selection may stay on an identical neighbouring line.
+
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -129,6 +134,79 @@ An open log keeps up with the build by itself: the newest lines slide in at the 
     },
     "escalation_question": "",
     "summary": "The log updates automatically in a fixed scrolling box, follows the latest output and recovers from failed requests. However, repeated output can erase the reader's selection even when nothing changed. Fix that selection bug before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8a430945a83126750dd437a58d8d9d3a59ba87b4",
+    "thread_id": "01a1222f-12a7-72c3-aff9-ca912a3f7c94",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 451000,
+      "cached_input_tokens": 336640,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1402,
+      "reasoning_output_tokens": 79
+    },
+    "saved_at": "2026-10-09T19:43:52.898Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: toggleLog, startLogTimer and logTick provide independent one-second polling and stop requests for closed or departed tickets. Passing AC1 tests exercise these behaviours."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: .log has fixed height and its own scrollbar; showLog updates the existing box. Passing AC2 and browser tests verify constant height and the 200-line tail."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "showLog and atBottom implement following with an eight-pixel tolerance. setLogText now preserves unchanged text and appends prefix growth without deletion. Passing browser tests cover selection during tail updates and repeated unchanged or growing output."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "loadLog retains existing content on failure and accepts the next successful response. Both passing AC4 tests exercise failure and recovery."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "replaced and showLog replace shorter logs and reset scrolling to the bottom. Passing AC5 tests cover truncated, different and empty replacement logs."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:645",
+        "issue": "Repeated unchanged or appended lines previously caused retained text to be deleted, destroying selections. The prefix-growth check now prevents those deletions, and the new browser regression test exercises both cases.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec accurately describes polling, fixed-height display, scrolling, selection preservation, failure recovery and replacement logs."
+    },
+    "escalation_question": "",
+    "summary": "Approved. Open logs update automatically, follow new output while allowing readers to scroll back, recover from failures and reset for a new build. The selection bug is fixed and covered by a browser regression test. All 426 supplied tests passed."
   }
 }
 ```
