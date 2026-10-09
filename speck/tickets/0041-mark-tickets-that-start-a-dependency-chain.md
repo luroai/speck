@@ -1,7 +1,7 @@
 ---
 id: "0041"
 title: "Mark tickets that start a dependency chain"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T15:43:31.009Z"
 ---
 # 0041 · Mark tickets that start a dependency chain
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Tickets can wait on each other through `after:`, but the panel doesn't show where a chain begins. So when choosing what to set ready or kick off first, you have to read every ticket's `after:` line to find the ones that unblock others.
@@ -47,9 +47,16 @@ In the panel you can see at a glance which tickets start a chain, what each one 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 shapingItems now signs the derived unlocks, chain and linked fields as part of a draft's data.; F2 queueItem calls hoverable for every in-flight ticket, and lightUp highlights or dims all queue rows.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,840,927
+- Elapsed since build started: 12 min
+- Changed lines: 117 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: the fake DOM in `test/support/panel.mjs` gives every node an Array of `children`, where a browser has an HTMLCollection with no `find` or `map`, so a bug like round 2's F1 passes the fake-page tests. Make its `children` array-like only.
 
