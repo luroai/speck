@@ -1734,17 +1734,18 @@ function sameToken(given, token) {
 }
 
 // Serves the panel page and /api/state to this machine only, plus the one write, POST /api/tickets/<id>/ready.
-// Every request reads the files afresh.
+// Every request reads the files afresh, the page included, so a changed panel.html shows on a reload.
 function cmdPanel(args) {
   const repo = findRepoRoot();
   const port = panelPort(args);
   const cfg = loadConfig(repo);
-  const page = fs.readFileSync(path.join(TEMPLATES, 'panel.html'), 'utf8')
-    .replace('{{repo}}', htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo))).replace('{{base}}', htmlEscape(cfg.base_branch));
+  const repoName = htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo)), base = htmlEscape(cfg.base_branch);
   // Made afresh on each start and put only in the page. A web page elsewhere can send a POST here (the Host check
   // doesn't stop a form post to 127.0.0.1), but can't read this token, and its Origin gives it away.
   const token = crypto.randomBytes(32).toString('hex');
-  const served = page.replace('{{token}}', token);
+  const pageFile = path.join(TEMPLATES, 'panel.html');
+  const page = () => fs.readFileSync(pageFile, 'utf8')
+    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token);
   const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`]);
   // Only these Host headers are served, so a web page on another name that resolves here (DNS rebinding) gets nothing.
   const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
@@ -1766,7 +1767,10 @@ function cmdPanel(args) {
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
     if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed.\n');
-    if (where === '/') return send(res, 200, 'text/html', served);
+    if (where === '/') {
+      try { return send(res, 200, 'text/html', page()); }
+      catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
+    }
     if (where === '/api/state') {
       try { return send(res, 200, 'application/json', JSON.stringify(statusData(repo))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }

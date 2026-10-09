@@ -40,6 +40,7 @@ Reloading the panel in the browser shows the current `templates/panel.html`, wit
 ## Notes
 - Today the page is read in `cmdPanel` in `scripts/speck.mjs`, before the server starts.
 - product.md's `panel` entry needs to say page changes show on a reload, and server changes need a restart.
+- Self-check: the placeholders are now filled with replacement functions, so a page or repo name containing `$&` or `$1` is served as written (test added); a `panel.html` that is a folder also gives the plain-text 500 (test added).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
