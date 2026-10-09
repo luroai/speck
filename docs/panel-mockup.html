@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>speck · control panel (mockup)</title>
+<style>
+  :root {
+    --bg: #1c1d20; --panel: #232428; --raise: #2a2b30; --line: #36383e; --line-soft: #2e3035;
+    --text: #d6d8dd; --muted: #8a8e97; --faint: #5f636c;
+    --accent: #7aa7f0; --ok: #62b77a; --warn: #e3a04f; --bad: #e0675d; --run: #5fa8e0; --idea: #b291e6;
+  }
+  * { box-sizing: border-box; border-radius: 0 !important; }
+  body { margin: 0; font: 13px/1.5 "Liberation Sans", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  code, .mono, .id { font-family: "Liberation Mono", monospace; }
+  code { font-size: 12px; color: #c9cdd6; }
+
+  header { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .logo { font-weight: 700; font-size: 16px; }
+  .logo span { color: var(--muted); font-weight: 400; }
+  .repo { color: var(--muted); font-size: 12px; }
+  .pills { margin-left: auto; display: flex; gap: 0; }
+  .pill { font-size: 12px; padding: 4px 12px; border: 1px solid var(--line); margin-left: -1px; color: var(--muted); }
+  .pill b { color: var(--text); font-weight: 600; }
+  .pill.attn { color: var(--warn); border-color: #5a4529; position: relative; z-index: 1; }
+  .pill.attn b { color: var(--warn); }
+  .live { display: inline-block; width: 6px; height: 6px; background: var(--run); margin-right: 6px; vertical-align: 1px; }
+  .sample { font-size: 11px; color: #a8916a; padding: 6px 24px; border-bottom: 1px solid var(--line); background: #24221e; }
+
+  main { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; padding: 16px 24px; }
+  section { background: var(--panel); border: 1px solid var(--line); }
+  section.full { grid-column: 1 / -1; }
+  .sh { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .sh h2 { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+  .sh .n { color: var(--muted); font-size: 12px; }
+  .sh .hint { margin-left: auto; color: var(--faint); font-size: 12px; }
+  .group { padding: 7px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line-soft); background: var(--raise); }
+  .group.attn { color: var(--warn); }
+  .group.run { color: var(--run); }
+
+  .id { font-size: 12px; color: var(--muted); }
+  .tag { font-size: 11px; padding: 0 6px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 17px; display: inline-block; }
+  .tag.p1 { color: var(--accent); border-color: #3b4a66; }
+  .tag.high { color: var(--bad); border-color: #5c3330; }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .title { color: var(--text); }
+  .sub { font-size: 12px; color: var(--muted); }
+  .btn { font: inherit; font-size: 11px; padding: 3px 10px; border: 1px solid var(--line); background: transparent; color: var(--faint); white-space: nowrap; }
+  .btn::after { content: " · later"; color: var(--faint); }
+  .tick { display: inline-block; width: 4px; height: 8px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); margin: 0 6px 2px 2px; }
+  .sq { display: inline-block; width: 6px; height: 6px; background: currentColor; margin: 0 6px 1px 1px; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .run { color: var(--run); }
+
+  /* Shaping */
+  .item { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .item:last-child { border-bottom: 0; }
+  .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .item.open { background: #26282d; border-left: 2px solid var(--accent); padding-left: 12px; }
+  .detail { grid-column: 1 / -1; margin-top: 6px; border-top: 1px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
+  .detail h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .detail p { margin: 0 0 8px; color: #bfc2c9; }
+  .detail ol { margin: 0; padding-left: 18px; color: #bfc2c9; }
+  .detail ol li { margin-bottom: 4px; }
+  .ready { border-left: 1px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
+  .ready div { padding: 3px 0; }
+  .item.idea .id { color: var(--idea); }
+
+  /* Queue */
+  .q { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  .q:last-child { border-bottom: 0; }
+  .q .top { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: baseline; }
+  .q .rank { font-family: "Liberation Mono", monospace; color: var(--accent); font-size: 12px; }
+  .q.wait { opacity: .5; }
+  .q.wait .rank { color: var(--muted); }
+  .q .indent { margin-left: 34px; }
+  .question { margin: 6px 0 4px 34px; padding: 6px 10px; border-left: 2px solid var(--warn); background: #2a2621; color: #ddd3c4; }
+  .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 8px 0 4px 34px; }
+  .stages div { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; padding-top: 5px; border-top: 3px solid var(--line); }
+  .stages .d { border-top-color: var(--ok); color: var(--muted); }
+  .stages .now { border-top-color: var(--run); color: var(--run); }
+  .act { margin-left: 34px; font-family: "Liberation Mono", monospace; font-size: 11px; color: var(--muted); }
+  .act b { color: #a9adb6; font-weight: 400; }
+  .next { color: var(--ok); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #36513d; padding: 0 5px; }
+
+  /* Shipped */
+  .stats { display: flex; border-bottom: 1px solid var(--line-soft); }
+  .stat { padding: 8px 14px; border-right: 1px solid var(--line-soft); }
+  .stat b { font-size: 15px; font-weight: 600; margin-right: 6px; }
+  .stat span { font-size: 11px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 14px; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { color: var(--muted); text-align: right; font-family: "Liberation Mono", monospace; font-size: 11px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">speck <span>control panel</span></div>
+  <div class="repo"><code>luroai/speck</code> · base <code>main</code> · auto-ship on (low, high)</div>
+  <div class="pills">
+    <div class="pill"><span class="live"></span>live · 2s ago</div>
+    <div class="pill attn"><b>1</b> needs you</div>
+    <div class="pill"><b>2</b> running</div>
+    <div class="pill"><b>3</b> up next</div>
+    <div class="pill"><b>3</b> drafts · <b>2</b> ideas</div>
+    <div class="pill"><b>5</b> shipped today</div>
+  </div>
+</header>
+<div class="sample">Mockup. Real tickets, criteria and actuals from this repo. The blocked question, the two running builds and the queue are a sample state. Read-only: buttons marked "later" show where write actions would go.</div>
+
+<main>
+  <!-- SHAPING -->
+  <section>
+    <div class="sh"><h2>Shaping</h2><span class="n">3 drafts · 2 ideas</span><span class="hint">Gate 1 happens here</span></div>
+
+    <div class="item open">
+      <div class="row"><span class="id">0015</span><span class="title">Ask the user to confirm before speck ship merges</span><span class="tag">P2</span><span class="tag">S</span><span class="tag">low</span></div>
+      <button class="btn">Set ready</button>
+      <div class="checks"><span class="ok"><span class="tick"></span>lint passes</span><span class="warn"><span class="sq"></span>1 open question</span><span class="warn"><span class="sq"></span>may clash with auto_ship</span></div>
+      <div class="detail">
+        <div>
+          <h4>Outcome</h4>
+          <p><code>speck ship</code> asks for the user's confirmation before it changes anything, whichever agent is in use.</p>
+          <h4>Acceptance criteria · 3 of max 10</h4>
+          <ol>
+            <li>In an interactive terminal, <code>speck ship &lt;id&gt;</code> runs all its checks, then prints the id, title and changed lines and asks <code>Ship &lt;id&gt;? [y/N]</code>.</li>
+            <li>Without an interactive terminal, it refuses with nothing changed unless the user has confirmed.</li>
+            <li>All existing ship checks and their order are unchanged, and tests cover both paths.</li>
+          </ol>
+        </div>
+        <div class="ready">
+          <h4>Readiness</h4>
+          <div class="ok"><span class="tick"></span>Size S, 3 criteria</div>
+          <div class="ok"><span class="tick"></span>No <code>after:</code> tickets</div>
+          <div class="ok"><span class="tick"></span>No overlap with other tickets</div>
+          <div class="warn"><span class="sq"></span>Notes: how does an agent confirm?</div>
+          <div class="warn"><span class="sq"></span><code>auto_ship: true</code> skips the prompt</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="row"><span class="id">0018</span><span class="title">Split speck.mjs into modules by area</span><span class="tag">P2</span><span class="tag">M</span><span class="tag">low</span></div>
+      <button class="btn">Set ready</button>
+      <div class="checks"><span class="ok"><span class="tick"></span>lint passes</span><span class="warn"><span class="sq"></span>touches the same files as 0020: won't run alongside it</span></div>
+    </div>
+    <div class="item">
+      <div class="row"><span class="id">0024</span><span class="title">Let the Codex reviewer run the tests</span><span class="tag">P2</span><span class="tag">M</span><span class="tag high">high</span></div>
+      <button class="btn">Set ready</button>
+      <div class="checks"><span class="ok"><span class="tick"></span>lint passes</span><span class="ok"><span class="tick"></span>after 0028: done</span><span class="bad"><span class="sq"></span>high risk: auto-ships under current config</span></div>
+    </div>
+    <div class="item idea">
+      <div class="row"><span class="id">idea</span><span class="title">PR ship mode for teams</span></div>
+      <button class="btn">Ticket it</button>
+      <div class="checks"><span>waiting · captured 8 Oct</span></div>
+    </div>
+    <div class="item idea">
+      <div class="row"><span class="id">idea</span><span class="title">speck control panel</span></div>
+      <button class="btn">Ticket it</button>
+      <div class="checks"><span>waiting · 3 open questions</span></div>
+    </div>
+  </section>
+
+  <!-- QUEUE -->
+  <section>
+    <div class="sh"><h2>Queue</h2><span class="n">1 needs you · 2 running · 3 up next</span><span class="hint">builds in parallel, one worktree each</span></div>
+
+    <div class="group attn">Needs you · 1</div>
+    <div class="q">
+      <div class="top"><span class="rank bad"><span class="sq"></span></span><div class="row"><span class="id">0022</span><span class="title">Set a ticket to reviewing when its review starts</span><span class="tag">P2</span><span class="tag">S</span><span class="tag">low</span></div><button class="btn">Answer</button></div>
+      <div class="question">Should <code>speck record</code> also set <code>reviewing</code>, or only <code>speck review</code>? Criterion 2 can be read either way.</div>
+      <div class="sub indent">Blocked by the builder 6 min ago, after round 2 · its worktree is kept until you answer</div>
+    </div>
+
+    <div class="group run">Running · 2</div>
+    <div class="q">
+      <div class="top"><span class="rank run"><span class="sq"></span></span><div class="row"><span class="id">0017</span><span class="title">Clean up the temporary repos the tests create</span><span class="tag p1">P1</span><span class="tag">S</span><span class="tag">low</span></div><span class="sub">3m 40s</span></div>
+      <div class="stages"><div class="d">Build</div><div class="d">Self-check</div><div class="now">Review 1</div><div>Approve</div><div>Ship</div></div>
+      <div class="act"><b>codex</b> reading test/speck.test.mjs · 42 / 5,000 lines</div>
+      <div class="act">worktree ../speck.worktrees/speck/0017-clean-up-the-temporary-…</div>
+    </div>
+    <div class="q">
+      <div class="top"><span class="rank run"><span class="sq"></span></span><div class="row"><span class="id">0025</span><span class="title">Keep other sessions' files out of a build</span><span class="tag">P2</span><span class="tag">S</span><span class="tag">low</span></div><span class="sub">1m 12s</span></div>
+      <div class="stages"><div class="now">Build</div><div>Self-check</div><div>Review</div><div>Approve</div><div>Ship</div></div>
+      <div class="act"><b>claude</b> npm test · 3 failing (new tests written first)</div>
+      <div class="act">worktree ../speck.worktrees/speck/0025-keep-other-sessions-files-…</div>
+    </div>
+
+    <div class="group">Up next · 3</div>
+    <div class="q">
+      <div class="top"><span class="rank">1</span><div class="row"><span class="id">0016</span><span class="title">Verify a Cursor builder end to end</span><span class="tag">P2</span><span class="tag">S</span><span class="tag">low</span></div><span class="next">next</span></div>
+      <div class="sub indent">after 0012, 0014: done</div>
+    </div>
+    <div class="q wait">
+      <div class="top"><span class="rank">2</span><div class="row"><span class="id">0020</span><span class="title">Split the test file by area</span><span class="tag">P2</span><span class="tag">M</span><span class="tag">low</span></div><span class="sub"></span></div>
+      <div class="sub indent warn">waiting on 0017 (running)</div>
+    </div>
+    <div class="q">
+      <div class="top"><span class="rank">3</span><div class="row"><span class="id">0021</span><span class="title">Close an approved build with one command</span><span class="tag p1">P1</span><span class="tag">M</span><span class="tag">low</span></div><span class="sub"></span></div>
+      <div class="sub indent">no dependencies</div>
+    </div>
+    <div class="q"><button class="btn">Reorder</button></div>
+  </section>
+
+  <!-- SHIPPED -->
+  <section class="full">
+    <div class="sh"><h2>Shipped</h2><span class="n">18 in total</span><span class="hint">latest 5 · stats over the latest 5</span></div>
+    <div class="stats">
+      <div class="stat"><b>4 min</b><span>median to approval</span></div>
+      <div class="stat"><b>2</b><span>median review rounds</span></div>
+      <div class="stat"><b>0%</b><span>blocked</span></div>
+      <div class="stat"><b>5</b><span>shipped today</span></div>
+    </div>
+    <table>
+            <tr><td><span class="id">0029</span>&nbsp; Show tickets being built in other worktrees</td><td class="num">4 min · 1 round · 188k tokens</td></tr>
+      <tr><td><span class="id">0028</span>&nbsp; Build each ticket in its own worktree</td><td class="num">9 min · 2 rounds · 524k tokens</td></tr>
+      <tr><td><span class="id">0027</span>&nbsp; Ship a ticket whose branch is in another worktree</td><td class="num">9 min · 2 rounds · 425k tokens</td></tr>
+      <tr><td><span class="id">0026</span>&nbsp; Pre-check every ticket before it goes ready</td><td class="num">4 min · 2 rounds · 360k tokens</td></tr>
+      <tr><td><span class="id">0023</span>&nbsp; Self-check the build before the first review round</td><td class="num">3 min · 1 round · 218k tokens</td></tr>
+    </table>
+  </section>
+</main>
+</body>
+</html>
