@@ -37,7 +37,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Scope:** nothing outside the ticket changed, and nothing it puts out of scope was touched.
 
    For each problem you find, add a test that fails, fix it, and re-run the tests. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
-6. Commit (`speck(<id>): <summary>`), then run `speck set <id> status reviewing` and commit again.
+6. Commit (`speck(<id>): <summary>`). There's no separate status step: the first review round sets the ticket to `reviewing`.
 
 ## 4. Review loop
 

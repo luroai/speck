@@ -11,7 +11,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## Before every round
 
-- All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit.
+- All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit, and so can the status change from `building` to `reviewing` that round 1 makes.
 - The test output is fresh: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 
 ## Reviewer model and effort

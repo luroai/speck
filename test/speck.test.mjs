@@ -148,6 +148,7 @@ const fs = require('fs');
 const args = process.argv.slice(2);
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
 fs.appendFileSync(${JSON.stringify(log + '.prompts')}, JSON.stringify(fs.readFileSync(0, 'utf8')) + '\\n');
+if (process.env.FAKE_CODEX_FAIL) { console.error('codex broke'); process.exit(2); }
 const out = args[args.indexOf('-o') + 1];
 fs.writeFileSync(out, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 'fine', escalation_question: '' }));
 console.log(JSON.stringify({ type: 'thread.started', thread_id: 'T1' }));
@@ -1527,7 +1528,8 @@ function commandRepo({ command = '{bin} --model {model} --effort {effort} --flag
   fs.writeFileSync(fake, `#!${process.execPath}
 const fs = require('fs');
 const stdin = fs.readFileSync(0, 'utf8');
-fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin }) + '\\n');
+const ticketStatus = (fs.readFileSync('speck/tickets/' + fs.readdirSync('speck/tickets').find(n => n.startsWith('0001-')), 'utf8').match(/^status: (\\S+)/m) || [])[1];
+fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin, ticketStatus }) + '\\n');
 const v = process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(changesVerdict))};
 const mode = process.env.FAKE_MODE || 'raw';
 if (mode === 'raw') console.log(v);
@@ -1901,7 +1903,7 @@ const selfCheck = () => {
 test('0023 AC1: the build skill has a self-check step after implementation and before review, covering the agreed areas', () => {
   const { md, text, at } = selfCheck();
   assert.ok(at > md.indexOf('## 3. Implement'), 'in the implement section');
-  assert.ok(at < md.indexOf('speck set <id> status reviewing'), 'before the ticket goes to reviewing');
+  assert.ok(at < md.indexOf('the first review round sets the ticket to `reviewing`'), 'before the ticket goes to reviewing (0022: the first round sets it)');
   assert.ok(at < md.indexOf('## 4. Review loop'), 'before the review loop');
   assert.ok(at > md.indexOf('**Living spec:**'), 'after product.md is updated, so its claims can be checked');
   // Each area is its own checklist item, named in bold, with the substance the ticket asks for.
@@ -2587,4 +2589,117 @@ test('0021 AC4: a rejected commit puts the ticket back exactly as it was, staged
   assert.match(res.stderr, /nothing was changed/);
   assert.deepEqual([r.text(), r.g('rev-parse', 'HEAD'), r.g('diff', '--cached', '--stat'), r.g('diff', '--stat')], snap);
   assert.equal(r.status(), 'reviewing');
+});
+
+// ---------- 0022: the first review round sets the ticket to reviewing ----------
+
+const statusOf = file => parseTicket(fs.readFileSync(file, 'utf8')).fm.status;
+const statusLine = file => fs.readFileSync(file, 'utf8').match(/^\*\*Status:\*\* .*$/m)[0];
+
+test('0022 AC1: speck review round 1 sets a building ticket to reviewing before the reviewer runs, left uncommitted with the round', () => {
+  const r = commandRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  const res = r.run('review', '1');
+  assert.equal(res.status, 10, res.stderr);
+  assert.equal(r.calls()[0].ticketStatus, 'reviewing', 'the reviewer already sees reviewing');
+  assert.equal(statusOf(r.ticketFile), 'reviewing');
+  assert.equal(statusLine(r.ticketFile), '**Status:** 🔍 reviewing', 'the header follows');
+  assert.equal(r.roundFile(1).verdict.verdict, 'changes_requested');
+  assert.equal(r.git('status', '--porcelain').stdout.trim(), `M ${path.relative(r.dir, r.ticketFile)}`, 'only the ticket is changed, and nothing is committed');
+  assert.match(r.git('show', `HEAD:${path.relative(r.dir, r.ticketFile)}`).stdout, /^status: building/m);
+});
+
+test('0022 AC1: the codex adapter does the same', () => {
+  const r = reviewRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  assert.equal(r.run('review', '1').status, 10);
+  assert.equal(statusOf(r.ticketFile), 'reviewing');
+  assert.equal(r.roundFile(1).meta.reviewer, 'codex');
+});
+
+test('0022 AC1: other statuses and later rounds are left alone', () => {
+  for (const status of ['ready', 'blocked', 'reviewing']) {
+    const r = commandRepo({ ticketFields: `status: ${status}` });
+    r.git('add', '-A'); r.git('commit', '-qm', status);
+    assert.equal(r.run('review', '1').status, 10);
+    assert.equal(statusOf(r.ticketFile), status, `${status} is not changed`);
+  }
+  // Round 2 on a ticket set back to building by hand stays building.
+  const r = commandRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  assert.equal(r.run('review', '1').status, 10);
+  assert.equal(r.run('set', '1', 'status', 'building').status, 0);
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fixed\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'fix');
+  assert.equal(r.run('review', '1').status, 10);
+  assert.equal(statusOf(r.ticketFile), 'building');
+});
+
+test('0022 AC1: round 2 runs when the only uncommitted ticket changes are round 1 and the status it set', () => {
+  const r = commandRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  assert.equal(r.run('review', '1').status, 10);
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fixed\n');
+  r.git('add', 'a.txt'); r.git('commit', '-qm', 'fix, ticket left uncommitted');
+  const res = r.run('review', '1');
+  assert.equal(res.status, 10, res.stderr);
+  assert.equal(r.roundFile(2).meta.round, 2);
+  // Any other uncommitted edit to the ticket is still refused.
+  fs.writeFileSync(r.ticketFile, fs.readFileSync(r.ticketFile, 'utf8').replace('Users cannot export.', 'Users cannot export at all.'));
+  assert.match(r.run('review', '1').stderr, /Commit your work before review/);
+});
+
+test('0022 AC2: a failed round leaves the status as it was', () => {
+  for (const mode of ['fail', 'garbage', 'badshape']) {
+    const r = commandRepo({ ticketFields: 'status: building' });
+    r.git('add', '-A'); r.git('commit', '-qm', 'building');
+    const before = fs.readFileSync(r.ticketFile, 'utf8');
+    assert.equal(r.runEnv({ FAKE_MODE: mode }, 'review', '1').status, 1);
+    assert.equal(r.calls()[0].ticketStatus, 'reviewing');
+    assert.equal(fs.readFileSync(r.ticketFile, 'utf8'), before, `${mode}: the ticket is exactly as it was`);
+    assert.equal(r.git('status', '--porcelain').stdout.trim(), '');
+  }
+  const codex = reviewRepo({ ticketFields: 'status: building', extraEnv: { FAKE_CODEX_FAIL: '1' } });
+  codex.git('add', '-A'); codex.git('commit', '-qm', 'building');
+  const res = codex.run('review', '1');
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /codex exited 2/);
+  assert.equal(statusOf(codex.ticketFile), 'building');
+  assert.equal(codex.git('status', '--porcelain').stdout.trim(), '');
+  // An uncommitted tree refuses before anything changes.
+  const dirty = commandRepo({ ticketFields: 'status: building' });
+  dirty.git('add', '-A'); dirty.git('commit', '-qm', 'building');
+  fs.writeFileSync(path.join(dirty.dir, 'a.txt'), 'uncommitted\n');
+  assert.match(dirty.run('review', '1').stderr, /Commit your work before review/);
+  assert.equal(statusOf(dirty.ticketFile), 'building');
+  assert.equal(dirty.calls().length, 0);
+});
+
+test('0022 AC3: speck record round 1 sets a building ticket to reviewing, and a refused reply changes nothing', () => {
+  const r = reviewRepo({ config: 'allow_same_model_review: true\n', ticketFields: 'reviewer: claude-subagent\nstatus: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  const v = path.join(r.dir, '..', `v-${path.basename(r.dir)}.json`);
+  fs.writeFileSync(v, 'not json');
+  assert.equal(r.run('record', '1', v).status, 1);
+  fs.writeFileSync(v, JSON.stringify({ verdict: 'approve' }));
+  assert.equal(r.run('record', '1', v).status, 1);
+  assert.equal(statusOf(r.ticketFile), 'building');
+  fs.writeFileSync(v, fenced(subagentVerdict('changes_requested', 'open')));
+  assert.equal(r.run('record', '1', v).status, 10);
+  assert.equal(statusOf(r.ticketFile), 'reviewing');
+  assert.equal(statusLine(r.ticketFile), '**Status:** 🔍 reviewing');
+  assert.equal(r.git('status', '--porcelain').stdout.trim(), `M ${path.relative(r.dir, r.ticketFile)}`);
+  // Round 2 never changes the status.
+  assert.equal(r.run('set', '1', 'status', 'building').status, 0);
+  r.git('add', '-A'); r.git('commit', '-qm', 'round 1');
+  fs.writeFileSync(v, fenced(subagentVerdict('approve', 'resolved')));
+  assert.equal(r.run('record', '1', v).status, 0);
+  assert.equal(statusOf(r.ticketFile), 'building');
+});
+
+test('0022 AC4: the build skill no longer asks for a separate set reviewing step and commit', () => {
+  const md = buildSkill();
+  assert.doesNotMatch(md, /speck set <id> status reviewing/);
+  assert.match(md, /first review round sets the ticket to `reviewing`/);
+  assert.match(skillText('speck-review'), /status change/);
 });
