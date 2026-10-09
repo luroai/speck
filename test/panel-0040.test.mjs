@@ -33,7 +33,7 @@ test('0040 AC1: a selection in an open ticket\'s details survives a refresh in w
   const p = fakePage([s, clone(s), clone(s)]);
   await p.settle();
   const item = openTicket(p, '0001');
-  const li = p.all(item).find(n => n.tagName === 'li');
+  const li = p.all(item).find(n => n.tagName === 'p');
   const kept = held(p, li);
   await refresh(p);
   assert.ok(kept(), 'the criterion holding the selection stayed on the page');
@@ -71,7 +71,7 @@ test('0040 AC2: the selection survives while other tickets change, and those cha
 test('0040 AC3: a selection in an open idea\'s note survives a refresh in which that idea is unchanged, whatever else changes', async () => {
   const s = base();
   const next = clone(s);
-  next.ideas[1].status = 'ticketed: 0007'; next.ideas[1].body = 'Changed.';
+  next.ideas[1].status = 'parked'; next.ideas[1].body = 'Changed.';
   next.ideas.unshift(idea('Zero', 'idea'));
   next.tickets[2].status = 'blocked'; next.tickets[2].blocked_question = 'Which way?';
   next.tickets[0].title = 'A renamed draft';
@@ -85,7 +85,7 @@ test('0040 AC3: a selection in an open idea\'s note survives a refresh in which 
   await refresh(p);
   assert.ok(kept(), 'the note holding the selection stayed on the page');
   assert.deepEqual(items(p).map(n => textOf(p, n, 'span').find(t => t === 'Zero' || t === 'Alpha' || t === 'Beta')), ['Zero', 'Alpha', 'Beta'], 'the new idea shows');
-  assert.ok(items(p)[2].textContent.includes('ticketed: 0007'), "the other idea's change shows");
+  assert.ok(items(p)[2].textContent.includes('parked'), "the other idea's change shows");
   assert.ok(queueText(p).some(t => t.includes('Which way?')), 'the queue change shows');
   assert.ok(toggles(p)[1].textContent.includes('3'), 'the ideas count shows');
   await refresh(p);
@@ -95,24 +95,24 @@ test('0040 AC3: a selection in an open idea\'s note survives a refresh in which 
 test('0040 AC4: when the open ticket\'s or idea\'s own data changes, the new content shows in that refresh', async () => {
   const s = base();
   const next = clone(s);
-  next.tickets[0].acceptance_criteria = ['First criterion, reworded.', 'Second criterion.'];
+  next.tickets[0].problem = 'A reworded problem.';
   next.ideas[0].body = '# Alpha\n\nStatus: idea\n\nA rewritten note.\n';
   const third = clone(next);
-  third.tickets[0].notes = '- A new note.'; // a field only the details show
+  third.tickets[0].outcome = 'A new outcome.'; // a field only the details show
   third.ideas[0].status = 'parked';
   const p = fakePage([s, next, third]);
   await p.settle();
   openTicket(p, '0001');
   click(toggles(p)[1]); click(top(items(p)[0])); click(toggles(p)[0]);
   await refresh(p);
-  assert.deepEqual(textOf(p, items(p)[0], 'li'), ['First criterion, reworded.', 'Second criterion.']);
+  assert.deepEqual(textOf(p, items(p)[0], 'p'), ['A reworded problem.', 'Outcome of 0001.']);
   click(toggles(p)[1]);
   assert.ok(items(p)[0].textContent.includes('A rewritten note.'));
   assert.ok(!items(p)[0].textContent.includes('Alpha note text'));
   await refresh(p);
   assert.ok(items(p)[0].textContent.includes('parked'));
   click(toggles(p)[0]);
-  assert.ok(items(p)[0].textContent.includes('A new note.'));
+  assert.ok(items(p)[0].textContent.includes('A new outcome.'));
 });
 
 test('0040 AC4: what is open, Set ready pending and a refusal still show at once, as view changes to the item itself', async () => {
@@ -140,7 +140,7 @@ test('0040 AC5: queue minutes, the connection status and the disconnected messag
   const p = fakePage([s, clone(s), new Error('down'), clone(s)], { Date: FakeDate });
   await p.settle();
   const item = openTicket(p, '0001');
-  const kept = held(p, p.all(item).find(n => n.tagName === 'li'));
+  const kept = held(p, p.all(item).find(n => n.tagName === 'p'));
   const minutes = () => queueRows(p).find(r => r.textContent.includes('0003')).textContent.match(/(\d+) min/)[1];
   assert.equal(minutes(), '5');
   now += 3 * 60000;
@@ -161,8 +161,8 @@ test('0040 AC5: queue minutes, the connection status and the disconnected messag
 
 test('0040 AC1-AC5: in a real browser, selected text stays selected through refreshes until its own item changes', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
-  const draft = (id, title, crit) => r.write(`${id}-draft.md`, fm({ id: `"${id}"`, title: `'${title}'`, status: 'draft' }),
-    `## Problem\nReading a long problem statement at Gate 1.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. ${crit}\n2. A second criterion to select.\n## Out of scope\n- PDF export\n`);
+  const draft = (id, title, problem) => r.write(`${id}-draft.md`, fm({ id: `"${id}"`, title: `'${title}'`, status: 'draft' }),
+    `## Problem\n${problem}\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n2. A second criterion to select.\n## Out of scope\n- PDF export\n`);
   draft('0002', 'The draft to read', 'Export button downloads a CSV.');
   const ideas = path.join(r.dir, 'speck', 'ideas');
   fs.mkdirSync(ideas, { recursive: true });
@@ -177,7 +177,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     await b.until(`!!document.querySelector('${item} .title')`, 'the draft');
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .detail')`, 'the draft to open');
-    await b.drag(await b.js(charAt(`${item} .detail ol li`, 0)), await b.js(charAt(`${item} .detail ol li`, 13)));
+    await b.drag(await b.js(charAt(`${item} .detail p.text`, 0)), await b.js(charAt(`${item} .detail p.text`, 13)));
     assert.equal(await sel(), 'Export button', 'the drag selected text');
     // AC1 and AC5: unchanged refreshes keep it, and the status pill keeps counting.
     // Each refresh puts in a new status pill, so a pill that isn't the one marked is a refresh since.
@@ -193,7 +193,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     assert.ok(await b.js(`document.querySelector('${item}:nth-child(2)').classList.contains('open')`), 'the ticket is still open');
     // AC4: its own data changes, and the new content shows.
     draft('0002', 'The draft to read', 'Export button downloads a TSV.');
-    await b.until(`document.querySelector('${item}.open .detail ol li').textContent.includes('TSV')`, 'the changed criterion');
+    await b.until(`document.querySelector('${item}.open .detail p.text').textContent.includes('TSV')`, 'the changed problem');
 
     // AC3: an idea's note.
     await b.js(`document.querySelectorAll('#shaping-toggle button')[1].click()`);
@@ -240,7 +240,7 @@ test('0040 AC1 and AC3: the same field values in another order count as unchange
   assert.notEqual(JSON.stringify(next.tickets[0].lint_messages), JSON.stringify(s.tickets[0].lint_messages), 'nested ones too');
   const p = fakePage([s, next, clone(s), reorder(s)]);
   await p.settle();
-  const kept = held(p, p.all(openTicket(p, '0001')).find(n => n.tagName === 'li'));
+  const kept = held(p, p.all(openTicket(p, '0001')).find(n => n.tagName === 'p'));
   await refresh(p);
   assert.ok(kept(), 'the ticket with its fields reordered keeps its node');
   click(toggles(p)[1]); click(top(items(p)[0]));

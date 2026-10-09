@@ -1,7 +1,7 @@
 ---
 id: "0052"
 title: "Show a build's log growing as it runs"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0052 · Show a build's log growing as it runs
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 An open log is a snapshot from the moment the ticket was opened: the ticket file changes only at a status or a review round, so the 2-second state refresh leaves the log standing still while the build prints. Reloading the page is the only way to see the newest lines, and a build's most useful output is always its last few lines.

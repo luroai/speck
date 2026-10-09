@@ -1349,7 +1349,8 @@ function ideaRepo() {
   const ideas = path.join(dir, 'speck', 'ideas');
   fs.mkdirSync(ideas, { recursive: true });
   const write = (name, text) => { fs.writeFileSync(path.join(ideas, name), text); return `speck/ideas/${name}`; };
-  const read = name => fs.readFileSync(path.join(ideas, name), 'utf8');
+  // A ticketed note is filed in speck/ideas/done/ (0057), so it's read from there once it has moved.
+  const read = name => fs.readFileSync(path.join(ideas, fs.existsSync(path.join(ideas, name)) ? '' : 'done', name), 'utf8');
   const tickets = () => fs.readdirSync(path.join(dir, 'speck', 'tickets')).filter(f => f.endsWith('.md'));
   return { dir, run, write, read, tickets };
 }

@@ -155,6 +155,19 @@
   .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
   .item.hl, .q.hl { background: #262c38; }
   .item.dim, .q.dim { opacity: .35; }
+
+  /* The full ticket, in a side pane over the right of the page */
+  .full-open { font: inherit; font-size: 12px; margin: 10px 0 0 8px; padding: 3px 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
+  .full-open:hover { color: var(--text); }
+  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(0, 0, 0, .4); }
+  #full-ticket[hidden] { display: none; }
+  #full-ticket .top { display: flex; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
+  #full-ticket .close { margin-left: auto; font: inherit; font-size: 11px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close:hover { color: var(--text); }
+  #full-ticket h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  #full-ticket p, #full-ticket ol { margin: 0 0 10px; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #full-ticket ol { padding-left: 18px; }
+  #full-ticket ol li { margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -180,6 +193,7 @@
     <table><tbody id="shipped"></tbody></table>
   </section>
 </main>
+<aside id="full-ticket" hidden></aside>
 
 <script>
 'use strict';
@@ -275,8 +289,8 @@ function panelModel(state) {
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
   return {
     drafts: tickets.filter(is('draft')).map(chain),
-    // The user's own ideas, leaving out inbox and dropped notes: those not yet ticketed first, then the rest, each group in JSON order.
-    ideas: [false, true].flatMap(t => ideas.filter(i => !['inbox', 'dropped'].includes(statusOf(i)) && String(i.status || '').startsWith('ticketed') === t)),
+    // The user's own ideas still to shape, in JSON order: inbox, dropped and ticketed notes are left out.
+    ideas: ideas.filter(i => !['inbox', 'dropped'].includes(statusOf(i)) && !String(i.status || '').startsWith('ticketed')),
     // Follow-ups waiting in the inbox, in JSON order.
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
     // One list: in-flight tickets, then ready ones, each group in JSON order.
@@ -361,6 +375,7 @@ const settingReady = new Set(); // ids whose Set ready request hasn't been answe
 const refused = new Map(); // id → why the server refused to set it ready
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
 const copyButtons = new Map(); // id → the Copy button last built for it
+let fullId = null; // the id of the ticket in the side pane, or null
 let copies = 0;
 const flip = (set, key) => { if (set.has(key)) set.delete(key); else set.add(key); render(); };
 const list = v => (Array.isArray(v) ? v : []);
@@ -393,22 +408,17 @@ function newHead(node, t) {
   node.insertBefore(ticketHead(t), old);
   node.removeChild(old);
 }
-// An open ticket: its sections, then a readiness list from what speck can check.
+// A heading and its text, or nothing when the text is empty.
+function part(body, heading, text) {
+  if (text === null || text === undefined || text === '') return;
+  body.appendChild(el('h4', null, heading));
+  body.appendChild(el('p', 'text', text));
+}
+// An open ticket, short: its problem and outcome, then a readiness list from what speck can check. The rest is in the side pane.
 function ticketDetail(t, criteria) {
   const body = el('div');
-  const part = (heading, text) => {
-    if (text === null || text === undefined || text === '') return;
-    body.appendChild(el('h4', null, heading));
-    body.appendChild(el('p', 'text', text));
-  };
-  part('Problem', t.problem);
-  part('Outcome', t.outcome);
-  const ol = el('ol');
-  for (const c of criteria) ol.appendChild(el('li', null, c));
-  body.appendChild(el('h4', null, `Acceptance criteria · ${criteria.length}`));
-  body.appendChild(criteria.length ? ol : el('p', null, 'None yet.'));
-  part('Out of scope', t.out_of_scope);
-  part('Notes', t.notes);
+  part(body, 'Problem', t.problem);
+  part(body, 'Outcome', t.outcome);
 
   const ready = el('div', 'ready', null, el('h4', null, 'Readiness'));
   const line = (cls, ok, text) => ready.appendChild(el('div', cls, null, el('span', ok ? 'tick' : 'sq'), el('span', null, text)));
@@ -427,6 +437,7 @@ function ticketDetail(t, criteria) {
   }
   if (!after.length) line('ok', true, 'no after: tickets');
   ready.appendChild(setReadyButton(t, errors.length || (t.lint && t.lint.errors) || 0));
+  ready.appendChild(fullButton(t));
   if (refused.has(t.id)) ready.appendChild(el('div', 'bad refused', refused.get(t.id)));
   return el('div', 'detail', null, body, ready);
 }
@@ -444,6 +455,46 @@ function setReadyButton(t, lintErrors) {
   });
   return b;
 }
+// Shows the whole ticket in the side pane, leaving the ticket open in the list.
+function fullButton(t) {
+  const b = el('button', 'full-open', 'Full ticket');
+  b.type = 'button';
+  b.addEventListener('click', e => { e.stopPropagation(); fullId = String(t.id); render(); });
+  return b;
+}
+// The side pane: the ticket's id and title, then each of its sections that has something in it, as text.
+function fullTicket(t) {
+  const close = el('button', 'close', 'Close');
+  close.type = 'button';
+  close.addEventListener('click', closeFull);
+  const body = el('div');
+  part(body, 'Problem', t.problem);
+  part(body, 'Outcome', t.outcome);
+  const criteria = list(t.acceptance_criteria);
+  if (criteria.length) {
+    const ol = el('ol');
+    for (const c of criteria) ol.appendChild(el('li', null, c));
+    body.appendChild(el('h4', null, 'Acceptance criteria'));
+    body.appendChild(ol);
+  }
+  part(body, 'Out of scope', t.out_of_scope);
+  part(body, 'Notes', t.notes);
+  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', t.title), close), body];
+}
+// Shows the ticket whose id is in fullId, the first one when ids repeat, or closes the pane when it has left the Tickets
+// list. The pane keeps its nodes while that ticket's own data is unchanged, so text selected in it survives the refresh.
+let fullBuilt = null; // the signature of what the pane shows
+function renderFull(drafts) {
+  const pane = $('full-ticket'), t = fullId === null ? null : drafts.find(d => String(d.id) === fullId);
+  if (!t) fullId = null;
+  const sig = t ? signature([fullId, ownData(t)]) : null;
+  pane.hidden = !t;
+  if (sig === fullBuilt) return;
+  fullBuilt = sig;
+  pane.replaceChildren(...(t ? fullTicket(t) : []));
+}
+function closeFull() { fullId = null; render(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && fullId !== null) closeFull(); });
 async function setReady(id) {
   refused.delete(id);
   settingReady.add(id);
@@ -654,9 +705,10 @@ function render() {
   const m = panelModel(state);
   shapingToggle(m);
   if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
-  else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
+  else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
+  renderFull(m.drafts);
 
   // The minutes come from the clock, not the ticket, so they are put right on a kept row.
   fill('queue', keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), logs.get(String(t.id)) ?? null], queueItem,

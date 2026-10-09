@@ -129,6 +129,7 @@ speck/
   config.yml                 # agents, test command, limits, base branch
   product.md                 # the living spec: what this product is and does today
   ideas/                     # low-ceremony notes and captured conversations
+  ideas/done/                # ticketed notes, filed away under the same name
   tickets/0007-<slug>.md     # numbered tickets; status lives in frontmatter, review rounds at the end
   tickets/done/0001-<slug>.md # closed tickets (done or cancelled), filed away under the same name
   .cache/                    # working files for reviews in progress (ignored by git)
@@ -140,6 +141,8 @@ speck/
 Every ticket opens with a header rendered from its frontmatter, such as `# 0007 · <title>` followed by `**Status:** 🔍 reviewing`, so previews that hide frontmatter still show the title and status. speck rewrites it whenever it changes the title or status, and `speck lint` warns if it's missing or stale.
 
 `speck/tickets/` holds only work in progress; `speck/tickets/done/` holds closed tickets, which means `done` or `cancelled`. Setting a ticket to `done` moves its file into `speck/tickets/done/` under the same name, `speck cancel <id> "<reason>"` sets it to `cancelled` with the reason and the date it was cancelled recorded in the ticket, and any other status moves it back into `speck/tickets/`. Commands take a ticket id, not a path, so they find it in either folder, and re-running `speck init` files any done ticket left behind by an older version. A move never overwrites: if the same file name is already in the other folder, speck stops and asks you to keep one.
+
+Idea notes are filed the same way. `speck new --source=speck/ideas/<file>.md` sets the note to `ticketed (<id>)` and moves it into `speck/ideas/done/` under the same name, and the ticket's `source:` points there. Later tickets from the same idea take it from `speck/ideas/done/` (the old path still finds it), and re-running `speck init` files any ticketed note left in `speck/ideas/` and updates the tickets that point at it. So `speck/ideas/` holds only ideas still waiting to be shaped.
 
 ## Skills and commands (v0.1)
 

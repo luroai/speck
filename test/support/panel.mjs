@@ -44,10 +44,10 @@ export const freePort = () => new Promise(resolve => {
   const s = net.createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); });
 });
 
-// Starts `speck panel` and resolves once it has printed its URL.
-export function startPanel(cwd, args) {
+// Starts `speck panel` (from `cli`, or the repo's own CLI) and resolves once it has printed its URL.
+export function startPanel(cwd, args, cli = CLI) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [CLI, 'panel', ...args], { cwd, env });
+    const child = spawn(process.execPath, [cli, 'panel', ...args], { cwd, env });
     let out = '', err = '';
     const done = setTimeout(() => { child.kill(); reject(new Error(`panel didn't start: ${out}${err}`)); }, 10000);
     child.stdout.on('data', d => { out += d; if (/http:\/\/127\.0\.0\.1:\d+/.test(out)) { clearTimeout(done); resolve({ child, out: () => out }); } });
@@ -108,6 +108,8 @@ export function fakePage(responses, globals = {}) {
     createElement: make,
     createTextNode: t => ({ tagName: '#text', children: [], textContent: String(t) }),
     getElementById: id => { if (!nodes.has(id)) nodes.set(id, make('div')); return nodes.get(id); },
+    listeners: {},
+    addEventListener(type, fn) { this.listeners[type] = fn; }, // the page's own key handling (0054)
   };
   const timers = [];
   const calls = []; // every fetch, so a test can check what the page sent
@@ -124,7 +126,9 @@ export function fakePage(responses, globals = {}) {
   vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals });
   const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
   const settle = () => new Promise(r => setTimeout(r, 20));
-  return { byId: id => document.getElementById(id), timers, all, settle, calls };
+  // A key pressed anywhere on the page, as the browser sends it to the document (0054).
+  const key = k => { if (document.listeners.keydown) document.listeners.keydown({ key: k }); };
+  return { byId: id => document.getElementById(id), timers, all, settle, calls, key };
 }
 
 export const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };

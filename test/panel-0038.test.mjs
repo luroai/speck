@@ -19,7 +19,7 @@ test('0038 AC1: the toggle reads Tickets, Ideas and Inbox with counts, Tickets s
   const s = state();
   const p = fakePage([s, s, s, s]);
   await p.settle();
-  assert.deepEqual(toggles(p).map(b => b.textContent), ['Tickets · 2', 'Ideas · 2', 'Inbox · 3']);
+  assert.deepEqual(toggles(p).map(b => b.textContent), ['Tickets · 2', 'Ideas · 1', 'Inbox · 3']);
   assert.match(toggles(p)[0].className, /\bon\b/, 'Tickets selected on load');
   assert.ok(toggles(p).slice(1).every(b => !/\bon\b/.test(b.className)));
   assert.ok(items(p).every(n => /\bticket\b/.test(n.className)), 'only tickets');
@@ -34,7 +34,7 @@ test('0038 AC1: the toggle reads Tickets, Ideas and Inbox with counts, Tickets s
   assert.equal(items(p).length, 3);
 
   click(toggles(p)[1]);
-  assert.deepEqual(items(p).map(titleOf).map(t => t.replace(/^idea/, '')), ['Mine', 'Done']);
+  assert.deepEqual(items(p).map(titleOf).map(t => t.replace(/^idea/, '')), ['Mine'], 'ticketed ideas are left out too (0056)');
   await refresh(p);
   assert.match(p.byId('shaping-section').className, /\bideas\b/);
   click(toggles(p)[0]);
@@ -94,7 +94,7 @@ test('0038 AC2: the From ticket id is read from the note, and a missing or odd b
 test('0038 AC3: Ideas leaves out inbox and dropped ideas, its count matches its list, and the rest is unchanged', async () => {
   const model = panelModel();
   const m = model({ tickets: [], ideas: [idea('T', 'ticketed (0001)'), idea('I', 'inbox'), idea('Fresh', 'idea'), idea('D', 'dropped'), idea('N', null), idea('Later', 'ticketed')] });
-  assert.deepEqual(m.ideas.map(i => i.title), ['Fresh', 'N', 'T', 'Later'], 'not-ticketed first, then ticketed, in JSON order');
+  assert.deepEqual(m.ideas.map(i => i.title), ['Fresh', 'N'], 'in JSON order, ticketed ones left out too (0056)');
   const s = state();
   const p = fakePage([s]);
   await p.settle();
