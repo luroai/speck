@@ -1,7 +1,7 @@
 ---
 id: "0034"
 title: "Show the queue as one list with progress bars"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0034 · Show the queue as one list with progress bars
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The queue splits tickets into Needs you, Running and Up next, so a ticket jumps between groups as it moves, and nothing shows how far a build has got. A progress bar per ticket makes the pipeline readable at a glance.
