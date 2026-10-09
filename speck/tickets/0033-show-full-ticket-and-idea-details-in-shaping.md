@@ -1,7 +1,7 @@
 ---
 id: "0033"
 title: Show everything needed for Gate 1 in Shaping                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T12:47:52.575Z"
 ---
 # 0033 · Show everything needed for Gate 1 in Shaping
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 At Gate 1 you need the whole ticket in front of you, but the panel's Shaping area shows only a criteria count, a lint result and the criteria. Ideas and tickets are also mixed in one list, so it isn't obvious which kind you're looking at.
@@ -52,3 +52,72 @@ Shaping shows tickets and ideas separately, with a clear colour for each, and op
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: clicking anywhere in an open ticket closes it, including when selecting its text to copy. Only toggling on the ticket's top row would avoid that.
+- Follow-up idea: open tickets and ideas are remembered by id and path for the page's life, so one that leaves Shaping and later returns comes back open.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1eeb6c9fdf0113d911a49ba3011e1b391c286a0a",
+    "thread_id": "01a120ba-f18d-7823-bc75-941166552ef4",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 324183,
+      "cached_input_tokens": 253440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1188,
+      "reasoning_output_tokens": 154
+    },
+    "saved_at": "2026-10-09T12:55:32.886Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: statusData, sectionText and selfCheck add the requested fields while retaining existing fields. The two 0033 AC1 tests exercise section extraction, empty sections, self-check selection, exact lint output and full idea bodies; both passed in the supplied test run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: header and render remove the counts and retain repo, base branch and connection status. Independently reran the 0033 AC2 test successfully."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html: shapingView, shapingToggle and accent CSS implement separate lists and preserve the selected view across polling. Independently reran both 0033 AC3 tests successfully."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html: panelModel, ticketItem and ticketDetail preserve draft order, show all requested details and readiness information, and retain open state by ticket id. Independently reran the 0033 AC4 test successfully."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "templates/panel.html: panelModel groups all ideas with unticketed ones first; ideaItem renders the body using textContent. Independently reran the 0033 AC5 test successfully."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated JSON contract and Shaping description match the implementation. Queue and Shipped behaviour remain within the existing specification."
+    },
+    "escalation_question": "",
+    "summary": "Shaping now separates tickets from ideas and exposes the ticket details needed for Gate 1. Selection and expanded items survive refreshes, and note content is safely displayed as text. All criteria have meaningful test coverage; the five panel tests independently rerun passed. No blocking issues found."
+  }
+}
+```
+
+</details>
