@@ -37,7 +37,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Scope:** nothing outside the ticket changed, and nothing it puts out of scope was touched.
 
    For each problem you find, add a test that fails, fix it, and re-run the tests. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
-6. Commit (`speck(<id>): <summary>`). There's no separate status step: the first review round sets the ticket to `reviewing`.
+6. Commit (`speck(<id>): <summary>`), staging each file you changed by name (see Rules). There's no separate status step: the first review round sets the ticket to `reviewing`.
 
 ## 4. Review loop
 
@@ -62,12 +62,13 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 Use this when the review loop says `block`, the size guard trips, or a product question comes up that you can't answer from the ticket or `product.md`:
 
 1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation.
-2. Run `speck set <id> status blocked`, then commit everything, including the ticket with its review rounds.
+2. Run `speck set <id> status blocked`, then commit your changes, staged by name, including the ticket with its review rounds.
 3. Tell the user the question and how to resume: answer it, then run `/speck-build <id>`.
 
 ## Rules
 
 - Never merge or ship unless the user runs `/speck-ship`: don't run `speck ship`, merge into the base branch or push it yourself. Shipping is the user's gate. The one exception is `speck ship <id> --auto` in section 5, which ships only when the user has turned on `auto_ship` in `speck/config.yml`.
 - Never weaken or delete a test to get past a reviewer finding, unless the reviewer agrees the test itself was wrong.
+- Stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back.
 - Never edit a ticket's `## Review rounds` section by hand. Only speck writes it.
 - Keep to the ticket. If you find other problems, list them in the Delivery log as follow-up ideas. Don't fix them.
