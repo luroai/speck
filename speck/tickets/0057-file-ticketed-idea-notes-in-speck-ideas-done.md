@@ -1,7 +1,7 @@
 ---
 id: "0057"
 title: "File ticketed idea notes in speck/ideas/done"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:06:19.069Z"
 ---
 # 0057 · File ticketed idea notes in speck/ideas/done
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Idea notes stay in `speck/ideas/` forever, so once most ideas are ticketed the folder is mostly finished notes. Tickets already get filed in `speck/tickets/done/` when closed, and ideas have no equivalent, so the folder doesn't show at a glance what's still to shape.
@@ -54,3 +54,71 @@ An idea note is filed in `speck/ideas/done/` once it's ticketed, so `speck/ideas
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. This repo's own ticketed notes are still in `speck/ideas/` until `speck init` is re-run here, which files them and rewrites the matching `source:` lines.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e0f1e2c6487a321ebce74fbe079f6ca0d177d97d",
+    "thread_id": "01a12215-f2e7-7532-bc46-24e7c96693ce",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 411564,
+      "cached_input_tokens": 319744,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 860,
+      "reasoning_output_tokens": 56
+    },
+    "saved_at": "2026-10-09T19:14:24.540Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdNew updates the status, moves the note and records its new source path. The 0057 AC1 integration tests exercise this and refusal on name collisions; supplied results pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdNew resolves missing inbox paths into done/ and extends ticketedStatus. The 0057 AC2 integration test creates three tickets using both paths and checks accumulated ids and sources; supplied results pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fileTicketedIdeas, called by cmdInit, migrates ticketed notes and updates sources in both ticket folders. The 0057 AC3 tests cover other statuses, repeated init, preserved comments and collisions; supplied results pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdStatus counts both folders; statusData reads only top-level ideas. The 0057 AC4 tests verify text counts, JSON and the panel's /api/state response; supplied results pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The capture overlap instructions, ticket context and overlap steps, and triage comparison explicitly include ideas/done/. The 0057 AC5 test checks these instruction sections, which implement this capability; supplied results pass."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec matches filing, migration, old-path lookup, collision handling and the distinction between text counts and JSON/panel lists."
+    },
+    "escalation_question": "",
+    "summary": "Ticketed ideas are filed away while remaining available for further tickets and overlap checks. Migration preserves other notes and avoids overwriting duplicate names. All five criteria have relevant passing tests in the supplied results. I verified the code and test assertions and found no blocking issues; tests were not rerun in this read-only review."
+  }
+}
+```
+
+</details>
