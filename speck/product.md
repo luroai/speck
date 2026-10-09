@@ -1,7 +1,5 @@
 # speck
 
-Last updated by ticket: 0041
-
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents.
 It's aimed at PMs and founders who write good tickets but don't review code line by line.
