@@ -40,6 +40,7 @@ A ticket's priority is always a whole number from 1 to 5 or none, and a ticket w
 - Reproduced 2026-10-09 in a fresh `speck init` repo: `speck status` printed `0002  P  S/low  b` above a P1 ticket for `priority: ""`, and `P[object Object]` for a bare `priority:`, while `status --json` gave `""` and `{}` and put both last.
 - `speck set` refuses every blank value today (`Usage: speck set <id> <field> <value>`); only `priority` changes here.
 - The text sort is in `cmdStatus` (`a.fm.priority ?? 9`), and the JSON sort is `rank` in `statusData`.
+- Self-check: no changes. Checked `priority: []`, `{}`, `"3"`, `null` and `3.0` (all lint errors, ranked with no priority), `speck set` with a padded or extra value (refused) and that other fields still refuse a blank value. The run-order test and the missing-line text test passed before the change; they stay as guards.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
