@@ -1,7 +1,7 @@
 ---
 id: "0054"
 title: "Show a short ticket in Shaping with the full ticket on demand"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:07:59.238Z"
 ---
 # 0054 · Show a short ticket in Shaping with the full ticket on demand
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 An open ticket in Shaping shows everything: problem, outcome, acceptance criteria, out of scope and notes, then the readiness list. That makes it long, so the user can't judge a draft at a glance before setting it ready.
@@ -51,7 +51,79 @@ An open ticket in Shaping shows a short view, and one click shows the whole tick
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 304,327
+- Elapsed since build started: 7 min
+- Changed lines: 80 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "23d196eaa33c6876719b227595b1dfba586a9c32",
+    "thread_id": "01a12216-4894-7f32-9f69-f6c9fe1b5ff9",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 303204,
+      "cached_input_tokens": 222720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1123,
+      "reasoning_output_tokens": 47
+    },
+    "saved_at": "2026-10-09T19:14:43.805Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html ticketDetail shows problem, outcome, readiness and both buttons, omitting the remaining sections. test/panel-0054.test.mjs AC1 exercises these inclusions and exclusions."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fullButton and fullTicket open the pane without closing the list item, render sections with textContent and criteria with an ordered list, and omit empty sections. The AC2 test exercises all these behaviours; panel.test.mjs also checks hostile markup remains text."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "fullId holds one ticket; closeFull and the document Escape handler close only the pane. The AC3 test exercises replacement, Close, Escape and preservation of open list tickets."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "render calls renderFull with current drafts; renderFull retains the chosen id, rebuilds changed content and closes when the draft disappears. The AC4 test exercises unchanged refreshes, updated criteria and transition to ready. Independent read-only in-memory checks also passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "renderFull compares canonical signatures of ownData and preserves pane nodes when unchanged. The AC5 test checks node retention through unchanged and unrelated updates; the supplied passing browser test exercises actual text selection across two refreshes."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated Shaping description matches the short view, full pane, close controls and refresh behaviour. Changes remain within the ticket's scope."
+    },
+    "escalation_question": "",
+    "summary": "Shaping now shows a shorter ticket, with the full details available in a side pane. The pane updates correctly, preserves selected text during unchanged refreshes and closes when the ticket becomes ready. The tests exercise the requested behaviour, and I found no blocking issues."
+  }
+}
+```
+
+</details>
