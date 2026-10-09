@@ -1,7 +1,7 @@
 ---
 id: "0071"
 title: Toggle a build between paused and playing from its queue row                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T22:30:17.959Z"
 ---
 # 0071 · Toggle a build between paused and playing from its queue row
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Pausing and playing a build from the CLI (0070) means leaving the panel, where the user is watching the build, for a terminal.
@@ -51,3 +51,64 @@ Each running build in the queue has a pause icon on the left of its row, which t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (no inbox notes: each is a known limit):
+- Known limit: a refusal stays under the row until the next click on the icon, as criterion 3 asks, so once the build has ended and the icon has gone it stays until the page is reloaded.
+- Known limit: after a click works, the icon changes at once; a state poll already on its way when the click was answered can show the old icon until the next poll, up to 2 seconds later.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ed8364eb50a626e49a61bfef394529e624a457b5",
+    "thread_id": "01a122d0-33b1-7df2-a396-ce856c3420e2",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 329772,
+      "cached_input_tokens": 237568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 768,
+      "reasoning_output_tokens": 70
+    },
+    "saved_at": "2026-10-09T22:37:37.781Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs buildRunning/statusData identify live process-group leaders with no recorded exit. templates/panel.html panelModel and toggleIcon restrict icons to building/reviewing tickets and supply the correct hover text. test/panel-0071.test.mjs AC1 tests exercise icon eligibility and actual CLI JSON."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelPausePlay calls pauseBuild/playBuild, the same functions used by cmdPause/cmdPlay. toggleIcon stops click propagation; toggleBuild prevents duplicate pending requests. AC2 tests check real process stopping/resuming, CLI interoperability, refusal messages, duplicate clicks and open/closed row preservation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelServer applies the identical Origin and sameToken checks used by Set ready before invoking pause/play. toggleRefused persists errors beneath the top row until another icon click. AC3 tests exercise invalid/missing credentials, unchanged process and marker state, and error persistence across refreshes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "queueItem removes the moving class while paused; queueCounter and tickCounters preserve the Paused label beside the counter. AC4 tests exercise paused motion, timer updates and playing again."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The queue icons use the same pause and play controls as the CLI, preserve whether the row is open, and show refusals and paused state correctly. Meaningful tests cover all four criteria, including real process signals and request security. I found no blocking issues. The builder reports all 559 tests passing; I inspected the code and tests but did not rerun tests because they write temporary files in this read-only environment."
+  }
+}
+```
+
+</details>
