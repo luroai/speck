@@ -1,7 +1,7 @@
 ---
 id: "0067"
 title: "Restart speck panel by itself when its code changes"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T20:00:56.511Z"
 ---
 # 0067 · Restart speck panel by itself when its code changes
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck panel` keeps running the code it started with. When a shipped ticket changes the server, the open panel breaks or shows old behaviour until the user finds the process and restarts it by hand (for example, every build log read "Couldn't load the log yet" because the running server predated the log route from 0051). 0059 made a browser reload pick up page changes, but not server changes, so a reload alone isn't enough.
@@ -43,7 +43,7 @@ started: "2026-10-09T20:00:56.511Z"
 - Today the page's token is made afresh on each start (`cmdPanel` in `scripts/speck.mjs`), so criterion 2 needs the token to survive a restart.
 - In a repo set up with `speck init`, the panel runs from `.speck/scripts/`, which changes only when `init` is re-run; here it runs from `scripts/`.
 - product.md's `panel` entry needs updating, including the line that 0059 added about server changes needing a restart.
-- Self-check: a server process still starting wasn't stopped by Ctrl+C, so each one is now tracked from the moment it's started (with a test); the error-line match missed a plain `Error:` and now finds it.
+- Self-check: a server process still starting wasn't stopped by Ctrl+C, so a server now kills its starting successor as it exits and every server stops once `speck panel` has gone (with a test).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,3 +53,79 @@ started: "2026-10-09T20:00:56.511Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c28e8fc8e6f23307910dcd0b5e9718e3e61c7cec",
+    "thread_id": "01a1224b-dfd2-7372-8d12-958bd170e08e",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 338408,
+      "cached_input_tokens": 247168,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1023,
+      "reasoning_output_tokens": 121
+    },
+    "saved_at": "2026-10-09T20:13:18.776Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/speck.mjs: panelSupervisor restarts only panelServer children; its own functions and constants remain from startup. speck/product.md:108 explicitly confirms that these code changes still require a manual restart. The AC1 test changes only response handling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSupervisor preserves the token across child restarts. test/panel-0067.test.mjs covers the old token and a real browser retaining its selected list and open idea, then using Set ready without reloading; supplied results pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelSupervisor.watch waits for 500 ms of unchanged file stamps. The AC3 burst test makes five successive edits and asserts one restart; supplied results pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "startPanelServer rejects failed starts before replacing live. AC4 tests exercise syntax errors, runtime errors, continued old-server responses, recovery on another edit and the page's error banner; supplied results pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "panelSupervisor tracks children from launch and handles SIGINT/SIGTERM; panelServer exits on IPC disconnect. AC5 tests cover URL output once, shutdown after restarting, SIGKILL and shutdown during startup; supplied results pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:1899",
+        "issue": "Changes to the panel's supervisor code never take effect automatically. Every restart continues using the original watcher, connection dispatcher and startup helpers. This contradicts AC1's requirement covering any code files the panel runs from and the outcome that it always runs current code.",
+        "suggested_fix": "Allow changed supervisor behaviour to take effect while preserving the port, token and failure fallback. Add a regression test that changes observable supervisor behaviour and verifies adoption without a user command. Any narrower scope requires the owner's explicit agreement.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated spec accurately documents the implementation, including the manual-restart exception, but that exception does not satisfy the ticket."
+    },
+    "escalation_question": "",
+    "summary": "Server route changes restart automatically, and the tests cover keeping an open page working, failed updates and clean shutdown. However, changes to the restart machinery itself still require a manual restart, so the promised automatic update behaviour is incomplete. I inspected the code and tests; I did not rerun tests because they create files and this review is read-only."
+  }
+}
+```
+
+</details>

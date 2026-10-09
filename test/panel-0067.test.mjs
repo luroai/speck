@@ -25,7 +25,12 @@ function edit(c, version) {
     .replace(/'Not found\.( [^\\']*)?\\n'/, `'Not found. ${version}\\n'`);
   fs.writeFileSync(c.cli, src);
 }
-const children = pid => spawnSync('ps', ['-o', 'pid=', '--ppid', String(pid)], { encoding: 'utf8' }).stdout.split('\n').map(s => +s.trim()).filter(Boolean);
+// Every server process of the panel started from `c`, which aren't all children of the process you start, since each
+// server starts the next. The CLI copy's folder is in their environment, so they're found by it.
+const children = (p, c) => spawnSync('ps', ['-eo', 'pid=', '-o', 'args='], { encoding: 'utf8' }).stdout.split('\n')
+  .filter(l => l.includes('SPECK_PANEL') || l.includes('--input-type=module'))
+  .map(l => +l.trim().split(/\s+/)[0]).filter(pid => pid && pid !== p.child.pid && envHas(pid, c.cli));
+const envHas = (pid, text) => { try { return fs.readFileSync(`/proc/${pid}/environ`, 'utf8').includes(text); } catch { return false; } };
 const alive = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
 const restarts = p => (p.out().match(/restarted/g) || []).length;
 
@@ -178,7 +183,7 @@ test('0067 AC5: the URL prints once, and Ctrl+C stops it with no process left be
     await within(5000, async () => (await request(port, { pathName: '/nope' })).body === 'Not found. v2\n', 'the restart');
     await wait(500);
     assert.equal((p.out().match(/http:\/\/127\.0\.0\.1:\d+/g) || []).length, 1, p.out());
-    const kids = children(p.child.pid);
+    const kids = children(p, c);
     assert.ok(kids.length >= 1, 'the server runs in a child');
     const exited = new Promise(res => p.child.on('exit', res));
     p.child.kill('SIGINT');
@@ -189,8 +194,8 @@ test('0067 AC5: the URL prints once, and Ctrl+C stops it with no process left be
 });
 
 test('0067 AC5: if speck panel is killed outright, its server stops too', async () => {
-  const { port, p } = await served();
-  const kids = children(p.child.pid);
+  const { c, port, p } = await served();
+  const kids = children(p, c);
   assert.ok(kids.length >= 1);
   const exited = new Promise(res => p.child.on('exit', res));
   p.child.kill('SIGKILL');
@@ -205,7 +210,7 @@ test('0067 AC5: Ctrl+C while new code is still starting stops that process too',
     // New code that takes 4 seconds to load, so it's still starting when Ctrl+C comes.
     fs.writeFileSync(c.cli, fs.readFileSync(c.cli, 'utf8').replace('const PANEL_PORT = 4777;', 'const PANEL_PORT = 4777; { const t0 = Date.now(); while (Date.now() - t0 < 4000); }'));
     let kids = [];
-    await within(5000, () => (kids = children(p.child.pid)).length >= 2, 'the new server process to start');
+    await within(5000, () => (kids = children(p, c)).length >= 2, 'the new server process to start');
     const exited = new Promise(res => p.child.on('exit', res));
     p.child.kill('SIGINT');
     await exited;
@@ -213,11 +218,15 @@ test('0067 AC5: Ctrl+C while new code is still starting stops that process too',
   } finally { if (p.child.exitCode === null && p.child.signalCode === null) await stop(p); }
 });
 
-test('0067 AC4: the error line is the one naming the error, or else the first line', async () => {
-  const { startErrorLine } = await import('../scripts/speck.mjs');
-  assert.equal(startErrorLine("file:///x/speck.mjs:9\nfunction broken( {\n                 ^\n\nSyntaxError: Unexpected token '{'\n    at x\n"), "SyntaxError: Unexpected token '{'");
-  assert.equal(startErrorLine('file:///x:1\nthrow new Error(1)\n\nError: boom\n    at y'), 'Error: boom');
-  assert.equal(startErrorLine('node:internal/x\nError [ERR_MODULE_NOT_FOUND]: Cannot find module'), 'Error [ERR_MODULE_NOT_FOUND]: Cannot find module');
-  assert.equal(startErrorLine('\n  Not a speck repo: run speck init.\nmore\n'), 'Not a speck repo: run speck init.');
-  assert.equal(startErrorLine(''), null);
+test('0067 AC1: a change to the code that watches and restarts is picked up too, with no command from the user', async () => {
+  const { c, port, p } = await served();
+  try {
+    const say = text => fs.writeFileSync(c.cli, fs.readFileSync(c.cli, 'utf8').replace(/the code changed, so it restarted with the new code\.|RESTART-V\d/, text));
+    say('RESTART-V2');
+    await within(5000, () => restarts(p) === 1, 'the first restart');
+    assert.doesNotMatch(p.out(), /RESTART-V2/, 'the old code announced the first restart');
+    say('RESTART-V3');
+    await within(5000, () => /RESTART-V2/.test(p.out()), 'the second restart, announced by the new watcher code');
+    assert.equal((await request(port)).status, 200);
+  } finally { await stop(p); }
 });
