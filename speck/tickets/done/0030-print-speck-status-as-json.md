@@ -1,7 +1,7 @@
 ---
 id: "0030"
 title: "Print speck status as JSON"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T10:47:45.752Z"
+finished: "2026-10-09T11:07:47.148Z"
 
 ---
 # 0030 · Print speck status as JSON
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The control panel (0031) needs everything `speck status` knows in a form a program can read. Today `speck status` only prints text for people, so any tool would have to scrape it.
