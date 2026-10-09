@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -1592,6 +1592,151 @@ function cmdPanel(args) {
   server.listen(port, '127.0.0.1', () => console.log(`speck panel: http://127.0.0.1:${port}/ (press Ctrl+C to stop)`));
 }
 
+// ---------- run (start a non-interactive build for each ready ticket) ----------
+
+const RUN_POLL_MS = 5000;
+const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --dangerously-skip-permissions';
+
+// The folder for speck run's records and logs, inside speck/.cache/, which git ignores.
+function runsDir(repo) {
+  const root = path.join(repo, 'speck', '.cache');
+  const dir = path.join(root, 'runs');
+  fs.mkdirSync(dir, { recursive: true });
+  const ignore = path.join(root, '.gitignore');
+  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, '# Working files for reviews in progress. Review history is in each ticket.\n*\n');
+  return dir;
+}
+
+const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+
+// One speck run per repo: a lock file holding its pid. The file is made complete and then linked into place, which
+// is atomic, so no runner ever sees a half-written lock. A lock whose process is gone (killed outright) is taken
+// over, but only while holding a second, short-lived recovery lock, so two runners can't both take over the same one.
+function takeRunLock(repo) {
+  const dir = runsDir(repo);
+  const lock = path.join(dir, 'run.lock'), recover = path.join(dir, 'run.lock.recover');
+  const mine = path.join(dir, `run.lock.${process.pid}.tmp`);
+  fs.writeFileSync(mine, String(process.pid));
+  const link = to => { try { fs.linkSync(mine, to); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
+  const holder = f => { try { return fs.readFileSync(f, 'utf8').trim(); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
+  const busy = pid => { const n = Number(pid); return Number.isInteger(n) && n > 0 && n !== process.pid && pidAlive(n); };
+  try {
+    for (let tries = 0; tries < 5; tries++) {
+      if (link(lock)) return lock;
+      const pid = holder(lock);
+      if (pid === null) continue; // removed just now: try again
+      if (busy(pid))
+        throw new SpeckError(`speck run is already running in this repo (process ${pid}). Stop that one first, or leave it running. If it isn't speck run, delete ${path.relative(repo, lock)}.`);
+      // A stale lock. Take it over only while holding the recovery lock, and only if it's still the same stale one.
+      if (!link(recover)) {
+        const other = holder(recover);
+        if (other !== null && !busy(other))
+          throw new SpeckError(`A speck run was stopped while taking over a stale lock. If no speck run is running, delete ${path.relative(repo, recover)}, then run this again.`);
+        throw new SpeckError(`Another speck run is starting in this repo (process ${other}). Leave that one running.`);
+      }
+      try {
+        if (holder(lock) === pid) fs.rmSync(lock, { force: true });
+        if (link(lock)) return lock;
+      } finally { fs.rmSync(recover, { force: true }); }
+    }
+    throw new SpeckError('speck run couldn\'t take its lock file. Try again.');
+  } finally { fs.rmSync(mine, { force: true }); }
+}
+
+// Watches the board and starts a build for each ready ticket that isn't waiting on another, up to
+// max_parallel_builds at once. Builds run in their own process group, so stopping speck run leaves them running.
+function cmdRun() {
+  const repo = findRepoRoot();
+  const cfg = loadConfig(repo);
+  const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
+  if (!command)
+    throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${DEFAULT_BUILD_COMMAND}'`);
+  let words;
+  try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
+  const max = cfg.max_parallel_builds ?? 1;
+  if (!Number.isInteger(max) || max < 1) throw new SpeckError(`max_parallel_builds in speck/config.yml must be a whole number of at least 1 (got "${max}").`);
+  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
+  if (branch !== cfg.base_branch)
+    throw new SpeckError(`This checkout is on "${branch}", not ${cfg.base_branch}. speck run starts builds from ${cfg.base_branch}, so switch to it, then run this again.`);
+  const lock = takeRunLock(repo);
+  const release = () => { try { if (fs.readFileSync(lock, 'utf8').trim() === String(process.pid)) fs.rmSync(lock, { force: true }); } catch { /* already gone */ } };
+  process.on('exit', release);
+  const stop = () => {
+    console.log(`speck run stopped.${running.size ? ` ${running.size} build${running.size === 1 ? ' is' : 's are'} still running: ${[...running].join(', ')}.` : ''}`);
+    process.exit(0);
+  };
+  process.on('SIGINT', stop);
+  process.on('SIGTERM', stop);
+
+  const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
+  const running = new Set();
+  const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
+  let lastError = null;
+
+  const finished = (id, log, code, signal, failed) => {
+    running.delete(id);
+    if (failed) console.log(`${id} build couldn't start: ${failed}`);
+    else console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
+    let status = null;
+    // From the same reading as the board, so a build's own worktree copy of the ticket counts.
+    try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { /* unreadable: nothing to say */ }
+    if (status === 'ready' && !failed) {
+      let tail = '';
+      try { tail = fs.readFileSync(log, 'utf8').replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
+      console.log(`${id} is still ready, so the build never started it. speck run won't launch it again. Last lines of ${path.relative(repo, log)}:\n${tail}`);
+    }
+    tick();
+  };
+
+  const launch = id => {
+    launched.add(id);
+    running.add(id);
+    const session = crypto.randomUUID();
+    const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, session));
+    const dir = runsDir(repo);
+    const log = path.join(dir, `${id}.log`);
+    const recordFile = path.join(dir, `${id}.json`);
+    const record = pid => `${JSON.stringify({ id, session, cwd: repo, started: new Date().toISOString(), pid, command: argv }, null, 2)}\n`;
+    let fd = null, child;
+    try {
+      // Written before the build starts, so a record that can't be written stops the build from starting at all.
+      fs.writeFileSync(recordFile, record(null));
+      fd = fs.openSync(log, 'w');
+      child = spawn(argv[0], argv.slice(1), { cwd: repo, detached: true, stdio: ['ignore', fd, fd] });
+    } catch (e) { if (fd !== null) fs.closeSync(fd); return finished(id, log, null, null, e.message); }
+    fs.closeSync(fd);
+    let done = false;
+    child.on('error', e => { if (!done) { done = true; finished(id, log, null, null, e.message); } });
+    child.on('exit', (code, signal) => { if (!done) { done = true; finished(id, log, code, signal, null); } });
+    child.unref();
+    if (child.pid) {
+      try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {
+        console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${session}.`);
+      }
+      console.log(`Launched ${id} (session ${session}). Log: ${path.relative(repo, log)}`);
+    }
+  };
+
+  function tick() {
+    let tickets;
+    try { tickets = statusData(repo).tickets; lastError = null; } catch (e) {
+      const msg = e instanceof SpeckError ? e.message : String(e?.message || e);
+      if (msg !== lastError) console.error(`speck run couldn't read the tickets, and will try again: ${msg}`);
+      lastError = msg;
+      return;
+    }
+    for (const t of tickets) {
+      if (running.size >= max) break;
+      if (t.status !== 'ready' || (t.waiting_on || []).length || launched.has(t.id)) continue;
+      launch(t.id);
+    }
+  }
+
+  console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
+  tick();
+  setInterval(tick, pollMs);
+}
+
 function cmdDiffstat() {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
@@ -1804,6 +1949,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
   speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777
+  speck run                           start a build for each ready ticket as it becomes ready, until stopped
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
@@ -1817,7 +1963,7 @@ const HELP = `speck: small tickets, independent review, you merge.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
