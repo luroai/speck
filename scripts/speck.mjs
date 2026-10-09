@@ -144,7 +144,8 @@ function ticketType(ticket) {
   const v = ticket.fm.type;
   if (v === undefined || v === null || (typeof v === 'string' && !v.trim())) return null;
   const line = ticket.raw.slice(0, fmEnd(ticket.raw)).match(/^type:(.*)$/m);
-  return line && stripComment(line[1]).trim() === '' ? null : v;
+  const empty = v && typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length;
+  return empty && line && stripComment(line[1]).trim() === '' ? null : v;
 }
 
 // The reviewer model and effort for a ticket: a ticket value wins, a blank one falls back to config, null means "reviewer's default".

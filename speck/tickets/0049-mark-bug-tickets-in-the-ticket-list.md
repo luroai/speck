@@ -1,7 +1,7 @@
 ---
 id: "0049"
 title: "Mark bug tickets in the ticket list"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T17:03:46.145Z"
 ---
 # 0049 · Mark bug tickets in the ticket list
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 Bugs and features look the same in the ticket list, so a bug that loses work (such as 0046) doesn't stand out from routine features when you choose what to set ready or build next.
@@ -43,6 +43,7 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+The review hit its 3-round limit with one finding open (a nested mapping under a bare `type:`, such as `type:` then `  name: feature`, passed lint), which is now fixed and tested on the branch. Allow one more review round to confirm it (recommended), or cancel the ticket? Each earlier round's findings were edge cases of the same blank-type check, and every criterion other than AC1 already passed.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -201,6 +202,87 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
     },
     "escalation_question": "",
     "summary": "The original blank-field problem is fixed, and bug creation and visible tags work. Validation still lets empty lists and mappings through as ticket types; these need to be rejected before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5e14fcca9588058247255a25173e8c7b44d3fc25",
+    "thread_id": "01a121a4-73de-7d13-bc7e-1646d5ff5205",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 873294,
+      "cached_input_tokens": 738304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3262,
+      "reasoning_output_tokens": 134
+    },
+    "saved_at": "2026-10-09T17:16:24.113Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "ticketType and lintTicket now reject explicit {} and [], independently verified. However, `type:\\n  name: feature` parses as a non-empty mapping and passes lint because ticketType treats the empty opening line as blank. AC1 tests cover inline collections but miss nested mappings. The template meets the requirement."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdNew validates every --type argument before writing. The AC2 CLI test covers creation and invalid-value refusals without creation; supplied output passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdStatus prints bug after the id, and statusData normalises missing and blank types to null. The AC3 CLI test covers missing, quoted blank and bare blanks with and without comments; supplied output passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html bugTag appears beside the id in Shaping, queue and Shipped. AC4 tests execute page rendering and verify tag placement, absence on other tickets and a distinct colour; supplied output passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 4 instructs adding --type=bug for defects. The AC5 test passes in supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The original bare-blank lint and JSON defect remains fixed, with regression coverage.",
+        "suggested_fix": "No further action for the original defect.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Collection validation is incomplete. Inline {} and [] are rejected, but a non-empty nested mapping such as `type:\\n  name: feature` now passes lint. Independently reproduced: the parsed type is {\"name\":\"feature\"}, yet lint returns no errors. ticketType checks the opening line without checking whether the mapping contains values.",
+        "suggested_fix": "Treat a bare type line as blank only when its parsed value is an empty mapping. Reject non-empty mappings, and add a regression test for a nested mapping while retaining the existing blank and inline-collection tests.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The claim that lint accepts only missing, blank or bug remains inaccurate because nested mappings pass validation."
+    },
+    "escalation_question": "",
+    "summary": "Bug creation and the visible tags work, and the earlier blank-field issue is fixed. One validation gap remains: a nested set of values is mistaken for a blank type and accepted. Rejecting that case will complete the requested validation."
   }
 }
 ```
