@@ -2106,6 +2106,7 @@ function cmdRun() {
   process.on('SIGTERM', stop);
 
   const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
+  const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const running = new Set();
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
@@ -2225,6 +2226,11 @@ function cmdRun() {
     for (const t of tickets) {
       if (running.size >= max) break;
       if (t.status !== 'ready' || (t.waiting_on || []).length || launched.has(t.id)) continue;
+      if (heldByStop(repo, t)) {
+        if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
+        held.add(t.id);
+        continue;
+      }
       launch(t.id);
     }
   }
@@ -2366,25 +2372,43 @@ function stoppedBySpeck(recordFile) {
   } catch { return false; }
 }
 
-// The build's processes that are still running. One that has exited and waits only for its parent to collect it is over.
-function liveBuildProcesses(b) {
-  const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
-  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
-  const zombies = new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([, s]) => /^Z/.test(s || '')).map(([p]) => Number(p)));
-  return buildProcesses(b.pid, b.rec.session).filter(p => !zombies.has(p));
+// True for a ticket whose last build `speck stop` ended, until the ticket is committed after the stop (set ready
+// again, for example). A ticket still ready because blocking it failed, or not blocked yet, isn't launched again.
+function heldByStop(repo, t) {
+  const file = path.join(runsDir(repo), `${t.id}.json`);
+  if (!stoppedBySpeck(file)) return false;
+  let at = NaN;
+  try { at = Date.parse(JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')).stopped); } catch { /* unreadable: held */ }
+  const r = sh('git', ['log', '-1', '--format=%cI', '--', t.path], { cwd: t.worktree || repo });
+  return !(Date.parse(r.stdout.trim()) > at);
 }
 
-// Ends a build and everything it started, already held with SIGSTOP so none can start anything more: asks each to end
-// (SIGTERM, and SIGCONT so a held one hears it), and ends any still there after a few seconds with SIGKILL.
+// Every process still running, as a set of pids. One that has exited and waits only for its parent to collect it is over.
+function runningPids() {
+  const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
+  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
+  return new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([p, s]) => /^\d+$/.test(p) && !/^Z/.test(s || '')).map(([p]) => Number(p)));
+}
+
+// Ends a build and everything it started, already held with SIGSTOP (`held`) so none can start anything more: asks each
+// to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there after a few seconds with SIGKILL.
+// Every process it has found stays on its list, so one that leaves the build's tree when its parent ends is still ended.
 // Returns the processes still running at the end.
-function endBuild(b) {
+function endBuild(b, held) {
+  const known = new Set(held);
+  const left = () => {
+    for (const p of buildProcesses(b.pid, b.rec.session)) known.add(p);
+    const running = runningPids();
+    return [...known].filter(p => running.has(p));
+  };
   const each = (pids, signal) => { for (const p of pids) try { process.kill(p, signal); } catch { /* gone */ } };
-  let left = liveBuildProcesses(b);
-  each(left, 'SIGTERM');
-  each(left, 'SIGCONT');
-  for (let i = 0; i < 50 && left.length; i++) { sleep(100); left = liveBuildProcesses(b); }
-  for (let i = 0; i < 20 && left.length; i++) { each(left, 'SIGKILL'); sleep(100); left = liveBuildProcesses(b); }
-  return left;
+  const asked = new Set();
+  const ask = pids => { const fresh = pids.filter(p => !asked.has(p)); for (const p of fresh) asked.add(p); each(fresh, 'SIGTERM'); each(fresh, 'SIGCONT'); };
+  let now = left();
+  ask(now);
+  for (let i = 0; i < 50 && now.length; i++) { sleep(100); now = left(); ask(now); }
+  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); sleep(100); now = left(); }
+  return now;
 }
 
 // Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
@@ -2413,7 +2437,7 @@ function cmdStop(args) {
     throw new SpeckError(`Couldn't stop ${b.id}: ${error} It's still ${b.paused ? 'paused' : 'running'}.`);
   }
   let left;
-  try { left = endBuild(b); } catch (e) {
+  try { left = endBuild(b, sent); } catch (e) {
     throw new SpeckError(`${b.id}'s build may be only partly stopped: ${e.message} Its ticket is unchanged. Run \`speck stop ${b.id}\` again. If it says there's nothing to stop, end any of its processes still running yourself, then block its ticket with \`speck set ${b.id} status blocked\`.`);
   }
   if (left.length)

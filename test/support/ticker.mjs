@@ -28,6 +28,9 @@ fs.writeFileSync(path.join(out, id + '.build.json'), JSON.stringify({ pid: proce
 spawn(process.execPath, [helper, out], { detached: true, stdio: 'ignore' }).unref();
 // ORPHAN: a step that starts a writer in a session of its own and exits at once, so the writer leaves the build's tree.
 if (process.env.ORPHAN) spawn(process.execPath, ['-e', \`require('child_process').spawn(process.execPath, [\${JSON.stringify(helper)}, \${JSON.stringify(out)}, 'orphan'], { detached: true, stdio: 'ignore' }).unref()\`], { detached: true, stdio: 'ignore' }).unref();
+// STUBBORN: a step that starts a writer in a session of its own, with an environment of its own, that ignores SIGTERM.
+// Only its parent, which ends on SIGTERM, ties it to the build.
+if (process.env.STUBBORN) spawn(process.execPath, ['-e', \`require('child_process').spawn(process.execPath, ['-e', \${JSON.stringify("process.on('SIGTERM', () => {}); require('fs').writeFileSync(" + JSON.stringify(path.join(out, 'stubborn.pid')) + ", String(process.pid)); setInterval(() => {}, 1000)")}], { detached: true, stdio: 'ignore', env: {} }).unref(); setInterval(() => {}, 1000)\`], { detached: true, stdio: 'ignore' }).unref();
 // SELF_PAUSE: the build pauses itself with speck, and saves that speck pause's pid in <out>/self.pid.
 if (process.env.SELF_PAUSE) setTimeout(() => {
   const c = spawn(process.execPath, [process.env.SELF_PAUSE, 'pause', id], { stdio: 'ignore' });

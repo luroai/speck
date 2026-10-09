@@ -180,3 +180,44 @@ test('0072 AC2 (self-check): a build stopped once its ticket is approved leaves 
     assert.equal(g(wt, 'rev-parse', 'HEAD'), head, 'no commit');
   } finally { await cleanup(t, run)(); }
 });
+
+test('0072 AC1 (round 1 F1): a process that ignores SIGTERM and leaves the build\'s tree when its parent ends is still ended', async () => {
+  const { t, run } = await started({ STUBBORN: '1' });
+  const pidFile = path.join(t.out, 'stubborn.pid');
+  try {
+    assert.ok(await until(() => fs.existsSync(pidFile) && fs.readFileSync(pidFile, 'utf8')), 'the stubborn process is running');
+    const pid = Number(fs.readFileSync(pidFile, 'utf8'));
+    assert.ok(!fs.readFileSync(`/proc/${pid}/environ`, 'utf8').includes('SPECK_BUILD_SESSION'), 'it has no session in its environment');
+    const r = speck(t.dir, 'stop', '0001');
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(gone(pid), `the stubborn process is no longer running (${state(pid)})`);
+  } finally {
+    try { process.kill(Number(fs.readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch {}
+    await cleanup(t, run)();
+  }
+});
+
+test('0072 AC3 (round 1 F2): a stopped build whose ticket could not be blocked is not launched again when speck run restarts, until its ticket is committed again', async () => {
+  const t = tickerRepo();
+  let run = await launched(t);
+  const hook = path.join(t.dir, '.git', 'hooks', 'pre-commit');
+  try {
+    fs.writeFileSync(hook, '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+    const r = speck(t.dir, 'stop', '0001');
+    assert.notEqual(r.status, 0, 'the ticket commit fails');
+    assert.match(r.stderr, /couldn't be committed/);
+    assert.match(ticketIn(t.dir), /^status: ready\b/m, 'the ticket is still ready');
+    await stopRun(run);
+    run = startRun(t.dir);
+    await wait(800);
+    assert.doesNotMatch(run.out(), /Launched 0001/, run.out());
+    assert.match(run.out(), /0001[^\n]*speck stop[^\n]*won't launch it again/);
+    await stopRun(run);
+    fs.rmSync(hook);
+    await wait(1100); // a commit time later than the stop
+    assert.equal(speck(t.dir, 'set', '0001', 'priority', '2').status, 0);
+    t.g('commit', '-qam', 'ready again');
+    run = startRun(t.dir);
+    assert.ok(await until(() => /Launched 0001/.test(run.out())), `launched once its ticket is committed again: ${run.out()}`);
+  } finally { await cleanup(t, run)(); }
+});
