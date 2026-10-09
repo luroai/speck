@@ -1,7 +1,7 @@
 ---
 id: "0051"
 title: "Expand a queue ticket to read its build log"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:15:53.316Z"
 ---
 # 0051 · Expand a queue ticket to read its build log
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build runs for tens of minutes and the queue shows only its five-step bar, so you can't tell whether it's working or stuck without leaving the panel. `speck run` already writes everything the build prints to `speck/.cache/runs/<id>.log` (0043), and the panel uses only the last 50 lines of it, and only once the build has exited (0045).
@@ -52,9 +52,15 @@ Clicking a queue ticket's top row opens it and shows the tail of its build's log
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The ANSI pattern does not consume charset designation sequences such as ESC ( B.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 859,198
+- Elapsed since build started: 12 min
+- Changed lines: 86 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (none went to the inbox):
 - Known limit: the server reads the whole log file on each request to take its last 200 lines. Fine for build logs today; worth reading only the file's tail if logs grow large, especially once 0052 polls an open log.
