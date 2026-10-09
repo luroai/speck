@@ -1,7 +1,7 @@
 ---
 id: "0037"
 title: "Triage the inbox from chat"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T18:29:51.917Z"
 ---
 # 0037 · Triage the inbox from chat
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Follow-ups from builds pile up in the inbox (0036). Reading every one would overwhelm the user, who wants to decide only what's worth a ticket, from their single shaping chat.
@@ -49,9 +49,14 @@ Asking the agent to triage the inbox clears it down to at most three decisions, 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 195,431
+- Elapsed since build started: 3 min
+- Changed lines: 18 (limit 5000)
 - Follow-ups:
   - `speck status` counts `dropped` ideas as waiting: saved to the inbox as `speck/ideas/2026-10-09-speck-status-counts-dropped-ideas-as-waiting.md`.
   - The panel's Ideas list showing `dropped` notes: skipped, covered by 0038 (AC3 leaves out `inbox` and `dropped`).
