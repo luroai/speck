@@ -36,6 +36,7 @@ idea / conversation
   → you edit and approve  → status: ready                  [GATE 1]
   → /speck-build 0007     → branch speck/0007-<slug>
        tests from acceptance criteria → implementation → tests pass
+       → builder self-check (edge cases, error paths, claims, scope)
        → review loop with reviewer subagent (see below)
        → approved?  yes → logs filled in, status: approved (waits on its branch, no PR),
                           or shipped straight away if auto_ship allows it

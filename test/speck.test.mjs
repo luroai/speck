@@ -1884,3 +1884,50 @@ test('0014 AC4: the docs describe the builder as any agent that reads speck skil
   assert.ok(limit, 'a known limit names the skills folders');
   for (const s of ['Claude Code', 'Codex', 'Cursor']) assert.ok(limit.includes(s), `known limit: ${s}`);
 });
+
+// ---------- 0023: self-check the build before the first review round ----------
+
+const buildSkill = () => fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
+const selfCheck = () => {
+  const md = buildSkill();
+  const step = md.split('\n').findIndex(l => /^\d+\. \*\*Self-check/.test(l));
+  if (step < 0) return { md, text: '', at: -1 };
+  const lines = md.split('\n').slice(step);
+  const end = lines.findIndex((l, i) => i > 0 && (/^\d+\. /.test(l) || /^## /.test(l)));
+  return { md, text: lines.slice(0, end).join('\n'), at: md.indexOf(lines[0]) };
+};
+
+test('0023 AC1: the build skill has a self-check step after implementation and before review, covering the agreed areas', () => {
+  const { md, text, at } = selfCheck();
+  assert.ok(at > md.indexOf('## 3. Implement'), 'in the implement section');
+  assert.ok(at < md.indexOf('speck set <id> status reviewing'), 'before the ticket goes to reviewing');
+  assert.ok(at < md.indexOf('## 4. Review loop'), 'before the review loop');
+  assert.ok(at > md.indexOf('**Living spec:**'), 'after product.md is updated, so its claims can be checked');
+  // Each area is its own checklist item, named in bold, with the substance the ticket asks for.
+  const item = label => (text.split('\n').find(l => l.includes(`**${label}:**`)) || '');
+  assert.match(item('Unusual input'), /empty/i);
+  assert.match(item('Unusual input'), /missing/i);
+  assert.match(item('Unusual input'), /malformed/i);
+  assert.match(item('Unusual input'), /built in/i);
+  assert.match(item('State over time'), /between review rounds, runs or re-runs/i);
+  assert.match(item('Error paths'), /plain error message/i);
+  assert.match(item('Claims'), /`product\.md`/);
+  assert.match(item('Claims'), /matches the code, and a test covers it/i);
+  assert.match(item('Scope'), /outside the ticket/i);
+});
+
+test('0023 AC2: each problem found gets a test and a fix, and the ticket Notes record the result', () => {
+  const { text } = selfCheck();
+  assert.match(text, /add a test/i);
+  assert.match(text, /fix/i);
+  assert.match(text, /re-run the tests/i);
+  assert.match(text, /`Self-check: [^`]+`/);
+  assert.match(text, /`Self-check: no changes`/);
+  assert.match(text, /Notes/);
+});
+
+test('0023 AC3: the step says it is not a review or an approval, and the reviewer still decides', () => {
+  const { text } = selfCheck();
+  assert.match(text, /not a review or an approval/i);
+  assert.match(text, /reviewer still decides/i);
+});
