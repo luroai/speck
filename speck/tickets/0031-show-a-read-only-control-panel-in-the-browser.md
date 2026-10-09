@@ -55,3 +55,79 @@ Tickets are now moving fast and several build at once, and following them in Mar
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a7b1b5e30ea89ae32bee2120877994343e2bf5bd",
+    "thread_id": "01a12062-11dd-7472-b2ec-402802b7b995",
+    "seconds": 41,
+    "usage": {
+      "input_tokens": 191105,
+      "cached_input_tokens": 120960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 980,
+      "reasoning_output_tokens": 41
+    },
+    "saved_at": "2026-10-09T11:18:21.547Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdPanel and panelPort implement localhost binding, port selection, startup errors and Host validation. test/panel.test.mjs AC1 integration tests exercise these behaviours; builder reports they passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdPanel uses statusData for /api/state, restricts methods and routes, and performs no writes. AC2 integration tests compare JSON with status --json, check responses, snapshot the repository and exercise error recovery; builder reports they passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel, render and draftItem implement the requested grouping, details and shipped metrics. AC3 model tests exercise ordering, missing timestamps, totals and exclusions; the whole-script test exercises opening criteria. Style tests check the mockup palette and areas. Builder reports these passed."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "templates/panel.html poll schedules the next request only after fetch and response parsing finish, with no timeout. Independently running the actual script with a pending fetch produced one fetch and zero scheduled polls. Existing AC4 tests cover immediate responses and immediate rejection, but not stalled requests."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "templates/panel.html el and render use textContent and createTextNode. AC5 whole-script tests exercise literal markup in titles across every area, ideas, blocked questions and opened criteria; builder reports they passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "A stalled fetch or response body stops polling indefinitely and leaves the page showing its previous connection status. Even successful requests are spaced by their duration plus two seconds, rather than fetching every two seconds. This breaks AC4's refresh and recovery guarantee. The fake-fetch tests resolve or reject immediately, so they miss this case.",
+        "suggested_fix": "Bound the entire request, including body parsing, with a timeout and cancellation, and schedule polling to preserve the required cadence. Prevent stale responses from overwriting newer state. Add timer-driven tests for a pending fetch and a pending response body, verifying disconnection and automatic recovery.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The panel description otherwise matches the implementation, but its claim of fetching every two seconds and recovering automatically is not reliable while a request remains pending."
+    },
+    "escalation_question": "",
+    "summary": "The read-only panel implements the requested views and protects ticket text from being interpreted as HTML. One reliability issue needs fixing: a stalled request can freeze updates indefinitely without showing that the panel is disconnected. The current tests miss this case."
+  }
+}
+```
+
+</details>

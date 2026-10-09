@@ -260,19 +260,28 @@ function setConnected(ok, problem) {
   else $('pills').replaceChildren(el('div', ok ? 'pill' : 'pill off', null, el('span', ok ? 'live' : 'live off'), document.createTextNode(ok ? 'live' : 'disconnected')));
 }
 
-// Fetches the state every 2 seconds without reloading the page. A failure shows as disconnected, and polling carries
-// on, so the page recovers by itself when the server is back.
+// Fetches the state every 2 seconds without reloading the page. Each poll schedules the next one before it starts, so
+// a request that never finishes can't stop polling. A request still pending when the next one is due counts as
+// disconnected and is aborted, and only the latest request's answer is used. A failure shows as disconnected and
+// polling carries on, so the page recovers by itself when the server is back.
+let seq = 0, pending = null;
 async function poll() {
+  setTimeout(poll, POLL_MS);
+  if (pending) { pending.abort(); pending = null; setConnected(false); }
+  const mine = ++seq, ctl = new AbortController();
+  pending = ctl;
   try {
-    const res = await fetch('/api/state', { cache: 'no-store' });
+    const res = await fetch('/api/state', { cache: 'no-store', signal: ctl.signal });
     let body = null;
     try { body = await res.json(); } catch (e) { body = null; }
+    if (mine !== seq) return; // a newer request has taken over
     if (!res.ok || !body || !Array.isArray(body.tickets)) setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
     else { state = body; lastOk = Date.now(); setConnected(true); }
   } catch (e) {
-    setConnected(false);
+    if (mine === seq) setConnected(false);
+  } finally {
+    if (pending === ctl) pending = null;
   }
-  setTimeout(poll, POLL_MS);
 }
 poll();
 </script>

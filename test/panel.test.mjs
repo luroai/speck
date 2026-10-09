@@ -214,7 +214,7 @@ test('0031 AC4: the page polls /api/state every 2 seconds, says when it is disco
   const html = page();
   assert.match(html, /fetch\(['"]\/api\/state['"]/);
   assert.match(html, /POLL_MS\s*=\s*2000\b/);
-  assert.match(html, /setTimeout\(poll,\s*POLL_MS\)/, 'keeps polling after a failure too');
+  assert.match(html, /async function poll\(\) \{\n\s*setTimeout\(poll,\s*POLL_MS\)/, 'schedules the next poll before this one starts');
   assert.match(html, /disconnected/i);
   assert.doesNotMatch(html, /location\.reload/, 'no page reloads');
 });
@@ -334,11 +334,13 @@ function fakePage(responses) {
   const fetch = async () => {
     const next = responses.shift();
     if (next instanceof Error) throw next;
+    if (next && next.then) return next; // a request the test settles later, or never
+    if (next && next.pendingBody) return { ok: true, status: 200, json: () => next.pendingBody };
     if (next && next.status) return { ok: false, status: next.status, json: async () => next.body };
     return { ok: true, status: 200, json: async () => next };
   };
   const script = page().match(/<script>([\s\S]*?)<\/script>/)[1];
-  vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), Date, Math, JSON, String, Number, Array, Set, console });
+  vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), AbortController, Date, Math, JSON, String, Number, Array, Set, console });
   const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
   const settle = () => new Promise(r => setTimeout(r, 20));
   return { byId: id => document.getElementById(id), timers, all, settle };
@@ -426,4 +428,29 @@ test('0031 AC1: the page header names the main checkout, even when the panel run
     assert.ok(body.includes(`<code>${path.basename(r.dir)}</code>`), 'main checkout name');
     assert.ok(!body.includes('{{repo}}') && !body.includes('{{base}}'));
   } finally { await stop(p); }
+});
+
+const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };
+
+test('0031 AC4: a request that never answers, or whose body never arrives, still shows as disconnected and recovers', async () => {
+  const one = { tickets: [T('0001', 'ready')], ideas: [] };
+  const moved = { tickets: [T('0001', 'building')], ideas: [] };
+  const stalled = deferred();
+  const p = fakePage([one, stalled, { pendingBody: new Promise(() => {}) }, moved]);
+  await p.settle();
+  assert.equal(p.timers.length, 1);
+  p.timers.shift()(); await p.settle(); // this request never answers
+  assert.equal(p.timers.length, 1, 'the next poll is already scheduled');
+  assert.equal(p.byId('offline').hidden, true, 'not yet overdue');
+  p.timers.shift()(); await p.settle(); // overdue: disconnected; this one's body never arrives
+  assert.equal(p.byId('offline').hidden, false, 'says it is disconnected');
+  assert.equal(p.timers.length, 1);
+  p.timers.shift()(); await p.settle(); // overdue again, then the server answers
+  assert.equal(p.byId('offline').hidden, true, 'recovered');
+  assert.match(p.byId('running').textContent, /0001/);
+  // The abandoned request answering late doesn't put the old state back.
+  stalled.resolve({ ok: true, status: 200, json: async () => one });
+  await p.settle();
+  assert.match(p.byId('running').textContent, /0001/);
+  assert.doesNotMatch(p.byId('next').textContent, /0001/);
 });
