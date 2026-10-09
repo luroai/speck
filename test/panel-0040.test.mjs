@@ -229,3 +229,23 @@ test('0040 self-check: drafts sharing an id, or named like built-ins, all still 
   await refresh(p);
   assert.equal(items(p).length, 4);
 });
+
+// Round 1, F1: "data unchanged" is the same field values, so the order the fields come in doesn't matter, at any level.
+const reorder = v => (Array.isArray(v) ? v.map(reorder) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).reverse().map(k => [k, reorder(v[k])])) : v);
+test('0040 AC1 and AC3: the same field values in another order count as unchanged, for a ticket and an idea', async () => {
+  const s = base();
+  s.tickets[0].lint_messages = { errors: [], warnings: ['A warning.'] };
+  const next = reorder(s);
+  assert.notEqual(JSON.stringify(next.tickets[0]), JSON.stringify(s.tickets[0]), 'the fields really are in another order');
+  assert.notEqual(JSON.stringify(next.tickets[0].lint_messages), JSON.stringify(s.tickets[0].lint_messages), 'nested ones too');
+  const p = fakePage([s, next, clone(s), reorder(s)]);
+  await p.settle();
+  const kept = held(p, p.all(openTicket(p, '0001')).find(n => n.tagName === 'li'));
+  await refresh(p);
+  assert.ok(kept(), 'the ticket with its fields reordered keeps its node');
+  click(toggles(p)[1]); click(top(items(p)[0]));
+  const keptIdea = held(p, p.all(items(p)[0]).find(n => n.tagName === 'pre'));
+  await refresh(p);
+  await refresh(p);
+  assert.ok(keptIdea(), 'the idea with its fields reordered keeps its node');
+});

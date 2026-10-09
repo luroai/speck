@@ -1,7 +1,7 @@
 ---
 id: "0040"
 title: "Keep selected text through the panel refresh"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T15:32:10.353Z"
 ---
 # 0040 · Keep selected text through the panel refresh
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel rebuilds the whole page on every 2-second refresh, so any text you select in an open ticket or idea is lost within 2 seconds. You can't reliably copy a criterion or a lint message out of the panel.
@@ -53,3 +53,79 @@ Text you select in an open ticket or idea stays selected through refreshes until
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "96d895e987b7245b0b125f47d9051722b63ba266",
+    "thread_id": "01a12151-0dfa-7ab2-9d99-08af6fd49825",
+    "seconds": 67,
+    "usage": {
+      "input_tokens": 337609,
+      "cached_input_tokens": 264448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1672,
+      "reasoning_output_tokens": 215
+    },
+    "saved_at": "2026-10-09T15:39:49.529Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.html shapingItems compares JSON.stringify signatures, which depend on object property order. A read-only reproduction using fakePage with identical ticket field values in reversed property order replaced and detached the open node. Existing AC1 tests only clone objects without changing property order."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/panel-0040.test.mjs AC2 exercises another draft changing status, queue review rounds, new shipped tickets and inserted drafts, asserting preserved nodes and immediate updates. The real-browser test verifies selection while other items are added."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The AC3 test exercises unchanged idea notes while other ideas and queue tickets change; the real-browser test checks actual selected note text after unrelated changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 tests verify changed criteria, notes, idea body and status appear immediately; the real-browser test verifies rewritten criteria and notes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "AC5 uses a controlled clock and failed/recovered fetches to verify queue minutes, connection status and disconnected messages update while the selected node remains attached."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "shapingItems treats object property order as data. The ticket explicitly defines unchanged data as the same field values, but rearranging frontmatter fields can change their order in /api/state without changing values. JSON.stringify then produces a different signature and replaces the open ticket, losing its selection. The read-only fakePage reproduction confirmed this detachment.",
+        "suggested_fix": "Compare field values independently of object property order, including nested objects, and add a regression test using the same values with reordered properties.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The selection guarantee currently overstates the implementation: identical field values with different property ordering can still clear a ticket selection. The wording will be accurate once F1 is fixed."
+    },
+    "escalation_question": "",
+    "summary": "The change preserves selected text during ordinary refreshes and keeps the rest of the panel updating. One edge case needs fixing: rearranging a ticket’s fields without changing their values still clears its selection, contrary to the agreed requirement."
+  }
+}
+```
+
+</details>

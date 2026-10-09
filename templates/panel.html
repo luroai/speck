@@ -382,10 +382,12 @@ function fill(id, nodes, emptyText) {
 // The Shaping items built by the last render, by key ('t:<id>' or 'i:<path>'), each with everything it shows. An item
 // whose data and view state are unchanged keeps its node, so text selected in it survives the refresh.
 let built = new Map();
+// The same field values give the same signature, whatever order the fields come in, at every level.
+const signature = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(f => [f, x[f]])) : x));
 function shapingItems(list, keyOf, viewOf, make) {
   const now = new Map();
   const nodes = list.map(x => {
-    const key = keyOf(x), sig = JSON.stringify([x, viewOf(x)]), last = built.get(key);
+    const key = keyOf(x), sig = signature([x, viewOf(x)]), last = built.get(key);
     if (now.has(key)) return make(x); // a repeated id or path: built afresh each time, as it can't share a node
     const node = last && last.sig === sig ? last.node : make(x);
     now.set(key, { sig, node });
