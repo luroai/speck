@@ -1,7 +1,7 @@
 ---
 id: "0057"
 title: "File ticketed idea notes in speck/ideas/done"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:06:19.069Z"
 
 ---
 # 0057 · File ticketed idea notes in speck/ideas/done
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Idea notes stay in `speck/ideas/` forever, so once most ideas are ticketed the folder is mostly finished notes. Tickets already get filed in `speck/tickets/done/` when closed, and ideas have no equivalent, so the folder doesn't show at a glance what's still to shape.
