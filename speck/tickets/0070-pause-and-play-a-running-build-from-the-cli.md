@@ -41,7 +41,7 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
 ## Notes
 - `speck run` launches each build with `detached: true`, so the build is the leader of its own process group and a signal can reach everything it started, including a Codex reviewer.
 - Whatever the mechanism, criterion 2 has to hold for a real build, not only for a test's stand-in build command.
-- Unverified: whether a Claude Code build frozen mid-request (for example with SIGSTOP) carries on cleanly after a long pause, or whether its connection to the model times out (it can't be checked without a real build). If it doesn't, play may need to end the frozen build and carry on its session instead.
+- Checked 2026-10-09: a Claude Code build frozen mid-request with SIGSTOP carries on cleanly after SIGCONT. A real `claude -p … --output-format stream-json` (Claude Code 2.1.296) was frozen mid-reply for 10½ minutes. On SIGCONT, Claude Code found its reply had been cut off, asked the model to resume from where it stopped, in the same session and process, then ran its next tool and ended with `success`. So play doesn't need to end the build and resume its session. Pauses of hours weren't tried.
 - Checked 2026-10-09: `claude --resume <session-id>` continues a session by id, and combines with `-p` (`claude --help`, Claude Code 2.1.296).
 - product.md's `speck run` description and the list of commands need updating.
 
