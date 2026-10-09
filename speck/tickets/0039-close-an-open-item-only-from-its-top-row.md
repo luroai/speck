@@ -51,6 +51,9 @@ An open ticket or idea closes only when you click its top row, so you can click 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: a drag that selects text inside the top row itself (for example the title) still opens or closes the item, because the browser ends the drag with a click there. Could ignore clicks that end a non-empty selection.
+- Follow-up idea: hovering an open item's details still lightens the whole item (`.item.ticket:hover`), although only the top row is clickable now.
+- Follow-up idea: the real-browser test helper (`browserPage` in test/panel.test.mjs) could be shared by other panel tests that need real input.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -122,6 +125,79 @@ An open ticket or idea closes only when you click its top row, so you can click 
     },
     "escalation_question": "",
     "summary": "The change correctly limits opening and closing to each item's top row, while preserving multiple open items across refreshes. Click coverage is good and the change stays within scope. Before approval, the text-selection requirement needs a test that actually selects text by dragging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e5896d52bbc61242c60fa95935e842ab864bca28",
+    "thread_id": "01a1212f-d19a-7ba1-b052-1a8bf49d44c8",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 424594,
+      "cached_input_tokens": 333824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1384,
+      "reasoning_output_tokens": 27
+    },
+    "saved_at": "2026-10-09T15:06:27.826Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html ticketItem binds toggling to .head, containing id, title, tags and checks. test/panel.test.mjs 0039 AC1 exercises clicks from every header descendant; supplied results show it passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketDetail is a sibling of the clickable header. The 0039 AC2 test exercises detail sections, readiness content and surrounding-item clicks without closing; it passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ideaItem binds toggling only to its header, with the note outside it. The 0039 AC3 test covers header clicks and note clicks; it passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The new 0039 AC4 real-browser test uses Chromium Input.dispatchMouseEvent to drag within and across ticket sections and within an idea note, then checks selected text and the open class. Supplied results show it ran and passed without skipping."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The independent open and openIdeas sets remain intact across rendering. The 0039 AC5 test verifies multiple open items and retained open/closed state through refresh callbacks; it passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel.test.mjs",
+        "issue": "The original AC4 test simulated clicks without exercising text selection. The added browser test now performs real drags and verifies selection and retained open state.",
+        "suggested_fix": "Completed: genuine browser selection coverage added, and the original test renamed to describe its click simulation.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The panel description accurately documents top-row toggling, detail text selection and retained open state."
+    },
+    "escalation_question": "",
+    "summary": "Tickets and ideas now close only from their top row. Clicking or selecting detail text leaves them open, and multiple open items survive refreshes. The missing selection coverage is fixed with a passing browser test. All five criteria pass; no blocking concerns remain."
   }
 }
 ```
