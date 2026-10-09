@@ -629,16 +629,25 @@ export function verdictFromOutput(stdout) {
 
 // The round-1 prompt exactly as it was sent, saved with the review's working files. If that copy is gone (another
 // machine, or a cleared cache), it is rebuilt from the commit round 1 reviewed. Only its test output can't be recovered.
+// A copy saved by a speck that still sent speck/product.md is rebuilt the same way, keeping the test output it holds.
 const roundOneFile = (repo, id) => path.join(cacheDir(repo, id), 'round-1.prompt.md');
+const LEGACY_SPEC = '## Living spec (speck/product.md)';
+function savedTests(text) {
+  const head = '## Test output (from the builder)\n\n```\n';
+  const from = text.indexOf(head);
+  const to = text.lastIndexOf('\n```', text.lastIndexOf('Return ONLY a JSON object'));
+  return from >= 0 && to >= from + head.length ? text.slice(from + head.length, to) : '(the round-1 test output was not kept)';
+}
 function roundOnePrompt(repo, s, id) {
-  const saved = roundOneFile(repo, id);
-  if (fs.existsSync(saved)) return fs.readFileSync(saved, 'utf8');
+  const file = roundOneFile(repo, id);
+  const saved = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+  if (saved !== null && !saved.includes(LEGACY_SPEC)) return saved;
   const sha = s.prior[0].meta.reviewed_sha;
   const at = rel => { const r = sh('git', ['show', `${sha}:${rel}`], { cwd: repo }); return r.status === 0 ? r.stdout : null; };
   const ticket = { raw: at(posix(path.relative(repo, s.ticket.file))) ?? s.ticket.raw };
   // Against the base as it was then: the branch may have merged a newer base since.
   const base = git(['merge-base', s.cfg.base_branch, sha], repo).trim();
-  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), '(the round-1 test output was not kept)');
+  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), saved === null ? '(the round-1 test output was not kept)' : savedTests(saved));
 }
 
 // Later rounds give a reviewer with no memory everything it has seen: the round-1 prompt, every earlier verdict and

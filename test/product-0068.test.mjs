@@ -128,6 +128,36 @@ test('0068 AC2: later rounds, including a rebuilt round-1 prompt, have no produc
   assert.match(sent[2], /# Earlier review rounds/, 'round 3 has the history');
 });
 
+test('0068 AC2 (F1): a round-1 prompt saved before this change is rebuilt for later rounds, keeping its test output', () => {
+  const r = reviewRepo();
+  const tests = r.at('../tests-0068.txt');
+  fs.writeFileSync(tests, '# saved-tests-marker\n```\nfenced line\n```\n');
+  assert.equal(r.review(verdict, `--tests=${tests}`).status, 10);
+  // Make the saved copy look like one from an older speck: the spec check, the spec itself and the old schema field.
+  const file = r.at('speck/.cache/0001/round-1.prompt.md');
+  const now = fs.readFileSync(file, 'utf8');
+  assert.match(now, /# saved-tests-marker/);
+  const legacy = now
+    .replace('\n## Severity', '5. **Living spec.** If `speck/product.md` was changed, check it. LEGACY-CHECK-MARKER\n\n## Severity')
+    .replace('## Diff against', '## Living spec (speck/product.md)\n\nLEGACY-SPEC-MARKER\n\n## Diff against')
+    .replace('"escalation_question",', '"product_md",\n    "escalation_question",');
+  assert.notEqual(legacy, now);
+  fs.writeFileSync(file, legacy);
+  r.fix('second\n');
+  assert.equal(r.review(verdict).status, 10);
+  const later = r.prompts()[1];
+  const history = later.indexOf('# Earlier review rounds');
+  assert.ok(history > 0);
+  assert.doesNotMatch(later, /LEGACY-(SPEC|CHECK)-MARKER/);
+  assert.doesNotMatch(later.slice(0, history), MENTION, 'the resent round-1 prompt has no spec, check or schema field');
+  assert.equal(later.slice(0, history).trimEnd(), now.trimEnd(), 'rebuilt as round 1 was sent, test output included');
+  // A saved copy from this version is still resent exactly as it was.
+  fs.writeFileSync(file, `${now.trimEnd()}\nCURRENT-COPY-MARKER\n`);
+  r.fix('third\n');
+  assert.equal(r.review(verdict).status, 11);
+  assert.ok(r.prompts()[2].startsWith(`${now.trimEnd()}\nCURRENT-COPY-MARKER`));
+});
+
 test('0068 AC2: the review summary has no product.md line, and a stored round with product_md still shows', () => {
   const r = reviewRepo();
   assert.equal(r.review(verdict).status, 10);
