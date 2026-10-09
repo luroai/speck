@@ -1,7 +1,7 @@
 ---
 id: "0043"
 title: "Build ready tickets automatically with speck run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T14:27:46.963Z"
 ---
 # 0043 · Build ready tickets automatically with speck run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Setting a ticket to ready is meant to start the pipeline, but someone still has to open a session and type `/speck-build <id>` for every ticket. With worktrees, builds can run side by side, but only if someone starts each one.
@@ -50,9 +50,15 @@ Setting a ticket to ready is meant to start the pipeline, but someone still has 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 finished checks the main checkout's ticket rather than its authoritative worktree copy.; F2 takeRunLock is not safe under concurrent startup.; F3 launch does not handle failure to write <id>.json after the detached child starts.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 568,222
+- Elapsed since build started: 17 min
+- Changed lines: 156 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: `SPECK_RUN_POLL_MS` (used by the tests to shorten the 5-second wait) also works for users but isn't documented. Either document it or make it test-only.
 - Follow-up idea: a lock whose pid has since been reused by an unrelated process is treated as a live `speck run`. The message says which file to delete, but speck can't tell the difference itself.
