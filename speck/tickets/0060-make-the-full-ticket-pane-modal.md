@@ -1,7 +1,7 @@
 ---
 id: "0060"
 title: "Make the full ticket pane modal"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:33:00.080Z"
 ---
 # 0060 · Make the full ticket pane modal
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 While the full ticket pane is open, the page behind it still scrolls, so scrolling past the end of a long ticket moves the panel instead. The only ways to close the pane are its Close button and Escape, so the user has to aim for a small button to get back to the board.
@@ -50,9 +50,15 @@ The full ticket pane holds the page still while it's open, and a click anywhere 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Keyboard focus can escape the pane into background buttons.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 855,719
+- Elapsed since build started: 8 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: `speck/ideas/2026-10-09-return-focus-after-the-full-ticket-pane-closes.md`: when the pane closes, the focus goes to the page body rather than back to the **Full ticket** button, so a keyboard user starts again from the top.
