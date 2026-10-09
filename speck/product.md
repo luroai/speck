@@ -104,8 +104,12 @@ Everything happens in the local repo, with no PR.
     The server writes nothing else.
     The page, in the dark style of `docs/panel-mockup.html`, has a header with the repo, the base branch and the connection status, and shows **Shaping**, with a Tickets / Ideas / Inbox toggle, each with its count (`Tickets · <n>`), that shows one list at a time (Tickets when the page loads), tickets in blue, ideas in purple and the inbox in teal on the toggle, the section's top edge and each item's left edge.
     **Tickets** lists drafts in the JSON's order with their id, title, priority, size, risk, criteria count and lint result.
-    Clicking that top row opens it: its problem, outcome, numbered acceptance criteria, out of scope and notes (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors.
-    Clicking the button doesn't close the ticket.
+    Clicking that top row opens a short view: its problem and outcome (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors, and a **Full ticket** button.
+    Clicking either button doesn't close the ticket.
+    **Full ticket** opens a side pane over the right of the page with that ticket's id, title, problem, outcome, numbered acceptance criteria, out of scope and notes, as text, leaving out any section with nothing in it.
+    The pane holds a single ticket, so clicking **Full ticket** on another ticket replaces its content.
+    It closes with its **Close** button or the Escape key, leaving the open ticket in the list open.
+    Through the refresh it keeps showing the same ticket (the first one with that id), shows the new content when that ticket's data changes, and closes when the ticket leaves the Tickets list, for example once it's ready.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
     Clicking the top row again closes it.
     Clicking or selecting text in an open ticket's details leaves it open.
@@ -125,9 +129,9 @@ Everything happens in the local repo, with no PR.
     Hovering a ticket in the Tickets list or a `ready` one in the queue highlights it and every ticket linked to it through `after:` in either direction, following links through other tickets that aren't `done` or `cancelled`, in both places, and dims the other tickets there until the pointer leaves it.
     In-flight tickets in the queue are never highlighted or dimmed, though links still pass through them.
     A ticket's chain icon and "unlocks" text change in place when only other tickets change, so text selected in its open details stays selected.
-    Text selected in an open ticket's details or an idea's note stays selected through the refresh while that ticket's (by `id`) or idea's (by `path`) data in `/api/state` is unchanged, whatever else changes.
+    Text selected in an open ticket's details, the side pane or an idea's note stays selected through the refresh while that ticket's (by `id`) or idea's (by `path`) data in `/api/state` is unchanged, whatever else changes.
     When its own data changes, the new content shows in that refresh and the selection may be lost.
-    The list showing and what's open survive the refresh and are never sent to the server.
+    The list showing and what's open, in the lists and the side pane, survive the refresh and are never sent to the server.
     Then the **Queue**, one list with no groups: in-flight tickets (`building`, `reviewing`, `blocked`, `approved`) first, then `ready` ones, each in the JSON's order.
     Every ticket in it has a five-step bar, Build, Self-check, Review, Approve and Ship: Build is done once `self_check` is set or the ticket has a review round, Self-check once it has a review round or has `self_check` while `reviewing`, Review and Approve once it's `approved` (Ship is then the current step, whatever else is done), and otherwise the current step is the first one not done.
     While a ticket has review rounds, the Review step reads "Review <n>", its latest round number.

@@ -253,12 +253,16 @@ test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every 
     assert.ok(!nodes.some(n => n.tagName === 'b' && n.textContent === 'x'), `${area} made no <b> from the title`);
   }
   assert.ok(p.byId('queue').textContent.includes('<script>alert(1)</script>'));
-  // Open the draft: its criteria, sections and lint messages are text too (0033).
+  // Open the draft: its sections and lint messages are text too (0033), and so is the full ticket in the side pane (0054).
   const draft = p.all(p.byId('shaping')).find(n => n.listeners.click);
   draft.listeners.click();
-  for (const s of ['<img src=x onerror=alert(1)>', '<u>problem</u>', '<u>notes</u>', '<u>lint</u>'])
+  for (const s of ['<u>problem</u>', '<u>lint</u>'])
     assert.ok(p.byId('shaping').textContent.includes(s), s);
   assert.ok(!p.all(p.byId('shaping')).some(n => ['img', 'u'].includes(n.tagName)));
+  p.all(p.byId('shaping')).find(n => n.tagName === 'button' && n.textContent === 'Full ticket').listeners.click({ stopPropagation() {} });
+  for (const s of [evil, '<img src=x onerror=alert(1)>', '<u>problem</u>', '<u>notes</u>'])
+    assert.ok(p.byId('full-ticket').textContent.includes(s), s);
+  assert.ok(!p.all(p.byId('full-ticket')).some(n => ['b', 'img', 'u'].includes(n.tagName)));
   // Ideas are behind the Ideas toggle (0033): title and note are text.
   p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click)[1].listeners.click();
   assert.ok(p.byId('shaping').textContent.includes('<i>idea</i>'));
@@ -432,10 +436,13 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
 
   click(top(list[0]));
   let open = items(p)[0].textContent;
-  for (const s of ['Problem', 'Problem of 0003.', 'Outcome', 'Outcome of 0003.', 'Acceptance criteria', 'One.', 'Two.', 'Out of scope', '- Not this.',
-    'Notes', '- A note.', 'Readiness', 'Size M, risk high', '2 criteria', lint.errors[0], lint.warnings[0], '0002 done', '0009 not done'])
+  // The short view (0054): criteria, out of scope and notes are in the side pane, behind Full ticket.
+  for (const s of ['Problem', 'Problem of 0003.', 'Outcome', 'Outcome of 0003.', 'Readiness', 'Size M, risk high', '2 criteria', lint.errors[0], lint.warnings[0], '0002 done', '0009 not done'])
     assert.ok(open.includes(s), s);
-  const ol = p.all(items(p)[0]).find(n => n.tagName === 'ol');
+  click(p.all(items(p)[0]).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
+  const pane = p.byId('full-ticket').textContent;
+  for (const s of ['Acceptance criteria', 'One.', 'Two.', 'Out of scope', '- Not this.', 'Notes', '- A note.']) assert.ok(pane.includes(s), s);
+  const ol = p.all(p.byId('full-ticket')).find(n => n.tagName === 'ol');
   assert.deepEqual(ol.children.map(li => li.textContent), ['One.', 'Two.'], 'numbered criteria');
   assert.ok(!items(p)[1].textContent.includes('Readiness'), 'only the clicked ticket opens');
 
