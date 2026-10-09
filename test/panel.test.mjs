@@ -9,76 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-
-// ---------- 0031: a read-only control panel in the browser ----------
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
-const PAGE = path.join(ROOT, 'templates', 'panel.html');
-const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
-const env = { ...process.env, ...gitEnv };
-const good = `## Problem\nUsers cannot export.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`;
-const fm = (o = {}) => Object.entries({ id: '"0001"', title: 'Export bookings as CSV', status: 'draft', size: 'S', risk: 'low', builder: 'claude', reviewer: 'codex', ...o }).map(([k, v]) => `${k}: ${v}`).join('\n');
-
-// A repo with speck installed and one ready ticket, committed.
-function panelRepo({ worktrees = 'false' } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
-  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
-  g('init', '-q', '-b', 'main');
-  assert.equal(run('init', '--skip-checks').status, 0);
-  const cfgFile = path.join(dir, 'speck', 'config.yml');
-  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8').replace(/^  test: .*$/m, '  test: "true"').replace(/^worktrees:.*$/m, `worktrees: ${worktrees}`));
-  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
-  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').split('## Problem')[0] + good);
-  assert.equal(run('set', '1', 'status', 'ready').status, 0);
-  g('add', '-A'); g('commit', '-qm', 'base');
-  const write = (name, fmText, body = good, where = 'speck/tickets') => {
-    fs.mkdirSync(path.join(dir, where), { recursive: true });
-    fs.writeFileSync(path.join(dir, where, name), `---\n${fmText}\n---\n${body}`);
-  };
-  return { dir, run, g, file, write };
-}
-
-const freePort = () => new Promise(resolve => {
-  const s = net.createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); });
-});
-
-// Starts `speck panel` and resolves once it has printed its URL.
-function startPanel(cwd, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [CLI, 'panel', ...args], { cwd, env });
-    let out = '', err = '';
-    const done = setTimeout(() => { child.kill(); reject(new Error(`panel didn't start: ${out}${err}`)); }, 10000);
-    child.stdout.on('data', d => { out += d; if (/http:\/\/127\.0\.0\.1:\d+/.test(out)) { clearTimeout(done); resolve({ child, out: () => out }); } });
-    child.stderr.on('data', d => { err += d; });
-    child.on('exit', code => { clearTimeout(done); reject(Object.assign(new Error(`panel exited ${code}: ${out}${err}`), { code, out, err })); });
-  });
-}
-const stop = p => new Promise(resolve => { p.child.removeAllListeners('exit'); p.child.on('exit', resolve); p.child.kill(); });
-
-function request(port, { method = 'GET', pathName = '/', host = `127.0.0.1:${port}` } = {}) {
-  return new Promise((resolve, reject) => {
-    const req = http.request({ host: '127.0.0.1', port, method, path: pathName, headers: { Host: host } }, res => {
-      let body = '';
-      res.setEncoding('utf8');
-      res.on('data', d => { body += d; });
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-// The page's pure model function, run outside the browser.
-const page = () => fs.readFileSync(PAGE, 'utf8');
-function panelModel() {
-  const m = page().match(/\/\/ ---- model[^\n]*\n([\s\S]*?)\/\/ ---- end model/);
-  assert.ok(m, 'the page has a marked model section');
-  const fn = vm.runInNewContext(`${m[1]}\npanelModel`, {});
-  // Back through JSON, so the result's arrays and objects belong to this realm and compare strictly.
-  return state => JSON.parse(JSON.stringify(fn(state)));
-}
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, stagesOf, stepText, stepState, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, nowStep, findText } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -219,11 +150,6 @@ test('0031 AC4: the page polls /api/state every 2 seconds, says when it is disco
   assert.doesNotMatch(html, /location\.reload/, 'no page reloads');
 });
 
-// A state with one ticket in every status, as speck status --json gives it.
-const T = (id, status, o = {}) => ({ id, title: `Ticket ${id}`, status, priority: 2, size: 'S', risk: 'low', path: `speck/tickets/${id}-x.md`, worktree: null,
-  acceptance_criteria: ['One.', 'Two.'], blocked_question: null, lint: { errors: 0, warnings: 0 }, rounds: [], waiting_on: [], ...o });
-const round = (n, tokens) => ({ round: n, reviewer: 'codex', verdict: 'approve', seconds: 10, tokens });
-
 test('0031 AC3: the model sorts tickets into Shaping, the Queue and Shipped, and leaves cancelled tickets out', () => {
   const model = panelModel();
   const state = {
@@ -307,43 +233,6 @@ test('0031 AC5: ticket and idea text is shown as text, never as HTML', () => {
   assert.doesNotMatch(script, /innerHTML|outerHTML|insertAdjacentHTML|document\.write|DOMParser|createContextualFragment/);
   assert.match(script, /textContent/);
 });
-
-// Runs the whole page script against a minimal DOM, fetch and timer, so the view can be checked without a browser.
-function fakePage(responses) {
-  const nodes = new Map();
-  const make = tag => {
-    const n = { tagName: tag, className: '', hidden: false, children: [], listeners: {}, _text: '' };
-    Object.defineProperty(n, 'textContent', {
-      get: () => n._text + n.children.map(c => c.textContent).join(''),
-      set: v => { n.children = []; n._text = String(v); },
-    });
-    n.appendChild = c => { n.children.push(c); return c; };
-    n.replaceChildren = (...cs) => { n._text = ''; n.children = cs; };
-    n.addEventListener = (type, fn) => { n.listeners[type] = fn; };
-    return n;
-  };
-  const document = {
-    createElement: make,
-    createTextNode: t => ({ tagName: '#text', children: [], textContent: String(t) }),
-    getElementById: id => { if (!nodes.has(id)) nodes.set(id, make('div')); return nodes.get(id); },
-  };
-  const timers = [];
-  const calls = []; // every fetch, so a test can check what the page sent
-  const fetch = async (url, opts) => {
-    calls.push({ url, opts });
-    const next = responses.shift();
-    if (next instanceof Error) throw next;
-    if (next && next.then) return next; // a request the test settles later, or never
-    if (next && next.pendingBody) return { ok: true, status: 200, json: () => next.pendingBody };
-    if (next && next.status) return { ok: false, status: next.status, json: async () => next.body };
-    return { ok: true, status: 200, json: async () => next };
-  };
-  const script = page().match(/<script>([\s\S]*?)<\/script>/)[1];
-  vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), AbortController, Date, Math, JSON, String, Number, Array, Set, console });
-  const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
-  const settle = () => new Promise(r => setTimeout(r, 20));
-  return { byId: id => document.getElementById(id), timers, all, settle, calls };
-}
 
 test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every area', async () => {
   const evil = '<b>x</b>';
@@ -435,8 +324,6 @@ test('0031 AC1: the page header names the main checkout, even when the panel run
   } finally { await stop(p); }
 });
 
-const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };
-
 test('0031 AC4: a request that never answers, or whose body never arrives, still shows as disconnected and recovers', async () => {
   const one = { tickets: [T('0001', 'ready')], ideas: [] };
   const moved = { tickets: [T('0001', 'building')], ideas: [] };
@@ -461,13 +348,6 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
 });
 
 // ---------- 0033: everything needed for Gate 1 in Shaping ----------
-
-const full = (id, o = {}) => T(id, 'draft', { problem: `Problem of ${id}.`, outcome: `Outcome of ${id}.`, out_of_scope: '- Not this.', notes: '- A note.\n- Self-check: no changes',
-  self_check: 'no changes', lint_messages: { errors: [], warnings: [] }, after: [], ...o });
-const idea = (name, status, body = `# ${name}\n\nStatus: ${status}\n\nSome <b>text</b>.\n`) => ({ path: `speck/ideas/${name}.md`, title: name, status, body });
-const click = n => n.listeners.click({ stopPropagation() {} });
-const toggles = p => p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click);
-const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test(n.className));
 
 test('0033 AC2: the page header shows the repo, base branch and connection status only, with no counts', async () => {
   const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
@@ -593,12 +473,6 @@ test('0033 AC5: the Ideas list shows every idea, not-ticketed first, and clickin
 
 // ---------- 0034: the queue as one list with progress bars ----------
 
-const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
-const stagesOf = row => (function find(n) { if (/\bstages\b/.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
-const stepText = row => stagesOf(row).children.map(s => s.textContent);
-const stepState = row => stagesOf(row).children.map(s => (/\bd\b/.test(s.className) ? 'done' : /\bnow\b/.test(s.className) ? 'now' : ''));
-const steps = t => t.steps.map(s => s.state || '');
-
 test('0034 AC1: the queue is one list, in-flight tickets first, then ready ones, each in JSON order, with no group headings', async () => {
   const model = panelModel();
   const state = { tickets: [T('0001', 'ready'), T('0002', 'approved'), T('0003', 'draft'), T('0004', 'building'), T('0005', 'ready'), T('0006', 'blocked'),
@@ -718,36 +592,6 @@ test('0034 AC5: an in-flight ticket shows its worktree path and the whole minute
 
 // ---------- 0042: set a draft ticket to ready from the panel ----------
 
-function post(port, pathName, { origin = `http://127.0.0.1:${port}`, token, host = `127.0.0.1:${port}`, method = 'POST' } = {}) {
-  return new Promise((resolve, reject) => {
-    const headers = { Host: host };
-    if (origin !== null) headers.Origin = origin;
-    if (token !== undefined) headers['X-Speck-Token'] = token;
-    const req = http.request({ host: '127.0.0.1', port, method, path: pathName, headers }, res => {
-      let body = '';
-      res.setEncoding('utf8');
-      res.on('data', d => { body += d; });
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
-const tokenOf = html => (html.match(/const TOKEN = '([0-9a-f]+)';/) || [])[1];
-const readyPath = id => `/api/tickets/${id}/ready`;
-
-// A panel repo with a draft 0002 that passes lint (untracked, as a fresh draft is), served on a free port.
-async function readyPanel() {
-  const r = panelRepo();
-  r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
-  const token = tokenOf((await request(port)).body);
-  return { r, port, p, token };
-}
-const headOf = r => r.g('rev-parse', 'HEAD');
-const readT = (r, name) => fs.readFileSync(path.join(r.dir, 'speck', 'tickets', name), 'utf8');
-
 test('0042 AC4: the page carries a token made afresh each time the server starts', async () => {
   const r = panelRepo();
   const tokens = [];
@@ -846,8 +690,6 @@ test('0042 AC4: without the panel\'s Origin and token the request gets 403 and c
     assert.equal(ok.status, 200, ok.body);
   } finally { await stop(p); }
 });
-
-const button = row => (function find(n) { if (n.tagName === 'button') return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 
 test('0042 AC1: an open draft has a Set ready button, disabled with the reason while it has lint errors', async () => {
   const state = { tickets: [
@@ -961,9 +803,6 @@ test('0042 AC3 (round 1 F1): when the commit fails, a ticket with its own staged
 
 // ---------- 0035: shipping performance in Shipped ----------
 
-const shippedRows = p => p.byId('shipped').children.filter(n => n.tagName === 'tr');
-const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
-
 test('0035 AC1: the stats count tickets shipped today and give median minutes, rounds and tokens, each with how many tickets it covers', () => {
   const model = panelModel();
   const now = Date.now(), iso = ms => new Date(ms).toISOString(), min = 60000;
@@ -1056,11 +895,6 @@ test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and s
 });
 
 // ---------- 0045: flag a build that finished without shipping ----------
-
-const exitOf = (message = 'speck ship refused: speck/config.yml has an uncommitted change.') => ({ build_exit: { at: '2026-10-09T14:55:00.000Z', code: 0, message } });
-const isRed = n => /\b(bad|blocked)\b/.test(n.className || '');
-const nowStep = row => stagesOf(row).children.find(s => /\bnow\b/.test(s.className));
-const findText = (p, row, text) => p.all(row).find(n => n._text === text);
 
 test('0045 AC3: an approved ticket with a build_exit is red on its left edge and current step, with the label and message as text', async () => {
   const message = 'Line one\n<b>not bold</b>\nShip refused.';

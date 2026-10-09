@@ -19,7 +19,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## 2. Tests first
 
-1. For each acceptance criterion, write at least one test that checks it. Name or comment each test with its criterion number (for example `AC2`).
+1. For each acceptance criterion, write at least one test that checks it. Name or comment each test with its criterion number (for example `AC2`). Put this ticket's new tests in a new test file of their own (for example `test/<area>-<id>.test.mjs`) rather than adding to the end of a shared one, and move any helpers they share into a support module, so builds running in parallel don't clash.
 2. Run the test command from `speck/config.yml` (`commands.test`). The new tests should fail. If a test passes before you've written any code, either the criterion is already met or the test is wrong, so look into it.
 3. If the project has no test setup, add the lightest standard one for its stack. If nothing can be tested automatically (for example, a pure copy change), say so in the ticket's Notes and describe how a reviewer can check it by reading the code.
 
@@ -28,7 +28,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 1. Write the simplest change that makes the tests pass, within the ticket's scope. Don't touch anything listed as out of scope, and don't make unrelated changes.
 2. Run the tests until they pass. Keep the full output: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 3. **Size guard:** run `speck diffstat`. If it exits 2 (over the limit), stop. Don't push on. Block the ticket (see section 6) and give a proposed split as the question.
-4. **Living spec:** if the change adds, removes or alters something a user can do, update `speck/product.md` in the same branch: change "Current capabilities", and record any key decisions or known limits. Set `Last updated by ticket: <id>`. Describe the present, not history.
+4. **Living spec:** if the change adds, removes or alters something a user can do, update `speck/product.md` in the same branch: change "Current capabilities", and record any key decisions or known limits. Set `Last updated by ticket: <id>`. Describe the present, not history. Write one sentence per line (a new line after each sentence, indented to stay in its list item), so builds running in parallel can each add sentences without clashing.
 5. **Self-check.** Before the first review round, go over your change the way an adversarial reviewer would. This is not a review or an approval: it catches what you can, and the reviewer still decides. Check:
    - **Unusual input:** empty, missing, malformed or repeated values, and names that are built in rather than missing (for example `constructor` or `__proto__` used as a key).
    - **State over time:** anything kept between review rounds, runs or re-runs. Can a later run pick up something stale or out of date that an earlier one left?
