@@ -1,7 +1,7 @@
 ---
 id: "0072"
 title: "Stop a running build from the CLI"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T22:28:19.677Z"
 ---
 # 0072 · Stop a running build from the CLI
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 The only way to end a build for good is to kill its process by hand, which leaves the ticket `building` with nothing to say why it stopped or how to carry on.
@@ -45,6 +45,7 @@ The only way to end a build for good is to kill its process by hand, which leave
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+Auto-ship hit a merge conflict with main (README.md only; scripts/speck.mjs auto-merged with 0071 and 0075), which I resolved keeping both sides and committed as `speck(0072): merge main`, with all 600 tests passing. The merge needs a review round, but all 3 rounds (`max_review_rounds`) are used. Should I (a) get one more round once you raise `max_review_rounds` to 4 in speck/config.yml, or (b) leave the merge for you to check with `speck pack 0072` and ship with `/speck-ship 0072`? I recommend (a), because scripts/speck.mjs merged with 0071's pause changes in the same area.
 
 ## Review log
 Round 1 (codex): changes requested: F1 endBuild forgets previously identified processes once they cease to be discoverable.; F2 A matching stopped mark does not prevent launch when speck run restarts.
