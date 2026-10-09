@@ -1,7 +1,7 @@
 ---
 id: "0069"
 title: "Drop the status word under an in-flight queue ticket's bar"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T21:42:46.474Z"
 ---
 # 0069 · Drop the status word under an in-flight queue ticket's bar
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Each in-flight ticket in the queue repeats its status in a line under its bar (for example **building**), though the bar's current step already shows it. The extra line makes every row taller for nothing.
@@ -45,7 +45,65 @@ An in-flight queue ticket no longer has a line under its bar repeating its statu
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 288,931
+- Elapsed since build started: 5 min
+- Changed lines: 2 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5d3c0b21fd5ca6f9bdb7ff5ed4bc65c06c9ee813",
+    "thread_id": "01a122a2-d06d-7720-80c0-291b03a149e5",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 288199,
+      "cached_input_tokens": 221312,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 732,
+      "reasoning_output_tokens": 48
+    },
+    "saved_at": "2026-10-09T21:48:00.896Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html queueItem removes the status line for building, reviewing and approved tickets without changing other rendering. All three AC1 tests in test/panel-0069.test.mjs passed independently, covering open and closed rows, bar, counter, path, log and build exit messages."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "queueItem renders the exact replacement instruction for blocked tickets after the question and resume command. Both AC2 tests passed independently, covering open and closed rows and missing question/session data."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueItem's ready-ticket branch and queuedLine are unchanged. The AC3 test passed independently for waiting, unlocking and standalone ready tickets, including bold Queued text."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The repeated status line is removed as requested. Blocked tickets retain the clearer instruction, and ready tickets keep their Queued line. Tests exercise the actual page script; all six ticket tests passed independently. No blocking concerns or unrelated changes found."
+  }
+}
+```
+
+</details>
