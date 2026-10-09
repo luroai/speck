@@ -143,7 +143,17 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
   const settle = () => new Promise(r => setTimeout(r, 20));
   // A key pressed anywhere on the page, as the browser sends it to the document (0054).
   const key = k => { if (document.listeners.keydown) document.listeners.keydown({ key: k }); };
-  return { byId: id => document.getElementById(id), timers, intervals, all, settle, calls, key };
+  // A click as a browser sends it (0077): the page's own listener on the document first, then the node's and those of
+  // each node it's in, until one stops it. Returns true when the document's listener stopped it.
+  const press = node => {
+    let stopped = false;
+    const e = { target: node, stopPropagation() { stopped = true; }, preventDefault() {} };
+    if (document.listeners.click) document.listeners.click(e);
+    const caught = stopped;
+    for (let n = node; n && !stopped; n = n.parentNode) if (n.listeners && n.listeners.click) n.listeners.click(e);
+    return caught;
+  };
+  return { byId: id => document.getElementById(id), timers, intervals, all, settle, calls, key, press };
 }
 
 export const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };

@@ -40,6 +40,7 @@ The priority tag on a draft ticket in the panel can be clicked to set its priori
 ## Notes
 - Decision (user, 2026-10-09): priority is set only while a ticket is a draft, to order the Tickets list. Once it's ready it isn't changed from the panel. (`speck run` still uses it to order ready tickets.)
 - Follows the Set ready path: `POST /api/tickets/<id>/ready` in `panelServer`, and the `readiness` function in `templates/panel.html`. The tag is drawn by `tags()`.
+- Self-check: choosing the priority a ticket already has now commits nothing (it used to make a commit that also swept in other edits to the ticket); added tests for that and for a failed commit putting the ticket back. Updated the 0039 AC1 test to skip the priority tag, which now opens its menu instead of the row (AC2).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
