@@ -1,7 +1,7 @@
 ---
 id: "0045"
 title: "Flag a build that finished without shipping"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T15:04:35.590Z"
 ---
 # 0045 · Flag a build that finished without shipping
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build started by `speck run` can finish without shipping: `speck ship --auto` refuses (as it did for 0035, over an uncommitted change in the main checkout), or the build stops partway. The panel still shows the ticket as normal, because approved tickets are assumed to ship within seconds, and the build's explanation goes only to a log file nobody sees. So the user isn't told that the ticket needs them.
@@ -51,9 +51,14 @@ When a build from `speck run` has finished but its ticket hasn't shipped, the pa
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 280,137
+- Elapsed since build started: 8 min
+- Changed lines: 61 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: a build that exits after its `speck run` has stopped is never recorded, so it's never flagged. A new `speck run` could spot run records whose process is gone and with no `exited`, and add the exit then.
 - Follow-up idea: resuming a flagged build by hand leaves it red; the build could clear or mark its run record when `speck start` resumes it.
