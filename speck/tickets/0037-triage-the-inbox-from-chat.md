@@ -1,7 +1,7 @@
 ---
 id: "0037"
 title: "Triage the inbox from chat"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0036"]            # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T18:29:51.917Z"
 
 ---
 # 0037 · Triage the inbox from chat
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Follow-ups from builds pile up in the inbox (0036). Reading every one would overwhelm the user, who wants to decide only what's worth a ticket, from their single shaping chat.
