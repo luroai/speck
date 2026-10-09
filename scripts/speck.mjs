@@ -1295,18 +1295,9 @@ export function shipTicket(repo, id) {
   writeField(t, 'status', 'done');
   git(['add', '-A', '--', placeTicket(work, t, 'done'), t.file], work);
   git(['commit', '-q', '-m', `speck(${pad}): ship`], work);
-  if (mergeAt === work) {
-    const out = sh('git', ['checkout', '-q', base], { cwd: work });
-    if (out.status !== 0) { // something changed a file in the folder since the check above: undo the ship commit, keeping it
-      git(['reset', '-q', '--keep', branchSha], work);
-      sh('git', ['checkout', '-q', start], { cwd: work }); // back where it started, if the changes allow it
-      const files = listedIn(out, 'Your local changes');
-      throw new SpeckError(`Couldn't switch ${work} to ${base}${files.length ? ` over uncommitted changes to ${files.join(', ')}` : `: ${out.stderr.trim().split('\n').pop()}`}. Nothing was shipped. Commit or stash them, then ship again.`);
-    }
-  }
-  // Uncommitted changes to tracked files, just before anything moves, so the undo can put them back exactly.
-  const kept = { [mergeAt]: git(['stash', 'create'], mergeAt).trim() };
-  if (mergeAt !== work) kept[work] = git(['stash', 'create'], work).trim();
+  // Uncommitted changes to tracked files, taken again just before each step that moves a branch, so a failure can put them back exactly.
+  const kept = {};
+  const snap = () => { for (const dir of new Set([mergeAt, work])) kept[dir] = git(['stash', 'create'], dir).trim(); };
   const lost = [];
   const putBack = dir => {
     if (!kept[dir] || sh('git', ['stash', 'apply', '-q', '--index', kept[dir]], { cwd: dir }).status === 0) return;
@@ -1314,6 +1305,18 @@ export function shipTicket(repo, id) {
     sh('git', ['stash', 'store', '-m', `speck ship ${pad}: uncommitted changes in ${dir}`, kept[dir]], { cwd: dir });
     lost.push(` Your uncommitted changes in ${dir} couldn't be put back in place, so they're saved in git's stash: run \`git stash pop --index\` there.`);
   };
+  if (mergeAt === work) {
+    snap();
+    const out = sh('git', ['checkout', '-q', base], { cwd: work });
+    if (out.status !== 0) { // something changed a file in the folder since the check above: undo the ship commit, keeping the change
+      git(['reset', '-q', '--hard', branchSha], work);
+      back();
+      putBack(work);
+      const files = listedIn(out, 'Your local changes');
+      throw new SpeckError(`Couldn't switch ${work} to ${base}${files.length ? ` over uncommitted changes to ${files.join(', ')}` : `: ${out.stderr.trim().split('\n').pop()}`}. Nothing was shipped. Commit or stash them, then ship again.${lost.join('')}`);
+    }
+  }
+  snap();
   // From the ship commit on, any failure puts back the base branch, the ticket branch, both folders and their uncommitted changes.
   const undo = () => {
     sh('git', ['merge', '--abort'], { cwd: mergeAt });
@@ -1341,6 +1344,7 @@ export function shipTicket(repo, id) {
       throw why ? overwriteError(`Bringing ${base} up to date with ${remote}`, ...why)
         : fail(`Couldn't bring ${base} up to date with ${remote}, so nothing was shipped: ${ff.stderr.trim().split('\n').pop()}`);
     }
+    snap(); // a hook may have changed files during the catch-up
   }
   const merge = sh('git', ['merge', '--no-ff', '-m', `speck(${pad}): ${t.fm.title}`, branch], { cwd: mergeAt });
   if (merge.status !== 0) {

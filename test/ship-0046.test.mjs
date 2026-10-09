@@ -208,3 +208,57 @@ test('0046 (self-check): changes that cannot be put back in place are saved in t
   assert.equal(status(r.wt), '');
   assert.equal(r.statusIn(r.wt), 'approved');
 });
+
+test('0046 round 1 F1: without a worktree, a failed switch to main keeps staged and partly staged changes', () => {
+  const r = shipRepo({ worktree: false });
+  const before = r.snapshot();
+  r.hook("printf 'staged\\n' > {main}/notes.txt && git -C {main} add notes.txt && printf 'both\\n' > {main}/notes.txt && printf 'mine\\n' > {main}/shared.txt && git -C {main} add shared.txt");
+  const res = runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 1, res.stderr + res.stdout);
+  noTrace(res);
+  assert.match(res.stderr, /Nothing was shipped/);
+  assert.equal(status(r.dir), 'MM notes.txt\nM  shared.txt\n', 'staged and unstaged states kept');
+  assert.equal(staged(r.dir, 'notes.txt'), 'staged\n');
+  assert.equal(read(r.dir, 'notes.txt'), 'both\n');
+  assert.equal(staged(r.dir, 'shared.txt'), 'mine\n');
+  const after = r.snapshot();
+  assert.equal(after.main, before.main);
+  assert.equal(after.branch, before.branch, 'the ship commit is undone');
+  assert.equal(after.dir.branch, 'speck/0001-export-bookings');
+  assert.equal(r.statusIn(r.dir), 'approved');
+});
+
+test('0046 round 1 F1: without a worktree, a failed switch over an edit to the shipped ticket saves it in the stash and undoes the ship commit', () => {
+  const r = shipRepo({ worktree: false });
+  const before = r.snapshot();
+  r.hook("t={main}/speck/tickets/done/0001-export-bookings.md && sed 's/^status: done/status: edited/' $t > $t.new && mv $t.new $t && printf 'mine\\n' > {main}/shared.txt");
+  const res = runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 1, res.stderr + res.stdout);
+  noTrace(res);
+  assert.match(res.stderr, /git stash pop --index/);
+  assert.match(gIn(r.dir, 'stash', 'show', '-p', 'stash@{0}').stdout, /\+mine/, 'the stash holds the changes');
+  const after = r.snapshot();
+  assert.equal(after.main, before.main);
+  assert.equal(after.branch, before.branch, 'the ship commit is undone');
+  assert.equal(r.statusIn(r.dir), 'approved');
+});
+
+test('0046 round 1 F2: changes a hook makes while ship catches up with the remote survive a conflict in the ticket merge', () => {
+  const r = shipRepo();
+  remoteMoves(r, 'shared.txt', 'changed elsewhere\n');
+  const before = r.snapshot();
+  r.hook("printf 'mine\\n' > {main}/notes.txt && printf 'staged\\n' > {wt}/notes.txt && git -C {wt} add notes.txt && printf 'wt\\n' > {wt}/other.txt", 'post-merge');
+  const res = runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 1, res.stderr + res.stdout);
+  noTrace(res);
+  assert.match(res.stderr, /hit a conflict/);
+  assert.equal(status(r.dir), ' M notes.txt\n');
+  assert.equal(read(r.dir, 'notes.txt'), 'mine\n');
+  assert.equal(status(r.wt), 'M  notes.txt\n M other.txt\n');
+  assert.equal(staged(r.wt, 'notes.txt'), 'staged\n');
+  assert.equal(read(r.wt, 'other.txt'), 'wt\n');
+  const after = r.snapshot();
+  assert.equal(after.main, before.main, 'the catch-up is undone');
+  assert.equal(after.branch, before.branch);
+  assert.equal(after.wt.head, before.wt.head);
+});

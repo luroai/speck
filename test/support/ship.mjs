@@ -59,10 +59,11 @@ export function shipRepo({ test = 'true', worktree = true } = {}) {
   };
   const snapshot = () => ({ main: sha('main'), branch: sha(BRANCH), dir: folder(dir), wt: folder(wt) });
   // A post-commit hook runs right after ship's own commit, so a change it makes lands after ship's last check and before the merge.
-  const hook = script => {
+  // A post-merge hook runs after a merge that succeeds, such as ship catching up with the remote.
+  const hook = (script, name = 'post-commit') => {
     const hooks = path.join(dir, '.git', 'hooks');
     fs.mkdirSync(hooks, { recursive: true });
-    fs.writeFileSync(path.join(hooks, 'post-commit'), `#!/bin/sh\nunset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE\n${script.replaceAll('{main}', dir).replaceAll('{wt}', wt)}\n`, { mode: 0o755 });
+    fs.writeFileSync(path.join(hooks, name), `#!/bin/sh\nunset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE\n${script.replaceAll('{main}', dir).replaceAll('{wt}', wt)}\n`, { mode: 0o755 });
   };
   return { dir, wt, g, run, sha, statusIn, snapshot, folder, hook };
 }
