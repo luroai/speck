@@ -1,7 +1,7 @@
 ---
 id: "0058"
 title: "Show the build timer as a MM:SS counter"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0058 · Show the build timer as a MM:SS counter
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The queue's elapsed time is whole minutes, so a build that started a minute and a half ago reads `1 min` and then sits there for another thirty seconds. With no seconds in it you can't tell a working build from a panel that has stopped updating, which is the same complaint that put motion on the progress bars (0055).
