@@ -1,7 +1,7 @@
 ---
 id: "0061"
 title: "Show the full ticket's text as formatted Markdown"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:42:48.053Z"
 ---
 # 0061 · Show the full ticket's text as formatted Markdown
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 The full ticket pane shows each section as plain text, so Markdown such as `**bold**`, `` `code` `` and `- ` lists shows its raw symbols. Long notes and criteria with code and lists are harder to read than in a Markdown viewer.
@@ -51,9 +51,17 @@ The full ticket pane shows each section's Markdown formatted, the way a Markdown
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Unsupported constructs do not remain literal when they contain recognised Markdown.; F2 Blank lines discard list context.
+Round 2 (codex): changes requested.
+Round 3 (codex): changes requested: F3 The new branch marks the entire closing line as literal, including text after the closing tag.
+Round 4 (codex): approve.
 
 ## Delivery log
+- Review rounds: 4
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 3,004,518
+- Elapsed since build started: 27 min
+- Changed lines: 287 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Blocked once at the 3-round limit. The user allowed a fourth round, which approved. `limits.max_review_rounds` was 4 on this branch for that round only and is back to 3.
 - Known limits of the pane's parser (no follow-up ticket needed):
