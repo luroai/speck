@@ -1,7 +1,7 @@
 ---
 id: "0038"
 title: "Show the inbox in Shaping"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0038 · Show the inbox in Shaping
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Inbox notes (0036) are idea notes, so without a change they'd crowd the panel's Ideas list and bury the user's own ideas. The user wants to see how many follow-ups are waiting without being shown them all.
