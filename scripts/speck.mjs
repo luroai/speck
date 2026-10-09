@@ -2372,15 +2372,17 @@ function stoppedBySpeck(recordFile) {
   } catch { return false; }
 }
 
-// True for a ticket whose last build `speck stop` ended, until the ticket is committed after the stop (set ready
-// again, for example). A ticket still ready because blocking it failed, or not blocked yet, isn't launched again.
+// The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.
+const lastTicketCommit = (dir, rel) => { const r = sh('git', ['log', '-1', '--format=%H', '--', rel], { cwd: dir }); return r.status === 0 ? r.stdout.trim() : ''; };
+
+// True for a ticket whose last build `speck stop` ended, until the ticket has a commit other than the one it had when
+// it was stopped (set ready again, for example). A ticket still ready because blocking it failed isn't launched again.
 function heldByStop(repo, t) {
   const file = path.join(runsDir(repo), `${t.id}.json`);
   if (!stoppedBySpeck(file)) return false;
-  let at = NaN;
-  try { at = Date.parse(JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')).stopped); } catch { /* unreadable: held */ }
-  const r = sh('git', ['log', '-1', '--format=%cI', '--', t.path], { cwd: t.worktree || repo });
-  return !(Date.parse(r.stdout.trim()) > at);
+  let mark = null;
+  try { mark = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')); } catch { /* unreadable: held */ }
+  return typeof mark?.ticket_commit !== 'string' || mark.ticket_commit === lastTicketCommit(t.worktree || repo, t.path);
 }
 
 // Every process still running, as a set of pids. One that has exited and waits only for its parent to collect it is over.
@@ -2427,7 +2429,10 @@ function cmdStop(args) {
   const b = runRecord(repo, args, 'stop');
   if (!b.running) throw new SpeckError(`${b.id} has no running or paused build launched by speck run, so there's nothing to stop.`);
   const stopMark = path.join(path.dirname(b.mark), `${b.id}.stopped`);
-  try { saveRecord(stopMark, { session: b.rec.session ?? null, pid: b.pid, stopped: new Date().toISOString() }); } catch (e) {
+  // The ticket's commit as the build ends, so speck run can tell when it has been committed again since.
+  const ticketCommit = () => { try { const { at, t } = buildTicket(repo, cfg, b.id); return lastTicketCommit(at, path.relative(at, t.file)); } catch { return null; } };
+  const mark = { session: b.rec.session ?? null, pid: b.pid, stopped: new Date().toISOString(), ticket_commit: ticketCommit() };
+  try { saveRecord(stopMark, mark); } catch (e) {
     throw new SpeckError(`Couldn't mark ${b.id} stopped in ${stopMark} (${e.message}), so it's still ${b.paused ? 'paused' : 'running'}.`);
   }
   const { sent, error } = signalBuild(b, 'SIGSTOP');
@@ -2445,6 +2450,8 @@ function cmdStop(args) {
   fs.rmSync(b.mark, { force: true });
   console.log(`${b.id} stopped (session ${b.rec.session ?? 'unknown'}).`);
 
+  const now = ticketCommit();
+  if (now !== mark.ticket_commit) try { saveRecord(stopMark, { ...mark, ticket_commit: now }); } catch { /* the earlier commit stays: it's still held */ }
   const { at, t } = buildTicket(repo, cfg, b.id);
   if (['approved', 'done', 'cancelled'].includes(t.fm.status)) { console.log(`Its ticket is ${t.fm.status}, so it was left as it is.`); return; }
   const d = new Date();

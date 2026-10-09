@@ -197,8 +197,12 @@ test('0072 AC1 (round 1 F1): a process that ignores SIGTERM and leaves the build
   }
 });
 
-test('0072 AC3 (round 1 F2): a stopped build whose ticket could not be blocked is not launched again when speck run restarts, until its ticket is committed again', async () => {
+test('0072 AC3 (round 1 F2, round 2): a stopped build whose ticket could not be blocked is not launched again when speck run restarts, until its ticket is committed again, whatever the commit dates', async () => {
   const t = tickerRepo();
+  // Its ticket's last commit is dated a day ahead, so it's later than the stop by the clock.
+  assert.equal(speck(t.dir, 'set', '0001', 'priority', '3').status, 0);
+  const future = new Date(Date.now() + 86400000).toISOString();
+  spawnSync('git', ['commit', '-qam', 'future'], { cwd: t.dir, env: { ...env, GIT_COMMITTER_DATE: future, GIT_AUTHOR_DATE: future } });
   let run = await launched(t);
   const hook = path.join(t.dir, '.git', 'hooks', 'pre-commit');
   try {
@@ -214,9 +218,10 @@ test('0072 AC3 (round 1 F2): a stopped build whose ticket could not be blocked i
     assert.match(run.out(), /0001[^\n]*speck stop[^\n]*won't launch it again/);
     await stopRun(run);
     fs.rmSync(hook);
-    await wait(1100); // a commit time later than the stop
+    // Committed again at once, within the same second as the stop, and dated earlier than the future commit.
     assert.equal(speck(t.dir, 'set', '0001', 'priority', '2').status, 0);
-    t.g('commit', '-qam', 'ready again');
+    const second = JSON.parse(fs.readFileSync(runsPath(t.dir, '0001.stopped'), 'utf8')).stopped.replace(/\.\d+Z$/, 'Z');
+    spawnSync('git', ['commit', '-qam', 'ready again'], { cwd: t.dir, env: { ...env, GIT_COMMITTER_DATE: second, GIT_AUTHOR_DATE: second } });
     run = startRun(t.dir);
     assert.ok(await until(() => /Launched 0001/.test(run.out())), `launched once its ticket is committed again: ${run.out()}`);
   } finally { await cleanup(t, run)(); }
