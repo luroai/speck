@@ -625,6 +625,8 @@ test('0034 AC2: every queued ticket has a five-step bar, with done and current s
     T('0009', 'blocked'),
     T('0010', 'ready'),
     T('0011', 'building', { self_check: '' }),
+    T('0012', 'approved'),
+    T('0013', 'approved', { self_check: 'x' }),
   ], ideas: [] });
   const by = id => m.queue.find(t => t.id === id);
   for (const t of m.queue) assert.equal(t.steps.length, 5, t.id);
@@ -642,13 +644,18 @@ test('0034 AC2: every queued ticket has a five-step bar, with done and current s
   assert.deepEqual(steps(by('0008')), ['done', 'done', 'now', '', '']);
   assert.deepEqual(steps(by('0009')), ['now', '', '', '', '']);
   assert.deepEqual(steps(by('0011')), ['now', '', '', '', ''], 'an empty self_check is not set');
+  assert.deepEqual(steps(by('0012')), ['', '', 'done', 'done', 'now'], 'approved with no rounds or self_check: Ship is still current');
+  assert.deepEqual(steps(by('0013')), ['done', '', 'done', 'done', 'now'], 'approved with self_check only: Ship is still current');
 });
 
 test('0034 AC2: the bar is drawn on the page with its labels, done steps and current step', async () => {
-  const state = { tickets: [T('0001', 'reviewing', { self_check: 'x', rounds: [round(1, 1), round(2, 1)] }), T('0002', 'approved', { rounds: [round(1, 1)] })], ideas: [] };
+  const state = { tickets: [T('0001', 'reviewing', { self_check: 'x', rounds: [round(1, 1), round(2, 1)] }), T('0002', 'approved', { rounds: [round(1, 1)] }),
+    T('0003', 'approved'), T('0004', 'approved', { self_check: 'x' })], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
-  const [a, b] = queueRows(p);
+  const [a, b, c, d] = queueRows(p);
+  assert.deepEqual(stepState(c), ['', '', 'done', 'done', 'now'], 'approved with no rounds: Ship is current');
+  assert.deepEqual(stepState(d), ['done', '', 'done', 'done', 'now'], 'approved with self_check only: Ship is current');
   assert.deepEqual(stepText(a), ['Build', 'Self-check', 'Review 2', 'Approve', 'Ship']);
   assert.deepEqual(stepState(a), ['done', 'done', 'now', '', '']);
   assert.deepEqual(stepState(b), ['done', 'done', 'done', 'done', 'now']);

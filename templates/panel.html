@@ -154,7 +154,7 @@ function progress(t) {
   const approved = t.status === 'approved';
   const done = [selfCheck || rounds.length > 0, rounds.length > 0 || (selfCheck && t.status === 'reviewing'), approved, approved, false];
   const labels = ['Build', 'Self-check', rounds.length ? `Review ${latest}` : 'Review', 'Approve', 'Ship'];
-  const current = t.status === 'ready' ? -1 : done.indexOf(false);
+  const current = t.status === 'ready' ? -1 : approved ? 4 : done.indexOf(false); // approved: Ship is current
   return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
 }
 function panelModel(state) {
