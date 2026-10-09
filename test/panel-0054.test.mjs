@@ -54,14 +54,14 @@ test('0054 AC2: Full ticket keeps the ticket open and shows its whole text in th
   assert.ok(paneOpen(p), 'the side pane opens');
   const text = pane(p).textContent;
   for (const x of ['0001', 'Ticket 0001', 'Problem of 0001.', 'Outcome of 0001.', 'Not this.', 'A <b>bold</b> note.']) assert.ok(text.includes(x), x);
-  assert.deepEqual(headings(p, pane(p)), ['Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']);
+  assert.deepEqual(headings(p, pane(p)), ['Readiness', 'Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']); // Readiness: 0062
   const ol = p.all(pane(p)).find(n => n.tagName === 'ol');
   assert.deepEqual(ol.children.map(li => li.textContent), ['First criterion.', 'Second criterion.'], 'numbered criteria');
   assert.doesNotMatch(page(), /innerHTML|insertAdjacentHTML/, 'built as text, never read as HTML');
 
   openTicket(p, '0003');
   showFull(p, '0003');
-  assert.deepEqual(headings(p, pane(p)), ['Outcome'], 'empty sections are left out');
+  assert.deepEqual(headings(p, pane(p)), ['Readiness', 'Outcome'], 'empty sections are left out');
   assert.ok(!p.all(pane(p)).some(n => n.tagName === 'ol'));
 });
 

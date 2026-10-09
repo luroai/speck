@@ -169,6 +169,7 @@
   #full-ticket .top { display: flex; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .close { margin-left: auto; font: inherit; font-size: 11px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover { color: var(--text); }
+  #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
   #full-ticket h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
   #full-ticket .md, #full-ticket ol.criteria { margin: 0 0 10px; color: #bfc2c9; overflow-wrap: anywhere; }
   #full-ticket ol.criteria { padding-left: 18px; }
@@ -655,12 +656,16 @@ function part(body, heading, text) {
   body.appendChild(el('h4', null, heading));
   body.appendChild(el('p', 'text', text));
 }
-// An open ticket, short: its problem and outcome, then a readiness list from what speck can check. The rest is in the side pane.
+// An open ticket, short: its problem and outcome, then its readiness list. The rest is in the side pane.
 function ticketDetail(t, criteria) {
   const body = el('div');
   part(body, 'Problem', t.problem);
   part(body, 'Outcome', t.outcome);
-
+  return el('div', 'detail', null, body, readiness(t, criteria, true));
+}
+// A ticket's readiness list from what speck can check, its Set ready button, the Full ticket button when `withFull`,
+// and why the server last refused to set it ready.
+function readiness(t, criteria, withFull) {
   const ready = el('div', 'ready', null, el('h4', null, 'Readiness'));
   const line = (cls, ok, text) => ready.appendChild(el('div', cls, null, el('span', ok ? 'tick' : 'sq'), el('span', null, text)));
   const sizeOk = t.size === 'S' || t.size === 'M';
@@ -678,9 +683,9 @@ function ticketDetail(t, criteria) {
   }
   if (!after.length) line('ok', true, 'no after: tickets');
   ready.appendChild(setReadyButton(t, errors.length || (t.lint && t.lint.errors) || 0));
-  ready.appendChild(fullButton(t));
+  if (withFull) ready.appendChild(fullButton(t));
   if (refused.has(t.id)) ready.appendChild(el('div', 'bad refused', refused.get(t.id)));
-  return el('div', 'detail', null, body, ready);
+  return ready;
 }
 // Gate 1 from the panel: the server sets the ticket ready and commits it, and the next refresh moves it to the queue.
 function setReadyButton(t, lintErrors) {
@@ -709,12 +714,13 @@ function fullButton(t) {
   });
   return b;
 }
-// The side pane: the ticket's id and title, then each of its sections that has something in it, its Markdown formatted.
+// The side pane: the ticket's id and title, its readiness list and buttons as in the list, without Full ticket, then
+// each of its sections that has something in it, its Markdown formatted.
 function fullTicket(t) {
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', closeFull);
-  const body = el('div');
+  const body = el('div', null, null, paneReadiness(t));
   mdPart(body, 'Problem', t.problem);
   mdPart(body, 'Outcome', t.outcome);
   const criteria = list(t.acceptance_criteria);
@@ -767,19 +773,33 @@ function mdInline(nodes) {
     return el(n.type === 'strong' ? 'strong' : 'em', null, null, ...mdInline(n.inline));
   });
 }
+const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
+// What the pane shows apart from its readiness list, and what that list shows, with the view state it depends on.
+const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
+const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
 // Shows the ticket whose id is in fullId, the first one when ids repeat, or closes the pane when it has left the Tickets
-// list. The pane keeps its nodes while that ticket's own data is unchanged, so text selected in it survives the refresh.
-let fullBuilt = null; // the signature of what the pane shows
+// list. The pane keeps its nodes while what they show is unchanged, so text selected in it survives the refresh. When
+// only the readiness list's data or its Set ready state changes, a new list replaces the old and the rest stays.
+let fullBuilt = null, readyBuilt = null; // the signatures of what the pane and its readiness list show
 function renderFull(drafts) {
   const pane = $('full-ticket'), t = fullId === null ? null : drafts.find(d => String(d.id) === fullId);
   if (!t) fullId = null;
-  const sig = t ? signature([fullId, ownData(t)]) : null;
+  const sig = t ? signature([fullId, fullText(t)]) : null, readySig = t ? signature([fullId, readyData(t)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
   holdPage(!!t);
-  if (sig === fullBuilt) return;
-  fullBuilt = sig;
-  pane.replaceChildren(...(t ? fullTicket(t) : []));
+  if (sig !== fullBuilt) {
+    fullBuilt = sig;
+    readyBuilt = readySig;
+    pane.replaceChildren(...(t ? fullTicket(t) : []));
+  } else if (readySig !== readyBuilt) {
+    readyBuilt = readySig;
+    const body = pane.children[1], old = body.children[0];
+    const focused = !!old.contains && old.contains(document.activeElement); // its Set ready, just clicked
+    body.insertBefore(paneReadiness(t), old);
+    body.removeChild(old);
+    if (focused && pane.focus) pane.focus({ preventScroll: true }); // so the keys still scroll the pane
+  }
 }
 function closeFull() { fullId = null; render(); }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.

@@ -42,6 +42,8 @@ The full ticket pane shows the same readiness list and action buttons as the ope
 - Readiness at the top, so it's visible without scrolling, is a default chosen while ticketing. To confirm before ready.
 - The refusal reasons and pending requests are already kept by ticket id in the page (`refused`, `settingReady`).
 - product.md's Shaping description needs updating.
+- The pane's readiness list carries the same "Readiness" heading as the list's, so the 0054 and 0061 tests that list the pane's headings now start with it.
+- Self-check: the pane's Set ready kept the focus on a node that was replaced, so the keys stopped scrolling the pane after a click; the pane now takes the focus back (browser test added).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
