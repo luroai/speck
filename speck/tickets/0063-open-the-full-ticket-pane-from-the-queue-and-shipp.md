@@ -1,7 +1,7 @@
 ---
 id: "0063"
 title: "Open the full ticket pane from any ticket in the panel"               # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T20:28:37.503Z"
 ---
 # 0063 · Open the full ticket pane from any ticket in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The full ticket pane opens only from a draft in Shaping. Once a ticket is in the queue or has shipped, the user can't read what it was meant to do without opening its file, which is when they most often want a reminder: watching a build, or checking what just shipped.
@@ -49,9 +49,14 @@ Any ticket in the queue or the Shipped list can be opened in the full ticket pan
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 447,796
+- Elapsed since build started: 13 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none went to the inbox):
 - Known limit: the ticket's out of scope says the queue opens only in-flight tickets, but a `ready` queue ticket opens too (it shows its log), so it gets a Full ticket button as well, as criterion 1 asks for any open queue ticket.
