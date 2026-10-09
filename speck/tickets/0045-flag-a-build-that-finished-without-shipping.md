@@ -1,7 +1,7 @@
 ---
 id: "0045"
 title: "Flag a build that finished without shipping"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T15:04:35.590Z"
 
 ---
 # 0045 · Flag a build that finished without shipping
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A build started by `speck run` can finish without shipping: `speck ship --auto` refuses (as it did for 0035, over an uncommitted change in the main checkout), or the build stops partway. The panel still shows the ticket as normal, because approved tickets are assumed to ship within seconds, and the build's explanation goes only to a log file nobody sees. So the user isn't told that the ticket needs them.
