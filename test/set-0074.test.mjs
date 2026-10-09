@@ -57,6 +57,18 @@ test('0074 AC2: values that are entirely quoted, padded or hold a backslash read
   }
 });
 
+test('0074 AC1, AC2: bracketed text with quotes reads back as text, comment and all', () => {
+  const { run, file, line } = repo();
+  for (const v of ['[It\'s fine]', '[Say "hi" now]', '[plain]', '[]']) {
+    assert.equal(run('set', '1', 'title', v).status, 0);
+    assert.equal(statusJson(run).title, v, `title ${v}`);
+    assert.ok(fs.readFileSync(file, 'utf8').includes(`\n# 0001 · ${v}\n`), `heading ${v}`);
+    assert.match(line('title'), /\s+# one outcome, no "and"$/, `comment kept after ${v}`);
+    assert.equal(run('set', '1', 'source', v).status, 0);
+    assert.equal(statusJson(run).source, v, `source ${v}`);
+  }
+});
+
 test('0074: plain values speck set writes keep their types', () => {
   const { run, line } = repo();
   assert.equal(run('set', '1', 'priority', '2').status, 0);
