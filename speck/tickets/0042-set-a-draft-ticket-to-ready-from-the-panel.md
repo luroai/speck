@@ -1,7 +1,7 @@
 ---
 id: "0042"
 title: "Set a draft ticket to ready from the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T14:00:42.783Z"
 ---
 # 0042 · Set a draft ticket to ready from the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Gate 1 now happens in the panel, but setting a ticket to ready still means leaving it for a terminal, running `speck set <id> status ready` and committing the ticket. That breaks the flow from reading a ticket to approving it.
@@ -48,9 +48,15 @@ An open draft ticket in the panel has a Set ready button that approves it and co
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A failed commit loses the ticket's pre-existing staged contents.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 688,129
+- Elapsed since build started: 15 min
+- Changed lines: 124 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: the Set ready request has no timeout, so if the server hangs (for example a commit waiting on a GPG signing prompt, which also blocks the whole server) the button stays on "Setting ready…" until the page is reloaded.
 - Follow-up idea: a 405 always says `Allow: GET`, including for other methods on `/api/tickets/<id>/ready`, where `POST` is allowed.
