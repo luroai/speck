@@ -1,7 +1,7 @@
 ---
 id: "0034"
 title: "Show the queue as one list with progress bars"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T13:12:49.215Z"
 ---
 # 0034 · Show the queue as one list with progress bars
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The queue splits tickets into Needs you, Running and Up next, so a ticket jumps between groups as it moves, and nothing shows how far a build has got. A progress bar per ticket makes the pipeline readable at a glance.
@@ -47,9 +47,15 @@ The queue is one list in which every in-flight ticket has a progress bar, ticket
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 An approved ticket without review rounds shows Build (or Self-check when self_check exists) as current instead of Ship.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 538,571
+- Elapsed since build started: 9 min
+- Changed lines: 65 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: the `.group` CSS rules in `templates/panel.html` are now unused and could be removed.
 - Follow-up idea: an approved ticket with no review rounds shows Ship as current with Build and Self-check not done, which can't happen through `/speck-build` but looks odd if a status is set by hand.
