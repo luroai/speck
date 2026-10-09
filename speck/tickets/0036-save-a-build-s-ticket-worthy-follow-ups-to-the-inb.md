@@ -1,7 +1,7 @@
 ---
 id: "0036"
 title: "Save a build's ticket-worthy follow-ups to the inbox"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T17:30:58.478Z"
 ---
 # 0036 · Save a build's ticket-worthy follow-ups to the inbox
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Most builds end with follow-up ideas in the ticket's Delivery log, but once the ticket moves to `speck/tickets/done/` nobody reads them again. The shaping chat, where tickets are made, never sees what a build learned, so real bugs and missing checks are lost.
@@ -49,7 +49,79 @@ Each follow-up that would need its own ticket lands in `speck/ideas/` as an inbo
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 266,705
+- Elapsed since build started: 3 min
+- Changed lines: 30 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5768f6428483e9d6a9b3098a49920a3bb8b8c7cb",
+    "thread_id": "01a121ba-49f6-7203-bc19-eee80903c4ea",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 265855,
+      "cached_input_tokens": 191872,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 850,
+      "reasoning_output_tokens": 68
+    },
+    "saved_at": "2026-10-09T17:34:12.662Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 5 step 1 requires separate dated notes for behaviour changes, bugs and missing checks, excludes tidy-ups and known limits, and writes nothing when none qualify. The AC1 text test covers these instructions and passed in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Section 5 step 1 supplies the required heading, Captured/status line, From ticket line and What/Why/Notes template. The AC2 test checks their order and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Section 5 step 1 requires checking every idea, live and archived ticket, and product.md; skipping clear duplicates without asking; and recording each skipped follow-up and its match. The AC3 test covers these rules and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Section 5 requires committing notes and the ticket by named paths on the ticket branch before close. Both successful shipping and disabled auto-ship reports must give the inbox count or say none. The AC4 test covers these instructions and passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-review/SKILL.md directs unfixed minor findings to build section 5 step 1. speck/product.md accurately describes the new inbox workflow. The AC5 test covers both files and passed."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The new description matches the skill instructions and explicitly states that this capability lives in the skills only."
+    },
+    "escalation_question": "",
+    "summary": "Builds now have clear instructions to save substantial follow-ups as linked inbox notes, skip duplicates and report how many were saved. The change meets all five criteria and stays within scope. Tests honestly check the instructions; whether an agent follows them remains a manual check, as the ticket specifies."
+  }
+}
+```
+
+</details>
