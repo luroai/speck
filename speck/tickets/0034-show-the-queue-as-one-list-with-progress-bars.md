@@ -41,6 +41,7 @@ The queue is one list in which every in-flight ticket has a progress bar, ticket
 - Design reference: the progress bars in `docs/panel-mockup.html`.
 - Uses `self_check` from 0033, so it builds after 0033.
 - Approved tickets aren't red: with `auto_ship` on they ship within seconds. Their bar shows Ship as the current step.
+- Self-check: a high-risk tag in the queue now uses the warning colour rather than red, so only a blocked ticket is red there (Shaping is unchanged). Also checked an empty `self_check`, a missing or `null` round number, an invalid or future `started` and a blocked ticket with no question. The 0031 tests that expected the Needs you, Running and Up next groups now expect the single list.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
