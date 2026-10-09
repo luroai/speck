@@ -1,7 +1,7 @@
 ---
 id: "0074"
 title: "Keep a title with an apostrophe from swallowing its comment"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0074 · Keep a title with an apostrophe from swallowing its comment
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck set <id> title "…"` writes the title without quotes when it has no `:` or `#`. A title with an odd number of apostrophes, such as "Pause a running build until it's played", then reads back with the template's trailing comment (`# one outcome, no "and"`) on the end, in the ticket's heading, `speck status`, the panel and everywhere else the title shows. It happened on 0070 and had to be fixed by hand.
