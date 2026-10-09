@@ -1,7 +1,7 @@
 ---
 id: "0031"
 title: "Show a read-only control panel in the browser"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T11:10:09.637Z"
 ---
 # 0031 · Show a read-only control panel in the browser
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Tickets are now moving fast and several build at once, and following them in Markdown files and `speck status` makes it hard to see what's running, what's next and what needs you. A read-only view in the browser shows the pipeline at a glance, without changing how speck works.
@@ -51,9 +51,15 @@ Tickets are now moving fast and several build at once, and following them in Mar
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A stalled fetch or response body stops polling indefinitely and leaves the page showing its previous connection status.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 661,090
+- Elapsed since build started: 11 min
+- Changed lines: 340 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -126,6 +132,79 @@ Tickets are now moving fast and several build at once, and following them in Mar
     },
     "escalation_question": "",
     "summary": "The read-only panel implements the requested views and protects ticket text from being interpreted as HTML. One reliability issue needs fixing: a stalled request can freeze updates indefinitely without showing that the panel is disconnected. The current tests miss this case."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "363882943806049949656a9300b2dc8ff622bb8f",
+    "thread_id": "01a12062-11dd-7472-b2ec-402802b7b995",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 467070,
+      "cached_input_tokens": 372480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1935,
+      "reasoning_output_tokens": 118
+    },
+    "saved_at": "2026-10-09T11:20:59.939Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdPanel and panelPort retain localhost binding, default/custom ports, startup errors and Host validation. AC1 integration tests in test/panel.test.mjs cover these behaviours and passed in the supplied run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdPanel serves the page and freshly computed statusData JSON, rejects other routes and methods, and performs no repository writes. AC2 integration tests cover JSON equivalence, routing, repository snapshots and server error recovery; all passed in the supplied run."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel, render and draftItem implement the specified groups, criteria details, ordering and shipped metrics. AC3 tests cover grouping, exclusions, latest-five ordering, missing timestamps and totals; whole-script tests exercise opening criteria. These passed in the supplied run."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html poll now schedules every 2000 ms before awaiting requests, aborts overdue requests including pending bodies, reports disconnection and ignores obsolete responses. I independently ran the new stalled-request/body regression test against the current page script; it passed. Existing worktree-update and recovery tests also passed in the supplied run."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "el and render use textContent and createTextNode for ticket and idea text. AC5 whole-script tests cover literal markup across all areas, questions and opened criteria; these passed in the supplied run."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Previously, a stalled request could stop polling indefinitely. The current implementation schedules subsequent polls independently, aborts overdue requests and prevents late responses from restoring stale state. The new regression test exercises stalled fetches, stalled bodies and recovery.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated panel description matches the implementation, including treating an unanswered request as disconnected when the next poll is due."
+    },
+    "escalation_question": "",
+    "summary": "The read-only panel meets all five criteria. The polling freeze is fixed and covered by a regression test that I independently ran. No blocking findings remain; the change is ready for merge."
   }
 }
 ```
