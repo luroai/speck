@@ -1,7 +1,7 @@
 ---
 id: "0075"
 title: "Treat a ticket with no priority the same everywhere"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T22:28:44.275Z"
 
 ---
 # 0075 · Treat a ticket with no priority the same everywhere
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck doesn't handle a ticket with no priority consistently. `speck status` lists `priority: ""` as `P` above P1 tickets and a bare `priority:` as `P[object Object]`, while `status --json` (and so `speck run` and the panel) puts both last. Nothing checks the value either: `speck set <id> priority high` is accepted, and there's no way to clear a priority with `speck set`. It still matters for tickets edited by hand.
