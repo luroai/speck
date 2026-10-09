@@ -110,6 +110,9 @@ Everything happens in the local repo, with no PR.
     Then **Shipped**: above the list, a stats row with the tickets shipped today (`finished` on today's date in the browser's time zone) and the median minutes from `started` to `finished`, median review rounds and median tokens, each saying how many tickets it covers (every `done` ticket with both times, with at least one review round, or with tokens recorded, respectively) and showing a dash when it covers none.
     The list has the latest 5 `done` tickets by `finished` time, newest first, with review rounds, tokens, the minutes from `started` to `finished` and when it shipped, from `finished` in the browser's time zone (`HH:MM` today, otherwise `D Mon HH:MM`, for example `8 Oct 14:02`, with no year); done tickets with no `finished` time come after those, within the 5, and show a dash for when they shipped.
     With no `done` tickets it says nothing has shipped yet and shows no stats.
+    Text selected in a queue or Shipped row, and the scroll position of a build message box, stay put through the refresh while that ticket's data in `/api/state` (by `id`, whatever order its fields come in) is unchanged, whatever else changes.
+    A kept row's minutes since `started`, Shipped time, chain icon and "unlocks" or "waiting on" text still change in place when only the clock or other tickets change.
+    When a row's own data changes, the new content shows in that refresh and its selection or scroll position may be lost.
     Cancelled tickets aren't shown.
     It fetches `/api/state` every 2 seconds without reloading (a request still unanswered when the next is due counts as disconnected), says when it's disconnected (or what the server couldn't read), keeps the last state on screen and recovers by itself.
     Ticket and idea text is always shown as text, never as HTML.

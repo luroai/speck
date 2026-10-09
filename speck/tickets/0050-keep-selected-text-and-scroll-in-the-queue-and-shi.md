@@ -43,6 +43,7 @@ Text selected in a queue or Shipped row, and the scroll position of a build mess
 - "Data unchanged" means the same field values in `/api/state` for that ticket (matched by `id`), whatever order the fields come in. Changes to the hover highlight, chain icon or "unlocks"/"waiting on" text that come only from other tickets aren't the row's own data.
 - No external facts: everything is in this repo.
 - Real-browser tests can use the helpers in `test/support/panel.mjs`.
+- Self-check: no changes (duplicate and built-in ids, reordered fields and failed refreshes were already covered by the tests).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

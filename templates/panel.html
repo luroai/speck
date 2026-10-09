@@ -329,7 +329,7 @@ function ticketHead(t) {
 }
 const ownData = t => { const { unlocks, chain, linked, ...own } = t; return own; }; // what /api/state has for this ticket
 function newHead(node, t) {
-  const old = [...node.children].find(n => n.className === 'head'); // children is an HTMLCollection, with no find
+  const old = child(node, 'head');
   node.insertBefore(ticketHead(t), old);
   node.removeChild(old);
 }
@@ -422,13 +422,13 @@ function shapingToggle(m) {
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)),
-    el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : '')));
+    el('span', 'sub', queueMinutes(t))));
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
   for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : 'now') : null, s.label));
   q.appendChild(bar);
   if (!t.inFlight) {
-    q.appendChild(el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : '')));
+    q.appendChild(queuedLine(t));
     return q;
   }
   if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
@@ -439,6 +439,23 @@ function queueItem(t) {
   q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
   if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
   return q;
+}
+const queueMinutes = t => (t.minutes !== null ? `${t.minutes} min` : '');
+const queuedLine = t => el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : ''));
+const child = (node, cls) => [...node.children].find(n => n.className === cls); // children is an HTMLCollection, with no find
+// What a kept queue row shows from the clock or from other tickets, put right on its node: the minutes, and for a
+// ready ticket its chain icon and Queued line. Only the parts that change are replaced.
+function queueUpdate(q, t) {
+  const sub = child(child(q, 'top'), 'sub');
+  if (sub.textContent !== queueMinutes(t)) sub.textContent = queueMinutes(t);
+  if (t.inFlight) return;
+  const row = child(child(q, 'top'), 'row'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
+  if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
+    if (icon) row.insertBefore(icon, child(row, 'title'));
+    if (old) row.removeChild(old);
+  }
+  const act = child(q, 'act'), line = queuedLine(t);
+  if (act.textContent !== line.textContent) { q.insertBefore(line, act); q.removeChild(act); }
 }
 // Hovering a ticket in Shaping or a ready one in the queue lights it and every ticket linked to it through after:, and dims the rest.
 // The classes are set on the nodes in place, so a Shaping item keeps its node (and any text selected in it).
@@ -466,23 +483,24 @@ function fill(id, nodes, emptyText) {
   for (const c of [...box.children]) if (!want.includes(c)) box.removeChild(c);
   want.forEach((n, i) => { if (box.children[i] !== n) box.insertBefore(n, box.children[i] || null); });
 }
-// The Shaping items built by the last render, by key ('t:<id>' or 'i:<path>'), each with everything it shows. An item
-// whose own data and view state are unchanged keeps its node, so text selected in it survives the refresh. What it
-// shows from other items (`derived`) is put right with `update`, on the node it keeps.
-let built = new Map();
+// The items built by the last render, for each box, by key ('t:<id>' or 'i:<path>' in Shaping, the id elsewhere), each
+// with everything it shows. An item whose own data and view state are unchanged keeps its node, so text selected in it,
+// and a box's scroll position, survive the refresh. What it shows from other items or the clock (`derived`) is put
+// right with `update`, on the node it keeps.
+const built = new Map();
 // The same field values give the same signature, whatever order the fields come in, at every level.
 const signature = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(f => [f, x[f]])) : x));
-function shapingItems(list, keyOf, viewOf, make, { own = x => x, derived = () => null, update = () => {} } = {}) {
-  const now = new Map();
+function keptItems(box, list, keyOf, viewOf, make, { own = x => x, derived = () => null, update = () => {} } = {}) {
+  const before = built.get(box) || new Map(), now = new Map();
   const nodes = list.map(x => {
-    const key = keyOf(x), sig = signature([own(x), viewOf(x)]), from = signature(derived(x)), last = built.get(key);
+    const key = keyOf(x), sig = signature([own(x), viewOf(x)]), from = signature(derived(x)), last = before.get(key);
     if (now.has(key)) return make(x); // a repeated id or path: built afresh each time, as it can't share a node
     const kept = last && last.sig === sig, node = kept ? last.node : make(x);
     if (kept && last.from !== from) update(node, x);
     now.set(key, { sig, from, node });
     return node;
   });
-  built = now;
+  built.set(box, now);
   return nodes;
 }
 
@@ -491,21 +509,24 @@ function render() {
   if (!state) return;
   const m = panelModel(state);
   shapingToggle(m);
-  if (shapingView === 'ideas') fill('shaping', shapingItems(m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
-  else fill('shaping', shapingItems(m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
+  if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
+  else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
 
-  fill('queue', m.queue.map(queueItem), 'Nothing in flight or ready.');
+  // The minutes come from the clock, not the ticket, so they are put right on a kept row.
+  fill('queue', keptItems('queue', m.queue, t => String(t.id), () => null, queueItem,
+    { own: t => { const { minutes, ...own } = ownData(t); return own; }, derived: t => [t.minutes, t.chain, t.unlocks], update: queueUpdate }), 'Nothing in flight or ready.');
   linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
   lightUp();
   const flying = m.queue.filter(t => t.inFlight).length;
   $('queue-n').textContent = `${flying} in flight · ${m.queue.length - flying} queued`;
 
-  fill('shipped', m.shipped.map(t => {
+  // The shipped time turns from the time alone to date and time after midnight, so it is put right on a kept row.
+  fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), () => null, t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
     const name = el('td', null, null, el('span', 'id', t.id), bugTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
     return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when));
-  }), 'Nothing shipped yet.');
+  }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => { tr.children[2].textContent = t.when; } }), 'Nothing shipped yet.');
   const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
     el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));
   const med = (s, fmt = String) => (s.median === null ? '–' : fmt(s.median));
