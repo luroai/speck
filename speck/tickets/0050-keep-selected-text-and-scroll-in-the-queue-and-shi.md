@@ -289,3 +289,84 @@ Round 2 (codex): approve.
 ```
 
 </details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9d8dc4d79a55a8a98511cc0cd02ce9be04423cc7",
+    "thread_id": "01a121bb-3369-72f3-a50f-ae0b405c2d7b",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 1571484,
+      "cached_input_tokens": 1301632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4434,
+      "reasoning_output_tokens": 433
+    },
+    "saved_at": "2026-10-09T18:50:29.369Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "keptItems retains unchanged queue rows. AC1 tests cover titles, questions, messages, other-ticket changes and reordered fields. copyLabel now updates only the button; an independent fakePage reproduction confirmed the row remains attached through clipboard failure, feedback reset and a successful refresh."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Unchanged message boxes retain their nodes. test/panel-0050.test.mjs includes real-browser scrollTop checks through refreshes and another ticket changing; supplied results pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render retains unchanged Shipped rows using keptItems. AC3 node-retention and real-browser selection tests pass in the supplied results."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "queueUpdate and the Shipped updater still use setText. The real-browser AC4 test exercises selected minute numbers, midnight and selection spanning title and minutes; supplied results pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Changed ticket signatures rebuild their rows. AC5 tests cover questions, messages, titles, rounds and status, with browser checks for changed queue and Shipped content."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clock updates previously discarded selections involving minutes or shipped-time text.",
+        "suggested_fix": "Completed: setText preserves the text node and adjusts affected selection endpoints, with browser regression coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Copy feedback previously rebuilt an unchanged blocked row and discarded its selection.",
+        "suggested_fix": "Completed: copyLabel changes only the button. The regression test verifies retained row and command nodes through feedback changes and reset; independent reproduction also confirms retention through a successful refresh.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The selection, scrolling and clock-update description matches the implementation. The temporary review-limit increase is excluded from the requested review scope."
+    },
+    "escalation_question": "",
+    "summary": "Both reported issues are fixed. Selected text and message scrolling survive unchanged-row refreshes, times continue updating, and Copy feedback now preserves the row. All five criteria pass."
+  }
+}
+```
+
+</details>
