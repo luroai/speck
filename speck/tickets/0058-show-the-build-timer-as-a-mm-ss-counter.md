@@ -1,7 +1,7 @@
 ---
 id: "0058"
 title: "Show the build timer as a MM:SS counter"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0051", "0052", "0053", "0055"]                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:49:23.122Z"
 
 ---
 # 0058 · Show the build timer as a MM:SS counter
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The queue's elapsed time is whole minutes, so a build that started a minute and a half ago reads `1 min` and then sits there for another thirty seconds. With no seconds in it you can't tell a working build from a panel that has stopped updating, which is the same complaint that put motion on the progress bars (0055).
