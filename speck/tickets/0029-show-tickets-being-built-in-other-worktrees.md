@@ -1,7 +1,7 @@
 ---
 id: "0029"
 title: "Show tickets being built in other worktrees"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T10:09:23.994Z"
 ---
 # 0029 · Show tickets being built in other worktrees
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once builds run in their own worktrees (0028), a ticket's progress is committed on its branch in that worktree. From the main checkout, the ticket still reads `ready`, so `speck status` misleads you and another session could start the same ticket.
