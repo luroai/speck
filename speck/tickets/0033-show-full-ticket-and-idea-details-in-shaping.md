@@ -1,7 +1,7 @@
 ---
 id: "0033"
 title: Show everything needed for Gate 1 in Shaping                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T12:47:52.575Z"
 
 ---
 # 0033 · Show everything needed for Gate 1 in Shaping
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 At Gate 1 you need the whole ticket in front of you, but the panel's Shaping area shows only a criteria count, a lint result and the criteria. Ideas and tickets are also mixed in one list, so it isn't obvious which kind you're looking at.
