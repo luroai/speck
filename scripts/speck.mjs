@@ -2128,7 +2128,11 @@ function cmdRun() {
   const finished = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
-    else {
+    else if (stoppedBySpeck(recordFile)) {
+      console.log(`${id} build ended by \`speck stop\`.`);
+      recordExit(id, recordFile, signal ? null : code);
+      return tick();
+    } else {
       console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
       recordExit(id, recordFile, signal ? null : code);
     }
@@ -2172,7 +2176,9 @@ function cmdRun() {
       if (pidAlive(b.pid)) continue;
       adopted.delete(id);
       running.delete(id);
+      const byStop = stoppedBySpeck(b.file);
       recordExit(id, b.file, null);
+      if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
       console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
       reportIfStillReady(id, b.log);
     }
@@ -2345,6 +2351,89 @@ function cmdPlay(args) {
     throw new SpeckError(`${b.id} is playing, but its paused mark ${b.mark} couldn't be removed (${e.message}). Run \`speck play ${b.id}\` again.`);
   }
   console.log(`${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`);
+}
+
+// ---------- stop (end a build speck run launched for good, and block its ticket) ----------
+
+const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+// True if `speck stop` ended the build in this run record: a <id>.stopped file beside it names its session and pid.
+function stoppedBySpeck(recordFile) {
+  try {
+    const rec = JSON.parse(fs.readFileSync(recordFile, 'utf8'));
+    const mark = JSON.parse(fs.readFileSync(recordFile.replace(/\.json$/, '.stopped'), 'utf8'));
+    return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && Number.isInteger(mark.pid) && mark.pid === rec.pid && mark.session === rec.session;
+  } catch { return false; }
+}
+
+// The build's processes that are still running. One that has exited and waits only for its parent to collect it is over.
+function liveBuildProcesses(b) {
+  const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
+  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
+  const zombies = new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([, s]) => /^Z/.test(s || '')).map(([p]) => Number(p)));
+  return buildProcesses(b.pid, b.rec.session).filter(p => !zombies.has(p));
+}
+
+// Ends a build and everything it started, already held with SIGSTOP so none can start anything more: asks each to end
+// (SIGTERM, and SIGCONT so a held one hears it), and ends any still there after a few seconds with SIGKILL.
+// Returns the processes still running at the end.
+function endBuild(b) {
+  const each = (pids, signal) => { for (const p of pids) try { process.kill(p, signal); } catch { /* gone */ } };
+  let left = liveBuildProcesses(b);
+  each(left, 'SIGTERM');
+  each(left, 'SIGCONT');
+  for (let i = 0; i < 50 && left.length; i++) { sleep(100); left = liveBuildProcesses(b); }
+  for (let i = 0; i < 20 && left.length; i++) { each(left, 'SIGKILL'); sleep(100); left = liveBuildProcesses(b); }
+  return left;
+}
+
+// Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
+function buildTicket(repo, cfg, id) {
+  const list = worktreeList(repo);
+  const branch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${id}-`);
+  const at = list.find(w => w.branch && branch.test(w.branch) && fs.existsSync(w.path))?.path || list[0].path;
+  return { at, t: findTicket(at, id) };
+}
+
+// Ends the build, then blocks its ticket and commits that where the build keeps it. A <id>.stopped mark is left first,
+// so speck run knows the build ended because of this rather than reporting it as a build that stopped or failed.
+function cmdStop(args) {
+  const repo = findRepoRoot();
+  const cfg = loadConfig(repo);
+  const b = runRecord(repo, args, 'stop');
+  if (!b.running) throw new SpeckError(`${b.id} has no running or paused build launched by speck run, so there's nothing to stop.`);
+  const stopMark = path.join(path.dirname(b.mark), `${b.id}.stopped`);
+  try { saveRecord(stopMark, { session: b.rec.session ?? null, pid: b.pid, stopped: new Date().toISOString() }); } catch (e) {
+    throw new SpeckError(`Couldn't mark ${b.id} stopped in ${stopMark} (${e.message}), so it's still ${b.paused ? 'paused' : 'running'}.`);
+  }
+  const { sent, error } = signalBuild(b, 'SIGSTOP');
+  if (error) {
+    if (!b.paused) carryOn(sent);
+    fs.rmSync(stopMark, { force: true });
+    throw new SpeckError(`Couldn't stop ${b.id}: ${error} It's still ${b.paused ? 'paused' : 'running'}.`);
+  }
+  let left;
+  try { left = endBuild(b); } catch (e) {
+    throw new SpeckError(`${b.id}'s build may be only partly stopped: ${e.message} Its ticket is unchanged. Run \`speck stop ${b.id}\` again. If it says there's nothing to stop, end any of its processes still running yourself, then block its ticket with \`speck set ${b.id} status blocked\`.`);
+  }
+  if (left.length)
+    throw new SpeckError(`Couldn't end all of ${b.id}'s build: process${left.length === 1 ? '' : 'es'} ${left.join(', ')} ${left.length === 1 ? 'is' : 'are'} still running. End ${left.length === 1 ? 'it' : 'them'} with \`kill -9 ${left.join(' ')}\`. Its ticket is unchanged.`);
+  fs.rmSync(b.mark, { force: true });
+  console.log(`${b.id} stopped (session ${b.rec.session ?? 'unknown'}).`);
+
+  const { at, t } = buildTicket(repo, cfg, b.id);
+  if (['approved', 'done', 'cancelled'].includes(t.fm.status)) { console.log(`Its ticket is ${t.fm.status}, so it was left as it is.`); return; }
+  const d = new Date();
+  const question = `Stopped by you on ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.`;
+  const comments = old => (old.match(/<!--[\s\S]*?-->/g) || []).map(c => `${c}\n`).join('');
+  let text = setField(t.raw, 'status', 'blocked');
+  text = /^## Blocked question[ \t]*$/m.test(text) ? replaceSection(text, 'Blocked question', old => `${comments(old)}${question}`, t.file)
+    : `${text.replace(/\s*$/, '')}\n\n## Blocked question\n${question}\n`;
+  fs.writeFileSync(t.file, syncHeader(text));
+  const commit = commitTicketOnly(at, t.file, t.raw, `speck(${b.id}): stopped`);
+  if (commit.status !== 0)
+    throw new SpeckError(`${b.id}'s build is stopped, but its ticket couldn't be committed in ${at}, so it's unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run \`speck set ${b.id} status blocked\` there and commit it.`);
+  console.log(`${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`);
 }
 
 function cmdDiffstat() {
@@ -2562,6 +2651,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck run                           start a build for each ready ticket as it becomes ready, until stopped
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused
+  speck stop <id>                     end a build speck run launched for good, and block its ticket
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
@@ -2575,7 +2665,7 @@ const HELP = `speck: small tickets, independent review, you merge.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {

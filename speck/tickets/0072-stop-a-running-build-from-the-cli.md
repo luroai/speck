@@ -40,6 +40,8 @@ The only way to end a build for good is to kill its process by hand, which leave
 - After 0070, so a paused build can be stopped too.
 - While a build runs, its ticket file lives in the build's worktree, and `speck status` reads it from there.
 - product.md's `speck run` description and the list of commands need updating.
+- product.md no longer exists (removed by 0068), so README's commands table (its `speck run` row and a new `stop` row) and `speck help` were updated instead.
+- Self-check: a stop whose `ps` fails before anything is ended now leaves the build running and unmarked (its stop mark is removed), a partly finished stop says how to finish by hand, and a ticket already approved, done or cancelled is left as it is; tests added for the first and last.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
