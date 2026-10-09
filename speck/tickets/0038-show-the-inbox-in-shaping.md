@@ -40,6 +40,7 @@ Shaping has an Inbox tab, with its own colour, that shows the count on the toggl
 - Builds on the Tickets / Ideas toggle from 0033 and uses the note format from 0036.
 - Uses the `status` and `body` fields that `speck status --json` already gives each idea, so the CLI doesn't change.
 - No external facts: everything is in this repo.
+- Self-check: the `From ticket:` id is now the first word on the line, so a line with trailing text (`0041 (round 2)`) still shows its id; added a test.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
