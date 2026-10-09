@@ -249,12 +249,9 @@ test('0031 AC3: the model sorts tickets into Shaping, the Queue and Shipped, and
   assert.deepEqual(ids(m.drafts), ['0001', '0010']);
   assert.deepEqual(m.drafts[0].acceptance_criteria, ['One.', 'Two.']);
   assert.deepEqual(m.ideas.map(i => i.title), ['A', 'C', 'B'], 'every idea, ticketed ones last (0033)');
-  assert.deepEqual(ids(m.needsYou), ['0002', '0003']);
-  assert.deepEqual(ids(m.running), ['0004', '0005']);
-  assert.equal(m.running[0].round, null);
-  assert.equal(m.running[1].round, 2, 'latest round number while reviewing');
-  assert.deepEqual(m.upNext.map(t => [t.rank, t.id, t.waiting_on]), [[1, '0006', ['0009', '0004']], [2, '0007', []]], 'numbered in JSON order');
-  const shown = [...m.drafts, ...m.needsYou, ...m.running, ...m.upNext, ...m.shipped];
+  assert.deepEqual(ids(m.queue), ['0002', '0003', '0004', '0005', '0006', '0007'], 'one list: in flight, then ready (0034)');
+  assert.deepEqual(m.queue.map(t => t.waiting_on), [[], [], [], [], ['0009', '0004'], []]);
+  const shown = [...m.drafts, ...m.queue, ...m.shipped];
   assert.ok(!shown.some(t => t.id === '0008'), 'cancelled is not shown');
 });
 
@@ -294,7 +291,7 @@ test('0031 AC3: Shipped shows the 5 latest finished done tickets, newest first, 
 
 test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without the sample banner or "later" buttons', () => {
   const html = page();
-  for (const text of ['Shaping', 'Queue', 'Shipped', 'Needs you', 'Running', 'Up next', 'waiting on '])
+  for (const text of ['Shaping', 'Queue', 'Shipped', 'waiting on '])
     assert.ok(html.includes(text), text);
   const mockup = fs.readFileSync(path.join(ROOT, 'docs', 'panel-mockup.html'), 'utf8');
   const vars = mockup.match(/:root \{[\s\S]*?\}/)[0];
@@ -359,12 +356,12 @@ test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every 
   };
   const p = fakePage([state]);
   await p.settle();
-  for (const area of ['shaping', 'needs', 'running', 'next', 'shipped']) {
+  for (const area of ['shaping', 'queue', 'shipped']) {
     const nodes = p.all(p.byId(area));
     assert.ok(p.byId(area).textContent.includes(evil), `${area} shows the title literally`);
     assert.ok(!nodes.some(n => n.tagName === 'b' && n.textContent === 'x'), `${area} made no <b> from the title`);
   }
-  assert.ok(p.byId('needs').textContent.includes('<script>alert(1)</script>'));
+  assert.ok(p.byId('queue').textContent.includes('<script>alert(1)</script>'));
   // Open the draft: its criteria, sections and lint messages are text too (0033).
   const draft = p.all(p.byId('shaping')).find(n => n.listeners.click);
   draft.listeners.click();
@@ -385,17 +382,17 @@ test('0031 AC4: the page shows when it is disconnected, keeps polling and recove
   const p = fakePage([one, new Error('connection refused'), new Error('connection refused'), moved]);
   await p.settle();
   assert.equal(p.byId('offline').hidden, true);
-  assert.match(p.byId('next').textContent, /0001/);
+  assert.match(p.byId('queue').textContent, /0001.*Queued/);
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, false, 'says it is disconnected');
   assert.match(p.byId('pills').textContent, /disconnected/);
-  assert.match(p.byId('next').textContent, /0001/, 'keeps the last state');
+  assert.match(p.byId('queue').textContent, /0001.*Queued/, 'keeps the last state');
   p.timers.shift()(); await p.settle();
   assert.equal(p.timers.length, 1, 'still polling while disconnected');
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.match(p.byId('running').textContent, /0001/, 'the ticket moved to Running');
-  assert.doesNotMatch(p.byId('next').textContent, /0001/);
+  assert.match(p.byId('queue').textContent, /0001.*building/, 'the ticket is now building');
+  assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
 });
 
 test('0031 AC4: when the server answers but cannot read the tickets, the page shows its error and recovers', async () => {
@@ -453,12 +450,12 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
   assert.equal(p.timers.length, 1);
   p.timers.shift()(); await p.settle(); // overdue again, then the server answers
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.match(p.byId('running').textContent, /0001/);
+  assert.match(p.byId('queue').textContent, /0001.*building/);
   // The abandoned request answering late doesn't put the old state back.
   stalled.resolve({ ok: true, status: 200, json: async () => one });
   await p.settle();
-  assert.match(p.byId('running').textContent, /0001/);
-  assert.doesNotMatch(p.byId('next').textContent, /0001/);
+  assert.match(p.byId('queue').textContent, /0001.*building/);
+  assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
 });
 
 // ---------- 0033: everything needed for Gate 1 in Shaping ----------
@@ -590,4 +587,129 @@ test('0033 AC5: the Ideas list shows every idea, not-ticketed first, and clickin
   assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'still open after a refresh');
   click(items(p)[1]);
   assert.ok(!items(p)[1].textContent.includes('Just'), 'clicking again closes it');
+});
+
+// ---------- 0034: the queue as one list with progress bars ----------
+
+const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
+const stagesOf = row => (function find(n) { if (/\bstages\b/.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
+const stepText = row => stagesOf(row).children.map(s => s.textContent);
+const stepState = row => stagesOf(row).children.map(s => (/\bd\b/.test(s.className) ? 'done' : /\bnow\b/.test(s.className) ? 'now' : ''));
+const steps = t => t.steps.map(s => s.state || '');
+
+test('0034 AC1: the queue is one list, in-flight tickets first, then ready ones, each in JSON order, with no group headings', async () => {
+  const model = panelModel();
+  const state = { tickets: [T('0001', 'ready'), T('0002', 'approved'), T('0003', 'draft'), T('0004', 'building'), T('0005', 'ready'), T('0006', 'blocked'),
+    T('0007', 'reviewing', { rounds: [round(1, 1)] }), T('0008', 'done'), T('0009', 'cancelled')], ideas: [] };
+  assert.deepEqual(model(state).queue.map(t => t.id), ['0002', '0004', '0006', '0007', '0001', '0005']);
+  const html = page();
+  for (const h of ['Needs you', 'Running', 'Up next']) assert.ok(!html.includes(h), `no ${h} heading`);
+  assert.ok(!/id="(needs|running|next)(-h)?"/.test(html), 'no group containers');
+  const p = fakePage([state]);
+  await p.settle();
+  assert.deepEqual(queueRows(p).map(r => r.textContent.slice(0, 4)), ['0002', '0004', '0006', '0007', '0001', '0005']);
+  assert.ok(!p.byId('queue').children.some(n => /\bgroup\b/.test(n.className)), 'no group rows');
+});
+
+test('0034 AC2: every queued ticket has a five-step bar, with done and current steps from status, self_check and rounds', () => {
+  const model = panelModel();
+  const m = model({ tickets: [
+    T('0001', 'building'),
+    T('0002', 'building', { self_check: 'no changes' }),
+    T('0003', 'reviewing', { self_check: 'no changes' }),
+    T('0004', 'reviewing'),
+    T('0005', 'reviewing', { rounds: [round(1, 1), round(2, 1)] }),
+    T('0006', 'building', { rounds: [round(1, 1)] }),
+    T('0007', 'approved', { rounds: [round(1, 1), round(3, 1)] }),
+    T('0008', 'blocked', { rounds: [round(1, 1)] }),
+    T('0009', 'blocked'),
+    T('0010', 'ready'),
+    T('0011', 'building', { self_check: '' }),
+    T('0012', 'approved'),
+    T('0013', 'approved', { self_check: 'x' }),
+  ], ideas: [] });
+  const by = id => m.queue.find(t => t.id === id);
+  for (const t of m.queue) assert.equal(t.steps.length, 5, t.id);
+  assert.deepEqual(by('0001').steps.map(s => s.label), ['Build', 'Self-check', 'Review', 'Approve', 'Ship']);
+  assert.deepEqual(steps(by('0001')), ['now', '', '', '', '']);
+  assert.deepEqual(steps(by('0002')), ['done', 'now', '', '', ''], 'self_check set, still building');
+  assert.deepEqual(steps(by('0003')), ['done', 'done', 'now', '', ''], 'self_check set and reviewing');
+  assert.deepEqual(steps(by('0004')), ['now', '', '', '', ''], 'reviewing without self_check or rounds');
+  assert.deepEqual(steps(by('0005')), ['done', 'done', 'now', '', '']);
+  assert.equal(by('0005').steps[2].label, 'Review 2', 'latest round number');
+  assert.deepEqual(steps(by('0006')), ['done', 'done', 'now', '', ''], 'a round, back to building to fix');
+  assert.equal(by('0006').steps[2].label, 'Review 1');
+  assert.deepEqual(steps(by('0007')), ['done', 'done', 'done', 'done', 'now'], 'approved: Ship is current');
+  assert.equal(by('0007').steps[2].label, 'Review 3', 'latest round, not the count');
+  assert.deepEqual(steps(by('0008')), ['done', 'done', 'now', '', '']);
+  assert.deepEqual(steps(by('0009')), ['now', '', '', '', '']);
+  assert.deepEqual(steps(by('0011')), ['now', '', '', '', ''], 'an empty self_check is not set');
+  assert.deepEqual(steps(by('0012')), ['', '', 'done', 'done', 'now'], 'approved with no rounds or self_check: Ship is still current');
+  assert.deepEqual(steps(by('0013')), ['done', '', 'done', 'done', 'now'], 'approved with self_check only: Ship is still current');
+});
+
+test('0034 AC2: the bar is drawn on the page with its labels, done steps and current step', async () => {
+  const state = { tickets: [T('0001', 'reviewing', { self_check: 'x', rounds: [round(1, 1), round(2, 1)] }), T('0002', 'approved', { rounds: [round(1, 1)] }),
+    T('0003', 'approved'), T('0004', 'approved', { self_check: 'x' })], ideas: [] };
+  const p = fakePage([state]);
+  await p.settle();
+  const [a, b, c, d] = queueRows(p);
+  assert.deepEqual(stepState(c), ['', '', 'done', 'done', 'now'], 'approved with no rounds: Ship is current');
+  assert.deepEqual(stepState(d), ['done', '', 'done', 'done', 'now'], 'approved with self_check only: Ship is current');
+  assert.deepEqual(stepText(a), ['Build', 'Self-check', 'Review 2', 'Approve', 'Ship']);
+  assert.deepEqual(stepState(a), ['done', 'done', 'now', '', '']);
+  assert.deepEqual(stepState(b), ['done', 'done', 'done', 'done', 'now']);
+});
+
+test('0034 AC3: a blocked ticket is red on its left edge and current step, with its question under it, and nothing else is red', async () => {
+  const state = { tickets: [T('0001', 'blocked', { blocked_question: 'Split it or keep it?', self_check: 'x' }), T('0002', 'approved', { risk: 'high' }),
+    T('0003', 'building', { risk: 'high' }), T('0004', 'reviewing'), T('0005', 'ready', { waiting_on: ['0001'] })], ideas: [] };
+  assert.deepEqual(panelModel()(state).queue.map(t => t.red), [true, false, false, false, false]);
+  const p = fakePage([state]);
+  await p.settle();
+  const rows = queueRows(p);
+  const red = n => /\b(bad|blocked)\b/.test(n.className || '');
+  assert.match(rows[0].className, /\bblocked\b/);
+  const now = stagesOf(rows[0]).children.find(s => /\bnow\b/.test(s.className));
+  assert.equal(now.textContent, 'Self-check');
+  assert.match(now.className, /\bbad\b/);
+  assert.equal(stagesOf(rows[0]).children.filter(red).length, 1, 'only the current step');
+  assert.ok(rows[0].textContent.includes('Split it or keep it?'));
+  for (const r of rows.slice(1)) assert.ok(!p.all(r).some(red), `${r.textContent.slice(0, 4)} has nothing red`);
+  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(css, /\.q\.blocked \{[^}]*border-left:[^}]*var\(--bad\)/);
+  assert.match(css, /\.stages \.now\.bad \{[^}]*border-top-color: var\(--bad\)/);
+  assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--warn\)/, 'a high-risk tag in the queue is not red');
+});
+
+test('0034 AC4: a ready ticket shows Queued and an empty bar, plus waiting on <ids> when it has any', async () => {
+  const state = { tickets: [T('0001', 'ready', { self_check: 'x', rounds: [round(1, 1)] }), T('0002', 'ready', { waiting_on: ['0009', '0004'] })], ideas: [] };
+  assert.deepEqual(steps(panelModel()(state).queue[0]), ['', '', '', '', '']);
+  const p = fakePage([state]);
+  await p.settle();
+  const [a, b] = queueRows(p);
+  assert.ok(a.textContent.includes('Queued'));
+  assert.deepEqual(stepState(a), ['', '', '', '', ''], 'no step done or current');
+  assert.deepEqual(stepText(a), ['Build', 'Self-check', 'Review 1', 'Approve', 'Ship'], 'AC2: Review <n> while it has rounds');
+  assert.ok(!a.textContent.includes('waiting on'));
+  assert.ok(b.textContent.includes('Queued') && b.textContent.includes('waiting on 0009, 0004'));
+});
+
+test('0034 AC5: an in-flight ticket shows its worktree path and the whole minutes since started', async () => {
+  const ago = ms => new Date(Date.now() - ms).toISOString();
+  const state = { tickets: [
+    T('0001', 'building', { worktree: '/tmp/wt/0001', started: ago(7.9 * 60000) }),
+    T('0002', 'reviewing', { started: ago(30000) }),
+    T('0003', 'blocked', { started: 'not a date' }),
+    T('0004', 'ready', { worktree: '/tmp/wt/0004', started: ago(60 * 60000) }),
+  ], ideas: [] };
+  const m = panelModel()(state);
+  assert.deepEqual(m.queue.map(t => t.minutes), [7, 0, null, null]);
+  const p = fakePage([state]);
+  await p.settle();
+  const [a, b, c, d] = queueRows(p);
+  assert.ok(a.textContent.includes('/tmp/wt/0001') && a.textContent.includes('7 min'));
+  assert.ok(b.textContent.includes('0 min') && !b.textContent.includes('worktree'));
+  assert.ok(!c.textContent.includes('min') && !c.textContent.includes('worktree'));
+  assert.ok(!d.textContent.includes('/tmp/wt/0004') && !d.textContent.includes('min'), 'not for a ready ticket');
 });

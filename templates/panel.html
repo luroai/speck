@@ -78,6 +78,9 @@
   .stages .now { border-top-color: var(--run); color: var(--run); }
   .act { margin-left: 34px; font-family: "Liberation Mono", monospace; font-size: 11px; color: var(--muted); }
   .act b { color: #a9adb6; font-weight: 400; }
+  .q.blocked { border-left: 2px solid var(--bad); padding-left: 12px; }
+  .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
+  .q .tag.high { color: var(--warn); border-color: #5a4529; }
   .next { color: var(--ok); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #36513d; padding: 0 5px; }
 
   /* Shipped */
@@ -129,9 +132,7 @@
   </section>
   <section>
     <div class="sh"><h2>Queue</h2><span class="n" id="queue-n"></span><span class="hint">builds run in their own worktrees</span></div>
-    <div class="group attn" id="needs-h">Needs you</div><div id="needs"></div>
-    <div class="group run" id="running-h">Running</div><div id="running"></div>
-    <div class="group" id="next-h">Up next</div><div id="next"></div>
+    <div id="queue"></div>
   </section>
   <section class="full">
     <div class="sh"><h2>Shipped</h2><span class="n" id="shipped-n"></span><span class="hint">latest 5</span></div>
@@ -143,6 +144,19 @@
 'use strict';
 
 // ---- model: pure, no DOM. test/panel.test.mjs runs this section on its own. ----
+const IN_FLIGHT = ['building', 'reviewing', 'blocked', 'approved'];
+// A ticket's five-step bar: each step is done, the current one ('now') or neither. A ready ticket has neither on every step.
+function progress(t) {
+  const rounds = Array.isArray(t.rounds) ? t.rounds : [];
+  const last = rounds[rounds.length - 1];
+  const latest = last && Number.isFinite(Number(last.round)) && last.round !== null && last.round !== '' ? Number(last.round) : rounds.length;
+  const selfCheck = typeof t.self_check === 'string' && t.self_check.trim() !== '';
+  const approved = t.status === 'approved';
+  const done = [selfCheck || rounds.length > 0, rounds.length > 0 || (selfCheck && t.status === 'reviewing'), approved, approved, false];
+  const labels = ['Build', 'Self-check', rounds.length ? `Review ${latest}` : 'Review', 'Approve', 'Ship'];
+  const current = t.status === 'ready' ? -1 : approved ? 4 : done.indexOf(false); // approved: Ship is current
+  return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const ideas = state && Array.isArray(state.ideas) ? state.ideas : [];
@@ -160,12 +174,12 @@ function panelModel(state) {
     drafts: tickets.filter(is('draft')),
     // Every idea: those not yet ticketed first, then the rest, each group in JSON order.
     ideas: [false, true].flatMap(t => ideas.filter(i => i && String(i.status || '').startsWith('ticketed') === t)),
-    needsYou: tickets.filter(is('blocked', 'approved')),
-    running: tickets.filter(is('building', 'reviewing')).map(t => {
-      const last = rounds(t)[rounds(t).length - 1];
-      return { ...t, round: t.status === 'reviewing' && last && last.round != null ? last.round : null };
+    // One list: in-flight tickets, then ready ones, each group in JSON order.
+    queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(t => {
+      const inFlight = t.status !== 'ready', start = time(t.started);
+      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked', waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [],
+        minutes: inFlight && start !== null ? Math.max(0, Math.floor((Date.now() - start) / 60000)) : null };
     }),
-    upNext: tickets.filter(is('ready')).map((t, i) => ({ ...t, rank: i + 1, waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [] })),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
     shippedTotal: done.length,
   };
@@ -267,9 +281,20 @@ function shapingToggle(m) {
   $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length));
   $('shaping-section').className = `shaping ${shapingView}`;
 }
-function queueItem(t, rank, rankCls, ...below) {
-  const q = el('div', 'q', null, el('div', 'top', null, el('span', `rank ${rankCls || ''}`, rank), tags(t), el('span')));
-  for (const b of below) if (b) q.appendChild(b);
+// A queue row: the ticket, its five-step bar, then what's under it. Only a blocked ticket is red.
+function queueItem(t) {
+  const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
+  const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t), el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : '')));
+  const bar = el('div', 'stages');
+  for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : 'now') : null, s.label));
+  q.appendChild(bar);
+  if (!t.inFlight) {
+    q.appendChild(el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : '')));
+    return q;
+  }
+  if (t.red && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
+  q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.red ? ` · answer the question, then run /speck-build ${t.id}` : '')));
+  if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
   return q;
 }
 function fill(id, nodes, emptyText) {
@@ -285,21 +310,9 @@ function render() {
   if (shapingView === 'ideas') fill('shaping', m.ideas.map(ideaItem), 'No ideas.');
   else fill('shaping', m.drafts.map(ticketItem), 'No draft tickets.');
 
-  $('needs-h').textContent = `Needs you · ${m.needsYou.length}`;
-  fill('needs', m.needsYou.map(t => t.status === 'blocked'
-    ? queueItem(t, '', 'bad', t.blocked_question ? el('div', 'question', t.blocked_question) : null, el('div', 'sub indent', 'blocked: answer the question, then run /speck-build ' + t.id))
-    : queueItem(t, '', 'ok', el('div', 'sub indent ok', `approved: read speck pack ${t.id}, then run /speck-ship ${t.id}`))), 'Nothing needs you.');
-  $('running-h').textContent = `Running · ${m.running.length}`;
-  fill('running', m.running.map(t => queueItem(t, '', 'run',
-    el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.round !== null ? ` · review round ${t.round}` : '')),
-    t.worktree ? el('div', 'act path', `worktree ${t.worktree}`) : null)), 'Nothing running.');
-  $('next-h').textContent = `Up next · ${m.upNext.length}`;
-  fill('next', m.upNext.map(t => {
-    const q = queueItem(t, String(t.rank), '', t.waiting_on.length ? el('div', 'sub indent warn', `waiting on ${t.waiting_on.join(', ')}`) : null);
-    if (t.waiting_on.length) q.className = 'q wait';
-    return q;
-  }), 'Nothing ready.');
-  $('queue-n').textContent = `${m.needsYou.length} needs you · ${m.running.length} running · ${m.upNext.length} up next`;
+  fill('queue', m.queue.map(queueItem), 'Nothing in flight or ready.');
+  const flying = m.queue.filter(t => t.inFlight).length;
+  $('queue-n').textContent = `${flying} in flight · ${m.queue.length - flying} queued`;
 
   fill('shipped', m.shipped.map(t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
