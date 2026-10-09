@@ -89,6 +89,13 @@
   .act b { color: #a9adb6; font-weight: 400; }
   .q.blocked { border-left: 2px solid var(--bad); padding-left: 12px; }
   .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
+  /* A step a build is working on now: a dot of light moves side to side along its line, unless the browser asks for reduced motion */
+  @media (prefers-reduced-motion: no-preference) {
+    .stages .now.moving { position: relative; }
+    .stages .now.moving::after { content: ''; position: absolute; top: -3px; left: 0; width: 16px; height: 3px;
+      background: linear-gradient(90deg, transparent, #e4f1ff, transparent); animation: sweep 1.6s ease-in-out infinite alternate; }
+    @keyframes sweep { to { left: calc(100% - 16px); } }
+  }
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: ui-monospace, monospace; font-size: 12px; }
   .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px 34px; }
   .resume .cmd { font-family: ui-monospace, monospace; font-size: 12px; color: #ddd3c4; background: #1f2126; padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
@@ -456,13 +463,15 @@ function shapingToggle(m) {
   $('shaping-section').className = `shaping ${shapingView}`;
 }
 // A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
+// A building or reviewing ticket that isn't red has a dot moving on its current step.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)),
     el('span', 'sub', queueMinutes(t))));
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
-  for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : 'now') : null, s.label));
+  const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red; // an agent is at work on it
+  for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : moving ? 'now moving' : 'now') : null, s.label));
   q.appendChild(bar);
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));

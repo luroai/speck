@@ -232,7 +232,7 @@ export async function browserPage(url) {
   };
   const move = ([x, y]) => send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y }); // the pointer, with no button down (0041)
   const close = async () => { ws.close(); chrome.kill(); await new Promise(r => chrome.once('exit', r)); fs.rmSync(profile, { recursive: true, force: true }); };
-  return { js, until, drag, move, close };
+  return { js, until, drag, move, close, send }; // send: a raw DevTools call, for example to emulate reduced motion (0055)
 }
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();

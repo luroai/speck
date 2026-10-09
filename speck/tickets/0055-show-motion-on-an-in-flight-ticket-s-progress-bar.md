@@ -42,6 +42,7 @@ The current step of a ticket that's being built or reviewed shows a moving dot o
 - Which tickets move, current step only, and reduced motion respected: defaults chosen while ticketing from the idea's open questions, to confirm before ready.
 - product.md's Queue description needs updating.
 - Checked 2026-10-09: `prefers-reduced-motion: reduce` is the standard CSS media feature for reduced motion (MDN, Media Queries Level 5).
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
