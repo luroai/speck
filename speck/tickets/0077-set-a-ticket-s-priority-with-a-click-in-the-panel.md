@@ -1,7 +1,7 @@
 ---
 id: "0077"
 title: "Set a ticket's priority with a click in the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T21:40:27.006Z"
 ---
 # 0077 · Set a ticket's priority with a click in the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Setting or changing a ticket's priority means editing its file or running `speck set`. When sorting through many tickets in the panel, the user wants to change priorities there, at a click.
@@ -50,3 +50,64 @@ The priority tag on a draft ticket in the panel can be clicked to set its priori
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox notes):
+  - The priority tag is a span, so it can't be reached with Tab; like the rest of the panel's rows it's mouse-only.
+  - While a menu is open, a click on another ticket's tag only closes the menu, so that ticket needs a second click.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "559adcdc802dc41483ec9d825c829ccf75558942",
+    "thread_id": "01a122a3-70a1-7b71-827d-4d1736db1122",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 382605,
+      "cached_input_tokens": 300416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 850,
+      "reasoning_output_tokens": 93
+    },
+    "saved_at": "2026-10-09T21:48:48.262Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: ticketHead enables priorityPicker only in the draft Tickets list; other tags remain passive. The 0077 AC1 test exercises drafts, missing priority, queue and Shipped tags; reported passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "priorityPicker, setPriority and document listeners implement choices, current marking and dismissal without toggling rows. panelSetPriority uses the same writeField as cmdSet and commitTicketOnly isolates the commit. AC2 tests exercise these behaviours, staged/unstaged isolation, unchanged priority and commit failure; reported passing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: panelServer applies the same Origin/token checks as Set ready; panelSetPriority rejects non-drafts and invalid priorities before writing. priorityRefused displays errors until the next tag click. AC3 tests exercise authentication, validation, unchanged files and persistent refusal messages; reported passing."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The existing state refresh and keptItems rendering update priority and ordering while retaining unaffected ticket nodes and open state. Both 0077 AC4 tests exercise refreshed ordering and preserved panel state; reported passing."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Draft tickets can now change priority from their tag, with protected requests and commits confined to the selected ticket. The tests meaningfully cover all four criteria, including dismissal, refusal messages and commit failure. No blocking issues found. I inspected the code and tests; I did not rerun tests because this review environment is read-only."
+  }
+}
+```
+
+</details>
