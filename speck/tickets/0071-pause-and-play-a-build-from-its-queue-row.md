@@ -1,7 +1,7 @@
 ---
 id: "0071"
 title: Toggle a build between paused and playing from its queue row                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T22:30:17.959Z"
 ---
 # 0071 · Toggle a build between paused and playing from its queue row
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Pausing and playing a build from the CLI (0070) means leaving the panel, where the user is watching the build, for a terminal.
@@ -47,9 +47,14 @@ Each running build in the queue has a pause icon on the left of its row, which t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 330,540
+- Elapsed since build started: 7 min
+- Changed lines: 121 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (no inbox notes: each is a known limit):
 - Known limit: a refusal stays under the row until the next click on the icon, as criterion 3 asks, so once the build has ended and the icon has gone it stays until the page is reloaded.
