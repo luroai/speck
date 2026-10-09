@@ -1,7 +1,7 @@
 ---
 id: "0025"
 title: "Keep other sessions' files out of a build"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T11:57:27.546Z"
 ---
 # 0025 · Keep other sessions' files out of a build
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Other sessions sometimes work in the same checkout during a build. Twice in recent builds their files appeared mid-build, and one `git add -A` committed and pushed five draft tickets that the builder hadn't written. Untracked files from elsewhere also make `speck review` refuse to run, though they aren't part of what's reviewed.
@@ -42,9 +42,15 @@ A build commits only the files it changed, and other sessions' untracked files d
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 requireCommitted exempts the ticket based solely on onlyRoundsChanged(ticket.raw), without checking its staged content.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 612,163
+- Elapsed since build started: 10 min
+- Changed lines: 24 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: `speck close` still refuses when any untracked file is outside the ticket, so another session's file in the ticket's tree would block closing a build. The ticket only covers review and record, so it's unchanged.
 
@@ -108,6 +114,69 @@ A build commits only the files it changed, and other sessions' untracked files d
     },
     "escalation_question": "",
     "summary": "The staging instructions and handling of other sessions' untracked files are implemented, and shipping retains its clean-tree safeguard. One loophole remains: staged changes to the ticket can escape the review checks when its visible copy has been restored. Fix that check and add regression coverage before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5ee1ea9f84143f2f7bbd5cba15f433538ec5866b",
+    "thread_id": "01a1208c-ab32-7603-ae13-2b4439e3c0dc",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 386810,
+      "cached_input_tokens": 302976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1462,
+      "reasoning_output_tokens": 73
+    },
+    "saved_at": "2026-10-09T12:06:54.618Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md and skills/speck-review/SKILL.md require staging by name, prohibit all three broad staging commands, and require leaving unknown files alone and mentioning them. The 0025 AC1 test checks these instructions and passes in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs requireCommitted, called by reviewSetup and cmdRecord, ignores untracked files and checks both working and staged ticket content before allowing the rounds/status exception. The two 0025 AC2 tests and the new F1 regression test exercise acceptance, refusal and the permitted staged-round exception; all pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs shipTicket retains its full git status --porcelain check. The 0025 AC3 test verifies that an untracked file blocks shipping without changing state and passes in the supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Staged substantive ticket changes could previously evade the clean-tree check when the working copy matched HEAD. requireCommitted now checks the index version as well, closing this loophole. The regression test reproduces the original state for both review and record and verifies refusal.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated spec accurately describes staging instructions, tracked-change checks and the unchanged shipping safeguard."
+    },
+    "escalation_question": "",
+    "summary": "All acceptance criteria are met. Other sessions' untracked files no longer block review or recording, while uncommitted tracked changes still do. The staged-ticket loophole is fixed with meaningful regression coverage. Shipping keeps its existing clean-tree requirement."
   }
 }
 ```
