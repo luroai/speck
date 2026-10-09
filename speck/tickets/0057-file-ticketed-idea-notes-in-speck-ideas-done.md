@@ -1,7 +1,7 @@
 ---
 id: "0057"
 title: "File ticketed idea notes in speck/ideas/done"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:06:19.069Z"
 ---
 # 0057 · File ticketed idea notes in speck/ideas/done
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Idea notes stay in `speck/ideas/` forever, so once most ideas are ticketed the folder is mostly finished notes. Tickets already get filed in `speck/tickets/done/` when closed, and ideas have no equivalent, so the folder doesn't show at a glance what's still to shape.
@@ -50,9 +50,14 @@ An idea note is filed in `speck/ideas/done/` once it's ticketed, so `speck/ideas
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 412,424
+- Elapsed since build started: 8 min
+- Changed lines: 85 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. This repo's own ticketed notes are still in `speck/ideas/` until `speck init` is re-run here, which files them and rewrites the matching `source:` lines.
 
