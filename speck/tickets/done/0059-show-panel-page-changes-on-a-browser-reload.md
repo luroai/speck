@@ -1,7 +1,7 @@
 ---
 id: "0059"
 title: "Show panel page changes on a browser reload"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T19:18:33.948Z"
+finished: "2026-10-09T19:23:11.138Z"
 
 ---
 # 0059 · Show panel page changes on a browser reload
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck panel` reads `templates/panel.html` once when it starts and keeps sending that copy. After a ticket that changes the page ships, the user has to find and restart the panel process before a browser reload shows the change, which is easy to miss and looks like the ticket didn't work.
