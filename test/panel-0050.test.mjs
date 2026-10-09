@@ -125,7 +125,7 @@ test('0050 AC3: a selection in a Shipped row survives a refresh in which that ti
   assert.ok(kept(), 'and through a second refresh');
 });
 
-test('0050 AC4: in-flight minutes and a Shipped time crossing midnight keep updating while text in that row is selected', async () => {
+test('0050 AC4: the in-flight time since started (MM:SS since 0058) and a Shipped time crossing midnight keep updating while text in that row is selected', async () => {
   let now = startOfToday() + 23 * 3600000 + 58 * 60000; // 23:58 today
   class FakeDate extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } }
   const iso = ms => new Date(ms).toISOString();
@@ -134,19 +134,19 @@ test('0050 AC4: in-flight minutes and a Shipped time crossing midnight keep upda
   await p.settle();
   const keptRow = held(p, 'queue', byClass(p, rowOf(p, '0003'), 'title'));
   const keptShip = held(p, 'shipped', shipOf(p, '0010').children[0]);
-  const minutes = () => rowOf(p, '0003').textContent.match(/(\d+) min/)[1];
+  const minutes = () => rowOf(p, '0003').textContent.match(/(\d\d):00/)[1];
   const when = () => shipOf(p, '0010').children[2].textContent;
-  assert.equal(minutes(), '5');
+  assert.equal(minutes(), '05');
   assert.equal(when(), '23:48');
   now += 3 * 60000; // 00:01 tomorrow
   await refresh(p);
   assert.ok(keptRow() && keptShip(), 'both selections stayed');
-  assert.equal(minutes(), '8', 'the minutes moved on');
+  assert.equal(minutes(), '08', 'the minutes moved on');
   assert.match(when(), /^\d+ \w{3} 23:48$/, 'the time became date and time');
   now += 60000;
   await refresh(p);
   assert.ok(keptRow() && keptShip());
-  assert.equal(minutes(), '9');
+  assert.equal(minutes(), '09');
 });
 
 test('0050 AC5: when a row\'s own ticket data changes, the new content shows in that refresh', async () => {
@@ -275,13 +275,13 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
   try {
     await b.until(`!!document.querySelector('${sub}')`, 'the page');
     await clock(late);
-    await b.until(`document.querySelector('${sub}') && document.querySelector('${sub}').textContent === '5 min' && document.querySelector('${when}').textContent === '23:48'`, 'the page on its moved clock');
-    // Only the minutes' number.
-    await select(sub, 0, sub, 1);
-    assert.equal(await sel(), '5');
+    await b.until(`document.querySelector('${sub}') && /^05:3\\d$/.test(document.querySelector('${sub}').textContent) && document.querySelector('${when}').textContent === '23:48'`, 'the page on its moved clock');
+    // Only the minutes (MM:SS since 0058).
+    await select(sub, 0, sub, 2);
+    assert.equal(await sel(), '05');
     await clock(late + 60000);
-    await b.until(`document.querySelector('${sub}').textContent === '6 min'`, 'the minutes to move on');
-    assert.equal(await sel(), '6', 'the selected number is still selected, and updated');
+    await b.until(`document.querySelector('${sub}').textContent.startsWith('06:')`, 'the minutes to move on');
+    assert.equal(await sel(), '06', 'the selected number is still selected, and updated');
     // The Shipped time, after midnight.
     await select(when, 0, when, 5);
     assert.equal(await sel(), '23:48');
@@ -292,10 +292,10 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     assert.equal(await sel(), date, 'and the selection grows with it');
     // From the title across the minutes.
     await select('#queue .q .title', 2, sub, 5);
-    assert.match(await sel(), /^long build\s+S\s+low\s+7 min$/);
+    assert.match(await sel(), /^long build\s+S\s+low\s+07:\d\d$/);
     await clock(late + 3 * 60000);
-    await b.until(`document.querySelector('${sub}').textContent === '8 min'`, 'the minutes to move on again');
-    assert.match(await sel(), /^long build\s+S\s+low\s+8 min$/, 'the selection across the title and minutes stays');
+    await b.until(`document.querySelector('${sub}').textContent.startsWith('08:')`, 'the minutes to move on again');
+    assert.match(await sel(), /^long build\s+S\s+low\s+08:\d\d$/, 'the selection across the title and minutes stays');
   } finally {
     await b.close();
     await stop(panel);

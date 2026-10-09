@@ -1,7 +1,7 @@
 ---
 id: "0058"
 title: "Show the build timer as a MM:SS counter"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0051", "0052", "0053", "0055"]                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:49:23.122Z"
+finished: "2026-10-09T20:27:34.484Z"
 
 ---
 # 0058 · Show the build timer as a MM:SS counter
 
-**Status:** 📋 ready
+**Status:** ✅ done
 
 ## Problem
 The queue's elapsed time is whole minutes, so a build that started a minute and a half ago reads `1 min` and then sits there for another thirty seconds. With no seconds in it you can't tell a working build from a panel that has stopped updating, which is the same complaint that put motion on the progress bars (0055).
@@ -46,12 +48,90 @@ An in-flight ticket's elapsed time is a counter in `MM:SS` that advances every s
 - What a kept row shows from the clock is listed in the page's `derived` for the queue, so whatever the counter reads has to be in it, or a kept row would stop ticking (0050).
 - `speck/product.md` says in-flight tickets show "the whole minutes since `started`", and that a kept row's minutes change in place: both need the new wording.
 - Checked 2026-10-09: `started` is written by `speck start` as an ISO timestamp, so the page has second precision without any change to the JSON (`statusData` in `scripts/speck.mjs`).
+- The counter has its own `setInterval`, not 0052's log timer: that one runs only while a queue ticket is open, and the counter must run whenever an in-flight ticket has a `started`. The fake page in `test/support/panel.mjs` now keeps repeating timers apart (`intervals`), so the existing tests that run the state poll with `p.timers.shift()` are unaffected.
+- `test/panel-0040.test.mjs` 0040 AC5 now starts its fake clock a second on: with seconds shown, a millisecond between reading the clock and making the tickets turned `05:00` into `04:59`.
+- Self-check: no changes. Checked an unreadable or future `started` (tested), repeated ids (each row is paired with its own counter node), a row rebuilt or removed between ticks (each render replaces the list the timer updates), and that the tick changes nothing but the counters' text.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 343,963
+- Elapsed since build started: 12 min
+- Changed lines: 36 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox note):
+- The counter's `setInterval` isn't aligned to each ticket's whole seconds, so a tick that lands late can now and then skip a second, or show one twice. Aligning it would need a timer per second boundary.
+- While the panel is disconnected the counters keep running from the last state received; the disconnected message says the state is old.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7dd27e832762844047067760a8b4a2f5a1a5145a",
+    "thread_id": "01a12241-6232-7f92-8dc5-57f2aa1a661e",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 342865,
+      "cached_input_tokens": 250624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1098,
+      "reasoning_output_tokens": 54
+    },
+    "saved_at": "2026-10-09T20:01:44.399Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: panelModel and queueItem derive the counter from readable started values for all four in-flight statuses. test/panel-0058.test.mjs AC1 tests cover placement, missing/unreadable dates, ready tickets and unchanged state fields; builder reports both passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: counter pads minutes and seconds without rolling minutes over. AC2 tests cover all specified examples, 100 minutes and future timestamps; builder reports passing. Independent read-only verification confirmed 07:42 and 62:07."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html: startCounters manages one 1000ms interval; tickCounters updates only counter text. render refreshes node references. AC3 tests exercise isolated ticks, unchanged surrounding nodes, rebuilt rows, cleanup and restart; builder reports passing. Independent read-only verification confirmed ticking and cleanup."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html: tickCounters uses setText, which replaces only differing characters and preserves selection endpoints. The real-browser AC3/AC4 test checks selections within and across the counter and records actual replaceData calls; builder reports passing."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "templates/panel.html retains Shipped minutes and median calculations and rendering. test/panel-0058.test.mjs AC5 verifies whole-minute row values and median; builder reports passing."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "Updated wording accurately describes queue formatting, the separate timer, cleanup and selection preservation. Shipped formatting remains unchanged."
+    },
+    "escalation_question": "",
+    "summary": "The queue now shows elapsed minutes and seconds and advances independently every second. Tests cover timer cleanup, selection preservation and unchanged Shipped formatting. Repository inspection and independent read-only checks found no blocking issues; the builder reports all 444 tests passing."
+  }
+}
+```
+
+</details>

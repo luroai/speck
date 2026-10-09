@@ -122,6 +122,11 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     addEventListener(type, fn) { this.listeners[type] = fn; }, // the page's own key handling (0054)
   };
   const timers = [];
+  // Repeating timers apart from `timers`, by id, so a test runs the state poll and the queue's 1-second counter (0058) apart.
+  const intervals = new Map();
+  let intervalIds = 0;
+  const setInterval = (fn, ms) => { intervals.set(++intervalIds, { fn, ms }); return intervalIds; };
+  const clearInterval = id => { intervals.delete(id); };
   const calls = []; // every fetch, so a test can check what the page sent
   const fetch = async (url, opts) => {
     calls.push({ url, opts });
@@ -133,12 +138,12 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     return { ok: true, status: 200, json: async () => next };
   };
   const script = page().match(/<script>([\s\S]*?)<\/script>/)[1];
-  vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals });
+  vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), setInterval, clearInterval, AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals });
   const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
   const settle = () => new Promise(r => setTimeout(r, 20));
   // A key pressed anywhere on the page, as the browser sends it to the document (0054).
   const key = k => { if (document.listeners.keydown) document.listeners.keydown({ key: k }); };
-  return { byId: id => document.getElementById(id), timers, all, settle, calls, key };
+  return { byId: id => document.getElementById(id), timers, intervals, all, settle, calls, key };
 }
 
 export const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };

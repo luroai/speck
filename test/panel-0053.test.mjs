@@ -92,7 +92,7 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   const shape = row => row.children.map(n => n.className);
   const a = rowOf(p, '0001');
   assert.deepEqual(shape(a), ['top', 'stages', 'act'], 'top row, bar, then the status line last');
-  assert.ok(topOf(a).textContent.includes('3 min'), 'the minutes since started, in the top row');
+  assert.match(topOf(a).textContent, /03:0\d$/, 'the time since started, in the top row (MM:SS since 0058)');
   assert.ok(a.children[2].textContent.startsWith('building'));
   const c = rowOf(p, '0003');
   assert.deepEqual(shape(c), ['top', 'stages', 'question', 'act']);
