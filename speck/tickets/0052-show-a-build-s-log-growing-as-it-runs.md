@@ -56,12 +56,13 @@ An open log keeps up with the build by itself: the newest lines slide in at the 
 ## Review log
 Round 1 (codex): changes requested: F1 setLogText mistakes repeated lines for a shifted tail.
 Round 2 (codex): approve.
+Round 3 (codex): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 679,152
-- Elapsed since build started: 11 min
+- Reviewer tokens: 1,451,368
+- Elapsed since build started: 15 min
 - Changed lines: 97 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -212,6 +213,79 @@ Follow-ups:
     },
     "escalation_question": "",
     "summary": "Approved. Open logs update automatically, follow new output while allowing readers to scroll back, recover from failures and reset for a new build. The selection bug is fixed and covered by a browser regression test. All 426 supplied tests passed."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "90e9b6aeb219642f4d411ba8c0cbaad14b847b7f",
+    "thread_id": "01a1222f-12a7-72c3-aff9-ca912a3f7c94",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 770251,
+      "cached_input_tokens": 608640,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1965,
+      "reasoning_output_tokens": 79
+    },
+    "saved_at": "2026-10-09T19:47:43.701Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: toggleLog, startLogTimer and logTick retain independent one-second polling. Passing test/panel-0052.test.mjs AC1 tests cover unopened, closed and departed tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The .log rule retains fixed height and overflow-y:auto; showLog updates the existing box with the endpoint's tail. Passing AC2 and browser tests verify tail content and constant height."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "atBottom, showLog and setLogText retain bottom following, scroll preservation and selection-preserving updates. Passing AC3 tests include browser coverage of rolling tails and repeated unchanged or growing lines."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "loadLog preserves the existing log on failure and updates it on recovery. Both AC4 failure-and-recovery tests pass after the merge."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "replaced and showLog reset shorter replacement logs to the bottom. AC5 tests and browser replacement coverage pass after the merge."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:672",
+        "issue": "The earlier repeated-line selection bug remains fixed: identical responses cause no mutation, and prefix growth only appends text. The browser regression test passes after the merge.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The conflict resolution preserves both live-log behaviour and main's worktree-path behaviour. queueItem shows the path only in open in-flight rows and still registers their log boxes. Follow-up ideas record deferred work without implementing it."
+    },
+    "escalation_question": "",
+    "summary": "Approved after the merge. Live logs still meet all five criteria, and worktree paths remain visible only in open rows as main intended. The selection fix remains intact. The supplied post-merge suite reports 435 passing tests, with no failures or skips."
   }
 }
 ```
