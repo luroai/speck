@@ -209,3 +209,76 @@ Round 2 (codex): approve.
 ```
 
 </details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1232650d69151ec21328a6e2ec90bf3fc6feaba1",
+    "thread_id": "01a1212f-d19a-7ba1-b052-1a8bf49d44c8",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 745930,
+      "cached_input_tokens": 493184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1924,
+      "reasoning_output_tokens": 27
+    },
+    "saved_at": "2026-10-09T15:30:22.595Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html ticketItem retains the click handler solely on .head, containing tags and checks. The relocated 0039 AC1 test in test/panel-0039.test.mjs exercises header descendants and passed in the supplied results."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketDetail remains outside the clickable header. The relocated 0039 AC2 test covers sections, readiness content and surrounding-item clicks; supplied results show it passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ideaItem retains header-only toggling with the note as a sibling. The relocated 0039 AC3 test covers opening, closing and note clicks; it passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "test/panel-0039.test.mjs retains the real Chromium drag test, checking selected text and retained open state for ticket details and idea notes. It ran and passed without skipping."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The independent open and openIdeas sets remain outside render(). The relocated 0039 AC5 test verifies multiple open items and retained open/closed state through refreshes; it passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0039.test.mjs",
+        "issue": "The original selection-coverage gap remains fixed: the genuine browser drag test survived relocation and the merge.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The resolution preserves main's current capabilities and reapplies only this ticket's accurate top-row and detail-selection wording."
+    },
+    "escalation_question": "",
+    "summary": "The merge preserves the approved behaviour and all five criteria still pass. The tests moved intact into their own file, including the passing browser selection test. No new blocking concerns were found."
+  }
+}
+```
+
+</details>
