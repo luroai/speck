@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>speck · control panel</title>
+<style>
+  :root {
+    --bg: #1c1d20; --panel: #232428; --raise: #2a2b30; --line: #36383e; --line-soft: #2e3035;
+    --text: #d6d8dd; --muted: #8a8e97; --faint: #5f636c;
+    --accent: #7aa7f0; --ok: #62b77a; --warn: #e3a04f; --bad: #e0675d; --run: #5fa8e0; --idea: #b291e6;
+  }
+  * { box-sizing: border-box; border-radius: 0 !important; }
+  body { margin: 0; font: 13px/1.5 "Liberation Sans", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  code, .mono, .id { font-family: "Liberation Mono", monospace; }
+  code { font-size: 12px; color: #c9cdd6; }
+
+  header { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .logo { font-weight: 700; font-size: 16px; }
+  .logo span { color: var(--muted); font-weight: 400; }
+  .repo { color: var(--muted); font-size: 12px; }
+  .pills { margin-left: auto; display: flex; gap: 0; }
+  .pill { font-size: 12px; padding: 4px 12px; border: 1px solid var(--line); margin-left: -1px; color: var(--muted); }
+  .pill b { color: var(--text); font-weight: 600; }
+  .pill.attn { color: var(--warn); border-color: #5a4529; position: relative; z-index: 1; }
+  .pill.attn b { color: var(--warn); }
+  .live { display: inline-block; width: 6px; height: 6px; background: var(--run); margin-right: 6px; vertical-align: 1px; }
+
+  main { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; padding: 16px 24px; }
+  section { background: var(--panel); border: 1px solid var(--line); }
+  section.full { grid-column: 1 / -1; }
+  .sh { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .sh h2 { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+  .sh .n { color: var(--muted); font-size: 12px; }
+  .sh .hint { margin-left: auto; color: var(--faint); font-size: 12px; }
+  .group { padding: 7px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 1px solid var(--line-soft); background: var(--raise); }
+  .group.attn { color: var(--warn); }
+  .group.run { color: var(--run); }
+
+  .id { font-size: 12px; color: var(--muted); }
+  .tag { font-size: 11px; padding: 0 6px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 17px; display: inline-block; }
+  .tag.p1 { color: var(--accent); border-color: #3b4a66; }
+  .tag.high { color: var(--bad); border-color: #5c3330; }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .title { color: var(--text); }
+  .sub { font-size: 12px; color: var(--muted); }
+  .tick { display: inline-block; width: 4px; height: 8px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); margin: 0 6px 2px 2px; }
+  .sq { display: inline-block; width: 6px; height: 6px; background: currentColor; margin: 0 6px 1px 1px; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .run { color: var(--run); }
+
+  /* Shaping */
+  .item { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .item:last-child { border-bottom: 0; }
+  .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .item.open { background: #26282d; border-left: 2px solid var(--accent); padding-left: 12px; }
+  .detail { grid-column: 1 / -1; margin-top: 6px; border-top: 1px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
+  .detail h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .detail p { margin: 0 0 8px; color: #bfc2c9; }
+  .detail ol { margin: 0; padding-left: 18px; color: #bfc2c9; }
+  .detail ol li { margin-bottom: 4px; }
+  .ready { border-left: 1px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
+  .ready div { padding: 3px 0; }
+  .item.idea .id { color: var(--idea); }
+
+  /* Queue */
+  .q { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+  .q:last-child { border-bottom: 0; }
+  .q .top { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: baseline; }
+  .q .rank { font-family: "Liberation Mono", monospace; color: var(--accent); font-size: 12px; }
+  .q.wait { opacity: .5; }
+  .q.wait .rank { color: var(--muted); }
+  .q .indent { margin-left: 34px; }
+  .question { margin: 6px 0 4px 34px; padding: 6px 10px; border-left: 2px solid var(--warn); background: #2a2621; color: #ddd3c4; }
+  .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 8px 0 4px 34px; }
+  .stages div { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; padding-top: 5px; border-top: 3px solid var(--line); }
+  .stages .d { border-top-color: var(--ok); color: var(--muted); }
+  .stages .now { border-top-color: var(--run); color: var(--run); }
+  .act { margin-left: 34px; font-family: "Liberation Mono", monospace; font-size: 11px; color: var(--muted); }
+  .act b { color: #a9adb6; font-weight: 400; }
+  .next { color: var(--ok); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #36513d; padding: 0 5px; }
+
+  /* Shipped */
+  .stats { display: flex; border-bottom: 1px solid var(--line-soft); }
+  .stat { padding: 8px 14px; border-right: 1px solid var(--line-soft); }
+  .stat b { font-size: 15px; font-weight: 600; margin-right: 6px; }
+  .stat span { font-size: 11px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 14px; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { color: var(--muted); text-align: right; font-family: "Liberation Mono", monospace; font-size: 11px; white-space: nowrap; }
+
+  /* Live panel additions */
+  .pill.off { color: var(--bad); border-color: #5c3330; position: relative; z-index: 1; }
+  .live.off { background: var(--bad); }
+  .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: 1px solid var(--line); background: #2a2020; }
+  .offline[hidden] { display: none; }
+  .item.draft { cursor: pointer; }
+  .item.draft:hover { background: #26282d; }
+  .detail { grid-template-columns: 1fr; }
+  .detail ol li, .question, .title { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
+  .path { overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">speck <span>control panel</span></div>
+  <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code> · read-only</div>
+  <div class="pills" id="pills"><div class="pill"><span class="live"></span>connecting…</div></div>
+</header>
+<div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
+
+<main>
+  <section>
+    <div class="sh"><h2>Shaping</h2><span class="n" id="shaping-n"></span><span class="hint">drafts and ideas · click a draft for its criteria</span></div>
+    <div id="shaping"></div>
+  </section>
+  <section>
+    <div class="sh"><h2>Queue</h2><span class="n" id="queue-n"></span><span class="hint">builds run in their own worktrees</span></div>
+    <div class="group attn" id="needs-h">Needs you</div><div id="needs"></div>
+    <div class="group run" id="running-h">Running</div><div id="running"></div>
+    <div class="group" id="next-h">Up next</div><div id="next"></div>
+  </section>
+  <section class="full">
+    <div class="sh"><h2>Shipped</h2><span class="n" id="shipped-n"></span><span class="hint">latest 5</span></div>
+    <table><tbody id="shipped"></tbody></table>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+// ---- model: pure, no DOM. test/panel.test.mjs runs this section on its own. ----
+function panelModel(state) {
+  const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
+  const ideas = state && Array.isArray(state.ideas) ? state.ideas : [];
+  const is = (...statuses) => t => statuses.includes(t.status);
+  const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
+  const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
+  const done = tickets.filter(is('done')).map(t => {
+    const start = time(t.started), end = time(t.finished);
+    return { ...t, end, roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+      minutes: start !== null && end !== null ? Math.round((end - start) / 60000) : null };
+  });
+  // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 5.
+  const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
+  return {
+    drafts: tickets.filter(is('draft')),
+    ideas: ideas.filter(i => i && !String(i.status || '').startsWith('ticketed')),
+    needsYou: tickets.filter(is('blocked', 'approved')),
+    running: tickets.filter(is('building', 'reviewing')).map(t => {
+      const last = rounds(t)[rounds(t).length - 1];
+      return { ...t, round: t.status === 'reviewing' && last && last.round != null ? last.round : null };
+    }),
+    upNext: tickets.filter(is('ready')).map((t, i) => ({ ...t, rank: i + 1, waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [] })),
+    shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
+    shippedTotal: done.length,
+  };
+}
+// ---- end model ----
+
+// ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
+const POLL_MS = 2000;
+const $ = id => document.getElementById(id);
+function el(tag, cls, text, ...kids) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined && text !== null) node.textContent = String(text);
+  for (const k of kids) if (k) node.appendChild(k);
+  return node;
+}
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
+const mark = (cls, ok) => el('span', cls, null, el('span', ok ? 'tick' : 'sq'));
+function check(cls, ok, text) { const s = mark(cls, ok); s.appendChild(el('span', null, text)); return s; }
+function tags(t) {
+  const row = el('div', 'row', null, el('span', 'id', t.id), el('span', 'title', t.title));
+  if (t.priority !== undefined && t.priority !== null && t.priority !== '') row.appendChild(el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`));
+  if (t.size) row.appendChild(el('span', 'tag', t.size));
+  if (t.risk) row.appendChild(el('span', t.risk === 'high' ? 'tag high' : 'tag', t.risk));
+  return row;
+}
+const open = new Set(); // drafts whose criteria are showing, kept across refreshes
+
+function draftItem(t) {
+  const item = el('div', `item draft${open.has(t.id) ? ' open' : ''}`, null, tags(t), el('span'));
+  const criteria = Array.isArray(t.acceptance_criteria) ? t.acceptance_criteria : [];
+  const lint = t.lint || { errors: 0, warnings: 0 };
+  const checks = el('div', 'checks');
+  checks.appendChild(el('span', null, plural(criteria.length, 'criterion', 'criteria')));
+  if (lint.errors) checks.appendChild(check('bad', false, `lint: ${plural(lint.errors, 'error')}`));
+  else checks.appendChild(check('ok', true, 'lint passes'));
+  if (lint.warnings) checks.appendChild(check('warn', false, plural(lint.warnings, 'warning')));
+  item.appendChild(checks);
+  if (open.has(t.id)) {
+    const list = el('ol');
+    for (const c of criteria) list.appendChild(el('li', null, c));
+    item.appendChild(el('div', 'detail', null, el('div', null, null, el('h4', null, `Acceptance criteria · ${criteria.length}`), criteria.length ? list : el('p', null, 'None yet.'))));
+  }
+  item.addEventListener('click', () => { if (open.has(t.id)) open.delete(t.id); else open.add(t.id); render(); });
+  return item;
+}
+function ideaItem(i) {
+  return el('div', 'item idea', null, el('div', 'row', null, el('span', 'id', 'idea'), el('span', 'title', i.title)), el('span'),
+    el('div', 'checks', null, el('span', null, i.status ? i.status : 'no status'), el('span', 'mono', i.path)));
+}
+function queueItem(t, rank, rankCls, ...below) {
+  const q = el('div', 'q', null, el('div', 'top', null, el('span', `rank ${rankCls || ''}`, rank), tags(t), el('span')));
+  for (const b of below) if (b) q.appendChild(b);
+  return q;
+}
+function fill(id, nodes, emptyText) {
+  const box = $(id);
+  box.replaceChildren(...(nodes.length ? nodes : [el('div', 'empty', emptyText)]));
+}
+
+let state = null, lastOk = null, connected = null;
+function render() {
+  if (!state) return;
+  const m = panelModel(state);
+  fill('shaping', [...m.drafts.map(draftItem), ...m.ideas.map(ideaItem)], 'No drafts or waiting ideas.');
+  $('shaping-n').textContent = `${plural(m.drafts.length, 'draft')} · ${plural(m.ideas.length, 'idea')}`;
+
+  $('needs-h').textContent = `Needs you · ${m.needsYou.length}`;
+  fill('needs', m.needsYou.map(t => t.status === 'blocked'
+    ? queueItem(t, '', 'bad', t.blocked_question ? el('div', 'question', t.blocked_question) : null, el('div', 'sub indent', 'blocked: answer the question, then run /speck-build ' + t.id))
+    : queueItem(t, '', 'ok', el('div', 'sub indent ok', `approved: read speck pack ${t.id}, then run /speck-ship ${t.id}`))), 'Nothing needs you.');
+  $('running-h').textContent = `Running · ${m.running.length}`;
+  fill('running', m.running.map(t => queueItem(t, '', 'run',
+    el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.round !== null ? ` · review round ${t.round}` : '')),
+    t.worktree ? el('div', 'act path', `worktree ${t.worktree}`) : null)), 'Nothing running.');
+  $('next-h').textContent = `Up next · ${m.upNext.length}`;
+  fill('next', m.upNext.map(t => {
+    const q = queueItem(t, String(t.rank), '', t.waiting_on.length ? el('div', 'sub indent warn', `waiting on ${t.waiting_on.join(', ')}`) : null);
+    if (t.waiting_on.length) q.className = 'q wait';
+    return q;
+  }), 'Nothing ready.');
+  $('queue-n').textContent = `${m.needsYou.length} needs you · ${m.running.length} running · ${m.upNext.length} up next`;
+
+  fill('shipped', m.shipped.map(t => {
+    const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
+    const name = el('td', null, null, el('span', 'id', t.id), document.createTextNode('\u00a0 ' + (t.title ?? '')));
+    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')));
+  }), 'Nothing shipped yet.');
+  $('shipped-n').textContent = `${m.shippedTotal} in total`;
+
+  const pill = (text, n, cls) => { const p = el('div', `pill${cls ? ' ' + cls : ''}`); p.appendChild(el('b', null, n)); p.appendChild(document.createTextNode(' ' + text)); return p; };
+  const status = el('div', connected ? 'pill' : 'pill off', null, el('span', connected ? 'live' : 'live off'),
+    document.createTextNode(connected ? `live · ${lastOk ? Math.max(0, Math.round((Date.now() - lastOk) / 1000)) : 0}s ago` : 'disconnected'));
+  $('pills').replaceChildren(status, pill('needs you', m.needsYou.length, m.needsYou.length ? 'attn' : ''), pill('running', m.running.length),
+    pill('up next', m.upNext.length), pill(`drafts · ${plural(m.ideas.length, 'idea')}`, m.drafts.length), pill('shipped', m.shippedTotal));
+}
+function setConnected(ok, problem) {
+  connected = ok;
+  $('offline').hidden = ok;
+  if (!ok) $('offline').textContent = problem
+    ? `speck panel couldn't read the tickets: ${problem} Showing the last state received. Retrying every 2 seconds…`
+    : "Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…";
+  if (state) render();
+  else $('pills').replaceChildren(el('div', ok ? 'pill' : 'pill off', null, el('span', ok ? 'live' : 'live off'), document.createTextNode(ok ? 'live' : 'disconnected')));
+}
+
+// Fetches the state every 2 seconds without reloading the page. Each poll schedules the next one before it starts, so
+// a request that never finishes can't stop polling. A request still pending when the next one is due counts as
+// disconnected and is aborted, and only the latest request's answer is used. A failure shows as disconnected and
+// polling carries on, so the page recovers by itself when the server is back.
+let seq = 0, pending = null;
+async function poll() {
+  setTimeout(poll, POLL_MS);
+  if (pending) { pending.abort(); pending = null; setConnected(false); }
+  const mine = ++seq, ctl = new AbortController();
+  pending = ctl;
+  try {
+    const res = await fetch('/api/state', { cache: 'no-store', signal: ctl.signal });
+    let body = null;
+    try { body = await res.json(); } catch (e) { body = null; }
+    if (mine !== seq) return; // a newer request has taken over
+    if (!res.ok || !body || !Array.isArray(body.tickets)) setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
+    else { state = body; lastOk = Date.now(); setConnected(true); }
+  } catch (e) {
+    if (mine === seq) setConnected(false);
+  } finally {
+    if (pending === ctl) pending = null;
+  }
+}
+poll();
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import http from 'node:http';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -1466,6 +1467,53 @@ function cmdStatus(args = []) {
   console.log(`\nIDEAS (${notes.length}: ${notes.length - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
 }
 
+// ---------- panel (a read-only view in the browser) ----------
+
+const PANEL_PORT = 4777;
+const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+function panelPort(args) {
+  const i = args.findIndex(a => a === '--port' || a.startsWith('--port='));
+  if (i === -1) return PANEL_PORT;
+  const v = args[i].startsWith('--port=') ? args[i].slice(7) : args[i + 1];
+  if (!/^\d+$/.test(v ?? '') || +v < 1 || +v > 65535) throw new SpeckError(`--port must be a whole number from 1 to 65535 (got "${v ?? ''}").`);
+  return +v;
+}
+
+// Serves the panel page and /api/state, read-only, to this machine only. Every request reads the files afresh.
+function cmdPanel(args) {
+  const repo = findRepoRoot();
+  const port = panelPort(args);
+  const cfg = loadConfig(repo);
+  const page = fs.readFileSync(path.join(TEMPLATES, 'panel.html'), 'utf8')
+    .replace('{{repo}}', htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo))).replace('{{base}}', htmlEscape(cfg.base_branch));
+  // Only these Host headers are served, so a web page on another name that resolves here (DNS rebinding) gets nothing.
+  const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
+  const send = (res, status, type, body) => {
+    res.writeHead(status, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
+      ...(status === 405 ? { Allow: 'GET' } : {}) });
+    res.end(body);
+  };
+  const server = http.createServer((req, res) => {
+    if (!hosts.has(String(req.headers.host || '').toLowerCase())) return send(res, 403, 'text/plain', 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
+    if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed: the panel is read-only.\n');
+    const where = req.url.split('?')[0];
+    if (where === '/') return send(res, 200, 'text/html', page);
+    if (where === '/api/state') {
+      try { return send(res, 200, 'application/json', JSON.stringify(statusData(repo))); }
+      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    return send(res, 404, 'text/plain', 'Not found.\n');
+  });
+  server.on('error', e => {
+    console.error(e.code === 'EADDRINUSE'
+      ? `Port ${port} is already in use, so the panel didn't start. Stop whatever is using it, or pick another port with --port <n>.`
+      : `The panel couldn't start on port ${port}: ${e.message}`);
+    process.exit(1);
+  });
+  server.listen(port, '127.0.0.1', () => console.log(`speck panel: http://127.0.0.1:${port}/ (read-only; press Ctrl+C to stop)`));
+}
+
 function cmdDiffstat() {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
@@ -1667,6 +1715,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
+  speck panel [--port <n>]           a read-only control panel in your browser, at http://127.0.0.1:4777
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
@@ -1680,7 +1729,7 @@ const HELP = `speck: small tickets, independent review, you merge.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
