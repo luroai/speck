@@ -38,6 +38,7 @@ Shipped shows overall stats above the list, and each row shows when its ticket s
 - `finished` is set when a ticket becomes `done`, which `speck ship` does as it merges, so it's the ship time.
 - Builds after 0033, which changes the same page. It touches a different part of the page from 0034, so the two can run side by side.
 - No external facts: everything comes from files speck already reads.
+- Self-check: no changes. Each median covers its own tickets (both times; at least one review round; tokens above 0, since 0 means not recorded), so each stat names its own count. An even count takes the mean of the middle two (rounds to one decimal place, minutes and tokens whole).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

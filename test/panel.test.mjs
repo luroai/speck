@@ -958,3 +958,99 @@ test('0042 AC3 (round 1 F1): when the commit fails, a ticket with its own staged
     assert.equal(readT(r, '0002-two.md'), working, 'the working copy is as it was');
   } finally { await stop(p); }
 });
+
+// ---------- 0035: shipping performance in Shipped ----------
+
+const shippedRows = p => p.byId('shipped').children.filter(n => n.tagName === 'tr');
+const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+
+test('0035 AC1: the stats count tickets shipped today and give median minutes, rounds and tokens, each with how many tickets it covers', () => {
+  const model = panelModel();
+  const now = Date.now(), iso = ms => new Date(ms).toISOString(), min = 60000;
+  const yesterday = startOfToday() - 60 * min;
+  const done = (id, started, finished, rounds = []) => T(id, 'done', { started, finished, rounds });
+  const m = model({ tickets: [
+    done('0011', iso(now - 10 * min), iso(now), [round(1, 100)]),
+    done('0012', iso(now - 30 * min), iso(now), [round(1, 50), round(2, 50), round(3, 200)]),
+    done('0013', iso(yesterday - 20 * min), iso(yesterday), [round(1, 0)]), // tokens not recorded
+    done('0014', undefined, iso(yesterday), []), // no started time, no rounds
+    done('0015', iso(yesterday), undefined, [round(1, 400), round(2, 400)]), // no finished time
+    T('0016', 'cancelled', { started: iso(now - min), finished: iso(now), rounds: [round(1, 9)] }),
+    T('0017', 'building', { started: iso(now - min), rounds: [round(1, 9)] }),
+  ], ideas: [] });
+  assert.equal(m.stats.today, 2, 'finished today, done only');
+  assert.deepEqual(m.stats.minutes, { median: 20, count: 3 }, 'started and finished: 10, 20, 30');
+  assert.deepEqual(m.stats.rounds, { median: 1.5, count: 4 }, 'tickets with review rounds: 1, 1, 2, 3');
+  assert.deepEqual(m.stats.tokens, { median: 300, count: 3 }, 'tickets with tokens recorded: 100, 300, 800');
+  assert.equal(model({ tickets: [done('0011', iso(now - 9 * min), iso(now), [round(1, 1)])], ideas: [] }).stats.minutes.median, 9);
+});
+
+test('0035 AC1: the stats row is drawn above the list, and a median with nothing to cover shows a dash', async () => {
+  const now = Date.now(), iso = ms => new Date(ms).toISOString();
+  const state = { tickets: [
+    T('0011', 'done', { started: iso(now - 4 * 60000), finished: iso(now), rounds: [round(1, 1200), round(2, 300)] }),
+    T('0012', 'done', { finished: iso(now), rounds: [] }),
+  ], ideas: [] };
+  const p = fakePage([state]);
+  await p.settle();
+  const stats = p.byId('shipped-stats');
+  assert.equal(stats.hidden, false);
+  assert.deepEqual(stats.children.map(c => c.textContent),
+    ['2shipped today', '4median minutes · 1 ticket', '2median review rounds · 1 ticket', '1,500median tokens · 1 ticket']);
+  const html = page();
+  assert.ok(html.indexOf('id="shipped-stats"') < html.indexOf('id="shipped"'), 'stats come before the list');
+  const none = fakePage([{ tickets: [T('0012', 'done', { finished: iso(now), rounds: [] })], ideas: [] }]);
+  await none.settle();
+  assert.deepEqual(none.byId('shipped-stats').children.map(c => c.textContent),
+    ['1shipped today', '–median minutes · 0 tickets', '–median review rounds · 0 tickets', '–median tokens · 0 tickets']);
+});
+
+test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon HH:MM before, a dash with no finished time', async () => {
+  const today = startOfToday();
+  const at = (dayStart, h, m) => new Date(new Date(dayStart).setHours(h, m)).toISOString();
+  const earlier = new Date(today); earlier.setDate(earlier.getDate() - 3); earlier.setHours(14, 2);
+  const nowTime = new Date(Date.now());
+  const hhmm = d => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const state = { tickets: [
+    T('0011', 'done', { finished: nowTime.toISOString() }),
+    T('0012', 'done', { finished: earlier.toISOString() }),
+    T('0013', 'done', { finished: at(new Date(2026, 9, 8), 9, 5) }),
+    T('0014', 'done', {}),
+  ], ideas: [] };
+  const m = panelModel()(state);
+  const when = id => m.shipped.find(t => t.id === id).when;
+  assert.equal(when('0011'), hhmm(nowTime));
+  assert.equal(when('0012'), `${earlier.getDate()} ${months[earlier.getMonth()]} 14:02`);
+  if (startOfToday() !== new Date(2026, 9, 8).getTime()) assert.equal(when('0013'), '8 Oct 09:05');
+  assert.equal(when('0014'), '–');
+  const p = fakePage([state]);
+  await p.settle();
+  const rows = shippedRows(p);
+  assert.equal(rows.length, 4);
+  const row = id => rows.find(r => r.textContent.startsWith(id));
+  assert.ok(row('0011').children.some(c => c.textContent === hhmm(nowTime)), 'today: HH:MM');
+  assert.ok(row('0012').children.some(c => c.textContent === `${earlier.getDate()} ${months[earlier.getMonth()]} 14:02`));
+  assert.ok(row('0014').children.some(c => c.textContent === '–'), 'no finished time: a dash');
+});
+
+test('0035 AC1, AC2: times use the browser\'s time zone, not UTC', () => {
+  const before = process.env.TZ;
+  process.env.TZ = 'America/New_York';
+  try {
+    const m = panelModel()({ tickets: [T('0011', 'done', { finished: '2026-10-08T02:30:00Z' })], ideas: [] });
+    assert.equal(m.shipped[0].when, '7 Oct 22:30', 'UTC 8 Oct 02:30 is 7 Oct 22:30 in New York');
+  } finally {
+    if (before === undefined) delete process.env.TZ; else process.env.TZ = before;
+  }
+});
+
+test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and shows no stats', async () => {
+  const state = { tickets: [T('0001', 'building'), T('0002', 'cancelled', { finished: new Date().toISOString() })], ideas: [] };
+  const p = fakePage([state]);
+  await p.settle();
+  assert.equal(p.byId('shipped-stats').hidden, true);
+  assert.equal(p.byId('shipped-stats').textContent, '');
+  assert.match(p.byId('shipped').textContent, /Nothing shipped yet/);
+  assert.match(page().match(/<style>([\s\S]*?)<\/style>/)[1], /\.stats\[hidden\] \{ display: none; \}/, 'hidden wins over display: flex');
+});
