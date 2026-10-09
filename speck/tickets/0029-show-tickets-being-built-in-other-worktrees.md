@@ -33,6 +33,9 @@ Once builds run in their own worktrees (0028), a ticket's progress is committed 
 ## Out of scope
 - Other commands (`next`, `pack`) reading from other worktrees.
 
+## Notes
+- Pre-check: no ambiguities found, and no external facts.
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 

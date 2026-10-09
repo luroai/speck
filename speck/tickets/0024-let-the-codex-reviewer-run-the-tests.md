@@ -37,7 +37,10 @@ The Codex reviewer can run the project's tests on a throwaway copy of the commit
 
 ## Notes
 - Risk is high because it changes the reviewer's sandbox from read-only to writable, even though it only writes to a throwaway copy.
-- After 0028: the throwaway copy can be a worktree, created and removed with the same code.
+- After 0028: the throwaway copy can be a worktree, created and removed with the same code. A worktree shares the repo's `.git`, so AC1 still means the reviewer mustn't be able to write refs there. Make sure the sandbox doesn't let it, or use a copy that doesn't share `.git`.
+- Checked 2026-10-09: `codex exec` (codex-cli 0.159.0) takes `--sandbox read-only|workspace-write|danger-full-access`, `-C/--cd <dir>` and `--add-dir <dir>`.
+- Unverified: whether `codex exec resume <session>` keeps working when it runs from a different folder each round (it has no `--cd` option). AC5 depends on this. If it doesn't, keep one copy per ticket at a fixed path across rounds.
+- Unverified: `codex exec --worktree` ("run the session in a new managed Git worktree") might provide the throwaway copy directly. Check whether it reviews the right commit and cleans up after itself before relying on it.
 - On by default for `codex`, so the reviewer actually checks. The assumption is that speed and token cost don't get worse, because the reviewer stops reasoning about test output it can't verify.
 
 ## Blocked question

@@ -33,6 +33,7 @@ A build commits only the files it changed, and other sessions' untracked files d
 - Running builds in separate worktrees (see the open question on worktrees).
 
 ## Notes
+- Pre-check: no ambiguities found, and no external facts.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

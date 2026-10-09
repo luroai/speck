@@ -26,7 +26,7 @@ Several sessions often share one checkout. Today `speck ship` checks out the bas
 
 ## Acceptance criteria
 1. When the ticket branch is checked out in a worktree and the base branch is checked out in the main checkout, `speck ship <id>` (and `--auto`) run from either folder gives today's result: the ticket set to `done` on its branch, a merge commit on the base branch, the push, and the branch deleted locally and on the remote.
-2. The base branch's checkout ends up with the merged files. Ship refuses, changing nothing, if that checkout has uncommitted changes to tracked files, or isn't on the base branch. Untracked files there only block it if the merge would overwrite them.
+2. When the base branch is checked out in another worktree, that checkout ends up with the merged files. Ship refuses, changing nothing, if that checkout has uncommitted changes to tracked files. Untracked files there only block it if the merge would overwrite them. When the base branch isn't checked out anywhere, ship works in the folder it runs in, as today.
 3. After a successful ship, the ticket's worktree is removed. When ship ran from inside that worktree, it says the folder is gone and prints the path of the base branch's checkout.
 4. Every existing ship check still applies. A refused or conflicting ship leaves the worktree, both branches and both folders as they were.
 5. Tickets built without a worktree ship exactly as today.
@@ -35,6 +35,8 @@ Several sessions often share one checkout. Today `speck ship` checks out the bas
 - Creating worktrees (0028).
 
 ## Notes
+- Pre-check: AC2 didn't say what happens when the base branch isn't checked out anywhere. It now does.
+- Checked 2026-10-09: git 2.53.0 here. Git refuses to check out a branch that's already checked out in another worktree (the reason for this ticket), and has `git worktree remove`.
 - Comes before 0028, so builds only move into worktrees once they can ship from one.
 
 ## Blocked question

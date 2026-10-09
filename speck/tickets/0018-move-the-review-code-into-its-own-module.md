@@ -25,7 +25,7 @@ created: 2026-10-09
 speck's code is split into files by area under `scripts/`, and speck works exactly as before.
 
 ## Acceptance criteria
-1. The review code (reviewing, recording, `prompt`, `diff`, `next`, `reviewer-settings` and the review pack), the install and doctor code, and the ship code (including `--auto`) each live in their own file under `scripts/`. `scripts/speck.mjs` keeps the ticket handling, the commands' entry point and shared helpers, and no file is over 600 lines.
+1. The review code (reviewing, recording, `prompt`, `diff`, `next`, `reviewer-settings` and the review pack), the install and doctor code, and the ship code (including `--auto`) each live in their own file under `scripts/`. `scripts/speck.mjs` keeps the commands' entry point. No file under `scripts/` is over 600 lines; if `speck.mjs` still is, more areas move out too.
 2. Every function that tests or other code import from `scripts/speck.mjs` today can still be imported from there.
 3. Every CLI command gives the same output and exit code as before, and the full test suite passes unchanged.
 4. A project installed with `speck init` (which copies `scripts/` into `.speck/`) runs `review`, `record`, `pack`, `doctor` and `ship` from `.speck/scripts/speck.mjs`, and re-running `init` there still updates `.speck/`.
@@ -35,6 +35,8 @@ speck's code is split into files by area under `scripts/`, and speck works exact
 - The test file (0020).
 
 ## Notes
+- Pre-check: AC1 used to fix what stays in `speck.mjs` and also cap every file at 600 lines, which could contradict each other. Now the cap wins.
+- Checked 2026-10-09: `speck init` copies the whole `scripts/` folder into `.speck/` (installTooling), so new module files install without changes.
 - This is a pure move. 0019 was merged in once `max_changed_lines` went up to 5,000.
 
 ## Blocked question

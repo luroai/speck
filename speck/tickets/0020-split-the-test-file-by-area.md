@@ -34,6 +34,7 @@ Tests are split into files by area, with shared helpers in one place, and the su
 - Splitting the CLI code (0018, 0019).
 
 ## Notes
+- Pre-check: no ambiguities found, and no external facts.
 - After 0017, so the cleanup lands in the helpers once rather than in every copy.
 - Test files don't count towards the changed-line limit.
 

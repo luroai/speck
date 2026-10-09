@@ -26,7 +26,7 @@ One command closes out an approved build: it writes the review log and delivery 
 
 ## Acceptance criteria
 1. `speck close <id>` refuses, changing nothing, unless `speck next <id>` says `ship` and the working tree has no changes outside the ticket file.
-2. It fills `## Review log` with one line per round: the round number, the reviewer, the verdict, and the id and first sentence of each blocking finding raised in that round.
+2. It replaces the contents of `## Review log` with one line per round: the round number, the reviewer, the verdict, and the id and first sentence of each blocking finding that first appears in that round. A finding carried over from an earlier round isn't repeated.
 3. It adds to `## Delivery log` the number of review rounds, the reviewer and model, reviewer tokens, the elapsed time since the build started, and the changed lines with the limit, all from the same data as `speck pack`. Anything already in the Delivery log (for example follow-up ideas the builder wrote) is kept.
 4. It sets the status to `approved` and commits only the ticket file, with the message `speck(<id>): approved`.
 5. The build skill's approved step uses `speck close <id>` (after the builder adds any follow-up ideas), then `speck ship <id> --auto` as now.
@@ -36,6 +36,7 @@ One command closes out an approved build: it writes the review log and delivery 
 - Writing follow-up ideas, which stay the builder's job.
 
 ## Notes
+- Pre-check: AC2's "raised in that round" could mean new findings or every finding listed. It now says findings first appearing in that round, and that the Review log is replaced, not appended to.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

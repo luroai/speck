@@ -25,7 +25,7 @@ Sessions that share one checkout keep colliding. One session's branch switch cha
 Each build happens in its own git worktree, so a build never touches the main checkout or another build.
 
 ## Acceptance criteria
-1. `speck start <id>` takes a `ready` ticket, creates its branch from the up-to-date base branch in a new worktree outside the main checkout, sets the ticket to `building` and commits it there, then prints the worktree's path. The main checkout's branch and files are unchanged.
+1. `speck start <id>` takes a `ready` ticket, creates its branch from the local base branch in a new worktree outside the main checkout, sets the ticket to `building` and commits it there, then prints the worktree's path. The main checkout's branch and files are unchanged.
 2. If `worktree_setup` in `speck/config.yml` is set (for example `npm ci`), `speck start` runs it in the new worktree. If it fails, the worktree and branch are removed, the ticket stays `ready`, and the error says why.
 3. `speck start` refuses, changing nothing, if the ticket isn't `ready` or a branch or worktree for it already exists. It prints the existing path so a build can resume there.
 4. With `worktrees: false` in config, `speck start` creates the branch in the current checkout as builds do today. New projects get `worktrees: true` and a blank `worktree_setup`, and this repo turns worktrees on.
@@ -36,6 +36,9 @@ Each build happens in its own git worktree, so a build never touches the main ch
 - Showing in-progress worktrees in `speck status` (0029).
 
 ## Notes
+- Pre-check: AC1's "up-to-date base branch" could have meant fetching from the remote. It now says the local base branch; the build skill's pre-flight still pulls first.
+- Checked 2026-10-09: this repo tracks `.speck/` (links to `scripts/` and `templates/`) and the skills, so a worktree has the speck CLI.
+- Checked 2026-10-09: `speck init` doesn't commit or ignore `.speck/` or the skills in a user's project. A worktree only has the CLI and skills if the user has committed them (see the open question).
 - After 0027, because builds in worktrees need to ship from one.
 - This reverses the "Worktrees rejected for now" decision in `speck/ideas/2026-10-08-speck-board.md`. The reason is isolation between sessions, not parallel builds. Update that note and `product.md`.
 - Worktrees share one `.git` object store, so a new one adds only the checked-out files. Gitignored files (`node_modules`, `.env`) aren't there, which is what `worktree_setup` is for.

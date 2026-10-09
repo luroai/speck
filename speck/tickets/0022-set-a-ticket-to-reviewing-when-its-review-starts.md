@@ -34,6 +34,7 @@ Starting a ticket's first review round sets it to `reviewing`, with no separate 
 - Setting `building` automatically.
 
 ## Notes
+- Pre-check: no ambiguities found, and no external facts. Note that `speck review` already lets the ticket's Review rounds section stay uncommitted. The status change will be committed with the builder's next fix commit.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

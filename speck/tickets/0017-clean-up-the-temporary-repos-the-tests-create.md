@@ -27,7 +27,7 @@ Running the tests leaves nothing behind in the system temporary folder, whether 
 ## Acceptance criteria
 1. After `npm test` finishes, the system temporary folder holds no new files or folders created by the run (compare a listing taken before and after).
 2. A test that fails still removes the temporary repos and folders it made.
-3. An interrupted run (the process killed part-way) leaves at most the folders of the tests that were running, not one per test so far.
+3. If the run is killed part-way, it leaves behind at most the temporary folders of the tests that were running at that moment, not one per test run so far.
 4. Every existing test still passes, and none is weakened or removed to get there.
 
 ## Out of scope
@@ -35,6 +35,7 @@ Running the tests leaves nothing behind in the system temporary folder, whether 
 - Changing what any test checks.
 
 ## Notes
+- Pre-check: no external facts. AC3 reworded so it's clear it's about a run killed mid-way.
 - The temporary folders include fake tool folders (`speck-bin-…`, `speck-fake-…`) and bare remotes, not only repos.
 
 ## Blocked question
