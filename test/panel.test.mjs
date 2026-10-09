@@ -328,7 +328,9 @@ function fakePage(responses) {
     getElementById: id => { if (!nodes.has(id)) nodes.set(id, make('div')); return nodes.get(id); },
   };
   const timers = [];
-  const fetch = async () => {
+  const calls = []; // every fetch, so a test can check what the page sent
+  const fetch = async (url, opts) => {
+    calls.push({ url, opts });
     const next = responses.shift();
     if (next instanceof Error) throw next;
     if (next && next.then) return next; // a request the test settles later, or never
@@ -340,7 +342,7 @@ function fakePage(responses) {
   vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), AbortController, Date, Math, JSON, String, Number, Array, Set, console });
   const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
   const settle = () => new Promise(r => setTimeout(r, 20));
-  return { byId: id => document.getElementById(id), timers, all, settle };
+  return { byId: id => document.getElementById(id), timers, all, settle, calls };
 }
 
 test('0031 AC5: a title like <b>x</b> is rendered as those characters, in every area', async () => {
@@ -712,4 +714,227 @@ test('0034 AC5: an in-flight ticket shows its worktree path and the whole minute
   assert.ok(b.textContent.includes('0 min') && !b.textContent.includes('worktree'));
   assert.ok(!c.textContent.includes('min') && !c.textContent.includes('worktree'));
   assert.ok(!d.textContent.includes('/tmp/wt/0004') && !d.textContent.includes('min'), 'not for a ready ticket');
+});
+
+// ---------- 0042: set a draft ticket to ready from the panel ----------
+
+function post(port, pathName, { origin = `http://127.0.0.1:${port}`, token, host = `127.0.0.1:${port}`, method = 'POST' } = {}) {
+  return new Promise((resolve, reject) => {
+    const headers = { Host: host };
+    if (origin !== null) headers.Origin = origin;
+    if (token !== undefined) headers['X-Speck-Token'] = token;
+    const req = http.request({ host: '127.0.0.1', port, method, path: pathName, headers }, res => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', d => { body += d; });
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+const tokenOf = html => (html.match(/const TOKEN = '([0-9a-f]+)';/) || [])[1];
+const readyPath = id => `/api/tickets/${id}/ready`;
+
+// A panel repo with a draft 0002 that passes lint (untracked, as a fresh draft is), served on a free port.
+async function readyPanel() {
+  const r = panelRepo();
+  r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
+  const port = await freePort();
+  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const token = tokenOf((await request(port)).body);
+  return { r, port, p, token };
+}
+const headOf = r => r.g('rev-parse', 'HEAD');
+const readT = (r, name) => fs.readFileSync(path.join(r.dir, 'speck', 'tickets', name), 'utf8');
+
+test('0042 AC4: the page carries a token made afresh each time the server starts', async () => {
+  const r = panelRepo();
+  const tokens = [];
+  for (let i = 0; i < 2; i++) {
+    const port = await freePort();
+    const p = await startPanel(r.dir, ['--port', String(port)]);
+    try { tokens.push(tokenOf((await request(port)).body)); } finally { await stop(p); }
+  }
+  assert.ok(tokens[0] && tokens[0].length >= 32, 'a long token is in the page');
+  assert.notEqual(tokens[0], tokens[1]);
+});
+
+test('0042 AC2: setting ready from the panel sets the status and commits only that ticket, leaving other changes as they were', async () => {
+  const { r, port, p, token } = await readyPanel();
+  try {
+    // Another change, staged, and another, not staged, that the commit must leave alone.
+    fs.writeFileSync(path.join(r.dir, 'staged.txt'), 'staged\n'); r.g('add', 'staged.txt');
+    fs.appendFileSync(path.join(r.dir, 'speck', 'product.md'), '\nunstaged edit\n');
+    const before = headOf(r);
+    const res = await post(port, readyPath('0002'), { token });
+    assert.equal(res.status, 200, res.body);
+    assert.match(res.headers['content-type'], /application\/json/);
+    assert.match(readT(r, '0002-two.md'), /^status: ready/m);
+    assert.equal(r.g('log', '-1', '--format=%s'), 'speck(0002): ready');
+    assert.equal(r.g('rev-parse', 'HEAD~1'), before, 'one new commit');
+    assert.equal(r.g('show', '--name-only', '--format=', 'HEAD'), 'speck/tickets/0002-two.md');
+    assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets/0002-two.md'), '', 'the ticket is fully committed');
+    assert.equal(r.g('diff', '--cached', '--name-only'), 'staged.txt', 'the staged change is still staged');
+    assert.equal(r.g('diff', '--name-only'), 'speck/product.md', 'the unstaged change is still unstaged');
+    // It's ready by speck's own reading, so the next /api/state has it out of Shaping.
+    const state = JSON.parse((await request(port, { pathName: '/api/state' })).body);
+    assert.equal(state.tickets.find(t => t.id === '0002').status, 'ready');
+    // Short ids work as they do on the command line.
+    r.write('0003-three.md', fm({ id: '"0003"', title: 'Three' }));
+    assert.equal((await post(port, readyPath('3'), { token })).status, 200);
+    assert.equal(r.g('log', '-1', '--format=%s'), 'speck(0003): ready');
+  } finally { await stop(p); }
+});
+
+test('0042 AC3: a refused request leaves the ticket a draft, commits nothing and says why', async () => {
+  const { r, port, p, token } = await readyPanel();
+  try {
+    r.write('0004-four.md', fm({ id: '"0004"', title: 'Four', size: 'L' }));
+    const cases = [
+      ['0004', 'a ticket that fails lint', res => {
+        const lint = r.run('lint', '4').stdout.split('\n').filter(l => l.startsWith('✗'));
+        assert.ok(lint.length);
+        for (const l of lint) assert.ok(JSON.parse(res.body).error.includes(l), l);
+      }],
+      ['0001', 'a ticket that is not a draft', res => assert.match(JSON.parse(res.body).error, /ready/)],
+      ['0099', 'an id with no ticket', res => { assert.equal(res.status, 404); assert.match(JSON.parse(res.body).error, /0099/); }],
+    ];
+    for (const [id, what, check] of cases) {
+      const before = headOf(r), files = ['0001-export-bookings.md', '0002-two.md', '0004-four.md'].map(n => fs.existsSync(path.join(r.dir, 'speck/tickets', n)) ? readT(r, n) : null);
+      const res = await post(port, readyPath(id), { token });
+      assert.ok(res.status >= 400 && res.status < 500, `${what}: ${res.status}`);
+      assert.ok(JSON.parse(res.body).error, `${what} gives a reason`);
+      check(res);
+      assert.equal(headOf(r), before, `${what}: nothing committed`);
+      assert.deepEqual(['0001-export-bookings.md', '0002-two.md', '0004-four.md'].map(n => fs.existsSync(path.join(r.dir, 'speck/tickets', n)) ? readT(r, n) : null), files, `${what}: no file changed`);
+    }
+    // A checkout that isn't on the base branch.
+    r.g('checkout', '-q', '-b', 'elsewhere');
+    const before = headOf(r);
+    const res = await post(port, readyPath('0002'), { token });
+    assert.ok(res.status >= 400 && res.status < 500, String(res.status));
+    assert.match(JSON.parse(res.body).error, /main/);
+    assert.match(readT(r, '0002-two.md'), /^status: draft/m);
+    assert.equal(headOf(r), before);
+  } finally { await stop(p); }
+});
+
+test('0042 AC4: without the panel\'s Origin and token the request gets 403 and changes nothing; other routes are unchanged', async () => {
+  const { r, port, p, token } = await readyPanel();
+  try {
+    const before = headOf(r), file = readT(r, '0002-two.md');
+    const bad = [
+      { token, origin: null }, { token, origin: 'http://evil.example' }, { token, origin: `http://127.0.0.1:${port + 1}` },
+      { token, origin: `https://127.0.0.1:${port}` }, { token, origin: 'null' }, { token, origin: `http://127.0.0.1:${port}/` },
+      {}, { token: '' }, { token: 'nope' }, { token: token.slice(0, -1) }, { token: token.toUpperCase() === token ? 'x' : token.toUpperCase() },
+    ];
+    for (const o of bad) assert.equal((await post(port, readyPath('0002'), o)).status, 403, JSON.stringify({ ...o, token: o.token === token ? 'right' : o.token }));
+    assert.equal((await post(port, readyPath('0002'), { token, host: 'evil.example' })).status, 403, 'the Host check still applies');
+    assert.equal(headOf(r), before);
+    assert.equal(readT(r, '0002-two.md'), file);
+    // Every other non-GET request is still 405, including other methods on the new path.
+    for (const method of ['PUT', 'DELETE', 'PATCH', 'HEAD']) assert.equal((await post(port, readyPath('0002'), { token, method })).status, 405, method);
+    for (const pathName of ['/', '/api/state', '/api/tickets/0002', '/api/tickets/0002/ready/x', '/api/tickets/abc/ready', '/api/tickets//ready'])
+      assert.equal((await post(port, pathName, { token })).status, 405, pathName);
+    assert.equal(headOf(r), before);
+    assert.equal((await request(port)).status, 200);
+    assert.equal((await request(port, { pathName: '/api/state' })).status, 200);
+    assert.equal((await request(port, { pathName: readyPath('0002') })).status, 404, 'GET on the new path is just an unknown page');
+    // The localhost origin works too.
+    const ok = await post(port, readyPath('0002'), { token, origin: `http://localhost:${port}`, host: `localhost:${port}` });
+    assert.equal(ok.status, 200, ok.body);
+  } finally { await stop(p); }
+});
+
+const button = row => (function find(n) { if (n.tagName === 'button') return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
+
+test('0042 AC1: an open draft has a Set ready button, disabled with the reason while it has lint errors', async () => {
+  const state = { tickets: [
+    full('0001', { lint: { errors: 1, warnings: 0 }, lint_messages: { errors: ['size L can never be ready: split it into sibling tickets.'], warnings: [] } }),
+    full('0002'),
+  ], ideas: [] };
+  const p = fakePage([state, state]);
+  await p.settle();
+  assert.equal(button(items(p)[0]), null, 'no button while closed');
+  click(items(p)[0]); click(items(p)[1]);
+  const [a, b] = items(p).map(button);
+  assert.ok(a && b);
+  assert.equal(a.textContent, 'Set ready');
+  assert.equal(a.disabled, true);
+  assert.match(a.title, /lint/i);
+  assert.equal(b.textContent, 'Set ready');
+  assert.ok(!b.disabled);
+});
+
+test('0042 AC2: clicking Set ready posts with the token, keeps the ticket open, and the next refresh moves it to the queue', async () => {
+  const draft = { tickets: [full('0002')], ideas: [] };
+  const ready = { tickets: [T('0002', 'ready')], ideas: [] };
+  const p = fakePage([draft, { ok: true, id: '0002' }, ready]);
+  await p.settle();
+  click(items(p)[0]);
+  let stopped = false;
+  button(items(p)[0]).listeners.click({ stopPropagation() { stopped = true; } });
+  await p.settle();
+  assert.ok(stopped, 'the click does not reach the row, so the ticket stays open');
+  const sent = p.calls[1];
+  assert.equal(sent.url, '/api/tickets/0002/ready');
+  assert.equal(sent.opts.method, 'POST');
+  assert.equal(sent.opts.headers['X-Speck-Token'], '{{token}}', 'the token the server put in the page');
+  p.timers.shift()(); await p.settle();
+  assert.equal(items(p).length, 0, 'no longer in Shaping');
+  assert.ok(p.byId('queue').textContent.includes('0002'));
+});
+
+test('0042 AC3: a refusal shows its reason under the button, and it stays through a refresh', async () => {
+  const draft = { tickets: [full('0002')], ideas: [] };
+  const reason = 'Not ready:\n  ✗ size L can never be ready: split it into sibling tickets.';
+  const p = fakePage([draft, { status: 422, body: { error: reason } }, draft]);
+  await p.settle();
+  click(items(p)[0]);
+  click(button(items(p)[0]));
+  await p.settle();
+  assert.ok(items(p)[0].textContent.includes(reason));
+  p.timers.shift()(); await p.settle();
+  assert.ok(items(p)[0].textContent.includes(reason), 'kept through the refresh');
+  assert.ok(items(p)[0].textContent.includes('Readiness'), 'still open');
+});
+
+test('0042 AC5: product.md says the panel has this one write and how it is protected', () => {
+  const product = fs.readFileSync(path.join(ROOT, 'speck', 'product.md'), 'utf8');
+  assert.match(product, /Set ready/);
+  assert.match(product, /`Origin`/);
+  assert.match(product, /token/);
+  assert.doesNotMatch(product, /It never writes to the repo/);
+});
+
+test('0042 AC4 (self-check): a token with non-ASCII characters of the right length gets 403 and the server keeps running', async () => {
+  const { r, port, p, token } = await readyPanel();
+  try {
+    const odd = 'é'.repeat(token.length);
+    const res = await new Promise((resolve, reject) => {
+      const req = http.request({ host: '127.0.0.1', port, method: 'POST', path: readyPath('0002'),
+        headers: { Host: `127.0.0.1:${port}`, Origin: `http://127.0.0.1:${port}`, 'X-Speck-Token': Buffer.from(odd, 'latin1').toString('latin1') } }, res2 => { res2.resume(); res2.on('end', () => resolve(res2)); });
+      req.on('error', reject); req.end();
+    });
+    assert.equal(res.statusCode, 403);
+    assert.equal(p.child.exitCode, null, 'still running');
+    assert.equal((await request(port)).status, 200);
+    assert.match(readT(r, '0002-two.md'), /^status: draft/m);
+  } finally { await stop(p); }
+});
+
+test('0042 AC3 (self-check): when the commit fails, the ticket is put back as it was and stays untracked', async () => {
+  const { r, port, p, token } = await readyPanel();
+  try {
+    const hook = path.join(r.dir, '.git', 'hooks', 'pre-commit');
+    fs.writeFileSync(hook, '#!/bin/sh\necho "hook says no" >&2\nexit 1\n', { mode: 0o755 });
+    const before = headOf(r), file = readT(r, '0002-two.md');
+    const res = await post(port, readyPath('0002'), { token });
+    assert.equal(res.status, 500);
+    assert.match(JSON.parse(res.body).error, /still a draft/);
+    assert.equal(readT(r, '0002-two.md'), file, 'the file is as it was');
+    assert.equal(headOf(r), before);
+    assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets/0002-two.md'), '?? speck/tickets/0002-two.md', 'still untracked, nothing staged');
+  } finally { await stop(p); }
 });

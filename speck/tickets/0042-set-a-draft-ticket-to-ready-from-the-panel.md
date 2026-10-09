@@ -42,6 +42,7 @@ An open draft ticket in the panel has a Set ready button that approves it and co
 - `speck start` refuses a ticket with uncommitted changes, which is why the button commits the ticket.
 - Builds after 0041, which changes the same page.
 - Checked 2026-10-09: browsers send an `Origin` header on cross-site form posts and `fetch` POSTs (Fetch standard).
+- Self-check: a token header with non-ASCII characters made the byte comparison throw and crashed the server, so tokens are now compared as bytes (test added). A failed commit left the ticket staged; it's now unstaged with `git reset` (test added). If the ticket file already had staged changes before the click and the commit fails, those are unstaged too. Also checked: duplicate `Origin` or token headers (joined by Node, so refused), ids that aren't 1–4 digits (405), and that clicking the button doesn't toggle the row.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

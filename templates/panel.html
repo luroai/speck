@@ -61,6 +61,9 @@
   .detail ol li { margin-bottom: 4px; }
   .ready { border-left: 1px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
   .ready div { padding: 3px 0; }
+  .set-ready { font: inherit; font-size: 12px; margin-top: 10px; padding: 3px 12px; background: transparent; color: var(--accent); border: 1px solid var(--accent); cursor: pointer; }
+  .set-ready:disabled { color: var(--muted); border-color: var(--line); cursor: not-allowed; }
+  .ready div.refused { white-space: pre-wrap; }
   .item.idea .id { color: var(--idea); }
 
   /* Queue */
@@ -188,6 +191,7 @@ function panelModel(state) {
 
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -210,6 +214,8 @@ function tags(t) {
 let shapingView = 'tickets'; // which Shaping list is showing: 'tickets' or 'ideas'
 const open = new Set(); // ids of the open tickets
 const openIdeas = new Set(); // paths of the open ideas
+const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
+const refused = new Map(); // id → why the server refused to set it ready
 const flip = (set, key) => { if (set.has(key)) set.delete(key); else set.add(key); render(); };
 const list = v => (Array.isArray(v) ? v : []);
 
@@ -261,7 +267,40 @@ function ticketDetail(t, criteria) {
     line(done ? 'ok' : 'warn', done, `after: ${id} ${done ? 'done' : 'not done'}`);
   }
   if (!after.length) line('ok', true, 'no after: tickets');
+  ready.appendChild(setReadyButton(t, errors.length || (t.lint && t.lint.errors) || 0));
+  if (refused.has(t.id)) ready.appendChild(el('div', 'bad refused', refused.get(t.id)));
   return el('div', 'detail', null, body, ready);
+}
+// Gate 1 from the panel: the server sets the ticket ready and commits it, and the next refresh moves it to the queue.
+function setReadyButton(t, lintErrors) {
+  const pending = settingReady.has(t.id);
+  const b = el('button', 'set-ready', pending ? 'Setting ready…' : 'Set ready');
+  b.type = 'button';
+  b.disabled = pending || lintErrors > 0;
+  if (lintErrors > 0) b.title = `Fix the lint ${lintErrors === 1 ? 'error' : 'errors'} first: a ticket that fails lint can't be ready.`;
+  b.addEventListener('click', e => {
+    e.stopPropagation(); // the click is for the button, not the row that opens and closes the ticket
+    if (b.disabled) return;
+    setReady(t.id);
+  });
+  return b;
+}
+async function setReady(id) {
+  refused.delete(id);
+  settingReady.add(id);
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/ready`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (!res.ok) {
+      let why = null;
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      refused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
+    }
+  } catch {
+    refused.set(id, "Couldn't reach the panel server, so the ticket wasn't changed.");
+  }
+  settingReady.delete(id);
+  render();
 }
 function ideaItem(i) {
   const isOpen = openIdeas.has(i.path);
