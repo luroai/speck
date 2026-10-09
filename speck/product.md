@@ -95,6 +95,9 @@ Everything happens in the local repo, with no PR.
     A port already in use, or a `--port` that isn't a whole number from 1 to 65535, stops it with a plain message and a non-zero exit.
     It answers only requests whose `Host` is `127.0.0.1:<port>` or `localhost:<port>` (anything else gets 403, against DNS rebinding) and only `GET`, apart from the one write below (any other method gets 405, whatever the path).
     `GET /` is the page and `GET /api/state` is the same JSON as `status --json`, read afresh for every request.
+    The page is read from `templates/panel.html` for every request too, so a change to it shows on a browser reload without restarting `speck panel`, with the same token for the life of the server.
+    A change to the server code (`scripts/speck.mjs`) still needs `speck panel` restarted.
+    If the page can't be read, `GET /` gets a plain-text 500 naming the file, and the server keeps running.
     A ticket speck can't read gives a 500 with the error, and the server keeps running.
     Any other path gets 404.
     Its one write is `POST /api/tickets/<id>/ready`, which the Set ready button sends: it accepts it only with an `Origin` of `http://127.0.0.1:<port>` or `http://localhost:<port>` and an `X-Speck-Token` header holding the token the server makes afresh each time it starts and puts only into the page it serves.
