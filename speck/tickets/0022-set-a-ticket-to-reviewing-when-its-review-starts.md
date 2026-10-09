@@ -1,7 +1,7 @@
 ---
 id: "0022"
 title: "Set a ticket to reviewing when its review starts"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T10:44:06.399Z"
 ---
 # 0022 · Set a ticket to reviewing when its review starts
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Before the first review round, the builder runs `speck set <id> status reviewing` and makes a separate commit, every ticket. It's a manual step and an extra commit that the first review could do itself.
@@ -44,9 +44,14 @@ Starting a ticket's first review round sets it to `reviewing`, with no separate 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 209,419
+- Elapsed since build started: 5 min
+- Changed lines: 40 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea (F1, minor): restore the ticket's status on SIGINT/SIGTERM while `speck review` waits for the reviewer. The limit is documented in product.md for now.
 
