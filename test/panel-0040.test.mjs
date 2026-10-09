@@ -71,7 +71,7 @@ test('0040 AC2: the selection survives while other tickets change, and those cha
 test('0040 AC3: a selection in an open idea\'s note survives a refresh in which that idea is unchanged, whatever else changes', async () => {
   const s = base();
   const next = clone(s);
-  next.ideas[1].status = 'ticketed: 0007'; next.ideas[1].body = 'Changed.';
+  next.ideas[1].status = 'parked'; next.ideas[1].body = 'Changed.';
   next.ideas.unshift(idea('Zero', 'idea'));
   next.tickets[2].status = 'blocked'; next.tickets[2].blocked_question = 'Which way?';
   next.tickets[0].title = 'A renamed draft';
@@ -85,7 +85,7 @@ test('0040 AC3: a selection in an open idea\'s note survives a refresh in which 
   await refresh(p);
   assert.ok(kept(), 'the note holding the selection stayed on the page');
   assert.deepEqual(items(p).map(n => textOf(p, n, 'span').find(t => t === 'Zero' || t === 'Alpha' || t === 'Beta')), ['Zero', 'Alpha', 'Beta'], 'the new idea shows');
-  assert.ok(items(p)[2].textContent.includes('ticketed: 0007'), "the other idea's change shows");
+  assert.ok(items(p)[2].textContent.includes('parked'), "the other idea's change shows");
   assert.ok(queueText(p).some(t => t.includes('Which way?')), 'the queue change shows');
   assert.ok(toggles(p)[1].textContent.includes('3'), 'the ideas count shows');
   await refresh(p);

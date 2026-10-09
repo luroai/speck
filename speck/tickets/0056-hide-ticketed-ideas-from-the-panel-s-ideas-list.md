@@ -40,6 +40,8 @@ The panel's Ideas list shows only ideas that haven't become tickets yet.
 ## Notes
 - The filter is in `templates/panel.html` (the `ideas:` line that orders unticketed ideas first). Nothing in the JSON changes.
 - product.md's Ideas description ("those whose status doesn't start with `ticketed` first") needs updating.
+- Five older tests asserted the old order (ticketed ideas listed last) and now expect them left out, as AC1 requires: 0031 AC3 and 0033 AC5 in `test/panel.test.mjs`, 0038 AC1 and AC3 in `test/panel-0038.test.mjs`, and 0040 AC3 in `test/panel-0040.test.mjs`, where the other idea's changed status is now `parked` so it stays in the list and the test still checks that the change shows.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

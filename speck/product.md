@@ -104,7 +104,9 @@ Everything happens in the local repo, with no PR.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
     Clicking the top row again closes it.
     Clicking or selecting text in an open ticket's details leaves it open.
-    **Ideas** lists the user's own ideas, leaving out those whose status is `inbox` or `dropped`, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
+    **Ideas** lists the user's ideas still to shape, in the JSON's order, leaving out those whose status is `inbox` or `dropped` or starts with `ticketed`, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
+    An idea that becomes ticketed leaves the list on the next refresh, and the other open ideas stay open.
+    With none to show it says "No ideas waiting."
     Clicking or selecting text in the note leaves it open.
     **Inbox** lists every idea whose status is `inbox`, in the JSON's order, with title, path and "from <id>" from its `From ticket:` line (left out when it has none), and opens and closes to show its note text the same way.
     An empty inbox says "Inbox is empty."
