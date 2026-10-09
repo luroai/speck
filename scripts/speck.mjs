@@ -1655,6 +1655,15 @@ function buildSession(runs, id) {
   return rec && typeof rec === 'object' && text(rec.session) && text(rec.cwd) ? { id: rec.session, cwd: rec.cwd } : null;
 }
 
+// True while a build launched by `speck run` is paused: its run record says so, and it has neither exited nor gone.
+function buildPaused(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return false;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return false; }
+  return !!rec && typeof rec === 'object' && !!rec.paused && !Object.hasOwn(rec, 'exited') && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid);
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
@@ -1693,6 +1702,7 @@ export function statusData(repo) {
       waiting_on: after.filter(id => !done.has(padId(id))),
       build_exit: buildExit(runs, t.fm.id),
       session: buildSession(runs, t.fm.id),
+      paused: buildPaused(runs, t.fm.id),
     };
   });
   // Lowest priority number first, no priority last, then by id. (Infinity - Infinity is NaN, which falls through to the id.)
@@ -2120,7 +2130,7 @@ function cmdRun() {
       running.add(id);
       const session = rec.session ?? 'unknown';
       adopted.set(id, { pid, session, file, log: path.join(dir, `${id}.log`) });
-      console.log(`${id} is already being built (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.`);
+      console.log(`${id} is already being built (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.${rec.paused ? ` It's paused: run \`speck play ${id}\` to carry it on.` : ''}`);
     }
   };
   const checkAdopted = () => {
@@ -2183,6 +2193,82 @@ function cmdRun() {
   adoptEarlierBuilds();
   tick();
   setInterval(tick, pollMs);
+}
+
+// ---------- pause and play (hold a build speck run launched, then carry it on) ----------
+
+// A build and every process it started, still running: its process group, and everything descended from it.
+// Claude Code runs each Bash command in a session of its own, so a signal to the group alone wouldn't reach them.
+// This process and its own children are left out, so a build that pauses itself still finishes saying so.
+function buildProcesses(pid) {
+  const r = sh('ps', ['-A', '-o', 'pid=,ppid=,pgid=']);
+  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps: ${(r.stderr || '').trim() || 'it failed'}.`);
+  const rows = r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/).map(Number)).filter(a => a.length === 3 && a.every(Number.isInteger));
+  const found = new Set(rows.filter(([p, , g]) => p === pid || g === pid).map(([p]) => p));
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const [p, pp] of rows) if (!found.has(p) && found.has(pp) && p !== process.pid) { found.add(p); grew = true; }
+  }
+  found.delete(process.pid);
+  return [...found];
+}
+
+// Sends `signal` to a build and everything it started. Stopping goes round again for any process started meanwhile.
+function signalBuild(pid, signal) {
+  const sent = new Set();
+  for (let pass = 0; pass < 10; pass++) {
+    const fresh = buildProcesses(pid).filter(p => !sent.has(p));
+    if (!fresh.length) break;
+    for (const p of fresh) { sent.add(p); try { process.kill(p, signal); } catch { /* gone meanwhile */ } }
+    if (signal !== 'SIGSTOP') break;
+  }
+}
+
+// The run record of a ticket's build, from the main checkout's speck/.cache/runs/, with what pause and play need.
+function runRecord(repo, args, usage) {
+  if (!args[0]) throw new SpeckError(`Usage: speck ${usage} <id>`);
+  if (process.platform === 'win32') throw new SpeckError(`speck ${usage} needs signals that Windows doesn't have, so it works on macOS and Linux only.`);
+  const t = findTicket(repo, args[0]);
+  const id = t.fm.id;
+  let main = repo;
+  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
+  const file = path.join(main, 'speck', '.cache', 'runs', `${id}.json`);
+  let rec = null;
+  try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* no record */ }
+  if (!rec || typeof rec !== 'object' || Array.isArray(rec)) rec = null;
+  const pid = rec?.pid;
+  // Running: no exit recorded, and its pid still leads its own process group, as a build speck run launched does.
+  const running = !!rec && !Object.hasOwn(rec, 'exited') && Number.isInteger(pid) && pid > 0 && pidAlive(pid)
+    && sh('ps', ['-o', 'pgid=', '-p', String(pid)]).stdout.trim() === String(pid);
+  return { id, file, rec, pid, running, paused: running && !!rec.paused };
+}
+
+// Written to a temporary file and renamed into place, as speck run writes its records.
+function saveRecord(file, rec) {
+  const tmp = `${file}.${process.pid}.tmp`;
+  try { fs.writeFileSync(tmp, `${JSON.stringify(rec, null, 2)}\n`); fs.renameSync(tmp, file); }
+  catch (e) { fs.rmSync(tmp, { force: true }); throw e; }
+}
+
+function cmdPause(args) {
+  const b = runRecord(findRepoRoot(), args, 'pause');
+  if (!b.running) throw new SpeckError(`${b.id} has no running build launched by speck run, so there's nothing to pause.`);
+  if (b.paused) throw new SpeckError(`${b.id} is already paused. Run \`speck play ${b.id}\` to carry it on.`);
+  signalBuild(b.pid, 'SIGSTOP');
+  try { saveRecord(b.file, { ...b.rec, paused: new Date().toISOString() }); } catch (e) {
+    signalBuild(b.pid, 'SIGCONT');
+    throw new SpeckError(`Couldn't mark ${b.id} paused in ${b.file} (${e.message}), so it's still running.`);
+  }
+  console.log(`${b.id} paused (session ${b.rec.session ?? 'unknown'}). Run \`speck play ${b.id}\` to carry it on.`);
+}
+
+function cmdPlay(args) {
+  const b = runRecord(findRepoRoot(), args, 'play');
+  if (!b.paused) throw new SpeckError(`${b.id} isn't paused, so there's nothing to play.`);
+  const { paused, ...rec } = b.rec;
+  try { saveRecord(b.file, rec); } catch (e) { throw new SpeckError(`Couldn't mark ${b.id} playing in ${b.file} (${e.message}), so it's still paused.`); }
+  signalBuild(b.pid, 'SIGCONT');
+  console.log(`${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`);
 }
 
 function cmdDiffstat() {
@@ -2398,6 +2484,8 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
   speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777
   speck run                           start a build for each ready ticket as it becomes ready, until stopped
+  speck pause <id>                    hold a build speck run launched where it is, until it's played
+  speck play <id>                     carry a paused build on from where it was paused
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
@@ -2411,7 +2499,7 @@ const HELP = `speck: small tickets, independent review, you merge.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {

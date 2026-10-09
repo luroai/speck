@@ -44,6 +44,9 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
 - Checked 2026-10-09: a Claude Code build frozen mid-request with SIGSTOP carries on cleanly after SIGCONT. A real `claude -p … --output-format stream-json` (Claude Code 2.1.296) was frozen mid-reply for 10½ minutes. On SIGCONT, Claude Code found its reply had been cut off, asked the model to resume from where it stopped, in the same session and process, then ran its next tool and ended with `success`. So play doesn't need to end the build and resume its session. Pauses of hours weren't tried.
 - Checked 2026-10-09: `claude --resume <session-id>` continues a session by id, and combines with `-p` (`claude --help`, Claude Code 2.1.296).
 - product.md's `speck run` description and the list of commands need updating.
+- product.md was removed in 0068, so the README's command table and `speck help` were updated instead.
+- Checked 2026-10-09: Claude Code runs each Bash command in a session and process group of its own (seen with `ps` during a real build), so a signal to the build's process group alone wouldn't reach its tool commands or a Codex reviewer started from one. Pause and play signal the build's process group and every process descended from it.
+- Self-check: a build that runs `speck pause` on itself used to stop the pause process too, so the pause never finished or marked the record. Pause now leaves itself out of the processes it signals (test added).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
