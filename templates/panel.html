@@ -372,9 +372,29 @@ function queueItem(t) {
   if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
   return q;
 }
+// Puts the nodes in the box in order, leaving in place any that are already there, so a node kept from the last
+// render is never taken out of the page (a browser drops any text selected in a node it takes out).
 function fill(id, nodes, emptyText) {
-  const box = $(id);
-  box.replaceChildren(...(nodes.length ? nodes : [el('div', 'empty', emptyText)]));
+  const box = $(id), want = nodes.length ? nodes : [el('div', 'empty', emptyText)];
+  for (const c of [...box.children]) if (!want.includes(c)) box.removeChild(c);
+  want.forEach((n, i) => { if (box.children[i] !== n) box.insertBefore(n, box.children[i] || null); });
+}
+// The Shaping items built by the last render, by key ('t:<id>' or 'i:<path>'), each with everything it shows. An item
+// whose data and view state are unchanged keeps its node, so text selected in it survives the refresh.
+let built = new Map();
+// The same field values give the same signature, whatever order the fields come in, at every level.
+const signature = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(f => [f, x[f]])) : x));
+function shapingItems(list, keyOf, viewOf, make) {
+  const now = new Map();
+  const nodes = list.map(x => {
+    const key = keyOf(x), sig = signature([x, viewOf(x)]), last = built.get(key);
+    if (now.has(key)) return make(x); // a repeated id or path: built afresh each time, as it can't share a node
+    const node = last && last.sig === sig ? last.node : make(x);
+    now.set(key, { sig, node });
+    return node;
+  });
+  built = now;
+  return nodes;
 }
 
 let state = null, lastOk = null, connected = null;
@@ -382,8 +402,8 @@ function render() {
   if (!state) return;
   const m = panelModel(state);
   shapingToggle(m);
-  if (shapingView === 'ideas') fill('shaping', m.ideas.map(ideaItem), 'No ideas.');
-  else fill('shaping', m.drafts.map(ticketItem), 'No draft tickets.');
+  if (shapingView === 'ideas') fill('shaping', shapingItems(m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
+  else fill('shaping', shapingItems(m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem), 'No draft tickets.');
 
   fill('queue', m.queue.map(queueItem), 'Nothing in flight or ready.');
   const flying = m.queue.filter(t => t.inFlight).length;

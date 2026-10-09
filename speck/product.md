@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: 0039
+Last updated by ticket: 0040
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents.
@@ -87,6 +87,8 @@ Everything happens in the local repo, with no PR.
     **Ideas** lists every idea, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
     Clicking or selecting text in the note leaves it open.
     More than one ticket or idea can be open at once.
+    Text selected in an open ticket's details or an idea's note stays selected through the refresh while that ticket's (by `id`) or idea's (by `path`) data in `/api/state` is unchanged, whatever else changes.
+    When its own data changes, the new content shows in that refresh and the selection may be lost.
     The list showing and what's open survive the refresh and are never sent to the server.
     Then the **Queue**, one list with no groups: in-flight tickets (`building`, `reviewing`, `blocked`, `approved`) first, then `ready` ones, each in the JSON's order.
     Every ticket in it has a five-step bar, Build, Self-check, Review, Approve and Ship: Build is done once `self_check` is set or the ticket has a review round, Self-check once it has a review round or has `self_check` while `reviewing`, Review and Approve once it's `approved` (Ship is then the current step, whatever else is done), and otherwise the current step is the first one not done.
