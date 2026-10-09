@@ -1,7 +1,7 @@
 ---
 id: "0040"
 title: "Keep selected text through the panel refresh"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T15:32:10.353Z"
 ---
 # 0040 · Keep selected text through the panel refresh
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel rebuilds the whole page on every 2-second refresh, so any text you select in an open ticket or idea is lost within 2 seconds. You can't reliably copy a criterion or a lint message out of the panel.
@@ -49,9 +49,15 @@ Text you select in an open ticket or idea stays selected through refreshes until
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 shapingItems treats object property order as data.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 868,902
+- Elapsed since build started: 10 min
+- Changed lines: 28 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: the queue and Shipped lists are still rebuilt on every refresh, so text selected there is lost (out of scope here).
 
