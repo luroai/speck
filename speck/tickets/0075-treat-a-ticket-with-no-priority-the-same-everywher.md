@@ -20,7 +20,7 @@ created: 2026-10-09
 **Status:** 📝 draft
 
 ## Problem
-speck doesn't handle a ticket with no priority consistently. `speck status` lists `priority: ""` as `P` above P1 tickets and a bare `priority:` as `P[object Object]`, while `status --json` (and so `speck run` and the panel) puts both last. Nothing checks the value either: `speck set <id> priority high` is accepted, and there's no way to clear a priority with `speck set`. Leaving tickets unprioritised (0076) needs this to work first.
+speck doesn't handle a ticket with no priority consistently. `speck status` lists `priority: ""` as `P` above P1 tickets and a bare `priority:` as `P[object Object]`, while `status --json` (and so `speck run` and the panel) puts both last. Nothing checks the value either: `speck set <id> priority high` is accepted, and there's no way to clear a priority with `speck set`. It still matters for tickets edited by hand.
 
 ## Outcome
 A ticket's priority is always a whole number from 1 to 5 or none, and a ticket with none is shown and ordered the same way everywhere.
@@ -32,7 +32,7 @@ A ticket's priority is always a whole number from 1 to 5 or none, and a ticket w
 4. The panel shows no priority tag for a ticket with no priority, in each of the three forms in criterion 1.
 
 ## Out of scope
-- Changing what priority new tickets get (0076).
+- Changing what priority new tickets get: they start at P3.
 - Setting priority from the panel (0077).
 
 ## Notes
