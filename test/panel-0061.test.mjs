@@ -234,7 +234,7 @@ test('0061 AC2-AC4: in a real browser, the pane formats Markdown, runs no HTML a
 
 test('0061 self-check: odd input shows as written or plainly formatted, quickly, and never breaks the pane', async () => {
   const deep = Array.from({ length: 2000 }, (_, i) => `${' '.repeat(i)}- level ${i}`).join('\n');
-  const heavy = ['['.repeat(20000), '*a '.repeat(10000), '**a '.repeat(10000), '_a '.repeat(10000), '`a``'.repeat(5000), `${'*a '.repeat(3000)}x${' a*'.repeat(3000)}`].join('\n\n');
+  const heavy = ['!['.repeat(10000), '<!--'.repeat(10000), '<a '.repeat(10000), '['.repeat(20000), '*a '.repeat(10000), '**a '.repeat(10000), '_a '.repeat(10000), '`a``'.repeat(5000), `${'*a '.repeat(3000)}x${' a*'.repeat(3000)}`].join('\n\n');
   const started = Date.now();
   const p = await showPane(full('0001', { problem: '0. zero\n1. one', outcome: '[](https://x.y) and [x]() and __proto__ and constructor', out_of_scope: deep, notes: heavy }));
   assert.ok(Date.now() - started < 2000, 'quick on long, odd text');
@@ -245,4 +245,44 @@ test('0061 self-check: odd input shows as written or plainly formatted, quickly,
   assert.equal(depth(section(p, 'Out of scope')), 16, 'lists nest at most 16 deep');
   assert.ok(section(p, 'Out of scope').textContent.includes('level 1999'), 'deeper items still show');
   assert.ok(section(p, 'Notes').textContent.length > 100000, 'the long notes show');
+});
+
+test('0061 AC3 (review F1): Markdown inside raw HTML, images, blockquotes, tables, rules and escapes stays as written', async () => {
+  const notes = [
+    'Tag <img alt="**bold** _i_ `c` [l](https://x.y)" src=x> and <!-- **hidden** --> end.',
+    '',
+    '![**alt** _i_](https://example.com/a_b)',
+    '',
+    '> **quoted** and [link](https://x.y)',
+    '> _more_',
+    '',
+    'a | **b**',
+    '--|--',
+    '**c** | `d`',
+    '',
+    '- - -',
+    '',
+    '\\*not italic\\* and \\_not\\_ either',
+  ].join('\n');
+  const p = await showPane(full('0001', { notes }));
+  const n = section(p, 'Notes');
+  assert.deepEqual(kids(n).map(x => x.textContent), [
+    'Tag <img alt="**bold** _i_ `c` [l](https://x.y)" src=x> and <!-- **hidden** --> end.',
+    '![**alt** _i_](https://example.com/a_b)',
+    '> **quoted** and [link](https://x.y)\n> _more_',
+    'a | **b**\n--|--\n**c** | `d`',
+    '- - -',
+    '\\*not italic\\* and \\_not\\_ either',
+  ]);
+  assert.ok(!p.all(n).some(x => ['strong', 'em', 'code', 'a', 'ul', 'img'].includes(x.tagName)), 'none of it is formatted');
+});
+
+test('0061 AC1 (review F2): a blank line between list items keeps the list and its nesting', async () => {
+  const p = await showPane(full('0001', { notes: '- first\n\n  - child\n\n- second\n\n1. one\n\n2. two\n\nAfter.' }));
+  const n = section(p, 'Notes');
+  assert.deepEqual(kids(n).map(x => x.tagName), ['ul', 'ol', 'p']);
+  const ul = kids(n)[0];
+  assert.deepEqual(kids(ul).map(li => kids(li)[0].textContent), ['first', 'second']);
+  assert.ok(kids(kids(ul)[0]).some(x => x.tagName === 'ul' && x.textContent === 'child'), 'child is nested in first');
+  assert.deepEqual(kids(kids(n)[1]).map(li => li.textContent), ['one', 'two'], 'one numbered list');
 });

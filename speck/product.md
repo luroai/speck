@@ -112,9 +112,9 @@ Everything happens in the local repo, with no PR.
     Clicking that top row opens a short view: its problem and outcome (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors, and a **Full ticket** button.
     Clicking either button doesn't close the ticket.
     **Full ticket** opens a side pane over the right of the page with that ticket's id, title, problem, outcome, numbered acceptance criteria, out of scope and notes, leaving out any section with nothing in it.
-    Each section's Markdown shows formatted: bold, italic (`*` or `_`), code spans, fenced code blocks keeping their spacing, `- `, `* ` and `1. ` lists nested by indentation (at most 16 levels), `#` to `###` headings ranked below the section's own heading, and paragraphs split by blank lines.
+    Each section's Markdown shows formatted: bold, italic (`*` or `_`), code spans, fenced code blocks keeping their spacing, `- `, `* ` and `1. ` lists nested by indentation (at most 16 levels, and a blank line between items keeps the list), `#` to `###` headings ranked below the section's own heading, and paragraphs split by blank lines.
     A link shows as a link opening in a new tab only when its URL starts `http://` or `https://`; any other link shows as its text alone.
-    Everything else, including raw HTML, tables, images and blockquotes, shows as literal text, and so does Markdown inside code.
+    Everything else, including raw HTML, tables, images, blockquotes, rules and backslash escapes, shows as literal text, with any Markdown inside it unformatted, and so does Markdown inside code.
     The parser is a small one in the page itself, so nothing is loaded from the network.
     While it's open, the rest of the page is dimmed and holds still: the wheel, touch and keys (the pane takes the focus) scroll only the pane, even at its top or bottom, and Tab can't reach the page behind.
     A click anywhere outside the pane closes it and does nothing else, so showing another ticket's full text takes two clicks: one to close the pane, then that ticket's **Full ticket**.

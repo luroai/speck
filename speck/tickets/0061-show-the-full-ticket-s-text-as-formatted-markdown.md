@@ -1,7 +1,7 @@
 ---
 id: "0061"
 title: "Show the full ticket's text as formatted Markdown"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:42:48.053Z"
 ---
 # 0061 · Show the full ticket's text as formatted Markdown
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The full ticket pane shows each section as plain text, so Markdown such as `**bold**`, `` `code` `` and `- ` lists shows its raw symbols. Long notes and criteria with code and lists are harder to read than in a Markdown viewer.
@@ -54,3 +54,82 @@ The full ticket pane shows each section's Markdown formatted, the way a Markdown
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "957ed34848e48d907ae7fe6620c3e7560290b74a",
+    "thread_id": "01a1223b-625f-79c3-8eb3-adfc141efabc",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 311135,
+      "cached_input_tokens": 230144,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1179,
+      "reasoning_output_tokens": 165
+    },
+    "saved_at": "2026-10-09T19:55:19.786Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The AC1 tests exercise formatting in every section, but markdown() in templates/panel.html:376 clears list nesting on every blank line. Reproduced '- first\\n\\n  - child': it produces two top-level lists instead of a nested list."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "inline() filters link protocols; mdInline() sets target='_blank' and rel='noopener noreferrer'. test/panel-0061.test.mjs exercises permitted and rejected URLs, including browser coverage."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "markdown()/inline() format Markdown inside unsupported constructs. Reproduced '<img alt=\"**bold**\" src=x>', '![**alt**](https://example.com/a_b)' and '> **quoted**': each produces a strong node and removes the literal ** symbols. Existing AC3 tests omit Markdown inside these constructs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The pane retains its nodes when its ticket signature is unchanged. The AC4 node-retention test and real-browser selection test in test/panel-0061.test.mjs exercise refresh preservation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:417",
+        "issue": "Unsupported constructs do not remain literal when they contain recognised Markdown. Raw HTML attributes, image labels and blockquotes can lose their Markdown symbols and gain formatting, contrary to AC3 and the explicit scope.",
+        "suggested_fix": "Preserve unsupported constructs as literal text before applying inline formatting. Add regression tests containing bold, italic, code and links inside raw HTML, images and blockquotes.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:376",
+        "issue": "Blank lines discard list context. A nested item following a blank line becomes a separate top-level list, so nesting no longer follows indentation as AC1 requires.",
+        "suggested_fix": "Keep list context across blank lines when subsequent items continue the list, using indentation to determine nesting. Add a test for '- first\\n\\n  - child\\n- second'.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The update describes the intended capability, but its claims that unsupported Markdown remains literal and lists nest by indentation are not fully true until F1 and F2 are fixed."
+    },
+    "escalation_question": "",
+    "summary": "The pane formats the basic examples, safely restricts links and preserves selected text through refreshes. Two formatting gaps remain: unsupported content can have its literal symbols removed, and blank lines break nested lists. These need fixes before merge."
+  }
+}
+```
+
+</details>

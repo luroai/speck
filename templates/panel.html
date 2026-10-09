@@ -352,21 +352,27 @@ function logText(log) {
   return (log.truncated === true ? ["Earlier lines aren't shown: this is the last 200 lines of the log.", ...out] : out).join('\n');
 }
 // A ticket section's Markdown as blocks for the full ticket pane: paragraphs, `#` to `###` headings, fenced code blocks
-// and `- `, `* ` or `1. ` lists nested by indentation, at most MAX_NEST deep (deeper items stay at that depth).
-// Anything else, raw HTML included, stays in the text as written.
+// and `- `, `* ` or `1. ` lists nested by indentation, at most MAX_NEST deep (deeper items stay at that depth). A blank
+// line between list items keeps the list going. Blockquotes, tables and rules are kept as written, unformatted, and so
+// is anything else not listed here, raw HTML included.
 const MAX_NEST = 16;
 const FENCE = /^([ \t]*)(`{3,})[^`]*$/;
 const ITEM = /^([ \t]*)([-*]|\d{1,9}\.)[ \t]+(.*)$/;
 const HEADING = /^ {0,3}(#{1,3})[ \t]+(\S.*?)[ \t]*$/;
+const QUOTE = /^[ \t]*>/, RULE = /^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/, PIPE = /^[ \t]*\|/;
+const DELIM = /^[ \t]*\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/; // a table's second row
 const indentOf = s => s.replace(/\t/g, '    ').length;
 function markdown(text) {
   const lines = String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
   const blocks = [];
-  let para = null, lists = []; // the paragraph being read, and the open lists, outermost first, with their indents
+  let para = null, lists = [], gap = false; // the paragraph being read, the open lists (outermost first), and a blank line just read
   const end = () => { para = null; lists = []; };
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const line = lines[i], next = lines[i + 1] ?? '';
     const fence = line.match(FENCE), item = line.match(ITEM), heading = line.match(HEADING);
+    const afterGap = gap;
+    gap = false;
+    const tableStart = line.includes('|') && next.includes('|') && DELIM.test(next);
     if (fence) {
       end();
       const cut = indentOf(fence[1]), body = [];
@@ -374,7 +380,12 @@ function markdown(text) {
       for (i++; i < lines.length && !close.test(lines[i]); i++) body.push(lines[i].replace(/^[ \t]*/, ws => ' '.repeat(Math.max(0, indentOf(ws) - cut))));
       blocks.push({ type: 'code', text: body.join('\n') });
     } else if (line.trim() === '') {
-      end();
+      para = null;
+      gap = true;
+    } else if (QUOTE.test(line) || RULE.test(line) || PIPE.test(line) || tableStart || (para && para.table && line.includes('|'))) {
+      if (!para || !para.literal || afterGap) { end(); para = { type: 'paragraph', literal: true, text: [] }; blocks.push(para); }
+      if (tableStart) para.table = true;
+      para.text.push(line);
     } else if (heading) {
       end();
       blocks.push({ type: 'heading', level: heading[1].length, inline: inline(heading[2]) });
@@ -397,28 +408,28 @@ function markdown(text) {
         lists.push(top);
       }
       top.list.items.push({ text: [item[3]], lists: [] });
-    } else if (lists.length && /^[ \t]/.test(line)) { // an indented line goes on with the list item above
+    } else if (lists.length && !afterGap && /^[ \t]/.test(line)) { // an indented line goes on with the list item above
       const items = lists[lists.length - 1].list.items;
       items[items.length - 1].text.push(line.trim());
-    } else if (para) {
+    } else if (para && !para.literal) {
       para.text.push(line.trim());
     } else {
-      lists = [];
+      end();
       para = { type: 'paragraph', text: [line.trim()] };
       blocks.push(para);
     }
   }
-  const finish = b => (b.type === 'paragraph' ? { type: 'paragraph', inline: inline(b.text.join('\n')) }
+  const finish = b => (b.type === 'paragraph' ? { type: 'paragraph', inline: b.literal ? [{ type: 'text', text: b.text.join('\n') }] : inline(b.text.join('\n')) }
     : b.type === 'list' ? { ...b, items: b.items.map(it => ({ inline: inline(it.text.join('\n')), lists: it.lists.map(finish) })) } : b);
   return blocks.map(finish);
 }
 // Inline Markdown: code spans, **bold**, *italic* and _italic_, and links. Only an http or https link keeps its URL.
 // Bold, italic and links nest at most MAX_NEST deep; deeper, their symbols show as written.
 function inline(s, links = true, depth = 0) {
-  const out = [], spans = codeSpans(s), misses = {}; // misses: where a search for each closer last failed
+  const out = [], spans = keptSpans(s), misses = {}; // misses: where a search for each closer last failed
   let text = '';
   const push = node => { if (text) out.push({ type: 'text', text }); text = ''; out.push(node); };
-  // The first index from `from` where `at` holds, skipping over code spans, or -1. A search that failed from one point
+  // The first index from `from` where `at` holds, skipping over kept spans, or -1. A search that failed from one point
   // fails from any later one, so it isn't run again.
   const seek = (kind, from, at) => {
     if (from >= (misses[kind] ?? Infinity)) return -1;
@@ -434,8 +445,8 @@ function inline(s, links = true, depth = 0) {
   for (let i = 0; i < s.length;) {
     const c = s[i];
     if (spans.has(i)) {
-      const { end, code } = spans.get(i);
-      push({ type: 'code', text: code });
+      const { end, node } = spans.get(i);
+      if (node.type === 'text') text += node.text; else push(node);
       i = end;
     } else if (c === '`') {
       const run = s.slice(i).match(/^`+/)[0]; // a run that closes no code span stays as written
@@ -466,9 +477,11 @@ function inline(s, links = true, depth = 0) {
   if (text) out.push({ type: 'text', text });
   return out;
 }
-// Each code span in `s`, by where it starts: the index after its closing backticks, and its text. A span opens at a run
-// of backticks and closes at the next run of the same length, read left to right.
-function codeSpans(s) {
+// What in `s` is kept from inline formatting, by where it starts: the index after it, and its node. Code spans become
+// code; raw HTML tags, images and backslash escapes stay as written. A code span opens at a run of backticks and closes
+// at the next run of the same length, read left to right.
+const TAG = /<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/y;
+function keptSpans(s) {
   const runs = [];
   for (const m of s.matchAll(/`+/g)) runs.push([m.index, m[0].length]);
   const next = new Array(runs.length), seen = new Map(); // next: the following run of the same length, or -1
@@ -480,8 +493,29 @@ function codeSpans(s) {
     const close = runs[next[k]][0];
     let code = s.slice(at + n, close).replace(/\n/g, ' ');
     if (/^ [\s\S]*[^ ][\s\S]* $/.test(code)) code = code.slice(1, -1);
-    spans.set(at, { end: close + n, code });
+    spans.set(at, { end: close + n, node: { type: 'code', text: code } });
     after = close + n;
+  }
+  const keep = (at, end) => spans.set(at, { end, node: { type: 'text', text: s.slice(at, end) } });
+  let noBracket = Infinity, noComment = Infinity; // from where no ']' or '-->' was found, so it isn't looked for again
+  for (let i = 0; i < s.length; i++) {
+    if (spans.has(i)) { i = spans.get(i).end - 1; continue; }
+    if (s[i] === '\\' && /[!-\/:-@[-`{-~]/.test(s[i + 1] || '')) { keep(i, i + 2); i++; continue; }
+    TAG.lastIndex = i;
+    const tag = s[i] === '<' && TAG.exec(s);
+    if (tag) { keep(i, i + tag[0].length); i += tag[0].length - 1; continue; }
+    if (s.startsWith('<!--', i) && i < noComment) {
+      const end = s.indexOf('-->', i + 4);
+      if (end < 0) noComment = i;
+      else { keep(i, end + 3); i = end + 2; continue; }
+    }
+    if (s[i] === '!' && s[i + 1] === '[' && i < noBracket) {
+      let close = i + 2;
+      while (close < s.length && s[close] !== ']') close = spans.has(close) ? spans.get(close).end : close + 1;
+      if (close >= s.length) noBracket = i;
+      const url = close < s.length ? linkTarget(s, close + 1) : null;
+      if (url !== null) { keep(i, close + url.length + 3); i = close + url.length + 2; }
+    }
   }
   return spans;
 }
