@@ -154,11 +154,16 @@ Everything happens in the local repo, with no PR.
   Each problem found gets a failing test and a fix, and the ticket's Notes get one `Self-check:` line.
   It's in the skill only, and it isn't a review or an approval.
 - **`speck run`: builds start themselves.**
-  `speck run` checks the tickets every 5 seconds and launches a build for each `ready` ticket whose `waiting_on` is empty, in `speck status` order (priority, then id), while fewer than `max_parallel_builds` (in `speck/config.yml`, default 1, a whole number of at least 1) of the builds it launched are still running.
+  `speck run` checks the tickets every 5 seconds and launches a build for each `ready` ticket whose `waiting_on` is empty, in `speck status` order (priority, then id), while fewer than `max_parallel_builds` (in `speck/config.yml`, default 1, a whole number of at least 1) of the builds it launched or found running are still running.
   Each build runs `build_command` from `speck/config.yml` from the repo root, without a shell and with stdin empty, with `{id}` replaced by the ticket id and `{session}` by a fresh UUID.
   The config template's default is `claude -p "/speck-build {id}" --session-id {session} --dangerously-skip-permissions`.
   For each build it writes `speck/.cache/runs/<id>.json` (session id, the folder the command ran from, start time, process id and the command) and sends the build's stdout and stderr to `speck/.cache/runs/<id>.log`, and it prints a line when it launches a build and one when it exits, with the exit code.
   When a build exits, it adds `exited` (the ISO time) and `exit_code` (a number, or `null` when a signal stopped it) to the run record, keeping its other fields; a later launch of the same ticket replaces the record, so an old exit never sticks to a new build.
+  When it starts, it reads each run record with no `exited`, so a restarted `speck run` doesn't launch a second build of a ticket an earlier one is still building.
+  If the record's process is still running, it prints once that the ticket is already being built, with the session and process id, and never launches that ticket.
+  That build counts towards `max_parallel_builds`, and `speck run` checks it on every poll.
+  When its process has gone, it adds `exited` (the time it noticed) and `exit_code: null` to the record, keeping its other fields, prints that the build stopped, and reports it as below if it left its ticket `ready`.
+  If the record's process isn't running (or it has no process id), it adds `exited` and `exit_code: null` straight away, and the ticket is treated as any other.
   It never changes anything in `speck/tickets/` itself: the build does that.
   It launches each ticket at most once per run.
   A build that exits leaving its ticket `ready` is reported with the last five lines of its log, and one whose command can't start is reported with the reason; neither is launched again.
@@ -270,7 +275,9 @@ Everything happens in the local repo, with no PR.
 - Builds from `speck run` ship as `auto_ship` and `auto_ship_risk` allow, with nobody watching, so setting a ticket ready can end in a merge and push to the base branch.
 - A build from `speck run` that exits without shipping stays red in the panel while its ticket is `approved`, `building` or `reviewing`, until `speck run` launches it again.
   Resuming it by hand with `/speck-build` doesn't clear its run record, so it stays red while that build runs.
-  Builds started by hand leave no run record and are never flagged, and neither is a build that exits after the `speck run` that launched it has stopped, because nothing is there to record its exit.
+  Builds started by hand leave no run record and are never flagged.
+  A build that exits after the `speck run` that launched it has stopped is only flagged once `speck run` is started again, with no exit code.
+- `speck run` tells a build is still running only by its process id, so a reused process id can make it treat a finished build as still running.
 - An idea's `ticketed (…)` status is only ever added to.
   Cancelling or finishing one of its tickets doesn't change it.
 - A `claude-subagent` reviewer, or a command reviewer, is read-only only because its prompt says so.

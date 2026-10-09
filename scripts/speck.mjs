@@ -1761,15 +1761,50 @@ function cmdRun() {
       console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
       recordExit(id, recordFile, signal ? null : code);
     }
+    if (!failed) reportIfStillReady(id, log);
+    tick();
+  };
+
+  // A build that ended with its ticket still ready never started it: say so, with the end of its log.
+  const reportIfStillReady = (id, log) => {
     let status = null;
     // From the same reading as the board, so a build's own worktree copy of the ticket counts.
     try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { /* unreadable: nothing to say */ }
-    if (status === 'ready' && !failed) {
-      let tail = '';
-      try { tail = fs.readFileSync(log, 'utf8').replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
-      console.log(`${id} is still ready, so the build never started it. speck run won't launch it again. Last lines of ${path.relative(repo, log)}:\n${tail}`);
+    if (status !== 'ready') return;
+    let tail = '';
+    try { tail = fs.readFileSync(log, 'utf8').replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
+    console.log(`${id} is still ready, so the build never started it. speck run won't launch it again. Last lines of ${path.relative(repo, log)}:\n${tail}`);
+  };
+
+  // Builds an earlier speck run launched: each run file with no exit recorded. One whose process is still running is
+  // left alone and watched until it stops; it counts towards max_parallel_builds meanwhile. One whose process has
+  // gone gets its exit recorded now. Its exit code can't be known, as it isn't this speck run's child.
+  const adopted = new Map();
+  const adoptEarlierBuilds = () => {
+    const dir = runsDir(repo);
+    for (const name of fs.readdirSync(dir).filter(f => /^[^.]+\.json$/.test(f)).sort()) {
+      const id = name.slice(0, -'.json'.length), file = path.join(dir, name);
+      let rec;
+      try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
+      const pid = rec.pid;
+      if (!(Number.isInteger(pid) && pid > 0 && pid !== process.pid && pidAlive(pid))) { recordExit(id, file, null); continue; }
+      launched.add(id);
+      running.add(id);
+      const session = rec.session ?? 'unknown';
+      adopted.set(id, { pid, session, file, log: path.join(dir, `${id}.log`) });
+      console.log(`${id} is already being built (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.`);
     }
-    tick();
+  };
+  const checkAdopted = () => {
+    for (const [id, b] of adopted) {
+      if (pidAlive(b.pid)) continue;
+      adopted.delete(id);
+      running.delete(id);
+      recordExit(id, b.file, null);
+      console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
+      reportIfStillReady(id, b.log);
+    }
   };
 
   const launch = id => {
@@ -1802,6 +1837,7 @@ function cmdRun() {
   };
 
   function tick() {
+    checkAdopted();
     let tickets;
     try { tickets = statusData(repo).tickets; lastError = null; } catch (e) {
       const msg = e instanceof SpeckError ? e.message : String(e?.message || e);
@@ -1817,6 +1853,7 @@ function cmdRun() {
   }
 
   console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
+  adoptEarlierBuilds();
   tick();
   setInterval(tick, pollMs);
 }
