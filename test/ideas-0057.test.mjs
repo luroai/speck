@@ -162,6 +162,6 @@ test('0057 AC5: the overlap check, /speck-ticket and inbox triage read speck/ide
   assert.match(steps, /every idea note in `speck\/ideas\/` and `speck\/ideas\/done\/`/, 'its overlap check covers them');
   const triage = ticket.slice(ticket.indexOf('## Triage the inbox'), ticket.indexOf('## Rules'));
   assert.match(triage, /idea note in `speck\/ideas\/` or `speck\/ideas\/done\/`/, 'triage compares against filed notes');
-  // A build's follow-up check runs the same comparison (product.md says so).
+  // A build's follow-up check runs the same comparison.
   assert.match(read('skills/speck-build/SKILL.md'), /every idea note in `speck\/ideas\/` and `speck\/ideas\/done\/`/);
 });

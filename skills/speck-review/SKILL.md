@@ -29,7 +29,7 @@ Check the ticket's `reviewer:` field.
 speck review <id> --tests=/tmp/speck-<id>-tests.txt
 ```
 
-This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, `product.md`, the diff and the test output. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
+This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, the diff and the test output. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
 
 **Any reviewer with a `command`** under `reviewer_options` in `speck/config.yml`
 

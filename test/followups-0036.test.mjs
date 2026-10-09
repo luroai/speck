@@ -50,7 +50,7 @@ test('0036 AC2: the note follows the /speck-capture format with Status: inbox an
 
 test('0036 AC3: duplicates are skipped without asking, and listed with their match in the Delivery log', () => {
   const s = step1();
-  for (const where of ['idea note', '`speck/tickets/`', '`speck/tickets/done/`', '`speck/product.md`']) assert.ok(s.includes(where), `checks ${where}`);
+  for (const where of ['idea note', '`speck/ideas/done/`', '`speck/tickets/`', '`speck/tickets/done/`']) assert.ok(s.includes(where), `checks ${where}`);
   assert.match(s, /[Ss]kip/, 'skips duplicates');
   assert.match(s, /[Dd]on't (stop to )?ask/, 'without asking the user');
   assert.match(s, /skipped follow-up and (its|the) match/, 'lists each skipped follow-up with its match');
@@ -70,16 +70,12 @@ test('0036 AC4: the notes are committed by name on the ticket branch before spec
   }
 });
 
-test('0036 AC5: /speck-review points unfixed minor findings at the same step, and product.md describes inbox notes', () => {
+test('0036 AC5: /speck-review points unfixed minor findings at the same step', () => {
   const review = read('skills/speck-review/SKILL.md');
   const rule = review.split('\n').find(l => /Minor findings don't block/.test(l));
   assert.ok(rule, 'the minor-findings rule is there');
   assert.match(rule, /section 5 step 1/, 'points at /speck-build section 5 step 1');
   assert.match(rule, /`\/speck-build`/, 'names the build skill');
-  const product = read('speck/product.md');
-  assert.match(product, /Status: inbox/, 'product.md names the inbox status');
-  assert.match(product, /From ticket:/, 'product.md names the From ticket line');
-  assert.match(product, /speck\/ideas\//, 'product.md says where the notes go');
 });
 
 test('0036: the installed skill copies match the source skills', () => {

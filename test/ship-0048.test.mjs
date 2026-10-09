@@ -11,7 +11,7 @@ import { shipRepo, remoteMoves, runIn, gIn, BRANCH, env } from './support/ship.m
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TICKET = 'speck/tickets/0001-export-bookings.md';
-const approve = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' };
+const approve = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 's', escalation_question: '' };
 const read = (dir, f) => fs.readFileSync(path.join(dir, f), 'utf8');
 const noTrace = res => assert.doesNotMatch(res.stderr, /^\s+at /m, 'no stack trace');
 
@@ -251,12 +251,3 @@ test('0048 AC4: /speck-build section 5 says how to merge, resolve, re-review and
   assert.match(s, /conflicting files in the question/);
 });
 
-test('0048 AC5: product.md describes the conflict exit code and the merge-and-re-review step', () => {
-  const p = read(ROOT, 'speck/product.md');
-  assert.match(p, /exits with 13/);
-  assert.match(p, /merges the base branch into the ticket branch/);
-  assert.match(p, /review round/);
-  assert.match(p, /`speck review` accepts an `approved` ticket/);
-  assert.match(p, /whole change against the base branch as merged/);
-  assert.doesNotMatch(p, /must be rebuilt on the latest base branch/);
-});

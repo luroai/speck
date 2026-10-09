@@ -5,7 +5,6 @@ Last updated: 8 October 2026
 ## State
 
 speck v0.1 is built and works end to end on Luro's machine, but nothing is committed yet. Read these first:
-- `speck/product.md`: what exists today;
 - `docs/brief.md`: the design and its rules;
 - `AGENTS.md`: rules for working in this repo.
 

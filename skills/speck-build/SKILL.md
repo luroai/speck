@@ -11,7 +11,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## 1. Pre-flight
 
-1. Read `speck/product.md`, `speck/config.yml`, the ticket (`speck/tickets/<id>-*.md`, or `speck/tickets/done/<id>-*.md` once it's done) and the repo's AGENTS.md or CLAUDE.md.
+1. Read `speck/config.yml`, the ticket (`speck/tickets/<id>-*.md`, or `speck/tickets/done/<id>-*.md` once it's done) and the repo's AGENTS.md or CLAUDE.md.
 2. The ticket must be `ready`. If it's `draft`, stop and tell the user that it needs their approval (Gate 1). If it's `building`, `reviewing` or `blocked`, you're resuming: run `speck start <id>`, which refuses to start it again and prints where its branch is checked out. Resume in that existing worktree, run `speck next <id>` there, then continue from the right step. If it's `blocked` and the user has answered the question, record the answer in the ticket's Notes before continuing.
 3. If the ticket's Notes have any `Unverified:` facts, check each now against current documentation or the installed tool, without editing anything yet. If one turns out to be wrong, stop and tell the user before building, with the correct fact and what it changes in the ticket.
 4. Make sure your `base_branch` is up to date (pull it if it has a remote). Create the branch with `speck start <id>`: it checks the ticket is ready and committed, makes its branch from the local base branch, in its own worktree when `worktrees` is on in `speck/config.yml`, runs `worktree_setup` there, sets the ticket to `building` and commits that (`speck(<id>): start`). It prints the folder to work in. From now on, do all of your building, testing, reviewing and shipping in the printed folder, which is the ticket's own worktree when worktrees are on. Never work in the main checkout then: other sessions may be using it.
@@ -28,16 +28,15 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 1. Write the simplest change that makes the tests pass, within the ticket's scope. Don't touch anything listed as out of scope, and don't make unrelated changes.
 2. Run the tests until they pass. Keep the full output: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 3. **Size guard:** run `speck diffstat`. If it exits 2 (over the limit), stop. Don't push on. Block the ticket (see section 6) and give a proposed split as the question.
-4. **Living spec:** if the change adds, removes or alters something a user can do, update `speck/product.md` in the same branch: change "Current capabilities", and record any key decisions or known limits. Describe the present, not history. Write one sentence per line (a new line after each sentence, indented to stay in its list item), so builds running in parallel can each add sentences without clashing.
-5. **Self-check.** Before the first review round, go over your change the way an adversarial reviewer would. This is not a review or an approval: it catches what you can, and the reviewer still decides. Check:
+4. **Self-check.** Before the first review round, go over your change the way an adversarial reviewer would. This is not a review or an approval: it catches what you can, and the reviewer still decides. Check:
    - **Unusual input:** empty, missing, malformed or repeated values, and names that are built in rather than missing (for example `constructor` or `__proto__` used as a key).
    - **State over time:** anything kept between review rounds, runs or re-runs. Can a later run pick up something stale or out of date that an earlier one left?
    - **Error paths:** every failure gives a plain error message saying what to do, changes nothing it shouldn't, and never ends in a stack trace.
-   - **Claims:** every sentence you added to docs, skills or `product.md` matches the code, and a test covers it. Narrow any claim the code doesn't fully back.
+   - **Claims:** every sentence you added to docs or skills matches the code, and a test covers it. Narrow any claim the code doesn't fully back.
    - **Scope:** nothing outside the ticket changed, and nothing it puts out of scope was touched.
 
    For each problem you find, add a test that fails, fix it, and re-run the tests. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
-6. Commit (`speck(<id>): <summary>`), staging each file you changed by name (see Rules). There's no separate status step: the first review round sets the ticket to `reviewing`.
+5. Commit (`speck(<id>): <summary>`), staging each file you changed by name (see Rules). There's no separate status step: the first review round sets the ticket to `reviewing`.
 
 ## 4. Review loop
 
@@ -53,7 +52,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 1. If minor findings or your own notes suggest follow-up ideas, write them in the ticket's `## Delivery log`. Then save to the inbox each one that would need its own ticket (a behaviour change, a bug or a missing check), so the shaping chat sees it once the ticket is done:
    - Write each one as its own note, `speck/ideas/<YYYY-MM-DD>-<slug>.md`, with today's date and a short slug of its title. If that file already exists, add `-2`, `-3` and so on to the slug rather than overwriting it.
    - Tidy-ups (such as unused code) and notes on known limits go only in the Delivery log. If none qualify, write no note.
-   - First check each one against every idea note in `speck/ideas/` and `speck/ideas/done/`, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria) and `speck/product.md`, as `/speck-capture` does. Skip any that clearly duplicates one of them, but don't stop to ask the user: an auto-ship build mustn't wait. Under the Delivery log's follow-ups, list each skipped follow-up and its match (an idea's path, a ticket's id or the line in `product.md`).
+   - First check each one against every idea note in `speck/ideas/` and `speck/ideas/done/`, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria), as `/speck-capture` does. Skip any that clearly duplicates one of them, but don't stop to ask the user: an auto-ship build mustn't wait. Under the Delivery log's follow-ups, list each skipped follow-up and its match (an idea's path or a ticket's id).
    - Use the `/speck-capture` format, with `Status: inbox` and a `From ticket:` line. Keep it under 30 lines:
 
      ```markdown
@@ -89,7 +88,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 
 ## 6. Block
 
-Use this when the review loop says `block`, the size guard trips, or a product question comes up that you can't answer from the ticket or `product.md`:
+Use this when the review loop says `block`, the size guard trips, or a product question comes up that you can't answer from the ticket or the code:
 
 1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation.
 2. Run `speck set <id> status blocked`, then commit your changes, staged by name, including the ticket with its review rounds.

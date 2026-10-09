@@ -60,7 +60,7 @@ test('titles joining outcomes get a warning', () => {
 });
 
 test('an approve with failing criteria is overridden', () => {
-  const v = validateVerdict({ verdict: 'approve', criteria: [{ id: 1, status: 'fail', evidence: '' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' });
+  const v = validateVerdict({ verdict: 'approve', criteria: [{ id: 1, status: 'fail', evidence: '' }], findings: [], summary: 's', escalation_question: '' });
   assert.equal(v.verdict, 'changes_requested');
 });
 
@@ -150,7 +150,7 @@ fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
 fs.appendFileSync(${JSON.stringify(log + '.prompts')}, JSON.stringify(fs.readFileSync(0, 'utf8')) + '\\n');
 if (process.env.FAKE_CODEX_FAIL) { console.error('codex broke'); process.exit(2); }
 const out = args[args.indexOf('-o') + 1];
-fs.writeFileSync(out, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 'fine', escalation_question: '' }));
+fs.writeFileSync(out, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 'fine', escalation_question: '' }));
 console.log(JSON.stringify({ type: 'thread.started', thread_id: 'T1' }));
 if (process.env.FAKE_CODEX_EVENT) console.log(process.env.FAKE_CODEX_EVENT);
 `, { mode: 0o755 });
@@ -265,7 +265,7 @@ test('AC5: saved rounds and the review pack show the reviewer model and effort, 
 
   // Rounds recorded from another reviewer carry the settings too.
   const v = path.join(unset.dir, 'v.json');
-  fs.writeFileSync(v, JSON.stringify({ verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' }));
+  fs.writeFileSync(v, JSON.stringify({ verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 's', escalation_question: '' }));
   unset.run('record', '1', v, '--reviewer=claude-subagent');
   assert.equal(unset.roundFile(2).meta.reviewer_model, 'default');
   assert.equal(unset.roundFile(2).meta.reviewer_effort, 'default');
@@ -275,7 +275,7 @@ test('AC5: recorded subagent rounds keep the settings the reviewer was started w
   const r = reviewRepo({ ticketFields: 'reviewer_model: first-model\nreviewer_effort: low' });
   assert.match(r.run('reviewer-settings', '1').stdout, /model: first-model\neffort: low/);
   const v = path.join(r.dir, 'v.json');
-  fs.writeFileSync(v, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' }));
+  fs.writeFileSync(v, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 's', escalation_question: '' }));
   r.run('record', '1', v, '--reviewer=claude-subagent');
   // The ticket's settings change mid-loop, but the same subagent is resumed for round 2.
   fs.writeFileSync(r.ticketFile, setField(setField(fs.readFileSync(r.ticketFile, 'utf8'), 'reviewer_model', 'second-model'), 'reviewer_effort', 'max'));
@@ -290,7 +290,7 @@ test('AC5: recorded subagent rounds keep the settings the reviewer was started w
 // ---------- 0006: ship approved tickets locally ----------
 
 const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
-const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' };
+const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 's', escalation_question: '' };
 
 // A repo with one ticket built on its branch, approved by the reviewer and set to `approved`.
 function shipRepo({ test = 'true', approve = true } = {}) {
@@ -397,8 +397,8 @@ test('AC2: speck ship refuses, changing nothing, unless every check passes', () 
 
 test('AC2: changes under speck/ after the review do not block shipping', () => {
   const r = shipRepo();
-  fs.appendFileSync(path.join(r.dir, 'speck', 'product.md'), '\nnote\n');
-  r.g('commit', '-qam', 'speck only');
+  fs.writeFileSync(path.join(r.dir, 'speck', 'ideas', 'note.md'), 'note\n');
+  r.g('add', 'speck/ideas/note.md'); r.g('commit', '-qm', 'speck only');
   assert.equal(r.run('ship', '1').status, 0);
 });
 
@@ -840,7 +840,7 @@ test('AC3: the reviewer diff and size count leave out the Review rounds section,
   const p = r.run('prompt', '1');
   assert.match(p.stdout, /A builder note/);
   assert.doesNotMatch(p.stdout.split('Return ONLY')[0], /## Review rounds|"thread_id"/, 'the round-1 prompt leaves the section out too');
-  // The size count leaves out all of speck/ by design (tickets, product.md), so neither the rounds nor the notes count.
+  // The size count leaves out all of speck/ by design (tickets, ideas), so neither the rounds nor the notes count.
   assert.match(r.run('diffstat').stdout, /^1 changed lines/m, 'only a.txt counts towards the size limit');
 });
 
@@ -1207,7 +1207,7 @@ test('setField keeps a trailing comment and the space before it, including on em
 const skillText = n => fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8');
 const overlapCheck = md => (md.split('## Check for overlap first')[1] || '').split('\n## ')[0];
 
-test('0010 AC1: /speck-capture checks ideas, every ticket (in full) and product.md before writing a note', () => {
+test('0010 AC1: /speck-capture checks ideas and every ticket (in full) before writing a note', () => {
   const md = skillText('speck-capture');
   const check = overlapCheck(md);
   assert.ok(check, 'capture skill has a "Check for overlap first" section');
@@ -1215,7 +1215,7 @@ test('0010 AC1: /speck-capture checks ideas, every ticket (in full) and product.
   assert.match(check, /every note in `speck\/ideas\/`/);
   assert.match(check, /every ticket in `speck\/tickets\/` and `speck\/tickets\/done\/`/);
   assert.match(check, /problem, outcome and acceptance criteria, not only/i);
-  assert.match(check, /`speck\/product\.md`/);
+  assert.match(check, /`speck\/ideas\/done\/`/);
   assert.match(check, /same, or largely the same, outcome/i, 'overlap is a judgement, not a text match');
 });
 
@@ -1232,7 +1232,6 @@ test('0010 AC3: on overlap the agent names each match and waits for an answer be
   const check = overlapCheck(skillText('speck-capture'));
   assert.match(check, /idea[^\n]*path[^\n]*`Status:`/i, 'ideas: path and status');
   assert.match(check, /ticket[^\n]*id[^\n]*status[^\n]*cancel_reason|ticket[^\n]*id[^\n]*status[^\n]*reason/i, 'tickets: id, status and cancel reason');
-  assert.match(check, /product\.md`[^\n]*line/i, 'product.md: the covering line');
   assert.match(check, /add to the existing item, go ahead anyway or stop/);
   assert.match(check, /write nothing until the user answers/i);
 });
@@ -1253,7 +1252,7 @@ test('0010 AC4: with no overlap the skill carries on and says so in one line', (
 
 const fenced = v => '```json\n' + JSON.stringify(v, null, 2) + '\n```\n';
 const subagentVerdict = (verdict, state) => ({
-  round: 1, verdict, escalation_question: '', summary: `Round: ${verdict}`, product_md: { accurate: true, note: '' },
+  round: 1, verdict, escalation_question: '', summary: `Round: ${verdict}`,
   criteria: [{ id: 1, status: verdict === 'approve' ? 'pass' : 'fail', evidence: 'a.txt' }],
   findings: [{ id: 'F1', severity: 'blocking', file: 'a.txt', issue: 'Deliberate bug.', suggested_fix: 'Fix it.', state }],
 });
@@ -1520,7 +1519,7 @@ test('auto-ship: the build skill runs speck ship --auto after approval, and the 
 
 // ---------- 0012: run a reviewer from a command set in config ----------
 
-const changesVerdict = { verdict: 'changes_requested', criteria: [{ id: 1, status: 'fail', evidence: 'a.txt' }], findings: [{ id: 'F1', severity: 'blocking', file: 'a.txt', issue: 'First problem.', suggested_fix: 'Fix it.', state: 'open' }], product_md: { accurate: true, note: '' }, summary: 'Round one summary.', escalation_question: '' };
+const changesVerdict = { verdict: 'changes_requested', criteria: [{ id: 1, status: 'fail', evidence: 'a.txt' }], findings: [{ id: 'F1', severity: 'blocking', file: 'a.txt', issue: 'First problem.', suggested_fix: 'Fix it.', state: 'open' }], summary: 'Round one summary.', escalation_question: '' };
 
 // A repo whose ticket uses reviewer "fake", run by a command in config. The fake logs its arguments,
 // working folder and stdin, then answers in the format FAKE_MODE asks for.
@@ -1882,13 +1881,6 @@ test('0014 AC4: the docs describe the builder as any agent that reads speck skil
   const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
   const req = readme.split('## Requirements')[1].split('\n## ')[0];
   for (const s of ['`.agents/skills/`', '`.claude/skills/`', 'Claude Code', 'Codex', 'Cursor']) assert.ok(req.includes(s), `README Requirements: ${s}`);
-  const product = fs.readFileSync(path.join(ROOT, 'speck', 'product.md'), 'utf8');
-  const doctor = product.split('\n').find(l => l.includes('`doctor`:'));
-  assert.match(doctor, /builder set in `speck\/config\.yml`/);
-  assert.doesNotMatch(product, /Claude Code is the only tested builder/);
-  const limit = product.split('\n').find(l => /builder/.test(l) && /`\.agents\/skills\/`/.test(l) && /Known|tested/i.test(l));
-  assert.ok(limit, 'a known limit names the skills folders');
-  for (const s of ['Claude Code', 'Codex', 'Cursor']) assert.ok(limit.includes(s), `known limit: ${s}`);
 });
 
 // ---------- 0023: self-check the build before the first review round ----------
@@ -1908,7 +1900,7 @@ test('0023 AC1: the build skill has a self-check step after implementation and b
   assert.ok(at > md.indexOf('## 3. Implement'), 'in the implement section');
   assert.ok(at < md.indexOf('the first review round sets the ticket to `reviewing`'), 'before the ticket goes to reviewing (0022: the first round sets it)');
   assert.ok(at < md.indexOf('## 4. Review loop'), 'before the review loop');
-  assert.ok(at > md.indexOf('**Living spec:**'), 'after product.md is updated, so its claims can be checked');
+  assert.ok(at > md.indexOf('**Size guard:**'), 'after the size guard');
   // Each area is its own checklist item, named in bold, with the substance the ticket asks for.
   const item = label => (text.split('\n').find(l => l.includes(`**${label}:**`)) || '');
   assert.match(item('Unusual input'), /empty/i);
@@ -1917,7 +1909,7 @@ test('0023 AC1: the build skill has a self-check step after implementation and b
   assert.match(item('Unusual input'), /built in/i);
   assert.match(item('State over time'), /between review rounds, runs or re-runs/i);
   assert.match(item('Error paths'), /plain error message/i);
-  assert.match(item('Claims'), /`product\.md`/);
+  assert.match(item('Claims'), /docs or skills/);
   assert.match(item('Claims'), /matches the code, and a test covers it/i);
   assert.match(item('Scope'), /outside the ticket/i);
 });
@@ -2682,7 +2674,7 @@ test('0030 AC2: a ticket being built in another worktree comes from that worktre
   assert.equal(fromWt[0].status, 'reviewing');
 });
 
-const rec = (round, meta, verdict) => ({ meta: { round, reviewer: 'codex', ...meta }, verdict: { verdict, criteria: [], findings: [], product_md: { accurate: true, note: '' }, summary: 's', escalation_question: '' } });
+const rec = (round, meta, verdict) => ({ meta: { round, reviewer: 'codex', ...meta }, verdict: { verdict, criteria: [], findings: [], summary: 's', escalation_question: '' } });
 const jsonRoundsSection = recs => `## Review rounds\n<!-- Written by speck after each review round. Don't edit it by hand. -->\n` +
   recs.map(x => `\n<details><summary>Round ${x.meta.round} · ${x.meta.reviewer} · ${x.verdict.verdict}</summary>\n\n\`\`\`json\n${JSON.stringify(x, null, 2)}\n\`\`\`\n\n</details>\n`).join('');
 
@@ -2943,22 +2935,6 @@ test('0032 AC2: when two parallel tickets change the same lines, the second ship
   assert.equal(r.statusAt(b.wt, b), 'approved');
   assert.ok(fs.existsSync(b.wt), 'worktree kept');
   assert.equal(fs.readFileSync(path.join(r.dir, 'shared.txt'), 'utf8'), 'line one\nline two from ticket 1\nline three\n');
-});
-
-test('0032 AC3: product.md says several tickets can be built at once, with no dependency scheduling and conflicts refused at ship', () => {
-  const product = fs.readFileSync(path.join(ROOT, 'speck', 'product.md'), 'utf8');
-  assert.doesNotMatch(product, /one ticket at a time/i);
-  assert.doesNotMatch(product, /not for running builds in parallel/i);
-  const limits = product.split('## Known limits')[1].split('\n## ')[0];
-  // A list item spans several lines (one sentence per line), so read it whole.
-  const line = limits.split(/\n(?=- )/).map(item => item.replace(/\s*\n\s*/g, ' ')).find(l => /several tickets can be built at once/i.test(l));
-  assert.ok(line, 'Known limits says several tickets can be built at once');
-  assert.match(line, /its own worktree/i);
-  assert.match(line, /no dependency scheduling/i);
-  assert.match(line, /conflict/i);
-  assert.match(line, /refused at ship/i);
-  // 0048: the build merges the base branch in and gets it re-reviewed, rather than being rebuilt.
-  assert.match(line, /merges the base branch in/i);
 });
 
 test('0032 AC4: the brief no longer puts parallel tickets out of scope, but dependency graphs stay out', () => {

@@ -43,6 +43,7 @@ speck no longer has a living spec. The code, the tickets and the tests are the r
 - Where a skill or doc said to check `product.md` for a product question, point to the ticket and the code instead.
 - Tests that only check the wording of `product.md` (0032, 0036 AC5, 0037, 0042 AC5, 0048 AC5) go. Tests that use `speck/product.md` only as a handy tracked file to edit should use another file.
 - `after: 0063` because 0063 is still building and edits `product.md`.
+- Self-check: no changes. Checked an old round with `product_md` (kept and shown without error), `init --force` over an existing `product.md` (left alone) and a rebuilt round-1 prompt (no `product.md`). One known limit: a ticket already mid-review when speck is updated resends its saved round-1 prompt exactly as it was sent, so that copy can still hold the old `product.md` text.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
