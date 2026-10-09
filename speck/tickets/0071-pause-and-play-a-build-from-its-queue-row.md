@@ -1,7 +1,7 @@
 ---
 id: "0071"
 title: Toggle a build between paused and playing from its queue row                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0069", "0070"]                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T22:30:17.959Z"
 
 ---
 # 0071 · Toggle a build between paused and playing from its queue row
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Pausing and playing a build from the CLI (0070) means leaving the panel, where the user is watching the build, for a terminal.
