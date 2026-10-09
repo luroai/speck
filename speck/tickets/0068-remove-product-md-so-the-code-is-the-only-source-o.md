@@ -1,7 +1,7 @@
 ---
 id: "0068"
 title: "Remove product.md so the code is the only source of truth"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0063"]             # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T20:42:50.070Z"
 
 ---
 # 0068 · Remove product.md so the code is the only source of truth
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `speck/product.md` has grown to about 400 lines that restate in prose what the code already does, and almost every ticket has to edit it. That costs each build and review round time on wording, and because every branch touches the same file, an uncommitted edit to it in the base checkout blocks ships (as it did for 0058).
