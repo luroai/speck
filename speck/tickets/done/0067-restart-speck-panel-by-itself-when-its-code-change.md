@@ -1,7 +1,7 @@
 ---
 id: "0067"
 title: "Restart speck panel by itself when its code changes"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T20:00:56.511Z"
+finished: "2026-10-09T20:21:41.247Z"
 
 ---
 # 0067 · Restart speck panel by itself when its code changes
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck panel` keeps running the code it started with. When a shipped ticket changes the server, the open panel breaks or shows old behaviour until the user finds the process and restarts it by hand (for example, every build log read "Couldn't load the log yet" because the running server predated the log route from 0051). 0059 made a browser reload pick up page changes, but not server changes, so a reload alone isn't enough.
