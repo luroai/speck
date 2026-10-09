@@ -1,6 +1,6 @@
 # speck control panel (was: speck board)
 
-Captured: 8 October 2026 · Reframed: 9 October 2026 · Status: idea
+Captured: 8 October 2026 · Reframed: 9 October 2026 · Status: ticketed (0030, 0031)
 
 A local control panel over a repo's `speck/` folder. It isn't a kanban board. Everything between Ready and shipped is an agent pipeline that runs in minutes, so there's no work passing between people to track in columns. The panel is a CI pipeline whose trigger is a ticket being set to `ready`, with a space around the two places that need a human: shaping work before Gate 1, and answering the pipeline when it asks.
 
