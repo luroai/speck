@@ -1,7 +1,7 @@
 ---
 id: "0039"
 title: "Close an open item only from its top row"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T14:54:14.683Z"
 
 ---
 # 0039 · Close an open item only from its top row
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In the panel's Shaping area, clicking anywhere inside an open ticket or idea closes it, including clicks in its details. So reading a ticket at Gate 1 or selecting a criterion to copy keeps collapsing it.
