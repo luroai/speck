@@ -1,7 +1,7 @@
 ---
 id: "0037"
 title: "Triage the inbox from chat"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T18:29:51.917Z"
 ---
 # 0037 · Triage the inbox from chat
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Follow-ups from builds pile up in the inbox (0036). Reading every one would overwhelm the user, who wants to decide only what's worth a ticket, from their single shaping chat.
@@ -52,4 +52,74 @@ Asking the agent to triage the inbox clears it down to at most three decisions, 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
+- Follow-ups:
+  - `speck status` counts `dropped` ideas as waiting: saved to the inbox as `speck/ideas/2026-10-09-speck-status-counts-dropped-ideas-as-waiting.md`.
+  - The panel's Ideas list showing `dropped` notes: skipped, covered by 0038 (AC3 leaves out `inbox` and `dropped`).
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6c6835b9cef164a4e51c73a62d79ed885cc02dc9",
+    "thread_id": "01a121ef-fe39-79f0-a8e7-1837a7886995",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 194733,
+      "cached_input_tokens": 125696,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 698,
+      "reasoning_output_tokens": 58
+    },
+    "saved_at": "2026-10-09T18:32:47.424Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md, triage step 1, requires reading every inbox note and a one-line empty-inbox response followed by stopping. test/triage-0037.test.mjs AC1 checks these instructions and the skill trigger."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Triage step 2 requires automatic drops for completed or covered work, comparison with ideas, live and archived tickets and product.md, keeping one duplicate, and reporting each drop with its reason. The AC2 test checks the instruction text; manual reading confirms the rule."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Triage step 3 limits the selection to three and requires title, source ticket, reason and ticket-or-drop choices. The AC3 text test covers each requirement."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Triage step 4 uses the existing ticket workflow with --source, explicitly creates drafts and handles dropped and unanswered notes. The section explicitly prohibits ready status. The AC4 text test covers these rules; existing 0009 tests exercise CLI source-status updates."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Triage step 5 specifies adding or incrementing Triaged, dropping and listing notes at two, and committing changed notes and created tickets staged by name with the required message. The AC5 test checks these instructions."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec accurately describes the instruction-based capability, preserves the six-skill count, and records that dropped ideas still count as waiting in status output."
+    },
+    "escalation_question": "",
+    "summary": "The change adds inbox triage to the existing ticket skill: it removes covered follow-ups, presents up to three choices, creates draft tickets and retires unpicked notes after two triages. The instructions meet the ticket and the changes stay within scope. Tests check the instruction text rather than actual agent behaviour; that limitation is explicitly documented and the instructions were reviewed directly."
+  }
+}
+```
+
+</details>
