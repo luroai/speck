@@ -1,7 +1,7 @@
 ---
 id: "0049"
 title: "Mark bug tickets in the ticket list"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T17:03:46.145Z"
 ---
 # 0049 · Mark bug tickets in the ticket list
 
-**Status:** ⛔ blocked
+**Status:** 🔍 reviewing
 
 ## Problem
 Bugs and features look the same in the ticket list, so a bug that loses work (such as 0046) doesn't stand out from routine features when you choose what to set ready or build next.
@@ -40,10 +40,10 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
 - 0046 and 0047 already have `type: bug` in their frontmatter, ahead of this ticket.
 - No external facts: everything is in this repo.
 - Self-check: `speck new` now refuses a bare `--type` and a second `--type` with any value but bug, which it had let through.
+- Blocked after 3 review rounds with F2 (a nested mapping under a bare `type:`) fixed but unconfirmed. Answer (2026-10-09): the user allowed one more review round, beyond `max_review_rounds`, to confirm the fix.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
-The review hit its 3-round limit with one finding open (a nested mapping under a bare `type:`, such as `type:` then `  name: feature`, passed lint), which is now fixed and tested on the branch. Allow one more review round to confirm it (recommended), or cancel the ticket? Each earlier round's findings were edge cases of the same blank-type check, and every criterion other than AC1 already passed.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
