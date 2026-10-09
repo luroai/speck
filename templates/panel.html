@@ -324,7 +324,7 @@ function ticketHead(t) {
 }
 const ownData = t => { const { unlocks, chain, linked, ...own } = t; return own; }; // what /api/state has for this ticket
 function newHead(node, t) {
-  const old = node.children.find(n => n.className === 'head');
+  const old = [...node.children].find(n => n.className === 'head'); // children is an HTMLCollection, with no find
   node.insertBefore(ticketHead(t), old);
   node.removeChild(old);
 }

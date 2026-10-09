@@ -1,7 +1,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fm, fakePage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { T, fm, charAt, fakePage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
 
 // ---------- 0041: tickets that start a dependency chain, and tickets waiting on others ----------
 
@@ -269,4 +271,35 @@ test('0041 review F2: tickets in flight are never highlighted or dimmed, but lin
   assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': 'dim' }, 'through 0002 to 0001, leaving 0002 and 0004 alone');
   await refresh(p);
   assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': 'dim' });
+});
+
+test('0041 review F1: in a real browser, text selected in an open ticket stays selected while its chain changes, and the icon updates', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
+  const r = panelRepo();
+  r.write('0002-first.md', fm({ id: '"0002"', title: 'First in the chain' }),
+    `## Problem\nA problem statement long enough to select.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`);
+  const next = after => r.write('0003-next.md', fm({ id: '"0003"', title: 'Waits on the first', ...(after ? { after: '["0002"]' } : {}) }));
+  next(true);
+  const port = await freePort();
+  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const b = await browserPage(`http://127.0.0.1:${port}/`);
+  const item = '#shaping .item:nth-child(1)';
+  try {
+    await b.until(`!!document.querySelector('${item} .chain')`, 'the chain icon on 0002');
+    await b.js(`document.querySelector('${item} .title').click()`);
+    await b.until(`!!document.querySelector('${item}.open .detail p.text')`, 'the draft to open');
+    await b.drag(await b.js(charAt(`${item} .detail p.text`, 0)), await b.js(charAt(`${item} .detail p.text`, 20)));
+    const selected = await b.js('getSelection().toString()');
+    assert.equal(selected, 'A problem statement ');
+    next(false); // 0003 no longer waits on 0002
+    await b.until(`!document.querySelector('${item} .chain') && !document.querySelector('${item} .checks').textContent.includes('unlocks')`, 'the chain icon to go');
+    assert.equal(await b.js('getSelection().toString()'), selected, 'the selection survived');
+    next(true);
+    await b.until(`!!document.querySelector('${item} .chain') && document.querySelector('${item} .checks').textContent.includes('unlocks 0003')`, 'polling to carry on and the icon to come back');
+    assert.equal(await b.js('getSelection().toString()'), selected, 'and survived again');
+    assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`));
+    assert.ok(await b.js(`document.getElementById('offline').hidden`), 'still connected');
+  } finally {
+    await b.close();
+    await stop(panel);
+  }
 });

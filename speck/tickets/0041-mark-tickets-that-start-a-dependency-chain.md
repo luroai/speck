@@ -135,3 +135,84 @@ In the panel you can see at a glance which tickets start a chain, what each one 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "86911c3e26e8ec3c597247080d6ae0ac4719da52",
+    "thread_id": "01a1215b-0898-7a43-a544-a64a1c6d660a",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 626948,
+      "cached_input_tokens": 525824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2462,
+      "reasoning_output_tokens": 119
+    },
+    "saved_at": "2026-10-09T15:53:26.973Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "Initial rendering is covered by the passing AC1 tests, but templates/panel.html:newHead throws when another ticket changes a draft's unlocks. Browser element.children is an HTMLCollection and has no find method, preventing the updated icon and label from rendering."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "chainIcon, ticketHead and queueItem render dimmed padlocks and waiting labels. test/panel-0041.test.mjs AC2 exercises both lists."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "chainIcon renders no icon for independent tickets and sets descriptive title attributes. The AC3 tests cover both behaviours."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelModel recalculates waiting and chain state; the AC4 refresh test covers padlock removal, promotion to chain starter and the case with no further dependants."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "chains, hoverable and lightUp implement transitive bidirectional highlighting and pointer departure. AC5 tests cover both lists and refreshes; the new F2 test verifies traversal through in-flight tickets without changing their appearance."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The selection-preserving approach is appropriate, but newHead calls node.children.find. In a browser, children is an HTMLCollection without find, so refreshing after a dependant finishes or changes its links throws TypeError. The new regression test misses this because the fake DOM represents children as an Array. A read-only reproduction with find unavailable reproduced the exception.",
+        "suggested_fix": "Use [...node.children].find(...) or an appropriate DOM selector. Add a real-browser regression test that changes another ticket's dependencies while text is selected, checking that the labels update, selection survives and polling continues.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Resolved: queueItem attaches hover handlers only to ready tickets, and lightUp only changes rows with ticketId. In-flight tickets remain unchanged while dependency traversal still passes through them. The new F2 regression test covers this.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The scope description is now accurate, but the claim that chain indicators update in place while preserving selection is not yet true in a browser because newHead throws."
+    },
+    "escalation_question": "",
+    "summary": "In-flight tickets are now correctly excluded from highlighting. The selection fix still needs one correction: changing a linked ticket triggers a browser error instead of updating the chain indicator. The new test passes because its simulated browser does not reproduce this browser behaviour."
+  }
+}
+```
+
+</details>
