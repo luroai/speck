@@ -2,7 +2,7 @@
 id: "0016"
 title: "Verify a Cursor builder end to end"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 2              # 1 (highest) to 5
+priority: 5              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 builder: claude
