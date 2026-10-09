@@ -1,7 +1,7 @@
 ---
 id: "0060"
 title: "Make the full ticket pane modal"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:33:00.080Z"
 
 ---
 # 0060 · Make the full ticket pane modal
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 While the full ticket pane is open, the page behind it still scrolls, so scrolling past the end of a long ticket moves the panel instead. The only ways to close the pane are its Close button and Escape, so the user has to aim for a small button to get back to the board.
