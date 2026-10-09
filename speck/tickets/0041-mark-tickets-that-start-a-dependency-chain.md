@@ -51,6 +51,7 @@ In the panel you can see at a glance which tickets start a chain, what each one 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: the fake DOM in `test/support/panel.mjs` gives every node an Array of `children`, where a browser has an HTMLCollection with no `find` or `map`, so a bug like round 2's F1 passes the fake-page tests. Make its `children` array-like only.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -211,6 +212,87 @@ In the panel you can see at a glance which tickets start a chain, what each one 
     },
     "escalation_question": "",
     "summary": "In-flight tickets are now correctly excluded from highlighting. The selection fix still needs one correction: changing a linked ticket triggers a browser error instead of updating the chain indicator. The new test passes because its simulated browser does not reproduce this browser behaviour."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8322d3809c59daf8b7f2bafd3fbde259ec41d0ad",
+    "thread_id": "01a1215b-0898-7a43-a544-a64a1c6d660a",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 874209,
+      "cached_input_tokens": 747776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3176,
+      "reasoning_output_tokens": 119
+    },
+    "saved_at": "2026-10-09T15:55:51.372Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: chains and panelModel identify chain starters and preserve JSON order; chainIcon, ticketHead and queueItem render accent icons and unlock labels. AC1 tests and the new browser refresh regression pass in the supplied results."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "chainIcon, ticketHead and queueItem render dimmed padlocks and waiting labels in both locations. The AC2 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "chainIcon supplies descriptive hover titles and renders no icon for independent tickets. The AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelModel recalculates dependency indicators each refresh. The AC4 test covers completion, padlock removal and promotion to chain starter, including no further dependants."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "chains computes bidirectional transitive groups; hoverable and lightUp highlight eligible rows and restore them on departure. AC5 and browser tests pass; the F2 regression confirms in-flight rows remain unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Resolved: newHead converts the HTMLCollection to an Array before finding the header. Derived dependency changes update the header while retaining the details. The new real-browser test changes a dependant's links twice and checks selection, indicators, open state and continued connectivity.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Resolved: only ready queue rows receive hover handlers or highlighting. Links still pass through in-flight tickets, as verified by the F2 regression test.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The specification accurately describes dependency indicators, highlighting scope and preservation of selected detail text when other tickets change."
+    },
+    "escalation_question": "",
+    "summary": "The panel now shows which tickets unlock others, which are waiting and how their dependency chains connect. Both earlier problems are fixed, with meaningful browser coverage for refreshes and selected text. All acceptance criteria pass; no blocking concerns remain."
   }
 }
 ```
