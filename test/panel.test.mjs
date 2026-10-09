@@ -217,7 +217,7 @@ test('0031 AC3: Shipped shows the 5 latest finished done tickets, newest first, 
 
 test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without the sample banner or "later" buttons', () => {
   const html = page();
-  for (const text of ['Shaping', 'Queue', 'Shipped', 'waiting on '])
+  for (const text of ['<h2>Plan</h2>', '<h2>Build</h2>', '<h2>Shipped</h2>', 'waiting on '])
     assert.ok(html.includes(text), text);
   const mockup = fs.readFileSync(path.join(ROOT, 'docs', 'panel-mockup.html'), 'utf8');
   const vars = mockup.match(/:root \{[\s\S]*?\}/)[0];

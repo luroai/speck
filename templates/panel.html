@@ -27,7 +27,7 @@
   .pill.attn b { color: var(--warn); }
   .live { display: inline-block; width: 6px; height: 6px; background: var(--run); margin-right: 6px; vertical-align: 1px; }
 
-  main { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; padding: 16px 24px; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 16px 24px; }
   section { background: var(--panel); border: 1px solid var(--line); }
   section.full { grid-column: 1 / -1; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
@@ -143,6 +143,13 @@
   .item.ticket:hover, .item.idea:hover, .item.inbox:hover { background: #26282d; }
   .item.idea.open { border-left-color: var(--idea); }
   .item.inbox.open { border-left-color: var(--inbox); }
+  /* The open item in Shaping or the queue is tinted with its list's colour */
+  :root { --accent-bg: #232a36; --idea-bg: #2b2535; --inbox-bg: #233234; --bad-bg: #33211f; }
+  .item.ticket.open, .item.ticket.open:hover { background: var(--accent-bg); }
+  .item.idea.open, .item.idea.open:hover { background: var(--idea-bg); }
+  .item.inbox.open, .item.inbox.open:hover { background: var(--inbox-bg); }
+  .q.open { background: var(--accent-bg); border-left: 2px solid var(--accent); padding-left: 12px; }
+  .q.blocked.open { background: var(--bad-bg); border-left-color: var(--bad); }
   .note { margin: 0; font: 12px/1.5 "Liberation Mono", monospace; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
   .path { overflow-wrap: anywhere; }
@@ -205,11 +212,11 @@
 
 <main>
   <section id="shaping-section" class="shaping tickets">
-    <div class="sh"><h2>Shaping</h2><span class="toggles" id="shaping-toggle"></span><span class="hint">Gate 1 happens here · click one to open it</span></div>
+    <div class="sh"><h2>Plan</h2><span class="toggles" id="shaping-toggle"></span><span class="hint">click one to open it</span></div>
     <div id="shaping"></div>
   </section>
   <section>
-    <div class="sh"><h2>Queue</h2><span class="n" id="queue-n"></span><span class="hint">builds run in their own worktrees</span></div>
+    <div class="sh"><h2>Build</h2><span class="n" id="queue-n"></span><span class="hint">builds run in their own worktrees</span></div>
     <div id="queue"></div>
   </section>
   <section class="full">
