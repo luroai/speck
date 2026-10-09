@@ -1,7 +1,7 @@
 ---
 id: "0030"
 title: "Print speck status as JSON"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T10:47:45.752Z"
 ---
 # 0030 · Print speck status as JSON
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The control panel (0031) needs everything `speck status` knows in a form a program can read. Today `speck status` only prints text for people, so any tool would have to scrape it.
@@ -49,8 +49,14 @@ The control panel (0031) needs everything `speck status` knows in a form a progr
 ## Review log
 Round 1 (codex): changes requested: F1 acceptance_criteria silently loses parts of multiline criteria.
 Round 2 (codex): approve.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,303,511
+- Elapsed since build started: 19 min
+- Changed lines: 69 (limit 5000)
 - Review rounds: 2
 - Reviewer: codex, model gpt-6.1-sol, effort default
 - Reviewer tokens: 678,593
@@ -202,6 +208,79 @@ Round 2 (codex): approve.
     },
     "escalation_question": "",
     "summary": "Approved. The JSON export meets all five criteria, and the incomplete acceptance text is fixed with a meaningful regression test. No blocking concerns remain. I inspected the current code and tests and verified syntax; the supplied test run passes all 158 tests, but sandbox restrictions prevented independently rerunning integration tests."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1b957f79966f2d071f953f1516091ece8881f673",
+    "thread_id": "01a1204a-a6cf-7e80-831e-122dae3216d1",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 622595,
+      "cached_input_tokens": 437248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2323,
+      "reasoning_output_tokens": 129
+    },
+    "saved_at": "2026-10-09T11:06:52.715Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdStatus retains JSON-only output and unchanged text handling. Test '0030 AC1' checks exit 0, output shape, missing folders and text compatibility; it passes in the supplied merged-suite run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "statusTickets, statusData and criteriaText are unchanged by the merge. The three 0030 AC2 tests cover ticket fields, lint counts, worktree selection and complete multiline criteria; all pass in the supplied run."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "statusData still maps ticketRounds in recorded order with seconds and token defaults. Test '0030 AC3' remains intact and passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData retains ordered dependency filtering and priority/id sorting. Test '0030 AC4' remains intact and passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "statusData retains sorted Markdown idea entries with path, heading and status fallbacks. Test '0030 AC5' remains intact and passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The earlier loss of multiline acceptance text remains fixed by criteriaText. The merge preserved its regression test.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The merge preserves the JSON contract and multiline-text documentation alongside main's updates."
+    },
+    "escalation_question": "",
+    "summary": "Approved after the merge. The JSON implementation and all its tests were preserved, and the changes from other tickets are already present on main. No new blocking concerns were found. Syntax checks pass; the supplied full-suite result reports 169 passing tests. Integration tests were not independently rerun in this read-only review."
   }
 }
 ```
