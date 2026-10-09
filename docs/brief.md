@@ -34,7 +34,7 @@ idea / conversation
   → decide against it     → speck cancel 0007 "<reason>"    (status: cancelled,
                             filed in speck/tickets/done/)
   → you edit and approve  → status: ready                  [GATE 1]
-  → /speck-build 0007     → branch speck/0007-<slug>
+  → /speck-build 0007     → speck start: branch speck/0007-<slug> in its own worktree
        tests from acceptance criteria → implementation → tests pass
        → builder self-check (edge cases, error paths, claims, scope)
        → review loop with reviewer subagent (see below)
@@ -150,7 +150,8 @@ Every ticket opens with a header rendered from its frontmatter, such as `# 0007 
 | `/speck-capture` | Turns an idea or the current conversation into `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into a numbered draft ticket. Runs the size checks and proposes splits, then pre-checks each criterion for more than one reading and checks the external facts it relies on. |
 | `speck cancel <id> "<reason>"` | Cancels a ticket you've decided against: records the reason and the date, sets it to `cancelled` and files it in `speck/tickets/done/`. Refuses a blank reason, a `done` ticket or an already-cancelled one. |
-| `/speck-build <id>` | Takes a `ready` ticket: branch, tests from acceptance criteria, implementation, then the review loop. Ends at `approved`, with no PR. |
+| `speck start <id>` | Starts a `ready` ticket: its branch in its own git worktree beside your checkout (with `worktrees: true`), `worktree_setup` run there, status `building`, committed. Prints the folder the build works in. |
+| `/speck-build <id>` | Takes a `ready` ticket: `speck start`, then in its worktree: tests from acceptance criteria, implementation, then the review loop. Ends at `approved`, with no PR. |
 | `/speck-review <id>` | Runs the review loop on its own (for example, after a manual fix) |
 | `/speck-ship <id>` | Your gate. Runs `speck ship <id>`: checks, marks the ticket done, merges into the base branch, pushes and deletes the branch. Only you start it; in Claude Code the skill can't be started by the agent. With `auto_ship` on, the build runs `speck ship <id> --auto` itself after approval. |
 | `/speck-status` | Lists tickets by status: approved (waiting for you) first, then blocked with their questions, then cancelled with their reasons |

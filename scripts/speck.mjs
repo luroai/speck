@@ -98,7 +98,7 @@ function loadConfig(repo) {
     escalate_after_repeat_disputes: 2, max_ticket_body_lines: 40, ...(cfg.limits || {}),
   };
   return { base_branch: 'main', branch_prefix: 'speck/', builder: 'claude', reviewer: 'codex',
-    allow_same_model_review: false, auto_ship: false, auto_ship_risk: ['low'], commands: {}, github: { status_check: 'speck/review' }, ...cfg, limits };
+    allow_same_model_review: false, auto_ship: false, auto_ship_risk: ['low'], worktrees: false, worktree_setup: '', commands: {}, github: { status_check: 'speck/review' }, ...cfg, limits };
 }
 
 // ---------- tickets ----------
@@ -1032,6 +1032,76 @@ function cmdCancel(args) {
   console.log(`${t.fm.id} cancelled → ${path.relative(repo, t.file)}`);
 }
 
+// ---------- start a build ----------
+
+// Where a ticket's worktree goes: beside the main checkout, never inside it, and at the same path each time.
+function worktreePath(main, branch) {
+  return path.join(path.dirname(main), `${path.basename(main)}.worktrees`, ...branch.split('/'));
+}
+
+// Starts building a ready ticket: makes its branch from the local base branch, in its own worktree when worktrees
+// are on, sets it to building and commits that there. Anything that goes wrong before the start commit is undone.
+function cmdStart(args) {
+  const id = args[0];
+  if (!id) throw new SpeckError('Usage: speck start <id>');
+  const repo = findRepoRoot();
+  const cfg = loadConfig(repo);
+  const t = findTicket(repo, id);
+  const pad = t.fm.id;
+  if (t.fm.status !== 'ready') throw new SpeckError(`Ticket ${pad} is "${t.fm.status}", not "ready". Only a ready ticket can be started.`);
+  const rel = posix(path.relative(repo, t.file));
+  if (git(['status', '--porcelain', '--', rel], repo).trim())
+    throw new SpeckError(`${rel} has uncommitted changes. Commit it first, so the build starts from the ticket as you approved it.`);
+  // Named after the ticket's file, which keeps its name when the title changes.
+  const branch = `${cfg.branch_prefix}${path.basename(t.file, '.md')}`;
+  const list = worktreeList(repo);
+  const existing = git(['for-each-ref', '--format=%(refname:short)', `refs/heads/${cfg.branch_prefix}${pad}-*`], repo).split('\n').filter(Boolean);
+  if (existing.length) {
+    const at = list.find(w => existing.includes(w.branch));
+    throw new SpeckError(at
+      ? `Ticket ${pad} has already started: ${at.branch} is checked out at\n${at.path}\nCarry on the build there.`
+      : `Ticket ${pad} already has a branch, ${existing.join(', ')}. Check it out to carry on the build, or delete it to start again.`);
+  }
+  if (cfg.worktrees !== true) {
+    if (git(['status', '--porcelain'], repo).trim()) throw new SpeckError('You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.');
+    const from = git(['branch', '--show-current'], repo).trim() || git(['rev-parse', 'HEAD'], repo).trim();
+    git(['switch', '-q', '-c', branch, cfg.base_branch], repo);
+    try { finishStart(repo, pad); } catch (e) {
+      sh('git', ['checkout', '-q', '-f', from], { cwd: repo }); // drops the half-made status change with the branch
+      sh('git', ['branch', '-D', branch], { cwd: repo });
+      throw e;
+    }
+    console.log(`Started ${pad} on ${branch}, in this checkout:\n${fs.realpathSync(repo)}`);
+    return;
+  }
+  // A worktree only has what's committed, so the CLI and skills must be.
+  const missing = ['.speck', ...SKILL_DIRS.map(d => `${d}/speck-build`)].filter(p => !git(['ls-files', '--', p], repo).trim());
+  if (missing.length) throw new SpeckError(`${missing.map(m => m === '.speck' ? '.speck/' : m).join(', ')} ${missing.length > 1 ? 'aren\'t' : 'isn\'t'} committed, so a worktree wouldn't have ${missing.length > 1 ? 'them' : 'it'}. Commit .speck/ and the skills folders (git add .speck .claude/skills .agents/skills), then run this again.`);
+  const at = worktreePath(list[0].path, branch);
+  if (fs.existsSync(at)) throw new SpeckError(`There's already a folder at ${at}. Move or remove it, then run this again.`);
+  fs.mkdirSync(path.dirname(at), { recursive: true });
+  git(['worktree', 'add', '-q', '-b', branch, at, cfg.base_branch], repo);
+  const undo = () => { sh('git', ['worktree', 'remove', '--force', at], { cwd: repo }); sh('git', ['branch', '-D', branch], { cwd: repo }); };
+  const setup = String(cfg.worktree_setup || '').trim();
+  if (setup) {
+    console.log(`Running worktree_setup in the new worktree: ${setup}`);
+    const r = sh('sh', ['-c', setup], { cwd: at });
+    if (r.status !== 0) {
+      undo();
+      const tail = (r.stderr || r.stdout).trim().split('\n').slice(-5).join('\n');
+      throw new SpeckError(`worktree_setup (${setup}) failed with exit ${r.status}, so the worktree and branch were removed and ${pad} is still ready.${tail ? `\n${tail}` : ''}`);
+    }
+  }
+  try { finishStart(at, pad); } catch (e) { undo(); throw e; }
+  console.log(`Started ${pad} on ${branch}, in its own worktree. Do all of the build there:\n${at}`);
+}
+
+function finishStart(dir, pad) {
+  writeField(findTicket(dir, pad), 'status', 'building');
+  git(['add', '-A', '--', 'speck/tickets'], dir);
+  git(['commit', '-q', '-m', `speck(${pad}): start`], dir);
+}
+
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
 function ticketBranch(repo, cfg, id) {
@@ -1378,6 +1448,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first)
+  speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status                        tickets by status, blocked first
   speck diffstat                      changed lines against the size limit
@@ -1392,7 +1463,7 @@ const HELP = `speck: small tickets, independent review, you merge.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, cancel: cmdCancel, status: cmdStatus, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -37,6 +37,9 @@ Each build happens in its own git worktree, so a build never touches the main ch
 - Showing in-progress worktrees in `speck status` (0029).
 
 ## Notes
+- Self-check: with worktrees off, a failed start commit (no git identity, say) left you on the new branch with a half-changed ticket. It's now undone as in worktree mode, with a test for both. The branch is named after the ticket's file, not its title, so a retitled ticket keeps a stable branch.
+- Projects without a `worktrees` key keep today's behaviour (worktrees off). Only new projects, and this repo, get them on.
+- The 0026 test expected checked facts to go into the start commit. `speck start` now makes that commit, so the build skill commits checked facts straight after it, and that one assertion was updated to match.
 - Pre-check: AC1's "up-to-date base branch" could have meant fetching from the remote. It now says the local base branch; the build skill's pre-flight still pulls first.
 - Checked 2026-10-09: this repo tracks `.speck/` (links to `scripts/` and `templates/`) and the skills, so a worktree has the speck CLI.
 - Checked 2026-10-09: `speck init` doesn't commit or ignore `.speck/` or the skills in a user's project. A worktree only has the CLI and skills if the user has committed them (AC3 makes `speck start` refuse in that case; agreed 2026-10-09).

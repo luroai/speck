@@ -38,4 +38,4 @@ A local kanban app over a repo's `speck/` folder, for managing ideas and tickets
 - `approved` tickets don't count as WIP, but a cap (for example 3 approved or blocked) pauses the queue until you ship or answer.
 - Blocked tickets are skipped; the queue moves to the next independent ticket.
 - The board server runs the queue. Without the board, `/speck-next` builds the next eligible ticket.
-- **Worktrees rejected for now.** One ticket at a time in one checkout. Worktrees would only earn their place for parallel builds, which go against low WIP, and they need extra setup for gitignored files like `.env` and `node_modules`.
+- **Worktrees: adopted for isolation (ticket 0028, 2026-10-09).** First rejected because they only seemed worth it for parallel builds. They came back for a different reason: several sessions sharing one checkout kept colliding (branch switches under another session, files swept into the wrong commit). Each build now gets its own worktree. It's still one ticket at a time, and `worktree_setup` covers gitignored files like `.env` and `node_modules`.

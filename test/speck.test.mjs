@@ -1976,7 +1976,8 @@ test('0026 AC3: the build pre-flight re-checks unverified facts and stops if one
   assert.doesNotMatch(line, /record it as/i, 'the check itself changes nothing');
   const record = pre.indexOf('`Checked <YYYY-MM-DD>: …`');
   assert.ok(record > pre.indexOf('Create the branch'), 'checked facts are recorded after the branch exists');
-  assert.ok(record < pre.indexOf('speck(<id>): start') || pre.slice(record).includes('speck(<id>): start'), 'and committed with the start commit');
+  // Since 0028, speck start makes the start commit, so checked facts get their own commit on the branch straight after.
+  assert.match(pre.slice(record).split('\n')[0], /commit it/i, 'and committed on the branch');
 });
 
 // ---------- 0027: ship a ticket whose branch is in another worktree ----------
@@ -2161,4 +2162,150 @@ test('0027 AC2/AC4 (F1): a remote catch-up blocked by an untracked file leaves e
   assert.deepEqual(r.snapshot(), before);
   assert.equal(r.statusIn(r.wt), 'approved');
   assert.equal(fs.readFileSync(path.join(r.dir, 'remote.txt'), 'utf8'), 'mine, untracked\n');
+});
+
+// ---------- 0028: build each ticket in its own worktree ----------
+
+// A repo with speck installed and committed, and ticket 0001 ready on main.
+function startRepo({ config = {}, ready = true, commitTooling = true } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const env = { ...process.env, ...gitEnv };
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
+  g('init', '-q', '-b', 'main');
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  let c = fs.readFileSync(cfgFile, 'utf8').replace(/^  test: .*$/m, '  test: "true"');
+  for (const [k, v] of Object.entries(config)) c = new RegExp(`^${k}:`, 'm').test(c) ? c.replace(new RegExp(`^${k}:.*$`, 'm'), `${k}: ${v}`) : c + `${k}: ${v}\n`;
+  fs.writeFileSync(cfgFile, c);
+  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').split('## Problem')[0] + good);
+  if (ready) assert.equal(run('set', '1', 'status', 'ready').status, 0);
+  g('add', ...(commitTooling ? ['-A'] : ['speck', 'AGENTS.md', 'CLAUDE.md']));
+  g('commit', '-qm', 'base');
+  const branch = 'speck/0001-export-bookings';
+  const worktrees = () => g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).map(l => fs.realpathSync(l.slice(9)));
+  const statusIn = cwd => parseTicket(fs.readFileSync(path.join(cwd, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8')).fm.status;
+  return { dir, run, g, branch, worktrees, statusIn, file };
+}
+
+test('0028 AC1: speck start makes the ticket branch in its own worktree outside the checkout, sets building there and prints the path', () => {
+  const r = startRepo({ config: { worktrees: 'true' } });
+  const head = r.g('rev-parse', 'HEAD');
+  const res = r.run('start', '1');
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  const [, wt] = r.worktrees();
+  assert.ok(wt, 'a second worktree exists');
+  assert.ok(res.stdout.includes(wt), 'prints its path');
+  assert.ok(!wt.startsWith(fs.realpathSync(r.dir) + path.sep), 'outside the main checkout');
+  assert.equal(spawnSync('git', ['branch', '--show-current'], { cwd: wt, encoding: 'utf8' }).stdout.trim(), r.branch);
+  assert.equal(r.statusIn(wt), 'building');
+  assert.equal(spawnSync('git', ['log', '-1', '--format=%s'], { cwd: wt, encoding: 'utf8' }).stdout.trim(), 'speck(0001): start');
+  assert.equal(spawnSync('git', ['status', '--porcelain'], { cwd: wt, encoding: 'utf8' }).stdout, '');
+  assert.equal(r.g('rev-parse', `${r.branch}~1`), head, 'branched from the local base');
+  // The main checkout is untouched.
+  assert.equal(r.g('branch', '--show-current'), 'main');
+  assert.equal(r.g('rev-parse', 'HEAD'), head);
+  assert.equal(r.g('status', '--porcelain'), '');
+  assert.equal(r.statusIn(r.dir), 'ready');
+});
+
+test('0028 AC2: worktree_setup runs in the new worktree, and a failing setup removes the worktree and branch', () => {
+  const ok = startRepo({ config: { worktrees: 'true', worktree_setup: '"touch setup-ran"' } });
+  assert.equal(ok.run('start', '1').status, 0);
+  assert.ok(fs.existsSync(path.join(ok.worktrees()[1], 'setup-ran')));
+  assert.ok(!fs.existsSync(path.join(ok.dir, 'setup-ran')));
+
+  const bad = startRepo({ config: { worktrees: 'true', worktree_setup: '"echo setup-boom >&2; exit 3"' } });
+  const res = bad.run('start', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /setup-boom/);
+  assert.match(res.stderr, /worktree_setup/);
+  assert.doesNotMatch(res.stderr, /    at /);
+  assert.equal(bad.worktrees().length, 1, 'worktree removed');
+  assert.equal(bad.g('rev-parse', '--verify', '-q', bad.branch), '', 'branch removed');
+  assert.equal(bad.statusIn(bad.dir), 'ready');
+  assert.ok(!fs.existsSync(path.join(path.dirname(fs.realpathSync(bad.dir)), `${path.basename(bad.dir)}.worktrees`, 'speck', '0001-export-bookings')), 'folder gone');
+});
+
+test('0028 AC3: speck start refuses, changing nothing, for a ticket that is not ready, already started, edited but uncommitted, or without committed tooling', () => {
+  const draft = startRepo({ config: { worktrees: 'true' }, ready: false });
+  let res = draft.run('start', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /"draft".*ready/);
+  assert.equal(draft.worktrees().length, 1);
+  assert.equal(draft.g('rev-parse', '--verify', '-q', draft.branch), '');
+
+  const twice = startRepo({ config: { worktrees: 'true' } });
+  assert.equal(twice.run('start', '1').status, 0);
+  const wt = twice.worktrees()[1];
+  res = twice.run('start', '1');
+  assert.notEqual(res.status, 0);
+  assert.ok((res.stderr + res.stdout).includes(wt), 'prints the existing worktree so the build can resume there');
+  assert.equal(twice.worktrees().length, 2);
+
+  const branchOnly = startRepo({ config: { worktrees: 'true' } });
+  branchOnly.g('branch', branchOnly.branch);
+  res = branchOnly.run('start', '1');
+  assert.notEqual(res.status, 0);
+  assert.ok(res.stderr.includes(branchOnly.branch));
+  assert.equal(branchOnly.worktrees().length, 1);
+
+  const edited = startRepo({ config: { worktrees: 'true' } });
+  fs.appendFileSync(edited.file, '\nmore\n');
+  res = edited.run('start', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /commit/i);
+  assert.equal(edited.worktrees().length, 1);
+
+  const tooling = startRepo({ config: { worktrees: 'true' }, commitTooling: false });
+  res = tooling.run('start', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, /\.speck\//);
+  assert.match(res.stderr, /commit/i);
+  assert.equal(tooling.worktrees().length, 1);
+  assert.equal(tooling.g('rev-parse', '--verify', '-q', tooling.branch), '');
+});
+
+test('0028 AC4: with worktrees off, speck start branches in the current checkout; new projects and this repo turn worktrees on', () => {
+  const off = startRepo({ config: { worktrees: 'false' } });
+  const res = off.run('start', '1');
+  assert.equal(res.status, 0, res.stderr);
+  assert.equal(off.g('branch', '--show-current'), off.branch);
+  assert.equal(off.statusIn(off.dir), 'building');
+  assert.equal(off.g('log', '-1', '--format=%s'), 'speck(0001): start');
+  assert.equal(off.worktrees().length, 1);
+  assert.ok(res.stdout.includes(fs.realpathSync(off.dir)));
+
+  const tpl = parseYaml(fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8'));
+  assert.equal(tpl.worktrees, true);
+  assert.equal(tpl.worktree_setup, '');
+  assert.equal(parseYaml(fs.readFileSync(path.join(ROOT, 'speck', 'config.yml'), 'utf8')).worktrees, true);
+});
+
+test('0028 AC5: the build skill starts with speck start and works only in the printed worktree, resuming there', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
+  const pre = md.split('## 1. Pre-flight')[1].split('\n## ')[0];
+  assert.match(pre, /`speck start <id>`/);
+  assert.match(pre, /printed/i);
+  assert.match(pre, /all of (your|the) (building|work)[^.]*worktree|every command[^.]*worktree/i);
+  assert.match(pre, /resum[^.]*existing worktree|existing worktree[^.]*resum/i);
+  assert.doesNotMatch(pre, /Create the branch `<branch_prefix><id>-<slug>`/, 'no hand-made branch any more');
+});
+
+test('0028 (self-check): a failed start commit is undone in both modes', () => {
+  for (const worktrees of ['true', 'false']) {
+    const r = startRepo({ config: { worktrees } });
+    const head = r.g('rev-parse', 'HEAD');
+    // No identity anywhere, so the start commit fails.
+    const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', HOME: os.tmpdir(), GIT_AUTHOR_NAME: '', GIT_AUTHOR_EMAIL: '', GIT_COMMITTER_NAME: '', GIT_COMMITTER_EMAIL: '', EMAIL: '' };
+    const res = spawnSync(process.execPath, [CLI, 'start', '1'], { cwd: r.dir, encoding: 'utf8', env });
+    assert.notEqual(res.status, 0, worktrees);
+    assert.equal(r.g('branch', '--show-current'), 'main', worktrees);
+    assert.equal(r.g('rev-parse', 'HEAD'), head, worktrees);
+    assert.equal(r.g('status', '--porcelain'), '', worktrees);
+    assert.equal(r.g('rev-parse', '--verify', '-q', r.branch), '', worktrees);
+    assert.equal(r.worktrees().length, 1, worktrees);
+    assert.equal(r.statusIn(r.dir), 'ready', worktrees);
+  }
 });
