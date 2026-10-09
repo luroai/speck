@@ -17,19 +17,22 @@ A local control panel over a repo's `speck/` folder. It isn't a kanban board. Ev
 Everything else is information.
 
 ## Screen
-- **Needs you:** at the top. Blocked questions, escalations, and approved tickets waiting on `/speck-ship`. Usually empty, and empty is the goal.
-- **Queue:** `ready` tickets in run order. A ticket waiting on an unfinished `after:` ticket is marked, for example "waiting on 0027".
-- **Running:** the ticket being built, shown like a CI run: build → self-check → review round 1, 2… → ship. The review findings and the agent's latest message or tool call are its logs. Finds tickets in their worktrees (0029).
-- **Shaping:** ideas and draft tickets, with readiness hints: lint result, open questions, overlaps.
-- **Shipped:** a changelog feed with actuals (time, review rounds, cost), which is also the proof data the brief asks for.
+Shaping and Queue are the two main areas, side by side, with Shipped as a compact table underneath. Dark grey, thin borders, square corners. A mockup is in `mockups/speck-panel/` (gitignored, local only).
+
+- **Shaping:** ideas and draft tickets, with readiness hints: lint result, open questions, overlaps, and tickets that touch the same files. One ticket can be opened to show its outcome, acceptance criteria and readiness checklist, which is what you need in front of you at Gate 1.
+- **Queue:** the whole pipeline, top to bottom:
+  - **Needs you:** blocked tickets with their question, escalations, and approved tickets waiting on `/speck-ship`. Usually empty, and empty is the goal.
+  - **Running:** every ticket being built, each in its own worktree (0029), shown like a CI run: build → self-check → review round 1, 2… → approve → ship. The review findings and the agent's latest message or tool call are its logs.
+  - **Up next:** `ready` tickets in run order. A ticket waiting on an unfinished `after:` ticket is marked, for example "waiting on 0017".
+- **Shipped:** a changelog of the latest tickets with actuals (time, review rounds, tokens) and a few medians, which is also the proof data the brief asks for.
 
 ## Where the CI analogy doesn't hold
-- **CI never asks questions. This pipeline does.** Blocked tickets and escalations make it a pipeline with an inbox, so Needs you is the heart of the panel.
+- **CI never asks questions. This pipeline does.** Blocked tickets and escalations make it a pipeline with an inbox, so Needs you sits at the top of the queue.
 - **Answering is not chatting.** Answering a blocked question writes to the ticket and resumes the build: the ticket is the conversation, which keeps the repo the source of truth. Talking to an agent mid-run means plugging into live agent sessions. That's a separate, much later idea.
 - **The queue needs a total order.** `priority: 1–5` has ties, and `after:` only covers dependencies. One rank per ticket (for example an `order` field in the frontmatter) gives the run order, survives restarts and works without the panel.
 
 ## Stages
-1. **Read-only.** All five areas are views over the ticket files, so version 1 needs no writes. Built on a JSON form of `speck status` that already includes tickets in other worktrees (0029).
+1. **Read-only.** Every area is a view over the ticket files, so version 1 needs no writes. Built on a JSON form of `speck status` that already includes tickets in other worktrees (0029).
 2. **Writes, in this order:** set a ticket to `ready` (Gate 1), reorder the queue, answer a blocked question.
 3. **Later:** the panel runs the queue itself (see below), a diff view beside the review rounds, live agent activity via agent hooks.
 
@@ -44,13 +47,13 @@ Everything else is information.
 - Keep from Cline Kanban (github.com/cline/kanban): state in the repo's ticket files, the human gates, and agents' normal permission checks. Chains move forward when you ship, not when an agent finishes.
 
 ## Build queue (decided 8 October 2026)
-- When nothing is in progress, the next eligible `ready` ticket starts building, taken from the top of the queue.
-- `wip_limit` in `config.yml`, default 1, counts building and reviewing tickets. One agent at a time.
+- **Builds run in parallel (decided 9 October 2026).** Every eligible `ready` ticket starts building, from the top of the queue, each in its own worktree. There's no WIP limit: running in parallel turned out much faster.
+- Two tickets that touch the same files don't run at the same time, because the second would conflict when it ships and `speck ship` refuses rather than rebasing. The later one waits until the earlier one ships.
 - A ticket is only eligible once every ticket in its `after:` list is `done` (shipped), so no build sits on unshipped work.
-- `approved` tickets don't count as WIP, but a cap (for example 3 approved or blocked) pauses the queue until you ship or answer.
+- A cap on tickets waiting for you (for example 3 approved or blocked) pauses the queue until you ship or answer.
 - Blocked tickets are skipped, and the queue moves to the next independent ticket.
 - The panel server runs the queue. Without the panel, `/speck-next` builds the next eligible ticket.
-- **Worktrees: adopted for isolation (ticket 0028, 9 October 2026).** First rejected because they only seemed worth it for parallel builds. They came back for a different reason: several sessions sharing one checkout kept colliding (branch switches under another session, files swept into the wrong commit). Each build now gets its own worktree. It's still one ticket at a time, and `worktree_setup` covers gitignored files like `.env` and `node_modules`.
+- **Worktrees: adopted for isolation (ticket 0028, 9 October 2026).** First rejected because they only seemed worth it for parallel builds. They came back for a different reason: several sessions sharing one checkout kept colliding (branch switches under another session, files swept into the wrong commit). Each build now gets its own worktree. Worktrees then made parallel builds possible, which is now the plan (see above). `worktree_setup` covers gitignored files like `.env` and `node_modules`.
 
 ## Open questions
 - **Inside the speck CLI or a separate project?** Inside (for example `speck panel`) reuses the frontmatter and review-round parsers with no duplication, but `docs/brief.md` lists the board as a later, separate project and out of scope for v0.1.
