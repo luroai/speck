@@ -2,20 +2,10 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { ROOT, panelRepo, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm } from './support/panel.mjs';
+import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm } from './support/panel.mjs';
 
 // ---------- 0059: page changes show on a browser reload ----------
-
-// A copy of the CLI and its templates, so a test can edit or remove its panel.html without touching the repo's own.
-function cliCopy() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cli-'));
-  fs.mkdirSync(path.join(dir, 'scripts'));
-  fs.copyFileSync(path.join(ROOT, 'scripts', 'speck.mjs'), path.join(dir, 'scripts', 'speck.mjs'));
-  fs.cpSync(path.join(ROOT, 'templates'), path.join(dir, 'templates'), { recursive: true });
-  return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html') };
-}
 
 async function served() {
   const r = panelRepo();

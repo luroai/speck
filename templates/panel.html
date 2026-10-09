@@ -122,6 +122,8 @@
   .live.off { background: var(--bad); }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: 1px solid var(--line); background: #2a2020; }
   .offline[hidden] { display: none; }
+  .restart { font-size: 12px; color: var(--warn); padding: 6px 24px; border-bottom: 1px solid var(--line); background: #2a2618; }
+  .restart[hidden] { display: none; }
   .detail ol li, .detail p.text, .question, .title { white-space: pre-wrap; overflow-wrap: anywhere; }
   .ready div { overflow-wrap: anywhere; }
 
@@ -182,6 +184,7 @@
   <div class="pills" id="pills"><div class="pill"><span class="live"></span>connecting…</div></div>
 </header>
 <div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
+<div class="restart" id="restart" hidden></div>
 
 <main>
   <section id="shaping-section" class="shaping tickets">
@@ -522,7 +525,7 @@ function holdPage(on) {
   if (!root || (heldAt !== null) === on) return;
   if (on) heldAt = [scrollX, scrollY];
   root.classList.toggle('held', on);
-  for (const n of document.querySelectorAll('header, #offline, main')) n.inert = on; // Tab can't reach, press or scroll to it
+  for (const n of document.querySelectorAll('header, #offline, #restart, main')) n.inert = on; // Tab can't reach, press or scroll to it
   if (!on) { scrollTo(...heldAt); heldAt = null; }
 }
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
@@ -844,6 +847,13 @@ function setConnected(ok, problem) {
   else $('pills').replaceChildren(el('div', ok ? 'pill' : 'pill off', null, el('span', ok ? 'live' : 'live off'), document.createTextNode(ok ? 'live' : 'disconnected')));
 }
 
+// speck panel restarts by itself when its code changes. When the new code fails to start, the old server keeps serving
+// and says so in restart_error, until a later change starts.
+function showRestartError(line) {
+  $('restart').hidden = !line;
+  $('restart').textContent = line ? `speck panel couldn't restart with its changed code: ${line} It's still running the code it had, and tries again on the next change.` : '';
+}
+
 // Fetches the state every 2 seconds without reloading the page. Each poll schedules the next one before it starts, so
 // a request that never finishes can't stop polling. A request still pending when the next one is due counts as
 // disconnected and is aborted, and only the latest request's answer is used. A failure shows as disconnected and
@@ -860,7 +870,7 @@ async function poll() {
     try { body = await res.json(); } catch (e) { body = null; }
     if (mine !== seq) return; // a newer request has taken over
     if (!res.ok || !body || !Array.isArray(body.tickets)) setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
-    else { state = body; lastOk = Date.now(); setConnected(true); }
+    else { state = body; lastOk = Date.now(); showRestartError(body.restart_error); setConnected(true); }
   } catch (e) {
     if (mine === seq) setConnected(false);
   } finally {

@@ -43,6 +43,7 @@ started: "2026-10-09T20:00:56.511Z"
 - Today the page's token is made afresh on each start (`cmdPanel` in `scripts/speck.mjs`), so criterion 2 needs the token to survive a restart.
 - In a repo set up with `speck init`, the panel runs from `.speck/scripts/`, which changes only when `init` is re-run; here it runs from `scripts/`.
 - product.md's `panel` entry needs updating, including the line that 0059 added about server changes needing a restart.
+- Self-check: a server process still starting wasn't stopped by Ctrl+C, so each one is now tracked from the moment it's started (with a test); the error-line match missed a plain `Error:` and now finds it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

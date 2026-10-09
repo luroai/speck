@@ -6,8 +6,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
+import net from 'node:net';
 import crypto from 'node:crypto';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn, spawnSync, fork } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -1747,17 +1748,28 @@ function panelLog(repo, id) {
   return { text: lines.slice(-PANEL_LOG_LINES).join('\n'), truncated: lines.length > PANEL_LOG_LINES };
 }
 
+// `speck panel`: a small supervisor that owns the port and hands each connection to a server process running the
+// current code, so a change to the code is picked up without a restart by hand.
+function cmdPanel(args) {
+  if (process.env.SPECK_PANEL_TOKEN && process.send) return panelServer(args);
+  return panelSupervisor(args);
+}
+
 // Serves the panel page, /api/state and each build's log to this machine only, plus the one write,
 // POST /api/tickets/<id>/ready. Every request reads the files afresh, the page included, so a changed panel.html shows
-// on a reload.
-function cmdPanel(args) {
+// on a reload. Runs in a process the supervisor started, which sends it each connection and tells it when to stop.
+function panelServer(args) {
   const repo = findRepoRoot();
   const port = panelPort(args);
   const cfg = loadConfig(repo);
   const repoName = htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo)), base = htmlEscape(cfg.base_branch);
-  // Made afresh on each start and put only in the page. A web page elsewhere can send a POST here (the Host check
-  // doesn't stop a form post to 127.0.0.1), but can't read this token, and its Origin gives it away.
-  const token = crypto.randomBytes(32).toString('hex');
+  // Made by the supervisor once, when `speck panel` starts, so it lasts through restarts, and put only in the page. A
+  // web page elsewhere can send a POST here (the Host check doesn't stop a form post to 127.0.0.1), but can't read this
+  // token, and its Origin gives it away. Taken out of the environment, so the commands this runs don't get it.
+  const token = process.env.SPECK_PANEL_TOKEN;
+  delete process.env.SPECK_PANEL_TOKEN;
+  let restartError = null; // the supervisor's last failed restart, shown on the page until a restart works
+  let stopping = false;
   const pageFile = path.join(TEMPLATES, 'panel.html');
   const page = () => fs.readFileSync(pageFile, 'utf8')
     .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token);
@@ -1766,7 +1778,7 @@ function cmdPanel(args) {
   const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
   const send = (res, status, type, body) => {
     res.writeHead(status, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
-      ...(status === 405 ? { Allow: 'GET' } : {}) });
+      ...(status === 405 ? { Allow: 'GET' } : {}), ...(stopping ? { Connection: 'close' } : {}) });
     res.end(body);
   };
   const server = http.createServer((req, res) => {
@@ -1787,7 +1799,7 @@ function cmdPanel(args) {
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
     if (where === '/api/state') {
-      try { return send(res, 200, 'application/json', JSON.stringify(statusData(repo))); }
+      try { return send(res, 200, 'application/json', JSON.stringify({ ...statusData(repo), ...(restartError ? { restart_error: restartError } : {}) })); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log$/);
@@ -1797,13 +1809,166 @@ function cmdPanel(args) {
     }
     return send(res, 404, 'text/plain', 'Not found.\n');
   });
-  server.on('error', e => {
-    console.error(e.code === 'EADDRINUSE'
-      ? `Port ${port} is already in use, so the panel didn't start. Stop whatever is using it, or pick another port with --port <n>.`
-      : `The panel couldn't start on port ${port}: ${e.message}`);
-    process.exit(1);
+  // Every open connection, and those waiting on an answer, so a stopping server can close the idle ones at once and the
+  // rest once answered (each answer then says Connection: close), and the browser's next request reaches the new server.
+  const sockets = new Set(), busy = new Set();
+  const finish = () => {
+    for (const s of sockets) if (!busy.has(s)) s.destroy();
+    if (!sockets.size) process.exit(0);
+  };
+  server.on('connection', s => { sockets.add(s); s.on('close', () => { sockets.delete(s); if (stopping) finish(); }); });
+  server.on('request', (req, res) => { busy.add(req.socket); res.on('close', () => { busy.delete(req.socket); if (stopping) finish(); }); });
+  process.on('message', (m, socket) => {
+    if (m === 'connection' && socket) {
+      if (stopping) return socket.destroy();
+      server.emit('connection', socket);
+      socket.resume();
+    } else if (m && m.type === 'restart-error') restartError = m.error || null;
+    else if (m === 'stop' && !stopping) {
+      stopping = true;
+      setTimeout(() => process.exit(0), 3000).unref();
+      finish();
+    }
   });
-  server.listen(port, '127.0.0.1', () => console.log(`speck panel: http://127.0.0.1:${port}/ (press Ctrl+C to stop)`));
+  process.on('SIGINT', () => {}); // Ctrl+C reaches the whole process group: the supervisor decides when this stops
+  process.on('disconnect', () => process.exit(0)); // the supervisor has gone, however it went
+  process.send('ready');
+}
+
+const PANEL_WATCH_MS = 250, PANEL_SETTLE_MS = 500, PANEL_START_MS = 10000;
+
+// The code `speck panel` runs from: every .mjs file in the CLI's own folder (scripts/, or .speck/scripts/ in a repo set
+// up with `speck init`). `codeStamp` is cheap, to notice a change; `codeHash` is the content, to tell a real change.
+function panelCode() {
+  const dir = path.dirname(fileURLToPath(import.meta.url));
+  let names = [];
+  try { names = fs.readdirSync(dir).filter(n => n.endsWith('.mjs')).sort(); } catch { /* gone for now: no code to compare */ }
+  return names.map(n => path.join(dir, n));
+}
+function codeStamp() {
+  return panelCode().map(f => { try { const st = fs.statSync(f); return `${f}:${st.size}:${st.mtimeMs}:${st.ino}`; } catch { return `${f}:-`; } }).join('|');
+}
+function codeHash() {
+  const h = crypto.createHash('sha256');
+  for (const f of panelCode()) { h.update(f); h.update('\0'); try { h.update(fs.readFileSync(f)); } catch { h.update('-'); } h.update('\0'); }
+  return h.digest('hex');
+}
+
+// The line of a failed start's output that names the error, such as "SyntaxError: Unexpected token '{'", or else its
+// first line.
+export function startErrorLine(text) {
+  const lines = String(text).split('\n').map(l => l.trim()).filter(Boolean);
+  return lines.find(l => /^([A-Z][A-Za-z]*)?(Error|Exception)( \[[A-Z_]+\])?: /.test(l)) || lines[0] || null;
+}
+
+// Starts a server process on the code as it is now. Resolves with it once it's ready to take connections. Rejects,
+// leaving nothing running, if it exits or isn't ready in time, with its error line and everything it printed. Each
+// process is in `kids` from the moment it's started until it exits, so stopping `speck panel` stops it too.
+function startPanelServer(args, token, kids) {
+  return new Promise((resolve, reject) => {
+    const child = fork(fileURLToPath(import.meta.url), ['panel', ...args], {
+      env: { ...process.env, SPECK_PANEL_TOKEN: token }, stdio: ['ignore', 'inherit', 'pipe', 'ipc'] });
+    kids.add(child);
+    child.on('exit', () => kids.delete(child));
+    let err = '', settled = false;
+    const fail = why => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.kill('SIGKILL');
+      reject(Object.assign(new Error(startErrorLine(err) || why), { output: err, code: child.exitCode }));
+    };
+    const timer = setTimeout(() => fail(`it wasn't ready within ${PANEL_START_MS / 1000} seconds`), PANEL_START_MS);
+    child.stderr.on('data', d => { if (settled) process.stderr.write(d); else err += d; });
+    child.on('error', e => fail(e.message));
+    child.on('close', code => fail(`it exited with code ${code}`)); // after 'exit', once all it printed has arrived
+    child.on('message', m => {
+      if (m !== 'ready' || settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.removeAllListeners('close');
+      resolve(child);
+    });
+  });
+}
+
+// Owns the port and the token for as long as `speck panel` runs, and passes each connection to the live server process.
+// Polls the code, and once a change has settled and the content differs from what's running, starts a server on the new
+// code and only then swaps it in, so a failed start leaves the old one serving. Changes to this function itself take
+// effect only when `speck panel` is started again.
+function panelSupervisor(args) {
+  findRepoRoot(); // a plain error outside a repo, before anything starts
+  const port = panelPort(args);
+  const token = crypto.randomBytes(32).toString('hex');
+  const kids = new Set();
+  let live = null, running = codeHash(), restartError = null, stamp = codeStamp(), changedAt = 0, restarting = false, quitting = false;
+  const adopt = child => {
+    child.on('exit', code => {
+      if (child !== live || quitting) return;
+      console.error(`speck panel's server stopped unexpectedly (exit code ${code}). Start speck panel again.`);
+      quit(1);
+    });
+    live = child;
+  };
+  const quit = (code = 0) => {
+    quitting = true;
+    for (const k of kids) k.kill('SIGTERM');
+    process.exit(code);
+  };
+  process.on('SIGINT', () => quit(0));
+  process.on('SIGTERM', () => quit(0));
+  process.on('exit', () => { for (const k of kids) k.kill('SIGTERM'); });
+
+  const restart = () => {
+    const hash = codeHash();
+    if (hash === running) {
+      // Back to the code that's running: nothing to restart, and an earlier failure no longer applies.
+      if (restartError) { restartError = null; live.send({ type: 'restart-error', error: null }); }
+      return;
+    }
+    restarting = true;
+    const starting = startPanelServer(args, token, kids);
+    starting.then(child => {
+      const old = live;
+      adopt(child);
+      running = hash;
+      restartError = null;
+      old.send('stop', () => {});
+      console.log('speck panel: the code changed, so it restarted with the new code.');
+    }, e => {
+      restartError = e.message;
+      live.send({ type: 'restart-error', error: restartError }, () => {});
+      console.error(`speck panel couldn't restart with the new code: ${e.message}\nIt's still running the code it had, and tries again on the next change.`);
+    }).finally(() => { restarting = false; });
+  };
+  const watch = () => {
+    const now = codeStamp();
+    if (now !== stamp) { stamp = now; changedAt = Date.now(); return; }
+    if (!changedAt || restarting || Date.now() - changedAt < PANEL_SETTLE_MS) return;
+    changedAt = 0;
+    restart();
+  };
+
+  startPanelServer(args, token, kids).then(child => {
+    adopt(child);
+    const front = net.createServer({ pauseOnConnect: true }, socket => {
+      if (!live) return socket.destroy();
+      live.send('connection', socket, err => { if (err) socket.destroy(); });
+    });
+    front.on('error', e => {
+      console.error(e.code === 'EADDRINUSE'
+        ? `Port ${port} is already in use, so the panel didn't start. Stop whatever is using it, or pick another port with --port <n>.`
+        : `The panel couldn't start on port ${port}: ${e.message}`);
+      quit(1);
+    });
+    front.listen(port, '127.0.0.1', () => {
+      console.log(`speck panel: http://127.0.0.1:${port}/ (press Ctrl+C to stop)`);
+      setInterval(watch, PANEL_WATCH_MS);
+    });
+  }, e => {
+    process.stderr.write(e.output || `The panel couldn't start: ${e.message}\n`);
+    quit(e.code || 1);
+  });
 }
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
