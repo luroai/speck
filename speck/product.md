@@ -64,6 +64,7 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - If the Codex sandbox can't start (for example, AppArmor blocking bubblewrap on Ubuntu), the reviewer works only from the diff and test output it's given. speck warns about this but can't fix it. Later rounds resume the same Codex session, so a reviewer that has seen the sandbox fail may keep saying so without trying again. Start a fresh session after fixing the host.
 - No PR flow yet. Shipping pushes the base branch directly, so it fails if the branch is protected by a "require a pull request" rule. A PR mode for teams is parked in `speck/ideas/2026-10-08-pr-ship-mode.md`.
 - In Codex and other agents, nothing technically stops the agent from starting `/speck-ship`. Only the skill and agent instructions say not to. Claude Code enforces it with `disable-model-invocation`.
+- If `speck review` is interrupted (for example with Ctrl-C) while the reviewer runs, a ticket that round 1 set to `reviewing` stays `reviewing` with no round recorded. Run the review again, or `speck set <id> status building`.
 - If the base branch has moved and conflicts, `speck ship` refuses. There's no automatic rebase.
 - Not yet published to npm (planned package name `speck-dev`). Install runs from GitHub with `npx`, so the repo must be public, or the user needs access to it.
 - No Claude Code plugin: skills are plain project skills, so commands are `/speck-build` rather than `/speck:build`.
