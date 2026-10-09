@@ -1,7 +1,7 @@
 ---
 id: "0050"
 title: Keep unchanged rows outside Shaping through the panel refresh                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T17:29:40.760Z"
 ---
 # 0050 · Keep unchanged rows outside Shaping through the panel refresh
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel still rebuilds every queue row and Shipped row on each 2-second refresh, so text you select there, such as a blocked ticket's question or a stopped build's last message, is lost within 2 seconds. A long build message scrolls in its own box, and that box jumps back to the top on every refresh, so you can't read or copy the end of it. 0040 fixed this only for open items in Shaping.
@@ -367,6 +367,87 @@ Round 4 (codex): approve.
     },
     "escalation_question": "",
     "summary": "Both reported issues are fixed. Selected text and message scrolling survive unchanged-row refreshes, times continue updating, and Copy feedback now preserves the row. All five criteria pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 5 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 5,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bf7197a5146cfbc3dfb7e970f54ca13f2e7cf352",
+    "thread_id": "01a121bb-3369-72f3-a50f-ae0b405c2d7b",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 2033600,
+      "cached_input_tokens": 1719808,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5154,
+      "reasoning_output_tokens": 433
+    },
+    "saved_at": "2026-10-09T18:53:02.386Z"
+  },
+  "verdict": {
+    "round": 5,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: keptItems retains unchanged queue rows independently of Shaping. AC1 tests cover titles, questions, messages, other-ticket changes and reordered fields. The Copy-feedback retention regression also passes in the supplied merged-suite results."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Unchanged build-message nodes remain attached. test/panel-0050.test.mjs verifies node retention and real-browser scrollTop preservation; supplied merged results pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render still uses keptItems for Shipped rows. AC3 tests and the real-browser Shipped selection checks pass in the supplied merged results."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "queueUpdate and the Shipped updater retain setText. The real-browser AC4 test verifies selected minutes, midnight and selection spanning title and minutes; supplied merged results pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "keptItems rebuilds rows when their own data signature changes. AC5 tests exercise changed questions, messages, titles, rounds and status, with passing browser checks."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clock updates previously discarded selections involving minutes or shipped-time text.",
+        "suggested_fix": "Completed: setText and its browser regression coverage remain intact after the merge.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Copy feedback previously rebuilt an unchanged blocked row and discarded its selection.",
+        "suggested_fix": "Completed: copyLabel still updates only the button, and the retained-row regression test passes.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The merged description matches the implementation. Inbox, Ideas and Tickets use distinct keys within the Shaping cache, preserving both sides of the conflict resolution. The temporary review-limit increase is excluded as requested."
+    },
+    "escalation_question": "",
+    "summary": "The merge preserves the Inbox behaviour and both selection fixes. Selected text and message scrolling survive refreshes, times keep updating, and changed tickets still appear promptly. All five criteria pass."
   }
 }
 ```
