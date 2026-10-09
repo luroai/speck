@@ -56,6 +56,11 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (no inbox notes: each is a known limit or a tidy-up, and the panel icon and stopping a build for good are already 0071 and 0072):
+- Known limit: a real Claude Code build was checked carrying on after a 10½-minute pause, not after pauses of hours.
+- Known limit: a process that clears its own environment and also leaves the build's process tree can't be found by pause. Catching it would need OS containment such as cgroups.
+- Known limit: pause and play refuse on Windows, which has no SIGSTOP or SIGCONT.
+- Tidy-up: a `<id>.paused` mark left by a build that died while paused stays in `speck/.cache/runs/` until the ticket is paused again. It's ignored, since it doesn't match the next build's session.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -216,6 +221,91 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
     ],
     "escalation_question": "",
     "summary": "Both earlier problems are fixed and have meaningful regression tests. One new race remains: a build that finishes immediately after play can have its completion record overwritten, hiding its exit result. Fix that before merge. I inspected the updated code and tests; the supplied suite reports 527 passing tests, but I did not rerun it in this read-only review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a5e84be93310b2d22a685c9dcece802d162c2e16",
+    "thread_id": "01a122ab-b759-7f60-9bf9-6b3552ec5a57",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 886217,
+      "cached_input_tokens": 710656,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2935,
+      "reasoning_output_tokens": 227
+    },
+    "saved_at": "2026-10-09T22:06:06.853Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdPause and buildProcesses stop the build, its process group, session-tagged processes and descendants. AC1, self-pause and F1 regression tests exercise halted logs/files, detached background work and unchanged ticket status; supplied results pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdPlay resumes existing processes without replacing their session, folder or log. AC2 verifies identical PID/session/cwd, appended output and an unchanged run record. The F3 regression verifies an immediate exit retains exited and exit_code. Supplied results pass; the ticket also records the manual Claude continuation experiment."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdRun continues counting stopped live processes and never relaunches them. buildPaused validates the separate marker against the current session/PID and excludes exited/dead builds. AC3 tests cover capacity, no relaunch, JSON flags and stale markers; supplied results pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "runRecord, cmdPause and cmdPlay enforce the required refusals. AC4 checks plain errors, non-zero exits and unchanged records/markers. F2 tests verify rollback after failed pause and retry after failed play; supplied results pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The pause marker persists independently of the launcher. AC5 restarts speck run, verifies continued inactivity and paused status, then successfully plays the existing build; supplied results pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:buildProcesses",
+        "issue": "Resolved: inherited session tagging finds detached background processes after their parent exits, with a regression covering pause and play.",
+        "suggested_fix": "No further change required for the reported case.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:signalBuild, cmdPause, cmdPlay",
+        "issue": "Resolved: signalling failures are reported, failed pauses roll back and failed plays retain a retryable pause marker.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:cmdPlay, buildPaused",
+        "issue": "Resolved structurally: pause/play write only the separate marker, so they cannot overwrite speck run's exit record. Tests check record immutability and completion immediately after play.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Pause and play preserve the running build and survive launcher restarts. All three reported problems are resolved, with meaningful regression coverage and no unrelated changes. The supplied suite reports 528 passing tests; I inspected the code and tests but did not rerun them in this read-only review. Real Claude continuation was manually checked for a 10½-minute pause; pauses lasting hours remain untested."
   }
 }
 ```
