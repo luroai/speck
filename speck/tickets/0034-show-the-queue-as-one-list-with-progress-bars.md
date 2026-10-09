@@ -51,6 +51,8 @@ The queue is one list in which every in-flight ticket has a progress bar, ticket
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: the `.group` CSS rules in `templates/panel.html` are now unused and could be removed.
+- Follow-up idea: an approved ticket with no review rounds shows Ship as current with Build and Self-check not done, which can't happen through `/speck-build` but looks odd if a status is set by hand.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -122,6 +124,79 @@ The queue is one list in which every in-flight ticket has a progress bar, ticket
     },
     "escalation_question": "",
     "summary": "The single queue, blocked styling, queued labels and elapsed-time details are implemented with meaningful tests. One progress-bar edge case needs fixing: approved tickets without review history appear to still be building instead of waiting to ship."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6e6cb9e6bf39d058fd1542a5eda45ccefe88efa2",
+    "thread_id": "01a120d0-e916-7050-a9a3-8346bdb1f250",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 358185,
+      "cached_input_tokens": 264832,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1629,
+      "reasoning_output_tokens": 51
+    },
+    "saved_at": "2026-10-09T13:21:25.265Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel() and render() retain one queue with in-flight tickets before ready tickets, preserving JSON order. The 0034 AC1 model and DOM test passes in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "progress() implements the five-step states and latest review label, now explicitly selecting Ship for approved tickets. Independently executed checks pass for approved tickets without rounds, with and without self_check. Both 0034 AC2 tests include model and rendered-page regression assertions and pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueItem() and the queue CSS restrict red row edges and current steps to blocked tickets, render their question, and use warning colour for high-risk tags. The 0034 AC3 rendering and CSS test passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "progress() leaves ready bars inactive; queueItem() renders Queued and non-empty waiting_on ids. The 0034 AC4 rendered-page test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "panelModel() floors elapsed minutes for in-flight tickets, and queueItem() renders available minutes and worktree paths. The 0034 AC5 model and rendered-page test passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Approved tickets without review rounds previously showed Build or Self-check as current instead of Ship.",
+        "suggested_fix": "Implemented: approved status now selects Ship explicitly, with model and rendered-page regression coverage for both self_check cases.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The queue description matches the implementation, including Ship being current for approved tickets regardless of earlier step completion."
+    },
+    "escalation_question": "",
+    "summary": "The queue now shows one ordered list with progress bars, blocked questions, queued dependencies and elapsed time. The approved-ticket edge case is fixed and covered by meaningful regression tests. All five criteria pass, with no blocking concerns remaining."
   }
 }
 ```
