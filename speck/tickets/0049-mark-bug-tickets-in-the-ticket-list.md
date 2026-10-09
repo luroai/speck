@@ -1,7 +1,7 @@
 ---
 id: "0049"
 title: "Mark bug tickets in the ticket list"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T17:03:46.145Z"
 ---
 # 0049 · Mark bug tickets in the ticket list
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Bugs and features look the same in the ticket list, so a bug that loses work (such as 0046) doesn't stand out from routine features when you choose what to set ready or build next.
@@ -49,3 +49,79 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c4d7c897d7ef6bdb1e72795f3fa6f37a1a5bc94e",
+    "thread_id": "01a121a4-73de-7d13-bc7e-1646d5ff5205",
+    "seconds": 45,
+    "usage": {
+      "input_tokens": 265563,
+      "cached_input_tokens": 189824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1165,
+      "reasoning_output_tokens": 21
+    },
+    "saved_at": "2026-10-09T17:10:33.395Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/speck.mjs: parseYaml parses an unquoted blank `type:` as {}, which lintTicket rejects. Independently reproduced with `type: # blank or bug`. The AC1 tests cover quoted empty strings only. The template and bug validation otherwise meet the criterion."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: cmdNew validates every --type argument before writing. test/type-0049.test.mjs AC2 exercises creation and invalid-value refusals, including bare and repeated flags; builder reports it passing."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "cmdStatus correctly prints bug after the id, covered by the AC3 test. However, statusData preserves {} for an unquoted blank `type:` instead of returning null. The test covers missing and quoted blank fields only."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html: bugTag is used by tags for Shaping and queue rows and directly by Shipped rendering. AC4 tests execute the actual page script and check placement, absence on other tickets and the distinct pink CSS colour; builder reports both passing."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 4 instructs adding --type=bug for defects. The AC5 test checks this instruction; builder reports it passing."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "An ordinary blank frontmatter field (`type:` or `type: # comment`) is parsed as {}, rejected by lint and emitted as {} in status JSON. This violates both blank-field requirements. Existing tests only exercise `type: \"\"`, so they miss this case.",
+        "suggested_fix": "Handle unquoted blank type fields consistently in lint and status JSON without accepting non-empty mappings as valid types. Add regression tests for `type:` and `type: # comment`, verifying lint acceptance and JSON null.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The update otherwise matches the implementation, but its claims that blank type fields pass lint and become JSON null are false for unquoted blanks. Fixing F1 should make those claims accurate."
+    },
+    "escalation_question": "",
+    "summary": "Bug creation and the visible pink tags are implemented with meaningful tests. One edge case needs fixing before merge: leaving the type field blank without quotation marks causes a lint error and incorrect JSON output."
+  }
+}
+```
+
+</details>

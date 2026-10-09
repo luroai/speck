@@ -17,6 +17,8 @@ const colour = name => (css().match(new RegExp(`--${name}:\\s*([^;]+);`)) || [])
 test('0049 AC1: lint accepts a missing, blank or bug type and names the field for any other value', () => {
   assert.deepEqual(lint(), [], 'missing');
   assert.deepEqual(lint({ type: '""' }), [], 'blank');
+  assert.deepEqual(lint({ type: '' }), [], 'bare type:');
+  assert.deepEqual(lint({ type: '# blank or bug' }), [], 'bare type: with a comment');
   assert.deepEqual(lint({ type: 'bug' }), [], 'bug');
   assert.deepEqual(lint({ type: 'bug   # a comment' }), [], 'bug with a comment');
   for (const v of ['feature', 'Bug', 'chore', 'constructor', '[bug]', '3']) {
@@ -57,6 +59,8 @@ test('0049 AC3: speck status shows bug after a bug ticket\'s id, and --json has 
   const r = panelRepo();
   r.write('0002-bug.md', fm({ id: '"0002"', title: 'Fix lost work', type: 'bug' }));
   r.write('0003-blank.md', fm({ id: '"0003"', title: 'Blank type', type: '""' }));
+  r.write('0004-bare.md', fm({ id: '"0004"', title: 'Bare type', type: '' }));
+  r.write('0005-comment.md', fm({ id: '"0005"', title: 'Bare type with a comment', type: '# blank or bug' }));
   const out = r.run('status').stdout;
   assert.match(out, /^\s+0002 bug\s+P/m, 'bug after the id');
   assert.doesNotMatch(out, /^\s+0001 bug/m);
@@ -66,6 +70,9 @@ test('0049 AC3: speck status shows bug after a bug ticket\'s id, and --json has 
   assert.equal(type('0002'), 'bug');
   assert.equal(type('0003'), null, 'blank is null');
   assert.equal(type('0001'), null, 'missing is null');
+  assert.equal(type('0004'), null, 'bare type: is null');
+  assert.equal(type('0005'), null, 'bare type: with a comment is null');
+  for (const id of ['0004', '0005']) assert.equal(json.tickets.find(t => t.id === id).lint.errors, 0, `${id} passes lint`);
   assert.ok(json.tickets.every(t => Object.hasOwn(t, 'type')));
 });
 
