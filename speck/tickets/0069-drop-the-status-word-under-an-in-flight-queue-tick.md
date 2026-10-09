@@ -1,7 +1,7 @@
 ---
 id: "0069"
 title: "Drop the status word under an in-flight queue ticket's bar"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0069 · Drop the status word under an in-flight queue ticket's bar
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Each in-flight ticket in the queue repeats its status in a line under its bar (for example **building**), though the bar's current step already shows it. The extra line makes every row taller for nothing.
