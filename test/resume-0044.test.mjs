@@ -191,3 +191,22 @@ test('0044: the page uses the Clipboard API and builds the command with textCont
   assert.match(page(), /navigator\.clipboard\.writeText\(/);
   assert.doesNotMatch(page(), /innerHTML/);
 });
+
+test('0050: the Copy label changes on the kept row, so text selected in it stays through the label reset and the next refresh', async () => {
+  const { p, timers } = await clipPage(state(), { fail: true });
+  const row = queueRows(p)[0];
+  const cmd = byClass(p, row, 'cmd')[0], btn = p.all(row).find(n => n.tagName === 'button');
+  const kept = () => queueRows(p)[0] === row && p.all(row).includes(cmd) && p.all(row).includes(btn);
+  const before = timers.length;
+  btn.listeners.click({ stopPropagation() {} });
+  await p.settle();
+  assert.match(btn.textContent, /couldn't copy/i);
+  assert.ok(kept(), 'the row is kept when the label changes');
+  timers.slice(before).find(t => t.ms === 2000 && t.fn !== timers[0].fn).fn();
+  assert.equal(btn.textContent, 'Copy');
+  assert.ok(kept(), 'and when it resets');
+  timers[0].fn();
+  await p.settle();
+  assert.ok(kept(), 'and through the next refresh');
+  assert.equal(p.all(queueRows(p)[0]).find(n => n.tagName === 'button').textContent, 'Copy');
+});
