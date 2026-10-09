@@ -215,3 +215,79 @@ Round 2 (codex): approve.
 ```
 
 </details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "36c000d59d58e35e8c3eacc112245ee3d016bd20",
+    "thread_id": "01a1215a-919f-7c70-8dd8-44e4b631d38a",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 772038,
+      "cached_input_tokens": 515968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2823,
+      "reasoning_output_tokens": 295
+    },
+    "saved_at": "2026-10-09T16:27:33.756Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "shipTicket's post-test changedFiles check is unchanged from round 2. Both AC1 tests pass on the merged result, verifying named files, content, staged state and unchanged branches."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The reviewed snapshot and undo code is unchanged. AC2 tests and F1/F2 regressions pass, covering both folders, staged changes, failed checkout, remote catch-up and stash recovery."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Overwrite detection and conflict-file reporting remain unchanged. AC3 overwrite tests and the conflict-filename test pass on the merged result."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Shipping code and tests have no diff against the round-2 commit. Existing refusal, exit-code, remote and worktree regressions and AC4 success tests pass in the supplied 291-test run. Tests were not rerun during this read-only review."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Failed checkout previously lost staged state or could leave the ship commit in place.",
+        "suggested_fix": "Resolved by the preserved snapshot and index restoration; both regression tests remain intact and pass after the merge.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Changes introduced during remote catch-up were missing from the rollback snapshot.",
+        "suggested_fix": "Resolved by refreshing snapshots after catch-up; the post-merge-hook regression remains intact and passes.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The merged spec retains this ticket's shipping guarantees and stash fallback alongside main's panel capabilities. Removing the update-marker line matches main. The diff against main contains only this ticket's intended changes."
+    },
+    "escalation_question": "",
+    "summary": "Approval stands after the merge. The reviewed shipping code and regression tests are unchanged, both earlier findings remain resolved, and the combined product description is accurate. All 291 supplied tests pass; no new blocking issues were found."
+  }
+}
+```
+
+</details>
