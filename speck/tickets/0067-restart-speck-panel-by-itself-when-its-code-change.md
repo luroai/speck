@@ -1,7 +1,7 @@
 ---
 id: "0067"
 title: "Restart speck panel by itself when its code changes"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T20:00:56.511Z"
 ---
 # 0067 · Restart speck panel by itself when its code changes
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck panel` keeps running the code it started with. When a shipped ticket changes the server, the open panel breaks or shows old behaviour until the user finds the process and restarts it by hand (for example, every build log read "Couldn't load the log yet" because the running server predated the log route from 0051). 0059 made a browser reload pick up page changes, but not server changes, so a reload alone isn't enough.
@@ -49,9 +49,15 @@ started: "2026-10-09T20:00:56.511Z"
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Changes to the panel's supervisor code never take effect automatically.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 953,548
+- Elapsed since build started: 19 min
+- Changed lines: 179 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes):
   - `cmdPanel`, which launches the first server process and then only waits, never runs new code; a change to it needs `speck panel` started again.
