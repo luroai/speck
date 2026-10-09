@@ -120,7 +120,7 @@ Everything happens in the local repo, with no PR.
     It refuses if the ticket has no `## Review log` or `## Delivery log` heading.
     It never merges or pushes.
   - `ship`: the user's gate.
-    It refuses, changing nothing, unless the ticket is `approved`, the review loop says ship, the working tree is clean, no commit after the reviewer's approval touched files outside `speck/` (even if later reverted), and `commands.test` is set and passes.
+    It refuses, changing nothing, unless the ticket is `approved`, the review loop says ship, the ticket's folder is clean, no commit after the reviewer's approval touched files outside `speck/` (even if later reverted), and `commands.test` is set and passes.
     If the base branch has a remote, it fetches it first: new remote commits are brought in before merging, and if local and remote have both moved on it refuses and says to `git pull`.
     Then it sets the ticket to `done` on its branch, merges into the base branch with a merge commit, deletes the local branch and pushes the base branch if it has a remote.
     Once that push succeeds, it also deletes the ticket branch on the remote if it's there.
@@ -128,7 +128,6 @@ Everything happens in the local repo, with no PR.
     A merge conflict is aborted and leaves everything as it was, and speck names the conflicting files and exits with 13.
     It also names what to merge into the ticket branch: the base branch, or its remote copy (for example `origin/main`) when it had just fetched new commits from the remote, since the undo leaves the local base branch without them.
     Every other refusal keeps its own code.
-    If tracked files in the base branch's checkout gain uncommitted changes while the tests run, it refuses before merging, names them and leaves them as they were.
     A merge that would overwrite uncommitted changes is reported as that, naming the files, not as a conflict.
     When a merge fails, the undo puts back any uncommitted changes to tracked files in the base checkout and the ticket's worktree, staged or not.
     If they can't go back in place, they're saved in git's stash and speck says to run `git stash pop --index` in that folder.
@@ -136,7 +135,9 @@ Everything happens in the local repo, with no PR.
     If not, it changes nothing, says why and exits with 12.
   - **Shipping across worktrees:** when the ticket branch is checked out in another git worktree, `ship` works from either folder.
     The checks, tests and ship commit happen in the ticket's worktree, and the merge happens where the base branch is checked out, so that checkout ends up with the merged files.
-    It refuses, changing nothing, if that checkout has uncommitted changes to tracked files, if the ticket's worktree isn't clean, or if its folder is missing (with a hint to run `git worktree prune`).
+    It refuses, changing nothing, if the ticket's worktree isn't clean, or if its folder is missing (with a hint to run `git worktree prune`).
+    Uncommitted edits in the base checkout don't block it, so you can keep editing ideas and tickets there while builds ship: they stay there, uncommitted and out of the merge.
+    It refuses only when that checkout has staged changes (git won't merge over them, even in other files) or uncommitted edits to a file the ticket's branch changes, checked before and again after the tests, naming each file and why, and leaving them as they were.
     Untracked files in the base checkout only block it when the merge would overwrite them, and speck names them.
     If the base branch isn't checked out anywhere, the merge happens in the ticket's worktree.
     After shipping, the ticket's worktree is removed; if ship ran from inside it, it says so and prints where the base branch is checked out.
@@ -272,7 +273,7 @@ Everything happens in the local repo, with no PR.
   Shipping is a local merge plus a push, so no GitHub PR, `gh` login or branch protection is needed.
 - **The reviewer reviews commits**, so `speck review` and `speck record` refuse, recording nothing, while a tracked file is modified or staged and not committed (apart from the ticket's own recorded rounds and round 1's status change), and name those files.
   Untracked files don't stop them: they may belong to another session, and they aren't part of what's reviewed.
-  `speck ship` still needs a fully clean tree, untracked files included.
+  `speck ship` still needs the ticket's own folder fully clean, untracked files included.
 - **speck never picks a model.**
   No model name is built into the code, templates or skills.
   With nothing set, the reviewer runs on its own default: Codex's default, or the builder's model in a fresh session for `claude-subagent`.

@@ -1291,6 +1291,8 @@ function shipFolders(repo, branch, base) {
 
 // Tracked files with uncommitted changes, staged or not.
 const changedFiles = dir => git(['status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(Boolean).map(l => l.slice(3));
+// Tracked files with changes in the index.
+const stagedFiles = dir => git(['status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(l => l && l[0] !== ' ').map(l => l.slice(3));
 
 // The files git lists, one per line and indented, after the line that says why it refused.
 function listedIn(r, why) {
@@ -1315,8 +1317,22 @@ export function shipTicket(repo, id) {
     throw new SpeckError(work === here
       ? 'You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.'
       : `The ticket's worktree at ${work} has uncommitted or untracked changes. Commit or remove them there, then run this again.`);
-  if (mergeAt !== work && git(['status', '--porcelain', '--untracked-files=no'], mergeAt).trim())
-    throw new SpeckError(`${base} is checked out at ${mergeAt}, and it has uncommitted changes. Commit or stash them there so the merge can update it, then run this again.`);
+  // Uncommitted edits in the base checkout can stay through the merge, so you can keep working there while
+  // builds ship, unless they're staged (git won't merge over a changed index) or in a file the ticket changes.
+  const clash = when => {
+    // Without a worktree, the ship runs in this folder, which was clean before the tests, so any change at all stops it.
+    if (mergeAt === work) {
+      const changed = changedFiles(work);
+      if (changed.length) throw new SpeckError(`These files in ${work} have uncommitted changes${when}: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
+      return;
+    }
+    const staged = new Set(stagedFiles(mergeAt));
+    const touched = new Set(git(['diff', '--name-only', `${base}...${branch}`], repo).split('\n').filter(Boolean));
+    const why = changedFiles(mergeAt).flatMap(f => staged.has(f) ? [`${f} (staged)`] : touched.has(f) ? [`${f} (the ticket changes it too)`] : []);
+    if (why.length)
+      throw new SpeckError(`These files in ${mergeAt}, where ${base} is checked out, have uncommitted changes${when} that stop the merge: ${why.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them (git won't merge over staged changes, even in other files), then ship again.`);
+  };
+  clash('');
   const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
   const catchUp = remoteBaseCatchUp(repo, remote, base);
   const start = git(['branch', '--show-current'], work).trim() || git(['rev-parse', 'HEAD'], work).trim();
@@ -1327,9 +1343,7 @@ export function shipTicket(repo, id) {
   try {
     shipChecks(work, cfg, pad, branch);
     if (!runTests(work, cfg)) throw new SpeckError('Tests failed on the approved branch, so nothing was shipped.');
-    // The base checkout was clean before the tests, so anything changed there now was changed while they ran.
-    const changed = changedFiles(mergeAt);
-    if (changed.length) throw new SpeckError(`These files in ${mergeAt} have uncommitted changes, made while the tests ran: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
+    clash(', made while the tests ran');
   } catch (e) { back(); throw e; }
   // Close the ticket on the branch, so the merge is what makes it done.
   const t = findTicket(work, pad);

@@ -13,7 +13,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 ## Steps
 
 1. Run `speck ship <id>`. It does everything, or nothing:
-   - It checks that the ticket is `approved`, the review loop says `ship`, the working tree is clean, nothing outside `speck/` changed after the reviewer approved, and the tests pass. If any check fails, it stops with the reason and changes nothing.
+   - It checks that the ticket is `approved`, the review loop says `ship`, the ticket's folder is clean, nothing outside `speck/` changed after the reviewer approved, and the tests pass. Uncommitted edits in the base branch's checkout are fine and stay there, unless they're staged or in a file the ticket changes. If any check fails, it stops with the reason and changes nothing.
    - If the base branch has a remote, it fetches it first and brings in any new commits. If local and remote have both moved on, it refuses and says to `git pull`.
    - It then sets the ticket to `done` on its branch, merges the branch into the base branch with a merge commit, deletes the branch and leaves the user on the base branch. If the merge conflicts, it aborts, leaves everything as it was and exits with 13.
    - If the base branch has a remote, it pushes it, then deletes the ticket branch on the remote too. If the push is refused, the merge stays local, the remote branch is kept and it says how to fix the push.
