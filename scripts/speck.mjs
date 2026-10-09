@@ -1140,7 +1140,11 @@ function cmdSet(args) {
 }
 
 function writeField(t, key, value) {
-  let text = setField(t.raw, key, /^\d+$/.test(value) && key !== 'id' ? Number(value) : value);
+  // A value holding a quote, or padded with spaces, is written as a JSON string so it reads back exactly as given:
+  // left bare, a lone ' would hide the line's trailing comment from stripComment. after is the one list field, so
+  // after ["0070"] stays a list, and any other bracketed value is text.
+  const quoted = typeof value === 'string' && key !== 'after' && (/['"[]/.test(value) || value !== value.trim());
+  let text = setField(t.raw, key, quoted ? JSON.stringify(value) : /^\d+$/.test(value) && key !== 'id' ? Number(value) : value);
   if (key === 'status' && value === 'building' && !t.fm.started) text = setField(text, 'started', new Date().toISOString());
   if (key === 'status' && value === 'done') text = setField(text, 'finished', new Date().toISOString());
   fs.writeFileSync(t.file, syncHeader(text));
