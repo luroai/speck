@@ -1,41 +1,58 @@
-# speck board
+# speck control panel (was: speck board)
 
-Captured: 8 October 2026 · Status: idea (separate project, after speck v0.1)
+Captured: 8 October 2026 · Reframed: 9 October 2026 · Status: idea
 
-A local kanban app over a repo's `speck/` folder, for managing ideas and tickets visually instead of in chat.
+A local control panel over a repo's `speck/` folder. It isn't a kanban board. Everything between Ready and shipped is an agent pipeline that runs in minutes, so there's no work passing between people to track in columns. The panel is a CI pipeline whose trigger is a ticket being set to `ready`, with a space around the two places that need a human: shaping work before Gate 1, and answering the pipeline when it asks.
 
-- Columns map to ticket status: Ideas, Draft, Ready for Dev, Building, Reviewing, Blocked, Done.
-- Cards are ticket files. Editing a card edits the file, so there's no separate database.
-- Set size, risk, builder and reviewer on the card. Priority is the card's position in its column.
-- Turning an idea card into a ticket runs `/speck-ticket`.
-- **Dragging a card to Ready for Dev is Gate 1.** It joins the build queue (see below), so it builds when it reaches the front.
-- The Blocked column shows the agent's question and lets you answer it inline.
-- Each card shows its review rounds and actuals.
-- Merging stays in GitHub. The board never approves or merges.
+## Why not a kanban board
+- Kanban columns show who holds what and where work piles up between people. In speck, people only touch both ends.
+- Building, Reviewing and Approved are machine stages. With `auto_ship` on, nobody acts on Approved either. Columns for them would mostly show machines moving cards along.
+- Nobody should ever drag a card into Building or Reviewing, so drag between columns goes.
 
-## Decided (8 October 2026)
-- **Web app, not a TUI.** `speck board` starts a zero-dependency `node:http` server serving one plain HTML/JS page. Native browser drag and drop; file watching pushes live updates to the page via server-sent events.
-- **Remote access by domain.** Runs on a headless box behind a Cloudflare Tunnel on a private domain, reachable from any browser. Tailscale works as a private fallback.
-- Cloudflare Access (allow only the user's email) in front of the tunnel is required, since the board can start agents. The server also checks its own token and optionally the `Cf-Access-Jwt-Assertion` header.
-- Server binds to `127.0.0.1` and checks the `Host` header against a configurable allow-list that includes the tunnel domain.
-- Server-sent events need a heartbeat (around every 30 seconds) and the page reconnects automatically, because Cloudflare drops idle connections.
+## Where the human's attention goes
+1. **Shaping, before Ready.** Ideas into tickets, tightening acceptance criteria, deciding what's worth doing. This is now the real work, and Gate 1 is the most important decision.
+2. **The queue.** What runs next.
+3. **Exceptions.** When the pipeline needs you: blocked questions, escalated review loops, approved tickets that `auto_ship` doesn't cover.
+
+Everything else is information.
+
+## Screen
+- **Needs you:** at the top. Blocked questions, escalations, and approved tickets waiting on `/speck-ship`. Usually empty, and empty is the goal.
+- **Queue:** `ready` tickets in run order. A ticket waiting on an unfinished `after:` ticket is marked, for example "waiting on 0027".
+- **Running:** the ticket being built, shown like a CI run: build → self-check → review round 1, 2… → ship. The review findings and the agent's latest message or tool call are its logs. Finds tickets in their worktrees (0029).
+- **Shaping:** ideas and draft tickets, with readiness hints: lint result, open questions, overlaps.
+- **Shipped:** a changelog feed with actuals (time, review rounds, cost), which is also the proof data the brief asks for.
+
+## Where the CI analogy doesn't hold
+- **CI never asks questions. This pipeline does.** Blocked tickets and escalations make it a pipeline with an inbox, so Needs you is the heart of the panel.
+- **Answering is not chatting.** Answering a blocked question writes to the ticket and resumes the build: the ticket is the conversation, which keeps the repo the source of truth. Talking to an agent mid-run means plugging into live agent sessions. That's a separate, much later idea.
+- **The queue needs a total order.** `priority: 1–5` has ties, and `after:` only covers dependencies. One rank per ticket (for example an `order` field in the frontmatter) gives the run order, survives restarts and works without the panel.
+
+## Stages
+1. **Read-only.** All five areas are views over the ticket files, so version 1 needs no writes. Built on a JSON form of `speck status` that already includes tickets in other worktrees (0029).
+2. **Writes, in this order:** set a ticket to `ready` (Gate 1), reorder the queue, answer a blocked question.
+3. **Later:** the panel runs the queue itself (see below), a diff view beside the review rounds, live agent activity via agent hooks.
+
+## Kept from the board decisions (8 October 2026)
+- **Web app, not a TUI.** A zero-dependency `node:http` server serving one plain HTML/JS page. Version 1 can poll for updates. Server-sent events come later, with a heartbeat around every 30 seconds and automatic reconnects, because Cloudflare drops idle connections.
+- **Local first.** The server binds to `127.0.0.1` and checks the `Host` header against an allow-list. Read-only, it can be reached privately over Tailscale.
+- **Before the panel can write or start agents:** a Cloudflare Tunnel on a private domain with Cloudflare Access (only the user's email) in front, the server's own token or passcode, and optionally the `Cf-Access-Jwt-Assertion` header.
 - Builds run on the box, not in the browser's request, so closing the tab never stops a build.
-- Saving a card fails if the file changed since it was loaded, in case an agent wrote to it meanwhile.
-- The board can never set `approved` or `done`.
+- A save fails if the file changed since it was loaded, in case an agent wrote to it meanwhile.
+- The panel can never set `approved` or `done`, and it never merges or ships. Shipping stays with `/speck-ship`, or `auto_ship`.
+- **One panel per repo.** No multi-repo view.
+- Keep from Cline Kanban (github.com/cline/kanban): state in the repo's ticket files, the human gates, and agents' normal permission checks. Chains move forward when you ship, not when an agent finishes.
 
-- **One board per repo.** Each repo runs its own board; no multi-repo view.
-
-## Borrowed from Cline Kanban (github.com/cline/kanban)
-- Show the agent's latest message or tool call on Building and Reviewing cards, via agent hooks.
-- A diff view in the card, beside the review rounds, to help decide whether to run `/speck-ship`.
-- A passcode by default when the board is exposed, alongside Cloudflare Access.
-- Keep: state in the repo's ticket files, the human gates, and agents' normal permission checks. Chains move forward when you ship, not when an agent finishes.
-
-## Build queue and WIP limit (decided 8 October 2026)
-- Ready for Dev is a queue. When nothing is in progress, the next eligible `ready` ticket starts building. Order is set by dragging cards in the Ready for Dev column: the top card goes first. The order is saved in the ticket files (for example an `order` field), so it survives restarts and works without the board.
+## Build queue (decided 8 October 2026)
+- When nothing is in progress, the next eligible `ready` ticket starts building, taken from the top of the queue.
 - `wip_limit` in `config.yml`, default 1, counts building and reviewing tickets. One agent at a time.
-- Tickets can declare `depends_on: [<id>]`. A ticket is only eligible once everything it depends on is `done` (shipped), so no build sits on unshipped work.
+- A ticket is only eligible once every ticket in its `after:` list is `done` (shipped), so no build sits on unshipped work.
 - `approved` tickets don't count as WIP, but a cap (for example 3 approved or blocked) pauses the queue until you ship or answer.
-- Blocked tickets are skipped; the queue moves to the next independent ticket.
-- The board server runs the queue. Without the board, `/speck-next` builds the next eligible ticket.
-- **Worktrees: adopted for isolation (ticket 0028, 2026-10-09).** First rejected because they only seemed worth it for parallel builds. They came back for a different reason: several sessions sharing one checkout kept colliding (branch switches under another session, files swept into the wrong commit). Each build now gets its own worktree. It's still one ticket at a time, and `worktree_setup` covers gitignored files like `.env` and `node_modules`.
+- Blocked tickets are skipped, and the queue moves to the next independent ticket.
+- The panel server runs the queue. Without the panel, `/speck-next` builds the next eligible ticket.
+- **Worktrees: adopted for isolation (ticket 0028, 9 October 2026).** First rejected because they only seemed worth it for parallel builds. They came back for a different reason: several sessions sharing one checkout kept colliding (branch switches under another session, files swept into the wrong commit). Each build now gets its own worktree. It's still one ticket at a time, and `worktree_setup` covers gitignored files like `.env` and `node_modules`.
+
+## Open questions
+- **Inside the speck CLI or a separate project?** Inside (for example `speck panel`) reuses the frontmatter and review-round parsers with no duplication, but `docs/brief.md` lists the board as a later, separate project and out of scope for v0.1.
+- **Name:** `speck panel`, `speck watch` or something else.
+- **Order field:** a new `order` field, or reuse `priority` with ties broken by id.
