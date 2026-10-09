@@ -91,6 +91,7 @@
   .stat { padding: 8px 14px; border-right: 1px solid var(--line-soft); }
   .stat b { font-size: 15px; font-weight: 600; margin-right: 6px; }
   .stat span { font-size: 11px; color: var(--muted); }
+  .stats[hidden] { display: none; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 6px 14px; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
   tr:last-child td { border-bottom: 0; }
@@ -139,6 +140,7 @@
   </section>
   <section class="full">
     <div class="sh"><h2>Shipped</h2><span class="n" id="shipped-n"></span><span class="hint">latest 5</span></div>
+    <div class="stats" id="shipped-stats" hidden></div>
     <table><tbody id="shipped"></tbody></table>
   </section>
 </main>
@@ -160,17 +162,34 @@ function progress(t) {
   const current = t.status === 'ready' ? -1 : approved ? 4 : done.indexOf(false); // approved: Ship is current
   return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
 }
+// The middle value, or the mean of the two middle ones; null with no values.
+function median(values) {
+  const v = [...values].sort((a, b) => a - b), mid = Math.floor(v.length / 2);
+  return !v.length ? null : v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
+}
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+// When a ticket shipped, in the browser's time zone: HH:MM today, otherwise D Mon HH:MM, or a dash with no time.
+function shippedAt(ms, now) {
+  if (ms === null) return '–';
+  const d = new Date(ms), pad = n => String(n).padStart(2, '0'), hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return sameDay(d, new Date(now)) ? hm : `${d.getDate()} ${MONTHS[d.getMonth()]} ${hm}`;
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const ideas = state && Array.isArray(state.ideas) ? state.ideas : [];
   const is = (...statuses) => t => statuses.includes(t.status);
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
+  const now = Date.now();
   const done = tickets.filter(is('done')).map(t => {
     const start = time(t.started), end = time(t.finished);
-    return { ...t, end, roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+    return { ...t, end, when: shippedAt(end, now), roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+      exactMinutes: start !== null && end !== null ? (end - start) / 60000 : null,
       minutes: start !== null && end !== null ? Math.round((end - start) / 60000) : null };
   });
+  // Each median covers the done tickets that have its data: both times, at least one review round, or tokens recorded.
+  const stat = (values, round) => { const m = median(values); return { median: m === null ? null : round(m), count: values.length }; };
   // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 5.
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
   return {
@@ -185,6 +204,12 @@ function panelModel(state) {
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
     shippedTotal: done.length,
+    stats: {
+      today: done.filter(t => t.end !== null && sameDay(new Date(t.end), new Date(now))).length,
+      minutes: stat(done.filter(t => t.exactMinutes !== null).map(t => t.exactMinutes), Math.round),
+      rounds: stat(done.filter(t => t.roundCount > 0).map(t => t.roundCount), n => Math.round(n * 10) / 10),
+      tokens: stat(done.filter(t => t.tokens > 0).map(t => t.tokens), Math.round),
+    },
   };
 }
 // ---- end model ----
@@ -356,8 +381,15 @@ function render() {
   fill('shipped', m.shipped.map(t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
     const name = el('td', null, null, el('span', 'id', t.id), document.createTextNode('\u00a0 ' + (t.title ?? '')));
-    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')));
+    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when));
   }), 'Nothing shipped yet.');
+  const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
+    el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));
+  const med = (s, fmt = String) => (s.median === null ? '–' : fmt(s.median));
+  $('shipped-stats').hidden = m.shippedTotal === 0;
+  $('shipped-stats').replaceChildren(...(m.shippedTotal ? [stat(m.stats.today, 'shipped today'),
+    stat(med(m.stats.minutes), 'median minutes', m.stats.minutes), stat(med(m.stats.rounds), 'median review rounds', m.stats.rounds),
+    stat(med(m.stats.tokens, n => n.toLocaleString('en-GB')), 'median tokens', m.stats.tokens)] : []));
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
   const status = el('div', connected ? 'pill' : 'pill off', null, el('span', connected ? 'live' : 'live off'),
