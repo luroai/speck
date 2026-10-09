@@ -1,7 +1,7 @@
 ---
 id: "0036"
 title: "Save a build's ticket-worthy follow-ups to the inbox"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T17:30:58.478Z"
+finished: "2026-10-09T18:29:25.581Z"
 
 ---
 # 0036 · Save a build's ticket-worthy follow-ups to the inbox
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Most builds end with follow-up ideas in the ticket's Delivery log, but once the ticket moves to `speck/tickets/done/` nobody reads them again. The shaping chat, where tickets are made, never sees what a build learned, so real bugs and missing checks are lost.
