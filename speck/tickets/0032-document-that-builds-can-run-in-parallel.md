@@ -1,7 +1,7 @@
 ---
 id: "0032"
 title: "Document that builds can run in parallel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T10:52:06.864Z"
 ---
 # 0032 · Document that builds can run in parallel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `product.md` says builds run one ticket at a time and the brief lists parallel builds as out of scope, but with one worktree per build, running tickets in parallel is now how speck is used, and it's much faster. Nothing yet proves that tickets built side by side both ship cleanly.
@@ -46,9 +46,14 @@ The docs say several tickets can be built at once, and the tests show that paral
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 194,266
+- Elapsed since build started: 4 min
+- Changed lines: 2 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea (review F1, minor): in the 0032 AC1 test, the `merge-base --is-ancestor` assertion compares stdout, which is empty either way, so it can't fail. Assert the git exit status instead, ideally against the saved approval commit's hash. The other AC1 assertions already prove the merge.
 
