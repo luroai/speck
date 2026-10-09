@@ -1,7 +1,7 @@
 ---
 id: "0033"
 title: Show everything needed for Gate 1 in Shaping                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T12:47:52.575Z"
 ---
 # 0033 · Show everything needed for Gate 1 in Shaping
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 At Gate 1 you need the whole ticket in front of you, but the panel's Shaping area shows only a criteria count, a lint result and the criteria. Ideas and tickets are also mixed in one list, so it isn't obvious which kind you're looking at.
@@ -48,9 +48,14 @@ Shaping shows tickets and ideas separately, with a clear colour for each, and op
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 325,371
+- Elapsed since build started: 8 min
+- Changed lines: 133 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: clicking anywhere in an open ticket closes it, including when selecting its text to copy. Only toggling on the ticket's top row would avoid that.
 - Follow-up idea: open tickets and ideas are remembered by id and path for the page's life, so one that leaves Shaping and later returns comes back open.
