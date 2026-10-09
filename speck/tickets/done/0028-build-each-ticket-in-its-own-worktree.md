@@ -1,7 +1,7 @@
 ---
 id: "0028"
 title: "Build each ticket in its own worktree"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0027"]                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T09:59:49.248Z"
+finished: "2026-10-09T10:09:15.198Z"
 
 ---
 # 0028 · Build each ticket in its own worktree
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Sessions that share one checkout keep colliding. One session's branch switch changes files under another's feet, one session's files end up in another's commits, and untracked files from elsewhere block reviews. This keeps happening and costs rework.
