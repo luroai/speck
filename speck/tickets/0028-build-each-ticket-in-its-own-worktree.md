@@ -1,7 +1,7 @@
 ---
 id: "0028"
 title: "Build each ticket in its own worktree"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T09:59:49.248Z"
 ---
 # 0028 · Build each ticket in its own worktree
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Sessions that share one checkout keep colliding. One session's branch switch changes files under another's feet, one session's files end up in another's commits, and untracked files from elsewhere block reviews. This keeps happening and costs rework.
