@@ -42,6 +42,8 @@ Any ticket in the queue or the Shipped list can be opened in the full ticket pan
 - Changes the rule from 0054 and 0062 that the pane closes when a draft is set ready: with this, it stays open on that ticket in the queue (criterion 3).
 - The pane's lookup is in `renderFull`, which looks only in the Tickets list today. Done tickets already come with their sections in `/api/state`.
 - product.md's Queue and Shipped descriptions need updating.
+- Tests changed by this ticket's rule change: 0054 AC4, 0060's browser test and 0062 AC3 expected the pane to close once a draft is set ready, so they now cancel the ticket (or check it stays open in the queue). 0051 AC2 and 0053 AC4 pin the open queue row's contents and now allow its Full ticket button, and 0050's browser test reads the Shipped time from the third cell, as the button's cell now comes last.
+- Self-check: added cover for ids named like built-ins, an id in more than one list (the first in Tickets, the queue, then Shipped), cancelled tickets closing the pane, and the pane keeping the focus after its own Set ready; no code changes needed.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -194,8 +194,8 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     // AC2: closing because the ticket left the list leaves the page where it was too.
     await scrollTo(350);
     await openPane();
-    long('ready');
-    await b.until(`document.getElementById('full-ticket').hidden`, 'the pane to close once the ticket is ready');
+    long('cancelled'); // a ready ticket shows in the queue, where the pane stays open on it (0063)
+    await b.until(`document.getElementById('full-ticket').hidden`, 'the pane to close once the ticket is cancelled');
     await still(350, 'after the ticket left the list');
   } finally {
     await b.close();

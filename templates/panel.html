@@ -165,6 +165,9 @@
   #full-backdrop[hidden] { display: none; }
   .full-open { font: inherit; font-size: 12px; margin: 10px 0 0 8px; padding: 3px 12px; background: transparent; color: var(--muted); border: 1px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
+  .q .full-open { margin: 6px 0 2px 34px; padding: 1px 10px; font-size: 11px; }
+  td.full-cell { width: 1%; padding-left: 0; }
+  td .full-open { margin: 0; padding: 0 8px; font-size: 11px; white-space: nowrap; }
   #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(0, 0, 0, .4); }
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
@@ -722,13 +725,13 @@ function fullButton(t) {
   });
   return b;
 }
-// The side pane: the ticket's id and title, its readiness list and buttons as in the list, without Full ticket, then
-// each of its sections that has something in it, its Markdown formatted.
-function fullTicket(t) {
+// The side pane: the ticket's id and title, for a draft its readiness list and buttons as in the list, without Full
+// ticket, then each of its sections that has something in it, its Markdown formatted.
+function fullTicket(t, draft) {
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', closeFull);
-  const body = el('div', null, null, paneReadiness(t));
+  const body = el('div', null, null, draft ? paneReadiness(t) : null);
   mdPart(body, 'Problem', t.problem);
   mdPart(body, 'Outcome', t.outcome);
   const criteria = list(t.acceptance_criteria);
@@ -785,21 +788,23 @@ const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
 // What the pane shows apart from its readiness list, and what that list shows, with the view state it depends on.
 const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
 const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
-// Shows the ticket whose id is in fullId, the first one when ids repeat, or closes the pane when it has left the Tickets
-// list. The pane keeps its nodes while what they show is unchanged, so text selected in it survives the refresh. When
-// only the readiness list's data or its Set ready state changes, a new list replaces the old and the rest stays.
+// Shows the ticket whose id is in fullId wherever it shows: in the Tickets list, the queue or the Shipped list, the
+// first one in that order when ids repeat. It closes the pane when the ticket shows in none of them. The pane keeps
+// its nodes while what they show is unchanged, so text selected in it survives the refresh. When only a draft's
+// readiness list data or its Set ready state changes, a new list replaces the old and the rest stays.
 let fullBuilt = null, readyBuilt = null; // the signatures of what the pane and its readiness list show
-function renderFull(drafts) {
-  const pane = $('full-ticket'), t = fullId === null ? null : drafts.find(d => String(d.id) === fullId);
+function renderFull(m) {
+  const pane = $('full-ticket'), find = ts => ts.find(d => String(d.id) === fullId);
+  const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
   if (!t) fullId = null;
-  const sig = t ? signature([fullId, fullText(t)]) : null, readySig = t ? signature([fullId, readyData(t)]) : null;
+  const sig = t ? signature([fullId, !!draft, fullText(t)]) : null, readySig = draft ? signature([fullId, readyData(draft)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
   holdPage(!!t);
   if (sig !== fullBuilt) {
     fullBuilt = sig;
     readyBuilt = readySig;
-    pane.replaceChildren(...(t ? fullTicket(t) : []));
+    pane.replaceChildren(...(t ? fullTicket(t, !!draft) : []));
   } else if (readySig !== readyBuilt) {
     readyBuilt = readySig;
     const body = pane.children[1], old = body.children[0];
@@ -881,7 +886,7 @@ function queueItem(t) {
   q.appendChild(bar);
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));
-    if (isOpen) q.appendChild(logBox(id));
+    if (isOpen) { q.appendChild(fullButton(t)); q.appendChild(logBox(id)); }
     return q;
   }
   if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
@@ -893,6 +898,7 @@ function queueItem(t) {
   q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
+    q.appendChild(fullButton(t));
     q.appendChild(logBox(id));
   }
   return q;
@@ -1109,7 +1115,7 @@ function render() {
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
-  renderFull(m.drafts);
+  renderFull(m);
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
@@ -1129,7 +1135,7 @@ function render() {
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), () => null, t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
     const name = el('td', null, null, el('span', 'id', t.id), bugTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
-    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when));
+    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, fullButton(t)));
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => setText(tr.children[2], t.when) }), 'Nothing shipped yet.');
   const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
     el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));

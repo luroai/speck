@@ -91,7 +91,8 @@ test('0062 AC2: either button shows "Setting ready…" in both places while a re
   }
 });
 
-test('0062 AC3: Set ready in the pane posts, keeps the pane open, and a success closes it on the next refresh', async () => {
+// Since 0063 the pane stays open on the ticket in the queue, without its readiness list.
+test('0062 AC3: Set ready in the pane posts, keeps the pane open, and a success moves it to the queue on the next refresh', async () => {
   const draft = { tickets: [full('0002')], ideas: [] };
   const p = fakePage([draft, { ok: true, id: '0002' }, { tickets: [T('0002', 'ready')], ideas: [] }]);
   await p.settle();
@@ -106,7 +107,8 @@ test('0062 AC3: Set ready in the pane posts, keeps the pane open, and a success 
   assert.equal(p.calls[1].opts.method, 'POST');
   assert.ok(paneOpen(p), 'open after the answer, until the next refresh');
   await refresh(p);
-  assert.ok(!paneOpen(p), 'the refresh closes it');
+  assert.ok(paneOpen(p) && pane(p).textContent.startsWith('0002'), 'the refresh leaves it open on the ticket');
+  assert.equal(readyBox(p, pane(p)), undefined, 'with no readiness list');
   assert.ok(queueRows(p).some(r => r.textContent.includes('0002')), 'and the ticket is in the queue');
 });
 

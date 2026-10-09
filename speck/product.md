@@ -123,6 +123,8 @@ Everything happens in the local repo, with no PR.
     Clicking that top row opens a short view: its problem and outcome (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors, and a **Full ticket** button.
     Clicking either button doesn't close the ticket.
     **Full ticket** opens a side pane over the right of the page with that ticket's id and title, then the same readiness list and buttons as the open ticket except **Full ticket** (today **Set ready**), then its problem, outcome, numbered acceptance criteria, out of scope and notes, leaving out any section with nothing in it.
+    An open queue ticket and each row in the Shipped list have a **Full ticket** button too, which opens the same pane on that ticket and opens, closes or selects nothing else.
+    For a ticket that isn't a draft, the pane shows the same id, title and sections, with no readiness list and no **Set ready**.
     The pane's **Set ready** is disabled with the same hover text as the list's, and both show "Setting ready…" while a request for that ticket is in progress, whichever of them sent it.
     Clicking it leaves the pane open, and a refusal's reason shows under both buttons until the next click on either.
     Each section's Markdown shows formatted: bold, italic (`*` or `_`), code spans, fenced code blocks keeping their spacing, `- `, `* ` and `1. ` lists nested by indentation (at most 16 levels, and a blank line between items keeps the list), `#` to `###` headings ranked below the section's own heading, and paragraphs split by blank lines.
@@ -134,7 +136,9 @@ Everything happens in the local repo, with no PR.
     A click anywhere outside the pane closes it and does nothing else, so showing another ticket's full text takes two clicks: one to close the pane, then that ticket's **Full ticket**.
     Clicking in the pane, or selecting text that starts in it and ends outside it, leaves it open.
     It also closes with its **Close** button or the Escape key, leaving the open ticket in the list open, and however it closes, the page is where it was when the pane opened.
-    Through the refresh it keeps showing the same ticket (the first one with that id), shows the new content when that ticket's data changes, and closes when the ticket leaves the Tickets list, for example once it's ready.
+    Through the refresh it keeps showing the same ticket while that ticket shows anywhere in the panel: in the Tickets list, the queue or the Shipped list's 5 (the first one with that id, looking in that order).
+    So it stays open on a ticket as it moves between them, when a draft is set ready, a queued ticket starts building or a build ships.
+    It shows the new content when that ticket's data changes, and closes when the ticket shows nowhere, for example once it's cancelled or a sixth ticket ships and pushes it off the Shipped list.
     When only its readiness list or **Set ready** state changes, only that list is replaced, so text selected elsewhere in the pane stays selected.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
     Clicking the top row again closes it.
@@ -176,6 +180,7 @@ Everything happens in the local repo, with no PR.
     Clicking a queue ticket's top row opens it and asks the server for its build log at once and then once a second, and clicking that top row again closes it and stops the requests.
     More than one can be open at once, and a log is asked for only while its ticket is open and in the queue, never for closed ones.
     The log has its own 1-second timer, apart from the 2-second state poll, and a request still waiting when the next is due is aborted.
+    An open queue ticket shows a **Full ticket** button just above its log, which opens the side pane on that ticket.
     An open in-flight ticket shows its worktree's full path, when it has one, as text in a monospace line under its status line, and a closed one leaves it out so the row stays short.
     The open ticket shows the log in a monospace box with a fixed height and its own scrollbar, as text, with ANSI escape sequences removed and each run of blank lines shown as one.
     When the log was cut short, a first line says earlier lines aren't shown, and a ticket with no log shows "No log yet.".
@@ -188,6 +193,7 @@ Everything happens in the local repo, with no PR.
     The requests carry on after a build has ended, until the ticket is closed or leaves the queue.
     Then **Shipped**: above the list, a stats row with the tickets shipped today (`finished` on today's date in the browser's time zone) and the median minutes from `started` to `finished`, median review rounds and median tokens, each saying how many tickets it covers (every `done` ticket with both times, with at least one review round, or with tokens recorded, respectively) and showing a dash when it covers none.
     The list has the latest 5 `done` tickets by `finished` time, newest first, with review rounds, tokens, the minutes from `started` to `finished` and when it shipped, from `finished` in the browser's time zone (`HH:MM` today, otherwise `D Mon HH:MM`, for example `8 Oct 14:02`, with no year); done tickets with no `finished` time come after those, within the 5, and show a dash for when they shipped.
+    Each row ends with a **Full ticket** button that opens the side pane on that ticket.
     With no `done` tickets it says nothing has shipped yet and shows no stats.
     Text selected in a queue or Shipped row, and the scroll position of a build message box or an open log, stay put through the refresh while that ticket's data in `/api/state` (by `id`, whatever order its fields come in) is unchanged, whatever else changes.
     A kept row's counter, Shipped time, chain icon and "unlocks" or "waiting on" text still change in place when only the clock or other tickets change.
