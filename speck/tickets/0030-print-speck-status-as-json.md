@@ -51,6 +51,7 @@ The control panel (0031) needs everything `speck status` knows in a form a progr
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: `parseYaml` silently drops a frontmatter key named `__proto__`, so it never reaches `--json` (or any command). Low priority.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -122,6 +123,79 @@ The control panel (0031) needs everything `speck status` knows in a form a progr
     },
     "escalation_question": "",
     "summary": "The JSON export covers tickets, worktrees, review history, dependencies and ideas, with meaningful tests. One fix is needed: multiline acceptance criteria currently lose their details, so the panel could show incomplete requirements. I verified the code and parsing behaviour; sandbox restrictions prevented rerunning the CLI integration checks."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "777234ced45c02c2bd0d89f1a941e7ca0147c540",
+    "thread_id": "01a1204a-a6cf-7e80-831e-122dae3216d1",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 412814,
+      "cached_input_tokens": 334336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1764,
+      "reasoning_output_tokens": 129
+    },
+    "saved_at": "2026-10-09T10:54:24.592Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdStatus prints only the JSON object when --json is present. Test '0030 AC1' covers exit 0, JSON-only stdout, empty folders and unchanged text output; supplied run passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "statusTickets shares text output's ticket and worktree selection. statusData includes frontmatter, paths, questions and lint counts. AC2 integration tests cover these fields; the new passing multiline regression exercises criteriaText with nested lists and wrapped text."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "statusData maps ticketRounds in recorded order with the required defaults and token sum. Passing test '0030 AC3' covers two rounds, missing seconds and usage, and no rounds."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData filters after against done ticket ids, preserves dependency order, and sorts by priority then id. Passing test '0030 AC4' covers missing dependencies, ties and absent priority."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "statusData sorts Markdown idea filenames and extracts paths, first headings and statuses with fallbacks. Passing test '0030 AC5' exercises each behaviour."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Multiline acceptance criteria previously lost continuation text and nested lists. criteriaText now preserves them, and the new CLI regression checks the complete returned text.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The JSON capability and preservation of multiline criterion text accurately describe the current implementation."
+    },
+    "escalation_question": "",
+    "summary": "Approved. The JSON export meets all five criteria, and the incomplete acceptance text is fixed with a meaningful regression test. No blocking concerns remain. I inspected the current code and tests and verified syntax; the supplied test run passes all 158 tests, but sandbox restrictions prevented independently rerunning integration tests."
   }
 }
 ```
