@@ -1931,3 +1931,50 @@ test('0023 AC3: the step says it is not a review or an approval, and the reviewe
   assert.match(text, /not a review or an approval/i);
   assert.match(text, /reviewer still decides/i);
 });
+
+// ---------- 0026: pre-check every ticket before it goes ready ----------
+
+const ticketSkill = () => fs.readFileSync(path.join(ROOT, 'skills', 'speck-ticket', 'SKILL.md'), 'utf8');
+const preCheck = () => {
+  const md = ticketSkill();
+  const lines = md.split('\n');
+  const start = lines.findIndex(l => /^\d+\. \*\*Pre-check/.test(l));
+  if (start < 0) return { md, text: '', at: -1 };
+  const end = lines.findIndex((l, i) => i > start && (/^\d+\. /.test(l) || /^## /.test(l)));
+  return { md, text: lines.slice(start, end).join('\n'), at: md.indexOf(lines[start]) };
+};
+
+test('0026 AC1: before presenting, each criterion is checked for more than one reading, and rewritten or asked about', () => {
+  const { md, text, at } = preCheck();
+  assert.ok(at > 0, 'the ticket skill has a Pre-check step');
+  assert.ok(at > md.indexOf('speck lint <id>'), 'after the lint');
+  assert.ok(at < md.indexOf('**Present the tickets**'), 'before the tickets are presented');
+  assert.match(text, /each acceptance criterion/i);
+  assert.match(text, /builder and (a )?reviewer could read it differently/i);
+  assert.match(text, /rewrite it/i);
+  assert.match(text, /ask the user/i);
+});
+
+test('0026 AC2: external facts are listed, checked where possible, and recorded in Notes as checked with a date or unverified', () => {
+  const { text } = preCheck();
+  for (const kind of ['tool and command names', 'flags', 'file formats', 'URLs', 'versions']) assert.ok(text.includes(kind), kind);
+  assert.match(text, /current documentation/i);
+  assert.match(text, /installed tool/i);
+  assert.match(text, /`Checked <YYYY-MM-DD>: [^`]+`/);
+  assert.match(text, /`Unverified: [^`]+`/);
+  assert.match(text, /Notes/);
+});
+
+test('0026 AC3: the build pre-flight re-checks unverified facts and stops if one is wrong', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
+  const pre = md.split('## 1. Pre-flight')[1].split('\n## ')[0];
+  const line = pre.split('\n').find(l => /Unverified:/.test(l)) || '';
+  assert.match(line, /check/i);
+  assert.match(line, /If one turns out to be wrong, stop and tell the user/i, 'stops for any wrong fact, with no extra conditions');
+  assert.ok(pre.indexOf(line) < pre.indexOf('Create the branch'), 'before any branch is created');
+  // Round 1 F1: checking must not edit the ticket before the clean-tree check; checked facts are recorded on the branch.
+  assert.doesNotMatch(line, /record it as/i, 'the check itself changes nothing');
+  const record = pre.indexOf('`Checked <YYYY-MM-DD>: …`');
+  assert.ok(record > pre.indexOf('Create the branch'), 'checked facts are recorded after the branch exists');
+  assert.ok(record < pre.indexOf('speck(<id>): start') || pre.slice(record).includes('speck(<id>): start'), 'and committed with the start commit');
+});

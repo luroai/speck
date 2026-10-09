@@ -23,8 +23,11 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Notes:** constraints and decisions only. No design essays.
    - **Estimate:** `size` S (a small, contained change) or M (several files or one new component). If it feels L, split it. Set `risk: high` if it touches auth, payments, data deletion, migrations, infrastructure or secrets. Set `priority` from 1 to 5 if the user gave one; otherwise use 3.
 5. **Check it:** run `speck lint <id>` for every ticket. Fix every ✗. Address the ! warnings, or keep them deliberately and say why.
-6. **Present the tickets** to the user: the overlap check's one-line result, then each ticket's id, title, size/risk and acceptance criteria, plus any assumptions you made. Ask only questions that change the acceptance criteria.
-7. **Don't mark tickets ready.** Moving a ticket to `ready` is the user's gate (Gate 1). If the user explicitly approves, run `speck set <id> status ready`. That command re-runs the lint and refuses if the ticket fails.
+6. **Pre-check** each ticket for the two problems that cost builds most:
+   - **Wording:** for each acceptance criterion, ask whether a builder and a reviewer could read it differently (for example "send the prompt again": the original text, or a fresh one?). If so, rewrite it so there's one reading. If you can't tell which reading the user means, ask the user rather than guessing.
+   - **External facts:** list what the ticket relies on outside this repo: tool and command names, flags, file formats, URLs and versions. Check each against current documentation or the installed tool where you can. Record each in Notes as `Checked <YYYY-MM-DD>: <fact> (<source>)`, or as `Unverified: <fact> (<why it couldn't be checked>)`. Fix any fact that turns out wrong before presenting the ticket.
+7. **Present the tickets** to the user: the overlap check's one-line result, then each ticket's id, title, size/risk and acceptance criteria, plus any assumptions you made. Ask only questions that change the acceptance criteria.
+8. **Don't mark tickets ready.** Moving a ticket to `ready` is the user's gate (Gate 1). If the user explicitly approves, run `speck set <id> status ready`. That command re-runs the lint and refuses if the ticket fails.
 
 ## Rules
 

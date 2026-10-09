@@ -13,8 +13,9 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 1. Read `speck/product.md`, `speck/config.yml`, the ticket (`speck/tickets/<id>-*.md`, or `speck/tickets/done/<id>-*.md` once it's done) and the repo's AGENTS.md or CLAUDE.md.
 2. The ticket must be `ready`. If it's `draft`, stop and tell the user that it needs their approval (Gate 1). If it's `building`, `reviewing` or `blocked`, you're resuming: check the branch and `speck next <id>`, then continue from the right step. If it's `blocked` and the user has answered the question, record the answer in the ticket's Notes before continuing.
-3. Make sure the working tree is clean and you're up to date with `base_branch`. Create the branch `<branch_prefix><id>-<slug>` from it.
-4. Run `speck set <id> status building` and commit (`speck(<id>): start`).
+3. If the ticket's Notes have any `Unverified:` facts, check each now against current documentation or the installed tool, without editing anything yet. If one turns out to be wrong, stop and tell the user before building, with the correct fact and what it changes in the ticket.
+4. Make sure the working tree is clean and you're up to date with `base_branch`. Create the branch `<branch_prefix><id>-<slug>` from it.
+5. On the new branch, change each fact you checked in step 3 from `Unverified:` to `Checked <YYYY-MM-DD>: …` in the ticket's Notes. Run `speck set <id> status building` and commit (`speck(<id>): start`).
 
 ## 2. Tests first
 
