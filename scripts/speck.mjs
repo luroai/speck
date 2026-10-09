@@ -1609,17 +1609,38 @@ function runsDir(repo) {
 
 const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 
-// One speck run per repo: a lock file holding its pid. A lock whose process is gone (killed outright) is taken over.
+// One speck run per repo: a lock file holding its pid. The file is made complete and then linked into place, which
+// is atomic, so no runner ever sees a half-written lock. A lock whose process is gone (killed outright) is taken
+// over, but only while holding a second, short-lived recovery lock, so two runners can't both take over the same one.
 function takeRunLock(repo) {
-  const lock = path.join(runsDir(repo), 'run.lock');
-  for (let tries = 0; tries < 2; tries++) {
-    try { fs.writeFileSync(lock, String(process.pid), { flag: 'wx' }); return lock; } catch (e) { if (e.code !== 'EEXIST') throw e; }
-    const pid = Number(fs.readFileSync(lock, 'utf8').trim());
-    if (Number.isInteger(pid) && pid > 0 && pidAlive(pid))
-      throw new SpeckError(`speck run is already running in this repo (process ${pid}). Stop that one first, or leave it running. If it isn't speck run, delete ${path.relative(repo, lock)}.`);
-    fs.rmSync(lock, { force: true });
-  }
-  throw new SpeckError('speck run couldn\'t take its lock file. Try again.');
+  const dir = runsDir(repo);
+  const lock = path.join(dir, 'run.lock'), recover = path.join(dir, 'run.lock.recover');
+  const mine = path.join(dir, `run.lock.${process.pid}.tmp`);
+  fs.writeFileSync(mine, String(process.pid));
+  const link = to => { try { fs.linkSync(mine, to); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
+  const holder = f => { try { return fs.readFileSync(f, 'utf8').trim(); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
+  const busy = pid => { const n = Number(pid); return Number.isInteger(n) && n > 0 && n !== process.pid && pidAlive(n); };
+  try {
+    for (let tries = 0; tries < 5; tries++) {
+      if (link(lock)) return lock;
+      const pid = holder(lock);
+      if (pid === null) continue; // removed just now: try again
+      if (busy(pid))
+        throw new SpeckError(`speck run is already running in this repo (process ${pid}). Stop that one first, or leave it running. If it isn't speck run, delete ${path.relative(repo, lock)}.`);
+      // A stale lock. Take it over only while holding the recovery lock, and only if it's still the same stale one.
+      if (!link(recover)) {
+        const other = holder(recover);
+        if (other !== null && !busy(other))
+          throw new SpeckError(`A speck run was stopped while taking over a stale lock. If no speck run is running, delete ${path.relative(repo, recover)}, then run this again.`);
+        throw new SpeckError(`Another speck run is starting in this repo (process ${other}). Leave that one running.`);
+      }
+      try {
+        if (holder(lock) === pid) fs.rmSync(lock, { force: true });
+        if (link(lock)) return lock;
+      } finally { fs.rmSync(recover, { force: true }); }
+    }
+    throw new SpeckError('speck run couldn\'t take its lock file. Try again.');
+  } finally { fs.rmSync(mine, { force: true }); }
 }
 
 // Watches the board and starts a build for each ready ticket that isn't waiting on another, up to
@@ -1657,7 +1678,8 @@ function cmdRun() {
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
     else console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
     let status = null;
-    try { status = findTicket(repo, id).fm.status; } catch { /* gone: nothing to say */ }
+    // From the same reading as the board, so a build's own worktree copy of the ticket counts.
+    try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { /* unreadable: nothing to say */ }
     if (status === 'ready' && !failed) {
       let tail = '';
       try { tail = fs.readFileSync(log, 'utf8').replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
@@ -1673,8 +1695,12 @@ function cmdRun() {
     const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, session));
     const dir = runsDir(repo);
     const log = path.join(dir, `${id}.log`);
+    const recordFile = path.join(dir, `${id}.json`);
+    const record = pid => `${JSON.stringify({ id, session, cwd: repo, started: new Date().toISOString(), pid, command: argv }, null, 2)}\n`;
     let fd = null, child;
     try {
+      // Written before the build starts, so a record that can't be written stops the build from starting at all.
+      fs.writeFileSync(recordFile, record(null));
       fd = fs.openSync(log, 'w');
       child = spawn(argv[0], argv.slice(1), { cwd: repo, detached: true, stdio: ['ignore', fd, fd] });
     } catch (e) { if (fd !== null) fs.closeSync(fd); return finished(id, log, null, null, e.message); }
@@ -1684,7 +1710,9 @@ function cmdRun() {
     child.on('exit', (code, signal) => { if (!done) { done = true; finished(id, log, code, signal, null); } });
     child.unref();
     if (child.pid) {
-      fs.writeFileSync(path.join(dir, `${id}.json`), `${JSON.stringify({ id, session, cwd: repo, started: new Date().toISOString(), pid: child.pid, command: argv }, null, 2)}\n`);
+      try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {
+        console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${session}.`);
+      }
       console.log(`Launched ${id} (session ${session}). Log: ${path.relative(repo, log)}`);
     }
   };

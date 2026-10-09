@@ -28,11 +28,19 @@ let n = 0; while (fs.existsSync(path.join(out, id + '.' + n + '.json'))) n++;
 fs.writeFileSync(path.join(out, id + '.' + n + '.json'), JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid, stdin: (() => { try { return fs.readFileSync(0, 'utf8'); } catch (e) { return 'ERR ' + e.code; } })() }));
 console.log('building ' + id);
 for (let i = 1; i <= 7; i++) console.error('stderr line ' + i);
+// FAKE_BLOCK: start the ticket in its own worktree with speck, as /speck-build does, and block it there.
+if (process.env.FAKE_BLOCK) {
+  const { spawnSync } = require('child_process');
+  const started = spawnSync(process.execPath, [process.env.FAKE_BLOCK, 'start', id], { encoding: 'utf8' });
+  const wt = started.stdout.trim().split('\\n').pop();
+  spawnSync(process.execPath, [process.env.FAKE_BLOCK, 'set', id, 'status', 'blocked'], { cwd: wt, encoding: 'utf8' });
+  spawnSync('git', ['commit', '-qam', 'blocked'], { cwd: wt });
+}
 setTimeout(() => process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
 `;
 
 // A repo with speck installed, the given tickets committed and build_command pointing at the fake builder.
-function runRepo({ tickets = [['0001', {}]], max, command } = {}) {
+function runRepo({ tickets = [['0001', {}]], max, command, worktrees = 'false' } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-out-'));
   const fake = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fake-')), 'fake-build.cjs');
@@ -41,7 +49,7 @@ function runRepo({ tickets = [['0001', {}]], max, command } = {}) {
   g('init', '-q', '-b', 'main');
   assert.equal(spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8', env }).status, 0);
   const cfgFile = path.join(dir, 'speck', 'config.yml');
-  let cfg = fs.readFileSync(cfgFile, 'utf8').replace(/^worktrees:.*$/m, 'worktrees: false');
+  let cfg = fs.readFileSync(cfgFile, 'utf8').replace(/^worktrees:.*$/m, `worktrees: ${worktrees}`);
   const cmd = command !== undefined ? command : `"${process.execPath}" "${fake}" "${out}" {id} {session}`;
   cfg = cfg.replace(/^build_command:.*$/m, '');
   if (cmd !== null) cfg += `\nbuild_command: ${JSON.stringify(cmd)}\n`;
@@ -269,4 +277,71 @@ test('0043 AC4 (self-check): a log file that cannot be opened is reported, and s
     assert.deepEqual(r.calls(), []);
     assert.doesNotMatch(run.out(), /at .*\.mjs:\d+/);
   } finally { await stopRun(run); }
+});
+
+test('0043 AC4 (round 1 F1): a build that moved its ticket on in its own worktree is not reported as never started', async () => {
+  const r = runRepo({ tickets: [['0001', {}]], worktrees: 'true' });
+  const run = startRun(r.dir, { FAKE_BLOCK: CLI });
+  try {
+    assert.ok(await until(() => /0001[^\n]*exit/i.test(run.out())), run.out());
+    await new Promise(res => setTimeout(res, 300));
+    const state = JSON.parse(spawnSync(process.execPath, [CLI, 'status', '--json'], { cwd: r.dir, encoding: 'utf8', env }).stdout);
+    assert.equal(state.tickets.find(t => t.id === '0001').status, 'blocked', 'the build blocked it in its worktree');
+    assert.doesNotMatch(run.out(), /still ready/i, run.out());
+    assert.equal(r.calls().length, 1);
+  } finally {
+    await stopRun(run); killAll(r.calls().map(c => c.pid));
+    // The ticket's worktree sits beside the repo: remove it with the repo.
+    fs.rmSync(`${r.dir}.worktrees`, { recursive: true, force: true });
+  }
+});
+
+// Starts several speck runs at the same moment and returns them once they've settled.
+async function race(dir, n, extraEnv = {}) {
+  const runs = Array.from({ length: n }, () => startRun(dir, { FAKE_MS: '4000', ...extraEnv }));
+  await new Promise(res => setTimeout(res, 1500));
+  return runs;
+}
+
+test('0043 AC5 (round 1 F2): of several speck runs started at once, exactly one keeps running and launches', async () => {
+  for (let round = 0; round < 3; round++) {
+    const r = runRepo({ tickets: [['0001', {}], ['0002', {}]], max: 5 });
+    const runs = await race(r.dir, 6);
+    try {
+      const live = runs.filter(x => x.child.exitCode === null);
+      assert.equal(live.length, 1, runs.map(x => x.out()).join('\n---\n'));
+      assert.deepEqual(r.calls().map(c => c.args[0]).sort(), ['0001', '0002'], 'each ticket launched once, by the one runner');
+      for (const x of runs.filter(y => y.child.exitCode !== null)) assert.notEqual(x.child.exitCode, 0);
+    } finally { for (const x of runs) await stopRun(x); killAll(r.calls().map(c => c.pid)); }
+  }
+});
+
+test('0043 AC5 (round 1 F2): several speck runs taking over the same stale lock at once leave exactly one running', async () => {
+  for (let round = 0; round < 3; round++) {
+    const r = runRepo({ tickets: [['0001', {}], ['0002', {}]], max: 5 });
+    const dead = spawnSync(process.execPath, ['-e', 'console.log(process.pid)'], { encoding: 'utf8' }).stdout.trim();
+    const runs = path.join(r.dir, 'speck', '.cache', 'runs');
+    fs.mkdirSync(runs, { recursive: true });
+    fs.writeFileSync(path.join(runs, 'run.lock'), dead);
+    const racers = await race(r.dir, 6);
+    try {
+      const live = racers.filter(x => x.child.exitCode === null);
+      assert.equal(live.length, 1, racers.map(x => x.out()).join('\n---\n'));
+      assert.deepEqual(r.calls().map(c => c.args[0]).sort(), ['0001', '0002']);
+      assert.ok(!fs.existsSync(path.join(runs, 'run.lock.recover')), 'the recovery lock is released');
+    } finally { for (const x of racers) await stopRun(x); killAll(r.calls().map(c => c.pid)); }
+  }
+});
+
+test('0043 AC3 (round 1 F3): a run record that cannot be written stops that build from starting, and speck run keeps going', async () => {
+  const r = runRepo({ tickets: [['0001', {}], ['0002', {}]] });
+  fs.mkdirSync(path.join(r.dir, 'speck', '.cache', 'runs', '0001.json'), { recursive: true }); // a folder where the record should go
+  const run = startRun(r.dir);
+  try {
+    assert.ok(await until(() => r.calls().some(c => c.args[0] === '0002')), run.out());
+    assert.match(run.out(), /0001[^\n]*couldn't start/i);
+    assert.ok(!r.calls().some(c => c.args[0] === '0001'), 'no build without a record');
+    assert.equal(run.child.exitCode, null, 'still running');
+    assert.doesNotMatch(run.out(), /at .*\.mjs:\d+/);
+  } finally { await stopRun(run); killAll(r.calls().map(c => c.pid)); }
 });
