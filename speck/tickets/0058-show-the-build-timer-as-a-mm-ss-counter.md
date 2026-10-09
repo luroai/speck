@@ -1,7 +1,7 @@
 ---
 id: "0058"
 title: "Show the build timer as a MM:SS counter"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:49:23.122Z"
 ---
 # 0058 · Show the build timer as a MM:SS counter
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The queue's elapsed time is whole minutes, so a build that started a minute and a half ago reads `1 min` and then sits there for another thirty seconds. With no seconds in it you can't tell a working build from a panel that has stopped updating, which is the same complaint that put motion on the progress bars (0055).
@@ -55,9 +55,14 @@ An in-flight ticket's elapsed time is a counter in `MM:SS` that advances every s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 343,963
+- Elapsed since build started: 12 min
+- Changed lines: 36 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox note):
 - The counter's `setInterval` isn't aligned to each ticket's whole seconds, so a tick that lands late can now and then skip a second, or show one twice. Aligning it would need a timer per second boundary.
