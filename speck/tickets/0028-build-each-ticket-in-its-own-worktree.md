@@ -1,7 +1,7 @@
 ---
 id: "0028"
 title: "Build each ticket in its own worktree"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T09:59:49.248Z"
 ---
 # 0028 · Build each ticket in its own worktree
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Sessions that share one checkout keep colliding. One session's branch switch changes files under another's feet, one session's files end up in another's commits, and untracked files from elsewhere block reviews. This keeps happening and costs rework.
@@ -51,7 +51,177 @@ Each build happens in its own git worktree, so a build never touches the main ch
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 run from inside an in-progress worktree, `speck start` refused on status before printing where to resume; F2 the tooling check used the index, so staged-only tooling, or tooling on another branch, passed. Round 2 (codex): approved.
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Review rounds: 2 (codex, `gpt-6.1-sol`), with 523,909 reviewer tokens.
+- Elapsed: about 9 minutes from start to approval (from `speck pack`).
+- Changed lines: 115 (excluding tests and `speck/`), against a limit of 5,000.
+- Follow-up ideas:
+  - The empty `<checkout>.worktrees/speck/` folder stays after the last worktree in it is removed. Ship could tidy it.
+  - `speck start` with worktrees off still needs the whole checkout clean. With worktrees on, only the ticket file needs to be committed.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9781af6cde12ece9dbd72c6c46a889fae795a576",
+    "thread_id": "01a1201f-ec3e-7f93-9c99-e39086e9ea79",
+    "seconds": 42,
+    "usage": {
+      "input_tokens": 149275,
+      "cached_input_tokens": 93440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1091,
+      "reasoning_output_tokens": 27
+    },
+    "saved_at": "2026-10-09T10:06:07.604Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: cmdStart creates the branch from cfg.base_branch and finishStart commits building status. The 0028 AC1 integration test checks isolation, ancestry, status, commit and printed path; builder reports it passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdStart runs setup with cwd set to the new worktree and removes the worktree and branch on non-zero exit. The passing 0028 AC2 integration test exercises successful setup and failure with an error message."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "cmdStart rejects non-ready status before looking up the existing worktree, so those refusals omit its path. Its tooling check uses git ls-files, which includes staged additions and does not establish that tooling exists on the base branch. The AC3 test misses both cases."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "loadConfig defaults worktrees to false; cmdStart implements the current-checkout mode. templates/config.yml and speck/config.yml enable worktrees with blank setup. The passing 0028 AC4 test checks these settings and current-checkout behaviour."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "skills/speck-build/SKILL.md pre-flight step 2 instructs resuming building/reviewing/blocked tickets through speck start, but cmdStart returns only a status error for these tickets. The AC5 test checks wording without exercising this interaction."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "cmdStart checks ready status before finding an existing branch/worktree. Running it from an in-progress ticket's worktree therefore prints no resume path, contrary to AC3 and the build skill's explicit resume instructions.",
+        "suggested_fix": "Discover the existing ticket branch/worktree before returning the status refusal and include its path. Add integration tests for building, reviewing and blocked tickets invoked from their existing worktree.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The committed-tooling guard checks the current index with git ls-files. Staged, uncommitted tooling passes it, as does tooling committed only on the caller's branch but absent from cfg.base_branch. The resulting worktree can lack the CLI or skills. Checking any tracked file under .speck and only speck-build also does not establish that the installed tooling is present.",
+        "suggested_fix": "Validate the required CLI and installed skills against the base commit used to create the worktree, including symlink targets where applicable. Refuse before creating anything when required tooling is absent or only staged. Add tests for staged tooling and tooling absent from the base branch.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The new description promises committed-tooling protection and resume-path reporting that the implementation does not fully provide."
+    },
+    "escalation_question": "",
+    "summary": "The main worktree creation and setup flows have useful integration tests and appear sound. Two gaps need fixing: resuming an in-progress build does not print its folder as instructed, and the tooling check can allow a worktree without the CLI or skills. The reported tests pass but miss these cases. I inspected the repository read-only; I did not rerun tests because they create files."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "91af583605bed5a6b18a6fa8f598674ac76f77d7",
+    "thread_id": "01a1201f-ec3e-7f93-9c99-e39086e9ea79",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 371613,
+      "cached_input_tokens": 293120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1930,
+      "reasoning_output_tokens": 81
+    },
+    "saved_at": "2026-10-09T10:08:28.476Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: cmdStart and finishStart create the branch from the local base, commit building status and print the external worktree path. The passing 0028 AC1 integration test checks branch ancestry, commit, status and unchanged main checkout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdStart runs worktree_setup in the new worktree and rolls back on failure. The passing 0028 AC2 integration test verifies setup location, error details, branch/worktree removal and ready status."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdStart now discovers existing branches before checking status; inCommit checks required tooling in the base commit. Passing AC3, AC3/AC5 (F1) and AC3 (F2) integration tests cover refusals, resume paths, staged-only tooling, tooling on another branch and committed/dangling relative symlinks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "loadConfig defaults worktrees to false; templates/config.yml and speck/config.yml enable it with blank setup. The passing 0028 AC4 test exercises current-checkout mode and checks configuration defaults."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md pre-flight requires speck start and all subsequent work in the printed folder. The passing AC5 instruction test and AC3/AC5 (F1) integration test cover the instructions and resume-path behaviour."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Non-ready tickets previously returned before discovering and printing their existing worktree.",
+        "suggested_fix": "Implemented: existing branch/worktree discovery precedes status validation, with integration coverage for building, reviewing and blocked tickets.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The previous index-based tooling check could accept tooling absent from the base commit.",
+        "suggested_fix": "Implemented: required CLI and installed skill paths are checked in the base commit, following committed relative symlinks. Added integration tests for staged-only and other-branch tooling and symlink targets.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated start description reflects base-commit tooling checks and resume-path reporting."
+    },
+    "escalation_question": "",
+    "summary": "Both blocking findings are resolved. Builds are isolated in their own worktrees, setup failures roll back, and existing builds report where to resume. All five criteria pass based on code inspection and the supplied passing test results. I did not rerun the file-creating tests in this read-only review."
+  }
+}
+```
+
+</details>
