@@ -42,6 +42,8 @@ Each follow-up that would need its own ticket lands in `speck/ideas/` as an inbo
 - The duplicate check is the agent's judgement, as in `/speck-capture`, but without asking: an auto-ship build mustn't wait for the user.
 - Mostly skill instructions. Where nothing can be tested automatically, the builder says so in Notes and the reviewer checks it by reading the skills.
 - No external facts: everything is in this repo.
+- Testing: the criteria are skill instructions, so `test/followups-0036.test.mjs` checks the skill text and `product.md` say each rule. Whether an agent follows them can only be checked by reading `skills/speck-build/SKILL.md` section 5 step 1 and the minor-findings rule in `skills/speck-review/SKILL.md`.
+- Self-check: added the rule that a note whose file name already exists gets `-2`, `-3` on its slug instead of overwriting an existing idea.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -50,11 +50,33 @@ Follow the `speck-review` skill (in the folder next to this one) exactly. In sho
 
 When `speck next <id>` says `ship`, the reviewer has approved. Close out the build on the ticket branch:
 
-1. If minor findings or your own notes suggest follow-up ideas, write them in the ticket's `## Delivery log` and commit the ticket.
+1. If minor findings or your own notes suggest follow-up ideas, write them in the ticket's `## Delivery log`. Then save to the inbox each one that would need its own ticket (a behaviour change, a bug or a missing check), so the shaping chat sees it once the ticket is done:
+   - Write each one as its own note, `speck/ideas/<YYYY-MM-DD>-<slug>.md`, with today's date and a short slug of its title. If that file already exists, add `-2`, `-3` and so on to the slug rather than overwriting it.
+   - Tidy-ups (such as unused code) and notes on known limits go only in the Delivery log. If none qualify, write no note.
+   - First check each one against every idea note in `speck/ideas/`, every ticket in `speck/tickets/` and `speck/tickets/done/` (problem, outcome and acceptance criteria) and `speck/product.md`, as `/speck-capture` does. Skip any that clearly duplicates one of them, but don't stop to ask the user: an auto-ship build mustn't wait. Under the Delivery log's follow-ups, list each skipped follow-up and its match (an idea's path, a ticket's id or the line in `product.md`).
+   - Use the `/speck-capture` format, with `Status: inbox` and a `From ticket:` line. Keep it under 30 lines:
+
+     ```markdown
+     # <the follow-up in a few words>
+
+     Captured: <date> · Status: inbox
+     From ticket: <id>
+
+     ## What
+     <what should change, in 1–3 sentences>
+
+     ## Why
+     <the problem it causes, and who for>
+
+     ## Notes
+     - <where it came from (a review finding or your own note) and any open questions>
+     ```
+
+   Commit the notes and the ticket on the ticket branch before `speck close`, staging each file by name (`speck(<id>): follow-ups`).
 2. Run `speck close <id>`. It refuses unless `speck next <id>` says `ship` and nothing outside the ticket file has uncommitted changes. It then replaces the ticket's `## Review log` with one line per round, adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to the `## Delivery log` (keeping what you wrote there), sets `approved` and commits only the ticket (`speck(<id>): approved`). Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
 3. Run `speck ship <id> --auto`. It ships only if `auto_ship` is `true` in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round. Then it runs all of `speck ship`'s usual checks and the tests.
-   - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, and anything worth a look (risk flags, follow-up ideas).
-   - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
+   - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, how many follow-ups went to the inbox or that none did, and anything worth a look (risk flags, follow-up ideas).
+   - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), how many follow-ups went to the inbox or that none did, anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
    - If it exits with 13, merging into the base branch hit a conflict (it names the conflicting files) and nothing changed. Bring the branch up to date and get it re-reviewed, without asking the user:
      1. In the ticket's worktree, merge the base branch into the ticket branch: merge the ref ship's message names, which is `<base_branch>`, or `<remote>/<base_branch>` when ship had just fetched new commits from the remote (`git merge <ref>`, no rebase or squash, so the reviewed commits stay as they are).
      2. Resolve each conflict keeping the intent of both sides: the base branch's change and this ticket's. Stage each resolved file by name.

@@ -16,6 +16,13 @@ Everything happens in the local repo, with no PR.
   It then asks whether to add to the existing item, go ahead anyway or stop, and writes nothing until you answer.
   If nothing overlaps, it says so in one line.
   Overlap is the agent's judgement, not a text match, and the check lives in the skill instructions only.
+- **Follow-ups to the inbox:** when a build writes follow-up ideas to the ticket's Delivery log (`/speck-build` section 5 step 1), it also writes each one that would need its own ticket (a behaviour change, a bug or a missing check) as its own inbox note, `speck/ideas/<YYYY-MM-DD>-<slug>.md`.
+  Each note uses the `/speck-capture` format, with `Captured: <date> · Status: inbox` and a `From ticket: <id>` line after its heading.
+  Tidy-ups and notes on known limits stay in the Delivery log only.
+  The build skips any follow-up that clearly duplicates an idea note, a ticket or a line in `product.md`, without asking, and lists each one it skipped with its match in the Delivery log.
+  It commits the notes on the ticket branch before `speck close`, so they ship with the ticket, and its final report says how many went to the inbox.
+  `/speck-review` sends minor findings that aren't fixed through the same step.
+  This lives in the skill instructions only.
 - **CLI** (`scripts/speck.mjs`, Node 20+, no dependencies):
   - `init`: one-step install and update, run as `npx github:luroai/speck init`.
     It creates `speck/`, copies the skills and the CLI (into `.speck/`) into the project, points AGENTS.md and CLAUDE.md at it, and runs `doctor`.
