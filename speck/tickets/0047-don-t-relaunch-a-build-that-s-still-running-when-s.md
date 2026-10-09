@@ -40,6 +40,8 @@ A restarted `speck run` leaves builds that are still running alone, keeps track 
 ## Notes
 - `exit_code` is `null` here because a process that isn't a child can't be waited on for its code.
 - No external facts: everything is in this repo.
+- The shared `speck run` test helpers moved from `test/run.test.mjs` to `test/support/run.mjs`, so this ticket's tests live in `test/run-0047.test.mjs`.
+- Self-check: a run file with no `session` printed "session undefined"; it now prints "session unknown" (test added).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
