@@ -52,6 +52,8 @@ An open draft ticket in the panel has a Set ready button that approves it and co
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: the Set ready request has no timeout, so if the server hangs (for example a commit waiting on a GPG signing prompt, which also blocks the whole server) the button stays on "Setting ready…" until the page is reloaded.
+- Follow-up idea: a 405 always says `Allow: GET`, including for other methods on `/api/tickets/<id>/ready`, where `POST` is allowed.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +125,79 @@ An open draft ticket in the panel has a Set ready button that approves it and co
     },
     "escalation_question": "",
     "summary": "The button, lint checks, ticket-only commit and browser protections are implemented with meaningful tests. One failure path needs fixing before merge: if committing fails, the panel can lose edits previously staged in the ticket. Tests were inspected; the supplied passing test run was not independently rerun in this read-only review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3fe3cbe3350e2527aadefb10bddd75d06137602d",
+    "thread_id": "01a12101-4958-7711-b9f1-1095e90f9440",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 433583,
+      "cached_input_tokens": 339840,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1866,
+      "reasoning_output_tokens": 130
+    },
+    "saved_at": "2026-10-09T14:16:02.249Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: ticketDetail and setReadyButton provide the button, disabled state and lint explanation. The 0042 AC1 test exercises valid and lint-failing drafts and passes in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: panelSetReady uses lintTicket and writeField as the CLI does; commitTicketOnly commits the ticket by path. The server AC2 test verifies the commit and preservation of unrelated changes; the page AC2 test verifies the next refresh moves it into the queue. Both pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelSetReady refuses all four specified invalid states before writing. Page tests cover displaying refusal reasons. commitTicketOnly now restores the original working file and staged contents on commit failure. The new '0042 AC3 (round 1 F1)' test uses distinct HEAD, staged and working copies and verifies their preservation; all relevant tests pass in the supplied output."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: cmdPanel retains Host checks, requires an allowed Origin and fresh server token, and preserves GET routing and other-method refusals. AC4 tests cover these protections, token regeneration and non-ASCII input; they pass in the supplied output."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "speck/product.md accurately describes Set ready as the panel's single write and explains Origin, token and Host protections. The AC5 documentation test passes in the supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs: commitTicketOnly",
+        "issue": "Previously, a failed commit discarded the ticket's pre-existing staged contents. The shared helper now saves and restores the original index entry, and the new regression test exercises the previously missing case.",
+        "suggested_fix": "Completed: preserve the original index entry and working contents on failure, with regression coverage.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The living spec matches the implemented capability and protections."
+    },
+    "escalation_question": "",
+    "summary": "The panel can approve and commit a draft ticket while preserving unrelated changes. The staged-edit loss on failed commits is fixed and covered by a meaningful regression test. All criteria pass with no blocking findings remaining. Code and tests were inspected; the supplied 216-test passing run was not independently rerun."
   }
 }
 ```
