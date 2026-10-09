@@ -44,6 +44,7 @@ Setting a ticket to ready is meant to start the pipeline, but someone still has 
 - Risk is high: it launches agents that can run any command with no prompts.
 - Checked 2026-10-09: `claude -p` runs non-interactively, `--session-id <uuid>` sets the session id and must be a valid UUID, and `--dangerously-skip-permissions` bypasses all permission checks (`claude --help`, Claude Code 2.1.294).
 - Checked 2026-10-09: `claude -p "/<skill> <args>"` runs a project skill with its arguments, as typing it in a session does (a throwaway skill in a temporary repo replied with its marker and the argument, Claude Code 2.1.294). Without stdin closed, `claude -p` waits 3 seconds and warns "no stdin data received", so builds get stdin from /dev/null.
+- Self-check: a `build_command` with an unclosed quote blamed "the reviewer command", so it now names `build_command` (test added). A log file that couldn't be opened would have crashed speck run, so it's now reported as a build that couldn't start (test added). The "already running" message says which lock file to delete if the process holding it isn't speck run. Also checked: non-string, blank and whitespace `build_command`, invalid `max_parallel_builds`, a stale lock from a killed run, a missing command binary, and that stdin is empty. `speck/config.yml` in this repo gets the same two settings as the template, and `product.md`'s parallel-builds limit now says `speck run` waits on `after:`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
