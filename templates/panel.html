@@ -122,6 +122,17 @@
   .note { margin: 0; font: 12px/1.5 "Liberation Mono", monospace; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
   .path { overflow-wrap: anywhere; }
+
+  /* Chains through after:: a chain icon on a ticket that unlocks others, a padlock on one that waits */
+  .chain, .lock { display: inline-block; position: relative; width: 12px; height: 10px; vertical-align: -1px; cursor: help; }
+  .chain { color: var(--accent); transform: rotate(-35deg); }
+  .chain::before, .chain::after { content: ''; position: absolute; top: 3px; width: 6px; height: 4px; border: 1.5px solid currentColor; }
+  .chain::before { left: 0; } .chain::after { left: 4px; }
+  .lock { color: var(--faint); }
+  .lock::before { content: ''; position: absolute; left: 3px; top: 0; width: 6px; height: 5px; border: 1.5px solid currentColor; border-bottom: 0; }
+  .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
+  .item.hl, .q.hl { background: #262c38; }
+  .item.dim, .q.dim { opacity: .35; }
 </style>
 </head>
 <body>
@@ -178,8 +189,39 @@ function shippedAt(ms, now) {
   const d = new Date(ms), pad = n => String(n).padStart(2, '0'), hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   return sameDay(d, new Date(now)) ? hm : `${d.getDate()} ${MONTHS[d.getMonth()]} ${hm}`;
 }
+// Links through after: among the tickets that aren't done or cancelled. For each id: the ones that list it in after:
+// (unlocks, in JSON order, each once) and every ticket linked to it in either direction, through others too (linked).
+function chains(tickets) {
+  const open = tickets.filter(t => t.status !== 'done' && t.status !== 'cancelled');
+  const ids = new Set(open.map(t => String(t.id)));
+  const unlocks = new Map(), next = new Map();
+  const add = (map, k, v) => { if (!map.has(k)) map.set(k, []); if (!map.get(k).includes(v)) map.get(k).push(v); };
+  for (const t of open) {
+    const id = String(t.id);
+    add(next, id, id);
+    for (const a of Array.isArray(t.after) ? t.after.map(String) : []) {
+      if (a === id) continue;
+      add(unlocks, a, id);
+      if (ids.has(a)) { add(next, id, a); add(next, a, id); }
+    }
+  }
+  const linked = new Map();
+  for (const id of ids) {
+    if (linked.has(id)) continue;
+    const group = [id];
+    for (let i = 0; i < group.length; i++) for (const n of next.get(group[i]) || []) if (!group.includes(n)) group.push(n);
+    for (const n of group) linked.set(n, group);
+  }
+  return { unlocks: id => unlocks.get(String(id)) || [], linked: id => linked.get(String(id)) || [String(id)] };
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
+  const links = chains(tickets);
+  // A ticket starts a chain when it waits on nothing and an unfinished ticket waits on it.
+  const chain = t => {
+    const waiting_on = Array.isArray(t.waiting_on) ? t.waiting_on : [], unlocks = links.unlocks(t.id);
+    return { ...t, waiting_on, unlocks, chain: !waiting_on.length && unlocks.length > 0, linked: links.linked(t.id) };
+  };
   const ideas = state && Array.isArray(state.ideas) ? state.ideas : [];
   const is = (...statuses) => t => statuses.includes(t.status);
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
@@ -196,18 +238,18 @@ function panelModel(state) {
   // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 5.
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
   return {
-    drafts: tickets.filter(is('draft')),
+    drafts: tickets.filter(is('draft')).map(chain),
     // Every idea: those not yet ticketed first, then the rest, each group in JSON order.
     ideas: [false, true].flatMap(t => ideas.filter(i => i && String(i.status || '').startsWith('ticketed') === t)),
     // One list: in-flight tickets, then ready ones, each group in JSON order.
-    queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(t => {
+    queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(chain).map(t => {
       const inFlight = t.status !== 'ready', start = time(t.started);
       // A build from speck run that has exited while its ticket is still in hand needs you, as a blocked ticket does.
       const exited = t.build_exit && typeof t.build_exit === 'object' && t.status !== 'blocked';
       const exit_label = !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label,
-        exit_message: exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null, waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [],
+        exit_message: exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         minutes: inFlight && start !== null ? Math.max(0, Math.floor((Date.now() - start) / 60000)) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
@@ -236,8 +278,14 @@ function el(tag, cls, text, ...kids) {
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
 const mark = (cls, ok) => el('span', cls, null, el('span', ok ? 'tick' : 'sq'));
 function check(cls, ok, text) { const s = mark(cls, ok); s.appendChild(el('span', null, text)); return s; }
-function tags(t) {
-  const row = el('div', 'row', null, el('span', 'id', t.id), el('span', 'title', t.title));
+// A chain icon on a ticket that starts a chain, a padlock on one waiting on others, or nothing. Hover text says which.
+function chainIcon(t) {
+  const icon = t.chain ? el('span', 'chain') : t.waiting_on.length ? el('span', 'lock') : null;
+  if (icon) icon.title = t.chain ? `Starts a chain: unlocks ${t.unlocks.join(', ')}` : `Waiting on ${t.waiting_on.join(', ')}`;
+  return icon;
+}
+function tags(t, icon) {
+  const row = el('div', 'row', null, el('span', 'id', t.id), icon, el('span', 'title', t.title));
   if (t.priority !== undefined && t.priority !== null && t.priority !== '') row.appendChild(el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`));
   if (t.size) row.appendChild(el('span', 'tag', t.size));
   if (t.risk) row.appendChild(el('span', t.risk === 'high' ? 'tag high' : 'tag', t.risk));
@@ -254,7 +302,7 @@ const list = v => (Array.isArray(v) ? v : []);
 
 function ticketItem(t) {
   const isOpen = open.has(t.id);
-  const head = el('div', 'head', null, tags(t), el('span'));
+  const head = el('div', 'head', null, tags(t, chainIcon(t)), el('span'));
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
   const checks = el('div', 'checks');
@@ -262,10 +310,12 @@ function ticketItem(t) {
   if (lint.errors) checks.appendChild(check('bad', false, `lint: ${plural(lint.errors, 'error')}`));
   else checks.appendChild(check('ok', true, 'lint passes'));
   if (lint.warnings) checks.appendChild(check('warn', false, plural(lint.warnings, 'warning')));
+  if (t.chain) checks.appendChild(el('span', null, `unlocks ${t.unlocks.join(', ')}`));
+  else if (t.waiting_on.length) checks.appendChild(el('span', null, `waiting on ${t.waiting_on.join(', ')}`));
   head.appendChild(checks);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
-  return el('div', `item ticket${isOpen ? ' open' : ''}`, null, head, isOpen ? ticketDetail(t, criteria) : null);
+  return hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, head, isOpen ? ticketDetail(t, criteria) : null), t);
 }
 // An open ticket: its sections, then a readiness list from what speck can check.
 function ticketDetail(t, criteria) {
@@ -355,12 +405,13 @@ function shapingToggle(m) {
 // A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
-  const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t), el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : '')));
+  const q = hoverable(el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)),
+    el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : ''))), t);
   const bar = el('div', 'stages');
   for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : 'now') : null, s.label));
   q.appendChild(bar);
   if (!t.inFlight) {
-    q.appendChild(el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : '')));
+    q.appendChild(el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : '')));
     return q;
   }
   if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
@@ -371,6 +422,25 @@ function queueItem(t) {
   q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
   if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
   return q;
+}
+// Hovering a ticket in Shaping or the queue lights it and every ticket linked to it through after:, and dims the rest.
+// The classes are set on the nodes in place, so a Shaping item keeps its node (and any text selected in it).
+let hovered = null; // the id of the ticket under the pointer, or null
+let linked = new Map(); // id → the ids linked to it, from the last render
+function hoverable(node, t) {
+  node.ticketId = String(t.id);
+  node.addEventListener('mouseenter', () => { hovered = node.ticketId; lightUp(); });
+  node.addEventListener('mouseleave', () => { if (hovered === node.ticketId) hovered = null; lightUp(); });
+  return node;
+}
+function lightUp() {
+  const rows = [...$('shaping').children, ...$('queue').children].filter(n => n.ticketId !== undefined);
+  if (!rows.some(n => n.ticketId === hovered)) hovered = null; // it has left the page, with no mouseleave
+  const group = hovered !== null && linked.get(hovered);
+  for (const n of rows) {
+    const cls = n.className.replace(/ (hl|dim)\b/g, '');
+    n.className = !group ? cls : `${cls} ${group.includes(n.ticketId) ? 'hl' : 'dim'}`;
+  }
 }
 // Puts the nodes in the box in order, leaving in place any that are already there, so a node kept from the last
 // render is never taken out of the page (a browser drops any text selected in a node it takes out).
@@ -406,6 +476,8 @@ function render() {
   else fill('shaping', shapingItems(m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem), 'No draft tickets.');
 
   fill('queue', m.queue.map(queueItem), 'Nothing in flight or ready.');
+  linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
+  lightUp();
   const flying = m.queue.filter(t => t.inFlight).length;
   $('queue-n').textContent = `${flying} in flight · ${m.queue.length - flying} queued`;
 

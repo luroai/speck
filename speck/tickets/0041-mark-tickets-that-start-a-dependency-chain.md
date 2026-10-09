@@ -41,6 +41,7 @@ In the panel you can see at a glance which tickets start a chain, what each one 
 - `after:` and `waiting_on` are already in `speck status --json`, so this is a change to `templates/panel.html` only.
 - Builds after 0040, which changes the same item code.
 - No external facts: everything is in this repo.
+- Self-check: a hovered ticket that leaves the page without a mouseleave (Shaping switched to Ideas, or it shipped) now stops dimming the rest; added a test that links aren't followed through done or cancelled tickets.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
