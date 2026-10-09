@@ -42,6 +42,9 @@ Tickets are now moving fast and several build at once, and following them in Mar
 - Zero dependencies: Node built-ins only, like the rest of the CLI.
 - The `Host` check guards against DNS rebinding while the server is localhost-only.
 - Build after 0030, whose JSON field names this relies on.
+- Readings chosen: any method other than `GET` gets 405 on every path, including unknown ones (`HEAD` included); unknown `GET` paths get 404. Shipped shows 5 rows at most: done tickets with a `finished` time newest first, then any with no `finished` time, cut at 5.
+- The page's grouping is a pure `panelModel(state)` in `templates/panel.html`, tested directly; `test/panel.test.mjs` also runs the whole page script against a minimal fake DOM, fetch and timer (AC4, AC5). Checked in a real browser (Playwright, Chromium) against this repo: the layout matches the mockup, a draft opens its criteria and stays open across refreshes, stopping the server shows "Disconnected" within 4 seconds, and restarting it recovers without a reload.
+- Self-check: the header named the worktree folder rather than the repo (now the main checkout's name, with a test); a ticket speck can't read made the page say it couldn't reach the server (now `/api/state` returns a 500 with the error and the page shows it, with tests); the browser asked for a missing favicon (now an empty inline icon).
 - Checked 2026-10-09: port 4777 is free on this machine, and Node reports a port already in use as error code `EADDRINUSE` on `listen` (Node 22.23.3, run locally).
 
 ## Blocked question
