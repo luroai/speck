@@ -317,8 +317,8 @@ function fakePage(responses) {
       get: () => n._text + n.children.map(c => c.textContent).join(''),
       set: v => { n.children = []; n._text = String(v); },
     });
-    n.appendChild = c => { n.children.push(c); return c; };
-    n.replaceChildren = (...cs) => { n._text = ''; n.children = cs; };
+    n.appendChild = c => { c.parentNode = n; n.children.push(c); return c; };
+    n.replaceChildren = (...cs) => { n._text = ''; for (const c of cs) c.parentNode = n; n.children = cs; };
     n.addEventListener = (type, fn) => { n.listeners[type] = fn; };
     return n;
   };
@@ -468,6 +468,7 @@ const idea = (name, status, body = `# ${name}\n\nStatus: ${status}\n\nSome <b>te
 const click = n => n.listeners.click({ stopPropagation() {} });
 const toggles = p => p.all(p.byId('shaping-toggle')).filter(n => n.listeners.click);
 const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test(n.className));
+const top = item => item.children.find(n => /\bhead\b/.test(n.className)); // an item's top row, which opens and closes it (0039)
 
 test('0033 AC2: the page header shows the repo, base branch and connection status only, with no counts', async () => {
   const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
@@ -550,7 +551,7 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
   for (const s of ['Third', 'P1', 'M', 'high', '2 criteria', 'lint: 1 error', '1 warning']) assert.ok(first.includes(s), s);
   assert.ok(list[1].textContent.includes('3 criteria') && list[1].textContent.includes('lint passes'));
 
-  click(list[0]);
+  click(top(list[0]));
   let open = items(p)[0].textContent;
   for (const s of ['Problem', 'Problem of 0003.', 'Outcome', 'Outcome of 0003.', 'Acceptance criteria', 'One.', 'Two.', 'Out of scope', '- Not this.',
     'Notes', '- A note.', 'Readiness', 'Size M, risk high', '2 criteria', lint.errors[0], lint.warnings[0], '0002 done', '0009 not done'])
@@ -561,11 +562,11 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
 
   p.timers.shift()(); await p.settle();
   assert.ok(items(p)[0].textContent.includes('Readiness'), 'stays open through a refresh');
-  click(items(p)[1]);
+  click(top(items(p)[1]));
   open = items(p)[1].textContent;
   assert.ok(open.includes('lint passes'), 'no lint messages');
   assert.ok(!open.includes('Problem of'), 'a missing section is not filled in');
-  click(items(p)[0]);
+  click(top(items(p)[0]));
   assert.ok(!items(p)[0].textContent.includes('Readiness'), 'clicking again closes it');
   p.timers.shift()(); await p.settle();
   assert.ok(!items(p)[0].textContent.includes('Readiness'), 'stays closed');
@@ -578,16 +579,16 @@ test('0033 AC5: the Ideas list shows every idea, not-ticketed first, and clickin
   await p.settle();
   click(toggles(p)[1]);
   const list = items(p);
-  const titles = list.map(n => n.children[0].textContent);
+  const titles = list.map(n => top(n).children[0].textContent);
   assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'No status', 'Done one', 'Later']);
   assert.ok(list[0].textContent.includes('idea') && list[2].textContent.includes('ticketed (0001)'), 'each with its status');
   assert.ok(!list[1].textContent.includes('Just'), 'closed by default');
-  click(list[1]);
+  click(top(list[1]));
   assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');
   assert.ok(!p.all(items(p)[1]).some(n => n.tagName === 'i'));
   p.timers.shift()(); await p.settle();
   assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'still open after a refresh');
-  click(items(p)[1]);
+  click(top(items(p)[1]));
   assert.ok(!items(p)[1].textContent.includes('Just'), 'clicking again closes it');
 });
 
@@ -857,7 +858,7 @@ test('0042 AC1: an open draft has a Set ready button, disabled with the reason w
   const p = fakePage([state, state]);
   await p.settle();
   assert.equal(button(items(p)[0]), null, 'no button while closed');
-  click(items(p)[0]); click(items(p)[1]);
+  click(top(items(p)[0])); click(top(items(p)[1]));
   const [a, b] = items(p).map(button);
   assert.ok(a && b);
   assert.equal(a.textContent, 'Set ready');
@@ -872,7 +873,7 @@ test('0042 AC2: clicking Set ready posts with the token, keeps the ticket open, 
   const ready = { tickets: [T('0002', 'ready')], ideas: [] };
   const p = fakePage([draft, { ok: true, id: '0002' }, ready]);
   await p.settle();
-  click(items(p)[0]);
+  click(top(items(p)[0]));
   let stopped = false;
   button(items(p)[0]).listeners.click({ stopPropagation() { stopped = true; } });
   await p.settle();
@@ -891,7 +892,7 @@ test('0042 AC3: a refusal shows its reason under the button, and it stays throug
   const reason = 'Not ready:\n  ✗ size L can never be ready: split it into sibling tickets.';
   const p = fakePage([draft, { status: 422, body: { error: reason } }, draft]);
   await p.settle();
-  click(items(p)[0]);
+  click(top(items(p)[0]));
   click(button(items(p)[0]));
   await p.settle();
   assert.ok(items(p)[0].textContent.includes(reason));
@@ -957,4 +958,118 @@ test('0042 AC3 (round 1 F1): when the commit fails, a ticket with its own staged
     assert.equal(r.g('show', `:${rel}`), staged, 'the staged copy is as it was');
     assert.equal(readT(r, '0002-two.md'), working, 'the working copy is as it was');
   } finally { await stop(p); }
+});
+
+// ---------- 0039: an open item closes only from its top row ----------
+
+// A click as the browser delivers it: to the node, then up through its parents, until a listener stops it.
+// A drag that selects text ends in a click on the nearest node holding both ends, so this covers that too.
+const press = n => {
+  let stopped = false;
+  const e = { target: n, stopPropagation() { stopped = true; } };
+  for (let at = n; at && !stopped; at = at.parentNode) if (at.listeners && at.listeners.click) at.listeners.click(e);
+};
+const isOpen = item => /\bopen\b/.test(item.className);
+const detailOf = item => item.children.find(n => /\bdetail\b/.test(n.className));
+
+test('0039 AC1: a draft opens and closes from anywhere in its top row: id, title, tags, criteria count and lint line', async () => {
+  const state = { tickets: [full('0001', { priority: 1, lint: { errors: 1, warnings: 1 } })], ideas: [] };
+  const p = fakePage([state]);
+  await p.settle();
+  const head = top(items(p)[0]);
+  assert.ok(head, 'the ticket has a top row');
+  const inHead = p.all(head);
+  for (const s of ['0001', 'Ticket 0001', 'P1', 'S', 'low', 'criteria', 'lint: 1 error', '1 warning'])
+    assert.ok(inHead.some(n => n.textContent === s || n.textContent.includes(s)), `the top row holds ${s}`);
+  for (const i of inHead.keys()) {
+    press(p.all(top(items(p)[0]))[i]);
+    assert.ok(isOpen(items(p)[0]), `opens from top-row node ${i}`);
+    press(p.all(top(items(p)[0]))[i]);
+    assert.ok(!isOpen(items(p)[0]), `closes from top-row node ${i}`);
+  }
+  assert.ok(!items(p)[0].listeners.click, 'the item itself does not open or close it');
+  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  assert.match(css, /\.head \{[^}]*cursor: pointer/, 'the top row shows it can be clicked');
+  assert.doesNotMatch(css, /\.item\.(ticket|idea) \{[^}]*cursor: pointer/, 'the details do not');
+});
+
+test('0039 AC2: clicking anywhere in an open ticket\'s sections or readiness list leaves it open', async () => {
+  const state = { tickets: [full('0001', { acceptance_criteria: ['One.', 'Two.'], lint_messages: { errors: [], warnings: ['A warning.'] }, after: ['0002'], waiting_on: ['0002'] })], ideas: [] };
+  const p = fakePage([state]);
+  await p.settle();
+  press(top(items(p)[0]));
+  const detail = () => detailOf(items(p)[0]);
+  const count = p.all(detail()).length;
+  assert.ok(count > 10, 'the details have sections and a readiness list');
+  for (let i = 0; i < count; i++) {
+    const n = p.all(detail())[i];
+    if (n.tagName === 'button') continue; // Set ready: its own click, covered by 0042
+    press(n);
+    assert.ok(isOpen(items(p)[0]) && detail(), `still open after a click on ${n.tagName} "${n.textContent.slice(0, 30)}"`);
+  }
+  press(items(p)[0]);
+  assert.ok(isOpen(items(p)[0]), 'a click on the item outside its top row leaves it open');
+  press(button(items(p)[0]));
+  assert.ok(isOpen(items(p)[0]), 'Set ready leaves it open');
+});
+
+test('0039 AC3: an idea opens and closes from its top row (title, status, path), and clicks in its note leave it open', async () => {
+  const state = { tickets: [], ideas: [idea('Fresh', 'idea', 'Line one.\nLine two.\n')] };
+  const p = fakePage([state]);
+  await p.settle();
+  click(toggles(p)[1]);
+  const head = top(items(p)[0]);
+  assert.ok(head, 'the idea has a top row');
+  for (const s of ['Fresh', 'idea', 'speck/ideas/Fresh.md']) assert.ok(p.all(head).some(n => n.textContent === s), `the top row holds ${s}`);
+  for (const i of p.all(head).keys()) {
+    press(p.all(top(items(p)[0]))[i]);
+    assert.ok(isOpen(items(p)[0]), `opens from top-row node ${i}`);
+    press(p.all(top(items(p)[0]))[i]);
+    assert.ok(!isOpen(items(p)[0]), `closes from top-row node ${i}`);
+  }
+  press(top(items(p)[0]));
+  for (const n of p.all(detailOf(items(p)[0]))) {
+    press(n);
+    assert.ok(isOpen(items(p)[0]), `still open after a click on ${n.tagName}`);
+  }
+  assert.ok(items(p)[0].textContent.includes('Line two.'));
+  press(items(p)[0]);
+  assert.ok(isOpen(items(p)[0]), 'a click on the item outside its top row leaves it open');
+});
+
+test('0039 AC4: a drag that selects text in a ticket\'s details or an idea\'s note leaves it open', async () => {
+  const state = { tickets: [full('0001', { acceptance_criteria: ['One.', 'Two.'] })], ideas: [idea('Fresh', 'idea')] };
+  const p = fakePage([state]);
+  await p.settle();
+  press(top(items(p)[0]));
+  // Across two criteria the click lands on their list; across Problem and the readiness list, on the details themselves.
+  const ol = p.all(items(p)[0]).find(n => n.tagName === 'ol');
+  press(ol);
+  assert.ok(isOpen(items(p)[0]), 'selecting across criteria');
+  press(detailOf(items(p)[0]));
+  assert.ok(isOpen(items(p)[0]), 'selecting across sections');
+  click(toggles(p)[1]);
+  press(top(items(p)[0]));
+  press(p.all(items(p)[0]).find(n => n.tagName === 'pre'));
+  assert.ok(isOpen(items(p)[0]), 'selecting within the note');
+  press(detailOf(items(p)[0]));
+  assert.ok(isOpen(items(p)[0]), 'selecting to the edge of the note');
+});
+
+test('0039 AC5: several items can be open at once, and what is open survives the 2-second refresh', async () => {
+  const state = { tickets: [full('0001'), full('0002'), full('0003')], ideas: [idea('A', 'idea'), idea('B', 'idea')] };
+  const p = fakePage([state, state, state]);
+  await p.settle();
+  press(top(items(p)[0])); press(top(items(p)[2]));
+  assert.deepEqual(items(p).map(isOpen), [true, false, true]);
+  click(toggles(p)[1]);
+  press(top(items(p)[0])); press(top(items(p)[1]));
+  assert.deepEqual(items(p).map(isOpen), [true, true]);
+  p.timers.shift()(); await p.settle();
+  assert.deepEqual(items(p).map(isOpen), [true, true], 'ideas stay open through a refresh');
+  click(toggles(p)[0]);
+  assert.deepEqual(items(p).map(isOpen), [true, false, true], 'tickets stay open too');
+  press(top(items(p)[0]));
+  p.timers.shift()(); await p.settle();
+  assert.deepEqual(items(p).map(isOpen), [false, false, true], 'and a closed one stays closed');
 });

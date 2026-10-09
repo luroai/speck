@@ -41,6 +41,7 @@ An open ticket or idea closes only when you click its top row, so you can click 
 - Reported as a follow-up in 0033's delivery log.
 - The page is `templates/panel.html`. No CLI or JSON change.
 - No external facts: everything is in this repo.
+- Self-check: moving the click off the whole item left its padding dead, so a click just above or beside a closed item's title did nothing. The top row now reaches into the item's padding (`.item .head` negative margins), checked in a browser. Existing 0033 and 0042 tests now click the top row instead of the item, with the same assertions.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
