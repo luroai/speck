@@ -43,6 +43,8 @@ The full ticket pane holds the page still while it's open, and a click anywhere 
 - "Collapse" read as closing the pane, with the ticket left open in the list. To confirm before ready.
 - A dimmed backdrop behind the pane is the builder's choice.
 - product.md's Shaping description needs updating.
+- The panel has no links, so AC3's "follow a link" is covered by the backdrop taking every click outside the pane; the browser test clicks over a ticket row and a toggle button.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
