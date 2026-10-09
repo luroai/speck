@@ -1,7 +1,7 @@
 ---
 id: "0022"
 title: "Set a ticket to reviewing when its review starts"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0022 · Set a ticket to reviewing when its review starts
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Before the first review round, the builder runs `speck set <id> status reviewing` and makes a separate commit, every ticket. It's a manual step and an extra commit that the first review could do itself.
