@@ -2720,3 +2720,11 @@ test('0030 AC5: ideas list each note sorted by file name with path, title and st
     { path: 'speck/ideas/b-board.md', title: 'Speck board', status: 'ticketed (0030, 0031)' },
   ]);
 });
+
+test('0030 AC2: a multi-line acceptance criterion comes through whole, with its nested list', () => {
+  const r = jsonRepo();
+  r.write('0002-multi.md', fm({ id: '"0002"', title: 'Multi' }), good.replace('1. Export button downloads a CSV.',
+    '1. Export a CSV with:\n   - names\n   - dates, wrapped\n     onto a second line\n\n2. Second criterion.\n<!-- a comment -->'));
+  const t = statusJson(r.run).tickets.find(x => x.id === '0002');
+  assert.deepEqual(t.acceptance_criteria, ['Export a CSV with:\n   - names\n   - dates, wrapped\n     onto a second line', 'Second criterion.']);
+});

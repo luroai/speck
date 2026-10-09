@@ -1371,6 +1371,18 @@ function statusTickets(repo, cfg) {
 
 const padId = id => String(id ?? '').padStart(4, '0');
 
+// Each acceptance criterion's full text without its number: a numbered line at the start of a line begins one, and
+// the lines under it (wrapped text, nested lists) belong to it, so a multi-line criterion comes through whole.
+function criteriaText(lines = []) {
+  const items = [];
+  for (const line of lines.join('\n').replace(/<!--[\s\S]*?-->/g, '').split('\n')) {
+    const m = line.match(/^\d+\.\s+(\S.*)$/);
+    if (m) items.push([m[1]]);
+    else if (items.length) items[items.length - 1].push(line);
+  }
+  return items.map(l => l.join('\n').replace(/\s+$/, ''));
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
@@ -1386,7 +1398,7 @@ export function statusData(repo) {
       ...t.fm,
       path: posix(path.relative(t.at || repo, t.file)),
       worktree: t.at || null,
-      acceptance_criteria: lint.acceptanceCriteria.map(l => l.replace(/^\d+\.\s+/, '')),
+      acceptance_criteria: criteriaText(t.sections['acceptance criteria']),
       blocked_question: question || null,
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },
       rounds: ticketRounds(t.raw).rounds.map(r => ({

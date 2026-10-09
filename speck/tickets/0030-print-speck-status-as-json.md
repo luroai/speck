@@ -51,3 +51,79 @@ The control panel (0031) needs everything `speck status` knows in a form a progr
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a1bc3c033aa66441cb04efa9f8fc896de927c6bb",
+    "thread_id": "01a1204a-a6cf-7e80-831e-122dae3216d1",
+    "seconds": 49,
+    "usage": {
+      "input_tokens": 262808,
+      "cached_input_tokens": 204032,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1207,
+      "reasoning_output_tokens": 129
+    },
+    "saved_at": "2026-10-09T10:52:54.490Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cmdStatus handles --json before text output. Test '0030 AC1' checks JSON parsing, exit 0, empty folders and unchanged text output. Live CLI verification was prevented by sandbox git EPERM."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "statusTickets shares text output's worktree selection; AC2 tests exercise fields, paths and lint counts. However, statusData derives acceptance_criteria from lintTicket.acceptanceCriteria, which discards continuation lines and nested lists."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "statusData maps ticketRounds records in order. Test '0030 AC3' checks recorded values, token totals, absent usage and empty rounds."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData filters dependencies against done tickets and sorts by numeric priority then id. Test '0030 AC4' exercises missing dependencies, ordering and absent priority."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "statusData reads sorted Markdown idea notes. Test '0030 AC5' checks paths, first heading, filename fallback, status and excluded non-Markdown files."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "acceptance_criteria silently loses parts of multiline criteria. A read-only probe with '1. Export a CSV with:' followed by nested bullets for names and dates returned only the opening line. The panel would receive an incomplete requirement. Existing tests use single-line criteria exclusively.",
+        "suggested_fix": "Extract complete numbered criterion blocks, retaining their continuation text and nested lists while removing the leading criterion number. Add a regression test covering multiline criteria.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The new capability is documented, but the claim that acceptance_criteria contains criterion text is incomplete while continuation text is discarded."
+    },
+    "escalation_question": "",
+    "summary": "The JSON export covers tickets, worktrees, review history, dependencies and ideas, with meaningful tests. One fix is needed: multiline acceptance criteria currently lose their details, so the panel could show incomplete requirements. I verified the code and parsing behaviour; sandbox restrictions prevented rerunning the CLI integration checks."
+  }
+}
+```
+
+</details>
