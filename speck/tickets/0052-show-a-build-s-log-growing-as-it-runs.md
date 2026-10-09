@@ -1,7 +1,7 @@
 ---
 id: "0052"
 title: "Show a build's log growing as it runs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:33:06.309Z"
 ---
 # 0052 · Show a build's log growing as it runs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 An open log is a snapshot from the moment the ticket was opened: the ticket file changes only at a status or a review round, so the 2-second state refresh leaves the log standing still while the build prints. Reloading the page is the only way to see the newest lines, and a build's most useful output is always its last few lines.
@@ -54,15 +54,20 @@ An open log keeps up with the build by itself: the newest lines slide in at the 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 setLogText mistakes repeated lines for a shifted tail.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 679,152
+- Elapsed since build started: 11 min
+- Changed lines: 97 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Stop asking for a log once its build has ended: `speck/ideas/2026-10-09-stop-asking-for-a-log-once-its-build-has-ended.md`.
 - Keep a scrolled-up reader's place as lines drop out of the tail: `speck/ideas/2026-10-09-keep-a-scrolled-up-log-reader-s-place.md`.
 - Known limit: in a cut-short log made of repeated lines, which lines dropped out is ambiguous, so a selection may stay on an identical neighbouring line.
-
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
