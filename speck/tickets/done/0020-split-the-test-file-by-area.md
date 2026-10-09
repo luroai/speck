@@ -1,7 +1,7 @@
 ---
 id: "0020"
 title: "Split the test file by area"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0017"]                # ticket ids that must be done first
 created: 2026-10-09
+cancel_reason: "No longer needed: new builds write their own test files with shared helpers in test/support/, so test/speck.test.mjs no longer grows with every ticket. Not worth the conflict risk of moving 172 tests."
+cancelled: 2026-10-09
 
 ---
 # 0020 · Split the test file by area
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 `test/speck.test.mjs` is about 1,900 lines. Builders and reviewers scroll through all of it to find the tests for one area, and appending every ticket's tests to one file makes it longer each time.
