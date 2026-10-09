@@ -1,7 +1,7 @@
 ---
 id: "0050"
 title: Keep unchanged rows outside Shaping through the panel refresh                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T17:29:40.760Z"
 ---
 # 0050 · Keep unchanged rows outside Shaping through the panel refresh
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel still rebuilds every queue row and Shipped row on each 2-second refresh, so text you select there, such as a blocked ticket's question or a stopped build's last message, is lost within 2 seconds. A long build message scrolls in its own box, and that box jumps back to the top on every refresh, so you can't read or copy the end of it. 0040 fixed this only for open items in Shaping.
@@ -49,9 +49,15 @@ Text selected in a queue or Shipped row, and the scroll position of a build mess
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Clock updates discard selection when the selected text includes the minutes or shipped-time field.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 953,917
+- Elapsed since build started: 11 min
+- Changed lines: 70 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -124,6 +130,79 @@ Text selected in a queue or Shipped row, and the scroll position of a build mess
     },
     "escalation_question": "",
     "summary": "Unchanged titles, questions and build messages now stay available to read and copy, and message scrolling is preserved. One required case remains: selecting the elapsed minutes or shipped time loses that selection when the displayed time updates. The tests currently miss this case."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "adc4fbfef490168cbb951792e4261714d2a91364",
+    "thread_id": "01a121bb-3369-72f3-a50f-ae0b405c2d7b",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 584637,
+      "cached_input_tokens": 393088,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2263,
+      "reasoning_output_tokens": 365
+    },
+    "saved_at": "2026-10-09T17:40:46.701Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: keptItems retains unchanged queue rows; queueUpdate changes derived content separately. AC1 tests cover selected titles, questions and messages, other-ticket changes and reordered fields. Supplied browser tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Unchanged build message nodes remain attached. The real-browser test sets scrollTop and verifies it survives refreshes while another ticket changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "render uses keptItems for Shipped rows. AC3 tests cover another Shipped row changing; the browser test verifies actual selected Shipped text survives refreshes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "queueUpdate and the Shipped updater now use setText to edit existing text nodes and retain selection endpoints. The new real-browser AC4 test verifies selected minute numbers, selected shipped time across midnight, and selection spanning a title and minutes. Supplied results show it passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "keptItems rebuilds rows when their own data signature changes. AC5 tests cover changed questions, build messages, titles, review rounds and status; browser tests verify changed queue and Shipped titles appear."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clock updates previously discarded selections involving minutes or shipped-time text.",
+        "suggested_fix": "Completed: setText edits the existing text node and adjusts affected selection endpoints, with real-browser regression coverage.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated description matches row retention, clock updates and selection preservation covered by the tests."
+    },
+    "escalation_question": "",
+    "summary": "Selected text and build-message scrolling now survive unchanged-row refreshes, including selections involving updating times. Changed tickets still update promptly. The previous issue is fixed, and all five criteria pass."
   }
 }
 ```
