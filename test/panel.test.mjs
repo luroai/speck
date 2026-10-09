@@ -441,7 +441,7 @@ test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket 
     assert.ok(open.includes(s), s);
   click(p.all(items(p)[0]).find(n => n.tagName === 'button' && n.textContent === 'Full ticket'));
   const pane = p.byId('full-ticket').textContent;
-  for (const s of ['Acceptance criteria', 'One.', 'Two.', 'Out of scope', '- Not this.', 'Notes', '- A note.']) assert.ok(pane.includes(s), s);
+  for (const s of ['Acceptance criteria', 'One.', 'Two.', 'Out of scope', 'Not this.', 'Notes', 'A note.']) assert.ok(pane.includes(s), s);
   const ol = p.all(p.byId('full-ticket')).find(n => n.tagName === 'ol');
   assert.deepEqual(ol.children.map(li => li.textContent), ['One.', 'Two.'], 'numbered criteria');
   assert.ok(!items(p)[1].textContent.includes('Readiness'), 'only the clicked ticket opens');

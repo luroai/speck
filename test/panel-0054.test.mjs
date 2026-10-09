@@ -53,7 +53,7 @@ test('0054 AC2: Full ticket keeps the ticket open and shows its whole text in th
   assert.ok(isOpen(itemOf(p, '0001')), 'the ticket stays open');
   assert.ok(paneOpen(p), 'the side pane opens');
   const text = pane(p).textContent;
-  for (const x of ['0001', 'Ticket 0001', 'Problem of 0001.', 'Outcome of 0001.', '- Not this.', 'A <b>bold</b> note.']) assert.ok(text.includes(x), x);
+  for (const x of ['0001', 'Ticket 0001', 'Problem of 0001.', 'Outcome of 0001.', 'Not this.', 'A <b>bold</b> note.']) assert.ok(text.includes(x), x);
   assert.deepEqual(headings(p, pane(p)), ['Problem', 'Outcome', 'Acceptance criteria', 'Out of scope', 'Notes']);
   const ol = p.all(pane(p)).find(n => n.tagName === 'ol');
   assert.deepEqual(ol.children.map(li => li.textContent), ['First criterion.', 'Second criterion.'], 'numbered criteria');
@@ -129,7 +129,7 @@ test('0054 AC5: text selected in the pane stays selected through the refresh whi
   await refresh(p);
   assert.ok(kept(), 'kept while other things change');
   await refresh(p);
-  assert.ok(pane(p).textContent.includes('- A new note.'), 'its own change shows');
+  assert.ok(pane(p).textContent.includes('A new note.'), 'its own change shows');
   assert.ok(!kept(), 'and then the pane is rebuilt');
 });
 

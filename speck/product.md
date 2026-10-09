@@ -111,7 +111,11 @@ Everything happens in the local repo, with no PR.
     **Tickets** lists drafts in the JSON's order with their id, title, priority, size, risk, criteria count and lint result.
     Clicking that top row opens a short view: its problem and outcome (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors, and a **Full ticket** button.
     Clicking either button doesn't close the ticket.
-    **Full ticket** opens a side pane over the right of the page with that ticket's id, title, problem, outcome, numbered acceptance criteria, out of scope and notes, as text, leaving out any section with nothing in it.
+    **Full ticket** opens a side pane over the right of the page with that ticket's id, title, problem, outcome, numbered acceptance criteria, out of scope and notes, leaving out any section with nothing in it.
+    Each section's Markdown shows formatted: bold, italic (`*` or `_`), code spans, fenced code blocks keeping their spacing, `- `, `* ` and `1. ` lists nested by indentation (at most 16 levels), `#` to `###` headings ranked below the section's own heading, and paragraphs split by blank lines.
+    A link shows as a link opening in a new tab only when its URL starts `http://` or `https://`; any other link shows as its text alone.
+    Everything else, including raw HTML, tables, images and blockquotes, shows as literal text, and so does Markdown inside code.
+    The parser is a small one in the page itself, so nothing is loaded from the network.
     While it's open, the rest of the page is dimmed and holds still: the wheel, touch and keys (the pane takes the focus) scroll only the pane, even at its top or bottom, and Tab can't reach the page behind.
     A click anywhere outside the pane closes it and does nothing else, so showing another ticket's full text takes two clicks: one to close the pane, then that ticket's **Full ticket**.
     Clicking in the pane, or selecting text that starts in it and ends outside it, leaves it open.
@@ -169,7 +173,7 @@ Everything happens in the local repo, with no PR.
     When a row's own data changes, the new content shows in that refresh and its selection or scroll position may be lost.
     Cancelled tickets aren't shown.
     It fetches `/api/state` every 2 seconds without reloading (a request still unanswered when the next is due counts as disconnected), says when it's disconnected (or what the server couldn't read), keeps the last state on screen and recovers by itself.
-    Ticket and idea text is always shown as text, never as HTML.
+    Ticket and idea text is never read as HTML: it's shown as text, apart from the Markdown the full ticket pane formats, which it builds node by node.
     The page is `templates/panel.html`, which `init` copies with the CLI.
   - `close`: closes an approved build with one command, run on the ticket branch after the reviewer approves.
     It refuses, changing nothing, unless `speck next` says `ship`, the ticket isn't already `approved`, `done` or `cancelled`, and nothing outside the ticket file has uncommitted changes (staged, edited or untracked).

@@ -42,6 +42,9 @@ The full ticket pane shows each section's Markdown formatted, the way a Markdown
 - The page is one file served locally: nothing may be loaded from the network, such as a Markdown library from a CDN.
 - product.md says ticket text is "always shown as text, never as HTML": it needs to say the pane formats the Markdown listed here and shows everything else as text.
 - The sections come from `/api/state` as their Markdown text (`problem`, `outcome`, `acceptance_criteria`, `out_of_scope`, `notes`). Nothing in the JSON changes.
+- Headings: "smaller than the section's own heading" is built as ranking below it: `#` is an `h5`, `##` and `###` are `h6` (classes `md-h1` to `md-h3`), under the section's `h4`, no larger than body text.
+- Three older assertions expected the raw `- Not this.` / `- A note.` / `- A new note.` in the pane (`test/panel-0054.test.mjs`, `test/panel.test.mjs`). AC1 makes those list items, so they now look for the item text.
+- Self-check: a list starting `0.` showed as starting at 1, lists nested 2000 deep overflowed the stack, and long runs of unmatched `[`, `*`, `**` or `_` took seconds; fixed with `start` kept as written, nesting capped at 16 levels, closer searches remembered per call and code spans found once, with a test for each.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
