@@ -1,7 +1,7 @@
 ---
 id: "0060"
 title: "Make the full ticket pane modal"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:33:00.080Z"
 ---
 # 0060 · Make the full ticket pane modal
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 While the full ticket pane is open, the page behind it still scrolls, so scrolling past the end of a long ticket moves the panel instead. The only ways to close the pane are its Close button and Escape, so the user has to aim for a small button to get back to the board.
@@ -54,3 +54,79 @@ The full ticket pane holds the page still while it's open, and a click anywhere 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "95bd2c8f8728930b73baede71736cfa4b5ceddc8",
+    "thread_id": "01a1222b-b836-7701-ac1a-7721192b9f81",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 307709,
+      "cached_input_tokens": 223616,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1070,
+      "reasoning_output_tokens": 225
+    },
+    "saved_at": "2026-10-09T19:38:16.807Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.html: fullButton focuses the pane and holdPage sets overflow:hidden, but background controls remain keyboard-focusable. Tabbing past Close can focus a background control and scroll the hidden root to reveal it. The browser test covers scrolling keys but never Tab navigation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "holdPage records scrollX/scrollY and restores them on closure. The 0060 browser test checks backdrop, Close, Escape and removal during refresh; supplied output reports it passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The fixed backdrop covers background controls and consumes outside clicks. The browser test clicks over a ticket row and the Ideas toggle and verifies neither activates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The backdrop handler requires the backdrop as click target. The browser test performs an actual selection drag from pane text to outside and verifies the pane remains open."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "closeFull and the Escape handler remain intact; renderFull preserves unchanged pane nodes and holds the page through refresh. The browser test exercises Close, Escape and two refreshes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Keyboard focus can escape the pane into background buttons. overflow:hidden prevents ordinary scrolling but still allows scrolling caused by focusing off-screen elements, so Tab navigation can move the page behind the open pane. Background buttons can also be activated by keyboard while covered.",
+        "suggested_fix": "Make the background inert while the pane is open, or contain focus within the pane and prevent background focus. Add a browser test that repeatedly presses Tab and Shift+Tab while opened at a non-zero page position, checking background controls cannot receive focus or activate and the page stays still.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The claim that keyboard interaction holds the background still needs the focus escape fixed. The remaining changes accurately describe the implementation."
+    },
+    "escalation_question": "",
+    "summary": "Outside clicks, text selection and the usual closing methods are well covered. One keyboard gap remains: Tab can reach buttons behind the pane and move the background page. Fix that before merging. I inspected the code and tests; I did not rerun tests in the read-only environment."
+  }
+}
+```
+
+</details>

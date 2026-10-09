@@ -508,13 +508,14 @@ function renderFull(drafts) {
   pane.replaceChildren(...(t ? fullTicket(t) : []));
 }
 function closeFull() { fullId = null; render(); }
-// While the pane is open the page can't scroll, and it's put back where it was when the pane closes.
+// While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
   const root = document.documentElement;
   if (!root || (heldAt !== null) === on) return;
   if (on) heldAt = [scrollX, scrollY];
   root.classList.toggle('held', on);
+  for (const n of document.querySelectorAll('header, #offline, main')) n.inert = on; // Tab can't reach, press or scroll to it
   if (!on) { scrollTo(...heldAt); heldAt = null; }
 }
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.

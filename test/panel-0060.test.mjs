@@ -122,6 +122,19 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
       await key(k, code, vk, text);
       await still(300, `${code} with nothing focused`);
     }
+    // Tab and Shift+Tab never reach the page behind, so nothing there takes the focus, presses or scrolls into view.
+    const states = await openStates();
+    await b.js(`document.getElementById('full-ticket').focus()`);
+    for (const modifiers of [0, 8]) {
+      for (let i = 0; i < 12; i++) {
+        await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers });
+        await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9, modifiers });
+        assert.ok(await b.js(`(a => a === document.body || document.getElementById('full-ticket').contains(a))(document.activeElement)`), `${modifiers ? 'Shift+Tab' : 'Tab'} keeps the focus off the page behind`);
+      }
+      await still(300, `${modifiers ? 'Shift+Tab' : 'Tab'} leaves the page still`);
+    }
+    assert.ok(!(await isHidden()), 'the pane stays open');
+    assert.deepEqual(await openStates(), states, 'no key reached a ticket behind');
     await swipe(...inPane, -2000);
     await still(300, 'a swipe up over the pane at its bottom');
     await swipe(...outside, -600);
