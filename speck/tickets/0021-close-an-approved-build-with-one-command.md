@@ -39,6 +39,8 @@ One command closes out an approved build: it writes the review log and delivery 
 ## Notes
 - Pre-check: AC2's "raised in that round" could mean new findings or every finding listed. It now says findings first appearing in that round, and that the Review log is replaced, not appended to.
 
+- Self-check: no changes beyond a guard for a finding with no id or issue text; edge cases (built-in names as ids, repeated close, missing log headings, dirty tree, failed commit) are covered or handled.
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
