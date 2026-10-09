@@ -442,12 +442,29 @@ function queueItem(t) {
 }
 const queueMinutes = t => (t.minutes !== null ? `${t.minutes} min` : '');
 const queuedLine = t => el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : ''));
+// Puts new text in a node with one text node by replacing only the characters that differ, in place, so a selection in
+// or across it stays and moves with the text. A browser would pull a selection's end inside those characters back to
+// their start, so it is put at their new end instead.
+function setText(node, text) {
+  const t = node.firstChild;
+  if (!t || t !== node.lastChild || t.nodeType !== 3) { node.textContent = text; return; }
+  const old = t.data;
+  if (old === text) return;
+  let a = 0, b = 0;
+  while (a < old.length && a < text.length && old[a] === text[a]) a++;
+  while (b < old.length - a && b < text.length - a && old[old.length - 1 - b] === text[text.length - 1 - b]) b++;
+  const count = old.length - a - b, put = text.slice(a, text.length - b);
+  const sel = getSelection(), range = sel.rangeCount ? sel.getRangeAt(0) : null;
+  const end = range && range.endContainer === t && range.endOffset > a && range.endOffset <= a + count;
+  t.replaceData(a, count, put);
+  if (end) range.setEnd(t, a + put.length);
+}
 const child = (node, cls) => [...node.children].find(n => n.className === cls); // children is an HTMLCollection, with no find
 // What a kept queue row shows from the clock or from other tickets, put right on its node: the minutes, and for a
 // ready ticket its chain icon and Queued line. Only the parts that change are replaced.
 function queueUpdate(q, t) {
   const sub = child(child(q, 'top'), 'sub');
-  if (sub.textContent !== queueMinutes(t)) sub.textContent = queueMinutes(t);
+  setText(sub, queueMinutes(t));
   if (t.inFlight) return;
   const row = child(child(q, 'top'), 'row'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
@@ -526,7 +543,7 @@ function render() {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
     const name = el('td', null, null, el('span', 'id', t.id), bugTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
     return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when));
-  }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => { tr.children[2].textContent = t.when; } }), 'Nothing shipped yet.');
+  }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => setText(tr.children[2], t.when) }), 'Nothing shipped yet.');
   const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
     el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));
   const med = (s, fmt = String) => (s.median === null ? '–' : fmt(s.median));

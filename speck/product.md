@@ -112,6 +112,7 @@ Everything happens in the local repo, with no PR.
     With no `done` tickets it says nothing has shipped yet and shows no stats.
     Text selected in a queue or Shipped row, and the scroll position of a build message box, stay put through the refresh while that ticket's data in `/api/state` (by `id`, whatever order its fields come in) is unchanged, whatever else changes.
     A kept row's minutes since `started`, Shipped time, chain icon and "unlocks" or "waiting on" text still change in place when only the clock or other tickets change.
+    The minutes and the Shipped time change only the characters that differ, so a selection in or across them stays too.
     When a row's own data changes, the new content shows in that refresh and its selection or scroll position may be lost.
     Cancelled tickets aren't shown.
     It fetches `/api/state` every 2 seconds without reloading (a request still unanswered when the next is due counts as disconnected), says when it's disconnected (or what the server couldn't read), keeps the last state on screen and recovers by itself.

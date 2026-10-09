@@ -254,3 +254,50 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
     await stop(panel);
   }
 });
+
+// Round 1, F1: a selection in or across the minutes or the Shipped time stays when the clock changes them.
+test('0050 AC4: in a real browser, a selection in or across the minutes or the Shipped time stays as they update', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
+  const late = startOfToday() + 23 * 3600000 + 58 * 60000 + 50000; // 23:58:50 today, where the page's clock starts
+  const iso = ms => new Date(ms).toISOString();
+  const r = panelRepo();
+  r.write('0003-t.md', fm({ id: '"0003"', title: "'A long build'", status: 'building', started: iso(late - 5.5 * 60000) }));
+  r.write('0010-t.md', fm({ id: '"0010"', title: "'Shipped late'", status: 'done', started: iso(late - 30 * 60000), finished: iso(late - 10 * 60000) }), good, 'speck/tickets/done');
+  const port = await freePort();
+  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const b = await browserPage(`http://127.0.0.1:${port}/`);
+  const sel = () => b.js('getSelection().toString()');
+  // The page's clock, moved by the test: every Date the page makes or asks for is `shift` ms on from the real one.
+  const clock = ms => b.js(`(() => { const R = window.RealDate || (window.RealDate = Date); window.shift = ${ms} - R.now();
+    window.Date = class extends R { constructor(...a) { super(...(a.length ? a : [R.now() + window.shift])); } static now() { return R.now() + window.shift; } }; })()`);
+  const select = (sel1, from, sel2, to) => b.js(`(() => { const r = document.createRange(); r.setStart(document.querySelector(${JSON.stringify(sel1)}).firstChild, ${from});
+    r.setEnd(document.querySelector(${JSON.stringify(sel2)}).firstChild, ${to}); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
+  const sub = '#queue .q .sub', when = '#shipped tr td:last-child';
+  try {
+    await b.until(`!!document.querySelector('${sub}')`, 'the page');
+    await clock(late);
+    await b.until(`document.querySelector('${sub}') && document.querySelector('${sub}').textContent === '5 min' && document.querySelector('${when}').textContent === '23:48'`, 'the page on its moved clock');
+    // Only the minutes' number.
+    await select(sub, 0, sub, 1);
+    assert.equal(await sel(), '5');
+    await clock(late + 60000);
+    await b.until(`document.querySelector('${sub}').textContent === '6 min'`, 'the minutes to move on');
+    assert.equal(await sel(), '6', 'the selected number is still selected, and updated');
+    // The Shipped time, after midnight.
+    await select(when, 0, when, 5);
+    assert.equal(await sel(), '23:48');
+    await clock(late + 2 * 60000);
+    await b.until(`document.querySelector('${when}').textContent !== '23:48'`, 'midnight to pass');
+    const date = await b.js(`document.querySelector('${when}').textContent`);
+    assert.match(date, /^\d+ \w{3} 23:48$/, 'past midnight it shows date and time');
+    assert.equal(await sel(), date, 'and the selection grows with it');
+    // From the title across the minutes.
+    await select('#queue .q .title', 2, sub, 5);
+    assert.match(await sel(), /^long build\s+S\s+low\s+7 min$/);
+    await clock(late + 3 * 60000);
+    await b.until(`document.querySelector('${sub}').textContent === '8 min'`, 'the minutes to move on again');
+    assert.match(await sel(), /^long build\s+S\s+low\s+8 min$/, 'the selection across the title and minutes stays');
+  } finally {
+    await b.close();
+    await stop(panel);
+  }
+});

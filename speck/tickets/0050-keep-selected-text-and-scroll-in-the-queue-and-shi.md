@@ -1,7 +1,7 @@
 ---
 id: "0050"
 title: Keep unchanged rows outside Shaping through the panel refresh                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T17:29:40.760Z"
 ---
 # 0050 · Keep unchanged rows outside Shaping through the panel refresh
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel still rebuilds every queue row and Shipped row on each 2-second refresh, so text you select there, such as a blocked ticket's question or a stopped build's last message, is lost within 2 seconds. A long build message scrolls in its own box, and that box jumps back to the top on every refresh, so you can't read or copy the end of it. 0040 fixed this only for open items in Shaping.
@@ -53,3 +53,79 @@ Text selected in a queue or Shipped row, and the scroll position of a build mess
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "782af10eb91a83170c6b5dd2f7ca40a9d7882c11",
+    "thread_id": "01a121bb-3369-72f3-a50f-ae0b405c2d7b",
+    "seconds": 62,
+    "usage": {
+      "input_tokens": 365417,
+      "cached_input_tokens": 285568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1600,
+      "reasoning_output_tokens": 326
+    },
+    "saved_at": "2026-10-09T17:35:40.926Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: keptItems and queueUpdate retain unchanged queue content. test/panel-0050.test.mjs covers titles, questions, messages, other-ticket changes and reordered fields; the supplied browser test passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The browser test in test/panel-0050.test.mjs sets a real build message box's scrollTop and verifies it remains unchanged through refreshes and another ticket's addition."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "keptItems retains unchanged Shipped rows. The AC3 test checks another shipped ticket changing, and the browser test verifies an actual Shipped title selection survives."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "queueUpdate replaces the minutes span's textContent, and render's Shipped update replaces the time cell's textContent. Selection inside those text nodes is lost when the clock changes. The AC4 test only checks retained title nodes, and the browser test does not exercise clock changes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "keptItems rebuilds rows when their own signature changes. The AC5 test exercises changed questions, messages, titles, review rounds and status; the supplied browser test verifies changed queue and Shipped titles appear."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clock updates discard selection when the selected text includes the minutes or shipped-time field. Assigning textContent removes the selected text node, despite the ticket requiring the selection to stay while these values update. The AC4 test's retained-title check misses this case.",
+        "suggested_fix": "Preserve and restore selection boundaries when updating clock text, including selections spanning neighbouring content. Add real-browser tests selecting the minutes and shipped time, advance the clock across a minute boundary and midnight, and verify both updated content and preserved selection.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The new unconditional selection-preservation claim is too broad until selections involving clock text also survive its updates."
+    },
+    "escalation_question": "",
+    "summary": "Unchanged titles, questions and build messages now stay available to read and copy, and message scrolling is preserved. One required case remains: selecting the elapsed minutes or shipped time loses that selection when the displayed time updates. The tests currently miss this case."
+  }
+}
+```
+
+</details>
