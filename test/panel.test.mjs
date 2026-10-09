@@ -286,7 +286,7 @@ test('0031 AC4: the page shows when it is disconnected, keeps polling and recove
   assert.equal(p.timers.length, 1, 'still polling while disconnected');
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.match(p.byId('queue').textContent, /0001.*building/, 'the ticket is now building');
+  assert.equal(nowStep(queueRows(p)[0]).textContent, 'Build', 'the ticket is now building');
   assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
 });
 
@@ -343,11 +343,11 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
   assert.equal(p.timers.length, 1);
   p.timers.shift()(); await p.settle(); // overdue again, then the server answers
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.match(p.byId('queue').textContent, /0001.*building/);
+  assert.equal(nowStep(queueRows(p)[0]).textContent, 'Build');
   // The abandoned request answering late doesn't put the old state back.
   stalled.resolve({ ok: true, status: 200, json: async () => one });
   await p.settle();
-  assert.match(p.byId('queue').textContent, /0001.*building/);
+  assert.equal(nowStep(queueRows(p)[0]).textContent, 'Build');
   assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
 });
 

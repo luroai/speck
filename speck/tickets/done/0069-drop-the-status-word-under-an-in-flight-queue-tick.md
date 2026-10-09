@@ -1,0 +1,110 @@
+---
+id: "0069"
+title: "Drop the status word under an in-flight queue ticket's bar"                # one outcome, no "and"
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+priority: 3              # 1 (highest) to 5
+size: S                  # S | M  (L is never ready; split it)
+risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
+type: ""                 # blank | bug (a ticket that fixes a defect)
+builder: claude
+reviewer: codex
+reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
+reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
+source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
+after: []                # ticket ids that must be done first
+created: 2026-10-09
+started: "2026-10-09T21:42:46.474Z"
+finished: "2026-10-09T21:54:07.029Z"
+
+---
+# 0069 · Drop the status word under an in-flight queue ticket's bar
+
+**Status:** ✅ done
+
+## Problem
+Each in-flight ticket in the queue repeats its status in a line under its bar (for example **building**), though the bar's current step already shows it. The extra line makes every row taller for nothing.
+
+## Outcome
+An in-flight queue ticket no longer has a line under its bar repeating its status.
+
+## Acceptance criteria
+1. A `building`, `reviewing` or `approved` ticket in the queue has no line under its bar giving its status, whether its row is open or closed. Everything else in the row (its bar, counter, build exit message, worktree path and log) shows as today.
+2. A `blocked` ticket in the queue shows `Answer the question, then run /speck-build <id>` (with its id) under its blocked question and resume command, in place of today's `blocked · answer the question, then run /speck-build <id>` line, and nothing else under its bar changes.
+3. `ready` tickets' "Queued" line is unchanged.
+
+## Out of scope
+- Pause, play and stop controls (0071, 0073).
+
+## Notes
+- The line is the `act` line built at the end of the in-flight branch of `queueItem` in `templates/panel.html`.
+- product.md's Queue description needs updating.
+- product.md no longer exists (removed by 0068), and no other doc or skill describes this line, so there was no doc to update.
+- Existing tests that matched the old status word (0031 AC4 in `test/panel.test.mjs`, 0053 AC2 and AC4 in `test/panel-0053.test.mjs`) now check the bar's current step or the new row layout instead.
+- Self-check: no changes
+
+## Blocked question
+<!-- Filled in by speck only when status is blocked. -->
+
+## Review log
+Round 1 (codex): approve.
+
+## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 288,931
+- Elapsed since build started: 5 min
+- Changed lines: 2 (limit 5000)
+<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5d3c0b21fd5ca6f9bdb7ff5ed4bc65c06c9ee813",
+    "thread_id": "01a122a2-d06d-7720-80c0-291b03a149e5",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 288199,
+      "cached_input_tokens": 221312,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 732,
+      "reasoning_output_tokens": 48
+    },
+    "saved_at": "2026-10-09T21:48:00.896Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html queueItem removes the status line for building, reviewing and approved tickets without changing other rendering. All three AC1 tests in test/panel-0069.test.mjs passed independently, covering open and closed rows, bar, counter, path, log and build exit messages."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "queueItem renders the exact replacement instruction for blocked tickets after the question and resume command. Both AC2 tests passed independently, covering open and closed rows and missing question/session data."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueItem's ready-ticket branch and queuedLine are unchanged. The AC3 test passed independently for waiting, unlocking and standalone ready tickets, including bold Queued text."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The repeated status line is removed as requested. Blocked tickets retain the clearer instruction, and ready tickets keep their Queued line. Tests exercise the actual page script; all six ticket tests passed independently. No blocking concerns or unrelated changes found."
+  }
+}
+```
+
+</details>
