@@ -39,6 +39,8 @@ The docs say several tickets can be built at once, and the tests show that paral
 - The conflict error's current text starts "Merging <branch> into <base> hit a conflict, so nothing was shipped".
 - Independent of 0030 and 0031, so it can be built alongside 0030.
 - No external facts beyond git, which the ship tests already use.
+- The AC1 and AC2 tests passed before any change: `speck ship` already handles parallel builds, as the ticket expected, so no code changed. The AC3 and AC4 doc tests failed first.
+- Self-check: no changes. The new Known limits claim that nothing orders builds by `after:` was checked against `scripts/speck.mjs`, which never reads that field.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

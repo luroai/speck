@@ -1,6 +1,6 @@
 # speck
 
-Last updated by ticket: 0022
+Last updated by ticket: 0032
 
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents. It's aimed at PMs and founders who write good tickets but don't review code line by line. Ideas become small numbered tickets. One agent builds each ticket, and a second, independent agent reviews it in turns until it approves. The human holds two gates: approving a ticket for development, and shipping it with `/speck-ship`. The second gate can be handed to the reviewer's approval with `auto_ship`. Everything happens in the local repo, with no PR.
@@ -49,13 +49,13 @@ speck is a lightweight, repo-native workflow for building software with AI codin
 - **Builder and reviewer are different agents by default** (Claude builds, Codex reviews).
 - **Only the reviewer can approve. Only the human can ship, unless they turn on `auto_ship`.** Agents never merge or ship unless the user runs `/speck-ship`, except through `speck ship <id> --auto` at the end of a build, and only when config allows it. Turning it on is the user's standing approval for whatever the reviewer approves.
 - **Ticket closure and `product.md` updates travel on the ticket branch.** `product.md` is updated and reviewed during the build, and `speck ship` sets `done` just before merging, so merging is what makes them true and nothing reaches the base branch unreviewed.
-- **Each build in its own worktree.** New projects get `worktrees: true`, and this repo has it on. Sessions sharing one checkout kept colliding, and a separate worktree per build stops that. Worktrees share one `.git`, so each adds only the checked-out files.
+- **Each build in its own worktree.** New projects get `worktrees: true`, and this repo has it on. Sessions sharing one checkout kept colliding, and a separate worktree per build stops that. It also lets several tickets be built at once. Worktrees share one `.git`, so each adds only the checked-out files.
 - **Local first, for solo builders.** Shipping is a local merge plus a push, so no GitHub PR, `gh` login or branch protection is needed.
 - **The reviewer reviews commits**, so `speck review` refuses to run on uncommitted changes.
 - **speck never picks a model.** No model name is built into the code, templates or skills. With nothing set, the reviewer runs on its own default: Codex's default, or the builder's model in a fresh session for `claude-subagent`.
 
 ## Known limits
-- One ticket at a time; no parallel runs or dependency scheduling. Worktrees are for isolating each build from other sessions in the same repo, not for running builds in parallel.
+- Several tickets can be built at once, each in its own worktree, but there's still no dependency scheduling: nothing orders builds by `after:` or stops two tickets that touch the same files from running together. Shipped one after the other, they each merge cleanly unless their changes conflict. A ticket whose changes conflict with one shipped before it is refused at ship, leaving it `approved` with its branch, worktree and the base branch as they were, and must be rebuilt on the latest base branch.
 - A worktree has no gitignored files (`node_modules`, `.env`, build output) unless `worktree_setup` provides them. New projects start with it blank.
 - Known builders: speck works with any agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as Claude Code, Codex and Cursor. Claude Code is the only builder that has run a ticket end to end so far. Codex and Cursor builders are untested (0016 covers Cursor).
 - An idea's `ticketed (…)` status is only ever added to. Cancelling or finishing one of its tickets doesn't change it.
