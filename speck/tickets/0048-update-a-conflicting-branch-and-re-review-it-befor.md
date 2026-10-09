@@ -53,6 +53,7 @@ When a build's ship hits a conflict, the build brings its branch up to date with
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: `speck close` drops earlier figure lines by their labels (`- Reviewer:`, `- Changed lines:` and so on), so a hand-written Delivery log line starting with one of those labels would go too. A marker around speck's figures would make that exact.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +125,79 @@ When a build's ship hits a conflict, the build brings its branch up to date with
     },
     "escalation_question": "",
     "summary": "The change handles local branch conflicts and correctly sends the merged result for review. However, a conflict caused by new remote changes cannot be recovered using the supplied instructions. That gap needs fixing before merge. Tests were inspected but not rerun in this read-only review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "77801f564e6ee4759d7edcacaf0e5e5b49807bd3",
+    "thread_id": "01a1218d-0ae4-7072-8f56-fb4ca95eb833",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 447204,
+      "cached_input_tokens": 331904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1697,
+      "reasoning_output_tokens": 107
+    },
+    "saved_at": "2026-10-09T16:47:55.400Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs shipTicket returns 13 for conflicts after rollback and names the files. AC1 tests cover unchanged state, other refusal codes and non-conflict merge failures; supplied results pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "startReviewing and reviewRound transition approved tickets to reviewing and restore them on failure. AC2 review, record and failure tests pass in the supplied results."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipBase and reviewSince recognise local and remote base merges; reviewerPrompt explains the whole shipping diff. AC3 and F1 integration tests inspect the actual reviewer prompt and matching speck diff; supplied results pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 5 specifies the merge ref, resolution, tests, commit, review response, close, retry and two-merge limit. AC4 instruction and local/remote recovery integration tests cover these requirements."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "speck/product.md documents exit 13, remote recovery and merge-and-re-review. The AC5 documentation test passes in the supplied results."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-build/SKILL.md",
+        "issue": "Remote-only conflicts previously directed recovery to an outdated local base. Resolved: ship now names the remote ref, the skill follows it, and reviewSince accounts for the remote base.",
+        "suggested_fix": "Implemented and covered by the F1 integration test through conflict, rollback, merge, re-review, close, auto-ship and push.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The documentation now accounts for both local and newly fetched remote conflicts."
+    },
+    "escalation_question": "",
+    "summary": "Conflict recovery now covers both local and remote changes and gets the resolved result independently reviewed before shipping again. The previous blocking issue is fixed. All 311 supplied test results pass; tests were inspected but not rerun during this read-only review."
   }
 }
 ```
