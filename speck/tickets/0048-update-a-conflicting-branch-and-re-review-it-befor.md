@@ -1,7 +1,7 @@
 ---
 id: "0048"
 title: Resolve a ship conflict without stopping the build                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T16:36:57.265Z"
 ---
 # 0048 · Resolve a ship conflict without stopping the build
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Builds run in parallel, so a ticket often finishes after another has changed the same files on the base branch. Then `speck ship --auto` refuses with a conflict and the build stops, leaving an approved ticket that someone has to merge by hand and get re-reviewed. That happened to 0039 on 9 October, and it will keep happening as more builds run at once.
@@ -49,9 +49,15 @@ When a build's ship hits a conflict, the build brings its branch up to date with
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Recovery cannot resolve a conflict introduced by newly fetched remote commits.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 671,125
+- Elapsed since build started: 11 min
+- Changed lines: 99 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: `speck close` drops earlier figure lines by their labels (`- Reviewer:`, `- Changed lines:` and so on), so a hand-written Delivery log line starting with one of those labels would go too. A marker around speck's figures would make that exact.
 
