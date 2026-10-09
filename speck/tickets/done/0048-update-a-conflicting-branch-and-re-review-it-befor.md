@@ -1,7 +1,7 @@
 ---
 id: "0048"
 title: Resolve a ship conflict without stopping the build                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0046"]                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T16:36:57.265Z"
+finished: "2026-10-09T16:49:17.699Z"
 
 ---
 # 0048 · Resolve a ship conflict without stopping the build
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Builds run in parallel, so a ticket often finishes after another has changed the same files on the base branch. Then `speck ship --auto` refuses with a conflict and the build stops, leaving an approved ticket that someone has to merge by hand and get re-reviewed. That happened to 0039 on 9 October, and it will keep happening as more builds run at once.
