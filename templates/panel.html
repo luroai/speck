@@ -380,8 +380,8 @@ function markdown(text) {
     const closed = open ? elementEnd(all, starts[i] + open[0].length, open, misses) : -1;
     if (closed > starts[i + 1]) { // an HTML element over more than one line, its contents and all, as written
       end();
-      const last = starts.findIndex(at => at >= closed) - 1;
-      blocks.push({ type: 'paragraph', literal: true, text: lines.slice(i, last + 1) });
+      const last = starts.findIndex(at => at >= closed) - 1; // the line it closes on, whose text after it is formatted
+      blocks.push({ type: 'paragraph', literal: true, text: [all.slice(starts[i], closed)], tail: all.slice(closed, starts[last + 1] - 1) });
       i = last;
     } else if (closed === -2) { // an element that never closes: as written, up to the next blank line
       end();
@@ -435,7 +435,7 @@ function markdown(text) {
       blocks.push(para);
     }
   }
-  const finish = b => (b.type === 'paragraph' ? { type: 'paragraph', inline: b.literal ? [{ type: 'text', text: b.text.join('\n') }] : inline(b.text.join('\n')) }
+  const finish = b => (b.type === 'paragraph' ? { type: 'paragraph', inline: b.literal ? [{ type: 'text', text: b.text.join('\n') }, ...inline(b.tail || '')] : inline(b.text.join('\n')) }
     : b.type === 'list' ? { ...b, items: b.items.map(it => ({ inline: inline(it.text.join('\n')), lists: it.lists.map(finish) })) } : b);
   return blocks.map(finish);
 }

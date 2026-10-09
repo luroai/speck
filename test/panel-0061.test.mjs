@@ -318,3 +318,12 @@ test('0061 AC3 (review round 2 F1): an HTML element stays as written with everyt
   assert.deepEqual(tags(p, n, 'strong').map(x => x.textContent), ['bold']);
   assert.ok(kids(n).every(k => k.tagName === 'p' && p.all(k).slice(1).every(x => ['#text', 'em', 'strong'].includes(x.tagName))), 'paragraphs, with nothing else made from the HTML');
 });
+
+test('0061 AC1 (review round 3 F3): text after an HTML element closing on a later line is formatted', async () => {
+  const p = await showPane(full('0001', { notes: '<div>\n**in**\n\n</div> **outside** `code` [link](https://x.y)\n\nNext.' }));
+  const n = section(p, 'Notes');
+  assert.deepEqual(kids(n).map(x => x.textContent), ['<div>\n**in**\n\n</div> outside code link', 'Next.']);
+  assert.deepEqual(tags(p, n, 'strong').map(x => x.textContent), ['outside']);
+  assert.deepEqual(tags(p, n, 'code').map(x => x.textContent), ['code']);
+  assert.deepEqual(tags(p, n, 'a').map(x => [x.textContent, x.href]), [['link', 'https://x.y']]);
+});
