@@ -75,7 +75,9 @@
   /* Queue */
   .q { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
   .q:last-child { border-bottom: 0; }
-  .q .top { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: baseline; }
+  .q .top { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: baseline; cursor: pointer; }
+  .q .log { margin: 6px 0 4px 34px; padding: 6px 10px; max-height: 24em; overflow-y: auto; background: #1f2126; border-left: 2px solid var(--line-soft);
+    font: 12px/1.5 "Liberation Mono", monospace; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
   .q .rank { font-family: "Liberation Mono", monospace; color: var(--accent); font-size: 12px; }
   .q.wait { opacity: .5; }
   .q.wait .rank { color: var(--muted); }
@@ -312,6 +314,24 @@ function panelModel(state) {
     },
   };
 }
+// A build's log as the panel shows it: ANSI escape sequences removed, each run of blank lines as one, a line first
+// saying earlier lines aren't shown when the server cut it short, or "No log yet." with nothing in it.
+// In turn: a control sequence (ESC [), a string such as a window title (ESC ], P, X, ^ or _, to BEL or ESC \), an
+// escape with intermediate bytes such as a character set (ESC ( B), any other two-byte escape, a lone ESC, and the
+// one-byte control sequence introducer.
+const ANSI = /\x1b\[[0-?]*[ -\/]*[@-~]|\x1b[\]PX^_][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[ -\/]+[0-~]?|\x1b[0-~]?|\x9b[0-?]*[ -\/]*[@-~]/g;
+function logText(log) {
+  const raw = log && typeof log.text === 'string' ? log.text : '';
+  const out = [];
+  for (const line of raw.replace(ANSI, '').replace(/\r\n?/g, '\n').split('\n')) {
+    const blank = line.trim() === '';
+    if (blank && (!out.length || out[out.length - 1] === '')) continue;
+    out.push(blank ? '' : line);
+  }
+  while (out.length && out[out.length - 1] === '') out.pop();
+  if (!out.length) return 'No log yet.';
+  return (log.truncated === true ? ["Earlier lines aren't shown: this is the last 200 lines of the log.", ...out] : out).join('\n');
+}
 // ---- end model ----
 
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
@@ -348,6 +368,9 @@ let shapingView = 'tickets'; // which Shaping list is showing: 'tickets', 'ideas
 const open = new Set(); // ids of the open tickets
 const openIdeas = new Set(); // paths of the open ideas
 const openInbox = new Set(); // paths of the open inbox notes
+const openQueue = new Set(); // ids of the open queue tickets
+const logs = new Map(); // id → the last log received for an open queue ticket, or { failed: true } before any arrived
+const logAsks = new Map(); // id → the number of its latest log request, so only the latest answer is used
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
 const refused = new Map(); // id → why the server refused to set it ready
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
@@ -517,8 +540,12 @@ function shapingToggle(m) {
 // A building or reviewing ticket that isn't red has a dot moving on its current step.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
-  const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)),
-    el('span', 'sub', queueMinutes(t))));
+  const id = String(t.id), isOpen = openQueue.has(id);
+  const top = el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueMinutes(t)));
+  // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
+  // selecting text in the top row leaves it as it is too, so the selection stays.
+  top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
+  const q = el('div', `${cls}${isOpen ? ' open' : ''}`, null, top);
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
   const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red; // an agent is at work on it
@@ -526,6 +553,7 @@ function queueItem(t) {
   q.appendChild(bar);
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));
+    if (isOpen) q.appendChild(logBox(id));
     return q;
   }
   if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
@@ -536,7 +564,34 @@ function queueItem(t) {
   }
   q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
   if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
+  if (isOpen) q.appendChild(logBox(id));
   return q;
+}
+// An open queue ticket's log, as text in a box with its own scrollbar.
+function logBox(id) {
+  const log = logs.get(id);
+  return el('pre', 'log', !log ? 'Loading the log…' : log.failed ? "Couldn't load the log. Close and open the ticket to try again." : logText(log));
+}
+// Opens or closes a queue ticket. Opening it asks for its log; a closed ticket's log is never asked for.
+function toggleLog(id) {
+  flip(openQueue, id);
+  if (openQueue.has(id)) loadLog(id);
+}
+// A request that fails leaves the last log on screen.
+async function loadLog(id) {
+  const mine = (logAsks.get(id) || 0) + 1;
+  logAsks.set(id, mine);
+  let log = null;
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/log`, { cache: 'no-store' });
+    const body = res.ok ? await res.json() : null;
+    if (body && typeof body.text === 'string') log = { text: body.text, truncated: body.truncated === true };
+  } catch { /* the server is down: keep what's shown */ }
+  if (logAsks.get(id) !== mine || !openQueue.has(id)) return; // a newer request has taken over, or it's closed
+  if (log) logs.set(id, log);
+  else if (!logs.has(id)) logs.set(id, { failed: true });
+  else return;
+  render();
 }
 const queueMinutes = t => (t.minutes !== null ? `${t.minutes} min` : '');
 const queuedLine = t => el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : ''));
@@ -656,7 +711,7 @@ function render() {
   renderFull(m.drafts);
 
   // The minutes come from the clock, not the ticket, so they are put right on a kept row.
-  fill('queue', keptItems('queue', m.queue, t => String(t.id), () => null, queueItem,
+  fill('queue', keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), logs.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { minutes, ...own } = ownData(t); return own; }, derived: t => [t.minutes, t.chain, t.unlocks], update: queueUpdate }), 'Nothing in flight or ready.');
   linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
   lightUp();

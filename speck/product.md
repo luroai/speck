@@ -98,6 +98,8 @@ Everything happens in the local repo, with no PR.
     The page is read from `templates/panel.html` for every request too, so a change to it shows on a browser reload without restarting `speck panel`, with the same token for the life of the server.
     A change to the server code (`scripts/speck.mjs`) still needs `speck panel` restarted.
     If the page can't be read, `GET /` gets a plain-text 500 naming the file, and the server keeps running.
+    `GET /api/tickets/<id>/log` gives `{"text": "…", "truncated": true|false}`: the last 200 lines of `speck/.cache/runs/<id>.log` in the main checkout (the build's output from `speck run`), read afresh for every request, with trailing blank lines dropped and `truncated` true when the file has more than 200 lines.
+    A ticket with no log gets empty text, still with 200.
     A ticket speck can't read gives a 500 with the error, and the server keeps running.
     Any other path gets 404.
     Its one write is `POST /api/tickets/<id>/ready`, which the Set ready button sends: it accepts it only with an `Origin` of `http://127.0.0.1:<port>` or `http://localhost:<port>` and an `X-Speck-Token` header holding the token the server makes afresh each time it starts and puts only into the page it serves.
@@ -148,10 +150,17 @@ Everything happens in the local repo, with no PR.
     Nothing else is red: a `blocked` or `ready` ticket with a `build_exit` looks as it would without one.
     A `ready` ticket shows "Queued", a bar with no step done or current and "waiting on <ids>" when it's waiting on any, or "unlocks <ids>" when it starts a chain.
     In-flight tickets show their worktree path, when they have one, and the whole minutes since `started`, when it's set.
+    Clicking a queue ticket's top row opens it and asks the server for its build log, once, and clicking that top row again closes it.
+    More than one can be open at once, and a log is asked for only when a ticket is opened, never for closed ones.
+    The open ticket shows the log in a monospace box with a fixed maximum height and its own scrollbar, as text, with ANSI escape sequences removed and each run of blank lines shown as one.
+    When the log was cut short, a first line says earlier lines aren't shown, and a ticket with no log shows "No log yet.".
+    Clicking or selecting text in the log leaves it open, and a click that ends selecting text in the top row neither opens nor closes it.
+    A log request that fails leaves the last log on screen.
+    The open log isn't kept up to date while the build runs: close and open the ticket to read it again.
     Then **Shipped**: above the list, a stats row with the tickets shipped today (`finished` on today's date in the browser's time zone) and the median minutes from `started` to `finished`, median review rounds and median tokens, each saying how many tickets it covers (every `done` ticket with both times, with at least one review round, or with tokens recorded, respectively) and showing a dash when it covers none.
     The list has the latest 5 `done` tickets by `finished` time, newest first, with review rounds, tokens, the minutes from `started` to `finished` and when it shipped, from `finished` in the browser's time zone (`HH:MM` today, otherwise `D Mon HH:MM`, for example `8 Oct 14:02`, with no year); done tickets with no `finished` time come after those, within the 5, and show a dash for when they shipped.
     With no `done` tickets it says nothing has shipped yet and shows no stats.
-    Text selected in a queue or Shipped row, and the scroll position of a build message box, stay put through the refresh while that ticket's data in `/api/state` (by `id`, whatever order its fields come in) is unchanged, whatever else changes.
+    Text selected in a queue or Shipped row, and the scroll position of a build message box or an open log, stay put through the refresh while that ticket's data in `/api/state` (by `id`, whatever order its fields come in) is unchanged, whatever else changes.
     A kept row's minutes since `started`, Shipped time, chain icon and "unlocks" or "waiting on" text still change in place when only the clock or other tickets change.
     The minutes and the Shipped time change only the characters that differ, so a selection in or across them stays too.
     When a row's own data changes, the new content shows in that refresh and its selection or scroll position may be lost.
