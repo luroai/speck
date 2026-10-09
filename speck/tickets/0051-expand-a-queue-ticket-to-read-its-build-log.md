@@ -56,6 +56,9 @@ Clicking a queue ticket's top row opens it and shows the tail of its build's log
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (none went to the inbox):
+- Known limit: the server reads the whole log file on each request to take its last 200 lines. Fine for build logs today; worth reading only the file's tail if logs grow large, especially once 0052 polls an open log.
+- Skipped for the inbox: keeping an open log up to date while the build runs, which is 0052.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -127,6 +130,79 @@ Clicking a queue ticket's top row opens it and shows the tail of its build's log
     },
     "escalation_question": "",
     "summary": "Queue tickets can open safely rendered build logs, and the tests cover request rules, multiple open rows and preserved scrolling. One formatting defect needs fixing: some terminal escape codes leave visible fragments in the log. I inspected the code and independently reproduced that defect; I did not rerun the filesystem-writing test suite in this read-only review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7a6e73211a4b8a977113736904fa5e2d12cd531b",
+    "thread_id": "01a12220-6f74-7f12-9caf-e426423e9f1f",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 543781,
+      "cached_input_tokens": 425216,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1925,
+      "reasoning_output_tokens": 126
+    },
+    "saved_at": "2026-10-09T19:28:04.458Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs panelLog and cmdPanel retain fresh main-checkout reads, 200-line tails, empty-log responses and request restrictions. All three AC1 integration tests pass in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html queueItem and toggleLog maintain independent open tickets and limit toggling to top-row clicks. AC2 tests and the real-browser selection test pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "logText removes terminal escapes and collapses blank lines; .q .log supplies monospace text, maximum height and scrolling. Independently executed every formatting assertion against the current page model, including the F1 regression: all passed. Formatting and browser tests also pass in the supplied output."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "logBox renders through el using textContent. The AC4 test exercises HTML-shaped malicious content and verifies no HTML elements are created; it passes in the supplied output."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "toggleLog requests logs only on opening. render includes openQueue and cached logs in keptItems, preserving unchanged rows. Request-count, refresh-preservation and browser scroll tests pass in the supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Charset designation escapes previously left visible fragments. The updated ANSI pattern consumes these sequences fully, and the added regression assertions pass independently against the current implementation.",
+        "suggested_fix": "None; the fix and regression coverage are sufficient.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The panel documentation accurately describes the endpoint, open rows, formatting, refresh preservation and close-and-reopen behaviour."
+    },
+    "escalation_question": "",
+    "summary": "Approved. Queue tickets show readable build logs safely as text, and unchanged open logs retain their scroll position through refreshes. The escape-formatting defect is fixed and independently verified. The supplied full test run passes all 385 tests; no blocking concerns remain."
   }
 }
 ```
