@@ -1,7 +1,7 @@
 ---
 id: "0065"
 title: "Fit the panel to the window with a scroll in each section"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0064"]               # ticket ids that must be done first
 created: 2026-10-09
+cancel_reason: "Changed my mind: keeping the current panel layout."
+cancelled: 2026-10-09
 
 ---
 # 0065 · Fit the panel to the window with a scroll in each section
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 The panel page scrolls as a whole, so scrolling down to a ticket in one section moves the other section, and the header, out of view. The two columns are also uneven (Shaping is wider), so the boundary between them sits right of centre.

@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0052", "0053", "0062", "0064"]               # ticket ids that must be done first
+after: ["0052", "0053", "0062"]               # ticket ids that must be done first
 created: 2026-10-09
 
 ---
@@ -37,7 +37,7 @@ Any ticket in the queue or the Shipped list can be opened in the full ticket pan
 - The review rounds or delivery log in the pane: it shows the same sections as for drafts.
 
 ## Notes
-- After 0062, as 0060, 0061 and 0062 all change the side pane; after 0052 and 0053, which change the open queue ticket; and after 0064, which makes Shipped a tab in the Queue section, all in `templates/panel.html`.
+- After 0062, as 0060, 0061 and 0062 all change the side pane; and after 0052 and 0053, which change the open queue ticket, all in `templates/panel.html`.
 - Changes the rule from 0054 and 0062 that the pane closes when a draft is set ready: with this, it stays open on that ticket in the queue (criterion 3).
 - The pane's lookup is in `renderFull`, which looks only in the Tickets list today. Done tickets already come with their sections in `/api/state`.
 - product.md's Queue and Shipped descriptions need updating.

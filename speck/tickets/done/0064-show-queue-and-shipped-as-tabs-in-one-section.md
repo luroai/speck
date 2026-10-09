@@ -1,7 +1,7 @@
 ---
 id: "0064"
 title: "Show Queue and Shipped as tabs in one section"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0052", "0053"]               # ticket ids that must be done first
 created: 2026-10-09
+cancel_reason: "Changed my mind: keeping the current panel layout."
+cancelled: 2026-10-09
 
 ---
 # 0064 · Show Queue and Shipped as tabs in one section
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 Shipped is a full-width section under Shaping and Queue, so the page is taller than the window and the user scrolls to see what has shipped. Shaping already shows one list at a time behind a toggle, and the Queue and Shipped lists could share a section the same way.
