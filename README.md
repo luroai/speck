@@ -51,7 +51,7 @@ To re-check your setup at any time: `node .speck/scripts/speck.mjs doctor`.
 | *you* | Approve a ticket for development: `node .speck/scripts/speck.mjs set <id> status ready` (Gate 1) |
 | `/speck-build <id>` | Tests from the acceptance criteria, then code, then the review loop. Ends with the ticket `approved`, waiting for you |
 | `node .speck/scripts/speck.mjs run` | Starts `/speck-build` in a non-interactive session for each ready ticket as it becomes ready, using `build_command` in `speck/config.yml`. The default skips all permission prompts |
-| `node .speck/scripts/speck.mjs pause <id>` | Holds a build that `speck run` launched where it is, with the processes it started, until you play it. Its ticket keeps its status, and it keeps its place among the builds running, even if `speck run` is restarted. macOS and Linux only |
+| `node .speck/scripts/speck.mjs pause <id>` | Holds a build that `speck run` launched where it is, with the processes it started, until you play it. Its ticket keeps its status, and it keeps its place among the builds running, even if `speck run` is restarted. In `speck panel`, the pause icon on the left of a running build's queue row does the same, and turns into a play icon that plays it. macOS and Linux only |
 | `node .speck/scripts/speck.mjs play <id>` | Carries a paused build on from where it was paused, in the same session, worktree and log |
 | `/speck-review <id>` | Re-run the review loop on its own |
 | `/speck-status` | Tickets by status: approved (waiting for you) first, then blocked questions |
