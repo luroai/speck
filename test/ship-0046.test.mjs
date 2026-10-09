@@ -59,7 +59,7 @@ test('0046 AC2/AC3: a conflict keeps uncommitted changes in both folders and nam
   // Git refuses to merge over staged changes, so only the worktree, where nothing is merged, can have them here.
   r.hook("printf 'mine\\n' > {main}/other.txt && printf 'staged\\n' > {wt}/notes.txt && git -C {wt} add notes.txt && printf 'wt\\n' > {wt}/other.txt");
   const res = runIn(r.dir, 'ship', '1');
-  assert.equal(res.status, 1, res.stderr + res.stdout);
+  assert.equal(res.status, 13, res.stderr + res.stdout);
   noTrace(res);
   assert.match(res.stderr, /hit a conflict/);
   assert.match(res.stderr, /shared\.txt/);
@@ -86,7 +86,7 @@ test('0046 AC2: without a worktree, a conflict keeps the uncommitted change and 
   const before = r.snapshot();
   r.hook("printf 'mine\\n' > {main}/notes.txt");
   const res = runIn(r.dir, 'ship', '1');
-  assert.equal(res.status, 1, res.stderr + res.stdout);
+  assert.equal(res.status, 13, res.stderr + res.stdout);
   noTrace(res);
   assert.match(res.stderr, /hit a conflict/);
   assert.equal(status(r.dir), ' M notes.txt\n');
@@ -104,7 +104,7 @@ test('0046 AC2: a conflict after catching up with the remote undoes the catch-up
   const before = r.snapshot();
   r.hook("printf 'mine\\n' > {main}/notes.txt");
   const res = runIn(r.dir, 'ship', '1');
-  assert.equal(res.status, 1, res.stderr + res.stdout);
+  assert.equal(res.status, 13, res.stderr + res.stdout);
   assert.match(res.stderr, /hit a conflict/);
   assert.equal(status(r.dir), ' M notes.txt\n');
   assert.equal(read(r.dir, 'notes.txt'), 'mine\n');
@@ -194,7 +194,7 @@ test('0046 (self-check): changes that cannot be put back in place are saved in t
   // The ship commit sets the ticket's status to done, which the undo takes away again, so an edit to that same line can't go back in place.
   r.hook("t={wt}/speck/tickets/done/0001-export-bookings.md && sed 's/^status: done/status: edited/' $t > $t.new && mv $t.new $t");
   const res = runIn(r.dir, 'ship', '1');
-  assert.equal(res.status, 1, res.stderr + res.stdout);
+  assert.equal(res.status, 13, res.stderr + res.stdout);
   noTrace(res);
   assert.match(res.stderr, /hit a conflict/);
   assert.match(res.stderr, /git stash pop --index/);
@@ -249,7 +249,7 @@ test('0046 round 1 F2: changes a hook makes while ship catches up with the remot
   const before = r.snapshot();
   r.hook("printf 'mine\\n' > {main}/notes.txt && printf 'staged\\n' > {wt}/notes.txt && git -C {wt} add notes.txt && printf 'wt\\n' > {wt}/other.txt", 'post-merge');
   const res = runIn(r.dir, 'ship', '1');
-  assert.equal(res.status, 1, res.stderr + res.stdout);
+  assert.equal(res.status, 13, res.stderr + res.stdout);
   noTrace(res);
   assert.match(res.stderr, /hit a conflict/);
   assert.equal(status(r.dir), ' M notes.txt\n');

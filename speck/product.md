@@ -55,7 +55,7 @@ Everything happens in the local repo, with no PR.
     Setting a cancelled ticket to any other status moves it back into `speck/tickets/` and keeps the recorded reason, so a cancelled idea can come back later as new work.
   - `status` (approved tickets first, as waiting for you, and cancelled tickets last, each with its reason, then ideas counted as waiting or ticketed, for example `IDEAS (3: 2 waiting, 1 ticketed)`; an idea is ticketed when its `Status:` value starts with `ticketed`.
     A ticket whose branch is checked out in another worktree is shown once, under the status in that worktree's copy (so an in-progress build no longer reads `ready` from the main checkout), with `↳ being built in <path>` on the line below.
-    With no other worktrees, the output is unchanged), `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `reviewer-settings`, `diff` (the changes since the reviewer's last round, as the reviewer sees them), `next` and `pack` (the review pack).
+    With no other worktrees, the output is unchanged), `diffstat` (with the size guard), `review` (Codex adapter), `record` (other reviewers), `prompt`, `reviewer-settings`, `diff` (the changes since the reviewer's last round, or the whole change after merging the base branch, as the reviewer sees them), `next` and `pack` (the review pack).
   - `status --json`: prints everything `status` knows as one JSON object, `{"tickets": [...], "ideas": [...]}`, with nothing else on stdout, for programs such as the control panel.
     Tickets are the same ones the text output shows, each once (a ticket being built in another worktree comes from that worktree's copy), sorted by `priority` (no priority last) then id.
     Each has every frontmatter field under its own name, plus `path` (relative to the checkout it was read from), `worktree` (that worktree's absolute path, or `null`), `acceptance_criteria` (each criterion's full text without its number, including wrapped lines and nested lists under it), `blocked_question` (or `null`), `lint` (`{errors, warnings}` counts from the same checks as `speck lint`), `lint_messages` (`{errors, warnings}` with the text of each message `speck lint` prints), `problem`, `outcome`, `out_of_scope` and `notes` (each section's text without template comments or leading and trailing empty lines, or `null` when nothing else is in it), `self_check` (the text after `Self-check:` on the first line of Notes that starts with it, a list marker such as `- ` allowed before it, or `null` if there's no such line or nothing after it), `rounds` (one `{round, reviewer, verdict, seconds, tokens}` per review round, with `seconds` `null` if not recorded and `tokens` the input plus output tokens, or `0`) `waiting_on` (the `after:` ids that aren't a `done` ticket, including ids with no ticket) and `build_exit` (how a build launched by `speck run` ended: `{at, code, message}` with `at` and `code` from its run record's `exited` and `exit_code`, and `message` the last 50 lines of its log with trailing blank lines dropped, or `null` when the log is missing or empty; `build_exit` itself is `null` when there's no run record, it can't be read or it has no `exited`).
@@ -120,7 +120,9 @@ Everything happens in the local repo, with no PR.
     Then it sets the ticket to `done` on its branch, merges into the base branch with a merge commit, deletes the local branch and pushes the base branch if it has a remote.
     Once that push succeeds, it also deletes the ticket branch on the remote if it's there.
     If the push fails, the remote copy is kept.
-    A merge conflict is aborted and leaves everything as it was, and speck names the conflicting files.
+    A merge conflict is aborted and leaves everything as it was, and speck names the conflicting files and exits with 13.
+    It also names what to merge into the ticket branch: the base branch, or its remote copy (for example `origin/main`) when it had just fetched new commits from the remote, since the undo leaves the local base branch without them.
+    Every other refusal keeps its own code.
     If tracked files in the base branch's checkout gain uncommitted changes while the tests run, it refuses before merging, names them and leaves them as they were.
     A merge that would overwrite uncommitted changes is reported as that, naming the files, not as a conflict.
     When a merge fails, the undo puts back any uncommitted changes to tracked files in the base checkout and the ticket's worktree, staged or not.
@@ -172,6 +174,11 @@ Everything happens in the local repo, with no PR.
   Its record is written before a build starts, so a build whose record can't be written isn't started.
   When a build exits, its ticket's status is read the same way as `speck status`, including the copy in the build's own worktree.
 - **Build ends at `approved`, or ships:** once the reviewer approves, `/speck-build` runs `speck close` (which fills in the ticket's review and delivery logs, sets `approved` and commits), then runs `speck ship <id> --auto`.
+  If that exits with 13 (a conflict), the builder merges the base branch into the ticket branch in its worktree, resolves the conflicts keeping the intent of both sides, runs the tests, commits, and runs a review round whose response lists each file it resolved and how.
+  On approval it runs `speck close` and `speck ship <id> --auto` again.
+  The extra round counts towards `max_review_rounds`.
+  If it still conflicts after two merges, the builder blocks the ticket with the conflicting files in the question.
+  This is in the skill only: speck itself never merges the base branch into a ticket branch.
   No PR is opened, and the GitHub CLI isn't needed.
 - **Auto-ship:** `auto_ship` and `auto_ship_risk` in `speck/config.yml` decide whether an approved ticket ships straight away.
   It ships only when `auto_ship` is `true`, the ticket's `risk` is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round (no round with `sandbox_ok: false`).
@@ -211,8 +218,13 @@ Everything happens in the local repo, with no PR.
 - **The first review round sets `reviewing`:** when round 1 starts on a ticket in `building`, speck sets it to `reviewing` (and rewrites its header), so the builder makes no separate status step or commit.
   `speck review` does this once its checks pass and before the reviewer runs, and puts the ticket back exactly as it was if the round fails (the reviewer errors, or its output isn't a valid verdict).
   `speck record` does it in the same write as round 1, so a refused reply changes nothing.
-  Tickets in any other status, and later rounds, are left alone.
+  `speck review` and `speck record` also set an `approved` ticket back to `reviewing` the same way, in any round, for a re-review after a merge, so `speck review` accepts an `approved` ticket.
+  Tickets in any other status, and later rounds on a `building` ticket, are left alone.
   The change stays uncommitted alongside the round, and the next round accepts both as the ticket's only uncommitted changes.
+- **Re-review after merging the base branch:** when the ticket branch has merged the base branch in since the last round (its merge base with the base branch has moved; the base branch's remote copy as last fetched counts as the base branch when it's ahead of the local one), the reviewer's diff is the branch's whole change against the base branch as merged, which is what would ship, not the diff since its last review.
+  The round's prompt says it follows a merge and asks the reviewer to check each resolved file keeps the intent of both sides, and `speck diff` shows the same diff.
+  A round 1 prompt rebuilt from git uses the base branch as it was when round 1 ran.
+  `speck close` replaces the figures an earlier close wrote in `## Delivery log` rather than adding a second set, keeping everything else there.
 - **Review rounds live in the ticket:** every round, from any reviewer, is added to a `## Review rounds` section at the end of the ticket file, as a collapsed `<details>` block with a one-line summary (round, reviewer, verdict) and the full record as a `json` code block.
   After a round, the ticket is the only tracked file that changes, and the round can stay uncommitted until the builder's next commit.
   `next`, `pack` and `ship` read the rounds from there.
@@ -263,7 +275,8 @@ Everything happens in the local repo, with no PR.
 ## Known limits
 - Several tickets can be built at once, each in its own worktree, but apart from `speck run`, which waits for a ticket's `after:` tickets to be done before launching it, there's no dependency scheduling: a build started by hand doesn't wait, and nothing stops two tickets that touch the same files from running together.
   Shipped one after the other, they each merge cleanly unless their changes conflict.
-  A ticket whose changes conflict with one shipped before it is refused at ship, leaving it `approved` with its branch, worktree and the base branch as they were, and must be rebuilt on the latest base branch.
+  A ticket whose changes conflict with one shipped before it is refused at ship (exit 13), leaving it `approved` with its branch, worktree and the base branch as they were.
+  `/speck-build` then merges the base branch in, resolves the conflicts and gets the result re-reviewed before shipping again.
 - A worktree has no gitignored files (`node_modules`, `.env`, build output) unless `worktree_setup` provides them.
   New projects start with it blank.
 - Known builders: speck works with any agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as Claude Code, Codex and Cursor.
@@ -296,7 +309,7 @@ Everything happens in the local repo, with no PR.
 - If `speck review` is interrupted (for example with Ctrl-C) while the reviewer runs, a ticket that round 1 set to `reviewing` stays `reviewing` with no round recorded.
   Run the review again, or `speck set <id> status building`.
 - If the base branch has moved and conflicts, `speck ship` refuses.
-  There's no automatic rebase.
+  There's no rebase: `/speck-build` merges the base branch into the ticket branch, and a `/speck-ship` run by hand leaves that merge to you.
 - Not yet published to npm (planned package name `speck-dev`).
   Install runs from GitHub with `npx`, so the repo must be public, or the user needs access to it.
 - No Claude Code plugin: skills are plain project skills, so commands are `/speck-build` rather than `/speck:build`.

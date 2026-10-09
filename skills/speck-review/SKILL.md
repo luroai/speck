@@ -11,7 +11,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## Before every round
 
-- All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit, and so can the status change from `building` to `reviewing` that round 1 makes.
+- All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit, and so can the status change from `building` to `reviewing` that round 1 makes (or from `approved` to `reviewing`, in a re-review after merging the base branch).
 - You stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back. Untracked files don't stop `speck review` or `speck record`; modified or staged tracked files that aren't committed do.
 - The test output is fresh: `<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`.
 
@@ -75,7 +75,7 @@ This resumes the same Codex session. The reviewer remembers its earlier findings
 
 **Reviewer with a `command`:** run the same command as for Codex, with `--response`. If the reviewer's config has `session_id_path` and `resume_command`, speck continues its session and sends only your response, the new diff and the tests. Otherwise, or if resuming fails, speck says so in one line and resends the round-1 prompt, every earlier verdict and response, then your new response and the diff since its last review. Either way, carry on as normal.
 
-**claude-subagent:** use SendMessage to the agent id you kept in round 1. That resumes the same reviewer, with its earlier findings and the model and effort it started with. Don't spawn a new one. Include your response file, the output of `speck diff <id>` (the changes since its last review, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Save its reply as in round 1, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
+**claude-subagent:** use SendMessage to the agent id you kept in round 1. That resumes the same reviewer, with its earlier findings and the model and effort it started with. Don't spawn a new one. Include your response file, the output of `speck diff <id>` (the changes since its last review, or the whole change against the base branch as merged after a merge, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Save its reply as in round 1, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent`.
 
 ## Ending the loop
 
