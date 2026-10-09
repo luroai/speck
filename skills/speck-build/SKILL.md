@@ -50,10 +50,9 @@ Follow the `speck-review` skill (in the folder next to this one) exactly. In sho
 
 When `speck next <id>` says `ship`, the reviewer has approved. Close out the build on the ticket branch:
 
-1. Add one line per review round to the ticket's `## Review log`, for example: `Round 1 (codex): changes requested: F1 missing empty-input case. Round 2: approved.`
-2. Fill in `## Delivery log`: review rounds, the reviewer tokens from `speck pack <id>`, elapsed time, and any follow-up ideas from minor findings.
-3. Run `speck set <id> status approved`, then commit the ticket (`speck(<id>): approved`). Its review rounds are in the ticket file. Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
-4. Run `speck ship <id> --auto`. It ships only if `auto_ship` is `true` in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round. Then it runs all of `speck ship`'s usual checks and the tests.
+1. If minor findings or your own notes suggest follow-up ideas, write them in the ticket's `## Delivery log` and commit the ticket.
+2. Run `speck close <id>`. It refuses unless `speck next <id>` says `ship` and nothing outside the ticket file has uncommitted changes. It then replaces the ticket's `## Review log` with one line per round, adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to the `## Delivery log` (keeping what you wrote there), sets `approved` and commits only the ticket (`speck(<id>): approved`). Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
+3. Run `speck ship <id> --auto`. It ships only if `auto_ship` is `true` in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round. Then it runs all of `speck ship`'s usual checks and the tests.
    - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, and anything worth a look (risk flags, follow-up ideas).
    - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
    - If any other check refused, report the reason as the ship skill describes. Don't work around it.
