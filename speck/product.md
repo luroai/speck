@@ -1,7 +1,5 @@
 # speck
 
-Last updated by ticket: 0046
-
 ## What it is
 speck is a lightweight, repo-native workflow for building software with AI coding agents.
 It's aimed at PMs and founders who write good tickets but don't review code line by line.
@@ -87,13 +85,22 @@ Everything happens in the local repo, with no PR.
     **Ideas** lists every idea, those whose status doesn't start with `ticketed` first, with title, status and path, and clicking that top row shows its note text under it, until the top row is clicked again.
     Clicking or selecting text in the note leaves it open.
     More than one ticket or idea can be open at once.
+    A ticket starts a chain when its `waiting_on` is empty and at least one ticket that isn't `done` or `cancelled` lists its id in `after:`.
+    In the Tickets list and among the queue's `ready` tickets, such a ticket shows a chain icon in the accent colour after its id, and "unlocks <ids>" (those tickets, in the JSON's order) in its line under the title: the criteria line in Shaping and the "Queued" line in the queue.
+    A ticket whose `waiting_on` isn't empty shows a dimmed padlock there instead, with "waiting on <ids>" in the same line.
+    Each icon's hover text says what it means, for example "Starts a chain: unlocks 0042" or "Waiting on 0039", and in-flight tickets show neither.
+    Hovering a ticket in the Tickets list or a `ready` one in the queue highlights it and every ticket linked to it through `after:` in either direction, following links through other tickets that aren't `done` or `cancelled`, in both places, and dims the other tickets there until the pointer leaves it.
+    In-flight tickets in the queue are never highlighted or dimmed, though links still pass through them.
+    A ticket's chain icon and "unlocks" text change in place when only other tickets change, so text selected in its open details stays selected.
+    Text selected in an open ticket's details or an idea's note stays selected through the refresh while that ticket's (by `id`) or idea's (by `path`) data in `/api/state` is unchanged, whatever else changes.
+    When its own data changes, the new content shows in that refresh and the selection may be lost.
     The list showing and what's open survive the refresh and are never sent to the server.
     Then the **Queue**, one list with no groups: in-flight tickets (`building`, `reviewing`, `blocked`, `approved`) first, then `ready` ones, each in the JSON's order.
     Every ticket in it has a five-step bar, Build, Self-check, Review, Approve and Ship: Build is done once `self_check` is set or the ticket has a review round, Self-check once it has a review round or has `self_check` while `reviewing`, Review and Approve once it's `approved` (Ship is then the current step, whatever else is done), and otherwise the current step is the first one not done.
     While a ticket has review rounds, the Review step reads "Review <n>", its latest round number.
     Red, on its left edge and its current step, marks a ticket that needs you: a `blocked` ticket, with its blocked question under it, and an `approved`, `building` or `reviewing` ticket with a `build_exit`, with "Build finished without shipping" (approved) or "Build stopped before finishing" (building or reviewing) and the build's last message under it, as text.
     Nothing else is red: a `blocked` or `ready` ticket with a `build_exit` looks as it would without one.
-    A `ready` ticket shows "Queued", a bar with no step done or current and "waiting on <ids>" when it's waiting on any.
+    A `ready` ticket shows "Queued", a bar with no step done or current and "waiting on <ids>" when it's waiting on any, or "unlocks <ids>" when it starts a chain.
     In-flight tickets show their worktree path, when they have one, and the whole minutes since `started`, when it's set.
     Then **Shipped**: above the list, a stats row with the tickets shipped today (`finished` on today's date in the browser's time zone) and the median minutes from `started` to `finished`, median review rounds and median tokens, each saying how many tickets it covers (every `done` ticket with both times, with at least one review round, or with tokens recorded, respectively) and showing a dash when it covers none.
     The list has the latest 5 `done` tickets by `finished` time, newest first, with review rounds, tokens, the minutes from `started` to `finished` and when it shipped, from `finished` in the browser's time zone (`HH:MM` today, otherwise `D Mon HH:MM`, for example `8 Oct 14:02`, with no year); done tickets with no `finished` time come after those, within the 5, and show a dash for when they shipped.

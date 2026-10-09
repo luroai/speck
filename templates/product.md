@@ -7,8 +7,6 @@ Updated on each ticket's branch during the build and checked by the reviewer. It
 Write one sentence per line, so tickets built in parallel can each add sentences without clashing.
 -->
 
-Last updated by ticket: 0000
-
 ## What it is
 <!-- One paragraph: what the product does and who it's for. -->
 
