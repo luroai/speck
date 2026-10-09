@@ -1,7 +1,7 @@
 ---
 id: "0044"
 title: "Show how to resume a blocked build's session"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0044 · Show how to resume a blocked build's session
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a build started by `speck run` gets blocked, its session has ended and nobody is in it. To answer the question with the agent's full context, you need to know which session to reopen and which folder to reopen it from.
