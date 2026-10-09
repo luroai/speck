@@ -1338,9 +1338,25 @@ function cmdShip(args) {
   shipTicket(repo, id);
 }
 
+// Tickets being built in other worktrees, read from that worktree's copy, which has the real status.
+function ticketsElsewhere(repo, cfg) {
+  const here = fs.realpathSync(repo);
+  const ticketBranch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d{4})-`);
+  return worktreeList(repo).flatMap(w => {
+    const m = w.branch && w.branch.match(ticketBranch);
+    if (!m || w.path === here || !fs.existsSync(w.path)) return [];
+    try { return [{ ...findTicket(w.path, m[1]), at: w.path }]; } catch { return []; }
+  });
+}
+
 function cmdStatus() {
   const repo = findRepoRoot();
   const tickets = listTickets(repo);
+  // A ticket being built elsewhere replaces this checkout's copy of it, so it shows once, under its real status.
+  for (const t of ticketsElsewhere(repo, loadConfig(repo))) {
+    const i = tickets.findIndex(x => x.fm.id === t.fm.id);
+    if (i >= 0) tickets[i] = t; else tickets.push(t);
+  }
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
@@ -1349,6 +1365,7 @@ function cmdStatus() {
     console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' ? ': waiting for you. Read `speck pack <id>`, then run /speck-ship <id>' : ''}`);
     for (const t of group) {
       console.log(`  ${t.fm.id}  P${t.fm.priority ?? '-'}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
+      if (t.at) console.log(`        ↳ being built in ${t.at}`);
       if (s === 'blocked') {
         const q = contentLines(t.sections['blocked question']).join(' ');
         if (q) console.log(`        ? ${q}`);

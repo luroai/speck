@@ -35,6 +35,9 @@ Once builds run in their own worktrees (0028), a ticket's progress is committed 
 - Other commands (`next`, `pack`) reading from other worktrees.
 
 ## Notes
+- Self-check: skips detached worktrees, missing worktree folders and worktrees whose ticket file can't be found, and escapes the branch prefix before matching. Found `product.md` not yet updated, and fixed that.
+- Built with `speck start` in its own worktree: the first ticket built this way. The tooling check followed this repo's `.speck/scripts` symlink, and the main checkout stayed on `main` throughout.
+- During the build, `/tmp` ran out of inodes again (test fixtures, now including `<repo>.worktrees` folders from `speck start` tests). 0017 should clean up those too.
 - Pre-check: no ambiguities found, and no external facts.
 
 ## Blocked question

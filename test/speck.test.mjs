@@ -2360,3 +2360,66 @@ test('0028 AC3 (F2): tooling must be in the base commit, not just staged or on a
   assert.match(res.stderr, /\.speck\//);
   assert.equal(dangling.worktrees().length, 1);
 });
+
+// ---------- 0029: show tickets being built in other worktrees ----------
+
+test('0029 AC1/AC2: speck status shows each ticket being built in another worktree once, under its real status, with the path below', () => {
+  const r = startRepo({ config: { worktrees: 'true' } });
+  // A second ready ticket, so two builds can run in two worktrees.
+  const second = path.join(r.dir, r.run('new', 'Import bookings').stdout.trim());
+  fs.writeFileSync(second, fs.readFileSync(second, 'utf8').split('## Problem')[0] + good);
+  r.run('set', '2', 'status', 'ready');
+  r.g('add', '-A'); r.g('commit', '-qm', 'second ticket');
+  assert.equal(r.run('start', '1').status, 0);
+  assert.equal(r.run('start', '2').status, 0);
+  const [, wt1, wt2] = r.worktrees();
+  const env = { ...process.env, ...gitEnv };
+  const inWt = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env });
+  inWt(wt1, 'set', '1', 'status', 'reviewing'); spawnSync('git', ['commit', '-qam', 'reviewing'], { cwd: wt1, env });
+  inWt(wt2, 'set', '2', 'status', 'blocked'); spawnSync('git', ['commit', '-qam', 'blocked'], { cwd: wt2, env });
+
+  const fromMain = r.run('status').stdout;
+  const lines = fromMain.split('\n');
+  const at = id => lines.findIndex(l => new RegExp(`^  ${id} `).test(l));
+  const group = i => lines.slice(0, i).reverse().find(l => /^[A-Z]+ \(/.test(l));
+  assert.match(group(at('0001')), /^REVIEWING \(1\)/, fromMain);
+  assert.match(group(at('0002')), /^BLOCKED \(1\)/, fromMain);
+  assert.ok(lines[at('0001') + 1].includes(wt1), 'path on the line below');
+  assert.ok(lines[at('0002') + 1].includes(wt2));
+  assert.equal(lines.filter(l => /^  0001 /.test(l)).length, 1, 'shown once');
+  assert.doesNotMatch(fromMain, /^READY/m, 'not shown as ready from main');
+
+  // From one build's worktree, the other build still shows with its path; its own ticket shows as it is there.
+  const fromWt1 = inWt(wt1, 'status').stdout.split('\n');
+  const own = fromWt1.findIndex(l => /^  0001 /.test(l));
+  const other = fromWt1.findIndex(l => /^  0002 /.test(l));
+  assert.ok(fromWt1[other + 1].includes(wt2));
+  assert.ok(!fromWt1[own + 1].includes(wt1), 'no path line for the folder you are in');
+  assert.match(fromWt1.slice(0, own).reverse().find(l => /^[A-Z]+ \(/.test(l)), /^REVIEWING/);
+});
+
+test('0029 AC1: an approved ticket in a worktree shows as approved', () => {
+  const r = startRepo({ config: { worktrees: 'true' } });
+  assert.equal(r.run('start', '1').status, 0);
+  const wt = r.worktrees()[1];
+  const env = { ...process.env, ...gitEnv };
+  spawnSync(process.execPath, [CLI, 'set', '1', 'status', 'approved'], { cwd: wt, env });
+  spawnSync('git', ['commit', '-qam', 'approved'], { cwd: wt, env });
+  const out = r.run('status').stdout;
+  assert.match(out, /^APPROVED \(1\)[^\n]*\n  0001 [^\n]*\n[^\n]*/m);
+  assert.ok(out.split('\n')[out.split('\n').findIndex(l => /^  0001 /.test(l)) + 1].includes(wt));
+});
+
+test('0029 AC3: with no other worktrees, speck status output is unchanged', () => {
+  const r = startRepo({ config: { worktrees: 'false' } });
+  assert.equal(r.run('status').stdout, '\nREADY (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
+  assert.equal(r.run('start', '1').status, 0); // a branch in this checkout, no other worktree
+  assert.equal(r.run('status').stdout, '\nBUILDING (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
+});
+
+test('0029 AC4: the status skill says to resume an in-progress ticket in its worktree and name the path', () => {
+  const md = fs.readFileSync(path.join(ROOT, 'skills', 'speck-status', 'SKILL.md'), 'utf8');
+  assert.match(md, /worktree/i);
+  assert.match(md, /resume[^.]*in (that|its) worktree|in (that|its) worktree[^.]*resume/i);
+  assert.match(md, /name the path|naming the path|give the path/i);
+});
