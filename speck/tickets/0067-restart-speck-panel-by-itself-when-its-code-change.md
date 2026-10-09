@@ -53,6 +53,9 @@ started: "2026-10-09T20:00:56.511Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox notes):
+  - `cmdPanel`, which launches the first server process and then only waits, never runs new code; a change to it needs `speck panel` started again.
+  - Server processes find the launcher's pipe at fd 4, inherited down the chain, which is untested on Windows.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +127,79 @@ started: "2026-10-09T20:00:56.511Z"
     },
     "escalation_question": "",
     "summary": "Server route changes restart automatically, and the tests cover keeping an open page working, failed updates and clean shutdown. However, changes to the restart machinery itself still require a manual restart, so the promised automatic update behaviour is incomplete. I inspected the code and tests; I did not rerun tests because they create files and this review is read-only."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "117c7f5e477cae76834406410288e599a3f24613",
+    "thread_id": "01a1224b-dfd2-7372-8d12-958bd170e08e",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 612321,
+      "cached_input_tokens": 380928,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1796,
+      "reasoning_output_tokens": 238
+    },
+    "saved_at": "2026-10-09T20:20:08.895Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: panelServer watches the code and starts a successor through startPanelServer, handing over the listening socket. The AC1 route test and new watcher-code regression test in test/panel-0067.test.mjs exercise updated serving and restart behaviour within five seconds; supplied results pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "startPanelServer passes the same token to each successor. AC2 tests exercise the pre-restart token and a real browser retaining its selected list and open item, then using Set ready without reloading; supplied results pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelServer's watcher waits for 500 ms of unchanged file stamps and prevents concurrent successors. The AC3 burst test verifies five close changes produce one restart; supplied results pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelServer keeps serving until its successor reports ready. The loader reports load/start errors over IPC; restart failure retains the old server and exposes restart_error. AC4 tests cover syntax and runtime failures, the banner, subsequent recovery and restoring running code; supplied results pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdPanel exits on SIGINT/SIGTERM; server processes monitor the inherited lifeline and kill a starting successor on exit. Only the initial server prints the URL. AC5 tests cover shutdown after restarting, SIGKILL and shutdown during successor startup; supplied results pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:panelServer",
+        "issue": "The previous implementation retained the original watcher and restart machinery after code changes. These now run inside each replacement server process, and the new regression test verifies updated restart behaviour on the next change.",
+        "suggested_fix": "Implemented: reload the serving, watching and handover logic together and retain regression coverage.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "Accurately describes handover, preserved tokens, failure fallback and shutdown. The remaining fixed launcher only starts the first server and waits; ongoing panel behaviour runs updated code."
+    },
+    "escalation_question": "",
+    "summary": "The panel now updates both its server behaviour and its restart machinery automatically. Tests cover keeping an open page working, grouping changes, recovering from failed updates and stopping all server processes. The previous blocking issue is resolved. I inspected the code and tests; the supplied full run reports 447 passing tests."
   }
 }
 ```
