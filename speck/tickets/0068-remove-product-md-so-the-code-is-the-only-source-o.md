@@ -53,6 +53,10 @@ speck no longer has a living spec. The code, the tickets and the tests are the r
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Existing projects keep an AGENTS.md speck section that says to read `speck/product.md` first, because `speck init` doesn't rewrite a section an older version wrote. Saved to the inbox: `speck/ideas/2026-10-09-refresh-an-old-speck-pointer-in-agents-md.md`.
+  - Draft tickets 0069 to 0073 have a note saying `product.md` needs updating. Those notes are now out of date, so reword them before setting the tickets to ready (not saved to the inbox: it's an edit to existing drafts).
+  - Codex keeps its session between rounds, so a Codex review that started before this change still has the old `product.md` text from its round 1. Only the new rounds' prompts leave it out. Known limit, not saved.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -115,6 +119,70 @@ speck no longer has a living spec. The code, the tickets and the tests are the r
     ],
     "escalation_question": "",
     "summary": "The separate spec is removed from installation, documentation and new reviews, and all 501 reported tests pass. One upgrade case remains: reviews already underway can still send the old spec and ask reviewers to check it. Fix that before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "34270a45a6fbd440f69cb37dd80fe23ef8d81e3a",
+    "thread_id": "01a1226b-f79c-7e12-8a9c-90f33abeb8a3",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 584955,
+      "cached_input_tokens": 437376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1581,
+      "reasoning_output_tokens": 59
+    },
+    "saved_at": "2026-10-09T20:50:50.661Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs cmdInit copies only config.yml and writes an AGENTS.md pointer without product.md. The AC1 tests cover fresh installation, preservation of existing product.md bytes with and without --force, and template deletion; all pass in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "validateVerdict, reviewerPrompt, roundOnePrompt and reviewPack remove the spec requirement and content while retaining compatibility with old verdicts. test/product-0068.test.mjs covers validation, fresh and rebuilt prompts, legacy cached prompts, and displaying old rounds; all pass. The F1 regression exercises the actual later-round command-review path and checks preservation of saved test output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Search of all specified skills, templates and documents found no prohibited mentions. AC3 tests verify the build skill has no spec-update step and overlap checks cover both ideas folders and both tickets folders; all pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "speck/product.md and templates/product.md are deleted. AC4 checks repository-file deletion and removal of other tests' dependencies on it. Supplied npm test output reports 502 passing tests and zero failures. Tests were not independently rerun because this review is read-only and the suite writes temporary files."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:641",
+        "issue": "Legacy cached prompts previously resent the removed spec and its review instruction. roundOnePrompt now detects those copies and rebuilds them using the current template, preserving saved test output. The new AC2 (F1) regression covers this upgrade case.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The separate spec is removed from installation, documentation and review requirements. The upgrade issue is fixed, existing spec files in other projects remain untouched, and historical reviews still display. All 502 reported tests pass. No blocking concerns remain."
   }
 }
 ```
