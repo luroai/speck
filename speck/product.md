@@ -94,15 +94,26 @@ Everything happens in the local repo, with no PR.
     `speck panel` serves it on `127.0.0.1` at port 4777, or the port given with `--port <n>` (or `--port=<n>`), prints the URL and runs until stopped.
     A port already in use, or a `--port` that isn't a whole number from 1 to 65535, stops it with a plain message and a non-zero exit.
     It answers only requests whose `Host` is `127.0.0.1:<port>` or `localhost:<port>` (anything else gets 403, against DNS rebinding) and only `GET`, apart from the one write below (any other method gets 405, whatever the path).
-    `GET /` is the page and `GET /api/state` is the same JSON as `status --json`, read afresh for every request.
-    The page is read from `templates/panel.html` for every request too, so a change to it shows on a browser reload without restarting `speck panel`, with the same token for the life of the server.
-    A change to the server code (`scripts/speck.mjs`) still needs `speck panel` restarted.
+    `GET /` is the page and `GET /api/state` is the same JSON as `status --json`, read afresh for every request, plus `restart_error` while the last restart has failed (below).
+    The page is read from `templates/panel.html` for every request too, so a change to it shows on a browser reload without restarting `speck panel`.
+    `speck panel` restarts by itself when its code changes.
+      The process you start only launches the first server process and waits until the last one has gone; each server process serves the panel and checks every `.mjs` file in the CLI's own folder (`scripts/`, or `.speck/scripts/` in a repo set up with `speck init`) four times a second.
+      Once they've been unchanged for half a second and their content differs from the code it runs, it starts a server process on the new code, hands it the socket listening on the port, and stops once the new one is ready, so the watching and restarting are new code too.
+      A change shows within a few seconds, and several files written close together, such as by a merge, cause one restart.
+      The old server closes its idle connections at once and stops after answering what it was already answering, so a browser's next request reaches the new code.
+      The token stays the same for as long as `speck panel` runs, through every restart, so an open page carries on, Set ready included, without a reload.
+      It prints its URL once, when it starts, and a line each time it restarts.
+      If the new code fails to start (it fails to load, throws while starting, exits, or isn't ready within 10 seconds), the old server keeps serving, `speck panel` prints the error, and `/api/state` gives `restart_error`, one line naming the error (such as `SyntaxError: Unexpected token '{'`).
+      The page then shows, under the header, that speck panel couldn't restart, with that line, until a later change starts or the code is put back as it was running.
+      Every change after a failure tries again.
+      Ctrl+C or a kill stops it, and its server processes, including one still starting, stop by themselves once it has gone, however it went.
+      Only `cmdPanel`, the part of the process you start that launches the first server, never runs new code: a change to it takes effect when `speck panel` is started again.
     If the page can't be read, `GET /` gets a plain-text 500 naming the file, and the server keeps running.
     `GET /api/tickets/<id>/log` gives `{"text": "…", "truncated": true|false}`: the last 200 lines of `speck/.cache/runs/<id>.log` in the main checkout (the build's output from `speck run`), read afresh for every request, with trailing blank lines dropped and `truncated` true when the file has more than 200 lines.
     A ticket with no log gets empty text, still with 200.
     A ticket speck can't read gives a 500 with the error, and the server keeps running.
     Any other path gets 404.
-    Its one write is `POST /api/tickets/<id>/ready`, which the Set ready button sends: it accepts it only with an `Origin` of `http://127.0.0.1:<port>` or `http://localhost:<port>` and an `X-Speck-Token` header holding the token the server makes afresh each time it starts and puts only into the page it serves.
+    Its one write is `POST /api/tickets/<id>/ready`, which the Set ready button sends: it accepts it only with an `Origin` of `http://127.0.0.1:<port>` or `http://localhost:<port>` and an `X-Speck-Token` header holding the token `speck panel` makes afresh each time it's started (kept through its own restarts) and puts only into the page it serves.
     Anything else gets 403 and changes nothing, because the `Host` check alone doesn't stop a web page in your browser posting a form to `127.0.0.1`.
     It then sets the ticket ready exactly as `speck set <id> status ready` does and commits only that ticket's file as `speck(<id>): ready` (`speck start` needs it committed), leaving everything else in the checkout, staged or not, as it was.
     It refuses, changing and committing nothing, with the reason as JSON: a ticket that fails lint (422, with the same messages as `speck lint`), one that isn't a draft (409), an id with no ticket (404) and a checkout that isn't on `base_branch` (409).
