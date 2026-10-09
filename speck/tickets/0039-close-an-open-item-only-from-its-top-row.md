@@ -1,7 +1,7 @@
 ---
 id: "0039"
 title: "Close an open item only from its top row"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T14:54:14.683Z"
 ---
 # 0039 · Close an open item only from its top row
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In the panel's Shaping area, clicking anywhere inside an open ticket or idea closes it, including clicks in its details. So reading a ticket at Gate 1 or selecting a criterion to copy keeps collapsing it.
@@ -47,9 +47,15 @@ An open ticket or idea closes only when you click its top row, so you can click 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The AC4 test claims to test text selection but only repeats click coverage.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 674,315
+- Elapsed since build started: 12 min
+- Changed lines: 29 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: a drag that selects text inside the top row itself (for example the title) still opens or closes the item, because the browser ends the drag with a click there. Could ignore clicks that end a non-empty selection.
 - Follow-up idea: hovering an open item's details still lightens the whole item (`.item.ticket:hover`), although only the top row is clickable now.
