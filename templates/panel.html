@@ -89,6 +89,13 @@
   .q .rank { font-family: "Liberation Mono", monospace; color: var(--accent); font-size: 12px; }
   .q.wait { opacity: .5; }
   .q.wait .rank { color: var(--muted); }
+  /* A running build's pause icon (two bars), or a paused one's play icon (a triangle), in the rank space */
+  .q .toggle-build { position: relative; width: 16px; height: 14px; padding: 0; vertical-align: -2px; background: none; border: 0; color: var(--muted); cursor: pointer; }
+  .q .toggle-build:hover { color: var(--text); }
+  .q .toggle-build.pause::before, .q .toggle-build.pause::after { content: ''; position: absolute; top: 2px; width: 3px; height: 10px; background: currentColor; }
+  .q .toggle-build.pause::before { left: 4px; } .q .toggle-build.pause::after { left: 9px; }
+  .q .toggle-build.play::before { content: ''; position: absolute; top: 2px; left: 5px; border: 5px solid transparent; border-left: 8px solid currentColor; border-right: 0; }
+  .q .toggle-refused { margin: 4px 0 0 34px; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .q .indent { margin-left: 34px; }
   .question { margin: 6px 0 4px 34px; padding: 6px 10px; border-left: 2px solid var(--warn); background: #2a2621; color: #ddd3c4; }
   .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 8px 0 4px 34px; }
@@ -346,7 +353,9 @@ function panelModel(state) {
       const exited = t.build_exit && typeof t.build_exit === 'object' && t.status !== 'blocked';
       const exit_label = !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
-      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label, resume: resumeOf(t, state.resume_command),
+      // A build speck run launched and is running can be paused and played from its row.
+      const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
+      return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label, resume: resumeOf(t, state.resume_command),
         exit_message: exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         since: inFlight ? start : null, counter: inFlight && start !== null ? counter(Date.now() - start) : null };
     }),
@@ -599,7 +608,7 @@ function linkTarget(s, from) {
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
 const LOG_MS = 1000; // how often an open queue ticket's log is asked for
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready and each priority change
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause and play
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -647,6 +656,8 @@ const settingReady = new Set(); // ids whose Set ready request hasn't been answe
 const refused = new Map(); // id → why the server refused to set it ready
 let priorityMenu = null; // the id of the draft whose priority menu is open, or null
 const priorityRefused = new Map(); // id → why the server refused to set its priority, until the next click on its tag
+const toggling = new Set(); // ids whose pause or play request hasn't been answered yet
+const toggleRefused = new Map(); // id → why the server refused to pause or play its build, until the next click on its icon
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
 const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
@@ -945,18 +956,19 @@ function shapingToggle(m) {
   $('shaping-section').className = `shaping ${shapingView}`;
 }
 // A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
-// A building or reviewing ticket that isn't red has a dot moving on its current step.
+// A building or reviewing ticket that isn't red has a dot moving on its current step, unless its build is paused.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const id = String(t.id), isOpen = openQueue.has(id);
-  const top = el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
+  const top = el('div', 'top', null, el('span', 'rank', null, toggleIcon(t)), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
   const q = el('div', `${cls}${isOpen ? ' open' : ''}`, null, top);
+  if (toggleRefused.has(id)) q.appendChild(el('div', 'toggle-refused', toggleRefused.get(id)));
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
-  const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red; // an agent is at work on it
+  const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red && !t.paused; // an agent is at work on it
   for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : moving ? 'now moving' : 'now') : null, s.label));
   q.appendChild(bar);
   if (!t.inFlight) {
@@ -977,6 +989,40 @@ function queueItem(t) {
     q.appendChild(logBox(id));
   }
   return q;
+}
+// A pause icon on a building or reviewing ticket whose build speck run launched and is running, or a play icon while
+// it's paused. Clicking it pauses or plays the build, and opens or closes nothing.
+function toggleIcon(t) {
+  if (!t.pausable) return null;
+  const what = t.paused ? 'play' : 'pause';
+  const b = el('button', `toggle-build ${what}`);
+  b.type = 'button';
+  b.title = t.paused ? 'Play build' : 'Pause build';
+  b.addEventListener('click', e => { e.stopPropagation(); toggleBuild(String(t.id), what); });
+  return b;
+}
+// The server pauses or plays the build as speck pause or speck play does. Until the next poll the icon shows what it
+// did; a refusal shows under the top row until the next click on the icon.
+async function toggleBuild(id, what) {
+  if (toggling.has(id)) return;
+  toggleRefused.delete(id);
+  toggling.add(id);
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/${what}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (res.ok) {
+      const t = state && state.tickets.find(x => x && String(x.id) === id);
+      if (t) t.paused = what === 'pause';
+    } else {
+      let why = null;
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      toggleRefused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
+    }
+  } catch {
+    toggleRefused.set(id, `Couldn't reach the panel server, so the build wasn't ${what === 'pause' ? 'paused' : 'played'}.`);
+  }
+  toggling.delete(id);
+  render();
 }
 // An open queue ticket's log, as text in a box with its own scrollbar.
 const logShown = log => (!log ? 'Loading the log…' : log.failed ? "Couldn't load the log yet. Trying again every second…" : logText(log));
@@ -1062,7 +1108,7 @@ function setLogText(node, text) {
   }
   setText(node, text);
 }
-const queueCounter = t => (t.counter !== null ? t.counter : '');
+const queueCounter = t => (t.counter !== null ? `${t.paused ? 'Paused · ' : ''}${t.counter}` : t.paused ? 'Paused' : '');
 const queuedLine = t => el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : ''));
 // Puts new text in a node with one text node by replacing only the characters that differ, in place, so a selection in
 // or across it stays and moves with the text. A browser would pull a selection's end inside those characters back to
@@ -1099,7 +1145,7 @@ function queueUpdate(q, t) {
 // The counters run on their own 1-second timer, apart from the state poll and render(), so they move on between polls.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.
 const COUNTER_MS = 1000;
-let counters = []; // [counter node, started in ms] for each in-flight queue row with a started, from the last render
+let counters = []; // [counter node, started in ms, paused] for each in-flight queue row with a started, from the last render
 let counterTimer = null;
 function startCounters(list) {
   counters = list;
@@ -1107,7 +1153,7 @@ function startCounters(list) {
   if (counters.length && counterTimer === null) counterTimer = setInterval(tickCounters, COUNTER_MS);
 }
 function tickCounters() {
-  for (const [sub, since] of counters) setText(sub, counter(Date.now() - since));
+  for (const [sub, since, paused] of counters) setText(sub, `${paused ? 'Paused · ' : ''}${counter(Date.now() - since)}`);
 }
 // Under a blocked question: the command that reopens the build's session, with a button that copies it.
 function resumeLine(t) {
@@ -1197,10 +1243,10 @@ function render() {
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
-  const rows = keptItems('queue', m.queue, t => String(t.id), t => openQueue.has(String(t.id)), queueItem,
+  const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), toggleRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
-  startCounters(m.queue.flatMap((t, i) => (t.counter !== null ? [[child(child(rows[i], 'top'), 'sub'), t.since]] : [])));
+  startCounters(m.queue.flatMap((t, i) => (t.counter !== null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : [])));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
   queueIds = new Set(m.queue.map(t => String(t.id)));

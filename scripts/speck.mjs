@@ -1667,6 +1667,17 @@ function buildPaused(runs, id) {
     && Number.isInteger(rec.pid) && rec.pid > 0 && mark.pid === rec.pid && mark.session === rec.session && pidAlive(rec.pid);
 }
 
+// True while a build launched by `speck run` is running, as `speck pause` sees it: its run record has no exit, and its
+// pid is alive and leads its own process group (`leads`).
+function buildRunning(runs, id, leads) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return false;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return false; }
+  return !!rec && typeof rec === 'object' && !Array.isArray(rec) && !Object.hasOwn(rec, 'exited')
+    && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid) && leads(rec.pid);
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
@@ -1676,6 +1687,9 @@ export function statusData(repo) {
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   const runs = path.join(main, 'speck', '.cache', 'runs');
+  // Whether a pid leads its own process group, as a build speck run launched does. ps runs once, and only if needed.
+  let rows = null;
+  const leads = pid => { try { rows ??= processRows(); } catch { rows = []; } return rows.some(([p, , g]) => p === pid && g === pid); };
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const question = contentLines(t.sections['blocked question']).join('\n');
@@ -1706,6 +1720,7 @@ export function statusData(repo) {
       build_exit: buildExit(runs, t.fm.id),
       session: buildSession(runs, t.fm.id),
       paused: buildPaused(runs, t.fm.id),
+      build_running: buildRunning(runs, t.fm.id, leads),
     };
   });
   // Lowest priority number first, no priority last, then by id. (Infinity - Infinity is NaN, which falls through to the id.)
@@ -1782,6 +1797,14 @@ function panelSetReady(repo, id) {
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   return { status: 200, body: { ok: true, id: pad } };
+}
+
+// The panel's pause and play icon: pauses or plays a build exactly as `speck pause <id>` or `speck play <id>` does,
+// refusing for the same reasons with the same words.
+function panelPausePlay(repo, id, what) {
+  try { findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
+  try { return { status: 200, body: { ok: true, message: (what === 'pause' ? pauseBuild : playBuild)(repo, [id]) } }; }
+  catch (e) { if (e instanceof SpeckError) return { status: 409, body: { error: e.message } }; throw e; }
 }
 
 // The panel's other write: set a draft ticket's priority, as `speck set <id> priority <n>` does, and commit only that
@@ -1884,8 +1907,8 @@ function codeHash() {
   return h.digest('hex');
 }
 
-// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the two writes,
-// POST /api/tickets/<id>/ready and POST /api/tickets/<id>/priority/<n>. Every request reads the files afresh, the page
+// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the writes,
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n> and POST /api/tickets/<id>/pause or /play. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -1940,6 +1963,15 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelSetPriority(repo, priority[1], priority[2]);
+        return send(res, out.status, 'application/json', JSON.stringify(out.body));
+      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    const toggle = where.match(/^\/api\/tickets\/(\d{1,4})\/(pause|play)$/);
+    if (req.method === 'POST' && toggle) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      try {
+        const out = panelPausePlay(repo, toggle[1], toggle[2]);
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
@@ -2321,9 +2353,10 @@ function saveRecord(file, rec) {
   catch (e) { fs.rmSync(tmp, { force: true }); throw e; }
 }
 
-// Stops the build, then marks it paused. If either fails, whatever it stopped is carried on again.
-function cmdPause(args) {
-  const b = runRecord(findRepoRoot(), args, 'pause');
+// Stops the build, then marks it paused. If either fails, whatever it stopped is carried on again. Returns what it
+// did, for `speck pause` to print and the panel's pause icon to answer with.
+function pauseBuild(repo, args) {
+  const b = runRecord(repo, args, 'pause');
   if (!b.running) throw new SpeckError(`${b.id} has no running build launched by speck run, so there's nothing to pause.`);
   if (b.paused) throw new SpeckError(`${b.id} is already paused. Run \`speck play ${b.id}\` to carry it on.`);
   const { sent, error } = signalBuild(b, 'SIGSTOP');
@@ -2332,20 +2365,22 @@ function cmdPause(args) {
     carryOn(sent);
     throw new SpeckError(`Couldn't mark ${b.id} paused in ${b.mark} (${e.message}), so it's still running.`);
   }
-  console.log(`${b.id} paused (session ${b.rec.session ?? 'unknown'}). Run \`speck play ${b.id}\` to carry it on.`);
+  return `${b.id} paused (session ${b.rec.session ?? 'unknown'}). Run \`speck play ${b.id}\` to carry it on.`;
 }
+function cmdPause(args) { console.log(pauseBuild(findRepoRoot(), args)); }
 
 // Carries the build on, then drops the paused mark. Until both have worked it stays marked paused, so play can be run again.
-function cmdPlay(args) {
-  const b = runRecord(findRepoRoot(), args, 'play');
+function playBuild(repo, args) {
+  const b = runRecord(repo, args, 'play');
   if (!b.paused) throw new SpeckError(`${b.id} isn't paused, so there's nothing to play.`);
   const { error } = signalBuild(b, 'SIGCONT');
   if (error) throw new SpeckError(`Couldn't play ${b.id}: ${error} It may be only partly playing, so it's still marked paused. Run \`speck play ${b.id}\` again.`);
   try { fs.rmSync(b.mark, { force: true }); } catch (e) {
     throw new SpeckError(`${b.id} is playing, but its paused mark ${b.mark} couldn't be removed (${e.message}). Run \`speck play ${b.id}\` again.`);
   }
-  console.log(`${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`);
+  return `${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`;
 }
+function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
 
 function cmdDiffstat() {
   const repo = findRepoRoot();

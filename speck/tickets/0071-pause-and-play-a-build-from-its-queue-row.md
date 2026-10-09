@@ -39,6 +39,9 @@ Each running build in the queue has a pause icon on the left of its row, which t
 - After 0069, which changes the same row, and after 0070, which does the pausing and playing.
 - The space on the left is the empty `rank` span in `queueItem` in `templates/panel.html`.
 - product.md's Queue description needs updating.
+- product.md was removed in 0068, so the README's `speck pause` row says what the panel's icon does instead.
+- `speck status --json` gains `build_running` for each ticket, so the page knows which builds speck run launched are running, as `speck pause` sees them.
+- Self-check: no changes to the code; added a test that a second click on the icon before the first is answered sends nothing more.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
