@@ -1,7 +1,7 @@
 ---
 id: "0056"
 title: "Hide ticketed ideas from the panel's Ideas list"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T19:06:38.670Z"
+finished: "2026-10-09T19:15:54.006Z"
 
 ---
 # 0056 · Hide ticketed ideas from the panel's Ideas list
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel's Ideas list shows ideas that have already become tickets, after the ones still waiting. Once ticketed, the work lives in the tickets, so these rows are clutter that hides the ideas still to shape.
