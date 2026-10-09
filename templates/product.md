@@ -4,6 +4,7 @@
 The living spec. A new agent session or a person should understand the product in about five minutes.
 Describe the present, not history; history lives in speck/tickets/.
 Updated on each ticket's branch during the build and checked by the reviewer. It reaches main when you ship.
+Write one sentence per line, so tickets built in parallel can each add sentences without clashing.
 -->
 
 Last updated by ticket: 0000

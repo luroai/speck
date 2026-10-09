@@ -1,7 +1,7 @@
 ---
 id: "0040"
 title: "Keep selected text through the panel refresh"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0040 · Keep selected text through the panel refresh
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel rebuilds the whole page on every 2-second refresh, so any text you select in an open ticket or idea is lost within 2 seconds. You can't reliably copy a criterion or a lint message out of the panel.

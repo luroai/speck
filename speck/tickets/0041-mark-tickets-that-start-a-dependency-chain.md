@@ -1,7 +1,7 @@
 ---
 id: "0041"
 title: "Mark tickets that start a dependency chain"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0041 · Mark tickets that start a dependency chain
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Tickets can wait on each other through `after:`, but the panel doesn't show where a chain begins. So when choosing what to set ready or kick off first, you have to read every ticket's `after:` line to find the ones that unblock others.

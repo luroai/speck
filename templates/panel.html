@@ -85,6 +85,7 @@
   .act b { color: #a9adb6; font-weight: 400; }
   .q.blocked { border-left: 2px solid var(--bad); padding-left: 12px; }
   .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
+  .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: ui-monospace, monospace; font-size: 12px; }
   .q .tag.high { color: var(--warn); border-color: #5a4529; }
   .next { color: var(--ok); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; border: 1px solid #36513d; padding: 0 5px; }
 
@@ -93,6 +94,7 @@
   .stat { padding: 8px 14px; border-right: 1px solid var(--line-soft); }
   .stat b { font-size: 15px; font-weight: 600; margin-right: 6px; }
   .stat span { font-size: 11px; color: var(--muted); }
+  .stats[hidden] { display: none; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 6px 14px; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
   tr:last-child td { border-bottom: 0; }
@@ -141,6 +143,7 @@
   </section>
   <section class="full">
     <div class="sh"><h2>Shipped</h2><span class="n" id="shipped-n"></span><span class="hint">latest 5</span></div>
+    <div class="stats" id="shipped-stats" hidden></div>
     <table><tbody id="shipped"></tbody></table>
   </section>
 </main>
@@ -162,17 +165,34 @@ function progress(t) {
   const current = t.status === 'ready' ? -1 : approved ? 4 : done.indexOf(false); // approved: Ship is current
   return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
 }
+// The middle value, or the mean of the two middle ones; null with no values.
+function median(values) {
+  const v = [...values].sort((a, b) => a - b), mid = Math.floor(v.length / 2);
+  return !v.length ? null : v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
+}
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+// When a ticket shipped, in the browser's time zone: HH:MM today, otherwise D Mon HH:MM, or a dash with no time.
+function shippedAt(ms, now) {
+  if (ms === null) return '–';
+  const d = new Date(ms), pad = n => String(n).padStart(2, '0'), hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return sameDay(d, new Date(now)) ? hm : `${d.getDate()} ${MONTHS[d.getMonth()]} ${hm}`;
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const ideas = state && Array.isArray(state.ideas) ? state.ideas : [];
   const is = (...statuses) => t => statuses.includes(t.status);
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
+  const now = Date.now();
   const done = tickets.filter(is('done')).map(t => {
     const start = time(t.started), end = time(t.finished);
-    return { ...t, end, roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+    return { ...t, end, when: shippedAt(end, now), roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+      exactMinutes: start !== null && end !== null ? (end - start) / 60000 : null,
       minutes: start !== null && end !== null ? Math.round((end - start) / 60000) : null };
   });
+  // Each median covers the done tickets that have its data: both times, at least one review round, or tokens recorded.
+  const stat = (values, round) => { const m = median(values); return { median: m === null ? null : round(m), count: values.length }; };
   // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 5.
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
   return {
@@ -182,11 +202,22 @@ function panelModel(state) {
     // One list: in-flight tickets, then ready ones, each group in JSON order.
     queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(t => {
       const inFlight = t.status !== 'ready', start = time(t.started);
-      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked', waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [],
+      // A build from speck run that has exited while its ticket is still in hand needs you, as a blocked ticket does.
+      const exited = t.build_exit && typeof t.build_exit === 'object' && t.status !== 'blocked';
+      const exit_label = !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+        : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
+      return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label,
+        exit_message: exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null, waiting_on: Array.isArray(t.waiting_on) ? t.waiting_on : [],
         minutes: inFlight && start !== null ? Math.max(0, Math.floor((Date.now() - start) / 60000)) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
     shippedTotal: done.length,
+    stats: {
+      today: done.filter(t => t.end !== null && sameDay(new Date(t.end), new Date(now))).length,
+      minutes: stat(done.filter(t => t.exactMinutes !== null).map(t => t.exactMinutes), Math.round),
+      rounds: stat(done.filter(t => t.roundCount > 0).map(t => t.roundCount), n => Math.round(n * 10) / 10),
+      tokens: stat(done.filter(t => t.tokens > 0).map(t => t.tokens), Math.round),
+    },
   };
 }
 // ---- end model ----
@@ -321,7 +352,7 @@ function shapingToggle(m) {
   $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length));
   $('shaping-section').className = `shaping ${shapingView}`;
 }
-// A queue row: the ticket, its five-step bar, then what's under it. Only a blocked ticket is red.
+// A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t), el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : '')));
@@ -332,8 +363,12 @@ function queueItem(t) {
     q.appendChild(el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : '')));
     return q;
   }
-  if (t.red && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
-  q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.red ? ` · answer the question, then run /speck-build ${t.id}` : '')));
+  if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
+  if (t.exit_label) {
+    q.appendChild(el('div', 'act bad', t.exit_label));
+    if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
+  }
+  q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
   if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
   return q;
 }
@@ -357,8 +392,15 @@ function render() {
   fill('shipped', m.shipped.map(t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
     const name = el('td', null, null, el('span', 'id', t.id), document.createTextNode('\u00a0 ' + (t.title ?? '')));
-    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')));
+    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when));
   }), 'Nothing shipped yet.');
+  const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
+    el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));
+  const med = (s, fmt = String) => (s.median === null ? '–' : fmt(s.median));
+  $('shipped-stats').hidden = m.shippedTotal === 0;
+  $('shipped-stats').replaceChildren(...(m.shippedTotal ? [stat(m.stats.today, 'shipped today'),
+    stat(med(m.stats.minutes), 'median minutes', m.stats.minutes), stat(med(m.stats.rounds), 'median review rounds', m.stats.rounds),
+    stat(med(m.stats.tokens, n => n.toLocaleString('en-GB')), 'median tokens', m.stats.tokens)] : []));
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
   const status = el('div', connected ? 'pill' : 'pill off', null, el('span', connected ? 'live' : 'live off'),

@@ -2949,7 +2949,8 @@ test('0032 AC3: product.md says several tickets can be built at once, with no de
   assert.doesNotMatch(product, /one ticket at a time/i);
   assert.doesNotMatch(product, /not for running builds in parallel/i);
   const limits = product.split('## Known limits')[1].split('\n## ')[0];
-  const line = limits.split('\n').find(l => /several tickets can be built at once/i.test(l));
+  // A list item spans several lines (one sentence per line), so read it whole.
+  const line = limits.split(/\n(?=- )/).map(item => item.replace(/\s*\n\s*/g, ' ')).find(l => /several tickets can be built at once/i.test(l));
   assert.ok(line, 'Known limits says several tickets can be built at once');
   assert.match(line, /its own worktree/i);
   assert.match(line, /no dependency scheduling/i);

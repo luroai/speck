@@ -1429,12 +1429,30 @@ function selfCheck(lines) {
   return null;
 }
 
+// How a build launched by `speck run` ended, from its run record and log in the main checkout's speck/.cache/runs/
+// (where speck run keeps them): {at, code, message}, or null when there's no record, it can't be read or the build
+// hasn't exited. message is the last 50 lines of the log, trailing blank lines dropped, or null when it's missing or empty.
+function buildExit(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return null;
+  const dir = runs;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(dir, `${id}.json`), 'utf8')); } catch { return null; }
+  if (!rec || typeof rec !== 'object' || !Object.hasOwn(rec, 'exited')) return null;
+  let message = null;
+  try { message = fs.readFileSync(path.join(dir, `${id}.log`), 'utf8').replace(/\s+$/, '').split('\n').slice(-50).join('\n') || null; } catch { /* no log */ }
+  return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
   const cfg = loadConfig(repo);
   const tickets = statusTickets(repo, cfg);
   const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
+  let main = repo;
+  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
+  const runs = path.join(main, 'speck', '.cache', 'runs');
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const question = contentLines(t.sections['blocked question']).join('\n');
@@ -1461,6 +1479,7 @@ export function statusData(repo) {
         tokens: (num(r?.meta?.usage?.input_tokens) || 0) + (num(r?.meta?.usage?.output_tokens) || 0),
       })),
       waiting_on: after.filter(id => !done.has(padId(id))),
+      build_exit: buildExit(runs, t.fm.id),
     };
   });
   // Lowest priority number first, no priority last, then by id. (Infinity - Infinity is NaN, which falls through to the id.)
@@ -1673,10 +1692,28 @@ function cmdRun() {
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
-  const finished = (id, log, code, signal, failed) => {
+  // Adds the exit to a build's run record, keeping what's there, so the board can tell a build that has finished.
+  // Written to a temporary file and renamed into place, so nothing reading it sees half a record.
+  const recordExit = (id, file, code) => {
+    const tmp = `${file}.${process.pid}.tmp`;
+    try {
+      const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec)) throw new Error('it isn\'t a JSON object');
+      fs.writeFileSync(tmp, `${JSON.stringify({ ...rec, exited: new Date().toISOString(), exit_code: code }, null, 2)}\n`);
+      fs.renameSync(tmp, file);
+    } catch (e) {
+      fs.rmSync(tmp, { force: true, recursive: true });
+      console.error(`${id}: couldn't save its exit in ${path.relative(repo, file)} (${e.message}), so the board won't show that this build has finished.`);
+    }
+  };
+
+  const finished = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
-    else console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
+    else {
+      console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
+      recordExit(id, recordFile, signal ? null : code);
+    }
     let status = null;
     // From the same reading as the board, so a build's own worktree copy of the ticket counts.
     try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { /* unreadable: nothing to say */ }
@@ -1707,7 +1744,7 @@ function cmdRun() {
     fs.closeSync(fd);
     let done = false;
     child.on('error', e => { if (!done) { done = true; finished(id, log, null, null, e.message); } });
-    child.on('exit', (code, signal) => { if (!done) { done = true; finished(id, log, code, signal, null); } });
+    child.on('exit', (code, signal) => { if (!done) { done = true; finished(id, log, code, signal, null, recordFile); } });
     child.unref();
     if (child.pid) {
       try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {

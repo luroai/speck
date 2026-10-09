@@ -18,7 +18,7 @@ worktree_setup: ""               # run in each new worktree, for example: npm ci
 # speck run: starts a build for each ready ticket. {id} is the ticket, {session} a fresh UUID for the build's session.
 # The default skips every permission prompt, because nobody is there to answer them: the agent can run any command.
 build_command: 'claude -p "/speck-build {id}" --session-id {session} --dangerously-skip-permissions'
-max_parallel_builds: 1           # how many builds speck run keeps going at once
+max_parallel_builds: 5           # how many builds speck run keeps going at once
 
 commands:
   test: "npm test"
