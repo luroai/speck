@@ -1,7 +1,7 @@
 ---
 id: "0039"
 title: "Close an open item only from its top row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T14:54:14.683Z"
 ---
 # 0039 · Close an open item only from its top row
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 In the panel's Shaping area, clicking anywhere inside an open ticket or idea closes it, including clicks in its details. So reading a ticket at Gate 1 or selecting a criterion to copy keeps collapsing it.
