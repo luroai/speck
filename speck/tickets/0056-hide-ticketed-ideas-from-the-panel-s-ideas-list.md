@@ -1,7 +1,7 @@
 ---
 id: "0056"
 title: "Hide ticketed ideas from the panel's Ideas list"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:06:38.670Z"
 ---
 # 0056 · Hide ticketed ideas from the panel's Ideas list
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 The panel's Ideas list shows ideas that have already become tickets, after the ones still waiting. Once ticketed, the work lives in the tickets, so these rows are clutter that hides the ideas still to shape.
@@ -47,7 +47,74 @@ The panel's Ideas list shows only ideas that haven't become tickets yet.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 287,312
+- Elapsed since build started: 8 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "392ca14569d12838b4c1668085916ab9bc8399aa",
+    "thread_id": "01a12216-02f3-7d93-a6ad-877e8a56f4d7",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 286453,
+      "cached_input_tokens": 219520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 859,
+      "reasoning_output_tokens": 65
+    },
+    "saved_at": "2026-10-09T19:14:21.207Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel filters ticketed prefixes, inbox and dropped while preserving JSON order. The 0056 AC1 model tests and page test exercise these behaviours and passed independently."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html shapingToggle uses m.ideas.length. The 0056 AC1, AC2 page test verifies Ideas · 3 alongside three ticketed ideas; it passed independently."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html render displays 'No ideas waiting.' Both 0056 AC3 tests verify the empty message, including an empty source list and all ideas excluded; both passed independently."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html render, keptItems and openIdeas preserve remaining open rows. The 0056 AC4 test opens three ideas, tickets one, refreshes twice and verifies its removal and the others remaining open; it passed independently."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The updated Ideas description accurately covers filtering, order, refresh behaviour and the empty message. Changes remain within scope; CLI output and Inbox behaviour are unchanged."
+    },
+    "escalation_question": "",
+    "summary": "Ticketed ideas now disappear from the panel’s Ideas list, its count matches the remaining ideas, and other open notes stay open after refresh. All six new tests passed independently. The existing test updates reflect the intended behaviour without weakening their remaining checks. No blocking concerns found."
+  }
+}
+```
+
+</details>
