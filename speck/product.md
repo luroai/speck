@@ -23,6 +23,16 @@ Everything happens in the local repo, with no PR.
   It commits the notes on the ticket branch before `speck close`, so they ship with the ticket, and its final report says how many went to the inbox.
   `/speck-review` sends minor findings that aren't fixed through the same step.
   This lives in the skill instructions only.
+- **Triage the inbox from chat:** asking the agent to "triage the inbox" runs the triage section of `/speck-ticket` on every note whose `Status:` is `inbox`.
+  If there are none, it says the inbox is empty in one line.
+  Without asking, it sets to `dropped` each inbox note that's already done or covered by another idea note, a ticket or `product.md`, keeps one of any inbox notes that duplicate each other, and names each one dropped with the reason.
+  It then puts at most three of the rest to you, each with its title, its `From ticket:` and a one-line reason, and asks whether to ticket it or drop it.
+  "Ticket it" makes a draft ticket with the note as `--source`, which sets the note to `ticketed (<id>)`, and "drop it" sets the note to `dropped`.
+  Triage never sets a ticket to `ready`.
+  At the end, each note still `inbox` gets a `Triaged: <n>` line, added or raised by one, and a note that reaches `Triaged: 2` is set to `dropped` instead and listed, so follow-ups nobody picks drop out by themselves.
+  It commits the notes it changed, and any tickets it made, staged by name, as `speck: triage inbox`.
+  `dropped` is an idea status only triage sets.
+  This lives in the skill instructions only.
 - **CLI** (`scripts/speck.mjs`, Node 20+, no dependencies):
   - `init`: one-step install and update, run as `npx github:luroai/speck init`.
     It creates `speck/`, copies the skills and the CLI (into `.speck/`) into the project, points AGENTS.md and CLAUDE.md at it, and runs `doctor`.
@@ -312,6 +322,7 @@ Everything happens in the local repo, with no PR.
 - `speck run` tells a build is still running only by its process id, so a reused process id can make it treat a finished build as still running.
 - An idea's `ticketed (…)` status is only ever added to.
   Cancelling or finishing one of its tickets doesn't change it.
+- `speck status` counts a `dropped` idea as waiting, because it counts every idea that isn't ticketed as waiting.
 - A `claude-subagent` reviewer, or a command reviewer, is read-only only because its prompt says so.
   Unlike Codex, speck runs it with no sandbox, so a command should use the tool's own read-only mode (for example Cursor's `--mode ask` or Claude Code's `--permission-mode plan`).
 - The Claude Code command reviewer has been run end to end (two rounds, `changes_requested` then `approve`).
