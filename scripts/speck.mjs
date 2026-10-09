@@ -138,8 +138,14 @@ export function setField(text, key, value) {
 }
 
 const blank = v => v === undefined || v === null || String(v).trim() === '';
-// A ticket's type: "bug", or null when it's missing or blank. A bare `type:` parses as an empty mapping, which is blank too.
-const ticketType = v => (blank(v) || (v && typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length) ? null : v);
+// A ticket's type: null when it's missing or blank, otherwise its value ("bug" is the only valid one).
+// A bare `type:` parses as an empty mapping, just like `type: {}`, so the frontmatter line itself says which it was.
+function ticketType(ticket) {
+  const v = ticket.fm.type;
+  if (v === undefined || v === null || (typeof v === 'string' && !v.trim())) return null;
+  const line = ticket.raw.slice(0, fmEnd(ticket.raw)).match(/^type:(.*)$/m);
+  return line && stripComment(line[1]).trim() === '' ? null : v;
+}
 
 // The reviewer model and effort for a ticket: a ticket value wins, a blank one falls back to config, null means "reviewer's default".
 export function reviewerSettings(fm = {}, cfg = {}) {
@@ -254,7 +260,7 @@ export function lintTicket(ticket, cfg) {
   if (!['S', 'M', 'L'].includes(fm.size)) errors.push(`size must be S or M (got "${fm.size}").`);
   if (fm.size === 'L') errors.push('size L can never be ready: split it into sibling tickets.');
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
-  if (ticketType(fm.type) !== null && fm.type !== 'bug') errors.push(`type must be blank or bug (got "${fm.type}").`);
+  if (ticketType(ticket) !== null && fm.type !== 'bug') errors.push(`type must be blank or bug (got "${fm.type}").`);
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
   if (fm.builder && modelFamily(fm.builder) === modelFamily(fm.reviewer) && !cfg.allow_same_model_review)
     errors.push(fm.builder === fm.reviewer
@@ -1547,7 +1553,7 @@ export function statusData(repo) {
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     return {
       ...t.fm,
-      type: ticketType(t.fm.type),
+      type: ticketType(t),
       path: posix(path.relative(t.at || repo, t.file)),
       worktree: t.at || null,
       acceptance_criteria: criteriaText(t.sections['acceptance criteria']),

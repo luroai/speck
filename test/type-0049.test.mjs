@@ -17,11 +17,12 @@ const colour = name => (css().match(new RegExp(`--${name}:\\s*([^;]+);`)) || [])
 test('0049 AC1: lint accepts a missing, blank or bug type and names the field for any other value', () => {
   assert.deepEqual(lint(), [], 'missing');
   assert.deepEqual(lint({ type: '""' }), [], 'blank');
+  assert.deepEqual(lint({ type: '"  "' }), [], 'only spaces');
   assert.deepEqual(lint({ type: '' }), [], 'bare type:');
   assert.deepEqual(lint({ type: '# blank or bug' }), [], 'bare type: with a comment');
   assert.deepEqual(lint({ type: 'bug' }), [], 'bug');
   assert.deepEqual(lint({ type: 'bug   # a comment' }), [], 'bug with a comment');
-  for (const v of ['feature', 'Bug', 'chore', 'constructor', '[bug]', '3']) {
+  for (const v of ['feature', 'Bug', 'chore', 'constructor', '[bug]', '3', '{}', '[]']) {
     const errors = lint({ type: v });
     assert.equal(errors.length, 1, `type: ${v} gives one error`);
     assert.match(errors[0], /\btype\b/, 'the error names the field');

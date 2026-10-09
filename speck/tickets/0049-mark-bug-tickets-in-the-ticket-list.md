@@ -125,3 +125,84 @@ A ticket can be marked as a bug, and bug tickets have a visible bug tag wherever
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d421b8daeae61aeb773d62a6acfe13c61833c2d0",
+    "thread_id": "01a121a4-73de-7d13-bc7e-1646d5ff5205",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 474282,
+      "cached_input_tokens": 367104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2176,
+      "reasoning_output_tokens": 104
+    },
+    "saved_at": "2026-10-09T17:12:45.103Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/speck.mjs: ticketType fixes bare blank fields, independently verified through parseTicket and lintTicket. However, explicit `type: {}` and `type: []` are also accepted: the former matches the empty-object check and the latter satisfies blank([]). These are values other than blank or bug. AC1 tests do not cover them."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdNew validates all --type arguments before writing. The AC2 CLI test exercises bug creation and refusal without creation for invalid, bare and repeated flags; supplied test output passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdStatus adds bug after the id; statusData now uses ticketType to return null for missing, quoted blank and bare blank fields. The expanded AC3 CLI test exercises these cases and passes in supplied output."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html uses bugTag beside the id through tags in Shaping and the queue, and directly in Shipped. AC4 tests exercise page rendering, absence on ordinary tickets and a distinct pink colour; supplied output passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 4 instructs using --type=bug for a defect. The AC5 instruction test passes in supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Bare blank type fields previously failed lint and produced an object in JSON. Both paths now normalise these fields, and regression tests exercise blanks with and without comments.",
+        "suggested_fix": "No further action for the original blank-field defect.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Type validation accepts explicit empty collections (`type: {}` and `type: []`) despite the requirement to reject every value other than blank or bug. The helper cannot distinguish a bare blank from an explicit empty mapping, and blank([]) returns true.",
+        "suggested_fix": "Distinguish genuinely blank type syntax from explicit collection values, avoiding broad string coercion for type validation. Add tests proving both explicit empty collections produce an error naming type while bare blanks still pass.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The blank-field claims are now correct, but the claim that lint accepts only missing, blank or bug remains inaccurate because explicit empty collections pass."
+    },
+    "escalation_question": "",
+    "summary": "The original blank-field problem is fixed, and bug creation and visible tags work. Validation still lets empty lists and mappings through as ticket types; these need to be rejected before approval."
+  }
+}
+```
+
+</details>
