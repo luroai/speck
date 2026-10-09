@@ -34,6 +34,7 @@ Before a ticket is presented for approval, the agent checks it for criteria with
 - Automated checking by the CLI.
 
 ## Notes
+- Self-check: the build pre-flight first said to stop only if a wrong fact "changes what to build", which is narrower than AC3. It now stops for any wrong fact, and the AC3 test checks that wording.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
