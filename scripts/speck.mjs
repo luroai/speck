@@ -1413,6 +1413,21 @@ function criteriaText(lines = []) {
   return items.map(l => l.join('\n').replace(/\s+$/, ''));
 }
 
+// A section's text without template comments, with leading and trailing empty lines dropped, or null if nothing else is in it.
+function sectionText(lines) {
+  const text = (lines || []).join('\n').replace(/<!--[\s\S]*?-->/g, '').replace(/^(?:[ \t]*\n)+/, '').replace(/\s+$/, '');
+  return text.trim() ? text : null;
+}
+
+// The text after `Self-check:` on the first line of Notes that starts with it (a list marker before it is allowed), or null.
+function selfCheck(lines) {
+  for (const line of (sectionText(lines) || '').split('\n')) {
+    const m = line.match(/^\s*(?:[-*+]\s+)?Self-check:(.*)$/);
+    if (m) return m[1].trim() || null;
+  }
+  return null;
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
@@ -1431,6 +1446,12 @@ export function statusData(repo) {
       acceptance_criteria: criteriaText(t.sections['acceptance criteria']),
       blocked_question: question || null,
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },
+      problem: sectionText(t.sections.problem),
+      outcome: sectionText(t.sections.outcome),
+      out_of_scope: sectionText(t.sections['out of scope']),
+      notes: sectionText(t.sections.notes),
+      self_check: selfCheck(t.sections.notes),
+      lint_messages: { errors: lint.errors, warnings: lint.warnings },
       rounds: ticketRounds(t.raw).rounds.map(r => ({
         round: r?.meta?.round ?? null,
         reviewer: r?.meta?.reviewer ?? null,
@@ -1447,7 +1468,7 @@ export function statusData(repo) {
   const dir = path.join(repo, 'speck', 'ideas');
   const ideas = (fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => f.endsWith('.md')).sort() : []).map(f => {
     const text = fs.readFileSync(path.join(dir, f), 'utf8');
-    return { path: `speck/ideas/${f}`, title: (text.match(/^# (.+)$/m) || [])[1]?.trim() || f, status: ideaStatus(text) || null };
+    return { path: `speck/ideas/${f}`, title: (text.match(/^# (.+)$/m) || [])[1]?.trim() || f, status: ideaStatus(text) || null, body: text };
   });
   return { tickets: entries, ideas };
 }
