@@ -123,3 +123,67 @@ Round 1 (codex): approve.
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7511d62cf1358a6e9294800f611c826737f95c02",
+    "thread_id": "01a12158-fb35-73d0-8c61-6c33bc56c57f",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 416367,
+      "cached_input_tokens": 298240,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1285,
+      "reasoning_output_tokens": 52
+    },
+    "saved_at": "2026-10-09T16:27:30.978Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs adoptEarlierBuilds remains unchanged after the merge: live recorded builds enter launched and running, with one session/pid message. test/run-0047.test.mjs AC1 verifies no duplicate launch across polls; merged-suite output reports pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "adoptEarlierBuilds adds adopted builds to running; tick enforces max_parallel_builds using running.size. AC2 verifies another ticket waits until the adopted build stops; merged-suite output reports pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "tick invokes checkAdopted every poll. It records stopped processes through recordExit with the detection timestamp and exit_code null, preserving other fields, and prints the stopped message. AC3 exercises these behaviours; merged-suite output reports pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "checkAdopted calls reportIfStillReady and leaves the adopted ticket in launched. AC4 verifies exactly the last five log lines and no subsequent relaunch; merged-suite output reports pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "adoptEarlierBuilds records dead or missing pids at startup without marking those tickets launched. AC5 verifies preserved fields, null exit codes, normal ready-ticket launching and unchanged completed or malformed records; merged-suite output reports pass."
+      }
+    ],
+    "findings": [],
+    "product_md": {
+      "accurate": true,
+      "note": "The merge preserves all 0047 capability and limitation descriptions. Removing the update marker matches main. The imported panel changes do not alter the runner or its status-data contract."
+    },
+    "escalation_question": "",
+    "summary": "Approval stands after the merge. The runner implementation and its tests are unchanged, and all five acceptance criteria remain satisfied. The supplied merged-suite output reports 285 passing tests. No integration problems were found; tests were not rerun in this read-only review environment."
+  }
+}
+```
+
+</details>
