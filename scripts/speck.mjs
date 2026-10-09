@@ -364,10 +364,18 @@ function cacheDir(repo, id) {
 
 const posix = p => p.split(path.sep).join('/');
 
-// True if the ticket's only uncommitted change is to its Review rounds section, so it can't hide unreviewed work.
+// The first review round moves a ticket from building to reviewing. Returns the text unchanged otherwise.
+function startReviewing(text) {
+  return parseTicket(text).fm.status === 'building' ? syncHeader(setField(text, 'status', 'reviewing')) : text;
+}
+
+// True if the ticket's only uncommitted changes are to its Review rounds section, and the building → reviewing
+// status change the first round makes, so it can't hide unreviewed work.
 function onlyRoundsChanged(repo, rel, text) {
   const head = sh('git', ['show', `HEAD:${rel}`], { cwd: repo });
-  return head.status === 0 && stripRounds(head.stdout) === stripRounds(text);
+  if (head.status !== 0) return false;
+  const now = stripRounds(text);
+  return stripRounds(head.stdout) === now || stripRounds(startReviewing(head.stdout)) === now;
 }
 
 // What the reviewer sees: every change from `since` to `to`, with every ticket's Review rounds section, and any old speck/reviews/ files, left out.
@@ -428,11 +436,12 @@ export function nextAction(all, cfg) {
   return { action: 'fix' };
 }
 
+// Round 1 also sets a building ticket to reviewing, in the same write, so a refused verdict changes nothing.
 function saveRound(repo, id, verdict, meta) {
   const t = findTicket(repo, id);
   const round = rounds(repo, id).length + 1;
   const record = { meta: { round, ...meta, saved_at: new Date().toISOString() }, verdict: validateVerdict({ ...verdict, round }) };
-  fs.writeFileSync(t.file, appendRounds(t.raw, [record]));
+  fs.writeFileSync(t.file, appendRounds(round === 1 ? startReviewing(t.raw) : t.raw, [record]));
   return record;
 }
 
@@ -482,8 +491,18 @@ function reviewSetup(repo, id, opts) {
   return { cfg, ticket, prior, round, head, base, sinceSha, diff, tests, response };
 }
 
-function runCodexReview(repo, id, opts) {
-  const { cfg, ticket, prior, round, head, sinceSha, diff, tests, response } = reviewSetup(repo, id, opts);
+// Runs a review round. Round 1 on a building ticket sets it to reviewing before the reviewer starts, and puts the
+// ticket back exactly as it was if the round fails, so only a recorded round leaves the status changed.
+function reviewRound(repo, id, opts, run) {
+  const s = reviewSetup(repo, id, opts);
+  const marked = s.round === 1 ? startReviewing(s.ticket.raw) : s.ticket.raw;
+  if (marked === s.ticket.raw) return run(s);
+  fs.writeFileSync(s.ticket.file, marked);
+  try { return run(s); } catch (e) { fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
+}
+
+function runCodexReview(repo, id, s) {
+  const { cfg, ticket, prior, round, head, sinceSha, diff, tests, response } = s;
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha });
 
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
@@ -602,8 +621,7 @@ function atPath(obj, dotted) {
 // Runs a reviewer set up in config as a command. speck reads the verdict from its output, so the builder never handles it.
 // If the reviewer can resume a session (session_id_path and resume_command), later rounds continue it with only the new
 // round's prompt. Otherwise, or if resuming fails, a fresh run gets the full history.
-function runCommandReview(repo, id, name, command, opts) {
-  const s = reviewSetup(repo, id, opts);
+function runCommandReview(repo, id, name, command, s) {
   const options = s.cfg.reviewer_options?.[name] || {};
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
   const values = { model: settings.model, effort: settings.effort };
@@ -1480,8 +1498,8 @@ function cmdReview(args) {
   const command = cfg.reviewer_options?.[reviewer]?.command;
   const opts = { tests: opt('tests'), response: opt('response') };
   let rec;
-  if (typeof command === 'string' && command.trim()) rec = runCommandReview(repo, id, reviewer, command, opts);
-  else if (reviewer === 'codex') rec = runCodexReview(repo, id, opts);
+  if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
+  else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));
   else throw new SpeckError(`speck review runs the codex adapter, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];

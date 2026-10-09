@@ -148,6 +148,7 @@ const fs = require('fs');
 const args = process.argv.slice(2);
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
 fs.appendFileSync(${JSON.stringify(log + '.prompts')}, JSON.stringify(fs.readFileSync(0, 'utf8')) + '\\n');
+if (process.env.FAKE_CODEX_FAIL) { console.error('codex broke'); process.exit(2); }
 const out = args[args.indexOf('-o') + 1];
 fs.writeFileSync(out, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], product_md: { accurate: true, note: '' }, summary: 'fine', escalation_question: '' }));
 console.log(JSON.stringify({ type: 'thread.started', thread_id: 'T1' }));
@@ -1527,7 +1528,8 @@ function commandRepo({ command = '{bin} --model {model} --effort {effort} --flag
   fs.writeFileSync(fake, `#!${process.execPath}
 const fs = require('fs');
 const stdin = fs.readFileSync(0, 'utf8');
-fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin }) + '\\n');
+const ticketStatus = (fs.readFileSync('speck/tickets/' + fs.readdirSync('speck/tickets').find(n => n.startsWith('0001-')), 'utf8').match(/^status: (\\S+)/m) || [])[1];
+fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin, ticketStatus }) + '\\n');
 const v = process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(changesVerdict))};
 const mode = process.env.FAKE_MODE || 'raw';
 if (mode === 'raw') console.log(v);
@@ -1901,7 +1903,7 @@ const selfCheck = () => {
 test('0023 AC1: the build skill has a self-check step after implementation and before review, covering the agreed areas', () => {
   const { md, text, at } = selfCheck();
   assert.ok(at > md.indexOf('## 3. Implement'), 'in the implement section');
-  assert.ok(at < md.indexOf('speck set <id> status reviewing'), 'before the ticket goes to reviewing');
+  assert.ok(at < md.indexOf('the first review round sets the ticket to `reviewing`'), 'before the ticket goes to reviewing (0022: the first round sets it)');
   assert.ok(at < md.indexOf('## 4. Review loop'), 'before the review loop');
   assert.ok(at > md.indexOf('**Living spec:**'), 'after product.md is updated, so its claims can be checked');
   // Each area is its own checklist item, named in bold, with the substance the ticket asks for.
@@ -2727,4 +2729,235 @@ test('0030 AC2: a multi-line acceptance criterion comes through whole, with its 
     '1. Export a CSV with:\n   - names\n   - dates, wrapped\n     onto a second line\n\n2. Second criterion.\n<!-- a comment -->'));
   const t = statusJson(r.run).tickets.find(x => x.id === '0002');
   assert.deepEqual(t.acceptance_criteria, ['Export a CSV with:\n   - names\n   - dates, wrapped\n     onto a second line', 'Second criterion.']);
+});
+
+// ---------- 0022: the first review round sets the ticket to reviewing ----------
+
+const statusOf = file => parseTicket(fs.readFileSync(file, 'utf8')).fm.status;
+const statusLine = file => fs.readFileSync(file, 'utf8').match(/^\*\*Status:\*\* .*$/m)[0];
+
+test('0022 AC1: speck review round 1 sets a building ticket to reviewing before the reviewer runs, left uncommitted with the round', () => {
+  const r = commandRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  const res = r.run('review', '1');
+  assert.equal(res.status, 10, res.stderr);
+  assert.equal(r.calls()[0].ticketStatus, 'reviewing', 'the reviewer already sees reviewing');
+  assert.equal(statusOf(r.ticketFile), 'reviewing');
+  assert.equal(statusLine(r.ticketFile), '**Status:** 🔍 reviewing', 'the header follows');
+  assert.equal(r.roundFile(1).verdict.verdict, 'changes_requested');
+  assert.equal(r.git('status', '--porcelain').stdout.trim(), `M ${path.relative(r.dir, r.ticketFile)}`, 'only the ticket is changed, and nothing is committed');
+  assert.match(r.git('show', `HEAD:${path.relative(r.dir, r.ticketFile)}`).stdout, /^status: building/m);
+});
+
+test('0022 AC1: the codex adapter does the same', () => {
+  const r = reviewRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  assert.equal(r.run('review', '1').status, 10);
+  assert.equal(statusOf(r.ticketFile), 'reviewing');
+  assert.equal(r.roundFile(1).meta.reviewer, 'codex');
+});
+
+test('0022 AC1: other statuses and later rounds are left alone', () => {
+  for (const status of ['ready', 'blocked', 'reviewing']) {
+    const r = commandRepo({ ticketFields: `status: ${status}` });
+    r.git('add', '-A'); r.git('commit', '-qm', status);
+    assert.equal(r.run('review', '1').status, 10);
+    assert.equal(statusOf(r.ticketFile), status, `${status} is not changed`);
+  }
+  // Round 2 on a ticket set back to building by hand stays building.
+  const r = commandRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  assert.equal(r.run('review', '1').status, 10);
+  assert.equal(r.run('set', '1', 'status', 'building').status, 0);
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fixed\n');
+  r.git('add', '-A'); r.git('commit', '-qm', 'fix');
+  assert.equal(r.run('review', '1').status, 10);
+  assert.equal(statusOf(r.ticketFile), 'building');
+});
+
+test('0022 AC1: round 2 runs when the only uncommitted ticket changes are round 1 and the status it set', () => {
+  const r = commandRepo({ ticketFields: 'status: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  assert.equal(r.run('review', '1').status, 10);
+  fs.writeFileSync(path.join(r.dir, 'a.txt'), 'fixed\n');
+  r.git('add', 'a.txt'); r.git('commit', '-qm', 'fix, ticket left uncommitted');
+  const res = r.run('review', '1');
+  assert.equal(res.status, 10, res.stderr);
+  assert.equal(r.roundFile(2).meta.round, 2);
+  // Any other uncommitted edit to the ticket is still refused.
+  fs.writeFileSync(r.ticketFile, fs.readFileSync(r.ticketFile, 'utf8').replace('Users cannot export.', 'Users cannot export at all.'));
+  assert.match(r.run('review', '1').stderr, /Commit your work before review/);
+});
+
+test('0022 AC2: a failed round leaves the status as it was', () => {
+  for (const mode of ['fail', 'garbage', 'badshape']) {
+    const r = commandRepo({ ticketFields: 'status: building' });
+    r.git('add', '-A'); r.git('commit', '-qm', 'building');
+    const before = fs.readFileSync(r.ticketFile, 'utf8');
+    assert.equal(r.runEnv({ FAKE_MODE: mode }, 'review', '1').status, 1);
+    assert.equal(r.calls()[0].ticketStatus, 'reviewing');
+    assert.equal(fs.readFileSync(r.ticketFile, 'utf8'), before, `${mode}: the ticket is exactly as it was`);
+    assert.equal(r.git('status', '--porcelain').stdout.trim(), '');
+  }
+  const codex = reviewRepo({ ticketFields: 'status: building', extraEnv: { FAKE_CODEX_FAIL: '1' } });
+  codex.git('add', '-A'); codex.git('commit', '-qm', 'building');
+  const res = codex.run('review', '1');
+  assert.equal(res.status, 1);
+  assert.match(res.stderr, /codex exited 2/);
+  assert.equal(statusOf(codex.ticketFile), 'building');
+  assert.equal(codex.git('status', '--porcelain').stdout.trim(), '');
+  // An uncommitted tree refuses before anything changes.
+  const dirty = commandRepo({ ticketFields: 'status: building' });
+  dirty.git('add', '-A'); dirty.git('commit', '-qm', 'building');
+  fs.writeFileSync(path.join(dirty.dir, 'a.txt'), 'uncommitted\n');
+  assert.match(dirty.run('review', '1').stderr, /Commit your work before review/);
+  assert.equal(statusOf(dirty.ticketFile), 'building');
+  assert.equal(dirty.calls().length, 0);
+});
+
+test('0022 AC3: speck record round 1 sets a building ticket to reviewing, and a refused reply changes nothing', () => {
+  const r = reviewRepo({ config: 'allow_same_model_review: true\n', ticketFields: 'reviewer: claude-subagent\nstatus: building' });
+  r.git('add', '-A'); r.git('commit', '-qm', 'building');
+  const v = path.join(r.dir, '..', `v-${path.basename(r.dir)}.json`);
+  fs.writeFileSync(v, 'not json');
+  assert.equal(r.run('record', '1', v).status, 1);
+  fs.writeFileSync(v, JSON.stringify({ verdict: 'approve' }));
+  assert.equal(r.run('record', '1', v).status, 1);
+  assert.equal(statusOf(r.ticketFile), 'building');
+  fs.writeFileSync(v, fenced(subagentVerdict('changes_requested', 'open')));
+  assert.equal(r.run('record', '1', v).status, 10);
+  assert.equal(statusOf(r.ticketFile), 'reviewing');
+  assert.equal(statusLine(r.ticketFile), '**Status:** 🔍 reviewing');
+  assert.equal(r.git('status', '--porcelain').stdout.trim(), `M ${path.relative(r.dir, r.ticketFile)}`);
+  // Round 2 never changes the status.
+  assert.equal(r.run('set', '1', 'status', 'building').status, 0);
+  r.git('add', '-A'); r.git('commit', '-qm', 'round 1');
+  fs.writeFileSync(v, fenced(subagentVerdict('approve', 'resolved')));
+  assert.equal(r.run('record', '1', v).status, 0);
+  assert.equal(statusOf(r.ticketFile), 'building');
+});
+
+test('0022 AC4: the build skill no longer asks for a separate set reviewing step and commit', () => {
+  const md = buildSkill();
+  assert.doesNotMatch(md, /speck set <id> status reviewing/);
+  assert.match(md, /first review round sets the ticket to `reviewing`/);
+  assert.match(skillText('speck-review'), /status change/);
+});
+
+// ---------- 0032: builds can run in parallel ----------
+
+// Two ready tickets, both started with `speck start` in their own worktrees, each changing a file and approved there.
+// With sameLines, both change the same line of shared.txt; otherwise each changes its own file.
+function parallelRepo({ sameLines = false } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-par-'));
+  const env = { ...process.env, ...gitEnv };
+  const runIn = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env });
+  const gIn = (cwd, ...a) => spawnSync('git', a, { cwd, encoding: 'utf8', env }).stdout.trim();
+  const run = (...a) => runIn(dir, ...a);
+  const g = (...a) => gIn(dir, ...a);
+  g('init', '-q', '-b', 'main');
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  let c = fs.readFileSync(cfgFile, 'utf8').replace(/^  test: .*$/m, '  test: "true"');
+  c = /^worktrees:/m.test(c) ? c.replace(/^worktrees:.*$/m, 'worktrees: true') : c + 'worktrees: true\n';
+  fs.writeFileSync(cfgFile, c);
+  const tickets = ['Export bookings', 'Import bookings'].map((title, i) => {
+    const file = path.join(dir, run('new', title).stdout.trim());
+    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').split('## Problem')[0] + good);
+    assert.equal(run('set', String(i + 1), 'status', 'ready').status, 0);
+    return { id: String(i + 1), name: path.basename(file), branch: `speck/${path.basename(file, '.md')}` };
+  });
+  fs.writeFileSync(path.join(dir, 'shared.txt'), 'line one\nline two\nline three\n');
+  g('add', '-A'); g('commit', '-qm', 'base');
+  // Start both before building either, as two parallel sessions would.
+  for (const t of tickets) {
+    const res = run('start', t.id);
+    assert.equal(res.status, 0, res.stderr + res.stdout);
+    t.wt = res.stdout.trim().split('\n').pop().trim();
+    assert.ok(fs.existsSync(t.wt), `worktree for ${t.id} exists`);
+  }
+  const v = path.join(os.tmpdir(), `verdict-${path.basename(dir)}.json`);
+  fs.writeFileSync(v, JSON.stringify(approveVerdict));
+  for (const [i, t] of tickets.entries()) {
+    if (sameLines) fs.writeFileSync(path.join(t.wt, 'shared.txt'), `line one\nline two from ticket ${t.id}\nline three\n`);
+    else fs.writeFileSync(path.join(t.wt, `ticket-${i + 1}.txt`), `from ticket ${t.id}\n`);
+    gIn(t.wt, 'add', '-A'); gIn(t.wt, 'commit', '-qm', `work ${t.id}`);
+    assert.equal(runIn(t.wt, 'record', t.id, v).status, 0);
+    assert.equal(runIn(t.wt, 'set', t.id, 'status', 'approved').status, 0);
+    gIn(t.wt, 'add', '-A'); gIn(t.wt, 'commit', '-qm', `approved ${t.id}`);
+  }
+  const sha = ref => g('rev-parse', '--verify', '-q', ref);
+  const statusAt = (cwd, t) => {
+    const p = ['speck/tickets', 'speck/tickets/done'].map(d => path.join(cwd, d, t.name)).find(f => fs.existsSync(f));
+    return p && parseTicket(fs.readFileSync(p, 'utf8')).fm.status;
+  };
+  const worktrees = () => g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).length;
+  return { dir, run, g, gIn, tickets, sha, statusAt, worktrees };
+}
+
+test('0032 AC1: two tickets built side by side in their own worktrees both ship, one after the other', () => {
+  const r = parallelRepo();
+  const [a, b] = r.tickets;
+  assert.equal(r.worktrees(), 3, 'both builds have their own worktree');
+  assert.equal(r.statusAt(a.wt, a), 'approved');
+  assert.equal(r.statusAt(b.wt, b), 'approved');
+  for (const t of [a, b]) {
+    const res = r.run('ship', t.id);
+    assert.equal(res.status, 0, res.stderr + res.stdout);
+  }
+  for (const t of [a, b]) {
+    assert.equal(r.statusAt(r.dir, t), 'done', `${t.id} is done on main`);
+    assert.ok(fs.existsSync(path.join(r.dir, 'speck', 'tickets', 'done', t.name)), `${t.id} filed under done/`);
+    assert.equal(r.sha(t.branch), '', `${t.id} branch deleted`);
+    assert.equal(fs.existsSync(t.wt), false, `${t.id} worktree removed`);
+    assert.equal(r.g('merge-base', '--is-ancestor', `main^{/approved ${t.id}}`, 'main'), '', `${t.id} work merged into main`);
+  }
+  assert.equal(fs.readFileSync(path.join(r.dir, 'ticket-1.txt'), 'utf8'), 'from ticket 1\n');
+  assert.equal(fs.readFileSync(path.join(r.dir, 'ticket-2.txt'), 'utf8'), 'from ticket 2\n');
+  assert.equal(r.worktrees(), 1);
+  assert.equal(r.g('branch', '--show-current'), 'main');
+  assert.equal(r.g('status', '--porcelain'), '');
+});
+
+test('0032 AC2: when two parallel tickets change the same lines, the second ship is refused and changes nothing', () => {
+  const r = parallelRepo({ sameLines: true });
+  const [a, b] = r.tickets;
+  const first = r.run('ship', a.id);
+  assert.equal(first.status, 0, first.stderr + first.stdout);
+  assert.equal(r.statusAt(r.dir, a), 'done');
+  const snapshot = () => ({
+    main: r.sha('main'), branch: r.sha(b.branch), wtHead: r.gIn(b.wt, 'rev-parse', 'HEAD'),
+    wtStatus: r.gIn(b.wt, 'status', '--porcelain'), wtBranch: r.gIn(b.wt, 'branch', '--show-current'),
+    dirStatus: r.g('status', '--porcelain'), dirBranch: r.g('branch', '--show-current'),
+    shared: fs.readFileSync(path.join(r.dir, 'shared.txt'), 'utf8'), worktrees: r.worktrees(),
+  });
+  const before = snapshot();
+  const second = r.run('ship', b.id);
+  assert.notEqual(second.status, 0);
+  assert.match(second.stderr, new RegExp(`Merging ${b.branch.replace(/[/.]/g, '\\$&')} into main hit a conflict, so nothing was shipped`));
+  assert.deepEqual(snapshot(), before);
+  assert.equal(r.statusAt(b.wt, b), 'approved');
+  assert.ok(fs.existsSync(b.wt), 'worktree kept');
+  assert.equal(fs.readFileSync(path.join(r.dir, 'shared.txt'), 'utf8'), 'line one\nline two from ticket 1\nline three\n');
+});
+
+test('0032 AC3: product.md says several tickets can be built at once, with no dependency scheduling and conflicts refused at ship', () => {
+  const product = fs.readFileSync(path.join(ROOT, 'speck', 'product.md'), 'utf8');
+  assert.doesNotMatch(product, /one ticket at a time/i);
+  assert.doesNotMatch(product, /not for running builds in parallel/i);
+  const limits = product.split('## Known limits')[1].split('\n## ')[0];
+  const line = limits.split('\n').find(l => /several tickets can be built at once/i.test(l));
+  assert.ok(line, 'Known limits says several tickets can be built at once');
+  assert.match(line, /its own worktree/i);
+  assert.match(line, /no dependency scheduling/i);
+  assert.match(line, /conflict/i);
+  assert.match(line, /refused at ship/i);
+  assert.match(line, /rebuil[td] on the latest base branch/i);
+});
+
+test('0032 AC4: the brief no longer puts parallel tickets out of scope, but dependency graphs stay out', () => {
+  const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
+  const out = brief.split('Out of scope for v0.1:')[1].split('\n\n')[0];
+  assert.doesNotMatch(out, /parallel/i);
+  assert.match(out, /dependency graphs/i);
 });

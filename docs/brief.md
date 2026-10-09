@@ -183,7 +183,7 @@ In scope:
 - a README with one real worked example and its actuals.
 
 Out of scope for v0.1:
-- running several tickets in parallel, or dependency graphs;
+- dependency graphs;
 - Jira or GitHub Issues sync;
 - the board;
 - builders other than Claude Code;
