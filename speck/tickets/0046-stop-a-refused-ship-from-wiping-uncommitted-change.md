@@ -52,6 +52,8 @@ A refused ship never discards changes it didn't make, and says plainly when your
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up idea: ship's own commit runs `git commit` after staging only the ticket, so anything the test run staged in the ticket's worktree goes into the ship commit too. It should commit only the ticket's paths.
+- Follow-up idea: without a worktree, tests that leave tracked files changed now refuse the ship (AC1), where before they were carried onto the base branch. Worth a line in the ship skill's refusal guide.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -126,6 +128,82 @@ A refused ship never discards changes it didn't make, and says plainly when your
     },
     "escalation_question": "",
     "summary": "The change protects edits made while tests run and improves refusal messages. The tests exercise real behaviour, but two rollback gaps remain: a failed branch switch can lose staged state, and edits made during remote catch-up can still be deleted. These need fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e6e3f31136429640141d7eeb8de394f703892b37",
+    "thread_id": "01a1215a-919f-7c70-8dd8-44e4b631d38a",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 467280,
+      "cached_input_tokens": 364416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2129,
+      "reasoning_output_tokens": 295
+    },
+    "saved_at": "2026-10-09T15:53:51.362Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "shipTicket checks changedFiles after tests, before committing or merging. Both AC1 tests verify refusal, filenames, preserved content and staged state, and unchanged branches."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipTicket snapshots both folders before merging and refreshes the snapshots after remote catch-up; undo restores them with --index. AC2 conflict tests and the new F2 regression verify preserved edits and staged state in both folders. Failed-checkout regressions cover staged changes and stash recovery."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "refused identifies local-change overwrite messages separately from conflicts; conflicting paths are collected before undo. AC3 tests cover overwrite refusals during catch-up and ticket merge, and the conflict test checks the filename."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Existing refusal checks and exit handling remain intact. Existing ship regression tests and the AC4 success test pass in the supplied 268-test output. Tests were inspected but not rerun during this read-only review."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Failed checkout previously lost staged state or could leave the ship commit in place.",
+        "suggested_fix": "Completed: snapshot before checkout, undo the ship commit, and restore with --index or save the changes in the stash. Two new regression tests exercise these paths.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Changes introduced during remote catch-up were missing from the rollback snapshot.",
+        "suggested_fix": "Completed: refresh both snapshots after successful catch-up. The new post-merge-hook regression verifies content and staged state survive a subsequent conflict.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The shipping description matches the implemented preservation, refusal messages and documented stash fallback."
+    },
+    "escalation_question": "",
+    "summary": "Both rollback gaps are fixed and covered by meaningful regression tests. Refused shipping preserves edits and staged state, names files that block the merge, and provides stash recovery instructions when changes cannot be restored in place. All 268 supplied tests pass; no blocking findings remain."
   }
 }
 ```
