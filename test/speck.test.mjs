@@ -2956,7 +2956,8 @@ test('0032 AC3: product.md says several tickets can be built at once, with no de
   assert.match(line, /no dependency scheduling/i);
   assert.match(line, /conflict/i);
   assert.match(line, /refused at ship/i);
-  assert.match(line, /rebuil[td] on the latest base branch/i);
+  // 0048: the build merges the base branch in and gets it re-reviewed, rather than being rebuilt.
+  assert.match(line, /merges the base branch in/i);
 });
 
 test('0032 AC4: the brief no longer puts parallel tickets out of scope, but dependency graphs stay out', () => {

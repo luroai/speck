@@ -55,6 +55,14 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 3. Run `speck ship <id> --auto`. It ships only if `auto_ship` is `true` in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round. Then it runs all of `speck ship`'s usual checks and the tests.
    - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, and anything worth a look (risk flags, follow-up ideas).
    - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
+   - If it exits with 13, merging into the base branch hit a conflict (it names the conflicting files) and nothing changed. Bring the branch up to date and get it re-reviewed, without asking the user:
+     1. In the ticket's worktree, merge the base branch into the ticket branch (`git merge <base_branch>`, no rebase or squash, so the reviewed commits stay as they are).
+     2. Resolve each conflict keeping the intent of both sides: the base branch's change and this ticket's. Stage each resolved file by name.
+     3. Run the tests (`<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`) and fix anything the merge broke.
+     4. Commit the merge (`speck(<id>): merge <base_branch>`).
+     5. Run a review round as in section 4 (`speck review <id>` accepts the `approved` ticket and sets it to `reviewing`). Its response file lists each file you resolved and how. The reviewer sees the branch's whole change against the base branch as merged. Take turns as usual until `speck next <id>` says `ship` or `block`. The round counts towards `max_review_rounds`.
+     6. On `ship`, run `speck close <id>`, then `speck ship <id> --auto` again.
+     If it exits with 13 again after two merges, block the ticket (section 6) with the conflicting files in the question.
    - If any other check refused, report the reason as the ship skill describes. Don't work around it.
 
 ## 6. Block

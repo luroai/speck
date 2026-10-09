@@ -42,6 +42,8 @@ When a build's ship hits a conflict, the build brings its branch up to date with
 - Builds after 0046, which changes the same ship code.
 - 0039's conflict was resolved this way by hand on 9 October, and the reviewer approved the merge in one round.
 - No external facts: everything is in this repo.
+- Self-check: a merge that fails with no conflicting files (a failing merge hook, say) is no longer called a conflict and keeps exit code 1; added a test. `speck close` replaces the figures an earlier close wrote, so the second close after a re-review doesn't repeat them. A round-1 prompt rebuilt from git diffs against the base as it was at round 1, not the newly merged base.
+- Existing tests that expected exit 1 on a conflict (ship-0046) now expect 13, and the 0032 product.md check now expects the merge-and-re-review wording instead of "rebuilt on the latest base branch": both are the behaviour this ticket changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -366,13 +366,15 @@ function cacheDir(repo, id) {
 
 const posix = p => p.split(path.sep).join('/');
 
-// The first review round moves a ticket from building to reviewing. Returns the text unchanged otherwise.
-function startReviewing(text) {
-  return parseTicket(text).fm.status === 'building' ? syncHeader(setField(text, 'status', 'reviewing')) : text;
+// The first review round moves a ticket from building to reviewing, and any round moves an approved one back to
+// reviewing (a re-review after merging the base branch in). Returns the text unchanged otherwise.
+function startReviewing(text, round = 1) {
+  const status = parseTicket(text).fm.status;
+  return status === 'approved' || (status === 'building' && round === 1) ? syncHeader(setField(text, 'status', 'reviewing')) : text;
 }
 
-// True if the ticket's only uncommitted changes are to its Review rounds section, and the building → reviewing
-// status change the first round makes, so it can't hide unreviewed work.
+// True if the ticket's only uncommitted changes are to its Review rounds section, and the building → reviewing or
+// approved → reviewing status change a round makes, so it can't hide unreviewed work.
 function onlyRoundsChanged(repo, rel, text) {
   const head = sh('git', ['show', `HEAD:${rel}`], { cwd: repo });
   if (head.status !== 0) return false;
@@ -438,12 +440,12 @@ export function nextAction(all, cfg) {
   return { action: 'fix' };
 }
 
-// Round 1 also sets a building ticket to reviewing, in the same write, so a refused verdict changes nothing.
+// Round 1 also sets a building ticket to reviewing, and any round an approved one, in the same write, so a refused verdict changes nothing.
 function saveRound(repo, id, verdict, meta) {
   const t = findTicket(repo, id);
   const round = rounds(repo, id).length + 1;
   const record = { meta: { round, ...meta, saved_at: new Date().toISOString() }, verdict: validateVerdict({ ...verdict, round }) };
-  fs.writeFileSync(t.file, appendRounds(round === 1 ? startReviewing(t.raw) : t.raw, [record]));
+  fs.writeFileSync(t.file, appendRounds(startReviewing(t.raw, round), [record]));
   return record;
 }
 
@@ -459,7 +461,8 @@ function reviewerPrompt(repo, ticket, cfg, round, extra) {
     `# Review round ${round}`,
     'The builder has responded to your previous findings. Keep finding ids stable. For each earlier finding, set state to resolved, dispute_accepted or dispute_rejected (or keep it open if the fix is incomplete). Raise new findings only for real problems introduced or missed.',
     '## Builder response', extra.response || '(none provided)',
-    `## Changes since your last review (${extra.sinceSha.slice(0, 8)}..HEAD)`, '```diff', extra.diff, '```',
+    ...(extra.merged ? [`This round follows a merge of ${cfg.base_branch} into the ticket branch, made to resolve a conflict when shipping. So the diff below is the branch's whole change against ${cfg.base_branch} as merged, which is what would ship, not only the changes since your last review. Check that each resolved file keeps the intent of both sides.`] : []),
+    `## ${extra.merged ? `The whole change against ${cfg.base_branch} as merged` : 'Changes since your last review'} (${extra.sinceSha.slice(0, 8)}..HEAD)`, '```diff', extra.diff, '```',
     '## Test output', '```', extra.tests, '```',
     'Re-check every acceptance criterion against the code as it is now and return the full verdict JSON.',
   ].join('\n\n');
@@ -486,6 +489,18 @@ function requireCommitted(repo, ticket, message) {
   if (status.length) throw new SpeckError(`${message} Uncommitted: ${status.map(l => l.slice(3)).join(', ')}. Untracked files are fine.`);
 }
 
+// Where the reviewer's diff starts: the base branch's merge base in round 1, otherwise the commit the last round
+// reviewed. If the branch has merged the base branch in since then (its merge base moved), it starts at the new merge
+// base instead, so the reviewer sees the branch's whole change against the base as merged: what would ship.
+function reviewSince(repo, cfg, prior) {
+  const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
+  const last = prior[prior.length - 1]?.meta?.reviewed_sha;
+  if (!last) return { base, sinceSha: base, merged: false };
+  const was = sh('git', ['merge-base', cfg.base_branch, last], { cwd: repo });
+  const merged = was.status === 0 && was.stdout.trim() !== base;
+  return { base, sinceSha: merged ? base : last, merged };
+}
+
 // Everything a review round needs, checked before any reviewer runs: the round number, the commit under review,
 // the diff since the last round and the builder's inputs.
 function reviewSetup(repo, id, opts) {
@@ -496,27 +511,26 @@ function reviewSetup(repo, id, opts) {
   if (round > cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
   requireCommitted(repo, ticket, 'Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
-  const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
-  const sinceSha = round === 1 ? base : prior[prior.length - 1].meta.reviewed_sha;
+  const { base, sinceSha, merged } = reviewSince(repo, cfg, prior);
   const diff = reviewDiff(repo, sinceSha);
   const tests = opts.tests ? fs.readFileSync(opts.tests, 'utf8') : '(no test output provided)';
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
-  return { cfg, ticket, prior, round, head, base, sinceSha, diff, tests, response };
+  return { cfg, ticket, prior, round, head, base, sinceSha, merged, diff, tests, response };
 }
 
-// Runs a review round. Round 1 on a building ticket sets it to reviewing before the reviewer starts, and puts the
-// ticket back exactly as it was if the round fails, so only a recorded round leaves the status changed.
+// Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
+// reviewer starts, and puts the ticket back exactly as it was if the round fails, so only a recorded round leaves the status changed.
 function reviewRound(repo, id, opts, run) {
   const s = reviewSetup(repo, id, opts);
-  const marked = s.round === 1 ? startReviewing(s.ticket.raw) : s.ticket.raw;
+  const marked = startReviewing(s.ticket.raw, s.round);
   if (marked === s.ticket.raw) return run(s);
   fs.writeFileSync(s.ticket.file, marked);
   try { return run(s); } catch (e) { fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
 }
 
 function runCodexReview(repo, id, s) {
-  const { cfg, ticket, prior, round, head, sinceSha, diff, tests, response } = s;
-  const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha });
+  const { cfg, ticket, prior, round, head, sinceSha, merged, diff, tests, response } = s;
+  const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });
 
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
   const schema = path.join(TEMPLATES, 'review-verdict.schema.json');
@@ -601,7 +615,9 @@ function roundOnePrompt(repo, s, id) {
   const sha = s.prior[0].meta.reviewed_sha;
   const at = rel => { const r = sh('git', ['show', `${sha}:${rel}`], { cwd: repo }); return r.status === 0 ? r.stdout : null; };
   const ticket = { raw: at(posix(path.relative(repo, s.ticket.file))) ?? s.ticket.raw };
-  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, s.base, sha), '(the round-1 test output was not kept)', at('speck/product.md') ?? '(no speck/product.md)');
+  // Against the base as it was then: the branch may have merged a newer base since.
+  const base = git(['merge-base', s.cfg.base_branch, sha], repo).trim();
+  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), '(the round-1 test output was not kept)', at('speck/product.md') ?? '(no speck/product.md)');
 }
 
 // Later rounds give a reviewer with no memory everything it has seen: the round-1 prompt, every earlier verdict and
@@ -612,7 +628,7 @@ function historyPrompt(repo, s, id) {
     if (r.meta.builder_response) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
     parts.push(`## Your round ${r.meta.round} verdict`, '```json', JSON.stringify(r.verdict, null, 2), '```');
   }
-  parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha }));
+  parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }));
   return parts.join('\n\n');
 }
 
@@ -648,7 +664,7 @@ function runCommandReview(repo, id, name, command, s) {
     if (!resume) why = 'no resume_command with {session} is set for it';
     else if (!lastThread) why = `no session id was saved from round ${s.round - 1}`;
     else {
-      const tried = runReviewer(repo, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha }));
+      const tried = runReviewer(repo, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }));
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
       else if (tried.status !== 0) why = `resuming session ${lastThread} exited ${tried.status}`;
       else { r = tried; session = 'continued'; }
@@ -1351,8 +1367,12 @@ export function shipTicket(repo, id) {
     const why = refused(merge);
     const conflicts = sh('git', ['diff', '--name-only', '--diff-filter=U'], { cwd: mergeAt }).stdout.split('\n').filter(Boolean);
     undo();
-    throw why ? overwriteError(`Merging ${branch} into ${base}`, ...why)
-      : fail(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged.${conflicts.length ? ` Conflicting files: ${conflicts.join(', ')}.` : ''} Rebuild the ticket on the latest ${base}, then ship again.`);
+    if (why) throw overwriteError(`Merging ${branch} into ${base}`, ...why);
+    if (!conflicts.length) throw fail(`Merging ${branch} into ${base} failed, so nothing was shipped and ${base} is unchanged: ${merge.stderr.trim().split('\n').pop()}`);
+    // A conflict has its own exit code, so a build can merge the base branch in, get it re-reviewed and ship again.
+    const e = fail(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Conflicting files: ${conflicts.join(', ')}. Merge ${base} into ${branch}, resolve the conflicts, get the result reviewed, then ship again.`);
+    e.code = 13;
+    throw e;
   }
   // From here on, run git from the main checkout, which always survives: the ticket's worktree is about to go.
   const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: main }).stdout.trim() || remote;
@@ -2006,7 +2026,9 @@ function cmdClose(args) {
     `- Changed lines: ${diff.total} (limit ${cfg.limits.max_changed_lines})`,
   ].join('\n');
   let text = replaceSection(t.raw, 'Review log', () => reviewLogLines(all).join('\n'), rel);
-  text = replaceSection(text, 'Delivery log', old => `${figures}${old ? `\n${old}` : ''}`, rel);
+  // A re-review after merging the base branch closes again, so figures from an earlier close are replaced, not repeated.
+  const fresh = old => old.replace(/^- (Review rounds|Reviewer|Reviewer tokens|Elapsed since build started|Elapsed|Changed lines): .*(\n|$)/gm, '').trim();
+  text = replaceSection(text, 'Delivery log', old => `${figures}${fresh(old) ? `\n${fresh(old)}` : ''}`, rel);
   const original = t.raw;
   t.raw = text;
   writeField(t, 'status', 'approved');
@@ -2050,13 +2072,11 @@ function cmdPrompt(args) {
 }
 
 function cmdDiff(args) {
-  // The changes since the reviewer last looked (or since the base branch), as a reviewer sees them.
+  // The changes since the reviewer last looked (or since the base branch, or the whole change after a merge), as a reviewer sees them.
   if (!args[0]) throw new SpeckError('Usage: speck diff <id>');
   const repo = findRepoRoot();
-  const cfg = loadConfig(repo);
-  const all = rounds(repo, args[0]);
-  const since = all.length ? all[all.length - 1].meta.reviewed_sha : git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
-  process.stdout.write(reviewDiff(repo, since));
+  const { sinceSha } = reviewSince(repo, loadConfig(repo), rounds(repo, args[0]));
+  process.stdout.write(reviewDiff(repo, sinceSha));
 }
 
 const HELP = `speck: small tickets, independent review, you merge.
