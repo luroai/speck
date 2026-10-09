@@ -1,7 +1,7 @@
 ---
 id: "0053"
 title: "Show the worktree path inside the open queue ticket"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0051"]                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T19:33:00.275Z"
 
 ---
 # 0053 · Show the worktree path inside the open queue ticket
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 An in-flight ticket's row prints its worktree's absolute path, for example `~/projects/speck.worktrees/speck/0052-show-a-build-s-log-growing-as-it-runs`, which is longer than everything else in the row put together. It's useful only now and then, when you want to look in the build's folder.
