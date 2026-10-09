@@ -136,3 +136,88 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "db5c6eec17a88528253a5d2629a66b8afd9fcdaf",
+    "thread_id": "01a122ab-b759-7f60-9bf9-6b3552ec5a57",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 539593,
+      "cached_input_tokens": 411648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2054,
+      "reasoning_output_tokens": 227
+    },
+    "saved_at": "2026-10-09T22:02:39.278Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs launch sets SPECK_BUILD_SESSION; buildProcesses combines environment membership, process groups and descendants. AC1 and the F1 regression exercise stopped logs/files, detached writers and unchanged ticket status; supplied results pass."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "AC2 exercises continuation of the same PID, session, folder and log; supplied results pass. The detailed manual Claude experiment supports real-agent continuation. However, cmdPlay can overwrite an exit recorded immediately after continuation (F3)."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "AC3 tests exercise retained capacity, no duplicate launch and paused true/false values. cmdRun watches stopped PIDs as live builds and buildPaused reads the persistent marker."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 exercises all required refusals and unchanged records. The new F2 tests inject process-list failures and verify pause rollback and retryable play; supplied results pass. signalBuild now distinguishes ESRCH from other signalling errors."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "AC5 stops and restarts speck run, verifies the existing build remains paused, then successfully plays it. The persistent record and adoption logic preserve this behaviour."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:buildProcesses",
+        "issue": "Resolved for detached background processes inheriting the build environment: membership now survives their parent's exit, and a regression exercises that behaviour.",
+        "suggested_fix": "No further fix required for the reported case.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:signalBuild, cmdPause, cmdPlay",
+        "issue": "Resolved: signalling failures are reported, failed pauses resume the processes already stopped, and failed plays retain the marker so they can be retried. The new tests exercise actual process-list failures without mocking away pause/play.",
+        "suggested_fix": "No further fix required for the reported failure path.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:cmdPlay",
+        "issue": "After SIGCONT, the build can finish before cmdPlay saves its record. speck run then adds exited and exit_code through recordExit, but cmdPlay writes the stale b.rec captured before signalling, removing those exit fields. This loses completion information and can make the board omit a failed build's exit. Resuming before writing introduced this race.",
+        "suggested_fix": "Coordinate record updates so clearing paused preserves concurrently recorded exit fields and checks that the record still belongs to the same build. Add a regression where the resumed build exits and its exit is recorded before play clears the marker.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both earlier problems are fixed and have meaningful regression tests. One new race remains: a build that finishes immediately after play can have its completion record overwritten, hiding its exit result. Fix that before merge. I inspected the updated code and tests; the supplied suite reports 527 passing tests, but I did not rerun it in this read-only review."
+  }
+}
+```
+
+</details>

@@ -1655,13 +1655,16 @@ function buildSession(runs, id) {
   return rec && typeof rec === 'object' && text(rec.session) && text(rec.cwd) ? { id: rec.session, cwd: rec.cwd } : null;
 }
 
-// True while a build launched by `speck run` is paused: its run record says so, and it has neither exited nor gone.
+// True while a build launched by `speck run` is paused: `speck pause` left a <id>.paused file beside its run record
+// naming this build's session and pid, and the build has neither exited nor gone. The mark is a file of its own, so
+// pause and play never write the run record that speck run keeps.
 function buildPaused(runs, id) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id)) return false;
-  let rec;
-  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return false; }
-  return !!rec && typeof rec === 'object' && !!rec.paused && !Object.hasOwn(rec, 'exited') && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid);
+  let rec, mark;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); mark = JSON.parse(fs.readFileSync(path.join(runs, `${id}.paused`), 'utf8')); } catch { return false; }
+  return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && !Object.hasOwn(rec, 'exited')
+    && Number.isInteger(rec.pid) && rec.pid > 0 && mark.pid === rec.pid && mark.session === rec.session && pidAlive(rec.pid);
 }
 
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
@@ -2130,7 +2133,7 @@ function cmdRun() {
       running.add(id);
       const session = rec.session ?? 'unknown';
       adopted.set(id, { pid, session, file, log: path.join(dir, `${id}.log`) });
-      console.log(`${id} is already being built (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.${rec.paused ? ` It's paused: run \`speck play ${id}\` to carry it on.` : ''}`);
+      console.log(`${id} is already being built (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.${buildPaused(dir, id) ? ` It's paused: run \`speck play ${id}\` to carry it on.` : ''}`);
     }
   };
   const checkAdopted = () => {
@@ -2277,10 +2280,10 @@ function runRecord(repo, args, usage) {
   // Running: no exit recorded, and its pid still leads its own process group, as a build speck run launched does.
   const running = !!rec && !Object.hasOwn(rec, 'exited') && Number.isInteger(pid) && pid > 0 && pidAlive(pid)
     && processRows().some(([p, , g]) => p === pid && g === pid);
-  return { id, file, rec, pid, running, paused: running && !!rec.paused };
+  return { id, rec, pid, running, mark: path.join(path.dirname(file), `${id}.paused`), paused: running && buildPaused(path.dirname(file), id) };
 }
 
-// Written to a temporary file and renamed into place, as speck run writes its records.
+// Written to a temporary file and renamed into place, so nothing reading it sees half of it.
 function saveRecord(file, rec) {
   const tmp = `${file}.${process.pid}.tmp`;
   try { fs.writeFileSync(tmp, `${JSON.stringify(rec, null, 2)}\n`); fs.renameSync(tmp, file); }
@@ -2294,9 +2297,9 @@ function cmdPause(args) {
   if (b.paused) throw new SpeckError(`${b.id} is already paused. Run \`speck play ${b.id}\` to carry it on.`);
   const { sent, error } = signalBuild(b, 'SIGSTOP');
   if (error) { carryOn(sent); throw new SpeckError(`Couldn't pause ${b.id}: ${error} It's still running.`); }
-  try { saveRecord(b.file, { ...b.rec, paused: new Date().toISOString() }); } catch (e) {
+  try { saveRecord(b.mark, { session: b.rec.session ?? null, pid: b.pid, paused: new Date().toISOString() }); } catch (e) {
     carryOn(sent);
-    throw new SpeckError(`Couldn't mark ${b.id} paused in ${b.file} (${e.message}), so it's still running.`);
+    throw new SpeckError(`Couldn't mark ${b.id} paused in ${b.mark} (${e.message}), so it's still running.`);
   }
   console.log(`${b.id} paused (session ${b.rec.session ?? 'unknown'}). Run \`speck play ${b.id}\` to carry it on.`);
 }
@@ -2307,9 +2310,8 @@ function cmdPlay(args) {
   if (!b.paused) throw new SpeckError(`${b.id} isn't paused, so there's nothing to play.`);
   const { error } = signalBuild(b, 'SIGCONT');
   if (error) throw new SpeckError(`Couldn't play ${b.id}: ${error} It may be only partly playing, so it's still marked paused. Run \`speck play ${b.id}\` again.`);
-  const { paused, ...rec } = b.rec;
-  try { saveRecord(b.file, rec); } catch (e) {
-    throw new SpeckError(`${b.id} is playing, but couldn't be marked so in ${b.file} (${e.message}). Run \`speck play ${b.id}\` again.`);
+  try { fs.rmSync(b.mark, { force: true }); } catch (e) {
+    throw new SpeckError(`${b.id} is playing, but its paused mark ${b.mark} couldn't be removed (${e.message}). Run \`speck play ${b.id}\` again.`);
   }
   console.log(`${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`);
 }

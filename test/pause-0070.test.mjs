@@ -32,6 +32,8 @@ if (process.env.SELF_PAUSE) setTimeout(() => {
   const c = spawn(process.execPath, [process.env.SELF_PAUSE, 'pause', id], { stdio: 'ignore' });
   fs.writeFileSync(path.join(out, 'self.pid'), String(c.pid));
 }, 300);
+// EXIT_ON_CONT: the build finishes the moment it's played, with exit code 3.
+if (process.env.EXIT_ON_CONT) process.on('SIGCONT', () => process.exit(3));
 let n = 0;
 setInterval(() => { console.log('tick ' + n++); if (fs.existsSync(path.join(out, 'stop'))) process.exit(0); }, 20);
 `;
@@ -110,6 +112,7 @@ test('0070 AC2: play carries the same build on, in the same session and folder, 
     const rec = record(t.dir, '0001');
     assert.equal(speck(t.dir, 'pause', '0001').status, 0);
     assert.ok(await still(t, '0001'));
+    const recPaused = fs.readFileSync(runsPath(t.dir, '0001.json'), 'utf8');
     const logBefore = fs.readFileSync(t.log('0001'), 'utf8');
     const r = speck(t.dir, 'play', '0001');
     assert.equal(r.status, 0, r.stderr);
@@ -123,7 +126,8 @@ test('0070 AC2: play carries the same build on, in the same session and folder, 
     assert.equal(after.session, rec.session, 'the same session');
     assert.equal(after.pid, before.pid);
     assert.equal(after.cwd, rec.cwd, 'the same folder');
-    assert.ok(!after.paused, 'no longer marked paused');
+    assert.equal(json(t.dir).tickets.find(x => x.id === '0001').paused, false, 'no longer marked paused');
+    assert.equal(fs.readFileSync(runsPath(t.dir, '0001.json'), 'utf8'), recPaused, 'play leaves the run record to speck run');
   } finally { await cleanup(t, run)(); }
 });
 
@@ -148,8 +152,13 @@ test('0070 AC3: every ticket without a paused build gets paused false, including
   const t = tickerRepo({ tickets: [['0001', {}], ['0002', {}], ['0003', {}]] });
   fs.mkdirSync(runsPath(t.dir, ''), { recursive: true });
   const dead = spawnSync(process.execPath, ['-e', '0']).pid;
-  fs.writeFileSync(runsPath(t.dir, '0002.json'), JSON.stringify({ id: '0002', session: 's', cwd: t.dir, pid: dead, paused: '2026-10-09T10:00:00.000Z' }));
-  fs.writeFileSync(runsPath(t.dir, '0003.json'), JSON.stringify({ id: '0003', session: 's', cwd: t.dir, pid: process.pid, paused: '2026-10-09T10:00:00.000Z', exited: '2026-10-09T11:00:00.000Z', exit_code: null }));
+  const mark = (id, o) => fs.writeFileSync(runsPath(t.dir, `${id}.paused`), JSON.stringify({ session: 's', paused: '2026-10-09T10:00:00.000Z', ...o }));
+  fs.writeFileSync(runsPath(t.dir, '0002.json'), JSON.stringify({ id: '0002', session: 's', cwd: t.dir, pid: dead }));
+  mark('0002', { pid: dead }); // its build has gone
+  fs.writeFileSync(runsPath(t.dir, '0003.json'), JSON.stringify({ id: '0003', session: 's', cwd: t.dir, pid: process.pid, exited: '2026-10-09T11:00:00.000Z', exit_code: null }));
+  mark('0003', { pid: process.pid }); // its build has exited
+  fs.writeFileSync(runsPath(t.dir, '0001.json'), JSON.stringify({ id: '0001', session: 'new', cwd: t.dir, pid: process.pid }));
+  mark('0001', { pid: process.pid }); // left by an earlier build of the ticket, in another session
   for (const x of json(t.dir).tickets) assert.equal(x.paused, false, x.id);
 });
 
@@ -161,7 +170,7 @@ test('0070 AC4: pause and play refuse plainly, exit non-zero and change nothing'
     const dead = spawnSync(process.execPath, ['-e', '0']).pid;
     fs.writeFileSync(runsPath(t.dir, '0003.json'), JSON.stringify({ id: '0003', session: 's', cwd: t.dir, pid: dead }));
     fs.writeFileSync(runsPath(t.dir, '0004.json'), JSON.stringify({ id: '0004', session: 's', cwd: t.dir, pid: t.build('0001').pid, exited: '2026-10-09T11:00:00.000Z', exit_code: 0 }));
-    const files = () => Object.fromEntries(fs.readdirSync(runsPath(t.dir, '')).filter(f => f.endsWith('.json')).map(f => [f, fs.readFileSync(runsPath(t.dir, f), 'utf8')]));
+    const files = () => Object.fromEntries(fs.readdirSync(runsPath(t.dir, '')).filter(f => !f.endsWith('.log')).map(f => [f, fs.readFileSync(runsPath(t.dir, f), 'utf8')]));
     const refused = (args, re) => {
       const before = files();
       const r = speck(t.dir, ...args);
@@ -259,7 +268,8 @@ test('0070 AC4 (round 1 F2): a pause that fails part way leaves the build runnin
       assert.notEqual(r.status, 0, `ps failing after ${ok} runs`);
       assert.match(r.stderr, /ps/);
       assert.doesNotMatch(r.stderr, /at .*\.mjs:\d+/, 'no stack trace');
-      assert.equal(fs.readFileSync(runsPath(t.dir, '0001.json'), 'utf8'), before, 'not marked paused');
+      assert.equal(fs.readFileSync(runsPath(t.dir, '0001.json'), 'utf8'), before, 'its run record is unchanged');
+      assert.ok(!fs.existsSync(runsPath(t.dir, '0001.paused')), 'not marked paused');
       assert.ok(await growing(t, '0001'), `still running (ps failing after ${ok} runs)`);
     }
   } finally { await cleanup(t, run)(); }
@@ -276,11 +286,27 @@ test('0070 AC4 (round 1 F2): a play that fails stays marked paused, never says i
       assert.notEqual(r.status, 0);
       assert.doesNotMatch(r.stdout, /playing/i);
       assert.match(r.stderr, /ps/);
-      assert.ok(record(t.dir, '0001').paused, 'still marked paused');
+      assert.equal(json(t.dir).tickets.find(x => x.id === '0001').paused, true, 'still marked paused');
       assert.ok(await still(t, '0001'), 'still paused');
     }
     const r = speck(t.dir, 'play', '0001');
     assert.equal(r.status, 0, r.stderr);
     assert.ok(await growing(t, '0001'), 'played on the retry');
+  } finally { await cleanup(t, run)(); }
+});
+
+test('0070 AC2 (round 2 F3): a build that finishes as soon as it is played keeps the exit speck run records for it', async () => {
+  const t = tickerRepo();
+  const run = await launched(t, { EXIT_ON_CONT: '1' });
+  try {
+    assert.equal(speck(t.dir, 'pause', '0001').status, 0);
+    assert.ok(await still(t, '0001'));
+    assert.equal(speck(t.dir, 'play', '0001').status, 0);
+    assert.ok(await until(() => /0001 build exited with code 3/.test(run.out())), run.out());
+    await wait(200);
+    const rec = record(t.dir, '0001');
+    assert.equal(rec.exit_code, 3, 'its exit is kept');
+    assert.ok(rec.exited);
+    assert.equal(json(t.dir).tickets.find(x => x.id === '0001').paused, false);
   } finally { await cleanup(t, run)(); }
 });
