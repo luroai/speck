@@ -578,7 +578,7 @@ test('0034 AC4: a ready ticket shows Queued and an empty bar, plus waiting on <i
   assert.ok(b.textContent.includes('Queued') && b.textContent.includes('waiting on 0009, 0004'));
 });
 
-test('0034 AC5: an in-flight ticket shows the whole minutes since started (its worktree path is in the open ticket, 0053)', async () => {
+test('0034 AC5: an in-flight ticket shows the time since started, as MM:SS since 0058 (its worktree path is in the open ticket, 0053)', async () => {
   const ago = ms => new Date(Date.now() - ms).toISOString();
   const state = { tickets: [
     T('0001', 'building', { worktree: '/tmp/wt/0001', started: ago(7.9 * 60000) }),
@@ -587,15 +587,15 @@ test('0034 AC5: an in-flight ticket shows the whole minutes since started (its w
     T('0004', 'ready', { worktree: '/tmp/wt/0004', started: ago(60 * 60000) }),
   ], ideas: [] };
   const m = panelModel()(state);
-  assert.deepEqual(m.queue.map(t => t.minutes), [7, 0, null, null]);
+  assert.deepEqual(m.queue.map(t => t.counter && t.counter.slice(0, 4)), ['07:5', '00:3', null, null]);
   const p = fakePage([state]);
   await p.settle();
   const [a, b, c, d] = queueRows(p);
   // 0053: the worktree path shows only in the open ticket (test/panel-0053.test.mjs), so the closed row leaves it out.
-  assert.ok(!a.textContent.includes('/tmp/wt/0001') && a.textContent.includes('7 min'));
-  assert.ok(b.textContent.includes('0 min') && !b.textContent.includes('worktree'));
-  assert.ok(!c.textContent.includes('min') && !c.textContent.includes('worktree'));
-  assert.ok(!d.textContent.includes('/tmp/wt/0004') && !d.textContent.includes('min'), 'not for a ready ticket');
+  assert.ok(!a.textContent.includes('/tmp/wt/0001') && /07:5\d/.test(a.textContent));
+  assert.ok(/00:3\d/.test(b.textContent) && !b.textContent.includes('worktree'));
+  assert.ok(!/\d\d:\d\d/.test(c.textContent) && !c.textContent.includes('worktree'));
+  assert.ok(!d.textContent.includes('/tmp/wt/0004') && !/\d\d:\d\d/.test(d.textContent), 'not for a ready ticket');
 });
 
 // ---------- 0042: set a draft ticket to ready from the panel ----------

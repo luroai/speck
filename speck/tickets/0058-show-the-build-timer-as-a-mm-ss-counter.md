@@ -47,6 +47,9 @@ An in-flight ticket's elapsed time is a counter in `MM:SS` that advances every s
 - What a kept row shows from the clock is listed in the page's `derived` for the queue, so whatever the counter reads has to be in it, or a kept row would stop ticking (0050).
 - `speck/product.md` says in-flight tickets show "the whole minutes since `started`", and that a kept row's minutes change in place: both need the new wording.
 - Checked 2026-10-09: `started` is written by `speck start` as an ISO timestamp, so the page has second precision without any change to the JSON (`statusData` in `scripts/speck.mjs`).
+- The counter has its own `setInterval`, not 0052's log timer: that one runs only while a queue ticket is open, and the counter must run whenever an in-flight ticket has a `started`. The fake page in `test/support/panel.mjs` now keeps repeating timers apart (`intervals`), so the existing tests that run the state poll with `p.timers.shift()` are unaffected.
+- `test/panel-0040.test.mjs` 0040 AC5 now starts its fake clock a second on: with seconds shown, a millisecond between reading the clock and making the tickets turned `05:00` into `04:59`.
+- Self-check: no changes. Checked an unreadable or future `started` (tested), repeated ids (each row is paired with its own counter node), a row rebuilt or removed between ticks (each render replaces the list the timer updates), and that the tick changes nothing but the counters' text.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

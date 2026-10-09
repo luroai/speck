@@ -267,6 +267,11 @@ function resumeOf(t, resumeCommand) {
   if (!cmd) return { text: `session ${s.id}`, command: false };
   return { text: `cd ${shellWord(s.cwd)} && ${cmd.split('{session}').join(shellWord(s.id))}`, command: true };
 }
+// An in-flight ticket's time since started, as MM:SS: minutes padded to two digits and counting past 59, never below 00:00.
+function counter(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000)), pad = n => String(n).padStart(2, '0');
+  return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+}
 function panelModel(state) {
   const tickets = (state && Array.isArray(state.tickets) ? state.tickets : []).filter(t => t && t.status !== 'cancelled');
   const links = chains(tickets);
@@ -308,7 +313,7 @@ function panelModel(state) {
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       return { ...t, inFlight, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label, resume: resumeOf(t, state.resume_command),
         exit_message: exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
-        minutes: inFlight && start !== null ? Math.max(0, Math.floor((Date.now() - start) / 60000)) : null };
+        since: inFlight ? start : null, counter: inFlight && start !== null ? counter(Date.now() - start) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
     shippedTotal: done.length,
@@ -574,7 +579,7 @@ function shapingToggle(m) {
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const id = String(t.id), isOpen = openQueue.has(id);
-  const top = el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueMinutes(t)));
+  const top = el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
@@ -686,7 +691,7 @@ function setLogText(node, text) {
   }
   setText(node, text);
 }
-const queueMinutes = t => (t.minutes !== null ? `${t.minutes} min` : '');
+const queueCounter = t => (t.counter !== null ? t.counter : '');
 const queuedLine = t => el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : ''));
 // Puts new text in a node with one text node by replacing only the characters that differ, in place, so a selection in
 // or across it stays and moves with the text. A browser would pull a selection's end inside those characters back to
@@ -706,11 +711,11 @@ function setText(node, text) {
   if (end) range.setEnd(t, a + put.length);
 }
 const child = (node, cls) => [...node.children].find(n => n.className === cls); // children is an HTMLCollection, with no find
-// What a kept queue row shows from the clock or from other tickets, put right on its node: the minutes, and for a
+// What a kept queue row shows from the clock or from other tickets, put right on its node: the counter, and for a
 // ready ticket its chain icon and Queued line. Only the parts that change are replaced.
 function queueUpdate(q, t) {
   const sub = child(child(q, 'top'), 'sub');
-  setText(sub, queueMinutes(t));
+  setText(sub, queueCounter(t));
   if (t.inFlight) return;
   const row = child(child(q, 'top'), 'row'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
@@ -719,6 +724,19 @@ function queueUpdate(q, t) {
   }
   const act = child(q, 'act'), line = queuedLine(t);
   if (act.textContent !== line.textContent) { q.insertBefore(line, act); q.removeChild(act); }
+}
+// The counters run on their own 1-second timer, apart from the state poll and render(), so they move on between polls.
+// Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.
+const COUNTER_MS = 1000;
+let counters = []; // [counter node, started in ms] for each in-flight queue row with a started, from the last render
+let counterTimer = null;
+function startCounters(list) {
+  counters = list;
+  if (!counters.length && counterTimer !== null) { clearInterval(counterTimer); counterTimer = null; }
+  if (counters.length && counterTimer === null) counterTimer = setInterval(tickCounters, COUNTER_MS);
+}
+function tickCounters() {
+  for (const [sub, since] of counters) setText(sub, counter(Date.now() - since));
 }
 // Under a blocked question: the command that reopens the build's session, with a button that copies it.
 function resumeLine(t) {
@@ -803,10 +821,12 @@ function render() {
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
   renderFull(m.drafts);
 
-  // The minutes come from the clock, not the ticket, so they are put right on a kept row.
+  // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
-  fill('queue', keptItems('queue', m.queue, t => String(t.id), t => openQueue.has(String(t.id)), queueItem,
-    { own: t => { const { minutes, ...own } = ownData(t); return own; }, derived: t => [t.minutes, t.chain, t.unlocks], update: queueUpdate }), 'Nothing in flight or ready.');
+  const rows = keptItems('queue', m.queue, t => String(t.id), t => openQueue.has(String(t.id)), queueItem,
+    { own: t => { const { counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks], update: queueUpdate });
+  fill('queue', rows, 'Nothing in flight or ready.');
+  startCounters(m.queue.flatMap((t, i) => (t.counter !== null ? [[child(child(rows[i], 'top'), 'sub'), t.since]] : [])));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
   queueIds = new Set(m.queue.map(t => String(t.id)));

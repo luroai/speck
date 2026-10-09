@@ -133,20 +133,20 @@ test('0040 AC4: what is open, Set ready pending and a refusal still show at once
   assert.ok(!/\bopen\b/.test(items(p)[0].className), 'and it still closes');
 });
 
-test('0040 AC5: queue minutes, the connection status and the disconnected message keep updating while text is selected', async () => {
-  let now = Date.now();
+test('0040 AC5: the queue\'s time since started (MM:SS since 0058), the connection status and the disconnected message keep updating while text is selected', async () => {
+  let now = Date.now() + 1000; // a second on, so the tickets' started times, made just after this, are 5 minutes and some seconds ago
   class FakeDate extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } }
   const s = base();
   const p = fakePage([s, clone(s), new Error('down'), clone(s)], { Date: FakeDate });
   await p.settle();
   const item = openTicket(p, '0001');
   const kept = held(p, p.all(item).find(n => n.tagName === 'p'));
-  const minutes = () => queueRows(p).find(r => r.textContent.includes('0003')).textContent.match(/(\d+) min/)[1];
-  assert.equal(minutes(), '5');
+  const minutes = () => queueRows(p).find(r => r.textContent.includes('0003')).textContent.match(/(\d\d):\d\d/)[1];
+  assert.equal(minutes(), '05');
   now += 3 * 60000;
   await refresh(p);
   assert.ok(kept());
-  assert.equal(minutes(), '8', 'the minutes since started moved on');
+  assert.equal(minutes(), '08', 'the time since started moved on');
   now += 4000;
   await refresh(p);
   assert.ok(kept(), 'a failed refresh keeps the selection too');

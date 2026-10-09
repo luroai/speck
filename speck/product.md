@@ -151,7 +151,9 @@ Everything happens in the local repo, with no PR.
       A blocked ticket with no `session` shows nothing extra.
     Nothing else is red: a `blocked` or `ready` ticket with a `build_exit` looks as it would without one.
     A `ready` ticket shows "Queued", a bar with no step done or current and "waiting on <ids>" when it's waiting on any, or "unlocks <ids>" when it starts a chain.
-    In-flight tickets show the whole minutes since `started`, when it's set.
+    In-flight tickets show the time since `started`, when it's set and readable, as a counter in `MM:SS` (for example `07:42`), with the minutes padded to two digits and counting past 59 (`62:07`).
+    The page works it out from `started`, and the counter moves on once a second from its own 1-second timer, apart from the 2-second state poll, changing nothing else in the row.
+    That timer is cleared while no in-flight ticket has a `started`.
     Clicking a queue ticket's top row opens it and asks the server for its build log at once and then once a second, and clicking that top row again closes it and stops the requests.
     More than one can be open at once, and a log is asked for only while its ticket is open and in the queue, never for closed ones.
     The log has its own 1-second timer, apart from the 2-second state poll, and a request still waiting when the next is due is aborted.
@@ -169,8 +171,8 @@ Everything happens in the local repo, with no PR.
     The list has the latest 5 `done` tickets by `finished` time, newest first, with review rounds, tokens, the minutes from `started` to `finished` and when it shipped, from `finished` in the browser's time zone (`HH:MM` today, otherwise `D Mon HH:MM`, for example `8 Oct 14:02`, with no year); done tickets with no `finished` time come after those, within the 5, and show a dash for when they shipped.
     With no `done` tickets it says nothing has shipped yet and shows no stats.
     Text selected in a queue or Shipped row, and the scroll position of a build message box or an open log, stay put through the refresh while that ticket's data in `/api/state` (by `id`, whatever order its fields come in) is unchanged, whatever else changes.
-    A kept row's minutes since `started`, Shipped time, chain icon and "unlocks" or "waiting on" text still change in place when only the clock or other tickets change.
-    The minutes and the Shipped time change only the characters that differ, so a selection in or across them stays too.
+    A kept row's counter, Shipped time, chain icon and "unlocks" or "waiting on" text still change in place when only the clock or other tickets change.
+    The counter and the Shipped time change only the characters that differ, so a selection in or across them stays too.
     When a row's own data changes, the new content shows in that refresh and its selection or scroll position may be lost.
     Cancelled tickets aren't shown.
     It fetches `/api/state` every 2 seconds without reloading (a request still unanswered when the next is due counts as disconnected), says when it's disconnected (or what the server couldn't read), keeps the last state on screen and recovers by itself.
