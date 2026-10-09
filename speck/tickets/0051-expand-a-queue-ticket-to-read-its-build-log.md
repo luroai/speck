@@ -54,13 +54,14 @@ Clicking a queue ticket's top row opens it and shows the tail of its build's log
 ## Review log
 Round 1 (codex): changes requested: F1 The ANSI pattern does not consume charset designation sequences such as ESC ( B.
 Round 2 (codex): approve.
+Round 3 (codex): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 859,198
-- Elapsed since build started: 12 min
-- Changed lines: 86 (limit 5000)
+- Reviewer tokens: 1,728,485
+- Elapsed since build started: 16 min
+- Changed lines: 87 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (none went to the inbox):
 - Known limit: the server reads the whole log file on each request to take its last 200 lines. Fine for build logs today; worth reading only the file's tail if logs grow large, especially once 0052 polls an open log.
@@ -209,6 +210,79 @@ Follow-ups (none went to the inbox):
     },
     "escalation_question": "",
     "summary": "Approved. Queue tickets show readable build logs safely as text, and unchanged open logs retain their scroll position through refreshes. The escape-formatting defect is fixed and independently verified. The supplied full test run passes all 385 tests; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0bdf4726bad3097ecdd100ed7c8e423a83e4ba3e",
+    "thread_id": "01a12220-6f74-7f12-9caf-e426423e9f1f",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 866565,
+      "cached_input_tokens": 702464,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2722,
+      "reasoning_output_tokens": 126
+    },
+    "saved_at": "2026-10-09T19:31:26.497Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs panelLog and cmdPanel preserve fresh main-checkout reads, 200-line tails, missing-log responses and request restrictions. The three AC1 integration tests pass in the supplied post-merge output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html queueItem and toggleLog retain top-row toggling and independent open tickets. AC2 tests and the real-browser test pass after the merge."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "logText and .q .log retain escape removal, collapsed blank lines, truncation notice, empty-log message and bounded monospace scrolling. Independently reran all formatting assertions against the merged page: passed. The supplied formatting and browser tests also pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "logBox still renders through el using textContent. The AC4 malicious HTML-shaped input test passes in the supplied post-merge output."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "toggleLog requests only on opening; render retains openQueue and cached logs in keptItems. Request-count, refresh-preservation and real-browser scroll tests pass after the merge."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The earlier escape-formatting defect remains fixed after the merge. Its regression assertions pass independently against the merged implementation.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The resolved documentation preserves main's page-reload behaviour and accurately adds the log endpoint and open-row behaviour. scripts/speck.mjs preserves both fresh page reads with a stable token and fresh log reads; the panel retains main's Shaping changes alongside the queue feature."
+    },
+    "escalation_question": "",
+    "summary": "Approved after the merge. Queue logs remain safely readable, and open logs retain their scroll position through refreshes. Both conflict resolutions preserve the intent of main and this ticket. The supplied post-merge suite passes all 413 tests; no blocking concerns remain."
   }
 }
 ```
