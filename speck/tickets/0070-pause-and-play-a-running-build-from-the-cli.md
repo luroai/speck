@@ -1,7 +1,7 @@
 ---
 id: "0070"
 title: "Pause a running build from the CLI until it's played"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T21:44:55.448Z"
 ---
 # 0070 · Pause a running build from the CLI until it's played
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once `speck run` has launched a build, the only way to halt it is to kill its process by hand, which ends it for good. The user sometimes wants a build to hold still for a while (to free the machine, or to look at what it has done so far) and then carry on as if nothing happened.
@@ -45,7 +45,7 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
 - Checked 2026-10-09: `claude --resume <session-id>` continues a session by id, and combines with `-p` (`claude --help`, Claude Code 2.1.296).
 - product.md's `speck run` description and the list of commands need updating.
 - product.md was removed in 0068, so the README's command table and `speck help` were updated instead.
-- Checked 2026-10-09: Claude Code runs each Bash command in a session and process group of its own (seen with `ps` during a real build), so a signal to the build's process group alone wouldn't reach its tool commands or a Codex reviewer started from one. Pause and play signal the build's process group and every process descended from it.
+- Checked 2026-10-09: Claude Code runs each Bash command in a session and process group of its own (seen with `ps` during a real build), so a signal to the build's process group alone wouldn't reach its tool commands or a Codex reviewer started from one. Pause and play signal the build's process group, every process carrying the build's session in `SPECK_BUILD_SESSION` (which speck run sets for each build it launches, and which Claude Code passes on to its Bash commands, checked the same way), and everything descended from those.
 - Self-check: a build that runs `speck pause` on itself used to stop the pause process too, so the pause never finished or marked the record. Pause now leaves itself out of the processes it signals (test added).
 
 ## Blocked question
@@ -56,3 +56,83 @@ Once `speck run` has launched a build, the only way to halt it is to kill its pr
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fa3658cc1ee485e7bd8395bcf6730db4931878d0",
+    "thread_id": "01a122ab-b759-7f60-9bf9-6b3552ec5a57",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 289240,
+      "cached_input_tokens": 212736,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1039,
+      "reasoning_output_tokens": 128
+    },
+    "saved_at": "2026-10-09T21:57:57.676Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "test/pause-0070.test.mjs AC1 honestly exercises a live build and a detached helper. However, scripts/speck.mjs buildProcesses only finds current descendants or members of the original process group; reparented background processes escape it (F1)."
+      },
+      {
+        "id": 2,
+        "status": "unclear",
+        "evidence": "The AC2 test verifies same-process continuation and log append using a ticker. The ticket describes a manual Claude experiment, but no inspectable result demonstrates continuation of a real build. cmdPlay also has an unrecoverable signalling failure path (F2)."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "AC3 tests exercise slot retention, no relaunch and true/false JSON flags. cmdRun retains stopped processes through pidAlive; buildPaused reads the persistent marker."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The AC4 test invokes both CLI commands for missing tickets, absent/dead/exited builds, already-paused builds and unpaused builds; checks non-zero exits, plain errors and unchanged records."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The AC5 test stops and restarts the launcher while the build is paused, checks continued inactivity, then plays it successfully. cmdRun adopts the existing live PID without resuming it."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:2203",
+        "issue": "Processes started by a build can escape pause after their immediate parent exits. For example, a Bash tool starts a background helper in its own session and then finishes. The helper is reparented and has a different process group, so buildProcesses cannot associate it with the build; it keeps changing files while pause reports success. The current test keeps the helper's parent alive and misses this case.",
+        "suggested_fix": "Track or contain build processes so membership survives reparenting. Add a regression where an intermediate tool exits after launching a detached writer, and verify pause stops that writer and play resumes it.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:2265",
+        "issue": "cmdPlay removes the paused marker before signalBuild enumerates or resumes processes. If that enumeration fails, the build remains stopped but subsequent play refuses because its marker is gone. Likewise, signalBuild silently ignores all signal errors, including permission failures, and can report success without resuming or stopping a live process.",
+        "suggested_fix": "Preserve recoverable paused state on signalling failure, distinguish disappeared processes from other signal errors, and roll back partial operations where necessary. Add failure-path tests verifying that a failed play can be retried and never reports a stopped build as playing.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The commands and tests cover ordinary pause, play and launcher restart behaviour well, and the change stays within scope. Two gaps prevent approval: background work can escape the pause, and a failed play can leave a build frozen with no way to retry through the CLI. Real-build continuation also needs inspectable validation. Tests were inspected; I did not rerun tests that write temporary repositories in this read-only review."
+  }
+}
+```
+
+</details>

@@ -25,6 +25,8 @@ const fs = require('fs'), path = require('path'), { spawn } = require('child_pro
 const [helper, out, id, session] = process.argv.slice(2);
 fs.writeFileSync(path.join(out, id + '.build.json'), JSON.stringify({ pid: process.pid, session, cwd: process.cwd() }));
 spawn(process.execPath, [helper, out], { detached: true, stdio: 'ignore' }).unref();
+// ORPHAN: a step that starts a writer in a session of its own and exits at once, so the writer leaves the build's tree.
+if (process.env.ORPHAN) spawn(process.execPath, ['-e', \`require('child_process').spawn(process.execPath, [\${JSON.stringify(helper)}, \${JSON.stringify(out)}, 'orphan'], { detached: true, stdio: 'ignore' }).unref()\`], { detached: true, stdio: 'ignore' }).unref();
 // SELF_PAUSE: the build pauses itself with speck, and saves that speck pause's pid in <out>/self.pid.
 if (process.env.SELF_PAUSE) setTimeout(() => {
   const c = spawn(process.execPath, [process.env.SELF_PAUSE, 'pause', id], { stdio: 'ignore' });
@@ -35,9 +37,9 @@ setInterval(() => { console.log('tick ' + n++); if (fs.existsSync(path.join(out,
 `;
 const HELPER = `
 const fs = require('fs'), path = require('path');
-const out = process.argv[2];
-fs.writeFileSync(path.join(out, 'helper.pid'), String(process.pid));
-setInterval(() => { fs.appendFileSync(path.join(out, 'helper.txt'), 'h\\n'); if (fs.existsSync(path.join(out, 'stop'))) process.exit(0); }, 20);
+const [out, name = 'helper'] = process.argv.slice(2);
+fs.writeFileSync(path.join(out, name + '.pid'), String(process.pid));
+setInterval(() => { fs.appendFileSync(path.join(out, name + '.txt'), 'h\\n'); if (fs.existsSync(path.join(out, 'stop'))) process.exit(0); }, 20);
 `;
 
 function tickerRepo(opts = {}) {
@@ -50,8 +52,9 @@ function tickerRepo(opts = {}) {
   const r = runRepo({ ...opts, command: `"${process.execPath}" "${ticker}" "${helperJs}" "${out}" {id} {session}` });
   const build = id => { try { return JSON.parse(fs.readFileSync(path.join(out, `${id}.build.json`), 'utf8')); } catch { return null; } };
   const helper = () => { try { return Number(fs.readFileSync(path.join(out, 'helper.pid'), 'utf8')); } catch { return null; } };
+  const orphan = () => { try { return Number(fs.readFileSync(path.join(out, 'orphan.pid'), 'utf8')); } catch { return null; } };
   const finish = () => fs.writeFileSync(path.join(out, 'stop'), '');
-  return { ...r, out, build, helper, finish, helperFile: path.join(out, 'helper.txt'), log: id => runsPath(r.dir, `${id}.log`) };
+  return { ...r, out, build, helper, orphan, finish, orphanFile: path.join(out, 'orphan.txt'), helperFile: path.join(out, 'helper.txt'), log: id => runsPath(r.dir, `${id}.log`) };
 }
 
 // Launches 0001 with speck run and waits until the build and its helper are both working.
@@ -74,7 +77,7 @@ async function growing(t, id) {
 }
 
 const cleanup = (t, run) => async () => {
-  const pids = [t.build('0001')?.pid, t.helper()].filter(Boolean);
+  const pids = [t.build('0001')?.pid, t.helper(), t.orphan()].filter(Boolean);
   for (const p of pids) try { process.kill(p, 'SIGCONT'); } catch {}
   t.finish();
   if (run) await stopRun(run);
@@ -213,5 +216,71 @@ test('0070 AC1 (self-check): a build that pauses itself is paused, and the pause
     assert.ok(await until(() => /^Z/.test(state(pid)) || !alive(pid), 5000), `speck pause, run inside the build, finished (${state(pid)})`);
     assert.ok(await still(t, '0001'), 'and the build is paused');
     assert.equal(json(t.dir).tickets.find(x => x.id === '0001').paused, true);
+  } finally { await cleanup(t, run)(); }
+});
+
+test('0070 AC1 (round 1 F1): a process the build started whose parent has exited is paused and played with it', async () => {
+  const t = tickerRepo();
+  const run = await launched(t, { ORPHAN: '1' });
+  try {
+    assert.ok(await until(() => t.orphan() && size(t.orphanFile) > 0), 'the orphaned writer is working');
+    const rows = spawnSync('ps', ['-A', '-o', 'pid=,ppid=,pgid='], { encoding: 'utf8' }).stdout.trim().split('\n').map(l => l.trim().split(/\s+/).map(Number));
+    const [, ppid, pgid] = rows.find(([p]) => p === t.orphan());
+    const build = t.build('0001').pid;
+    assert.ok(ppid !== build && pgid !== build, 'it is outside the build\'s tree and process group');
+    assert.equal(speck(t.dir, 'pause', '0001').status, 0);
+    await wait(100);
+    const n = size(t.orphanFile);
+    await wait(400);
+    assert.equal(size(t.orphanFile), n, 'it stops writing');
+    assert.ok(state(t.orphan()).startsWith('T'));
+    assert.equal(speck(t.dir, 'play', '0001').status, 0);
+    assert.ok(await until(() => size(t.orphanFile) > n, 3000), 'it writes again once played');
+  } finally { await cleanup(t, run)(); }
+});
+
+// A ps that works for its first FAKE_PS_OK runs (counted in FAKE_PS_COUNT), then fails.
+function failingPs() {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-ps-'));
+  const real = spawnSync('sh', ['-c', 'command -v ps'], { encoding: 'utf8' }).stdout.trim();
+  fs.writeFileSync(path.join(bin, 'ps'), `#!/bin/sh\nn=$(cat "$FAKE_PS_COUNT" 2>/dev/null || echo 0)\necho $((n + 1)) > "$FAKE_PS_COUNT"\nif [ "$n" -lt "$FAKE_PS_OK" ]; then exec ${real} "$@"; fi\necho "ps: broken" >&2\nexit 1\n`, { mode: 0o755 });
+  return ok => ({ ...env, PATH: `${bin}${path.delimiter}${env.PATH}`, FAKE_PS_OK: String(ok), FAKE_PS_COUNT: path.join(bin, `count-${Math.random()}`) });
+}
+const speckWith = (dir, e, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: e });
+
+test('0070 AC4 (round 1 F2): a pause that fails part way leaves the build running and unmarked', async () => {
+  const t = tickerRepo();
+  const run = await launched(t);
+  const ps = failingPs();
+  try {
+    for (const ok of [0, 1, 2]) { // fails checking the build, listing its processes, or going round again after stopping them
+      const before = fs.readFileSync(runsPath(t.dir, '0001.json'), 'utf8');
+      const r = speckWith(t.dir, ps(ok), 'pause', '0001');
+      assert.notEqual(r.status, 0, `ps failing after ${ok} runs`);
+      assert.match(r.stderr, /ps/);
+      assert.doesNotMatch(r.stderr, /at .*\.mjs:\d+/, 'no stack trace');
+      assert.equal(fs.readFileSync(runsPath(t.dir, '0001.json'), 'utf8'), before, 'not marked paused');
+      assert.ok(await growing(t, '0001'), `still running (ps failing after ${ok} runs)`);
+    }
+  } finally { await cleanup(t, run)(); }
+});
+
+test('0070 AC4 (round 1 F2): a play that fails stays marked paused, never says it is playing, and can be run again', async () => {
+  const t = tickerRepo();
+  const run = await launched(t);
+  const ps = failingPs();
+  try {
+    assert.equal(speck(t.dir, 'pause', '0001').status, 0);
+    for (const ok of [0, 1]) { // fails checking the build, or listing its processes
+      const r = speckWith(t.dir, ps(ok), 'play', '0001');
+      assert.notEqual(r.status, 0);
+      assert.doesNotMatch(r.stdout, /playing/i);
+      assert.match(r.stderr, /ps/);
+      assert.ok(record(t.dir, '0001').paused, 'still marked paused');
+      assert.ok(await still(t, '0001'), 'still paused');
+    }
+    const r = speck(t.dir, 'play', '0001');
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(await growing(t, '0001'), 'played on the retry');
   } finally { await cleanup(t, run)(); }
 });
