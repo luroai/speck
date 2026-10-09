@@ -1,7 +1,7 @@
 ---
 id: "0075"
 title: "Treat a ticket with no priority the same everywhere"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T22:28:44.275Z"
 ---
 # 0075 · Treat a ticket with no priority the same everywhere
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck doesn't handle a ticket with no priority consistently. `speck status` lists `priority: ""` as `P` above P1 tickets and a bare `priority:` as `P[object Object]`, while `status --json` (and so `speck run` and the panel) puts both last. Nothing checks the value either: `speck set <id> priority high` is accepted, and there's no way to clear a priority with `speck set`. It still matters for tickets edited by hand.
@@ -50,3 +50,64 @@ A ticket's priority is always a whole number from 1 to 5 or none, and a ticket w
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, no inbox notes):
+- Known limit: a draft with no priority shows no tag in the panel, so it can't be given one there. 0077 puts that out of scope on purpose (new tickets start at P3), so no idea note.
+- Tidy-up: the panel's `t.priority !== ''` check in `tags()` is now redundant, since `status --json` gives `null` for every form of no priority.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "11849b0e1f380026caf9bd0270a38f0f003f2c5e",
+    "thread_id": "01a122cd-dc8f-7a53-ace9-cbaa9876f94f",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 385542,
+      "cached_input_tokens": 301568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 941,
+      "reasoning_output_tokens": 53
+    },
+    "saved_at": "2026-10-09T22:35:08.466Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: fieldValue/ticketPriority normalise all three empty forms to null; cmdStatus and statusData share byPriority. test/priority-0075.test.mjs exercises text output, JSON values and ordering for every form, plus runner launch order."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "lintTicket validates priorities with validPriority; cmdSet refuses invalid input before writes. AC2 tests exercise invalid values, unchanged file contents, plain errors and valid priorities. Independent read-only checks confirmed lint rejects the specified invalid values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdSet accepts an explicit empty priority; writeField/setField writes priority: \"\" and preserves its comment. The AC3 test checks the resulting line, lint, JSON and text ordering, and continued rejection of empty titles. Independent setField verification confirmed comment preservation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "statusData supplies null to the panel; templates/panel.html omits priority tags for null. The AC4 test feeds actual CLI JSON into the real panel script and checks all three forms in draft and ready rows, with a P2 positive control."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Tickets without a priority now display and sort consistently. Invalid priorities are rejected, and clearing a priority preserves its comment. All four criteria have meaningful tests, reported passing by the builder. Read-only checks confirmed validation and comment preservation; I found no blocking issues. The full suite was not rerun in the read-only environment."
+  }
+}
+```
+
+</details>
