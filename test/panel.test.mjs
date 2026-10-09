@@ -938,3 +938,23 @@ test('0042 AC3 (self-check): when the commit fails, the ticket is put back as it
     assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets/0002-two.md'), '?? speck/tickets/0002-two.md', 'still untracked, nothing staged');
   } finally { await stop(p); }
 });
+
+test('0042 AC3 (round 1 F1): when the commit fails, a ticket with its own staged changes keeps both its staged and working copies', async () => {
+  const { r, port, p, token } = await readyPanel();
+  try {
+    const rel = 'speck/tickets/0002-two.md', file = path.join(r.dir, rel);
+    r.g('add', rel); r.g('commit', '-qm', 'two');                                // HEAD's copy
+    fs.writeFileSync(file, readT(r, '0002-two.md').replace('Two', 'Two staged')); r.g('add', rel); // the staged copy
+    fs.writeFileSync(file, readT(r, '0002-two.md').replace('Two staged', 'Two working'));                                   // the working copy
+    const staged = r.g('show', `:${rel}`), working = readT(r, '0002-two.md');
+    assert.notEqual(staged, working);
+    assert.notEqual(staged, r.g('show', `HEAD:${rel}`));
+    fs.writeFileSync(path.join(r.dir, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+    const before = headOf(r);
+    const res = await post(port, readyPath('0002'), { token });
+    assert.equal(res.status, 500);
+    assert.equal(headOf(r), before);
+    assert.equal(r.g('show', `:${rel}`), staged, 'the staged copy is as it was');
+    assert.equal(readT(r, '0002-two.md'), working, 'the working copy is as it was');
+  } finally { await stop(p); }
+});

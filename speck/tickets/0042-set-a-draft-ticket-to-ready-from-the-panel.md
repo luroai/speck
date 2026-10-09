@@ -1,7 +1,7 @@
 ---
 id: "0042"
 title: "Set a draft ticket to ready from the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T14:00:42.783Z"
 ---
 # 0042 · Set a draft ticket to ready from the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Gate 1 now happens in the panel, but setting a ticket to ready still means leaving it for a terminal, running `speck set <id> status ready` and committing the ticket. That breaks the flow from reading a ticket to approving it.
@@ -42,7 +42,7 @@ An open draft ticket in the panel has a Set ready button that approves it and co
 - `speck start` refuses a ticket with uncommitted changes, which is why the button commits the ticket.
 - Builds after 0041, which changes the same page.
 - Checked 2026-10-09: browsers send an `Origin` header on cross-site form posts and `fetch` POSTs (Fetch standard).
-- Self-check: a token header with non-ASCII characters made the byte comparison throw and crashed the server, so tokens are now compared as bytes (test added). A failed commit left the ticket staged; it's now unstaged with `git reset` (test added). If the ticket file already had staged changes before the click and the commit fails, those are unstaged too. Also checked: duplicate `Origin` or token headers (joined by Node, so refused), ids that aren't 1–4 digits (405), and that clicking the button doesn't toggle the row.
+- Self-check: a token header with non-ASCII characters made the byte comparison throw and crashed the server, so tokens are now compared as bytes (test added). A failed commit left the ticket staged; it's now put back as it was (test added). Also checked: duplicate `Origin` or token headers (joined by Node, so refused), ids that aren't 1–4 digits (405), and that clicking the button doesn't toggle the row.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,3 +52,79 @@ An open draft ticket in the panel has a Set ready button that approves it and co
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a9fa7a41023b59b8a6dc033944ff00f1b5889739",
+    "thread_id": "01a12101-4958-7711-b9f1-1095e90f9440",
+    "seconds": 56,
+    "usage": {
+      "input_tokens": 251582,
+      "cached_input_tokens": 182144,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1098,
+      "reasoning_output_tokens": 130
+    },
+    "saved_at": "2026-10-09T14:12:30.996Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: ticketDetail and setReadyButton render the button with disabled state and explanatory title. The 0042 AC1 test exercises both valid and lint-failing drafts."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: panelSetReady uses the CLI's lintTicket and writeField helpers and a path-specific commit. The server AC2 test checks the commit message, committed path and preservation of unrelated staged and unstaged files; the page AC2 test checks movement into the queue."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The AC3 tests cover the four required validation refusals and displaying the reason. However, panelSetReady's commit-failure rollback resets the ticket's index entry to HEAD, destroying any pre-existing staged version. The failure test covers only an untracked ticket."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: cmdPanel checks Host, Origin and a fresh random token before writing; sameToken safely compares bytes. AC4 tests exercise token regeneration, rejected credentials, both permitted origins, unchanged GET routes, other methods and non-ASCII tokens."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "speck/product.md describes the single write, Origin and token protection, continuing Host checks and local-program access. The AC5 test checks the documentation, and inspection confirms these protections exist."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs: panelSetReady",
+        "issue": "A failed commit loses the ticket's pre-existing staged contents. The catch block restores the working file but runs git reset on its path. If the index held edits different from both HEAD and the working file, that staged version is lost. The builder's notes acknowledge this, but the regression test exercises only an untracked draft.",
+        "suggested_fix": "Save the ticket's original index entry before staging and restore that exact entry on failure, preserving its original untracked state when applicable. cmdClose already uses this approach. Add a failed-commit test with distinct HEAD, staged and working versions, asserting that both index and working contents remain unchanged.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": true,
+      "note": "The documented capability and request protections match the implementation. The failed-commit rollback needs fixing."
+    },
+    "escalation_question": "",
+    "summary": "The button, lint checks, ticket-only commit and browser protections are implemented with meaningful tests. One failure path needs fixing before merge: if committing fails, the panel can lose edits previously staged in the ticket. Tests were inspected; the supplied passing test run was not independently rerun in this read-only review."
+  }
+}
+```
+
+</details>

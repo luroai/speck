@@ -1529,16 +1529,9 @@ function panelSetReady(repo, id) {
     return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
   const rel = path.relative(repo, t.file);
   writeField(t, 'status', 'ready');
-  try {
-    git(['add', '--', rel], repo);
-    // With a path, commit takes only that path, so anything else staged stays staged and uncommitted.
-    git(['commit', '-q', '-m', `speck(${pad}): ready`, '--', rel], repo);
-  } catch (e) {
-    fs.writeFileSync(t.file, t.raw);
-    // Unstages it: back to HEAD's copy in the index, or out of the index if it was never committed.
-    sh('git', ['reset', '-q', '--', rel], { cwd: repo });
-    return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft: ${e.message}` } };
-  }
+  const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): ready`);
+  if (commit.status !== 0)
+    return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   return { status: 200, body: { ok: true, id: pad } };
 }
 
@@ -1703,6 +1696,22 @@ export function pathsOutside(porcelain, rel) {
 
 const changesOutside = (repo, rel) => pathsOutside(git(['status', '--porcelain', '-z', '--untracked-files=all'], repo), rel);
 
+// Commits only the ticket file, already written, as `message`. Anything else staged stays staged and uncommitted.
+// If the commit fails, the file goes back to `original` and its index entry back exactly as it was (staged
+// content kept, or out of the index if it was never added). Returns the failing git result, or { status: 0 }.
+function commitTicketOnly(repo, file, original, message) {
+  const rel = path.relative(repo, file);
+  const entry = git(['ls-files', '-s', '--', rel], repo).trim().split('\t')[0].split(' ');
+  const staged = sh('git', ['add', '--', rel], { cwd: repo });
+  const commit = staged.status === 0 ? sh('git', ['commit', '-q', '-m', message, '--', rel], { cwd: repo }) : staged;
+  if (commit.status !== 0) {
+    fs.writeFileSync(file, original);
+    if (entry.length === 3) sh('git', ['update-index', '--cacheinfo', `${entry[0]},${entry[1]},${rel}`], { cwd: repo });
+    else sh('git', ['reset', '-q', '--', rel], { cwd: repo });
+  }
+  return commit;
+}
+
 function cmdClose(args) {
   const id = args.find(a => !a.startsWith('--'));
   if (!id) throw new SpeckError('Usage: speck close <id>');
@@ -1735,17 +1744,10 @@ function cmdClose(args) {
   const original = t.raw;
   t.raw = text;
   writeField(t, 'status', 'approved');
-  // The ticket's own staged state, so a failed commit puts it back exactly as it was.
-  const entry = git(['ls-files', '-s', '--', rel], repo).trim().split('\t')[0].split(' ');
   // Only the ticket file is committed, so nothing else can ride along with the approval.
-  const staged = sh('git', ['add', '--', rel], { cwd: repo });
-  const commit = staged.status === 0 ? sh('git', ['commit', '-q', '-m', `speck(${pad}): approved`, '--', rel], { cwd: repo }) : staged;
-  if (commit.status !== 0) {
-    fs.writeFileSync(t.file, original);
-    if (entry.length === 3) sh('git', ['update-index', '--cacheinfo', `${entry[0]},${entry[1]},${rel}`], { cwd: repo });
-    else sh('git', ['reset', '-q', '--', rel], { cwd: repo });
+  const commit = commitTicketOnly(repo, t.file, original, `speck(${pad}): approved`);
+  if (commit.status !== 0)
     throw new SpeckError(`Couldn't commit the ticket, so nothing was changed.\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}`);
-  }
   console.log(`${pad} approved, committed as speck(${pad}): approved. Next: speck ship ${pad} --auto (or /speck-ship ${pad}).`);
 }
 
