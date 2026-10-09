@@ -27,6 +27,7 @@ test('0039 AC1: a draft opens and closes from anywhere in its top row: id, title
   for (const s of ['0001', 'Ticket 0001', 'P1', 'S', 'low', 'criteria', 'lint: 1 error', '1 warning'])
     assert.ok(inHead.some(n => n.textContent === s || n.textContent.includes(s)), `the top row holds ${s}`);
   for (const i of inHead.keys()) {
+    if (/\bpick\b/.test(inHead[i].className)) continue; // since 0077 the priority tag opens its menu instead (covered there)
     press(p.all(top(items(p)[0]))[i]);
     assert.ok(isOpen(items(p)[0]), `opens from top-row node ${i}`);
     press(p.all(top(items(p)[0]))[i]);

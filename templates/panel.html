@@ -45,6 +45,14 @@
   :root { --bug: #e07bb5; } /* the bug tag's own colour */
   .tag.bug { color: var(--bug); border-color: #5c3550; }
   #shipped .tag.bug { margin-left: 8px; }
+  .prio { position: relative; display: inline-block; }
+  .tag.pick { cursor: pointer; }
+  .tag.pick:hover { color: var(--text); border-color: var(--muted); }
+  .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; background: var(--raise); border: 1px solid var(--line); }
+  .prio-menu button { font: inherit; font-size: 11px; padding: 1px 8px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+  .prio-menu button:hover { color: var(--text); }
+  .prio-menu button.on { color: var(--accent); }
+  .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .title { color: var(--text); }
   .sub { font-size: 12px; color: var(--muted); }
@@ -591,7 +599,7 @@ function linkTarget(s, from) {
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
 const LOG_MS = 1000; // how often an open queue ticket's log is asked for
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready and each priority change
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -611,9 +619,13 @@ function chainIcon(t) {
 }
 // A "bug" tag for a bug ticket, or nothing.
 const bugTag = t => (t.type === 'bug' ? el('span', 'tag bug', 'bug') : null);
-function tags(t, icon) {
+// `pick`: the priority tag opens the menu that sets it (a draft in the Tickets list).
+function tags(t, icon, pick) {
   const row = el('div', 'row', null, el('span', 'id', t.id), bugTag(t), icon, el('span', 'title', t.title));
-  if (t.priority !== undefined && t.priority !== null && t.priority !== '') row.appendChild(el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`));
+  if (t.priority !== undefined && t.priority !== null && t.priority !== '') {
+    const tag = el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`);
+    row.appendChild(pick ? priorityPicker(t, tag) : tag);
+  }
   if (t.size) row.appendChild(el('span', 'tag', t.size));
   if (t.risk) row.appendChild(el('span', t.risk === 'high' ? 'tag high' : 'tag', t.risk));
   return row;
@@ -633,6 +645,8 @@ let queueIds = new Set(); // ids in the queue at the last render, so a ticket th
 let logTimer = false; // whether the log timer is set
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
 const refused = new Map(); // id → why the server refused to set it ready
+let priorityMenu = null; // the id of the draft whose priority menu is open, or null
+const priorityRefused = new Map(); // id → why the server refused to set its priority, until the next click on its tag
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
 const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
@@ -642,12 +656,13 @@ const list = v => (Array.isArray(v) ? v : []);
 
 function ticketItem(t) {
   const isOpen = open.has(t.id);
-  return hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, ticketHead(t), isOpen ? ticketDetail(t, list(t.acceptance_criteria)) : null), t);
+  const why = priorityRefused.has(String(t.id)) ? el('div', 'bad prio-refused', priorityRefused.get(String(t.id))) : null;
+  return hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, ticketHead(t), why, isOpen ? ticketDetail(t, list(t.acceptance_criteria)) : null), t);
 }
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
 function ticketHead(t) {
-  const head = el('div', 'head', null, tags(t, chainIcon(t)), el('span'));
+  const head = el('div', 'head', null, tags(t, chainIcon(t), true), el('span'));
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
   const checks = el('div', 'checks');
@@ -673,6 +688,29 @@ function part(body, heading, text) {
   if (text === null || text === undefined || text === '') return;
   body.appendChild(el('h4', null, heading));
   body.appendChild(el('p', 'text', text));
+}
+// A draft's priority tag, which opens a menu of P1 to P5 with its own marked, and the menu while it's open. A click
+// while it's open closes it and does nothing else (see the document's click listener below).
+function priorityPicker(t, tag) {
+  const id = String(t.id), box = el('span', 'prio', null, tag);
+  tag.className += ' pick';
+  tag.title = 'Set the priority';
+  tag.addEventListener('click', e => {
+    e.stopPropagation(); // the click is for the tag, not the ticket
+    priorityRefused.delete(id);
+    priorityMenu = id;
+    render();
+  });
+  if (priorityMenu !== id) return box;
+  const menu = el('span', 'prio-menu');
+  for (let n = 1; n <= 5; n++) {
+    const b = el('button', String(t.priority) === String(n) ? 'on' : null, `P${n}`);
+    b.type = 'button';
+    b.addEventListener('click', e => { e.stopPropagation(); setPriority(id, n); });
+    menu.appendChild(b);
+  }
+  box.appendChild(menu);
+  return box;
 }
 // An open ticket, short: its problem and outcome, then its readiness list. The rest is in the side pane.
 function ticketDetail(t, criteria) {
@@ -834,7 +872,37 @@ function holdPage(on) {
 }
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && fullId !== null) closeFull(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (priorityMenu !== null) closePriorityMenu();
+  else if (fullId !== null) closeFull();
+});
+// While a priority menu is open, a click anywhere else only closes it: caught on its way down, before it reaches what
+// was clicked, so it neither opens nor closes a ticket nor presses a button.
+const inPriorityMenu = n => { for (; n; n = n.parentNode) if (/\bprio-menu\b/.test(String(n.className || ''))) return true; return false; };
+document.addEventListener('click', e => {
+  if (priorityMenu === null || inPriorityMenu(e.target)) return;
+  e.stopPropagation();
+  e.preventDefault();
+  closePriorityMenu();
+}, true);
+function closePriorityMenu() { priorityMenu = null; render(); }
+// The server sets the draft's priority and commits it, and the next refresh moves it to its place in the list.
+async function setPriority(id, n) {
+  priorityMenu = null;
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/priority/${n}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (!res.ok) {
+      let why = null;
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      priorityRefused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
+    }
+  } catch {
+    priorityRefused.set(id, "Couldn't reach the panel server, so the priority wasn't changed.");
+  }
+  render();
+}
 async function setReady(id) {
   refused.delete(id);
   settingReady.add(id);
@@ -1117,10 +1185,13 @@ let state = null, lastOk = null, connected = null;
 function render() {
   if (!state) return;
   const m = panelModel(state);
+  // A menu whose ticket isn't showing any more is closed, so it can't catch the next click.
+  if (priorityMenu !== null && (shapingView !== 'tickets' || !m.drafts.some(t => String(t.id) === priorityMenu))) priorityMenu = null;
   shapingToggle(m);
   if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
-  else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
+  else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
+    t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
     { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
   renderFull(m);
 

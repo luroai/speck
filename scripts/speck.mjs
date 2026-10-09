@@ -1736,7 +1736,7 @@ function cmdStatus(args = []) {
   console.log(`\nIDEAS (${total}: ${total - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
 }
 
-// ---------- panel (a view in the browser, with one write: Set ready) ----------
+// ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -1768,6 +1768,27 @@ function panelSetReady(repo, id) {
   const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): ready`);
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
+  return { status: 200, body: { ok: true, id: pad } };
+}
+
+// The panel's other write: set a draft ticket's priority, as `speck set <id> priority <n>` does, and commit only that
+// ticket. `value` is from the URL, so anything but 1 to 5 is refused. Every refusal comes before the first write.
+function panelSetPriority(repo, id, value) {
+  const cfg = loadConfig(repo);
+  let t;
+  try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
+  const pad = t.fm.id;
+  if (t.fm.status !== 'draft') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so its priority can't be changed from here.` } };
+  if (!/^[1-5]$/.test(value)) return { status: 422, body: { error: `Priority must be a whole number from 1 to 5, not "${value.slice(0, 20)}".` } };
+  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
+  if (branch !== cfg.base_branch)
+    return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
+  if (String(t.fm.priority) === value) return { status: 200, body: { ok: true, id: pad } }; // already at that priority
+  const rel = path.relative(repo, t.file);
+  writeField(t, 'priority', value);
+  const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): priority ${value}`);
+  if (commit.status !== 0)
+    return { status: 500, body: { error: `Couldn't commit ${rel}, so its priority is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   return { status: 200, body: { ok: true, id: pad } };
 }
 
@@ -1850,9 +1871,10 @@ function codeHash() {
   return h.digest('hex');
 }
 
-// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the one write,
-// POST /api/tickets/<id>/ready. Every request reads the files afresh, the page included, so a changed panel.html shows
-// on a reload. It also watches the code, and when it changes, hands over to a server on the new code (see cmdPanel).
+// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the two writes,
+// POST /api/tickets/<id>/ready and POST /api/tickets/<id>/priority/<n>. Every request reads the files afresh, the page
+// included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
+// server on the new code (see cmdPanel).
 export async function panelServer() {
   const env = process.env;
   const args = JSON.parse(env.SPECK_PANEL_ARGS || '[]'), handover = env.SPECK_PANEL_HANDOVER === '1';
@@ -1896,6 +1918,15 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelSetReady(repo, ready[1]);
+        return send(res, out.status, 'application/json', JSON.stringify(out.body));
+      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    const priority = where.match(/^\/api\/tickets\/(\d{1,4})\/priority\/([^/]*)$/);
+    if (req.method === 'POST' && priority) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      try {
+        const out = panelSetPriority(repo, priority[1], priority[2]);
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
