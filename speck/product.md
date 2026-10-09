@@ -112,8 +112,10 @@ Everything happens in the local repo, with no PR.
     Clicking that top row opens a short view: its problem and outcome (a section with nothing in it is left out), and a readiness list with size and risk, criteria count, each lint error and warning in full (or "lint passes") and each `after:` id marked done or not done, then a **Set ready** button, disabled with the reason as its hover text while the ticket has lint errors, and a **Full ticket** button.
     Clicking either button doesn't close the ticket.
     **Full ticket** opens a side pane over the right of the page with that ticket's id, title, problem, outcome, numbered acceptance criteria, out of scope and notes, as text, leaving out any section with nothing in it.
-    The pane holds a single ticket, so clicking **Full ticket** on another ticket replaces its content.
-    It closes with its **Close** button or the Escape key, leaving the open ticket in the list open.
+    While it's open, the rest of the page is dimmed and holds still: the wheel, touch and keys (the pane takes the focus) scroll only the pane, even at its top or bottom, and Tab can't reach the page behind.
+    A click anywhere outside the pane closes it and does nothing else, so showing another ticket's full text takes two clicks: one to close the pane, then that ticket's **Full ticket**.
+    Clicking in the pane, or selecting text that starts in it and ends outside it, leaves it open.
+    It also closes with its **Close** button or the Escape key, leaving the open ticket in the list open, and however it closes, the page is where it was when the pane opened.
     Through the refresh it keeps showing the same ticket (the first one with that id), shows the new content when that ticket's data changes, and closes when the ticket leaves the Tickets list, for example once it's ready.
     When the server refuses, the reason shows under the button until the next click on it, and once it's ready the next refresh moves it to the queue.
     Clicking the top row again closes it.
