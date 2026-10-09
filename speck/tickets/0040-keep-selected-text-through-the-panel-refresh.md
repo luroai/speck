@@ -42,6 +42,8 @@ Text you select in an open ticket or idea stays selected through refreshes until
 - Builds after 0039, which changes the same item code.
 - "Data unchanged" means the same field values in `/api/state` for that ticket (matched by `id`) or idea (matched by `path`).
 - No external facts: everything is in this repo.
+- Self-check: added a test that drafts sharing an id, or with ids such as `__proto__` and `constructor`, all show and refresh; no code change.
+- The browser helpers from `test/panel-0039.test.mjs` moved into `test/support/panel.mjs` so this ticket's real-browser test can use them.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
