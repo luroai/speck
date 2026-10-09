@@ -2618,7 +2618,7 @@ test('0030 AC1: speck status --json prints one JSON object with tickets and idea
   const res = r.run('status', '--json');
   assert.equal(res.status, 0);
   const out = JSON.parse(res.stdout);
-  assert.deepEqual(Object.keys(out).sort(), ['ideas', 'tickets']);
+  assert.deepEqual(Object.keys(out).sort(), ['ideas', 'resume_command', 'tickets']); // resume_command added by 0044
   assert.ok(Array.isArray(out.tickets) && Array.isArray(out.ideas));
   assert.equal(out.tickets.length, 1);
   assert.equal(r.run('status').stdout, plain, 'text output still the same');
@@ -2626,7 +2626,7 @@ test('0030 AC1: speck status --json prints one JSON object with tickets and idea
   // No tickets and no ideas folder.
   fs.rmSync(path.join(r.dir, 'speck', 'tickets'), { recursive: true, force: true });
   fs.rmSync(path.join(r.dir, 'speck', 'ideas'), { recursive: true, force: true });
-  assert.deepEqual(statusJson(r.run), { tickets: [], ideas: [] });
+  assert.deepEqual(statusJson(r.run), { tickets: [], ideas: [], resume_command: 'claude --resume {session}' });
 });
 
 test('0030 AC2: each ticket has its frontmatter, path, worktree, acceptance criteria, blocked question and lint counts', () => {
