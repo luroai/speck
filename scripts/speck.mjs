@@ -1034,6 +1034,23 @@ function cmdCancel(args) {
 
 // ---------- start a build ----------
 
+// True if `p` exists in commit `rev`, following committed symlinks the way a checkout would (speck's own repo links
+// .speck/scripts to ../scripts). Nothing on disk or in the index counts.
+function inCommit(repo, rev, p, hops = 0) {
+  const parts = p.split('/').filter(Boolean);
+  for (let i = 0; i < parts.length; i++) {
+    const r = sh('git', ['ls-tree', rev, '--', parts.slice(0, i + 1).join('/')], { cwd: repo });
+    const [mode, , obj] = r.stdout.trim().split(/\s+/);
+    if (r.status !== 0 || !obj) return false;
+    if (mode === '120000') {
+      const target = sh('git', ['cat-file', '-p', obj], { cwd: repo }).stdout;
+      const next = path.posix.normalize(path.posix.join(parts.slice(0, i).join('/'), target, ...parts.slice(i + 1)));
+      return hops < 10 && !next.startsWith('..') && inCommit(repo, rev, next, hops + 1);
+    }
+  }
+  return true;
+}
+
 // Where a ticket's worktree goes: beside the main checkout, never inside it, and at the same path each time.
 function worktreePath(main, branch) {
   return path.join(path.dirname(main), `${path.basename(main)}.worktrees`, ...branch.split('/'));
@@ -1048,12 +1065,7 @@ function cmdStart(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
   const pad = t.fm.id;
-  if (t.fm.status !== 'ready') throw new SpeckError(`Ticket ${pad} is "${t.fm.status}", not "ready". Only a ready ticket can be started.`);
-  const rel = posix(path.relative(repo, t.file));
-  if (git(['status', '--porcelain', '--', rel], repo).trim())
-    throw new SpeckError(`${rel} has uncommitted changes. Commit it first, so the build starts from the ticket as you approved it.`);
-  // Named after the ticket's file, which keeps its name when the title changes.
-  const branch = `${cfg.branch_prefix}${path.basename(t.file, '.md')}`;
+  // An existing build comes first, so resuming from anywhere (even inside its worktree) gets the path to carry on in.
   const list = worktreeList(repo);
   const existing = git(['for-each-ref', '--format=%(refname:short)', `refs/heads/${cfg.branch_prefix}${pad}-*`], repo).split('\n').filter(Boolean);
   if (existing.length) {
@@ -1062,6 +1074,12 @@ function cmdStart(args) {
       ? `Ticket ${pad} has already started: ${at.branch} is checked out at\n${at.path}\nCarry on the build there.`
       : `Ticket ${pad} already has a branch, ${existing.join(', ')}. Check it out to carry on the build, or delete it to start again.`);
   }
+  if (t.fm.status !== 'ready') throw new SpeckError(`Ticket ${pad} is "${t.fm.status}", not "ready". Only a ready ticket can be started.`);
+  const rel = posix(path.relative(repo, t.file));
+  if (git(['status', '--porcelain', '--', rel], repo).trim())
+    throw new SpeckError(`${rel} has uncommitted changes. Commit it first, so the build starts from the ticket as you approved it.`);
+  // Named after the ticket's file, which keeps its name when the title changes.
+  const branch = `${cfg.branch_prefix}${path.basename(t.file, '.md')}`;
   if (cfg.worktrees !== true) {
     if (git(['status', '--porcelain'], repo).trim()) throw new SpeckError('You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.');
     const from = git(['branch', '--show-current'], repo).trim() || git(['rev-parse', 'HEAD'], repo).trim();
@@ -1074,9 +1092,17 @@ function cmdStart(args) {
     console.log(`Started ${pad} on ${branch}, in this checkout:\n${fs.realpathSync(repo)}`);
     return;
   }
-  // A worktree only has what's committed, so the CLI and skills must be.
-  const missing = ['.speck', ...SKILL_DIRS.map(d => `${d}/speck-build`)].filter(p => !git(['ls-files', '--', p], repo).trim());
-  if (missing.length) throw new SpeckError(`${missing.map(m => m === '.speck' ? '.speck/' : m).join(', ')} ${missing.length > 1 ? 'aren\'t' : 'isn\'t'} committed, so a worktree wouldn't have ${missing.length > 1 ? 'them' : 'it'}. Commit .speck/ and the skills folders (git add .speck .claude/skills .agents/skills), then run this again.`);
+  // A worktree only has what's in the base commit it's made from, so the CLI and every installed skill must be there.
+  const skills = SKILL_DIRS.flatMap(d => {
+    const abs = path.join(repo, d);
+    const names = fs.existsSync(abs) ? fs.readdirSync(abs).filter(n => n.startsWith('speck-')) : [];
+    return (names.length ? names : ['speck-build']).map(n => `${d}/${n}/SKILL.md`);
+  });
+  const missing = ['.speck/scripts/speck.mjs', ...skills].filter(p => !inCommit(repo, cfg.base_branch, p));
+  if (missing.length) {
+    const what = [...new Set(missing.map(m => m.startsWith('.speck/') ? '.speck/' : m))];
+    throw new SpeckError(`${what.join(', ')} ${missing.length > 1 ? 'aren\'t' : 'isn\'t'} in ${cfg.base_branch}'s latest commit, so a worktree wouldn't have ${missing.length > 1 ? 'them' : 'it'}. Commit .speck/ and the skills folders on ${cfg.base_branch} (git add .speck .claude/skills .agents/skills, then commit), then run this again.`);
+  }
   const at = worktreePath(list[0].path, branch);
   if (fs.existsSync(at)) throw new SpeckError(`There's already a folder at ${at}. Move or remove it, then run this again.`);
   fs.mkdirSync(path.dirname(at), { recursive: true });

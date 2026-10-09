@@ -2309,3 +2309,54 @@ test('0028 (self-check): a failed start commit is undone in both modes', () => {
     assert.equal(r.statusIn(r.dir), 'ready', worktrees);
   }
 });
+
+test('0028 AC3/AC5 (F1): from inside an in-progress worktree, speck start prints where to resume', () => {
+  const r = startRepo({ config: { worktrees: 'true' } });
+  assert.equal(r.run('start', '1').status, 0);
+  const wt = r.worktrees()[1];
+  const env = { ...process.env, ...gitEnv };
+  for (const status of ['building', 'reviewing', 'blocked']) {
+    if (status !== 'building') {
+      spawnSync(process.execPath, [CLI, 'set', '1', 'status', status], { cwd: wt, env });
+      spawnSync('git', ['commit', '-qam', status], { cwd: wt, env });
+    }
+    const res = spawnSync(process.execPath, [CLI, 'start', '1'], { cwd: wt, encoding: 'utf8', env });
+    assert.notEqual(res.status, 0, status);
+    assert.ok((res.stdout + res.stderr).includes(wt), `${status}: prints the worktree`);
+    assert.equal(r.worktrees().length, 2, status);
+  }
+});
+
+test('0028 AC3 (F2): tooling must be in the base commit, not just staged or on another branch, following symlinks', () => {
+  const staged = startRepo({ config: { worktrees: 'true' }, commitTooling: false });
+  staged.g('add', '.speck', '.claude', '.agents');
+  let res = staged.run('start', '1');
+  assert.notEqual(res.status, 0, 'staged only');
+  assert.match(res.stderr, /\.speck\//);
+  assert.equal(staged.worktrees().length, 1);
+  assert.equal(staged.g('rev-parse', '--verify', '-q', staged.branch), '');
+
+  const elsewhere = startRepo({ config: { worktrees: 'true' }, commitTooling: false });
+  elsewhere.g('switch', '-q', '-c', 'tooling');
+  elsewhere.g('add', '-A'); elsewhere.g('commit', '-qm', 'tooling on a side branch');
+  res = elsewhere.run('start', '1');
+  assert.notEqual(res.status, 0, 'committed on another branch only');
+  assert.equal(elsewhere.worktrees().length, 1);
+
+  // A symlinked .speck/scripts (as in speck's own repo) counts if its target is committed, and not if it dangles.
+  const linked = startRepo({ config: { worktrees: 'true' } });
+  fs.renameSync(path.join(linked.dir, '.speck', 'scripts'), path.join(linked.dir, 'cli'));
+  fs.symlinkSync('../cli', path.join(linked.dir, '.speck', 'scripts'));
+  linked.g('add', '-A'); linked.g('commit', '-qm', 'symlinked cli');
+  res = linked.run('start', '1');
+  assert.equal(res.status, 0, res.stderr);
+
+  const dangling = startRepo({ config: { worktrees: 'true' } });
+  fs.rmSync(path.join(dangling.dir, '.speck', 'scripts'), { recursive: true });
+  fs.symlinkSync('../missing', path.join(dangling.dir, '.speck', 'scripts'));
+  dangling.g('add', '-A'); dangling.g('commit', '-qm', 'dangling cli');
+  res = dangling.run('start', '1');
+  assert.notEqual(res.status, 0, 'dangling symlink');
+  assert.match(res.stderr, /\.speck\//);
+  assert.equal(dangling.worktrees().length, 1);
+});
