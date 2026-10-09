@@ -91,7 +91,9 @@ Everything happens in the local repo, with no PR.
     In the Tickets list and among the queue's `ready` tickets, such a ticket shows a chain icon in the accent colour after its id, and "unlocks <ids>" (those tickets, in the JSON's order) in its line under the title: the criteria line in Shaping and the "Queued" line in the queue.
     A ticket whose `waiting_on` isn't empty shows a dimmed padlock there instead, with "waiting on <ids>" in the same line.
     Each icon's hover text says what it means, for example "Starts a chain: unlocks 0042" or "Waiting on 0039", and in-flight tickets show neither.
-    Hovering a ticket in the Tickets list or the queue highlights it and every ticket linked to it through `after:` in either direction, following links through other tickets that aren't `done` or `cancelled`, in both places, and dims the other tickets there until the pointer leaves it.
+    Hovering a ticket in the Tickets list or a `ready` one in the queue highlights it and every ticket linked to it through `after:` in either direction, following links through other tickets that aren't `done` or `cancelled`, in both places, and dims the other tickets there until the pointer leaves it.
+    In-flight tickets in the queue are never highlighted or dimmed, though links still pass through them.
+    A ticket's chain icon and "unlocks" text change in place when only other tickets change, so text selected in its open details stays selected.
     Text selected in an open ticket's details or an idea's note stays selected through the refresh while that ticket's (by `id`) or idea's (by `path`) data in `/api/state` is unchanged, whatever else changes.
     When its own data changes, the new content shows in that refresh and the selection may be lost.
     The list showing and what's open survive the refresh and are never sent to the server.

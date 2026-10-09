@@ -225,3 +225,48 @@ test('0041 AC5: links are not followed through a done or cancelled ticket', () =
   const m = panelModel()({ tickets: [T('0001', 'done'), T('0009', 'cancelled'), full('0002', { after: ['0001', '0009'] }), full('0003', { after: ['0001', '0009'] })] });
   assert.deepEqual(m.drafts.map(t => t.linked), [['0002'], ['0003']]);
 });
+
+// A browser drops a selection when a node holding it, or one above it, is taken out of the page (as in 0040's tests).
+const held = (p, node) => {
+  const chain = [];
+  for (let at = node; at; at = at.parentNode) { chain.push([at, at.detached || 0]); if (at === p.byId('shaping')) break; }
+  return () => chain.every(([n, d], i) => (n.detached || 0) === d && (i === chain.length - 1 || n.parentNode === chain[i + 1][0]));
+};
+
+test('0041 review F1: text selected in an open ticket stays selected when only its chain changes, and the icon and text change in place', async () => {
+  const s1 = { tickets: [full('0001'), T('0002', 'ready', { after: ['0001'], waiting_on: ['0001'] })], ideas: [] };
+  const s2 = { tickets: [full('0001'), T('0002', 'done', { after: ['0001'] })], ideas: [] }; // what waited on it finished
+  const s3 = { tickets: [full('0001'), T('0002', 'done', { after: ['0001'] }), full('0003', { after: ['0001'], waiting_on: ['0001'] })], ideas: [] };
+  const p = fakePage([s1, s2, s3]);
+  await p.settle();
+  click(top(shaping(p, '0001')));
+  const item = shaping(p, '0001');
+  const kept = held(p, p.all(item).find(n => n.tagName === 'li'));
+  assert.equal(iconOf(p, item).title, 'Starts a chain: unlocks 0002');
+  await refresh(p);
+  assert.ok(kept(), 'the details stayed on the page');
+  assert.equal(shaping(p, '0001'), item);
+  assert.equal(iconOf(p, item), null, 'the icon went in the same refresh');
+  assert.ok(!nodes(p, item, 'checks')[0].textContent.includes('unlocks'));
+  await refresh(p);
+  assert.ok(kept(), 'and through a new ticket waiting on it');
+  assert.equal(iconOf(p, item).title, 'Starts a chain: unlocks 0003');
+  assert.ok(nodes(p, item, 'checks')[0].textContent.includes('unlocks 0003'));
+  assert.ok(/\bopen\b/.test(item.className));
+  click(top(item));
+  assert.ok(!/\bopen\b/.test(shaping(p, '0001').className), 'the new top row still opens and closes it');
+});
+
+test('0041 review F2: tickets in flight are never highlighted or dimmed, but links still pass through them', async () => {
+  // 0001 (draft) ← 0002 (building) ← 0003 (draft); 0004 (reviewing) and 0005 (ready) stand alone.
+  const s = { tickets: [full('0001'), T('0002', 'building', { after: ['0001'], waiting_on: ['0001'] }), full('0003', { after: ['0002'], waiting_on: ['0002'] }),
+    T('0004', 'reviewing'), T('0005', 'ready')], ideas: [] };
+  const p = fakePage([s, s]);
+  await p.settle();
+  assert.equal(queued(p, '0002').listeners.mouseenter, undefined, 'no hover on a building ticket');
+  assert.equal(queued(p, '0004').listeners.mouseenter, undefined, 'or a reviewing one');
+  shaping(p, '0003').listeners.mouseenter();
+  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': 'dim' }, 'through 0002 to 0001, leaving 0002 and 0004 alone');
+  await refresh(p);
+  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': 'dim' });
+});

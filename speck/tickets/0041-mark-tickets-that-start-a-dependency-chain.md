@@ -1,7 +1,7 @@
 ---
 id: "0041"
 title: "Mark tickets that start a dependency chain"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-09T15:43:31.009Z"
 ---
 # 0041 · Mark tickets that start a dependency chain
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Tickets can wait on each other through `after:`, but the panel doesn't show where a chain begins. So when choosing what to set ready or kick off first, you have to read every ticket's `after:` line to find the ones that unblock others.
@@ -51,3 +51,87 @@ In the panel you can see at a glance which tickets start a chain, what each one 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4baa3cf43278ea6999e207a808b878f106a0b47b",
+    "thread_id": "01a1215b-0898-7a43-a544-a64a1c6d660a",
+    "seconds": 54,
+    "usage": {
+      "input_tokens": 332719,
+      "cached_input_tokens": 262016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1413,
+      "reasoning_output_tokens": 64
+    },
+    "saved_at": "2026-10-09T15:50:30.871Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: chains, panelModel, chainIcon and ticketItem implement ordered unlocks and accent icons. test/panel-0041.test.mjs AC1 tests exercise both lists and exclude finished tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "chainIcon, ticketItem and queueItem render padlocks and waiting labels; AC2 tests exercise both locations and check the dimmed colour."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "chainIcon supplies descriptive title attributes or no icon. AC3 tests check both behaviours."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelModel recalculates chain state each refresh. The AC4 test exercises completion, removal of the padlock and promotion to chain starter."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "chains computes bidirectional connected groups; hoverable and lightUp apply and clear highlighting. AC5 tests exercise transitive links, both lists, pointer departure and refresh; the supplied browser test also passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "shapingItems now signs the derived unlocks, chain and linked fields as part of a draft's data. Changing another linked ticket therefore replaces an unchanged open draft's DOM node and loses its text selection, contradicting the existing selection guarantee and product.md. A read-only reproduction with an unchanged draft and its dependent changing from ready to done returned nodeRetained:false and detached:1. Existing tests only cover refreshes with unchanged dependency groups.",
+        "suggested_fix": "Keep node retention based on the ticket's own API data and view state. Update derived chain indicators in place when dependencies change, preserving detail nodes. Add a regression test selecting text while another linked ticket finishes or changes its after list.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "queueItem calls hoverable for every in-flight ticket, and lightUp highlights or dims all queue rows. This changes tickets being built or reviewed despite their explicit exclusion from scope. A read-only reproduction hovering a building ticket produced 'q hl' for it and 'q dim' for another row.",
+        "suggested_fix": "Restrict hover handlers and visual highlighting to Shaping tickets and ready queue tickets. Dependency traversal can still pass through other unfinished tickets. Add tests confirming building and reviewing rows remain visually unchanged.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The new dependency descriptions match the implementation, but the retained promise that unchanged ticket data preserves selection is broken when linked tickets change."
+    },
+    "escalation_question": "",
+    "summary": "Chain icons, waiting labels and dependency highlighting work and have meaningful tests. Two fixes are needed before merge: preserve selected text when another linked ticket changes, and keep highlighting away from tickets already being built or reviewed."
+  }
+}
+```
+
+</details>

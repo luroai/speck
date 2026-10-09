@@ -302,6 +302,11 @@ const list = v => (Array.isArray(v) ? v : []);
 
 function ticketItem(t) {
   const isOpen = open.has(t.id);
+  return hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, ticketHead(t), isOpen ? ticketDetail(t, list(t.acceptance_criteria)) : null), t);
+}
+// A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
+// details stay on the page.
+function ticketHead(t) {
   const head = el('div', 'head', null, tags(t, chainIcon(t)), el('span'));
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
@@ -315,7 +320,13 @@ function ticketItem(t) {
   head.appendChild(checks);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
-  return hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, head, isOpen ? ticketDetail(t, criteria) : null), t);
+  return head;
+}
+const ownData = t => { const { unlocks, chain, linked, ...own } = t; return own; }; // what /api/state has for this ticket
+function newHead(node, t) {
+  const old = node.children.find(n => n.className === 'head');
+  node.insertBefore(ticketHead(t), old);
+  node.removeChild(old);
 }
 // An open ticket: its sections, then a readiness list from what speck can check.
 function ticketDetail(t, criteria) {
@@ -405,8 +416,9 @@ function shapingToggle(m) {
 // A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
-  const q = hoverable(el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)),
-    el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : ''))), t);
+  const q = el('div', cls, null, el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)),
+    el('span', 'sub', t.minutes !== null ? `${t.minutes} min` : '')));
+  if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
   for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : 'now') : null, s.label));
   q.appendChild(bar);
@@ -423,7 +435,7 @@ function queueItem(t) {
   if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`));
   return q;
 }
-// Hovering a ticket in Shaping or the queue lights it and every ticket linked to it through after:, and dims the rest.
+// Hovering a ticket in Shaping or a ready one in the queue lights it and every ticket linked to it through after:, and dims the rest.
 // The classes are set on the nodes in place, so a Shaping item keeps its node (and any text selected in it).
 let hovered = null; // the id of the ticket under the pointer, or null
 let linked = new Map(); // id → the ids linked to it, from the last render
@@ -450,17 +462,19 @@ function fill(id, nodes, emptyText) {
   want.forEach((n, i) => { if (box.children[i] !== n) box.insertBefore(n, box.children[i] || null); });
 }
 // The Shaping items built by the last render, by key ('t:<id>' or 'i:<path>'), each with everything it shows. An item
-// whose data and view state are unchanged keeps its node, so text selected in it survives the refresh.
+// whose own data and view state are unchanged keeps its node, so text selected in it survives the refresh. What it
+// shows from other items (`derived`) is put right with `update`, on the node it keeps.
 let built = new Map();
 // The same field values give the same signature, whatever order the fields come in, at every level.
 const signature = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(f => [f, x[f]])) : x));
-function shapingItems(list, keyOf, viewOf, make) {
+function shapingItems(list, keyOf, viewOf, make, { own = x => x, derived = () => null, update = () => {} } = {}) {
   const now = new Map();
   const nodes = list.map(x => {
-    const key = keyOf(x), sig = signature([x, viewOf(x)]), last = built.get(key);
+    const key = keyOf(x), sig = signature([own(x), viewOf(x)]), from = signature(derived(x)), last = built.get(key);
     if (now.has(key)) return make(x); // a repeated id or path: built afresh each time, as it can't share a node
-    const node = last && last.sig === sig ? last.node : make(x);
-    now.set(key, { sig, node });
+    const kept = last && last.sig === sig, node = kept ? last.node : make(x);
+    if (kept && last.from !== from) update(node, x);
+    now.set(key, { sig, from, node });
     return node;
   });
   built = now;
@@ -473,7 +487,8 @@ function render() {
   const m = panelModel(state);
   shapingToggle(m);
   if (shapingView === 'ideas') fill('shaping', shapingItems(m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas.');
-  else fill('shaping', shapingItems(m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem), 'No draft tickets.');
+  else fill('shaping', shapingItems(m.drafts, t => `t:${t.id}`, t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null], ticketItem,
+    { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
 
   fill('queue', m.queue.map(queueItem), 'Nothing in flight or ready.');
   linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
