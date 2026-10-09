@@ -1,7 +1,7 @@
 ---
 id: "0070"
 title: "Pause a running build from the CLI until it's played"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0070 · Pause a running build from the CLI until it's played
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Once `speck run` has launched a build, the only way to halt it is to kill its process by hand, which ends it for good. The user sometimes wants a build to hold still for a while (to free the machine, or to look at what it has done so far) and then carry on as if nothing happened.
