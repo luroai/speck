@@ -37,6 +37,9 @@ An in-flight queue ticket no longer has a line under its bar repeating its statu
 ## Notes
 - The line is the `act` line built at the end of the in-flight branch of `queueItem` in `templates/panel.html`.
 - product.md's Queue description needs updating.
+- product.md no longer exists (removed by 0068), and no other doc or skill describes this line, so there was no doc to update.
+- Existing tests that matched the old status word (0031 AC4 in `test/panel.test.mjs`, 0053 AC2 and AC4 in `test/panel-0053.test.mjs`) now check the bar's current step or the new row layout instead.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

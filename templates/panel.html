@@ -895,7 +895,7 @@ function queueItem(t) {
     q.appendChild(el('div', 'act bad', t.exit_label));
     if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
   }
-  q.appendChild(el('div', 'act', null, el('b', null, t.status), document.createTextNode(t.status === 'blocked' ? ` · answer the question, then run /speck-build ${t.id}` : '')));
+  if (t.status === 'blocked') q.appendChild(el('div', 'act', `Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
