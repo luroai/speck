@@ -1,7 +1,7 @@
 ---
 id: "0032"
 title: "Document that builds can run in parallel"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0032 · Document that builds can run in parallel
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `product.md` says builds run one ticket at a time and the brief lists parallel builds as out of scope, but with one worktree per build, running tickets in parallel is now how speck is used, and it's much faster. Nothing yet proves that tickets built side by side both ship cleanly.
