@@ -39,6 +39,7 @@ Every value `speck set` writes reads back exactly as given, whatever quotes it c
 - Reproduced 2026-10-09 in a fresh `speck init` repo: `It's fine` read back as `It's fine                # one outcome, no "and"`; `A 'quoted' word`, `Say "hi" now` and `plain title` read back correctly.
 - Cause: `setField` in `scripts/speck.mjs` quotes a value only when it contains `:` or `#` or is blank, and `stripComment` treats a lone `'` as opening a quoted string, so the `#` of the comment after it is never found.
 - 0008 fixed the same kind of problem for `cancel_reason` by always writing it with `JSON.stringify`.
+- Self-check: added a lone `"` and a lone `'` to the exact-read-back tests (both pass); a `[...]` value such as `after` is still written as a list, so a title shaped like `[x]` is not covered.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
