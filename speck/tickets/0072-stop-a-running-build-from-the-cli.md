@@ -1,7 +1,7 @@
 ---
 id: "0072"
 title: "Stop a running build from the CLI"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0072 · Stop a running build from the CLI
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The only way to end a build for good is to kill its process by hand, which leaves the ticket `building` with nothing to say why it stopped or how to carry on.
