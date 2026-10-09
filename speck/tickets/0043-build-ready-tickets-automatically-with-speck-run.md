@@ -43,7 +43,7 @@ Setting a ticket to ready is meant to start the pipeline, but someone still has 
 - A blocked build already writes its question, sets `blocked`, commits and exits, so no extra handling is needed for a build that gets stuck.
 - Risk is high: it launches agents that can run any command with no prompts.
 - Checked 2026-10-09: `claude -p` runs non-interactively, `--session-id <uuid>` sets the session id and must be a valid UUID, and `--dangerously-skip-permissions` bypasses all permission checks (`claude --help`, Claude Code 2.1.294).
-- Unverified: that `claude -p "/speck-build <id>"` runs the skill the same way as typing it in a session (a real build is needed to check it). The builder checks it with one real run on a throwaway repo and records the result here.
+- Checked 2026-10-09: `claude -p "/<skill> <args>"` runs a project skill with its arguments, as typing it in a session does (a throwaway skill in a temporary repo replied with its marker and the argument, Claude Code 2.1.294). Without stdin closed, `claude -p` waits 3 seconds and warns "no stdin data received", so builds get stdin from /dev/null.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
