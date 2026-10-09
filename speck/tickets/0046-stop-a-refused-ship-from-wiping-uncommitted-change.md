@@ -1,7 +1,7 @@
 ---
 id: "0046"
 title: "Stop a refused ship from wiping uncommitted changes"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 type: bug                # blank, or bug
@@ -18,7 +18,7 @@ started: "2026-10-09T15:41:25.661Z"
 ---
 # 0046 · Stop a refused ship from wiping uncommitted changes
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck ship` checks that the base branch's checkout is clean, then runs the tests (over a minute here) before it merges. If anything edits a tracked file in that checkout during the tests and the merge then fails, ship's undo runs `git reset --hard` there and silently throws the edit away. On 9 October this wiped an uncommitted `speck/product.md` edit three times while 0045 tried to ship, and each failure was reported as a "conflict", which hid the real cause.
@@ -48,9 +48,15 @@ A refused ship never discards changes it didn't make, and says plainly when your
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 On a failed checkout without a worktree, reset --keep preserves working content but resets the index.; F2 The snapshot is taken before remote catch-up.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 737,156
+- Elapsed since build started: 13 min
+- Changed lines: 73 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up idea: ship's own commit runs `git commit` after staging only the ticket, so anything the test run staged in the ticket's worktree goes into the ship commit too. It should commit only the ticket's paths.
 - Follow-up idea: without a worktree, tests that leave tracked files changed now refuse the ship (AC1), where before they were carried onto the base branch. Worth a line in the ship skill's refusal guide.
