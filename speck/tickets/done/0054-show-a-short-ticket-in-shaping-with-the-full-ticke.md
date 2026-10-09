@@ -1,7 +1,7 @@
 ---
 id: "0054"
 title: "Show a short ticket in Shaping with the full ticket on demand"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/2026-10-09-shorter-ticket-view-with-full-view-on-demand.md"
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T19:07:59.238Z"
+finished: "2026-10-09T19:21:05.030Z"
 
 ---
 # 0054 · Show a short ticket in Shaping with the full ticket on demand
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 An open ticket in Shaping shows everything: problem, outcome, acceptance criteria, out of scope and notes, then the readiness list. That makes it long, so the user can't judge a draft at a glance before setting it ready.
