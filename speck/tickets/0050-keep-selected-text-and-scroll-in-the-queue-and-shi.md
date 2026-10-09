@@ -1,7 +1,7 @@
 ---
 id: "0050"
 title: Keep unchanged rows outside Shaping through the panel refresh                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T17:29:40.760Z"
 ---
 # 0050 · Keep unchanged rows outside Shaping through the panel refresh
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel still rebuilds every queue row and Shipped row on each 2-second refresh, so text you select there, such as a blocked ticket's question or a stopped build's last message, is lost within 2 seconds. A long build message scrolls in its own box, and that box jumps back to the top on every refresh, so you can't read or copy the end of it. 0040 fixed this only for open items in Shaping.
@@ -53,13 +53,14 @@ Round 1 (codex): changes requested: F1 Clock updates discard selection when the 
 Round 2 (codex): approve.
 Round 3 (codex): changes requested: F2 The Copy-label interaction fix rebuilds the entire blocked row when feedback expires after two seconds.
 Round 4 (codex): approve.
+Round 5 (codex): approve.
 
 ## Delivery log
-- Review rounds: 4
+- Review rounds: 5
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 3,729,847
-- Elapsed since build started: 81 min
-- Changed lines: 81 (limit 5000)
+- Reviewer tokens: 5,768,601
+- Elapsed since build started: 84 min
+- Changed lines: 83 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
