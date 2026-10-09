@@ -1,7 +1,7 @@
 ---
 id: "0022"
 title: "Set a ticket to reviewing when its review starts"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
+started: "2026-10-09T10:44:06.399Z"
 
 ---
 # 0022 · Set a ticket to reviewing when its review starts
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Before the first review round, the builder runs `speck set <id> status reviewing` and makes a separate commit, every ticket. It's a manual step and an extra commit that the first review could do itself.
