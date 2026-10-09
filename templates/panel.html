@@ -170,9 +170,22 @@
   #full-ticket .close { margin-left: auto; font: inherit; font-size: 11px; color: var(--muted); background: none; border: 1px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover { color: var(--text); }
   #full-ticket h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
-  #full-ticket p, #full-ticket ol { margin: 0 0 10px; color: #bfc2c9; white-space: pre-wrap; overflow-wrap: anywhere; }
-  #full-ticket ol { padding-left: 18px; }
-  #full-ticket ol li { margin-bottom: 4px; }
+  #full-ticket .md, #full-ticket ol.criteria { margin: 0 0 10px; color: #bfc2c9; overflow-wrap: anywhere; }
+  #full-ticket ol.criteria { padding-left: 18px; }
+  #full-ticket ol.criteria > li { margin-bottom: 4px; }
+  /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
+  #full-ticket .md p, #full-ticket .criteria p { margin: 0 0 8px; }
+  #full-ticket .md > :last-child, #full-ticket li > :last-child { margin-bottom: 0; }
+  #full-ticket .md ul, #full-ticket .md ol, #full-ticket .criteria ul, #full-ticket .criteria ol { margin: 0 0 8px; padding-left: 20px; }
+  #full-ticket li ul, #full-ticket li ol { margin: 2px 0 0; }
+  #full-ticket h5, #full-ticket h6 { margin: 10px 0 4px; color: var(--text); font-weight: 600; }
+  #full-ticket .md-h1 { font-size: 13px; }
+  #full-ticket .md-h2 { font-size: 12px; }
+  #full-ticket .md-h3 { font-size: 12px; color: var(--muted); }
+  #full-ticket code.md-code { background: var(--raise); border: 1px solid var(--line-soft); padding: 0 4px; }
+  #full-ticket pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: 1px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+  #full-ticket pre code { font-size: 12px; }
+  #full-ticket .md a, #full-ticket .criteria a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -339,6 +352,221 @@ function logText(log) {
   if (!out.length) return 'No log yet.';
   return (log.truncated === true ? [TRUNCATED, ...out] : out).join('\n');
 }
+// A ticket section's Markdown as blocks for the full ticket pane: paragraphs, `#` to `###` headings, fenced code blocks
+// and `- `, `* ` or `1. ` lists nested by indentation, at most MAX_NEST deep (deeper items stay at that depth). A blank
+// line between list items keeps the list going. Blockquotes, tables, rules, HTML elements over several lines and a line
+// starting an element that never closes (to the next blank line) are kept as written, unformatted, and so is anything
+// else not listed here.
+const MAX_NEST = 16;
+const FENCE = /^([ \t]*)(`{3,})[^`]*$/;
+const ITEM = /^([ \t]*)([-*]|\d{1,9}\.)[ \t]+(.*)$/;
+const HEADING = /^ {0,3}(#{1,3})[ \t]+(\S.*?)[ \t]*$/;
+const QUOTE = /^[ \t]*>/, RULE = /^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/, PIPE = /^[ \t]*\|/;
+const DELIM = /^[ \t]*\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/; // a table's second row
+const BLOCK_TAG = /^[ \t]*<([A-Za-z][A-Za-z0-9-]*)(?:\s[^<>]*)?\/?>/; // a line starting with an HTML tag
+const indentOf = s => s.replace(/\t/g, '    ').length;
+function markdown(text) {
+  const all = String(text ?? '').replace(/\r\n?/g, '\n'), lines = all.split('\n');
+  const blocks = [], misses = new Map(), starts = [0]; // starts: where each line begins in `all`
+  for (const line of lines) starts.push(starts[starts.length - 1] + line.length + 1);
+  let para = null, lists = [], gap = false; // the paragraph being read, the open lists (outermost first), and a blank line just read
+  const end = () => { para = null; lists = []; };
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i], next = lines[i + 1] ?? '';
+    const fence = line.match(FENCE), item = line.match(ITEM), heading = line.match(HEADING);
+    const afterGap = gap;
+    gap = false;
+    const tableStart = line.includes('|') && next.includes('|') && DELIM.test(next);
+    const open = line.match(BLOCK_TAG);
+    const closed = open ? elementEnd(all, starts[i] + open[0].length, open, misses) : -1;
+    if (closed > starts[i + 1]) { // an HTML element over more than one line, its contents and all, as written
+      end();
+      const last = starts.findIndex(at => at >= closed) - 1; // the line it closes on, whose text after it is formatted
+      blocks.push({ type: 'paragraph', literal: true, text: [all.slice(starts[i], closed)], tail: all.slice(closed, starts[last + 1] - 1) });
+      i = last;
+    } else if (closed === -2) { // an element that never closes: as written, up to the next blank line
+      end();
+      const body = [];
+      for (; i < lines.length && lines[i].trim() !== ''; i++) body.push(lines[i]);
+      blocks.push({ type: 'paragraph', literal: true, text: body });
+      i--;
+    } else if (fence) {
+      end();
+      const cut = indentOf(fence[1]), body = [];
+      const close = new RegExp(`^[ \\t]*\`{${fence[2].length},}[ \\t]*$`);
+      for (i++; i < lines.length && !close.test(lines[i]); i++) body.push(lines[i].replace(/^[ \t]*/, ws => ' '.repeat(Math.max(0, indentOf(ws) - cut))));
+      blocks.push({ type: 'code', text: body.join('\n') });
+    } else if (line.trim() === '') {
+      para = null;
+      gap = true;
+    } else if (QUOTE.test(line) || RULE.test(line) || PIPE.test(line) || tableStart || (para && para.table && line.includes('|'))) {
+      if (!para || !para.literal || afterGap) { end(); para = { type: 'paragraph', literal: true, text: [] }; blocks.push(para); }
+      if (tableStart) para.table = true;
+      para.text.push(line);
+    } else if (heading) {
+      end();
+      blocks.push({ type: 'heading', level: heading[1].length, inline: inline(heading[2]) });
+    } else if (item) {
+      para = null;
+      const indent = indentOf(item[1]), ordered = item[2] !== '-' && item[2] !== '*';
+      while (lists.length > 1 && lists[lists.length - 1].indent > indent) lists.pop();
+      let top = lists[lists.length - 1];
+      if (top && indent > top.indent && lists.length < MAX_NEST) { // nested in the item above
+        const parent = top.list.items[top.list.items.length - 1];
+        top = { indent, list: { type: 'list', ordered, start: ordered ? Number(item[2].slice(0, -1)) : 1, items: [] } };
+        parent.lists.push(top.list);
+        lists.push(top);
+      } else if (!top || top.list.ordered !== ordered) { // a new list beside the one above, or the first
+        const list = { type: 'list', ordered, start: ordered ? Number(item[2].slice(0, -1)) : 1, items: [] };
+        const parent = lists.length > 1 ? lists[lists.length - 2].list.items.at(-1) : null;
+        if (parent) parent.lists.push(list); else blocks.push(list);
+        if (top) lists.pop();
+        top = { indent: top ? top.indent : indent, list };
+        lists.push(top);
+      }
+      top.list.items.push({ text: [item[3]], lists: [] });
+    } else if (lists.length && !afterGap && /^[ \t]/.test(line)) { // an indented line goes on with the list item above
+      const items = lists[lists.length - 1].list.items;
+      items[items.length - 1].text.push(line.trim());
+    } else if (para && !para.literal) {
+      para.text.push(line.trim());
+    } else {
+      end();
+      para = { type: 'paragraph', text: [line.trim()] };
+      blocks.push(para);
+    }
+  }
+  const finish = b => (b.type === 'paragraph' ? { type: 'paragraph', inline: b.literal ? [{ type: 'text', text: b.text.join('\n') }, ...inline(b.tail || '')] : inline(b.text.join('\n')) }
+    : b.type === 'list' ? { ...b, items: b.items.map(it => ({ inline: inline(it.text.join('\n')), lists: it.lists.map(finish) })) } : b);
+  return blocks.map(finish);
+}
+// Inline Markdown: code spans, **bold**, *italic* and _italic_, and links. Only an http or https link keeps its URL.
+// Bold, italic and links nest at most MAX_NEST deep; deeper, their symbols show as written.
+function inline(s, links = true, depth = 0) {
+  const out = [], spans = keptSpans(s), misses = {}; // misses: where a search for each closer last failed
+  let text = '';
+  const push = node => { if (text) out.push({ type: 'text', text }); text = ''; out.push(node); };
+  // The first index from `from` where `at` holds, skipping over kept spans, or -1. A search that failed from one point
+  // fails from any later one, so it isn't run again.
+  const seek = (kind, from, at) => {
+    if (from >= (misses[kind] ?? Infinity)) return -1;
+    for (let j = from; j < s.length; j++) {
+      if (spans.has(j)) { j = spans.get(j).end - 1; continue; }
+      if (at(j)) return j;
+    }
+    misses[kind] = Math.min(from, misses[kind] ?? Infinity);
+    return -1;
+  };
+  const word = ch => /[\p{L}\p{N}]/u.test(ch || '');
+  const nest = depth < MAX_NEST;
+  for (let i = 0; i < s.length;) {
+    const c = s[i];
+    if (spans.has(i)) {
+      const { end, node } = spans.get(i);
+      if (node.type === 'text') text += node.text; else push(node);
+      i = end;
+    } else if (c === '`') {
+      const run = s.slice(i).match(/^`+/)[0]; // a run that closes no code span stays as written
+      text += run; i += run.length;
+    } else if (nest && c === '*' && s[i + 1] === '*' && /[^\s*]/.test(s[i + 2] || '')) {
+      const close = seek('**', i + 2, j => s[j] === '*' && s[j + 1] === '*' && /\S/.test(s[j - 1]));
+      if (close < 0) { text += '**'; i += 2; continue; }
+      push({ type: 'strong', inline: inline(s.slice(i + 2, close), links, depth + 1) });
+      i = close + 2;
+    } else if (nest && (c === '*' || (c === '_' && !word(s[i - 1]))) && /[^\s*_]/.test(s[i + 1] || '')) {
+      const close = seek(c, i + 1, j => s[j] === c && /\S/.test(s[j - 1]) && s[j + 1] !== c && s[j - 1] !== c && (c === '*' || !word(s[j + 1])));
+      if (close < 0) { text += c; i++; continue; }
+      push({ type: 'em', inline: inline(s.slice(i + 1, close), links, depth + 1) });
+      i = close + 1;
+    } else if (nest && c === '[' && links && s[i - 1] !== '!') {
+      const close = seek(']', i + 1, j => s[j] === ']');
+      const url = close > i + 1 ? linkTarget(s, close + 1) : null;
+      if (url === null) { text += c; i++; continue; }
+      const kids = inline(s.slice(i + 1, close), false, depth + 1);
+      if (/^https?:\/\/\S/i.test(url)) push({ type: 'link', href: url, inline: kids });
+      else for (const k of kids) push(k);
+      i = close + url.length + 3;
+    } else if (c === '_' || c === '*') {
+      const run = s.slice(i).match(/^[*_]+/)[0]; // a run that opens nothing stays as written
+      text += run; i += run.length;
+    } else { text += c; i++; }
+  }
+  if (text) out.push({ type: 'text', text });
+  return out;
+}
+// What in `s` is kept from inline formatting, by where it starts: the index after it, and its node. Code spans become
+// code; raw HTML (a whole element when it closes), images and backslash escapes stay as written. A code span opens at a run of backticks and closes
+// at the next run of the same length, read left to right.
+const TAG = /<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/y;
+function keptSpans(s) {
+  const runs = [];
+  for (const m of s.matchAll(/`+/g)) runs.push([m.index, m[0].length]);
+  const next = new Array(runs.length), seen = new Map(); // next: the following run of the same length, or -1
+  for (let k = runs.length - 1; k >= 0; k--) { next[k] = seen.get(runs[k][1]) ?? -1; seen.set(runs[k][1], k); }
+  const spans = new Map();
+  for (let k = 0, after = 0; k < runs.length; k++) {
+    const [at, n] = runs[k];
+    if (at < after || next[k] < 0) continue;
+    const close = runs[next[k]][0];
+    let code = s.slice(at + n, close).replace(/\n/g, ' ');
+    if (/^ [\s\S]*[^ ][\s\S]* $/.test(code)) code = code.slice(1, -1);
+    spans.set(at, { end: close + n, node: { type: 'code', text: code } });
+    after = close + n;
+  }
+  const keep = (at, end) => spans.set(at, { end, node: { type: 'text', text: s.slice(at, end) } });
+  let noBracket = Infinity, noComment = Infinity; // from where no ']' or '-->' was found, so it isn't looked for again
+  const elements = new Map(); // tag name → from where its closing tag wasn't found
+  for (let i = 0; i < s.length; i++) {
+    if (spans.has(i)) { i = spans.get(i).end - 1; continue; }
+    if (s[i] === '\\' && /[!-\/:-@[-`{-~]/.test(s[i + 1] || '')) { keep(i, i + 2); i++; continue; }
+    TAG.lastIndex = i;
+    const tag = s[i] === '<' && TAG.exec(s);
+    if (tag) { // a tag, or a whole element when it closes, as written
+      const end = Math.max(i + tag[0].length, elementEnd(s, i + tag[0].length, tag, elements));
+      keep(i, end); i = end - 1; continue;
+    }
+    if (s.startsWith('<!--', i) && i < noComment) {
+      const end = s.indexOf('-->', i + 4);
+      if (end < 0) noComment = i;
+      else { keep(i, end + 3); i = end + 2; continue; }
+    }
+    if (s[i] === '!' && s[i + 1] === '[' && i < noBracket) {
+      let close = i + 2;
+      while (close < s.length && s[close] !== ']') close = spans.has(close) ? spans.get(close).end : close + 1;
+      if (close >= s.length) noBracket = i;
+      const url = close < s.length ? linkTarget(s, close + 1) : null;
+      if (url !== null) { keep(i, close + url.length + 3); i = close + url.length + 2; }
+    }
+  }
+  return spans;
+}
+// The index after the closing tag that ends the element an opening `tag` match starts, counting nested ones of the same
+// name; -1 for a closing, self-closing or void tag; or -2 for one that never closes. `misses` (tag name → from where no
+// closing tag was found) saves looking again.
+const VOID = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i;
+function elementEnd(s, from, tag, misses) {
+  const name = (tag[0].match(/^[ \t]*<([A-Za-z][A-Za-z0-9-]*)/) || [])[1];
+  if (!name || tag[0].endsWith('/>') || VOID.test(name)) return -1;
+  const key = name.toLowerCase();
+  if (from >= (misses.get(key) ?? Infinity)) return -2;
+  const re = new RegExp(`<(\\/?)${name}(?:\\s[^<>]*)?\\/?>`, 'gi');
+  re.lastIndex = from;
+  for (let m, depth = 1; (m = re.exec(s));) {
+    if (m[1]) { if (--depth === 0) return re.lastIndex; } else if (!m[0].endsWith('/>')) depth++;
+  }
+  misses.set(key, Math.min(from, misses.get(key) ?? Infinity));
+  return -2;
+}
+// The URL in `(url)` at `from`, with no spaces and any parentheses in it paired, or null.
+function linkTarget(s, from) {
+  if (s[from] !== '(') return null;
+  let depth = 0;
+  for (let j = from + 1; j < s.length && !/\s/.test(s[j]); j++) {
+    if (s[j] === '(') depth++;
+    else if (s[j] === ')' && depth-- === 0) return j > from + 1 ? s.slice(from + 1, j) : null;
+  }
+  return null;
+}
 // ---- end model ----
 
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
@@ -481,24 +709,63 @@ function fullButton(t) {
   });
   return b;
 }
-// The side pane: the ticket's id and title, then each of its sections that has something in it, as text.
+// The side pane: the ticket's id and title, then each of its sections that has something in it, its Markdown formatted.
 function fullTicket(t) {
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', closeFull);
   const body = el('div');
-  part(body, 'Problem', t.problem);
-  part(body, 'Outcome', t.outcome);
+  mdPart(body, 'Problem', t.problem);
+  mdPart(body, 'Outcome', t.outcome);
   const criteria = list(t.acceptance_criteria);
   if (criteria.length) {
-    const ol = el('ol');
-    for (const c of criteria) ol.appendChild(el('li', null, c));
+    const ol = el('ol', 'criteria');
+    for (const c of criteria) {
+      const [first, ...rest] = markdown(c);
+      // A criterion's first paragraph sits in its numbered item, not in a paragraph of its own.
+      const lead = first && first.type === 'paragraph' ? mdInline(first.inline) : first ? mdBlocks([first]) : [];
+      ol.appendChild(el('li', null, null, ...lead, ...mdBlocks(rest)));
+    }
     body.appendChild(el('h4', null, 'Acceptance criteria'));
     body.appendChild(ol);
   }
-  part(body, 'Out of scope', t.out_of_scope);
-  part(body, 'Notes', t.notes);
+  mdPart(body, 'Out of scope', t.out_of_scope);
+  mdPart(body, 'Notes', t.notes);
   return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', t.title), close), body];
+}
+// A heading and its Markdown, formatted, or nothing when the text is empty.
+function mdPart(body, heading, text) {
+  if (text === null || text === undefined || text === '') return;
+  body.appendChild(el('h4', null, heading));
+  body.appendChild(el('div', 'md', null, ...mdBlocks(markdown(text))));
+}
+// Nodes for Markdown blocks and inline runs from markdown(). Text goes in as text nodes, never read as HTML, and a link
+// gets its URL only when markdown() kept one, which it does only for http and https.
+function mdBlocks(blocks) {
+  return blocks.map(b => {
+    if (b.type === 'code') return el('pre', null, null, el('code', null, b.text));
+    if (b.type === 'heading') return el(b.level === 1 ? 'h5' : 'h6', `md-h${b.level}`, null, ...mdInline(b.inline));
+    if (b.type === 'list') {
+      const node = el(b.ordered ? 'ol' : 'ul', null, null, ...b.items.map(it => el('li', null, null, ...mdInline(it.inline), ...mdBlocks(it.lists))));
+      if (b.ordered && b.start !== 1) node.start = b.start;
+      return node;
+    }
+    return el('p', null, null, ...mdInline(b.inline));
+  });
+}
+function mdInline(nodes) {
+  return nodes.map(n => {
+    if (n.type === 'text') return document.createTextNode(n.text);
+    if (n.type === 'code') return el('code', 'md-code', n.text);
+    if (n.type === 'link') {
+      const a = el('a', null, null, ...mdInline(n.inline));
+      a.href = n.href;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      return a;
+    }
+    return el(n.type === 'strong' ? 'strong' : 'em', null, null, ...mdInline(n.inline));
+  });
 }
 // Shows the ticket whose id is in fullId, the first one when ids repeat, or closes the pane when it has left the Tickets
 // list. The pane keeps its nodes while that ticket's own data is unchanged, so text selected in it survives the refresh.
