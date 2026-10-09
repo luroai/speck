@@ -45,6 +45,7 @@ The full ticket pane shows each section's Markdown formatted, the way a Markdown
 - Headings: "smaller than the section's own heading" is built as ranking below it: `#` is an `h5`, `##` and `###` are `h6` (classes `md-h1` to `md-h3`), under the section's `h4`, no larger than body text.
 - Three older assertions expected the raw `- Not this.` / `- A note.` / `- A new note.` in the pane (`test/panel-0054.test.mjs`, `test/panel.test.mjs`). AC1 makes those list items, so they now look for the item text.
 - Self-check: a list starting `0.` showed as starting at 1, lists nested 2000 deep overflowed the stack, and long runs of unmatched `[`, `*`, `**` or `_` took seconds; fixed with `start` kept as written, nesting capped at 16 levels, closer searches remembered per call and code spans found once, with a test for each.
+- Blocked answer (2026-10-09): the user allowed one more review round to check the round 3 fix (F3). `max_review_rounds` is raised to 4 on this branch for that round only, and put back to 3 before close.
 
 ## Blocked question
 The reviewer hit the 3-round limit with one open finding (F3: text after a multi-line HTML element's closing tag stayed unformatted). It's now fixed with a regression test, committed but not yet reviewed. Allow one more review round to check the F3 fix (yes/no)? Recommendation: yes. Rounds 1 and 2 were also about HTML edge cases inside AC3, and every criterion other than this one passed in round 3.
