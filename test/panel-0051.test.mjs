@@ -195,6 +195,12 @@ test('0051 AC3: the formatting on its own', () => {
   assert.equal(logText(null), 'No log yet.');
   assert.equal(logText({ text: 'a\n\n\n\nb', truncated: false }), 'a\n\nb');
   assert.equal(logText({ text: '\x1b[38;5;196mred\x1b[0m', truncated: false }), 'red');
+  // Review round 1, F1: every kind of escape is consumed whole, leaving nothing visible.
+  assert.equal(logText({ text: '\x1b(Bnormal', truncated: false }), 'normal', 'a character set designation');
+  assert.equal(logText({ text: '\x1b)0\x1b#8\x1b%Ga', truncated: false }), 'a', 'others with intermediate bytes');
+  assert.equal(logText({ text: '\x1b7\x1b8\x1b=\x1b>\x1bMb\x1bc', truncated: false }), 'b', 'two-byte escapes');
+  assert.equal(logText({ text: '\x1bPq#0;2;0;0;0\x1b\\c\x1b_app\x1b\\\x1b]8;;http://x\x1b\\d\x1b]8;;\x07', truncated: false }), 'cd', 'strings, ended by ST or BEL');
+  assert.equal(logText({ text: '\x1b[?25l\x1b[?2004he\x9b31mf\x1b', truncated: false }), 'ef', 'private modes, 8-bit CSI and a lone ESC');
   assert.match(logText({ text: 'a', truncated: true }), /^Earlier lines aren't shown.*\na$/);
 });
 

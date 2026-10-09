@@ -302,7 +302,10 @@ function panelModel(state) {
 }
 // A build's log as the panel shows it: ANSI escape sequences removed, each run of blank lines as one, a line first
 // saying earlier lines aren't shown when the server cut it short, or "No log yet." with nothing in it.
-const ANSI = /\x1b\[[0-?]*[ -\/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[@-Z\\-_]?|\x9b[0-?]*[ -\/]*[@-~]/g;
+// In turn: a control sequence (ESC [), a string such as a window title (ESC ], P, X, ^ or _, to BEL or ESC \), an
+// escape with intermediate bytes such as a character set (ESC ( B), any other two-byte escape, a lone ESC, and the
+// one-byte control sequence introducer.
+const ANSI = /\x1b\[[0-?]*[ -\/]*[@-~]|\x1b[\]PX^_][^\x07\x1b]*(?:\x07|\x1b\\)?|\x1b[ -\/]+[0-~]?|\x1b[0-~]?|\x9b[0-?]*[ -\/]*[@-~]/g;
 function logText(log) {
   const raw = log && typeof log.text === 'string' ? log.text : '';
   const out = [];

@@ -1,7 +1,7 @@
 ---
 id: "0051"
 title: "Expand a queue ticket to read its build log"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T19:15:53.316Z"
 ---
 # 0051 · Expand a queue ticket to read its build log
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A build runs for tens of minutes and the queue shows only its five-step bar, so you can't tell whether it's working or stuck without leaving the panel. `speck run` already writes everything the build prints to `speck/.cache/runs/<id>.log` (0043), and the panel uses only the last 50 lines of it, and only once the build has exited (0045).
@@ -56,3 +56,79 @@ Clicking a queue ticket's top row opens it and shows the tail of its build's log
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2e4927bce7045130d3765e89dfbeff688758306a",
+    "thread_id": "01a12220-6f74-7f12-9caf-e426423e9f1f",
+    "seconds": 51,
+    "usage": {
+      "input_tokens": 312426,
+      "cached_input_tokens": 229120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1066,
+      "reasoning_output_tokens": 126
+    },
+    "saved_at": "2026-10-09T19:26:03.938Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs panelLog and cmdPanel implement fresh main-checkout reads and existing request restrictions. The three AC1 tests cover tail length, missing logs, worktrees and request rules; builder reports them passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html queueItem and toggleLog restrict toggling to the top row and maintain an independent open set. AC2 tests cover multiple open tickets and selection; the reported browser test passes."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "logText and .q .log provide formatting and scrolling, covered by AC3 and browser tests. However, an independent read-only execution of logText with '\\u001b(Bnormal' produced '(Bnormal': a standard terminal charset escape remains visible."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "logBox uses el, which assigns textContent. The AC4 test supplies HTML-shaped log content and checks that no corresponding elements are created; builder reports it passing."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "toggleLog requests only on opening; render includes open state and cached log in keptItems. AC5 tests exercise request counts and preserved nodes/scroll position, supplemented by the reported passing browser test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The ANSI pattern does not consume charset designation sequences such as ESC ( B. logText displays their remaining '(B' characters, contrary to the requirement that ANSI escape sequences aren't shown. Existing tests cover colour and OSC sequences but miss this case.",
+        "suggested_fix": "Extend escape removal to consume charset designation sequences fully, and add a regression test asserting that '\\u001b(Bnormal' renders as 'normal'.",
+        "state": "open"
+      }
+    ],
+    "product_md": {
+      "accurate": false,
+      "note": "The endpoint and open-row descriptions match the implementation, but the claim that ANSI escape sequences are removed is not fully true until F1 is fixed."
+    },
+    "escalation_question": "",
+    "summary": "Queue tickets can open safely rendered build logs, and the tests cover request rules, multiple open rows and preserved scrolling. One formatting defect needs fixing: some terminal escape codes leave visible fragments in the log. I inspected the code and independently reproduced that defect; I did not rerun the filesystem-writing test suite in this read-only review."
+  }
+}
+```
+
+</details>
