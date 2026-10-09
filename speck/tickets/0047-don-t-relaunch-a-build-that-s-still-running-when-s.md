@@ -1,7 +1,7 @@
 ---
 id: "0047"
 title: "Don't relaunch a build that's still running when speck run restarts"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 type: bug                # blank, or bug
@@ -17,7 +17,7 @@ created: 2026-10-09
 ---
 # 0047 · Don't relaunch a build that's still running when speck run restarts
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck run` only knows about the builds it launched itself. If it's restarted while a build it launched seconds earlier hasn't yet set its ticket to `building`, the new `speck run` sees the ticket as `ready` and launches it again, so two agents build the same ticket. That happened to 0040 on 9 October. A build left running across a restart also never gets its exit recorded, so the panel can't flag it if it finishes without shipping (0045).
