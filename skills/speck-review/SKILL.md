@@ -59,7 +59,7 @@ Respond to **every blocking finding** in a response file, `/tmp/speck-<id>-respo
 - **Fix** whenever the reviewer is right. That's the default.
 - **Dispute** only with a concrete, checkable reason, such as "the ticket puts X out of scope" or "test Y covers that path". Don't dispute to save effort.
 - **needs_pm** if the finding depends on a product decision. Then stop the loop and block the ticket using the build skill's section 6.
-- Minor findings don't block. Fix them if they're trivial; otherwise list them as follow-up ideas in the ticket's Delivery log.
+- Minor findings don't block. Fix them if they're trivial; otherwise handle them as follow-up ideas in `/speck-build` section 5 step 1: they go in the ticket's Delivery log, and any that would need its own ticket also goes to the inbox in `speck/ideas/`.
 
 Then re-run the tests, commit (`speck(<id>): review round N fixes`), and run the next round.
 
