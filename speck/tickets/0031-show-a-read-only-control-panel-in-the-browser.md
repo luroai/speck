@@ -1,7 +1,7 @@
 ---
 id: "0031"
 title: "Show a read-only control panel in the browser"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,7 +16,7 @@ created: 2026-10-09
 ---
 # 0031 · Show a read-only control panel in the browser
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Tickets are now moving fast and several build at once, and following them in Markdown files and `speck status` makes it hard to see what's running, what's next and what needs you. A read-only view in the browser shows the pipeline at a glance, without changing how speck works.
