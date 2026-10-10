@@ -1,7 +1,7 @@
 ---
 id: "0088"
 title: "Set up speck through a conversation with your agent"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0086", "0087"]                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-10T15:19:34.126Z"
 
 ---
 # 0088 · Set up speck through a conversation with your agent
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Getting speck working needs Node, git, a clean repo, a test command, a builder and a reviewer, and choices most people can't make alone, like which reviewer to trust or whether builds may skip permission prompts. `speck init` sets up the files and `speck doctor` lists what's missing, but someone without a technical background still has to fix each gap themselves.
