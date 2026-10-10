@@ -1,7 +1,7 @@
 ---
 id: "0018"
 title: Move the panel and build-control code into their own modules                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-10T11:56:49.356Z"
 ---
 # 0018 · Move the panel and build-control code into their own modules
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 `scripts/speck.mjs` is 2,769 lines in one file, about twice its size when this ticket was first written. Reviewers read large parts of it every round, which is a big share of the reviewer tokens a ticket costs, and an edit in one area risks breaking another. The panel's server and the build controls (`run`, `pause`, `play`, `stop`) are about 750 of those lines and are where it has grown fastest.
@@ -51,7 +51,75 @@ The panel's server and the build controls live in their own files under `scripts
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 532,045
+- Elapsed since build started: 14 min
+- Changed lines: 1547 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "72c027fcc73fc729512b947d334194ed1ed9b860",
+    "thread_id": "01a125b8-415f-7951-a870-e79302f730f9",
+    "seconds": 47,
+    "usage": {
+      "input_tokens": 530552,
+      "cached_input_tokens": 418944,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1493,
+      "reasoning_output_tokens": 71
+    },
+    "saved_at": "2026-10-10T12:10:41.747Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs contains the panel implementation; scripts/run.mjs contains run, pause, play and stop. scripts/speck.mjs retains COMMANDS and the CLI entry point and shrank from 2,769 to 2,022 lines. test/split-0018.test.mjs AC1 exercises these checks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Compared main's 25 exported names with the current module: all remain available. Independently importing scripts/speck.mjs succeeded. test/split-0018.test.mjs AC2 imports and checks every original export."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Compared the moved implementation bodies against main: identical apart from export keywords, a trailing blank line and the equivalent panel loader path. COMMANDS and error handling remain unchanged. AC3 checks output and exit codes; existing command tests exercise successful builds and controls. Supplied suite output reports 617 passes. Existing tests changed only the authorised 0067 edit targets and the copy helper. The read-only environment prevents independently rerunning tests that write fixtures."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs panelCode, codeStamp and codeHash still inspect every .mjs file in the scripts directory; startPanelServer imports speck.mjs, which re-exports panelServer. AC4 exercises changes to panel.mjs and run.mjs. The 12 existing 0067 tests retain their assertions and cover handover, failed restarts, token preservation and process cleanup."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs installTooling copies the complete scripts directory. test/split-0018.test.mjs AC5 checks installed module files and launches .speck/scripts/speck.mjs, then verifies the HTML page and state endpoint. Supplied output reports it passing."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel and build controls now live in separate modules, with existing behaviour and imports preserved. The tests exercise restart and installation behaviour without weakening existing assertions. All 617 tests reportedly pass; independent read-only checks found no blocking issues."
+  }
+}
+```
+
+</details>
