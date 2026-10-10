@@ -1,7 +1,7 @@
 ---
 id: "0079"
 title: "Make the panel's ticket writes use the same code as speck set"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:12:28.556Z"
 ---
 # 0079 · Make the panel's ticket writes use the same code as speck set
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's Ready and priority buttons (0042, 0077) each have their own copy of the checks and the field write that `speck set` does, while pause, play and stop already call the same code as the CLI. Two copies drift: a rule added to `speck set` wouldn't apply in the panel, and an out-of-range priority already gets different wording in each.
@@ -50,9 +50,14 @@ The panel sets a ticket's status and priority through the same code as `speck se
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 333,079
+- Elapsed since build started: 9 min
+- Changed lines: 59 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: `commitTicketOnly` commits one path, so a panel write that moves a ticket between folders can't be committed in one go; the panel refuses the one case that would (a draft filed in `speck/tickets/done/`).
 
