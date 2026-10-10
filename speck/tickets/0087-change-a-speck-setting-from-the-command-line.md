@@ -48,12 +48,13 @@ Changing a setting today means editing `speck/config.yml` by hand. An agent sett
 ## Review log
 Round 1 (codex): changes requested: F1 setConfigText updates a shadowed child in an earlier duplicate section instead of adding it to the section speck actually reads.
 Round 2 (codex): approve.
+Round 3 (codex): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 852,622
-- Elapsed since build started: 11 min
+- Reviewer tokens: 1,880,023
+- Elapsed since build started: 73 min
 - Changed lines: 138 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -195,6 +196,75 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Approved. The command changes one setting, checks its value, preserves the rest of the file and handles missing settings in older files. The repeated-section problem is fixed and tested. All ticket-specific tests pass; the supplied full suite still reports three failures in unrelated tests."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b753a337feae0807f5c605f6a0185a65ddf5967f",
+    "thread_id": "01a12621-7db7-76f1-9293-56d685940ab9",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 1025181,
+      "cached_input_tokens": 645248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2220,
+      "reasoning_output_tokens": 116
+    },
+    "saved_at": "2026-10-10T15:10:18.404Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/config.mjs setConfigText and cmdConfig remain unchanged by the merge. Passing AC1 CLI tests verify top-level and dotted-key updates, old → new output, preservation of unrelated lines and comments, duplicate keys and line endings."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "yamlValue quotes strings and cmdConfig checks exact read-back before writing. All AC2 CLI tests pass, covering hashes, colons, quotes, whitespace, YAML-like strings and newlines."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "checkConfigValue validates known keys, efforts, booleans, positive whole numbers and risk lists. All AC3 CLI tests pass and verify plain refusal messages and unchanged file contents."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "setConfigText adds missing keys to their effective section. Passing AC4 tests cover older files, absent sections, empty sections, missing final newlines and the F1 repeated-section regression."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdConfig has no commit operation; findRepoRoot supplies the speck init message. Both AC5 CLI tests pass, verifying commit history and no files created when config is absent."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/config.mjs",
+        "issue": "The repeated-section bug remains fixed after the merge. Existing-child lookup is restricted to the effective parent section.",
+        "suggested_fix": "No further change required; the F1 CLI regression passes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved after the merge. The command meets all five criteria, and the earlier bug remains fixed. Git comparisons confirm the implementation is unchanged and the files brought in from main are preserved exactly. The supplied full test run reports 745 passes, no failures and three skips. No blocking findings remain."
   }
 }
 ```
