@@ -32,47 +32,65 @@ function turnsDir(repo) {
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
 const parse = text => { try { const v = JSON.parse(text); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
 const alive = pid => Number.isInteger(pid) && pid > 0 && pidAlive(pid);
-const runFile = (dir, run) => (typeof run === 'string' && /^[0-9a-f-]+$/.test(run) ? path.join(dir, `run.${run}.pid`) : null);
+// A run's files beside its claim: the pid of the shell running its tests, and the folder that shell makes just before
+// starting them.
+const runFiles = (dir, run) => (typeof run === 'string' && /^[0-9a-f-]+$/.test(run)
+  ? { pid: path.join(dir, `run.${run}.pid`), started: path.join(dir, `run.${run}.started`) } : null);
 
-// A claim on a turn is held while the speck process that made it is alive, or the shell running its tests is: that
-// shell writes its pid to run.<run>.pid, so tests left running by a speck process that was killed still hold it. A
-// claim that can't be read as one, or whose processes have both gone, is free to take over.
-function busy(dir, text) {
+// The shell that runs the tests: it records its pid, makes the started folder, then becomes the test command's shell,
+// as `sh -c <cmd>` would run it. If the started folder is already there, a waiter has taken the turn over from this run,
+// so it stops without running anything.
+export const TEST_SHELL = 'printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && exec sh -c "$3"';
+
+// Whether a claim on a turn is held: while the speck process that made it is alive, or the shell running its tests
+// is, so tests left running by a speck process that was killed still hold it. A claim that can't be read as one is
+// free. When the speck process has gone and its tests haven't started, this makes the started folder itself, so they
+// never can: either that or the shell's mkdir comes first, never both.
+function held(dir, text) {
   const { pid, run } = parse(text);
   if (alive(pid)) return true;
-  const file = runFile(dir, run);
-  return !!file && alive(Number(read(file)));
+  const files = runFiles(dir, run);
+  if (!files) return false;
+  try { fs.mkdirSync(files.started); return false; } catch (e) { if (e.code !== 'EEXIST') throw e; }
+  return alive(Number(read(files.pid)));
 }
 
-// The claims on turn `n`, oldest first. Each is a file slot-<n>.g<k>.lock, and the turn belongs to the one with the
-// highest k.
+// Removes a claim. Our own run's files go with it, once its shell has ended. Another run's started folder stays, as
+// its shell might still be about to make it: run files no claim names are cleared once they're a day old.
+const forget = (file, text, own = false) => {
+  fs.rmSync(file, { force: true });
+  const files = own && runFiles(path.dirname(file), parse(text).run);
+  if (files) { fs.rmSync(files.pid, { force: true }); fs.rmSync(files.started, { recursive: true, force: true }); }
+};
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// The claims on turn `n`, oldest first. Each is a file slot-<n>.g<k>.lock, numbered so that two runs taking over the
+// same turn at once can't both link the same claim.
 function claims(dir, n) {
   const re = new RegExp(`^slot-${n}\\.g(\\d+)\\.lock$`);
   return fs.readdirSync(dir).flatMap(f => { const m = f.match(re); return m ? [{ k: Number(m[1]), file: path.join(dir, f) }] : []; })
     .sort((a, b) => a.k - b.k);
 }
 
-// Claims turn `n` if it's free, returning the claim's file, or null. Our claim file is made complete and then linked
-// into place as the next claim, which is atomic, so only one process gets each number and nobody sees half a file.
-// Nothing ever deletes a claim that's in use: a turn whose processes have gone is taken over by claiming the next
-// number. A process that claimed from a listing already out of date finds a later claim afterwards and withdraws.
-function takeTurn(dir, n, mine) {
-  const all = claims(dir, n);
-  const top = all.at(-1);
-  if (top) { const text = read(top.file); if (text !== null && busy(dir, text)) return null; }
-  const k = top ? top.k + 1 : 0;
+// Links our claim file `mine` as claim number k on turn n, which is atomic, so nobody sees half a file. The claim is
+// kept only if no other claim on the turn is held, however it's numbered, so a run that claimed from a listing already
+// out of date backs off. Two runs that claim at once may both back off, but never both keep their claims. Returns the
+// claim's file, or null.
+export function claimTurn(dir, n, k, mine) {
   const file = path.join(dir, `slot-${n}.g${k}.lock`);
   try { fs.linkSync(mine, file); } catch (e) { if (e.code === 'EEXIST') return null; throw e; }
-  if (claims(dir, n).some(c => c.k > k)) { fs.rmSync(file, { force: true }); return null; }
-  // Older claims are of no use now: clear those whose processes have gone.
-  for (const c of all) {
-    const text = read(c.file);
-    if (text === null || busy(dir, text)) continue;
-    fs.rmSync(c.file, { force: true });
-    const run = runFile(dir, parse(text).run);
-    if (run) fs.rmSync(run, { force: true });
-  }
+  const others = claims(dir, n).filter(c => c.file !== file).map(c => ({ ...c, text: read(c.file) })).filter(c => c.text !== null);
+  if (others.some(c => held(dir, c.text))) { fs.rmSync(file, { force: true }); return null; }
+  // The others are of no use now: clear them.
+  for (const c of others) if (read(c.file) === c.text) forget(c.file, c.text);
   return file;
+}
+
+// Claims turn `n` if it's free, as the next number after its latest claim.
+function takeTurn(dir, n, mine) {
+  const top = claims(dir, n).at(-1);
+  if (top) { const text = read(top.file); if (text !== null && held(dir, text)) return null; }
+  return claimTurn(dir, n, top ? top.k + 1 : 0, mine);
 }
 
 // The runs holding turns, for the message saying what a run waits for.
@@ -81,7 +99,7 @@ function holders(dir, max) {
   for (let n = 0; n < max; n++) {
     const top = claims(dir, n).at(-1);
     const text = top && read(top.file);
-    if (text && busy(dir, text)) { const { pid, cwd } = parse(text); out.push(`process ${pid}${typeof cwd === 'string' ? ` in ${cwd}` : ''}`); }
+    if (text && held(dir, text)) { const { pid, cwd } = parse(text); out.push(`process ${pid}${typeof cwd === 'string' ? ` in ${cwd}` : ''}`); }
   }
   return out;
 }
@@ -94,8 +112,13 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}) {
   const dir = turnsDir(repo);
   const run = crypto.randomUUID();
   const text = JSON.stringify({ pid: process.pid, cwd: repo, run });
-  // Files left by speck processes killed while waiting.
-  for (const f of fs.readdirSync(dir)) { const m = f.match(/^turn\.(\d+)\..*\.tmp$/); if (m && !alive(Number(m[1]))) fs.rmSync(path.join(dir, f), { force: true }); }
+  // Files left by speck processes that were killed: claim files made while waiting, and old files of killed runs.
+  const named = new Set(fs.readdirSync(dir).filter(f => f.endsWith('.lock')).map(f => parse(read(path.join(dir, f))).run));
+  for (const f of fs.readdirSync(dir)) {
+    const m = f.match(/^turn\.(\d+)\..*\.tmp$/), r = f.match(/^run\.([0-9a-f-]+)\.(pid|started)$/);
+    const old = () => { try { return Date.now() - fs.statSync(path.join(dir, f)).mtimeMs > DAY_MS; } catch { return false; } };
+    if ((m && !alive(Number(m[1]))) || (r && !named.has(r[1]) && old())) fs.rmSync(path.join(dir, f), { recursive: true, force: true });
+  }
   const mine = path.join(dir, `turn.${process.pid}.${run}.tmp`);
   fs.writeFileSync(mine, text);
   let lock = null, said = false;
@@ -108,17 +131,15 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}) {
         console.log(`Waiting for a turn to run the tests: max_parallel_tests is ${max}, and ${going.length === 1 ? 'a run is' : `${going.length || max} runs are`} already going${going.length ? ` (${going.join('; ')})` : ''}. This run starts when one ends.`);
         said = true;
       }
-      sleep(POLL_MS);
+      sleep(POLL_MS * (0.5 + Math.random())); // spread out, so runs that backed off together don't clash again
     }
   } finally { fs.rmSync(mine, { force: true }); }
-  const pids = runFile(dir, run);
+  const files = runFiles(dir, run);
   try {
     onStart();
-    // The shell records its pid, then becomes the test command's shell, as `sh -c <cmd>` would run it.
-    return sh('sh', ['-c', 'printf %s "$$" > "$1" && exec sh -c "$2"', 'sh', pids, cmd], { cwd: repo, stdio: 'inherit' });
+    return sh('sh', ['-c', TEST_SHELL, 'sh', files.pid, files.started, cmd], { cwd: repo, stdio: 'inherit' });
   } finally {
-    if (read(lock) === text) fs.rmSync(lock, { force: true });
-    fs.rmSync(pids, { force: true });
+    if (read(lock) === text) forget(lock, text, true);
   }
 }
 

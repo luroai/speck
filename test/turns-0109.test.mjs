@@ -8,6 +8,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { shipRepo, CLI, env } from './support/ship.mjs';
+import { TEST_SHELL, claimTurn } from '../scripts/turns.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const noTrace = res => assert.doesNotMatch(res.stderr, /^\s+at /m, 'no stack trace');
@@ -230,6 +231,81 @@ test('0109 AC4: many runs taking over a dead turn at once never overlap', async 
     const runs = await Promise.all(Array.from({ length: 8 }, (_, i) => speckAsync(i % 2 ? wt : dir, 'test').done));
     for (const r of runs) assert.equal(r.status, 0, `a run overlapped another: ${r.stdout}${r.stderr}`);
   }
+});
+
+test('0109 AC4: when speck test dies before its shell starts the tests, a waiter takes over and that shell never starts them', () => {
+  const { dir } = testRepo({ cmd: 'echo ran' });
+  const tests = path.join(dir, 'speck', '.cache', 'tests');
+  fs.mkdirSync(tests, { recursive: true });
+  const run = '0109aaaa-0000-4000-8000-000000000001';
+  fs.writeFileSync(path.join(tests, 'slot-0.g0.lock'), JSON.stringify({ pid: deadPid(), cwd: dir, run }));
+  // The waiter takes the turn over.
+  const res = speck(dir, 'test');
+  assert.equal(res.status, 0, res.stderr);
+  assert.doesNotMatch(res.stdout, WAITING);
+  // Then the dead run's shell, paused until now, resumes: it must not start its tests.
+  const marker = path.join(fs.realpathSync(os.tmpdir()), 'late.txt');
+  fs.writeFileSync(path.join(tests, 'slot-0.g0.lock'), JSON.stringify({ pid: deadPid(), cwd: dir, run }));
+  speck(dir, 'test'); // takes the turn over again, as above
+  const late = spawnSync('sh', ['-c', TEST_SHELL, 'sh', path.join(tests, `run.${run}.pid`), path.join(tests, `run.${run}.started`), `touch ${marker}`], { cwd: dir });
+  assert.notEqual(late.status, 0);
+  assert.equal(fs.existsSync(marker), false, 'the late shell ran nothing');
+});
+
+test('0109 AC4: a turn whose speck process has died but whose tests have started stays held while they run', async () => {
+  const { dir } = testRepo({ cmd: 'echo ran' });
+  const tests = path.join(dir, 'speck', '.cache', 'tests');
+  fs.mkdirSync(tests, { recursive: true });
+  const run = '0109aaaa-0000-4000-8000-000000000002';
+  const shell = sleeper();
+  try {
+    fs.writeFileSync(path.join(tests, 'slot-0.g0.lock'), JSON.stringify({ pid: deadPid(), cwd: dir, run }));
+    fs.writeFileSync(path.join(tests, `run.${run}.pid`), String(shell.pid));
+    fs.mkdirSync(path.join(tests, `run.${run}.started`));
+    const waiting = speckAsync(dir, 'test');
+    await until(() => WAITING.test(waiting.out.stdout), 'speck test said it was waiting');
+    shell.kill('SIGKILL');
+    const res = await waiting.done;
+    assert.equal(res.status, 0, res.stderr);
+    assert.match(res.stdout, /^ran$/m);
+  } finally { shell.kill(); }
+});
+
+test('0109 AC4: a run that claims a turn from an out-of-date listing backs off when a lower claim is held', async () => {
+  const { dir } = testRepo();
+  const tests = path.join(dir, 'speck', '.cache', 'tests');
+  fs.mkdirSync(tests, { recursive: true });
+  const holder = sleeper();
+  try {
+    // A run took the turn as claim 0, after the claims this stale run had seen were cleared away.
+    const held = JSON.stringify({ pid: holder.pid, cwd: dir });
+    fs.writeFileSync(path.join(tests, 'slot-0.g0.lock'), held);
+    const mine = path.join(tests, 'mine.tmp');
+    fs.writeFileSync(mine, JSON.stringify({ pid: process.pid, cwd: dir }));
+    assert.equal(claimTurn(tests, 0, 1, mine), null, 'the stale run backs off');
+    assert.equal(fs.existsSync(path.join(tests, 'slot-0.g1.lock')), false, 'and withdraws its claim');
+    assert.equal(fs.readFileSync(path.join(tests, 'slot-0.g0.lock'), 'utf8'), held, 'the held claim is untouched');
+    // With no other claim held, the same claim is kept.
+    const ended = new Promise(r => holder.once('exit', r));
+    holder.kill('SIGKILL');
+    await ended;
+    assert.equal(claimTurn(tests, 0, 1, mine), path.join(tests, 'slot-0.g1.lock'));
+  } finally { holder.kill(); }
+});
+
+test('0109 AC4: files of killed runs that no claim names are cleared once they are a day old', () => {
+  const { dir } = testRepo({ cmd: 'true' });
+  const tests = path.join(dir, 'speck', '.cache', 'tests');
+  fs.mkdirSync(tests, { recursive: true });
+  const old = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+  const make = (name, folder) => { const f = path.join(tests, name); folder ? fs.mkdirSync(f) : fs.writeFileSync(f, '1'); fs.utimesSync(f, old, old); return f; };
+  const gone = [make('run.0109bbbb.pid'), make('run.0109bbbb.started', true), make(`turn.${deadPid()}.x.tmp`)];
+  const kept = [make('run.0109cccc.started', true), make('run.0109dddd.pid')];
+  fs.utimesSync(kept[1], new Date(), new Date());
+  fs.writeFileSync(path.join(tests, 'slot-5.g0.lock'), JSON.stringify({ pid: deadPid(), run: '0109cccc' }));
+  assert.equal(speck(dir, 'test').status, 0);
+  for (const f of gone) assert.equal(fs.existsSync(f), false, `${path.basename(f)} is cleared`);
+  for (const f of kept) assert.equal(fs.existsSync(f), true, `${path.basename(f)} is kept`);
 });
 
 test('0109 AC5: max_parallel_tests is in the config template', () => {

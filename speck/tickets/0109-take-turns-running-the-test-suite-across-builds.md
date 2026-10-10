@@ -130,3 +130,80 @@ Builds keep working in parallel, but take turns running the full test suite, as 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "16e93b77db1ab3c8fea4af2578824a7ad38ab0d7",
+    "thread_id": "01a127db-e5d6-7e53-8e5c-bd6a5f323e25",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 662606,
+      "cached_input_tokens": 480896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2068,
+      "reasoning_output_tokens": 334
+    },
+    "saved_at": "2026-10-10T22:15:06.898Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/turns.mjs cmdTest/runTestsInTurn and passing tests 858–863 cover execution, exit codes, defaults and ordinary waiting across worktrees. F1 and F2 still allow overlapping suites beyond the limit."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "scripts/ship.mjs runTests calls runTestsInTurn; passing test 864 exercises shipping's wait. The shared implementation still has F1 and F2."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Build and review skills consistently prescribe speck test for full-suite runs. Test 865 passes and checks these instructions."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "busy/takeTurn reclaim dead claims. Passing tests 866–868 exercise recovery; test 869 additionally verifies ownership survives wrapper death after the suite starts."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Config template defaults max_parallel_tests to 1, and scripts/config.mjs registers count validation. Tests 871–873 pass, exercising accepted and rejected values."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs:117",
+        "issue": "The fix protects an orphaned suite only after its shell publishes its pid. If the wrapper dies after spawning but before that publication, a waiter can reclaim and delete the claim, then start its suite. The original shell subsequently publishes its pid and starts its suite without checking ownership, so both run. The builder acknowledges this window; test 869 kills the wrapper after the command has started and therefore does not exercise it.",
+        "suggested_fix": "Make the child establish and validate ownership before it can execute the test command, using a protocol that remains safe if the parent dies during startup. Add a controlled test that pauses child startup before pid publication, kills the wrapper, lets a waiter acquire the turn, and then resumes the child.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs:60",
+        "issue": "Generation numbers can reset because completed and older claims are deleted. A waiter A can read dead g0 and pause before linking g1. Waiter B takes g1, deletes g0, completes and deletes g1. Run C then takes g0 and starts. A resumes, successfully links g1 and sees no higher generation, so it starts alongside C: lower live claims are never checked. The contention test passes but does not force this interleaving, so the recovery race remains.",
+        "suggested_fix": "Prevent generation reuse/reset while stale observations may exist, or replace this protocol with a locking mechanism that guarantees exclusive ownership. Add a deterministic test for a delayed stale claimant resuming after another run completes and a new lower-generation claim becomes active.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The fixes improve recovery, and the supplied suite reports 882 passing tests with no failures. Both earlier findings remain incomplete: startup after a killed wrapper and reuse of deleted generation numbers can still let heavy suites overlap. These need fixing before merge. Tests were inspected but not rerun."
+  }
+}
+```
+
+</details>
