@@ -52,6 +52,11 @@ To set speck up through a conversation, the agent needs to know what's already i
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: suggest the test command for the package manager the lockfile shows (`pnpm test`, `yarn test`, `bun test`), not always `npm test` (speck/ideas/2026-10-10-suggest-the-test-command-for-the-project-s-package-manager.md).
+- Known limit: with several lockfiles, the first in a fixed order wins (pnpm, yarn, bun, npm), and `packageManager` in package.json isn't read.
+- Known limit: a pyproject.toml that lists only a pytest plugin (such as `pytest-cov`) without pytest itself doesn't count as using pytest; multi-line TOML strings aren't parsed.
+- Known limit: `test/luro-0082.test.mjs` reads an idea note by path, so filing that note broke it (fixed here). A test that reads a note could find it in either `speck/ideas/` or `speck/ideas/done/`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -188,6 +193,75 @@ To set speck up through a conversation, the agent needs to know what's already i
     ],
     "escalation_question": "",
     "summary": "The comment handling fix works, and the other four criteria remain satisfied. One related issue remains: a project description mentioning pytest can still produce the wrong test command. I confirmed this without writing files. The supplied suite reports no failures; I did not rerun tests that create temporary files."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "df202d168ff386d7b371ccc4668c206c222e8bce",
+    "thread_id": "01a12623-27ec-77e2-9e0c-016ab1eae25b",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 1222500,
+      "cached_input_tokens": 1010816,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2683,
+      "reasoning_output_tokens": 138
+    },
+    "saved_at": "2026-10-10T14:13:24.252Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/detect.mjs cmdDetect emits one JSON object without requiring installation. AC1 tests in test/detect-0086.test.mjs cover non-repos, missing git, package-bin execution and unchanged folder/git snapshots, including a stale index. Supplied results show all passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "osFacts, nodeFacts and gitFacts report all required fields. AC2 tests cover platform and Node support, commits, tracked changes, main/master, unborn branches, detached HEAD and local/global git identity; all pass in supplied results."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "speckFacts checks speck/config.yml and reads .speck/VERSION. AC3 tests cover absent installation, missing version and installed version; both pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "agentFacts checks all four executables through onPath and uses codex login status for authentication, matching doctor. AC4 tests cover missing/present tools and successful/failed authentication; both pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "suggestCommands and its helpers cover npm scripts, lockfile install commands, pytest and Makefile targets. AC5 tests include meaningful positive/negative fixtures and F1 regressions; all pass. Five independent in-memory checks also passed, confirming comments and descriptions do not override make test while actual pytest dependencies are recognised."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/detect.mjs",
+        "issue": "Previously, comments and unrelated project strings could incorrectly suggest pytest and override make test. pyprojectUsesPytest now checks dependency contexts and pytest configuration; regression tests cover both reported cases.",
+        "suggested_fix": "Completed: dependency-aware detection and regression coverage are present.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. The command reports the requested setup facts as JSON without changing the project. The incorrect pytest suggestions are fixed and covered by meaningful tests. Independent read-only checks passed; the supplied full suite reports 707 passes, no failures and three skips. I did not rerun tests that write temporary files."
   }
 }
 ```
