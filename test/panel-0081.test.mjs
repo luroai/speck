@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { spawnSync } from 'node:child_process';
 import { ROOT, T, page, findChrome, browserPage } from './support/panel.mjs';
+import { commitBySubject } from './support/commits.mjs';
 
 // ---------- 0081: a build's pause or play icon sits vertically centred on its collapsed queue row ----------
 
@@ -138,7 +139,9 @@ test('0081 AC1, AC2, AC3: a refused pause or play leaves the icon centred, colla
 
 // The panel as it was before this ticket, to check rows without the icon against.
 const before = () => {
-  const r = spawnSync('git', ['show', '9ff5e4c:templates/panel.html'], { cwd: ROOT, encoding: 'utf8' });
+  const ready = commitBySubject('speck(0081): ready');
+  if (!ready) return null;
+  const r = spawnSync('git', ['show', `${ready}:templates/panel.html`], { cwd: ROOT, encoding: 'utf8' });
   return r.status === 0 ? r.stdout : null;
 };
 const parts = l => ({ top: l.top, stages: l.stages, id: l.id, title: l.title, tags: l.tags, sub: l.sub });

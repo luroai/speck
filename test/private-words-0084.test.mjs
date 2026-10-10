@@ -7,7 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { ROOT, env } from './support/panel.mjs';
-import { readPrivateWords, filesNaming } from './support/private-words.mjs';
+import { readPrivateWords, privateWordsFile, filesNaming } from './support/private-words.mjs';
 
 // ---------- 0084: 0082's check reads the owner's private words from outside the repo ----------
 
@@ -85,11 +85,10 @@ test('AC3: a missing list or a list with no words skips the check and the rest s
   }
 });
 
-test('AC4: 0082\'s test file no longer holds the words, whole or in parts', () => {
-  const ticket = fs.readdirSync(path.join(ROOT, 'speck/tickets/done')).find(f => f.startsWith('0082-'));
-  const ac2 = fs.readFileSync(path.join(ROOT, 'speck/tickets/done', ticket), 'utf8').split('\n').find(l => l.startsWith('2. '));
-  const words = [...ac2.matchAll(/`([^`]+)`/g)].map(m => m[1].toLowerCase()).filter(w => !w.includes(' '));
-  assert.ok(words.length >= 3, 'read the words from 0082\'s AC2');
+// The words come from the owner's list, read as 0082's check reads it.
+test('AC4: 0082\'s test file no longer holds the words, whole or in parts', (t) => {
+  const words = readPrivateWords().map(w => w.toLowerCase());
+  if (!words.length) return t.skip(`no words listed in ${privateWordsFile()}`);
   const src = fs.readFileSync(path.join(ROOT, 'test/luro-0082.test.mjs'), 'utf8');
   for (const w of words) assert.ok(!src.toLowerCase().includes(w), 'a word is in the file whole');
   const literals = [...src.matchAll(/(['"`])((?:(?!\1)[^\\\n]|\\.)*)\1/g)].map(m => m[2].toLowerCase()).filter(s => s.length >= 2);
