@@ -1,6 +1,6 @@
 # speck — product brief
 
-Status: v0.1 brief, implemented · 8 October 2026
+Status: 0.2.0, a public preview · 10 October 2026
 
 ## Thesis
 
