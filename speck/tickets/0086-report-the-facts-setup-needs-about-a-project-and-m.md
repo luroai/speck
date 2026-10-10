@@ -1,7 +1,7 @@
 ---
 id: "0086"
 title: Report the facts setup needs as JSON                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:56:49.065Z"
 ---
 # 0086 · Report the facts setup needs as JSON
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 To set speck up through a conversation, the agent needs to know what's already in place: Node, git, the repo's state, which coding agents are installed and how the project runs its tests. Today it would have to work each of these out with its own commands, differently every time, and speck's own checks only print ✓ and ✗ for a person to read.
@@ -46,6 +46,7 @@ To set speck up through a conversation, the agent needs to know what's already i
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+Codex approved 0086 in round 3, but `speck ship --auto` then conflicted with main on `test/luro-0082.test.mjs`: 0090 had made the same one-line path fix. I merged main and took main's line, so the branch's diff against main is now exactly what was approved, and the tests pass (710 pass, 0 fail). The re-review can't run because round 3 was the last one `max_review_rounds` allows. Should I (a) run one more review round on the merge, with `max_review_rounds` raised to 4 for this ticket only, or (b) leave it for you to read and ship with `/speck-ship 0086`? I recommend (b): the merge changed none of this ticket's own lines.
 
 ## Review log
 Round 1 (codex): changes requested: F1 usesPytest searches arbitrary pyproject.toml text for the word pytest.
