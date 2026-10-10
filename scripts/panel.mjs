@@ -6,7 +6,7 @@ import net from 'node:net';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, lintTicket, writeField, worktreeList, padId, readableLog, statusData, commitTicketOnly } from './speck.mjs';
+import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, commitTicketOnly } from './speck.mjs';
 import { pauseBuild, playBuild, stopBuild } from './run.mjs';
 
 // ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
@@ -22,6 +22,12 @@ function panelPort(args) {
   return +v;
 }
 
+// `speck set`'s own checks, as the panel's 422 response, or null when they pass.
+function setRefusal(t, cfg, key, value) {
+  try { checkSetValue(key, value); checkSetTicket(t, cfg, key, value); return null; }
+  catch (e) { if (e instanceof SpeckError) return { status: 422, body: { error: e.message } }; throw e; }
+}
+
 // The panel's one write: set a draft ticket to ready, as `speck set <id> status ready` does, and commit only that
 // ticket, since `speck start` needs it committed. Every refusal comes before the first write. Returns
 // { status, body } for the server to send.
@@ -31,13 +37,16 @@ function panelSetReady(repo, id) {
   try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
   const pad = t.fm.id;
   if (t.fm.status !== 'draft') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so it can't be set ready from here.` } };
-  const { errors } = lintTicket(t, cfg);
-  if (errors.length) return { status: 422, body: { error: `Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}` } };
+  // `speck set` would move a draft filed with the finished tickets back to speck/tickets/, and this commit holds one file.
+  if (path.dirname(path.resolve(t.file)) !== path.resolve(repo, 'speck', 'tickets'))
+    return { status: 409, body: { error: `Ticket ${pad} is a draft filed in speck/tickets/done/, so it can't be set ready from here. Run \`speck set ${pad} status ready\`, which moves it back to speck/tickets/, then commit it.` } };
+  const refused = setRefusal(t, cfg, 'status', 'ready');
+  if (refused) return refused;
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
   if (branch !== cfg.base_branch)
     return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
   const rel = path.relative(repo, t.file);
-  writeField(t, 'status', 'ready');
+  setTicketField(repo, t, 'status', 'ready');
   const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): ready`);
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
@@ -69,13 +78,16 @@ function panelSetPriority(repo, id, value) {
   try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
   const pad = t.fm.id;
   if (t.fm.status !== 'draft') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so its priority can't be changed from here.` } };
-  if (!/^[1-5]$/.test(value)) return { status: 422, body: { error: `Priority must be a whole number from 1 to 5, not "${value.slice(0, 20)}".` } };
+  // `speck set` can clear a priority with "", but the panel only sets one.
+  if (value === '') return { status: 422, body: { error: `Pick a priority from 1 to 5: the panel can't clear one.` } };
+  const refused = setRefusal(t, cfg, 'priority', value);
+  if (refused) return refused;
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
   if (branch !== cfg.base_branch)
     return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
   if (String(t.fm.priority) === value) return { status: 200, body: { ok: true, id: pad } }; // already at that priority
   const rel = path.relative(repo, t.file);
-  writeField(t, 'priority', value);
+  setTicketField(repo, t, 'priority', value);
   const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): priority ${value}`);
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${rel}, so its priority is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
