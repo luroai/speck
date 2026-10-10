@@ -1,7 +1,7 @@
 ---
 id: "0081"
 title: "Centre a build's pause icon on its collapsed queue row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T12:00:13.924Z"
+finished: "2026-10-10T12:10:14.492Z"
 
 ---
 # 0081 · Centre a build's pause icon on its collapsed queue row
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In a collapsed queue row, a running build's pause icon, or a paused build's play icon, lines up with the title line, so it sits near the top of the row, above the progress bar. It looks out of place next to the two lines it controls.
