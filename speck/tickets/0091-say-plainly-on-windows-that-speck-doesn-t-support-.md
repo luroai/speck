@@ -45,12 +45,13 @@ On Windows, `speck doctor` and `speck init` say plainly that speck doesn't suppo
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 337,261
-- Elapsed since build started: 4 min
+- Reviewer tokens: 965,223
+- Elapsed since build started: 69 min
 - Changed lines: 19 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: three tests read an idea note that has since been filed in speck/ideas/done/, so they fail on main (speck/ideas/2026-10-10-fix-tests-that-read-a-filed-idea-note.md).
@@ -102,6 +103,56 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Windows users now receive a clear unsupported-platform warning and instructions to run speck in WSL. macOS and Linux checks remain unchanged. The tests exercise the requested behaviour. The three reported suite failures come from an existing stale file path on main. No blocking concerns found; installation tests were inspected rather than rerun because this review is read-only."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "445ccbb12b7363d2d3a8b85323ffc59a7d4aff38",
+    "thread_id": "01a1261d-0f04-7c22-abe5-11a702c4f3f3",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 626763,
+      "cached_input_tokens": 392064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1199,
+      "reasoning_output_tokens": 31
+    },
+    "saved_at": "2026-10-10T15:06:27.672Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/install.mjs: doctorChecks adds the required Windows ✗ item and WSL fix; cmdDoctor prints it and fails. Both AC1 tests in test/windows-0091.test.mjs pass in the supplied post-merge output. Implementation and tests are unchanged from round 1."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doctorChecks adds the item only for win32; existing checks remain unchanged against merged main. The AC2 platform comparison test exercises Linux and macOS and passes; the Linux init test also passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/install.mjs: cmdInit passes platform into doctorChecks and uses its result to print the final fix-items instruction. The AC3 test exercises the actual init implementation and passes in the supplied post-merge output."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the Windows warning and WSL instructions, with macOS and Linux behaviour unchanged. Main’s licence changes and test-path fix are preserved exactly. The supplied full test run reports 695 passes, no failures and three existing skips. No blocking concerns."
   }
 }
 ```
