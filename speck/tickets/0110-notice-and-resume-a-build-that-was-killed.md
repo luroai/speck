@@ -39,6 +39,10 @@ A build that was killed is shown plainly as stopped, and `speck run` resumes its
 - 0045 flags a build that finished without shipping; this covers a build that was killed before it finished.
 - On 2026-10-10 the five builds were resumed by hand with `claude --resume <session> -p …`, which carried on cleanly from each worktree.
 - Failing before this build: none
+- A killed build is one whose run record has no exit, whose pid has gone, that `speck stop` didn't end, whose stream-json log has no closing `result` event (so a build that ended by itself while speck run was down isn't taken for one) and whose session no running process names (so a session already resumed by hand isn't resumed twice).
+- speck run resumes it by turning `build_command` into a resume: `--session-id {session}` becomes `--resume {session}` and the one word with `{id}` becomes the carry-on message. A build_command without both is left stopped, with the resume command.
+- 0047 AC3's test now uses a blocked ticket: a killed build whose ticket is building is resumed instead, as AC2 asks.
+- Self-check: speck run only acts on killed builds whose ticket is building or reviewing, and every other build that has gone gets its exit recorded as before (it had been recording exits for records written while it ran, which 0070 and 0072's tests caught).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
