@@ -50,6 +50,11 @@ Builds keep working in parallel, but take turns running the full test suite, as 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- A turn is held by the speck process or the shell running the tests. If that shell is killed on its own while the tests it started keep running, the turn is freed early.
+- A claim whose pid has been reused by another live process looks held until that process ends. The waiting message names the pid and folder.
+- Lowering `max_parallel_tests` doesn't stop runs already holding higher turns.
+- A changelog line for `speck test` and `max_parallel_tests`: skipped as covered by ticket 0106 (bring the 0.2.0 changelog up to date).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -202,6 +207,83 @@ Builds keep working in parallel, but take turns running the full test suite, as 
     ],
     "escalation_question": "",
     "summary": "The fixes improve recovery, and the supplied suite reports 882 passing tests with no failures. Both earlier findings remain incomplete: startup after a killed wrapper and reuse of deleted generation numbers can still let heavy suites overlap. These need fixing before merge. Tests were inspected but not rerun."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1b436b964651a41f0bb15b454557e42e8f8dbf34",
+    "thread_id": "01a127db-e5d6-7e53-8e5c-bd6a5f323e25",
+    "seconds": 60,
+    "usage": {
+      "input_tokens": 1009115,
+      "cached_input_tokens": 493440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3091,
+      "reasoning_output_tokens": 640
+    },
+    "saved_at": "2026-10-10T22:28:35.968Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "speck test runs the configured command, preserves its exit code, shares turns across worktrees, defaults to one concurrent run and prints its waiting message once. Tests 858–863 pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Shipping uses runTestsInTurn for its test runs, sharing the same turn mechanism as speck test. Test 864 passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The build and review skills direct full-suite runs through speck test. Test 865 passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Dead claims can be reclaimed, surviving test shells retain their turns, and an atomic started-folder seal prevents a late shell from starting after takeover. Claim checks cover both lower and higher generations. Tests 866–874 pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The config template defaults max_parallel_tests to 1; config set and runtime validation require a whole number of at least 1. Tests 875–877 pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs",
+        "issue": "Resolved: the shell and a recovering waiter compete atomically to create the started folder. A waiter that seals the run prevents its late shell from executing; a shell that starts first has already recorded its PID and retains the turn.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs",
+        "issue": "Resolved: claimTurn withdraws its claim when any other claim is held, including a lower generation created after an outdated listing. The regression test exercises the previously unsafe interleaving.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both earlier findings are resolved, and all five acceptance criteria pass. The supplied suite reports 886 passing tests, three skipped and no failures. Code and tests were inspected; tests were not rerun in the read-only review environment."
   }
 }
 ```
