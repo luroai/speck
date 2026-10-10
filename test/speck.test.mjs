@@ -76,7 +76,8 @@ test('nextAction: approve ships, max rounds and repeat disputes block', () => {
 
 test('CLI: init, new, lint, set ready, status', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
-  const run = (...a) => spawnSync('node', [CLI, ...a], { cwd: dir, encoding: 'utf8' });
+  // Setting ready commits the ticket (0108), so git needs an identity.
+  const run = (...a) => spawnSync('node', [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...gitEnv } });
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   assert.equal(run('init', '--skip-checks').status, 0);
   assert.ok(fs.existsSync(path.join(dir, 'speck', 'config.yml')));

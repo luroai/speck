@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly } from './speck.mjs';
+import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly } from './speck.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -84,6 +84,7 @@ export function cmdRun() {
 
   const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
   const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
+  const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
   const running = new Set();
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
@@ -208,6 +209,11 @@ export function cmdRun() {
         held.add(t.id);
         continue;
       }
+      if (!readyOnBase(repo, cfg.base_branch, t.path)) {
+        if (!uncommitted.has(t.id)) console.log(`${t.id} is ready but not committed as ready on ${cfg.base_branch}, so speck run is waiting for it to be committed before launching it.`);
+        uncommitted.add(t.id);
+        continue;
+      }
       launch(t.id);
     }
   }
@@ -216,6 +222,14 @@ export function cmdRun() {
   adoptEarlierBuilds();
   tick();
   setInterval(tick, pollMs);
+}
+
+// Whether the ticket at `rel` is ready in the base branch's latest commit. A ticket set ready but not committed, or
+// never committed at all, isn't: `speck start` would refuse it.
+function readyOnBase(repo, base, rel) {
+  const r = sh('git', ['show', `refs/heads/${base}:${rel}`], { cwd: repo });
+  if (r.status !== 0) return false;
+  try { return parseTicket(r.stdout).fm.status === 'ready'; } catch { return false; }
 }
 
 // ---------- pause and play (hold a build speck run launched, then carry it on) ----------
