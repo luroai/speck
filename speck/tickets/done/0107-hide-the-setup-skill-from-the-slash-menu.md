@@ -1,7 +1,7 @@
 ---
 id: "0107"
 title: "Hide the setup skill from the slash menu"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T22:40:08.804Z"
+finished: "2026-10-10T22:54:34.868Z"
 
 ---
 # 0107 · Hide the setup skill from the slash menu
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The `speck-setup` skill (0088) appears in Claude Code's `/` menu beside Capture, Ticket, Build and Ship. People only need it once, when the pasted setup prompt starts it, and every extra entry in the menu is one more thing to learn.
