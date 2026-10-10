@@ -87,18 +87,18 @@ export function setConfigText(text, keys, v) {
   const lines = text.split('\n');
   const entries = settingLines(lines);
   const same = (a, b) => a.length === b.length && a.every((k, i) => k === b[i]);
-  // speck reads the last copy of a setting that appears twice, so that's the one changed.
-  const at = entries.filter(e => same(e.path, keys)).pop();
+  // speck reads the last copy of a setting or section that appears twice, so that's the one changed or added to.
+  const section = keys.length > 1 ? entries.filter(e => same(e.path, keys.slice(0, 1))).pop() : null;
+  const at = entries.filter(e => same(e.path, keys) && (!section || e.i > section.i)).pop();
   if (at) { lines[at.i] = settingLine(at.indent, keys.at(-1), v, lines[at.i]); return lines.join('\n'); }
   const cr = lines[0]?.endsWith('\r') ? '\r' : '';
   const name = keys.at(-1);
-  if (keys.length === 1 || !entries.some(e => same(e.path, keys.slice(0, 1)))) {
+  if (keys.length === 1 || !section) {
     // Not there at all: add it at the end, in its own new section if it has one.
     const add = keys.length === 1 ? [`${name}: ${v}`] : ['', `${keys[0]}:`, `  ${name}: ${v}`];
     if (lines.at(-1) === '') lines.pop();
     return [...lines, ...add.map(l => l + cr), ''].join('\n');
   }
-  const section = entries.filter(e => same(e.path, keys.slice(0, 1))).pop();
   if (section.value !== '') {
     if (section.value.trim() !== '{}')
       throw new SpeckError(`${keys[0]} in speck/config.yml isn't a section of settings, so ${keys.join('.')} can't be added under it. Fix that line by hand, then run this again.`);

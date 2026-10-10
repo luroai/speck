@@ -259,3 +259,12 @@ test('0087: speck help lists config set', () => {
   const out = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' });
   assert.match(out.stdout, /speck config set <key> <value>/);
 });
+
+test('0087 AC4: a key only in an earlier copy of a section is added to the copy speck reads (review F1)', () => {
+  const r = repo('commands:\n  test: old\ncommands:\n  other: keep\n');
+  const out = r.run('commands.test', 'npm test');
+  assert.equal(out.status, 0, out.stderr);
+  assert.match(out.stdout, /^commands\.test: \(not set\) → npm test$/m);
+  assert.equal(r.read(), 'commands:\n  test: old\ncommands:\n  other: keep\n  test: npm test\n');
+  assert.equal(r.cfg().commands.test, 'npm test');
+});

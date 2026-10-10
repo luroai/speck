@@ -1,7 +1,7 @@
 ---
 id: "0087"
 title: "Change a speck setting from the command line"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:56:59.164Z"
 ---
 # 0087 · Change a speck setting from the command line
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Changing a setting today means editing `speck/config.yml` by hand. An agent setting speck up for someone (0088) would have to edit YAML directly, where one wrong indent or unquoted value breaks every speck command, and nothing checks the value is one speck accepts.
@@ -50,3 +50,75 @@ Changing a setting today means editing `speck/config.yml` by hand. An agent sett
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b8aa76a328355b6c8dacdc48071578313f047e84",
+    "thread_id": "01a12621-7db7-76f1-9293-56d685940ab9",
+    "seconds": 42,
+    "usage": {
+      "input_tokens": 269596,
+      "cached_input_tokens": 175104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 982,
+      "reasoning_output_tokens": 116
+    },
+    "saved_at": "2026-10-10T14:05:32.701Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/config.mjs cmdConfig and setConfigText implement single-line updates and old → new output. AC1 CLI tests cover top-level and dotted keys, comments, duplicate scalar keys and Windows line endings; builder output reports them passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "yamlValue checks values against parseYaml before writing. AC2 CLI tests cover hashes, colons, both quote types, whitespace, YAML-like strings and newlines; all pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "checkConfigValue validates known keys, efforts, flags, positive integers and risks before writing. AC3 tests exercise refusals and assert the entire file remains unchanged; supplied results pass."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "AC4 tests pass for ordinary older files, missing sections and {} sections. However, setConfigText searches all matching child lines before selecting the effective section. A key present only in an earlier duplicate section is treated as present, although parseYaml discards that section. The command consequently refuses to add the missing effective key."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdConfig contains no commit operation, and findRepoRoot supplies the speck init message. Both AC5 CLI tests pass in the supplied results and check git history and absence of created files respectively."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/config.mjs",
+        "issue": "setConfigText updates a shadowed child in an earlier duplicate section instead of adding it to the section speck actually reads. Reproduced read-only with `commands:\\n  test: old\\ncommands:\\n  other: keep\\n`: setting commands.test edits the first section, while parseYaml still returns only commands.other. cmdConfig's read-back guard then refuses this valid setting, violating AC4.",
+        "suggested_fix": "Find the effective parent section first and restrict existing-child lookup to that section. Add a CLI regression test showing a key shadowed by a later section is added there, preserving all other lines and settings.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The command validates values and preserves formatting in the tested cases. One older-file edge case needs fixing: repeated sections can prevent a missing setting from being added. The tests exercise real CLI behaviour, and the change stays within scope. The supplied full suite also reports three unrelated failures; I did not rerun tests that write temporary files in this read-only review."
+  }
+}
+```
+
+</details>
