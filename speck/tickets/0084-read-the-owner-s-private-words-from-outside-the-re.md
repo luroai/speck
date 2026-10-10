@@ -1,7 +1,7 @@
 ---
 id: "0084"
 title: "Read the owner's private words from outside the repo in 0082's check"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-10T13:14:35.849Z"
 
 ---
 # 0084 · Read the owner's private words from outside the repo in 0082's check
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0082's AC2 test checks that no tracked file names the owner, so it has to know the words to look for. It holds them in the test file, split into parts and joined at runtime. Anyone reading the file can join them too, so the repo still names the owner, and the history rewrite that follows 0082 can't remove them without breaking the test.
