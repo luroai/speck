@@ -1,7 +1,7 @@
 ---
 id: "0083"
 title: "Warn when a ticket contains your home folder's path"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T12:55:01.787Z"
+finished: "2026-10-10T13:04:47.493Z"
 
 ---
 # 0083 · Warn when a ticket contains your home folder's path
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Tickets are committed and often published, and an absolute path from the writer's machine can slip into one. That path usually contains their username. It happened in 0053, and nobody noticed until much later.
