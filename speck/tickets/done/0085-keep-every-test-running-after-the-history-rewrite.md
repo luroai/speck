@@ -1,7 +1,7 @@
 ---
 id: "0085"
 title: "Keep every test running after the history rewrite"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T13:29:12.837Z"
+finished: "2026-10-10T13:34:33.510Z"
 
 ---
 # 0085 · Keep every test running after the history rewrite
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The history rewrite changes every commit id and removes the owner's words from 0082's ticket. Two tests depend on those: 0081's AC5 finds the panel from before 0081 by a fixed commit id, so it would quietly skip, and 0084's AC4 reads the owner's words from 0082's ticket, so it would fail. A trial rewrite on 2026-10-10 showed both.
