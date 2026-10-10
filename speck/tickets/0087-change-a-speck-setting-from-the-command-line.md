@@ -50,6 +50,9 @@ Changing a setting today means editing `speck/config.yml` by hand. An agent sett
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Three tests (luro-0082 AC4, and two in private-words-0084 that run it) fail on main because the idea note they read was filed into speck/ideas/done/. Sent to the inbox: speck/ideas/2026-10-10-fix-the-test-that-reads-a-filed-idea-note.md.
+- `speck config set` doesn't check text settings: a blank base_branch or reviewer is accepted, as speck reads them today. Known limit.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -117,6 +120,75 @@ Changing a setting today means editing `speck/config.yml` by hand. An agent sett
     ],
     "escalation_question": "",
     "summary": "The command validates values and preserves formatting in the tested cases. One older-file edge case needs fixing: repeated sections can prevent a missing setting from being added. The tests exercise real CLI behaviour, and the change stays within scope. The supplied full suite also reports three unrelated failures; I did not rerun tests that write temporary files in this read-only review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "53a9575a8014b4e78477dba635c0d45198413a48",
+    "thread_id": "01a12621-7db7-76f1-9293-56d685940ab9",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 580378,
+      "cached_input_tokens": 423168,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1666,
+      "reasoning_output_tokens": 116
+    },
+    "saved_at": "2026-10-10T14:07:51.325Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/config.mjs setConfigText and cmdConfig preserve unrelated lines and print old → new. Passing AC1 CLI tests cover top-level and nested settings, comments, ordering, duplicate keys and Windows line endings."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "yamlValue and cmdConfig verify exact read-back before writing. All AC2 CLI tests pass, including hashes, colons, quotes, padded strings and newlines."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "checkConfigValue validates keys, efforts, booleans, positive whole numbers and risk lists before writing. Passing AC3 CLI tests check plain refusal messages and byte-for-byte unchanged files."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "setConfigText now selects the last parent section before looking for its child. All AC4 tests pass, including the new F1 CLI regression. An independent read-only reproduction confirms the setting is added to the effective section and other values remain intact."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdConfig performs no commit; findRepoRoot supplies the speck init instruction. Both AC5 CLI tests pass, checking unchanged commit history and no files created when config is absent."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/config.mjs",
+        "issue": "The earlier repeated-section bug is fixed: shadowed children no longer prevent adding a setting to the effective section.",
+        "suggested_fix": "Implemented and covered by the passing AC4 regression test for review F1.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. The command changes one setting, checks its value, preserves the rest of the file and handles missing settings in older files. The repeated-section problem is fixed and tested. All ticket-specific tests pass; the supplied full suite still reports three failures in unrelated tests."
   }
 }
 ```
