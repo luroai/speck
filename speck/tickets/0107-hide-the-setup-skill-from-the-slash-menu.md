@@ -37,6 +37,7 @@ The setup skill is agent-only: it's hidden from the `/` menu, and the setup prom
 ## Notes
 - Decided 2026-10-10: new skills are agent-only; only Capture, Ticket, Build and Ship (plus the existing review and status) are for people.
 - Checked 2026-10-10: `user-invocable: false` hides a skill from the `/` menu while Claude can still load it (Claude Code skills docs).
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
