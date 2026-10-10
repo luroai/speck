@@ -1,7 +1,7 @@
 ---
 id: "0018"
 title: Move the panel and build-control code into their own modules                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-10T11:56:49.356Z"
+finished: "2026-10-10T12:12:19.516Z"
 
 ---
 # 0018 · Move the panel and build-control code into their own modules
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `scripts/speck.mjs` is 2,769 lines in one file, about twice its size when this ticket was first written. Reviewers read large parts of it every round, which is a big share of the reviewer tokens a ticket costs, and an edit in one area risks breaking another. The panel's server and the build controls (`run`, `pause`, `play`, `stop`) are about 750 of those lines and are where it has grown fastest.
