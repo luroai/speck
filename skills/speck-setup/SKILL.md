@@ -1,6 +1,7 @@
 ---
 name: speck-setup
-description: Set speck up in this project through a conversation. Checks what's there with speck detect, explains each choice, asks before changing anything, and leaves speck ready to build the first ticket. Use when the user says "set up speck", "speck setup", "install speck here", or speck isn't set up yet and they want to start.
+description: Set speck up in this project through a conversation. Checks what's there with speck detect, explains each choice, asks before changing anything, and leaves speck ready to build the first ticket. Use when the user says "set up speck", "speck setup", "install speck here", or speck isn't set up yet and they want to start. The setup prompt in speck's README starts it, so it isn't typed as a command.
+user-invocable: false
 ---
 
 # speck setup
