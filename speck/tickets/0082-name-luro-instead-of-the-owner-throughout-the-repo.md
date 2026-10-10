@@ -1,7 +1,7 @@
 ---
 id: "0082"
 title: "Name Luro instead of the owner throughout the repo's files"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:55:01.374Z"
 ---
 # 0082 · Name Luro instead of the owner throughout the repo's files
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 speck is moving to the `luroai` GitHub organisation under the brand Luro, and the owner wants to keep their own name out of it. Today the install command points at the owner's personal GitHub account, and the docs name the owner, so anyone reading the repo sees who they are.
@@ -50,7 +50,75 @@ The repo's files point to `luroai/speck` and refer to Luro or "the maintainer", 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 238,720
+- Elapsed since build started: 3 min
+- Changed lines: 58 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5db9e02d49df44e7056d2bd2626a9a4187a1ad33",
+    "thread_id": "01a125e4-1767-70f3-a4f8-1af4352b3245",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 238079,
+      "cached_input_tokens": 150400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 641,
+      "reasoning_output_tokens": 15
+    },
+    "saved_at": "2026-10-10T12:58:16.882Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md contain the required command; scripts/install.mjs installTooling uses it in the error. Both AC1 tests in test/luro-0082.test.mjs passed; the message test runs the real CLI without skills."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Independent case-insensitive git grep found no matches outside ticket 0082. The AC2 tracked-file scan in test/luro-0082.test.mjs passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "docs/HANDOFF.md is deleted and git ls-files lists no such file. The AC3 deletion test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The diff preserves the sentences in docs/brief.md and the pilot idea except for replacing the name with 'the maintainer'; ticket 0053's example now begins ~/projects/. The AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/panel-mockup.html shows luroai/speck, covered by the passing AC5 test. Supplied full-suite output reports 651 passes, zero failures and three existing skips. Tests were inspected but not rerun because they write temporary files and this review is read-only."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The install instructions and mockup now name Luro, personal identifiers are removed outside the exempt ticket, and the outdated handoff note is deleted. The changes stay within scope and the supplied full test run passes. Ready for merge."
+  }
+}
+```
+
+</details>
