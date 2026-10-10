@@ -1,7 +1,7 @@
 ---
 id: "0087"
 title: "Change a speck setting from the command line"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-10T13:56:59.164Z"
 
 ---
 # 0087 · Change a speck setting from the command line
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Changing a setting today means editing `speck/config.yml` by hand. An agent setting speck up for someone (0088) would have to edit YAML directly, where one wrong indent or unquoted value breaks every speck command, and nothing checks the value is one speck accepts.
