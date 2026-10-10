@@ -1,7 +1,7 @@
 ---
 id: "0108"
 title: "Build only tickets whose ready status is committed"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0095", "0100"]                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T19:51:22.377Z"
+finished: "2026-10-10T20:06:58.932Z"
 
 ---
 # 0108 · Build only tickets whose ready status is committed
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck set <id> status ready` doesn't commit the ticket, but `speck run` launches any ticket marked ready, committed or not. `speck start` then refuses the uncommitted ticket, so on 2026-10-10 five builds (0095, 0097–0100) each committed their own ticket on `main` in the shared checkout to get past it, with five different commit messages. Builders changing `main` to get past a refusal is exactly the improvising speck must stop.
