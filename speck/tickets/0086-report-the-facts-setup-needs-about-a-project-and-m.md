@@ -1,7 +1,7 @@
 ---
 id: "0086"
 title: Report the facts setup needs as JSON                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:56:49.065Z"
 ---
 # 0086 · Report the facts setup needs as JSON
 
-**Status:** ⛔ blocked
+**Status:** 🔍 reviewing
 
 ## Problem
 To set speck up through a conversation, the agent needs to know what's already in place: Node, git, the repo's state, which coding agents are installed and how the project runs its tests. Today it would have to work each of these out with its own commands, differently every time, and speck's own checks only print ✓ and ✗ for a person to read.
@@ -43,10 +43,10 @@ To set speck up through a conversation, the agent needs to know what's already i
 - Checked 2026-10-10: `npx github:<owner>/<repo>` runs the package's `speck` bin with the given arguments, and `#<tag>` pins a git ref (npm 10 `package-spec` docs).
 - Outside the ticket: `test/luro-0082.test.mjs` read the setup idea note from `speck/ideas/`, but b455507 filed it in `speck/ideas/done/`, so it and the two 0084 tests that run it failed on main. The test now reads it from `done/` (a path change only, the assertion is unchanged), so the suite is green for ship.
 - Self-check: git status ran with optional locks off so it can't refresh the index (a test makes the index stale to prove it); package.json that's malformed, not an object or has `__proto__` scripts suggests nothing; the CLI uses nothing newer than Node 16, so an old Node can still report itself.
+- Answered 2026-10-10 (blocked question): option (b) couldn't work, because `speck ship` refuses when files outside `speck/` changed after the approval, and the merge brought in nine. The user agreed to (a): one more review round on the merge, with `max_review_rounds` raised to 4 on this branch only and put back to 3 before close. `main` was merged again first, to bring in 0087 and 0091 (conflicts in `scripts/speck.mjs` and `docs/brief.md`, where both sides added a line; kept both).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
-Codex approved 0086 in round 3, but `speck ship --auto` then conflicted with main on `test/luro-0082.test.mjs`: 0090 had made the same one-line path fix. I merged main and took main's line, so the branch's diff against main is now exactly what was approved, and the tests pass (710 pass, 0 fail). The re-review can't run because round 3 was the last one `max_review_rounds` allows. Should I (a) run one more review round on the merge, with `max_review_rounds` raised to 4 for this ticket only, or (b) leave it for you to read and ship with `/speck-ship 0086`? I recommend (b): the merge changed none of this ticket's own lines.
 
 ## Review log
 Round 1 (codex): changes requested: F1 usesPytest searches arbitrary pyproject.toml text for the word pytest.
