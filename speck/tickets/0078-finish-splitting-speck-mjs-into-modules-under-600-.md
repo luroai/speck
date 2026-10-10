@@ -43,6 +43,9 @@ speck's code is split into files by area under `scripts/`, none over 600 lines, 
 - The review code is about 720 lines with its commands, so it can't be one file under the cap.
 - Rough size: about 1,400–1,500 lines move, so about 3,000 counted against `max_changed_lines`.
 - Checked 2026-10-10: `speck init` copies the whole `scripts/` folder into `.speck/` (`installTooling`).
+- Built 2026-10-10: the modules are `core.mjs` (utilities, config, tickets and their rounds section, lint, diff size, and helpers several commands share), `review.mjs`, `reviewers.mjs` (the prompt and command reviewers), `pack.mjs`, `close.mjs`, `install.mjs` and `ship.mjs`. `core.mjs` imports none of them, so it is always ready before the rest. Every moved line is unchanged apart from an added `export`. `speck set`'s checks stay in `speck.mjs`, where the 0079 tests read them.
+- AC4's test runs the same commands through a whole build with the CLI from the branch's merge base with `main` and with this one, and compares output, exit codes, the ticket and the git log. Once the split is on `main` there's no single-file CLI to compare with, so that test (and the "no existing test changed" check) skips itself.
+- Self-check: no changes. Each module loads on its own whichever is imported first (no top-level use of an import across a cycle), a word-level scan finds no name used without being imported, and changing one message in `ship.mjs` makes the AC4 test fail.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
