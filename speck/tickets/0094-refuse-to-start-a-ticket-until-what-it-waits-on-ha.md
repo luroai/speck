@@ -38,6 +38,7 @@ A ticket can wait on others with `after:`. `speck run` holds it until they've sh
 ## Notes
 - `speck run` already waits on `done` (`waiting_on` in `statusData`); this brings `speck start` in line.
 - Failing before this build: none
+- Self-check: no changes. Checked ids written as numbers, repeated ids, `constructor` as an id, and that resuming a started ticket still reports its worktree (the branch check runs before the after: check). AC3 and AC4 tests passed before the change: they guard existing behaviour.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -221,6 +221,8 @@ function cmdStart(args) {
       : `Ticket ${pad} already has a branch, ${existing.join(', ')}. Check it out to carry on the build, or delete it to start again.`);
   }
   if (t.fm.status !== 'ready') throw new SpeckError(`Ticket ${pad} is "${t.fm.status}", not "ready". Only a ready ticket can be started.`);
+  const waits = startWaits(repo, cfg, t);
+  if (waits) throw new SpeckError(waits);
   const rel = posix(path.relative(repo, t.file));
   if (git(['status', '--porcelain', '--', rel], repo).trim())
     throw new SpeckError(`${rel} has uncommitted changes. Commit it first, so the build starts from the ticket as you approved it.`);
@@ -266,6 +268,26 @@ function cmdStart(args) {
   }
   try { finishStart(at, pad); } catch (e) { undo(); throw e; }
   console.log(`Started ${pad} on ${branch}, in its own worktree. Do all of the build there:\n${at}`);
+}
+
+// Why a ticket can't start yet because of its after: list, or null if every ticket there is done, as speck run waits for.
+// Statuses come from statusTickets, so a ticket being built in another worktree shows its real status.
+function startWaits(repo, cfg, t) {
+  const after = Array.isArray(t.fm.after) ? t.fm.after.map(padId) : [];
+  if (!after.length) return null;
+  const status = new Map(statusTickets(repo, cfg).map(x => [padId(x.fm.id), x.fm.status]));
+  const waiting = [], gone = [];
+  for (const id of [...new Set(after)]) {
+    const s = status.get(id);
+    if (s === 'done') continue;
+    if (s === undefined) gone.push(`${id}, which matches no ticket`);
+    else if (s === 'cancelled') gone.push(`${id}, which was cancelled`);
+    else waiting.push(`${id} (${s})`);
+  }
+  const why = [];
+  if (waiting.length) why.push(`Ticket ${t.fm.id} waits on ${waiting.join(', ')}. It can start once ${waiting.length > 1 ? 'they\'ve' : 'it\'s'} shipped.`);
+  if (gone.length) why.push(`Ticket ${t.fm.id}'s after: lists ${gone.join(', and ')}. Take ${gone.length > 1 ? 'them' : 'it'} out of after: before the ticket can start.`);
+  return why.length ? why.join('\n') : null;
 }
 
 function finishStart(dir, pad) {
