@@ -1,7 +1,7 @@
 ---
 id: "0100"
 title: "Add fix tickets for a broken main at P0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-10-a-shipping-agent-that-heals-the-build.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-10T18:38:18.271Z"
 
 ---
 # 0100 · Add fix tickets for a broken main at P0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When `main` breaks, every ship stops until it's fixed, so the fix must come before everything else. speck's tickets have only one type besides the default (`bug`) and priorities 1 to 5, so a fix can't be marked or ordered ahead of everything else.
