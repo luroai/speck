@@ -36,6 +36,9 @@ On Windows, `speck doctor` and `speck init` say plainly that speck doesn't suppo
 
 ## Notes
 - Tests can't run on Windows here, so the check should take the platform as an input that tests can set.
+- `doctorChecks`, `cmdDoctor` and `cmdInit` take the platform as an optional last argument (default `process.platform`); test/windows-0091.test.mjs sets it.
+- Three tests in luro-0082 and private-words-0084 fail on main too, before this change: they read speck/ideas/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md, which was moved to speck/ideas/done/ when it was ticketed. Not touched here.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
