@@ -1,7 +1,7 @@
 ---
 id: "0085"
 title: "Keep every test running after the history rewrite"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:29:12.837Z"
 ---
 # 0085 · Keep every test running after the history rewrite
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The history rewrite changes every commit id and removes the owner's words from 0082's ticket. Two tests depend on those: 0081's AC5 finds the panel from before 0081 by a fixed commit id, so it would quietly skip, and 0084's AC4 reads the owner's words from 0082's ticket, so it would fail. A trial rewrite on 2026-10-10 showed both.
@@ -45,9 +45,14 @@ The test suite gives the same results before and after the history rewrite.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 237,260
+- Elapsed since build started: 4 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
