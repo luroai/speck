@@ -1,6 +1,6 @@
 # Set up speck by giving your agent a prompt
 
-Captured: 2026-10-10 · Status: idea
+Captured: 2026-10-10 · Status: ticketed (0086, 0087, 0088, 0089)
 
 ## What
 Setup is a conversation with your agent. The user pastes a short "give your agent this prompt" message into Claude Code, and the agent installs what's missing, sets up git and the project, detects the agents present, proposes builder and reviewer models and writes the config, asking the user at each decision.
