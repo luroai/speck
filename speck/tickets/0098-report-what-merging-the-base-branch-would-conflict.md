@@ -38,6 +38,11 @@ To decide whether a conflict is safe to resolve without another review, the ship
 
 ## Notes
 - The same change made on both sides doesn't conflict in git, so it needs no class of its own.
+- Built on `git merge-tree --write-tree` (git 2.38 or later), which merges in the object store only: no ref, worktree or index changes, though it can leave unreferenced objects for git's usual garbage collection.
+- Class order when more than one fits: `lockfile`, then `ticket`, then `added-lines`, then `logic`. A lockfile is rebuilt rather than kept on both sides, and a file under `speck/` needs speck's own handling, however its lines conflict.
+- Line ranges and counts come from the merge as `git merge` would write it in this repo (its own `merge.conflictStyle`), markers included. Classes come from a diff3 merge, which shows the base's lines: a conflict is added-lines when both sides keep every base line in it, in order. A file both sides added (no base version) or a conflict with no markers (deleted on one side, binary) is `logic`, with 1 conflict and no line ranges.
+- Untracked files don't count as uncommitted changes, since the check reads only commits.
+- Self-check: added a test for a missing base branch and for unrelated histories (both already refused plainly)
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
