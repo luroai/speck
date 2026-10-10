@@ -2150,6 +2150,7 @@ function cmdRun() {
   process.on('SIGTERM', stop);
 
   const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
+  const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const running = new Set();
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
@@ -2172,7 +2173,11 @@ function cmdRun() {
   const finished = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
-    else {
+    else if (stoppedBySpeck(recordFile)) {
+      console.log(`${id} build ended by \`speck stop\`.`);
+      recordExit(id, recordFile, signal ? null : code);
+      return tick();
+    } else {
       console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
       recordExit(id, recordFile, signal ? null : code);
     }
@@ -2216,7 +2221,9 @@ function cmdRun() {
       if (pidAlive(b.pid)) continue;
       adopted.delete(id);
       running.delete(id);
+      const byStop = stoppedBySpeck(b.file);
       recordExit(id, b.file, null);
+      if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
       console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
       reportIfStillReady(id, b.log);
     }
@@ -2263,6 +2270,11 @@ function cmdRun() {
     for (const t of tickets) {
       if (running.size >= max) break;
       if (t.status !== 'ready' || (t.waiting_on || []).length || launched.has(t.id)) continue;
+      if (heldByStop(repo, t)) {
+        if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
+        held.add(t.id);
+        continue;
+      }
       launch(t.id);
     }
   }
@@ -2393,6 +2405,114 @@ function playBuild(repo, args) {
   return `${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`;
 }
 function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
+
+// ---------- stop (end a build speck run launched for good, and block its ticket) ----------
+
+const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+// True if `speck stop` ended the build in this run record: a <id>.stopped file beside it names its session and pid.
+function stoppedBySpeck(recordFile) {
+  try {
+    const rec = JSON.parse(fs.readFileSync(recordFile, 'utf8'));
+    const mark = JSON.parse(fs.readFileSync(recordFile.replace(/\.json$/, '.stopped'), 'utf8'));
+    return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && Number.isInteger(mark.pid) && mark.pid === rec.pid && mark.session === rec.session;
+  } catch { return false; }
+}
+
+// The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.
+const lastTicketCommit = (dir, rel) => { const r = sh('git', ['log', '-1', '--format=%H', '--', rel], { cwd: dir }); return r.status === 0 ? r.stdout.trim() : ''; };
+
+// True for a ticket whose last build `speck stop` ended, until the ticket has a commit other than the one it had when
+// it was stopped (set ready again, for example). A ticket still ready because blocking it failed isn't launched again.
+function heldByStop(repo, t) {
+  const file = path.join(runsDir(repo), `${t.id}.json`);
+  if (!stoppedBySpeck(file)) return false;
+  let mark = null;
+  try { mark = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')); } catch { /* unreadable: held */ }
+  return typeof mark?.ticket_commit !== 'string' || mark.ticket_commit === lastTicketCommit(t.worktree || repo, t.path);
+}
+
+// Every process still running, as a set of pids. One that has exited and waits only for its parent to collect it is over.
+function runningPids() {
+  const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
+  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
+  return new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([p, s]) => /^\d+$/.test(p) && !/^Z/.test(s || '')).map(([p]) => Number(p)));
+}
+
+// Ends a build and everything it started, already held with SIGSTOP (`held`) so none can start anything more: asks each
+// to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there after a few seconds with SIGKILL.
+// Every process it has found stays on its list, so one that leaves the build's tree when its parent ends is still ended.
+// Returns the processes still running at the end.
+function endBuild(b, held) {
+  const known = new Set(held);
+  const left = () => {
+    for (const p of buildProcesses(b.pid, b.rec.session)) known.add(p);
+    const running = runningPids();
+    return [...known].filter(p => running.has(p));
+  };
+  const each = (pids, signal) => { for (const p of pids) try { process.kill(p, signal); } catch { /* gone */ } };
+  const asked = new Set();
+  const ask = pids => { const fresh = pids.filter(p => !asked.has(p)); for (const p of fresh) asked.add(p); each(fresh, 'SIGTERM'); each(fresh, 'SIGCONT'); };
+  let now = left();
+  ask(now);
+  for (let i = 0; i < 50 && now.length; i++) { sleep(100); now = left(); ask(now); }
+  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); sleep(100); now = left(); }
+  return now;
+}
+
+// Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
+function buildTicket(repo, cfg, id) {
+  const list = worktreeList(repo);
+  const branch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${id}-`);
+  const at = list.find(w => w.branch && branch.test(w.branch) && fs.existsSync(w.path))?.path || list[0].path;
+  return { at, t: findTicket(at, id) };
+}
+
+// Ends the build, then blocks its ticket and commits that where the build keeps it. A <id>.stopped mark is left first,
+// so speck run knows the build ended because of this rather than reporting it as a build that stopped or failed.
+function cmdStop(args) {
+  const repo = findRepoRoot();
+  const cfg = loadConfig(repo);
+  const b = runRecord(repo, args, 'stop');
+  if (!b.running) throw new SpeckError(`${b.id} has no running or paused build launched by speck run, so there's nothing to stop.`);
+  const stopMark = path.join(path.dirname(b.mark), `${b.id}.stopped`);
+  // The ticket's commit as the build ends, so speck run can tell when it has been committed again since.
+  const ticketCommit = () => { try { const { at, t } = buildTicket(repo, cfg, b.id); return lastTicketCommit(at, path.relative(at, t.file)); } catch { return null; } };
+  const mark = { session: b.rec.session ?? null, pid: b.pid, stopped: new Date().toISOString(), ticket_commit: ticketCommit() };
+  try { saveRecord(stopMark, mark); } catch (e) {
+    throw new SpeckError(`Couldn't mark ${b.id} stopped in ${stopMark} (${e.message}), so it's still ${b.paused ? 'paused' : 'running'}.`);
+  }
+  const { sent, error } = signalBuild(b, 'SIGSTOP');
+  if (error) {
+    if (!b.paused) carryOn(sent);
+    fs.rmSync(stopMark, { force: true });
+    throw new SpeckError(`Couldn't stop ${b.id}: ${error} It's still ${b.paused ? 'paused' : 'running'}.`);
+  }
+  let left;
+  try { left = endBuild(b, sent); } catch (e) {
+    throw new SpeckError(`${b.id}'s build may be only partly stopped: ${e.message} Its ticket is unchanged. Run \`speck stop ${b.id}\` again. If it says there's nothing to stop, end any of its processes still running yourself, then block its ticket with \`speck set ${b.id} status blocked\`.`);
+  }
+  if (left.length)
+    throw new SpeckError(`Couldn't end all of ${b.id}'s build: process${left.length === 1 ? '' : 'es'} ${left.join(', ')} ${left.length === 1 ? 'is' : 'are'} still running. End ${left.length === 1 ? 'it' : 'them'} with \`kill -9 ${left.join(' ')}\`. Its ticket is unchanged.`);
+  fs.rmSync(b.mark, { force: true });
+  console.log(`${b.id} stopped (session ${b.rec.session ?? 'unknown'}).`);
+
+  const now = ticketCommit();
+  if (now !== mark.ticket_commit) try { saveRecord(stopMark, { ...mark, ticket_commit: now }); } catch { /* the earlier commit stays: it's still held */ }
+  const { at, t } = buildTicket(repo, cfg, b.id);
+  if (['approved', 'done', 'cancelled'].includes(t.fm.status)) { console.log(`Its ticket is ${t.fm.status}, so it was left as it is.`); return; }
+  const d = new Date();
+  const question = `Stopped by you on ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.`;
+  const comments = old => (old.match(/<!--[\s\S]*?-->/g) || []).map(c => `${c}\n`).join('');
+  let text = setField(t.raw, 'status', 'blocked');
+  text = /^## Blocked question[ \t]*$/m.test(text) ? replaceSection(text, 'Blocked question', old => `${comments(old)}${question}`, t.file)
+    : `${text.replace(/\s*$/, '')}\n\n## Blocked question\n${question}\n`;
+  fs.writeFileSync(t.file, syncHeader(text));
+  const commit = commitTicketOnly(at, t.file, t.raw, `speck(${b.id}): stopped`);
+  if (commit.status !== 0)
+    throw new SpeckError(`${b.id}'s build is stopped, but its ticket couldn't be committed in ${at}, so it's unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run \`speck set ${b.id} status blocked\` there and commit it.`);
+  console.log(`${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`);
+}
 
 function cmdDiffstat() {
   const repo = findRepoRoot();
@@ -2609,6 +2729,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck run                           start a build for each ready ticket as it becomes ready, until stopped
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused
+  speck stop <id>                     end a build speck run launched for good, and block its ticket
   speck diffstat                      changed lines against the size limit
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
@@ -2622,7 +2743,7 @@ const HELP = `speck: small tickets, independent review, you merge.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
