@@ -53,6 +53,11 @@ To decide whether a conflict is safe to resolve without another review, the ship
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- The build was killed once when the machine ran out of memory (five test suites at once), and then resumed. Later full runs used `--test-concurrency=2`.
+- Follow-ups:
+  - Idea: let merge-check check against the remote's base branch, as `speck ship` does after catching up (speck/ideas/2026-10-10-let-merge-check-check-against-the-remote-base.md).
+  - Tidy-up: `docs/brief.md` doesn't describe `speck merge-check` yet. 0101, which builds the skill that uses it, is the natural place.
+  - Known limit: merge-check refuses while a merge is in progress in the branch's worktree (that counts as uncommitted changes), so it has to run before the base branch is merged in.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -115,6 +120,70 @@ To decide whether a conflict is safe to resolve without another review, the ship
     ],
     "escalation_question": "",
     "summary": "The command reports ordinary merges without changing the checkout, and its tests exercise real Git behaviour. It needs one fix before merge: files using a custom conflict marker size receive incorrect conflict details. Tests were inspected; the full suite was not rerun in this read-only review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1056f58c3ba8597e441286189760ee227fa6c204",
+    "thread_id": "01a12753-38ad-7370-a728-c1ac09159aab",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 805447,
+      "cached_input_tokens": 638208,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1586,
+      "reasoning_output_tokens": 148
+    },
+    "saved_at": "2026-10-10T19:44:28.418Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/merge-check.mjs cmdMergeCheck uses object-store merges and status with --no-optional-locks. Passing AC1 integration tests verify unchanged refs, worktrees and indexes, and plain refusals for missing branches and staged or unstaged changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing 'AC1 AC2: a clean merge prints one JSON object...' integration test exercises real Git commits and asserts clean:true, files:[] and unchanged snapshots."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "classify uses the shared LOCKFILES pattern, speck/ precedence and diff3 base-line preservation. Passing integration tests exercise added-lines, logic, lockfile, ticket, deletion and add/add cases. The new custom-marker-size test covers both added-lines and logic."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "markerSizes and conflictsIn now recognise each file's configured marker length. Passing integration tests assert multiple conflict ranges, diff3 ranges, markerless conflicts and nine-character markers with two conflicts."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/merge-check.mjs:25",
+        "issue": "The previous parser ignored custom conflict marker sizes. This is fixed by reading attributes from the merge's checkout and using that length throughout parsing.",
+        "suggested_fix": "Implemented; the new real Git regression test verifies classification, count and ranges with nine-character markers.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The command reports whether a merge would conflict, classifies affected files and gives conflict counts and locations without changing the checkout. The custom-marker issue is fixed and covered by a meaningful regression test. All four criteria pass; no blocking findings remain. I inspected the current code and tests but did not rerun the full suite."
   }
 }
 ```
