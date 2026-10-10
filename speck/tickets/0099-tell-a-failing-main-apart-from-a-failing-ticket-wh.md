@@ -1,7 +1,7 @@
 ---
 id: "0099"
 title: "Tell a failing main apart from a failing ticket when shipping"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T18:38:10.812Z"
 ---
 # 0099 · Tell a failing main apart from a failing ticket when shipping
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck ship` runs the tests on the ticket's branch. When they fail because `main` itself is broken, it gives the same refusal as a broken ticket, so every waiting ship fails with a message that blames the ticket. On 2026-10-10 that's what stopped 0087, 0090 and 0091.
@@ -45,9 +45,15 @@ When a ship's tests fail, `speck ship` checks the base branch too, and says plai
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 testFailure's finally block runs git worktree prune for the entire repository.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,082,493
+- Elapsed since build started: 60 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: main's tests run in a fresh worktree, so a test command that needs untracked files (a `.env`, say) that `worktree_setup` doesn't create fails there too and is reported as exit 14.
 - Follow-ups skipped as duplicates: `/speck-build` doesn't yet say what to do on exit 14 (matches 0101 and 0102).
