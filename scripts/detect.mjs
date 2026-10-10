@@ -86,9 +86,24 @@ function npmTest(dir) {
   return typeof test === 'string' && test.trim() !== '' && !NPM_DEFAULT_TEST.test(test);
 }
 
+// A TOML file without its comments: each line up to a # that isn't inside a string.
+function tomlWithoutComments(text) {
+  return text.split('\n').map(line => {
+    let quote = null;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (quote) { if (ch === '\\' && quote === '"') i++; else if (ch === quote) quote = null; }
+      else if (ch === '"' || ch === "'") quote = ch;
+      else if (ch === '#') return line.slice(0, i);
+    }
+    return line;
+  }).join('\n');
+}
+
+// pytest's own settings table, a quoted requirement such as "pytest>=8", or a Poetry-style `pytest = "^8"` key.
 function usesPytest(dir) {
   if (isFile(path.join(dir, 'pytest.ini')) || isFile(path.join(dir, 'conftest.py'))) return true;
-  if (/^\s*\[tool\.pytest\b|["'\s[,]pytest\b/m.test(read(dir, 'pyproject.toml') || '')) return true;
+  if (/^\s*\[tool\.pytest\b|["']pytest\b|^\s*pytest\s*=/m.test(tomlWithoutComments(read(dir, 'pyproject.toml') || ''))) return true;
   if (/^\s*\[tool:pytest\]/m.test(read(dir, 'setup.cfg') || '')) return true;
   if (/^\s*\[pytest\]/m.test(read(dir, 'tox.ini') || '')) return true;
   let files = [];

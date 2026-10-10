@@ -1,7 +1,7 @@
 ---
 id: "0086"
 title: Report the facts setup needs as JSON                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:56:49.065Z"
 ---
 # 0086 · Report the facts setup needs as JSON
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 To set speck up through a conversation, the agent needs to know what's already in place: Node, git, the repo's state, which coding agents are installed and how the project runs its tests. Today it would have to work each of these out with its own commands, differently every time, and speck's own checks only print ✓ and ✗ for a person to read.
@@ -52,3 +52,75 @@ To set speck up through a conversation, the agent needs to know what's already i
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1975cf100ebc50ea89d83f9ce46988a017363038",
+    "thread_id": "01a12623-27ec-77e2-9e0c-016ab1eae25b",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 351674,
+      "cached_input_tokens": 258816,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 977,
+      "reasoning_output_tokens": 86
+    },
+    "saved_at": "2026-10-10T14:07:16.589Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/detect.mjs cmdDetect emits JSON without requiring installation. AC1 tests exercise non-repos, missing git, symlinked package bin and unchanged repo snapshots including a stale index. Tests inspected; not rerun because they write temporary files."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "osFacts, nodeFacts and gitFacts report the required fields. AC2 tests exercise supported platforms, Node versions, staged and unstaged changes, unborn branches, detached HEAD and local/global identity."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "speckFacts reads speck/config.yml and .speck/VERSION. AC3 tests cover absent installation, missing version and installed version."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "agentFacts uses onPath for all four agents and codex login status, matching doctor’s authentication check. AC4 tests exercise absent/present tools and successful/failed login status."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "suggestCommands covers npm, lockfiles, pytest and Makefile targets with behavioural tests. However, usesPytest treats comments mentioning pytest as evidence. A read-only, in-memory reproduction with pyproject.toml containing '# pytest is not used here' returned test_command: 'pytest'."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/detect.mjs",
+        "issue": "usesPytest searches arbitrary pyproject.toml text for the word pytest. A comment such as '# pytest is not used here' incorrectly suggests pytest, potentially overriding a valid Makefile test command. Existing negative tests do not cover comments.",
+        "suggested_fix": "Restrict detection to actual pytest configuration or dependency declarations, ignoring comments and unrelated text. Add regression tests for a comment-only mention, both without another test command and alongside a Makefile test target.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The command reports the requested machine and project facts, and the tests meaningfully cover most behaviour. One fix is needed: a comment mentioning pytest can cause setup to recommend the wrong test command. I verified this without changing files; I did not rerun tests that create temporary files."
+  }
+}
+```
+
+</details>
