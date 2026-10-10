@@ -41,6 +41,7 @@ Tickets are committed and often published, and an absolute path from the writer'
 - Lint already separates errors (✗, which block `ready`) from warnings (!, which don't), in `lintTicket` in `scripts/core.mjs`.
 - Checked 2026-10-10: on Linux and macOS, Node's `os.homedir()` returns `$HOME` when it is set (Node.js `os` docs).
 - Tests should set `HOME` (and so the home folder) to a temporary path, so they don't depend on the machine running them.
+- Self-check: added a test that a home folder with regex characters (`a.b+c`) is matched literally; also skips a relative home folder, and a path inside a longer one (`/mnt/home/ann`) or followed by `-`, `_` or `.name`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
