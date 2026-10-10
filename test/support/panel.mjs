@@ -70,11 +70,10 @@ export function request(port, { method = 'GET', pathName = '/', host = `127.0.0.
   });
 }
 
-// A copy of the CLI and its templates, so a test can edit its code or panel.html without touching the repo's own (0059, 0067).
+// A copy of the CLI (the whole scripts/ folder, since it's split into modules: 0018) and its templates, so a test can edit its code or panel.html without touching the repo's own (0059, 0067).
 export function cliCopy() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-cli-'));
-  fs.mkdirSync(path.join(dir, 'scripts'));
-  fs.copyFileSync(path.join(ROOT, 'scripts', 'speck.mjs'), path.join(dir, 'scripts', 'speck.mjs'));
+  fs.cpSync(path.join(ROOT, 'scripts'), path.join(dir, 'scripts'), { recursive: true });
   fs.cpSync(path.join(ROOT, 'templates'), path.join(dir, 'templates'), { recursive: true });
   return { cli: path.join(dir, 'scripts', 'speck.mjs'), page: path.join(dir, 'templates', 'panel.html') };
 }

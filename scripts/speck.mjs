@@ -5,14 +5,15 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import http from 'node:http';
-import net from 'node:net';
-import crypto from 'node:crypto';
-import { spawn, spawnSync } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { cmdPanel, panelServer } from './panel.mjs';
+import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows } from './run.mjs';
+
+export { panelServer };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const TEMPLATES = path.join(ROOT, 'templates');
+export const TEMPLATES = path.join(ROOT, 'templates');
 const STATUSES = ['draft', 'ready', 'building', 'reviewing', 'blocked', 'approved', 'done', 'cancelled'];
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 const LOCKFILES = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|poetry\.lock|uv\.lock|Pipfile\.lock|Cargo\.lock|Gemfile\.lock|go\.sum|composer\.lock)$/;
@@ -21,11 +22,11 @@ const RISKY = /(auth|login|password|session|token|secret|\.env|payment|billing|s
 
 // ---------- small utilities ----------
 
-class SpeckError extends Error {
+export class SpeckError extends Error {
   constructor(message, code = 1) { super(message); this.code = code; this.name = 'SpeckError'; }
 }
 
-function sh(cmd, args, opts = {}) {
+export function sh(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, ...opts });
   if (r.error) throw new SpeckError(`${cmd} failed: ${r.error.message}`);
   return r;
@@ -37,7 +38,7 @@ function git(args, cwd) {
   return r.stdout;
 }
 
-function findRepoRoot(start = process.cwd()) {
+export function findRepoRoot(start = process.cwd()) {
   let dir = start;
   while (true) {
     if (fs.existsSync(path.join(dir, 'speck', 'config.yml'))) return dir;
@@ -94,7 +95,7 @@ function scalar(v) {
   return v;
 }
 
-function loadConfig(repo) {
+export function loadConfig(repo) {
   const cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
   const limits = {
     max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3,
@@ -224,7 +225,7 @@ function listTickets(repo) {
   return [...seen.keys()].sort().map(f => ({ file: seen.get(f), ...parseTicket(fs.readFileSync(seen.get(f), 'utf8')) }));
 }
 
-function findTicket(repo, id) {
+export function findTicket(repo, id) {
   const pad = String(id).padStart(4, '0');
   const found = ticketDirs(repo).flatMap(dir => {
     if (!fs.existsSync(dir)) return [];
@@ -1152,7 +1153,7 @@ function cmdSet(args) {
   console.log(`${t.fm.id} ${key} → ${value}`);
 }
 
-function writeField(t, key, value) {
+export function writeField(t, key, value) {
   // A value holding a quote, or padded with spaces, is written as a JSON string so it reads back exactly as given:
   // left bare, a lone ' would hide the line's trailing comment from stripComment. after is the one list field, so
   // after ["0070"] stays a list, and any other bracketed value is text.
@@ -1337,7 +1338,7 @@ function remoteBaseCatchUp(repo, remote, base) {
 }
 
 // Every checkout of this repo, the main one first, with the branch each one has (null when detached).
-function worktreeList(repo) {
+export function worktreeList(repo) {
   return git(['worktree', 'list', '--porcelain'], repo).split('\n\n').filter(b => b.trim()).map(block => {
     const lines = block.split('\n');
     const at = lines.find(l => l.startsWith('worktree '))?.slice(9);
@@ -1577,7 +1578,7 @@ function statusTickets(repo, cfg) {
   return tickets;
 }
 
-const padId = id => String(id ?? '').padStart(4, '0');
+export const padId = id => String(id ?? '').padStart(4, '0');
 
 // Each acceptance criterion's full text without its number: a numbered line at the start of a line begins one, and
 // the lines under it (wrapped text, nested lists) belong to it, so a multi-line criterion comes through whole.
@@ -1671,7 +1672,7 @@ function buildSession(runs, id) {
 // True while a build launched by `speck run` is paused: `speck pause` left a <id>.paused file beside its run record
 // naming this build's session and pid, and the build has neither exited nor gone. The mark is a file of its own, so
 // pause and play never write the run record that speck run keeps.
-function buildPaused(runs, id) {
+export function buildPaused(runs, id) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id)) return false;
   let rec, mark;
@@ -1776,754 +1777,6 @@ function cmdStatus(args = []) {
   console.log(`\nIDEAS (${total}: ${total - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
 }
 
-// ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
-
-const PANEL_PORT = 4777;
-const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-
-function panelPort(args) {
-  const i = args.findIndex(a => a === '--port' || a.startsWith('--port='));
-  if (i === -1) return PANEL_PORT;
-  const v = args[i].startsWith('--port=') ? args[i].slice(7) : args[i + 1];
-  if (!/^\d+$/.test(v ?? '') || +v < 1 || +v > 65535) throw new SpeckError(`--port must be a whole number from 1 to 65535 (got "${v ?? ''}").`);
-  return +v;
-}
-
-// The panel's one write: set a draft ticket to ready, as `speck set <id> status ready` does, and commit only that
-// ticket, since `speck start` needs it committed. Every refusal comes before the first write. Returns
-// { status, body } for the server to send.
-function panelSetReady(repo, id) {
-  const cfg = loadConfig(repo);
-  let t;
-  try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
-  const pad = t.fm.id;
-  if (t.fm.status !== 'draft') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so it can't be set ready from here.` } };
-  const { errors } = lintTicket(t, cfg);
-  if (errors.length) return { status: 422, body: { error: `Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}` } };
-  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
-  if (branch !== cfg.base_branch)
-    return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
-  const rel = path.relative(repo, t.file);
-  writeField(t, 'status', 'ready');
-  const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): ready`);
-  if (commit.status !== 0)
-    return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
-  return { status: 200, body: { ok: true, id: pad } };
-}
-
-// The panel's pause and play icon: pauses or plays a build exactly as `speck pause <id>` or `speck play <id>` does,
-// refusing for the same reasons with the same words.
-function panelPausePlay(repo, id, what) {
-  try { findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
-  try { return { status: 200, body: { ok: true, message: (what === 'pause' ? pauseBuild : playBuild)(repo, [id]) } }; }
-  catch (e) { if (e instanceof SpeckError) return { status: 409, body: { error: e.message } }; throw e; }
-}
-
-// The panel's Stop build button: stops a build exactly as `speck stop <id>` does, refusing for the same reasons with the
-// same words.
-function panelStop(repo, id) {
-  try { findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
-  const lines = [];
-  try { stopBuild(repo, [id], line => lines.push(line)); } catch (e) { if (e instanceof SpeckError) return { status: 409, body: { error: e.message } }; throw e; }
-  return { status: 200, body: { ok: true, message: lines.join('\n') } };
-}
-
-// The panel's other write: set a draft ticket's priority, as `speck set <id> priority <n>` does, and commit only that
-// ticket. `value` is from the URL, so anything but 1 to 5 is refused. Every refusal comes before the first write.
-function panelSetPriority(repo, id, value) {
-  const cfg = loadConfig(repo);
-  let t;
-  try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
-  const pad = t.fm.id;
-  if (t.fm.status !== 'draft') return { status: 409, body: { error: `Ticket ${pad} is "${t.fm.status}", not a draft, so its priority can't be changed from here.` } };
-  if (!/^[1-5]$/.test(value)) return { status: 422, body: { error: `Priority must be a whole number from 1 to 5, not "${value.slice(0, 20)}".` } };
-  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
-  if (branch !== cfg.base_branch)
-    return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
-  if (String(t.fm.priority) === value) return { status: 200, body: { ok: true, id: pad } }; // already at that priority
-  const rel = path.relative(repo, t.file);
-  writeField(t, 'priority', value);
-  const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): priority ${value}`);
-  if (commit.status !== 0)
-    return { status: 500, body: { error: `Couldn't commit ${rel}, so its priority is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
-  return { status: 200, body: { ok: true, id: pad } };
-}
-
-// True only for the token this server made, compared in constant time.
-// Compared as bytes, since a header with non-ASCII characters can match in length but not in bytes.
-function sameToken(given, token) {
-  if (typeof given !== 'string') return false;
-  const a = Buffer.from(given), b = Buffer.from(token);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-// The tail of a build's log from `speck run`, for the panel: its last 200 lines, from the main checkout, with trailing
-// blank lines dropped, and whether it has more. A ticket with no log gets empty text. Reads only, writing nothing.
-const PANEL_LOG_LINES = 200;
-function panelLog(repo, id) {
-  let main = repo;
-  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
-  let text;
-  try { text = readableLog(fs.readFileSync(path.join(main, 'speck', '.cache', 'runs', `${padId(id)}.log`), 'utf8')); }
-  catch (e) { if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return { text: '', truncated: false }; throw e; }
-  const lines = text.split('\n');
-  while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
-  return { text: lines.slice(-PANEL_LOG_LINES).join('\n'), truncated: lines.length > PANEL_LOG_LINES };
-}
-
-// `speck panel`. The process you start only launches the first server process and waits until the last one has gone.
-// Everything else, serving, watching the code and restarting, happens in server processes, each running the code as it
-// was when it started: when the code changes, a server starts its successor on the new code, hands it the port and stops.
-function cmdPanel(args) {
-  findRepoRoot(); // plain errors before anything starts
-  panelPort(args);
-  // Made once, when `speck panel` starts, and passed down through every restart, so an open page's token keeps working.
-  const { child } = startPanelServer(args, crypto.randomBytes(32).toString('hex'), null, 'pipe');
-  // Each server process writes its exit code to this pipe as it exits, and the pipe closes once they all have.
-  let code = 1, piped = false, disconnected = false;
-  const done = () => { if (piped && disconnected) process.exit(code); };
-  child.on('message', m => { if (m && m.type === 'failed') console.error(m.message); });
-  child.on('disconnect', () => { disconnected = true; done(); });
-  child.on('error', e => { console.error(`The panel couldn't start: ${e.message}`); process.exit(1); });
-  child.stdio[4].setEncoding('utf8');
-  child.stdio[4].on('data', d => { const last = d.trim().split('\n').pop(); if (/^\d+$/.test(last)) code = +last; });
-  child.stdio[4].on('close', () => { piped = true; done(); });
-  // Server processes stop by themselves once this has gone.
-  process.on('SIGINT', () => process.exit(0));
-  process.on('SIGTERM', () => process.exit(0));
-}
-
-// Starts a server process on the code as it is now, with the token, and the port to take over from `from` (the running
-// server, if any). `lifeline` is the pipe to `cmdPanel` ('pipe' for the first, then fd 4, passed on). The new process
-// says 'ready' once it's serving, or { type: 'failed', line, message } and exits if it can't start.
-function startPanelServer(args, token, from, lifeline) {
-  const code = codeHash();
-  const loader = `try { const m = await import(process.env.SPECK_PANEL_CODE_URL); await m.panelServer(); }
-catch (e) { const line = (e && e.name === 'SpeckError' ? '' : (e && e.name || 'Error') + ': ') + String(e && e.message || e).split('\\n')[0];
-  process.send({ type: 'failed', line, message: e && e.name === 'SpeckError' ? e.message : line }, () => process.exit(typeof e?.code === 'number' ? e.code : 1)); }`;
-  const child = spawn(process.execPath, ['--input-type=module', '-e', loader], {
-    stdio: ['ignore', 'inherit', 'inherit', 'ipc', lifeline],
-    env: { ...process.env, SPECK_PANEL_CODE_URL: pathToFileURL(fileURLToPath(import.meta.url)).href, SPECK_PANEL_ARGS: JSON.stringify(args),
-      SPECK_PANEL_TOKEN: token, SPECK_PANEL_CODE: code, SPECK_PANEL_HANDOVER: from ? '1' : '' } });
-  if (from) child.on('message', m => { if (m === 'port') child.send('listen', from, () => {}); });
-  return { child, code };
-}
-
-const PANEL_WATCH_MS = 250, PANEL_SETTLE_MS = 500, PANEL_START_MS = 10000, PANEL_STOP_MS = 3000;
-
-// The code `speck panel` runs from: every .mjs file in the CLI's own folder (scripts/, or .speck/scripts/ in a repo set
-// up with `speck init`). `codeStamp` is cheap, to notice a change; `codeHash` is the content, to tell a real change.
-function panelCode() {
-  const dir = path.dirname(fileURLToPath(import.meta.url));
-  let names = [];
-  try { names = fs.readdirSync(dir).filter(n => n.endsWith('.mjs')).sort(); } catch { /* gone for now: no code to compare */ }
-  return names.map(n => path.join(dir, n));
-}
-function codeStamp() {
-  return panelCode().map(f => { try { const st = fs.statSync(f); return `${f}:${st.size}:${st.mtimeMs}:${st.ino}`; } catch { return `${f}:-`; } }).join('|');
-}
-function codeHash() {
-  const h = crypto.createHash('sha256');
-  for (const f of panelCode()) { h.update(f); h.update('\0'); try { h.update(fs.readFileSync(f)); } catch { h.update('-'); } h.update('\0'); }
-  return h.digest('hex');
-}
-
-// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n> and POST /api/tickets/<id>/pause, /play or /stop. Every request reads the files afresh, the page
-// included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
-// server on the new code (see cmdPanel).
-export async function panelServer() {
-  const env = process.env;
-  const args = JSON.parse(env.SPECK_PANEL_ARGS || '[]'), handover = env.SPECK_PANEL_HANDOVER === '1';
-  // A web page elsewhere can send a POST here (the Host check doesn't stop a form post to 127.0.0.1), but can't read
-  // this token, which goes only into the page, and its Origin gives it away. Taken out of the environment, so the
-  // commands this runs don't get it.
-  const token = env.SPECK_PANEL_TOKEN, running = env.SPECK_PANEL_CODE || codeHash();
-  for (const k of ['SPECK_PANEL_ARGS', 'SPECK_PANEL_HANDOVER', 'SPECK_PANEL_TOKEN', 'SPECK_PANEL_CODE', 'SPECK_PANEL_CODE_URL']) delete env[k];
-  if (!token || !process.send) throw new SpeckError('Start the panel with: speck panel');
-  let successor = null; // the server starting on new code, until it's ready or fails
-  // The pipe to cmdPanel: this writes its exit code there, and stops once cmdPanel has gone (Ctrl+C or a kill).
-  process.on('exit', c => { if (successor) successor.kill('SIGKILL'); try { fs.writeSync(4, `${c}\n`); } catch { /* cmdPanel has gone */ } });
-  const life = new net.Socket({ fd: 4, readable: true, writable: false, allowHalfOpen: true });
-  life.on('end', () => process.exit(0));
-  life.on('error', () => process.exit(0));
-  life.resume();
-
-  const repo = findRepoRoot();
-  const port = panelPort(args);
-  const cfg = loadConfig(repo);
-  const repoName = htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo)), base = htmlEscape(cfg.base_branch);
-  let restartError = null; // the last failed restart, shown on the page until a restart works or the code is put back
-  let stopping = false;
-  const pageFile = path.join(TEMPLATES, 'panel.html');
-  const page = () => fs.readFileSync(pageFile, 'utf8')
-    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token);
-  const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`]);
-  // Only these Host headers are served, so a web page on another name that resolves here (DNS rebinding) gets nothing.
-  const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
-  const send = (res, status, type, body) => {
-    res.writeHead(status, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
-      ...(status === 405 ? { Allow: 'GET' } : {}), ...(stopping ? { Connection: 'close' } : {}) });
-    res.end(body);
-  };
-  const server = http.createServer((req, res) => {
-    if (!hosts.has(String(req.headers.host || '').toLowerCase())) return send(res, 403, 'text/plain', 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
-    const where = req.url.split('?')[0];
-    const ready = where.match(/^\/api\/tickets\/(\d{1,4})\/ready$/);
-    if (req.method === 'POST' && ready) {
-      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
-        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
-      try {
-        const out = panelSetReady(repo, ready[1]);
-        return send(res, out.status, 'application/json', JSON.stringify(out.body));
-      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
-    }
-    const priority = where.match(/^\/api\/tickets\/(\d{1,4})\/priority\/([^/]*)$/);
-    if (req.method === 'POST' && priority) {
-      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
-        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
-      try {
-        const out = panelSetPriority(repo, priority[1], priority[2]);
-        return send(res, out.status, 'application/json', JSON.stringify(out.body));
-      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
-    }
-    const toggle = where.match(/^\/api\/tickets\/(\d{1,4})\/(pause|play|stop)$/);
-    if (req.method === 'POST' && toggle) {
-      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
-        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
-      try {
-        const out = toggle[2] === 'stop' ? panelStop(repo, toggle[1]) : panelPausePlay(repo, toggle[1], toggle[2]);
-        return send(res, out.status, 'application/json', JSON.stringify(out.body));
-      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
-    }
-    if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed.\n');
-    if (where === '/') {
-      try { return send(res, 200, 'text/html', page()); }
-      catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
-    }
-    if (where === '/api/state') {
-      try { return send(res, 200, 'application/json', JSON.stringify({ ...statusData(repo), ...(restartError ? { restart_error: restartError } : {}) })); }
-      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
-    }
-    const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log$/);
-    if (log) {
-      try { return send(res, 200, 'application/json', JSON.stringify(panelLog(repo, log[1]))); }
-      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
-    }
-    return send(res, 404, 'text/plain', 'Not found.\n');
-  });
-
-  // The port: the server this one replaces hands over the socket it's listening on, and both take connections until
-  // the old one stops. The first server listens itself.
-  const where = handover
-    ? await new Promise(resolve => { process.on('message', (m, h) => { if (m === 'listen' && h) resolve(h); }); process.send('port'); })
-    : { port, host: '127.0.0.1' };
-  await new Promise((resolve, reject) => {
-    server.once('error', e => reject(e.code === 'EADDRINUSE'
-      ? new SpeckError(`Port ${port} is already in use, so the panel didn't start. Stop whatever is using it, or pick another port with --port <n>.`)
-      : new SpeckError(`The panel couldn't start on port ${port}: ${e.message}`)));
-    server.listen(where, resolve);
-  });
-  server.on('error', e => console.error(`speck panel: ${e.message}`));
-  if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/ (press Ctrl+C to stop)`);
-  process.send('ready');
-
-  // Stops taking connections, closes the idle ones at once and the rest once answered (each answer then says
-  // Connection: close), so the browser's next request reaches the new server, then exits.
-  const stop = () => {
-    stopping = true;
-    clearInterval(watcher);
-    setTimeout(() => process.exit(0), PANEL_STOP_MS).unref();
-    server.close(() => process.exit(0));
-    server.closeIdleConnections();
-  };
-  // Starts a server on the new code and hands over to it once it's ready. If it can't start, this one keeps serving and
-  // says why, until a later change.
-  const restart = () => {
-    if (codeHash() === running) { restartError = null; return; } // back to the code that's running: nothing to do
-    const { child } = startPanelServer(args, token, server, 4);
-    successor = child;
-    let settled = false;
-    const fail = line => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      child.kill('SIGKILL');
-      successor = null;
-      restartError = line;
-      console.error(`speck panel couldn't restart with the new code: ${line}\nIt's still running the code it had, and tries again on the next change.`);
-    };
-    const timer = setTimeout(() => fail(`it wasn't ready within ${PANEL_START_MS / 1000} seconds`), PANEL_START_MS);
-    child.on('error', e => fail(e.message));
-    child.on('exit', c => fail(`it stopped with exit code ${c} before it was ready`));
-    child.on('message', m => {
-      if (m && m.type === 'failed') fail(m.line);
-      if (m !== 'ready' || settled) return;
-      settled = true;
-      clearTimeout(timer);
-      successor = null;
-      child.removeAllListeners();
-      child.disconnect();
-      child.unref();
-      console.log('speck panel: the code changed, so it restarted with the new code.');
-      stop();
-    });
-  };
-  // Checks the code four times a second, and once a change has settled (unchanged for PANEL_SETTLE_MS), restarts if
-  // the content differs from what's running. The first check always compares, in case the code changed while starting.
-  let stamp = '', changedAt = 0;
-  const watcher = setInterval(() => {
-    const now = codeStamp();
-    if (now !== stamp) { stamp = now; changedAt = Date.now(); return; }
-    if (!changedAt || successor || stopping || Date.now() - changedAt < PANEL_SETTLE_MS) return;
-    changedAt = 0;
-    restart();
-  }, PANEL_WATCH_MS);
-}
-
-// ---------- run (start a non-interactive build for each ready ticket) ----------
-
-const RUN_POLL_MS = 5000;
-const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
-const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
-
-// The folder for speck run's records and logs, inside speck/.cache/, which git ignores.
-function runsDir(repo) {
-  const root = path.join(repo, 'speck', '.cache');
-  const dir = path.join(root, 'runs');
-  fs.mkdirSync(dir, { recursive: true });
-  const ignore = path.join(root, '.gitignore');
-  if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, '# Working files for reviews in progress. Review history is in each ticket.\n*\n');
-  return dir;
-}
-
-const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
-
-// One speck run per repo: a lock file holding its pid. The file is made complete and then linked into place, which
-// is atomic, so no runner ever sees a half-written lock. A lock whose process is gone (killed outright) is taken
-// over, but only while holding a second, short-lived recovery lock, so two runners can't both take over the same one.
-function takeRunLock(repo) {
-  const dir = runsDir(repo);
-  const lock = path.join(dir, 'run.lock'), recover = path.join(dir, 'run.lock.recover');
-  const mine = path.join(dir, `run.lock.${process.pid}.tmp`);
-  fs.writeFileSync(mine, String(process.pid));
-  const link = to => { try { fs.linkSync(mine, to); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
-  const holder = f => { try { return fs.readFileSync(f, 'utf8').trim(); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
-  const busy = pid => { const n = Number(pid); return Number.isInteger(n) && n > 0 && n !== process.pid && pidAlive(n); };
-  try {
-    for (let tries = 0; tries < 5; tries++) {
-      if (link(lock)) return lock;
-      const pid = holder(lock);
-      if (pid === null) continue; // removed just now: try again
-      if (busy(pid))
-        throw new SpeckError(`speck run is already running in this repo (process ${pid}). Stop that one first, or leave it running. If it isn't speck run, delete ${path.relative(repo, lock)}.`);
-      // A stale lock. Take it over only while holding the recovery lock, and only if it's still the same stale one.
-      if (!link(recover)) {
-        const other = holder(recover);
-        if (other !== null && !busy(other))
-          throw new SpeckError(`A speck run was stopped while taking over a stale lock. If no speck run is running, delete ${path.relative(repo, recover)}, then run this again.`);
-        throw new SpeckError(`Another speck run is starting in this repo (process ${other}). Leave that one running.`);
-      }
-      try {
-        if (holder(lock) === pid) fs.rmSync(lock, { force: true });
-        if (link(lock)) return lock;
-      } finally { fs.rmSync(recover, { force: true }); }
-    }
-    throw new SpeckError('speck run couldn\'t take its lock file. Try again.');
-  } finally { fs.rmSync(mine, { force: true }); }
-}
-
-// Watches the board and starts a build for each ready ticket that isn't waiting on another, up to
-// max_parallel_builds at once. Builds run in their own process group, so stopping speck run leaves them running.
-function cmdRun() {
-  const repo = findRepoRoot();
-  const cfg = loadConfig(repo);
-  const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
-  if (!command)
-    throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${DEFAULT_BUILD_COMMAND}'`);
-  let words;
-  try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
-  const max = cfg.max_parallel_builds ?? 1;
-  if (!Number.isInteger(max) || max < 1) throw new SpeckError(`max_parallel_builds in speck/config.yml must be a whole number of at least 1 (got "${max}").`);
-  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
-  if (branch !== cfg.base_branch)
-    throw new SpeckError(`This checkout is on "${branch}", not ${cfg.base_branch}. speck run starts builds from ${cfg.base_branch}, so switch to it, then run this again.`);
-  const lock = takeRunLock(repo);
-  const release = () => { try { if (fs.readFileSync(lock, 'utf8').trim() === String(process.pid)) fs.rmSync(lock, { force: true }); } catch { /* already gone */ } };
-  process.on('exit', release);
-  const stop = () => {
-    console.log(`speck run stopped.${running.size ? ` ${running.size} build${running.size === 1 ? ' is' : 's are'} still running: ${[...running].join(', ')}.` : ''}`);
-    process.exit(0);
-  };
-  process.on('SIGINT', stop);
-  process.on('SIGTERM', stop);
-
-  const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
-  const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
-  const running = new Set();
-  const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
-  let lastError = null;
-
-  // Adds the exit to a build's run record, keeping what's there, so the board can tell a build that has finished.
-  // Written to a temporary file and renamed into place, so nothing reading it sees half a record.
-  const recordExit = (id, file, code) => {
-    const tmp = `${file}.${process.pid}.tmp`;
-    try {
-      const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (!rec || typeof rec !== 'object' || Array.isArray(rec)) throw new Error('it isn\'t a JSON object');
-      fs.writeFileSync(tmp, `${JSON.stringify({ ...rec, exited: new Date().toISOString(), exit_code: code }, null, 2)}\n`);
-      fs.renameSync(tmp, file);
-    } catch (e) {
-      fs.rmSync(tmp, { force: true, recursive: true });
-      console.error(`${id}: couldn't save its exit in ${path.relative(repo, file)} (${e.message}), so the board won't show that this build has finished.`);
-    }
-  };
-
-  const finished = (id, log, code, signal, failed, recordFile) => {
-    running.delete(id);
-    if (failed) console.log(`${id} build couldn't start: ${failed}`);
-    else if (stoppedBySpeck(recordFile)) {
-      console.log(`${id} build ended by \`speck stop\`.`);
-      recordExit(id, recordFile, signal ? null : code);
-      return tick();
-    } else {
-      console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
-      recordExit(id, recordFile, signal ? null : code);
-    }
-    if (!failed) reportIfStillReady(id, log);
-    tick();
-  };
-
-  // A build that ended with its ticket still ready never started it: say so, with the end of its log.
-  const reportIfStillReady = (id, log) => {
-    let status = null;
-    // From the same reading as the board, so a build's own worktree copy of the ticket counts.
-    try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { /* unreadable: nothing to say */ }
-    if (status !== 'ready') return;
-    let tail = '';
-    try { tail = readableLog(fs.readFileSync(log, 'utf8')).replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
-    console.log(`${id} is still ready, so the build never started it. speck run won't launch it again. Last lines of ${path.relative(repo, log)}:\n${tail}`);
-  };
-
-  // Builds an earlier speck run launched: each run file with no exit recorded. One whose process is still running is
-  // left alone and watched until it stops; it counts towards max_parallel_builds meanwhile. One whose process has
-  // gone gets its exit recorded now. Its exit code can't be known, as it isn't this speck run's child.
-  const adopted = new Map();
-  const adoptEarlierBuilds = () => {
-    const dir = runsDir(repo);
-    for (const name of fs.readdirSync(dir).filter(f => /^[^.]+\.json$/.test(f)).sort()) {
-      const id = name.slice(0, -'.json'.length), file = path.join(dir, name);
-      let rec;
-      try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
-      if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
-      const pid = rec.pid;
-      if (!(Number.isInteger(pid) && pid > 0 && pid !== process.pid && pidAlive(pid))) { recordExit(id, file, null); continue; }
-      launched.add(id);
-      running.add(id);
-      const session = rec.session ?? 'unknown';
-      adopted.set(id, { pid, session, file, log: path.join(dir, `${id}.log`) });
-      console.log(`${id} is already being built (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.${buildPaused(dir, id) ? ` It's paused: run \`speck play ${id}\` to carry it on.` : ''}`);
-    }
-  };
-  const checkAdopted = () => {
-    for (const [id, b] of adopted) {
-      if (pidAlive(b.pid)) continue;
-      adopted.delete(id);
-      running.delete(id);
-      const byStop = stoppedBySpeck(b.file);
-      recordExit(id, b.file, null);
-      if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
-      console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
-      reportIfStillReady(id, b.log);
-    }
-  };
-
-  const launch = id => {
-    launched.add(id);
-    running.add(id);
-    const session = crypto.randomUUID();
-    const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, session));
-    const dir = runsDir(repo);
-    const log = path.join(dir, `${id}.log`);
-    const recordFile = path.join(dir, `${id}.json`);
-    const record = pid => `${JSON.stringify({ id, session, cwd: repo, started: new Date().toISOString(), pid, command: argv }, null, 2)}\n`;
-    let fd = null, child;
-    try {
-      // Written before the build starts, so a record that can't be written stops the build from starting at all.
-      fs.writeFileSync(recordFile, record(null));
-      fd = fs.openSync(log, 'w');
-      child = spawn(argv[0], argv.slice(1), { cwd: repo, detached: true, stdio: ['ignore', fd, fd], env: { ...process.env, [BUILD_ENV]: session } });
-    } catch (e) { if (fd !== null) fs.closeSync(fd); return finished(id, log, null, null, e.message); }
-    fs.closeSync(fd);
-    let done = false;
-    child.on('error', e => { if (!done) { done = true; finished(id, log, null, null, e.message); } });
-    child.on('exit', (code, signal) => { if (!done) { done = true; finished(id, log, code, signal, null, recordFile); } });
-    child.unref();
-    if (child.pid) {
-      try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {
-        console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${session}.`);
-      }
-      console.log(`Launched ${id} (session ${session}). Log: ${path.relative(repo, log)}`);
-    }
-  };
-
-  function tick() {
-    checkAdopted();
-    let tickets;
-    try { tickets = statusData(repo).tickets; lastError = null; } catch (e) {
-      const msg = e instanceof SpeckError ? e.message : String(e?.message || e);
-      if (msg !== lastError) console.error(`speck run couldn't read the tickets, and will try again: ${msg}`);
-      lastError = msg;
-      return;
-    }
-    for (const t of tickets) {
-      if (running.size >= max) break;
-      if (t.status !== 'ready' || (t.waiting_on || []).length || launched.has(t.id)) continue;
-      if (heldByStop(repo, t)) {
-        if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
-        held.add(t.id);
-        continue;
-      }
-      launch(t.id);
-    }
-  }
-
-  console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
-  adoptEarlierBuilds();
-  tick();
-  setInterval(tick, pollMs);
-}
-
-// ---------- pause and play (hold a build speck run launched, then carry it on) ----------
-
-// Set in the environment of each build speck run launches, so every process the build starts inherits it.
-const BUILD_ENV = 'SPECK_BUILD_SESSION';
-
-// Every process, as [pid, ppid, pgid].
-function processRows() {
-  const r = sh('ps', ['-A', '-o', 'pid=,ppid=,pgid=']);
-  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}). Try again.`);
-  return r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/).map(Number)).filter(a => a.length === 3 && a.every(Number.isInteger));
-}
-
-// The processes whose environment holds `entry` (NAME=value). Linux reads /proc; macOS asks ps for each process's
-// environment. Anywhere else, or for a process whose environment can't be read, it finds nothing.
-function processesWithEnv(entry) {
-  if (process.platform === 'linux') {
-    const found = [];
-    for (const d of fs.readdirSync('/proc').filter(d => /^\d+$/.test(d))) {
-      try { if (fs.readFileSync(`/proc/${d}/environ`, 'utf8').split('\0').includes(entry)) found.push(Number(d)); } catch { /* gone, or not ours */ }
-    }
-    return found;
-  }
-  if (process.platform !== 'darwin') return [];
-  const r = sh('ps', ['-A', '-E', '-ww', '-o', 'pid=,command=']);
-  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}). Try again.`);
-  const has = new RegExp(`(^|\\s)${entry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`);
-  return r.stdout.split('\n').filter(l => has.test(l)).map(l => Number(l.trim().split(/\s+/)[0])).filter(Number.isInteger);
-}
-
-// A build and every process it started, still running: its process group, every process holding its session in
-// BUILD_ENV, and everything descended from those. Claude Code runs each Bash command in a session of its own, and a
-// background process whose parent has exited is no longer in the build's tree, so neither the group nor the tree
-// alone would reach them all. This process and its own children are left out, so a build that pauses itself still
-// finishes saying so.
-function buildProcesses(pid, session) {
-  const rows = processRows();
-  const self = p => p === process.pid || rows.some(([q, pp]) => q === p && pp === process.pid);
-  const found = new Set(rows.filter(([p, , g]) => p === pid || g === pid).map(([p]) => p));
-  if (typeof session === 'string' && session) for (const p of processesWithEnv(`${BUILD_ENV}=${session}`)) found.add(p);
-  for (let grew = true; grew;) {
-    grew = false;
-    for (const [p, pp] of rows) if (!found.has(p) && found.has(pp)) { found.add(p); grew = true; }
-  }
-  return [...found].filter(p => !self(p));
-}
-
-// Sends `signal` to a build and everything it started. Stopping goes round again for any process started meanwhile.
-// A process that has gone meanwhile is skipped. Returns the processes it signalled, and the first error that stopped
-// it (null if none), so the caller can undo what it did.
-function signalBuild(b, signal) {
-  const sent = [];
-  try {
-    for (let pass = 0; pass < 10; pass++) {
-      const fresh = buildProcesses(b.pid, b.rec.session).filter(p => !sent.includes(p));
-      if (!fresh.length) break;
-      for (const p of fresh) {
-        try { process.kill(p, signal); sent.push(p); }
-        catch (e) { if (e.code !== 'ESRCH') throw new SpeckError(`Couldn't send ${signal} to process ${p} (${e.code || e.message}).`); }
-      }
-      if (signal !== 'SIGSTOP') break;
-    }
-  } catch (e) { return { sent, error: e instanceof SpeckError ? e.message : String(e?.message || e) }; }
-  return { sent, error: null };
-}
-const carryOn = pids => { for (const p of pids) try { process.kill(p, 'SIGCONT'); } catch { /* gone */ } };
-
-// The run record of a ticket's build, from the main checkout's speck/.cache/runs/, with what pause and play need.
-function runRecord(repo, args, usage) {
-  if (!args[0]) throw new SpeckError(`Usage: speck ${usage} <id>`);
-  if (process.platform === 'win32') throw new SpeckError(`speck ${usage} needs signals that Windows doesn't have, so it works on macOS and Linux only.`);
-  const t = findTicket(repo, args[0]);
-  const id = t.fm.id;
-  let main = repo;
-  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
-  const file = path.join(main, 'speck', '.cache', 'runs', `${id}.json`);
-  let rec = null;
-  try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* no record */ }
-  if (!rec || typeof rec !== 'object' || Array.isArray(rec)) rec = null;
-  const pid = rec?.pid;
-  // Running: no exit recorded, and its pid still leads its own process group, as a build speck run launched does.
-  const running = !!rec && !Object.hasOwn(rec, 'exited') && Number.isInteger(pid) && pid > 0 && pidAlive(pid)
-    && processRows().some(([p, , g]) => p === pid && g === pid);
-  return { id, rec, pid, running, mark: path.join(path.dirname(file), `${id}.paused`), paused: running && buildPaused(path.dirname(file), id) };
-}
-
-// Written to a temporary file and renamed into place, so nothing reading it sees half of it.
-function saveRecord(file, rec) {
-  const tmp = `${file}.${process.pid}.tmp`;
-  try { fs.writeFileSync(tmp, `${JSON.stringify(rec, null, 2)}\n`); fs.renameSync(tmp, file); }
-  catch (e) { fs.rmSync(tmp, { force: true }); throw e; }
-}
-
-// Stops the build, then marks it paused. If either fails, whatever it stopped is carried on again. Returns what it
-// did, for `speck pause` to print and the panel's pause icon to answer with.
-function pauseBuild(repo, args) {
-  const b = runRecord(repo, args, 'pause');
-  if (!b.running) throw new SpeckError(`${b.id} has no running build launched by speck run, so there's nothing to pause.`);
-  if (b.paused) throw new SpeckError(`${b.id} is already paused. Run \`speck play ${b.id}\` to carry it on.`);
-  const { sent, error } = signalBuild(b, 'SIGSTOP');
-  if (error) { carryOn(sent); throw new SpeckError(`Couldn't pause ${b.id}: ${error} It's still running.`); }
-  try { saveRecord(b.mark, { session: b.rec.session ?? null, pid: b.pid, paused: new Date().toISOString() }); } catch (e) {
-    carryOn(sent);
-    throw new SpeckError(`Couldn't mark ${b.id} paused in ${b.mark} (${e.message}), so it's still running.`);
-  }
-  return `${b.id} paused (session ${b.rec.session ?? 'unknown'}). Run \`speck play ${b.id}\` to carry it on.`;
-}
-function cmdPause(args) { console.log(pauseBuild(findRepoRoot(), args)); }
-
-// Carries the build on, then drops the paused mark. Until both have worked it stays marked paused, so play can be run again.
-function playBuild(repo, args) {
-  const b = runRecord(repo, args, 'play');
-  if (!b.paused) throw new SpeckError(`${b.id} isn't paused, so there's nothing to play.`);
-  const { error } = signalBuild(b, 'SIGCONT');
-  if (error) throw new SpeckError(`Couldn't play ${b.id}: ${error} It may be only partly playing, so it's still marked paused. Run \`speck play ${b.id}\` again.`);
-  try { fs.rmSync(b.mark, { force: true }); } catch (e) {
-    throw new SpeckError(`${b.id} is playing, but its paused mark ${b.mark} couldn't be removed (${e.message}). Run \`speck play ${b.id}\` again.`);
-  }
-  return `${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`;
-}
-function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
-
-// ---------- stop (end a build speck run launched for good, and block its ticket) ----------
-
-const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-
-// True if `speck stop` ended the build in this run record: a <id>.stopped file beside it names its session and pid.
-function stoppedBySpeck(recordFile) {
-  try {
-    const rec = JSON.parse(fs.readFileSync(recordFile, 'utf8'));
-    const mark = JSON.parse(fs.readFileSync(recordFile.replace(/\.json$/, '.stopped'), 'utf8'));
-    return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && Number.isInteger(mark.pid) && mark.pid === rec.pid && mark.session === rec.session;
-  } catch { return false; }
-}
-
-// The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.
-const lastTicketCommit = (dir, rel) => { const r = sh('git', ['log', '-1', '--format=%H', '--', rel], { cwd: dir }); return r.status === 0 ? r.stdout.trim() : ''; };
-
-// True for a ticket whose last build `speck stop` ended, until the ticket has a commit other than the one it had when
-// it was stopped (set ready again, for example). A ticket still ready because blocking it failed isn't launched again.
-function heldByStop(repo, t) {
-  const file = path.join(runsDir(repo), `${t.id}.json`);
-  if (!stoppedBySpeck(file)) return false;
-  let mark = null;
-  try { mark = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')); } catch { /* unreadable: held */ }
-  return typeof mark?.ticket_commit !== 'string' || mark.ticket_commit === lastTicketCommit(t.worktree || repo, t.path);
-}
-
-// Every process still running, as a set of pids. One that has exited and waits only for its parent to collect it is over.
-function runningPids() {
-  const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
-  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
-  return new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([p, s]) => /^\d+$/.test(p) && !/^Z/.test(s || '')).map(([p]) => Number(p)));
-}
-
-// Ends a build and everything it started, already held with SIGSTOP (`held`) so none can start anything more: asks each
-// to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there after a few seconds with SIGKILL.
-// Every process it has found stays on its list, so one that leaves the build's tree when its parent ends is still ended.
-// Returns the processes still running at the end.
-function endBuild(b, held) {
-  const known = new Set(held);
-  const left = () => {
-    for (const p of buildProcesses(b.pid, b.rec.session)) known.add(p);
-    const running = runningPids();
-    return [...known].filter(p => running.has(p));
-  };
-  const each = (pids, signal) => { for (const p of pids) try { process.kill(p, signal); } catch { /* gone */ } };
-  const asked = new Set();
-  const ask = pids => { const fresh = pids.filter(p => !asked.has(p)); for (const p of fresh) asked.add(p); each(fresh, 'SIGTERM'); each(fresh, 'SIGCONT'); };
-  let now = left();
-  ask(now);
-  for (let i = 0; i < 50 && now.length; i++) { sleep(100); now = left(); ask(now); }
-  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); sleep(100); now = left(); }
-  return now;
-}
-
-// Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
-function buildTicket(repo, cfg, id) {
-  const list = worktreeList(repo);
-  const branch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${id}-`);
-  const at = list.find(w => w.branch && branch.test(w.branch) && fs.existsSync(w.path))?.path || list[0].path;
-  return { at, t: findTicket(at, id) };
-}
-
-// Ends the build, then blocks its ticket and commits that where the build keeps it. A <id>.stopped mark is left first,
-// so speck run knows the build ended because of this rather than reporting it as a build that stopped or failed.
-// `say` gets each line it reports, for `speck stop` to print and the panel's Stop build button to answer with.
-function stopBuild(repo, args, say) {
-  const cfg = loadConfig(repo);
-  const b = runRecord(repo, args, 'stop');
-  if (!b.running) throw new SpeckError(`${b.id} has no running or paused build launched by speck run, so there's nothing to stop.`);
-  const stopMark = path.join(path.dirname(b.mark), `${b.id}.stopped`);
-  // The ticket's commit as the build ends, so speck run can tell when it has been committed again since.
-  const ticketCommit = () => { try { const { at, t } = buildTicket(repo, cfg, b.id); return lastTicketCommit(at, path.relative(at, t.file)); } catch { return null; } };
-  const mark = { session: b.rec.session ?? null, pid: b.pid, stopped: new Date().toISOString(), ticket_commit: ticketCommit() };
-  try { saveRecord(stopMark, mark); } catch (e) {
-    throw new SpeckError(`Couldn't mark ${b.id} stopped in ${stopMark} (${e.message}), so it's still ${b.paused ? 'paused' : 'running'}.`);
-  }
-  const { sent, error } = signalBuild(b, 'SIGSTOP');
-  if (error) {
-    if (!b.paused) carryOn(sent);
-    fs.rmSync(stopMark, { force: true });
-    throw new SpeckError(`Couldn't stop ${b.id}: ${error} It's still ${b.paused ? 'paused' : 'running'}.`);
-  }
-  let left;
-  try { left = endBuild(b, sent); } catch (e) {
-    throw new SpeckError(`${b.id}'s build may be only partly stopped: ${e.message} Its ticket is unchanged. Run \`speck stop ${b.id}\` again. If it says there's nothing to stop, end any of its processes still running yourself, then block its ticket with \`speck set ${b.id} status blocked\`.`);
-  }
-  if (left.length)
-    throw new SpeckError(`Couldn't end all of ${b.id}'s build: process${left.length === 1 ? '' : 'es'} ${left.join(', ')} ${left.length === 1 ? 'is' : 'are'} still running. End ${left.length === 1 ? 'it' : 'them'} with \`kill -9 ${left.join(' ')}\`. Its ticket is unchanged.`);
-  fs.rmSync(b.mark, { force: true });
-  say(`${b.id} stopped (session ${b.rec.session ?? 'unknown'}).`);
-
-  const now = ticketCommit();
-  if (now !== mark.ticket_commit) try { saveRecord(stopMark, { ...mark, ticket_commit: now }); } catch { /* the earlier commit stays: it's still held */ }
-  const { at, t } = buildTicket(repo, cfg, b.id);
-  if (['approved', 'done', 'cancelled'].includes(t.fm.status)) { say(`Its ticket is ${t.fm.status}, so it was left as it is.`); return; }
-  const d = new Date();
-  const question = `Stopped by you on ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.`;
-  const comments = old => (old.match(/<!--[\s\S]*?-->/g) || []).map(c => `${c}\n`).join('');
-  let text = setField(t.raw, 'status', 'blocked');
-  text = /^## Blocked question[ \t]*$/m.test(text) ? replaceSection(text, 'Blocked question', old => `${comments(old)}${question}`, t.file)
-    : `${text.replace(/\s*$/, '')}\n\n## Blocked question\n${question}\n`;
-  fs.writeFileSync(t.file, syncHeader(text));
-  const commit = commitTicketOnly(at, t.file, t.raw, `speck(${b.id}): stopped`);
-  if (commit.status !== 0)
-    throw new SpeckError(`${b.id}'s build is stopped, but its ticket couldn't be committed in ${at}, so it's unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run \`speck set ${b.id} status blocked\` there and commit it.`);
-  say(`${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`);
-}
-function cmdStop(args) { stopBuild(findRepoRoot(), args, line => console.log(line)); }
-
 function cmdDiffstat() {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
@@ -2591,7 +1844,7 @@ function cmdRecord(args) {
 // ---------- close (write the logs, set approved and commit, once the reviewer has approved) ----------
 
 // Replaces the body of a `## <name>` section, or throws a plain error if the ticket has no such section.
-function replaceSection(text, name, body, where) {
+export function replaceSection(text, name, body, where) {
   const m = text.match(new RegExp(`^## ${name}[ \\t]*$`, 'm'));
   if (!m) throw new SpeckError(`${where} has no "## ${name}" section. Add the heading back, then run this again.`);
   const from = m.index + m[0].length;
@@ -2631,7 +1884,7 @@ const changesOutside = (repo, rel) => pathsOutside(git(['status', '--porcelain',
 // Commits only the ticket file, already written, as `message`. Anything else staged stays staged and uncommitted.
 // If the commit fails, the file goes back to `original` and its index entry back exactly as it was (staged
 // content kept, or out of the index if it was never added). Returns the failing git result, or { status: 0 }.
-function commitTicketOnly(repo, file, original, message) {
+export function commitTicketOnly(repo, file, original, message) {
   const rel = path.relative(repo, file);
   const entry = git(['ls-files', '-s', '--', rel], repo).trim().split('\t')[0].split(' ');
   const staged = sh('git', ['add', '--', rel], { cwd: repo });
