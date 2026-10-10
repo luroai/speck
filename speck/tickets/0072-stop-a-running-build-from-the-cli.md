@@ -283,3 +283,75 @@ Follow-ups:
 ```
 
 </details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c309edfef2ad8f137a882ba9763b6d48601533d9",
+    "thread_id": "01a122d1-2f34-7e43-89a5-31ff42d2819f",
+    "seconds": 80,
+    "usage": {
+      "input_tokens": 1468148,
+      "cached_input_tokens": 1137536,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3619,
+      "reasoning_output_tokens": 384
+    },
+    "saved_at": "2026-10-10T07:35:36.230Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cmdStop ends running and paused builds, retains all discovered process IDs through termination, and removes the paused mark. Panel pause requests use the same pauseBuild function as the CLI, so stopping a panel-paused build follows the reviewed path. Supplied termination regression tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The ticket is blocked with the dated question and committed in the checkout holding its build branch. The branch, worktree, previous commits and session record are preserved. Supplied tests verify these properties and the panel's resume data."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both launched and adopted builds recognise matching stopped marks and suppress ordinary failure reporting. heldByStop compares ticket commit hashes to prevent relaunch after restart without relying on commit dates. The merge preserves priority ordering and these guards; supplied restart and adopted-build tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "runRecord and cmdStop reject missing tickets and builds without a live running or paused process before changing records or tickets. Supplied refusal tests verify plain errors, non-zero exits and unchanged state."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Previously identified processes could escape termination after their parent exited. endBuild now retains their IDs and checks their liveness until termination completes.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "A stopped ticket left ready could relaunch after a runner restart. The commit-identity guard remains intact after the merge and handles misleading commit dates.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All four acceptance criteria pass. The merge preserves panel pause behaviour, priority handling and both sides of the README changes. No new findings. The supplied suite reports 600 passing tests; tests were not rerun in this read-only review."
+  }
+}
+```
+
+</details>
