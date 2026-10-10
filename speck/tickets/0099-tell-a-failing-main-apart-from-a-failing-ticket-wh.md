@@ -49,6 +49,8 @@ When a ship's tests fail, `speck ship` checks the base branch too, and says plai
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: main's tests run in a fresh worktree, so a test command that needs untracked files (a `.env`, say) that `worktree_setup` doesn't create fails there too and is reported as exit 14.
+- Follow-ups skipped as duplicates: `/speck-build` doesn't yet say what to do on exit 14 (matches 0101 and 0102).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -111,6 +113,70 @@ When a ship's tests fail, `speck ship` checks the base branch too, and says plai
     ],
     "escalation_question": "",
     "summary": "The change correctly distinguishes failing base tests from a ticket-only failure and returns the requested messages and exit codes. One cleanup step can also remove unrelated worktree records during a refusal; that must be fixed before merge. I inspected the code and tests; I did not rerun tests in the read-only environment."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "537b811585721938306c3c7fced4300a8d6b6bb8",
+    "thread_id": "01a1274f-1570-75d3-974d-c8706340e9fc",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 705365,
+      "cached_input_tokens": 538624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1283,
+      "reasoning_output_tokens": 42
+    },
+    "saved_at": "2026-10-10T19:37:42.908Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs:shipTicket passes catchUp || baseSha to testFailure, which runs setup and the configured tests in a detached temporary worktree and cleans it in finally. test/ship-0099.test.mjs AC1 tests cover separate execution, base contents, setup and setup failure; supplied results pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs:testFailure returns exit code 14 with the required explanation when base tests also fail. AC2 tests cover normal shipping, --auto and worktrees disabled; supplied results pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs:testFailure returns the existing default exit code 1 and states that the base tests pass. The AC3 test asserts the exit code and both message components; supplied results pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Cleanup now targets only the temporary directory and its recorded Git admin folder. The AC4 preservation test checks branches, checkout contents, stash, ticket status and worktree lists for both outcomes and checkout modes. New F1 regression tests cover preserving unrelated missing worktrees and cleanup when the temporary worktree is locked; supplied results pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "Previously, repository-wide worktree pruning could remove unrelated stale worktree registrations during a refusal. The global prune has been removed and cleanup is scoped to the temporary worktree, with regression coverage.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Shipping now distinguishes failing base tests from a ticket-only failure, with the requested messages and exit codes. The cleanup issue is fixed, and all four criteria pass. The supplied suite reports 806 passing tests, no failures and three skips; I verified the code and coverage without rerunning tests in the read-only environment."
   }
 }
 ```
