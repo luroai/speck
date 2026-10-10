@@ -1,7 +1,7 @@
 ---
 id: "0082"
 title: "Name Luro instead of the owner throughout the repo's files"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T12:55:01.374Z"
+finished: "2026-10-10T13:00:06.370Z"
 
 ---
 # 0082 · Name Luro instead of the owner throughout the repo's files
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck is moving to the `luroai` GitHub organisation under the brand Luro, and the owner wants to keep their own name out of it. Today the install command points at the owner's personal GitHub account, and the docs name the owner, so anyone reading the repo sees who they are.
