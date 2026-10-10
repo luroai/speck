@@ -1,7 +1,7 @@
 ---
 id: "0094"
 title: "Refuse to start a ticket until what it waits on has shipped"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-a-shipping-agent-that-heals-the-build.md"  
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T22:40:08.807Z"
+finished: "2026-10-10T22:58:10.744Z"
 
 ---
 # 0094 · Refuse to start a ticket until what it waits on has shipped
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket can wait on others with `after:`. `speck run` holds it until they've shipped, but `speck start`, which `/speck-build` uses, only checks that the ticket is ready. So building a ticket by hand can start it before the work it depends on is in `main`, on a branch that doesn't have that work.
