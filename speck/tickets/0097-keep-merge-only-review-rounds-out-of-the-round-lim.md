@@ -1,7 +1,7 @@
 ---
 id: "0097"
 title: "Keep merge-only review rounds out of the round limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T18:38:16.364Z"
 ---
 # 0097 · Keep merge-only review rounds out of the round limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When an approved ticket has to merge the base branch in before it can ship, the reviewer checks the merge in another round, and that round counts towards `max_review_rounds`. A ticket approved in its last allowed round then can't be re-reviewed at all, as 0086 found on 2026-10-10, and someone has to raise the limit by hand.
@@ -47,9 +47,15 @@ A review round that checks only a merge after an approval doesn't count towards 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 reviewSetup refuses a new merge run after the previous merge was approved on its last permitted round.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,112,009
+- Elapsed since build started: 71 min
+- Changed lines: 79 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. The idea this ticket replaces, `speck/ideas/2026-10-09-allow-one-more-review-round-without-editing-config.md`, is still in the inbox; the shaping chat can move it to `speck/ideas/done/`.
 - Build was interrupted once (machine out of memory with five suites running) and resumed; tests then ran with `--test-concurrency=2`.
