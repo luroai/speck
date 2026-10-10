@@ -1,7 +1,7 @@
 ---
 id: "0089"
 title: "Lead the README with a prompt to give your agent"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.
 after: ["0088"]                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T15:33:39.042Z"
+finished: "2026-10-10T15:41:36.478Z"
 
 ---
 # 0089 · Lead the README with a prompt to give your agent
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README starts with requirements and a terminal command, which assumes the reader is comfortable installing tools and editing config. The people speck is for would rather tell their agent what they want, and setup is now a conversation (0088).
