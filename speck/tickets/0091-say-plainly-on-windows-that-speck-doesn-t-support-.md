@@ -1,7 +1,7 @@
 ---
 id: "0091"
 title: "Say plainly on Windows that speck doesn't support it yet"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:57:08.603Z"
 ---
 # 0091 · Say plainly on Windows that speck doesn't support it yet
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck supports only macOS and Linux for now, and parts of it, such as pausing and stopping builds, rely on them. On Windows, `speck init` and `speck doctor` say nothing about this, so someone there finds out only when something fails.
@@ -48,3 +48,57 @@ On Windows, `speck doctor` and `speck init` say plainly that speck doesn't suppo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up: three tests read an idea note that has since been filed in speck/ideas/done/, so they fail on main (speck/ideas/2026-10-10-fix-tests-that-read-a-filed-idea-note.md).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e60501a827c6ef636896f215d15b2a0c75b5e850",
+    "thread_id": "01a1261d-0f04-7c22-abe5-11a702c4f3f3",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 336490,
+      "cached_input_tokens": 247680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 771,
+      "reasoning_output_tokens": 31
+    },
+    "saved_at": "2026-10-10T14:00:34.925Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/install.mjs: doctorChecks adds a required failing Windows item with the support statement and WSL fix; cmdDoctor prints it. Both AC1 tests exercise this behaviour and pass in the supplied output. Independent read-only checks also passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/windows-0091.test.mjs AC2 compares Linux and macOS checks with the Windows list minus its new item. Independent platform comparisons passed, and the diff confirms all existing checks remain unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/install.mjs: cmdInit passes the platform to doctorChecks and uses its failed result for the final fix-items message. The AC3 test runs the actual installation and checks its output without mocking the implementation; it passes in the supplied output."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Windows users now receive a clear unsupported-platform warning and instructions to run speck in WSL. macOS and Linux checks remain unchanged. The tests exercise the requested behaviour. The three reported suite failures come from an existing stale file path on main. No blocking concerns found; installation tests were inspected rather than rerun because this review is read-only."
+  }
+}
+```
+
+</details>
