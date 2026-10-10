@@ -47,17 +47,23 @@ export function pathsOutside(porcelain, rel) {
 const changesOutside = (repo, rel) => pathsOutside(git(['status', '--porcelain', '-z', '--untracked-files=all'], repo), rel);
 
 // Commits only the ticket file, already written, as `message`. Anything else staged stays staged and uncommitted.
-// If the commit fails, the file goes back to `original` and its index entry back exactly as it was (staged
+// `from` is where the ticket was before, when it has just been moved between speck/tickets/ and its done/ folder: a
+// copy there that git knows about is committed as removed, so the commit records the move.
+// If the commit fails, the file goes back to `original` at `from` and each index entry back exactly as it was (staged
 // content kept, or out of the index if it was never added). Returns the failing git result, or { status: 0 }.
-export function commitTicketOnly(repo, file, original, message) {
-  const rel = path.relative(repo, file);
-  const entry = git(['ls-files', '-s', '--', rel], repo).trim().split('\t')[0].split(' ');
-  const staged = sh('git', ['add', '--', rel], { cwd: repo });
-  const commit = staged.status === 0 ? sh('git', ['commit', '-q', '-m', message, '--', rel], { cwd: repo }) : staged;
+export function commitTicketOnly(repo, file, original, message, from = file) {
+  const rel = path.relative(repo, file), old = path.relative(repo, from);
+  const entryOf = p => git(['ls-files', '-s', '--', p], repo).trim().split('\t')[0].split(' ');
+  const entry = entryOf(rel), oldEntry = old !== rel ? entryOf(old) : [];
+  const paths = oldEntry.length === 3 ? [rel, old] : [rel];
+  const staged = sh('git', ['add', '-A', '--', ...paths], { cwd: repo });
+  const commit = staged.status === 0 ? sh('git', ['commit', '-q', '-m', message, '--', ...paths], { cwd: repo }) : staged;
   if (commit.status !== 0) {
-    fs.writeFileSync(file, original);
+    if (old !== rel) fs.renameSync(file, from);
+    fs.writeFileSync(from, original);
     if (entry.length === 3) sh('git', ['update-index', '--cacheinfo', `${entry[0]},${entry[1]},${rel}`], { cwd: repo });
     else sh('git', ['reset', '-q', '--', rel], { cwd: repo });
+    if (oldEntry.length === 3) sh('git', ['update-index', '--add', '--cacheinfo', `${oldEntry[0]},${oldEntry[1]},${old}`], { cwd: repo });
   }
   return commit;
 }

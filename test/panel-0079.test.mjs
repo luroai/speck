@@ -141,9 +141,11 @@ test('0079 AC5: after the panel\'s Ready, the ticket is byte for byte what speck
   const { r, port, p, token } = await readyPanel();
   try {
     const file = path.join(r.dir, 'speck', 'tickets', '0002-two.md'), original = fs.readFileSync(file, 'utf8');
+    const head = headOf(r);
     assert.equal(r.run('set', '2', 'status', 'ready').status, 0);
     const want = fs.readFileSync(file, 'utf8');
     assert.notEqual(want, original);
+    r.g('reset', '-q', head); // speck set commits the ticket (0108): undo that, so the panel has it to commit
     fs.writeFileSync(file, original);
     const res = await post(port, readyPath('0002'), { token });
     assert.equal(res.status, 200, res.body);

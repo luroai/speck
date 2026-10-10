@@ -18,11 +18,12 @@ function repo() {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-lint-')));
   const fakeHome = path.join(dir, 'ann');
   const run = (args, home = fakeHome) => {
-    const env = { ...process.env, HOME: home, USERPROFILE: home };
+    // Setting ready commits the ticket on main (0108), so git needs an identity without the real home folder.
+    const env = { ...process.env, HOME: home, USERPROFILE: home, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
     if (home === null) { delete env.HOME; delete env.USERPROFILE; }
     return spawnSync(process.execPath, [CLI, ...args], { cwd: dir, encoding: 'utf8', env });
   };
-  spawnSync('git', ['init', '-q'], { cwd: dir });
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   assert.equal(run(['init', '--skip-checks']).status, 0);
   const file = path.join(dir, run(['new', 'Placeholder']).stdout.trim());
   const head = fs.readFileSync(file, 'utf8').split('## Problem')[0];

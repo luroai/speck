@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
-import { cmdClose } from './close.mjs';
+import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
 import { cmdShip } from './ship.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
@@ -108,7 +108,23 @@ function cmdSet(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
   checkSetTicket(t, cfg, key, value);
-  setTicketField(repo, t, key, value);
+  // Setting ready commits the ticket, as the panel does, since `speck start` and `speck run` need it committed on the
+  // base branch. Every refusal comes before the first write.
+  const ready = key === 'status' && value === 'ready';
+  if (ready) {
+    const branch = sh('git', ['symbolic-ref', '--short', '-q', 'HEAD'], { cwd: repo }).stdout.trim();
+    if (branch !== cfg.base_branch)
+      throw new SpeckError(`This checkout is ${branch ? `on "${branch}"` : 'not on a branch'}, not ${cfg.base_branch}, so setting ${t.fm.id} ready would commit it to the wrong branch. Switch to ${cfg.base_branch}, then run this again.`);
+  }
+  const original = t.raw;
+  const from = setTicketField(repo, t, key, value);
+  // A ticket already committed as ready has nothing to commit.
+  const changed = ready && sh('git', ['status', '--porcelain', '--', ...new Set([t.file, from].map(f => path.relative(repo, f)))], { cwd: repo }).stdout.trim();
+  if (changed) {
+    const commit = commitTicketOnly(repo, t.file, original, `speck(${padId(t.fm.id)}): ready`, from);
+    if (commit.status !== 0)
+      throw new SpeckError(`Couldn't commit ${posix(path.relative(repo, from))}, so ${t.fm.id} is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run this again.`);
+  }
   console.log(`${t.fm.id} ${key} → ${value}`);
 }
 
@@ -132,10 +148,13 @@ export function checkSetTicket(t, cfg, key, value) {
   }
 }
 
+// Returns where the ticket was before, which differs from t.file when a status change moved it.
 export function setTicketField(repo, t, key, value) {
+  const from = t.file;
   writeField(t, key, value);
   // Setting done moves the ticket into speck/tickets/done/, and any other status brings it back.
   if (key === 'status') placeTicket(repo, t, value);
+  return from;
 }
 
 // Cancelling is a status change with a why. The reason and the date are part of the record, so it gets its own
@@ -496,7 +515,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck detect                        print what setup needs to know about this folder and machine, as JSON
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
-  speck set <id> <field> <value>      update a ticket field (status ready runs lint first; priority "" clears it)
+  speck set <id> <field> <value>      update a ticket field (status ready runs lint first and commits the ticket; priority "" clears it)
   speck config set <key> <value>      change one setting in speck/config.yml, checked first (nested: commands.test)
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
