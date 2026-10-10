@@ -1,7 +1,7 @@
 ---
 id: "0072"
 title: "Stop a running build from the CLI"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-09T22:28:19.677Z"
 ---
 # 0072 · Stop a running build from the CLI
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 The only way to end a build for good is to kill its process by hand, which leaves the ticket `building` with nothing to say why it stopped or how to carry on.
@@ -51,12 +51,13 @@ Auto-ship hit a merge conflict with main (README.md only; scripts/speck.mjs auto
 Round 1 (codex): changes requested: F1 endBuild forgets previously identified processes once they cease to be discoverable.; F2 A matching stopped mark does not prevent launch when speck run restarts.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 2,108,864
-- Elapsed since build started: 17 min
+- Reviewer tokens: 3,580,631
+- Elapsed since build started: 547 min
 - Changed lines: 128 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
