@@ -1,7 +1,7 @@
 ---
 id: "0078"
 title: "Finish splitting speck.mjs into modules under 600 lines"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0018", "0079", "0080"]                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-10T12:22:51.299Z"
 
 ---
 # 0078 · Finish splitting speck.mjs into modules under 600 lines
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0018, `scripts/speck.mjs` still holds about 2,000 lines: ticket parsing, the review loop and review pack, install and doctor, start, ship and status. Reviewers still read large parts of it every round, and an edit in one area risks breaking another.
