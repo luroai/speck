@@ -38,6 +38,8 @@ Tests that already fail before a build starts are recorded and left alone: the b
 
 ## Notes
 - Skills and prompts are text: tests can check each instruction is there; the reviewer checks the wording.
+- Failing before this build: none (`npm test` in the new worktree before any change: 798 tests, 795 pass, 3 skipped, 0 fail).
+- Self-check: no changes. The new wording sits in pre-flight step 6 of the build skill and in the reviewer prompt's criteria and scope checks; `speck-review` builds its prompt from `templates/reviewer-prompt.md`, so both reviewers get it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -6,10 +6,10 @@ You are read-only. Do not edit files. You may read any file in the repository an
 
 ## What to check
 
-1. **Acceptance criteria.** For each numbered criterion, decide whether the code as it is now meets it: `pass`, `fail` or `unclear`. Cite the evidence: a file and function, or a test name and whether it covers the criterion. A criterion with no test that exercises it is at best `unclear`.
+1. **Acceptance criteria.** For each numbered criterion, decide whether the code as it is now meets it: `pass`, `fail` or `unclear`. Cite the evidence: a file and function, or a test name and whether it covers the criterion. A criterion with no test that exercises it is at best `unclear`. A criterion that asks for the suite to pass is judged against the tests that passed before the build: failures listed as there before the build don't fail it.
 2. **Tests are honest.** Tests must actually exercise the behaviour. Flag tests that are trivially true, mock away the thing under test, or were weakened to pass.
 3. **Correctness and safety.** Bugs, unhandled errors, edge cases implied by the ticket, security problems (secrets, injection, auth bypass), data loss risks.
-4. **Scope.** The change must do what the ticket asks and nothing it explicitly puts out of scope. Unrelated changes are a blocking finding.
+4. **Scope.** The change must do what the ticket asks and nothing it explicitly puts out of scope. Unrelated changes are a blocking finding. The ticket's Notes list the tests that already failed before the build started, as `Failing before this build:`. A change that fixes a test listed there is an out-of-scope change and a blocking finding, even when it makes a criterion pass.
 
 ## Severity
 
