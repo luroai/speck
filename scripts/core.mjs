@@ -143,15 +143,16 @@ function fieldValue(ticket, key) {
   const empty = v && typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length;
   return empty && line && stripComment(line[1]).trim() === '' ? null : v;
 }
-// A ticket's type: null or its value ("bug" is the only valid one).
+// A ticket's type: null or its value ("bug" or "fix", a fix for a broken base branch, are the only valid ones).
+export const TYPES = ['bug', 'fix'];
 export const ticketType = ticket => fieldValue(ticket, 'type');
-// A ticket's priority: null (none) or its value, which is valid only as a whole number from 1 to 5.
+// A ticket's priority: null (none) or its value, which is valid only as a whole number from 1 to 5, or 0 on a fix ticket.
 export const ticketPriority = ticket => fieldValue(ticket, 'priority');
-const validPriority = v => v === null || (Number.isInteger(v) && v >= 1 && v <= 5);
-// Lowest priority number first, no priority (or an invalid one) last, then by id. Takes { priority, id }.
-// (Infinity - Infinity is NaN, which falls through to the id.)
-const priorityRank = p => (Number.isInteger(p) ? p : Infinity);
-export const byPriority = (a, b) => (priorityRank(a.priority) - priorityRank(b.priority)) || padId(a.id).localeCompare(padId(b.id));
+const validPriority = (v, type) => v === null || (Number.isInteger(v) && v >= (type === 'fix' ? 0 : 1) && v <= 5);
+// Fix tickets first, then lowest priority number first, no priority (or an invalid one) last, then by id.
+// Takes { type, priority, id }. (Infinity - Infinity is NaN, which falls through to the id.)
+const priorityRank = t => (Number.isInteger(t.priority) && validPriority(t.priority, t.type) ? t.priority : Infinity);
+export const byPriority = (a, b) => ((b.type === 'fix') - (a.type === 'fix')) || (priorityRank(a) - priorityRank(b)) || padId(a.id).localeCompare(padId(b.id));
 
 // The reviewer model and effort for a ticket: a ticket value wins, a blank one falls back to config, null means "reviewer's default".
 export function reviewerSettings(fm = {}, cfg = {}) {
@@ -270,8 +271,11 @@ export function lintTicket(ticket, cfg) {
   if (!['S', 'M', 'L'].includes(fm.size)) errors.push(`size must be S or M (got "${fm.size}").`);
   if (fm.size === 'L') errors.push('size L can never be ready: split it into sibling tickets.');
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
-  if (ticketType(ticket) !== null && fm.type !== 'bug') errors.push(`type must be blank or bug (got "${fm.type}").`);
-  if (!validPriority(ticketPriority(ticket))) errors.push(`priority must be blank or a whole number from 1 to 5 (got ${JSON.stringify(fm.priority)}).`);
+  if (ticketType(ticket) !== null && !TYPES.includes(fm.type)) errors.push(`type must be blank, bug or fix (got "${fm.type}").`);
+  if (!validPriority(ticketPriority(ticket), fm.type))
+    errors.push(fm.priority === 0
+      ? 'priority must be blank or a whole number from 1 to 5 (got 0): priority 0 is only for a fix ticket.'
+      : `priority must be blank or a whole number from 1 to 5, or 0 on a fix ticket (got ${JSON.stringify(fm.priority)}).`);
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
   if (fm.builder && modelFamily(fm.builder) === modelFamily(fm.reviewer) && !cfg.allow_same_model_review)
     errors.push(fm.builder === fm.reviewer
