@@ -161,3 +161,25 @@ test('0088 AC3: an existing project with code but no commits gets a first commit
   const commit = s.search(/Ask before making a commit of their code/i), base = s.search(/\*\*Base branch\.\*\*/);
   assert.ok(commit !== -1 && commit < base, 'the first commit is asked for before the base branch is set');
 });
+
+test('0088 review F1: a new project chooses its agents before the first ticket, so the ticket records them', () => {
+  const s = flat(section('4.'));
+  const agents = s.search(/sections 5 and 6/), ticket = s.indexOf('speck new');
+  assert.ok(agents !== -1 && agents < ticket, 'sections 5 and 6 come before speck new');
+  assert.doesNotMatch(s, /Continue with section 5\.\s*$/, 'section 4 does not end by sending setup on to section 5');
+  assert.match(flat(section('6.')), /section 4, step 5/, 'section 6 sends a new project back for its first ticket');
+});
+
+test('0088 review F2: a new project that is already a repo records its base branch only once speck is installed', () => {
+  const s = flat(section('4.'));
+  const install = s.search(/\*\*install speck\*\*/), set = s.indexOf('speck config set base_branch');
+  assert.ok(install !== -1 && set !== -1 && install < set, 'base_branch is set after speck is installed');
+});
+
+test('0088 review F3: the reviewer is chosen against the builder\'s model family, and a same-family pair needs consent', () => {
+  const s = flat(section('5.'));
+  assert.match(s, /another model family than the builder's/i);
+  assert.match(s, /Codex builder/i);
+  assert.match(s, /speck config set reviewer codex` and `speck config set allow_same_model_review true/);
+  assert.match(s, /Never pair a builder and reviewer from the same family without/i);
+});

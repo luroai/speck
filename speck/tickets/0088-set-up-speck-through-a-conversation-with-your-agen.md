@@ -1,7 +1,7 @@
 ---
 id: "0088"
 title: "Set up speck through a conversation with your agent"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T15:19:34.126Z"
 ---
 # 0088 · Set up speck through a conversation with your agent
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Getting speck working needs Node, git, a clean repo, a test command, a builder and a reviewer, and choices most people can't make alone, like which reviewer to trust or whether builds may skip permission prompts. `speck init` sets up the files and `speck doctor` lists what's missing, but someone without a technical background still has to fix each gap themselves.
@@ -51,3 +51,91 @@ A `speck-setup` skill lets your agent take you through setting speck up in a con
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d754d328f6f8ea1ced843e600149113121f60d84",
+    "thread_id": "01a1266d-4c3b-71b0-b5b3-22f3061a1f64",
+    "seconds": 56,
+    "usage": {
+      "input_tokens": 382537,
+      "cached_input_tokens": 278272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1383,
+      "reasoning_output_tokens": 119
+    },
+    "saved_at": "2026-10-10T15:28:35.614Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/setup-0088.test.mjs exercises init and checks the installed skill contents in both folders. The repository links and installation mechanism match."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md sections 1–2 and Rules require detect, explicit consent for machine/git changes, and config set for settings. AC2 text tests cover these instructions."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "SKILL.md section 3 requires stopping on tracked changes, confirming the base branch, warning about direct pushes, and running the test command. Corresponding AC3 tests check each instruction."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Section 4 names and tests the commit/draft-ticket steps, but creates the ticket before agent selection and attempts base-branch configuration before installation for an already initialised empty repository."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "Section 5 always proposes installed Codex even when Codex was selected as builder. Section 4 also creates the first ticket with the previous agent settings. AC5 text tests do not catch these contradictions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md:59",
+        "issue": "The first ticket is created before builder/reviewer selection. scripts/speck.mjs cmdNew copies cfg.builder and cfg.reviewer into the ticket. On the Claude-only path, setup subsequently selects claude-subagent in config, but the first ticket still explicitly requires Codex. Doctor can pass while the instructed first build cannot use the agreed reviewer.",
+        "suggested_fix": "Choose and record the agents before creating the scaffold ticket, or explicitly synchronise its agent fields afterwards. Add a regression check for this ordering.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md:56",
+        "issue": "For an empty folder where git has already been initialised but speck is absent, step 1 invokes section 3's base-branch configuration before step 2 installs speck. config set requires speck/config.yml, so this supported new-project path fails immediately.",
+        "suggested_fix": "Confirm the branch early if desired, but write base_branch after init and before creating the first ticket. Cover an empty repository on a non-main branch.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md:70",
+        "issue": "Reviewer selection unconditionally proposes Codex whenever it is installed, including when the user has just selected Codex as builder. This contradicts the cross-family preference and produces a same-model pair without consent; scripts/core.mjs lintTicket rejects that pair with the default settings.",
+        "suggested_fix": "Select the reviewer relative to the chosen builder's model family, and require explicit consent before any same-family pairing. Add a check covering a Codex builder.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The conversational setup guide is installed correctly and covers the requested explanations and permission checks. Three sequencing and agent-selection problems can leave users with a failing setup or an unusable first ticket. The reported tests pass, but their text checks miss these paths."
+  }
+}
+```
+
+</details>

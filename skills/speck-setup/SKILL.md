@@ -47,17 +47,18 @@ If `speck.installed` is true, speck is already here. Say which version, and carr
 4. **Test command.** speck runs the tests before every review and refuses to ship until they pass. If `suggestions.test_command` has a command, explain where it came from and ask whether it's the right one. If it's null, ask the user how they run their tests, or whether they have none yet. Run it once to confirm, and show the result:
    - If it passes, run `speck config set commands.test "<command>"`.
    - If it fails, show the end of the output. Ask whether to set it anyway (speck won't ship until it passes) or try another command.
-   - If they have no tests, leave it blank and offer a draft ticket to add a test runner, as in section 4, step 4.
+   - If they have no tests, leave it blank and offer a draft ticket to add a test runner. If they want one, make it after sections 5 and 6, as in section 4, step 5, so it records the agents they choose.
 5. **Worktree setup.** If `suggestions.worktree_setup` has a command, explain that each build happens in a fresh copy of the project, which needs its dependencies installed first. Ask, then run `speck config set worktree_setup "<command>"`.
 6. Continue with section 5.
 
 ## 4. A new project
 
-1. **Make it a git repo.** If `repo.is_repo` is false, explain that git keeps the history of every change and lets speck build on branches. Ask before running `git init -b main`, which makes `main` the base branch. If it's already a repo, confirm the base branch with the user as in section 3, step 3.
-2. **Git name and email**, then **install speck** (section 2). Offer a `.gitignore` for files that shouldn't be committed, such as `node_modules/` and `.env`.
+1. **Make it a git repo.** If `repo.is_repo` is false, explain that git keeps the history of every change and lets speck build on branches. Ask before running `git init -b main`, which makes `main` the base branch. If it's already a repo, confirm the base branch with the user as in section 3, step 3, and give the same warning about pull requests. Don't record it yet: that needs speck installed.
+2. **Git name and email**, then **install speck** (section 2). If the base branch isn't `main`, now run `speck config set base_branch <name>`. Offer a `.gitignore` for files that shouldn't be committed, such as `node_modules/` and `.env`.
 3. **The first commit.** Explain that speck needs one commit to branch from. Ask before making a commit, then commit everything with the message `Set up speck`.
-4. **The first ticket.** A new project has no tests, and speck can't ship anything until a test command is set and passes. So the first ticket sets up the app with a test runner. Run `speck new "Scaffold the app with a test runner"` and fill it in as `/speck-ticket` describes. Ask the user what they want to build, and if they have no preference, recommend a common language and test runner for it. Its acceptance criteria include that the tests pass and that `commands.test` is set to the command that runs them (with `speck config set`). Leave it `draft`: the user reads it and approves it. Ask before making a commit of the ticket (`speck: first ticket`), because a build can only start from a committed ticket.
-5. Continue with section 5.
+4. **The agents.** Follow sections 5 and 6 now, then come back here. A ticket records the builder and reviewer set when it's made, so they're chosen first.
+5. **The first ticket.** A new project has no tests, and speck can't ship anything until a test command is set and passes. So the first ticket sets up the app with a test runner. Run `speck new "Scaffold the app with a test runner"` and fill it in as `/speck-ticket` describes. Ask the user what they want to build, and if they have no preference, recommend a common language and test runner for it. Its acceptance criteria include that the tests pass and that `commands.test` is set to the command that runs them (with `speck config set`). Leave it `draft`: the user reads it and approves it. Ask before making a commit of the ticket (`speck: first ticket`), because a build can only start from a committed ticket.
+6. Continue with section 7.
 
 ## 5. Builder and reviewer
 
@@ -66,11 +67,11 @@ The builder writes the code; the reviewer is a second agent that checks it and m
 Look at `agents` in `speck detect`:
 
 - **Builder:** propose Claude Code (`claude`), which is the one most tested. If they'd rather use another agent that's on the PATH (`codex`, `cursor-agent` or `gemini`), run `speck config set builder <name>` with `codex`, `cursor` or `gemini`.
-- **Reviewer:** prefer one from another model family.
-  - If `codex.on_path` is true, propose Codex and run `speck config set reviewer codex`. If `codex.signed_in` is false, ask them to run `codex login` and follow the prompts, then run `speck detect` again.
-  - If Codex isn't installed, offer to install it (`npm install -g @openai/codex`, asking first) and sign in.
-  - Cursor or Gemini can also review, but each needs a reviewer command added to `reviewer_options` by hand (see "Using another reviewer" in speck's README). If they want that, point them to it rather than editing the file.
-  - If only Claude is available, or they'd rather not add another agent, explain same-model review: a fresh Claude session reviews the work, which is independent of the build but shares its model's blind spots, so it may miss more. Turn it on only if the user agrees, with `speck config set reviewer claude-subagent` and `speck config set allow_same_model_review true`. If they don't agree, they need another reviewer: go back to the options above.
+- **Reviewer:** prefer one from another model family than the builder's. Claude Code runs Anthropic's models, Codex OpenAI's and Gemini Google's. Cursor can run several, so its family depends on the model it uses.
+  - With a Claude, Cursor or Gemini builder, propose Codex: run `speck config set reviewer codex`. If `codex.on_path` is false, offer to install it (`npm install -g @openai/codex`, asking first). If `codex.signed_in` is false, ask them to run `codex login` and follow the prompts, then run `speck detect` again.
+  - With a Codex builder, Codex would be the same family. Another family, such as Claude Code, needs a reviewer command added to `reviewer_options` by hand (see "Using another reviewer" in speck's README). Cursor or Gemini reviewers need one too. If they want that, point them to it rather than editing the file.
+  - If only Claude is available, or they'd rather not add another agent, explain same-model review: a fresh session of the builder's own agent reviews the work, which is independent of the build but shares its model's blind spots, so it may miss more. Turn it on only if the user agrees: with a Claude builder, `speck config set reviewer claude-subagent` and `speck config set allow_same_model_review true`; with a Codex builder, `speck config set reviewer codex` and `speck config set allow_same_model_review true`. If they don't agree, they need a reviewer from another family: go back to the options above.
+  - Never pair a builder and reviewer from the same family without that agreement.
 - Leave `reviewer_model` and `reviewer_effort` blank, which uses each agent's own default, unless the user asks for a particular one.
 
 ## 6. Builds that `speck run` starts
@@ -79,6 +80,8 @@ Look at `agents` in `speck detect`:
 
 - If yes, leave `build_command` as it is.
 - If no, run `speck config set build_command ""`. `speck run` then refuses to start builds, and they build each ticket with `/speck-build <id>` instead.
+
+Then, in a new project, go back to section 4, step 5 for the first ticket. In an existing project that wanted a ticket to add a test runner, make it the same way. Otherwise continue with section 7.
 
 ## 7. Finish
 
