@@ -40,6 +40,8 @@ started: "2026-10-10T13:14:35.849Z"
 - The words are listed in 0082's ticket file (its AC2), which the reviewer can read. The history rewrite later replaces them there too, which is why 0082's ticket file stays excluded from the check for now.
 - Tests should set `HOME` to a temporary folder, so they don't depend on the machine's own list.
 - The owner keeps their list at that path on their machine. It's never committed.
+- AC4's "its other tests are unchanged" is checked by reading the diff of `test/luro-0082.test.mjs`: only the AC2 test and one import line change. A test comparing against a base commit would break after the history rewrite.
+- Self-check: the check now matches words literally (`git grep -F`), so a listed word with `.` or `*` doesn't match more than it says; a list that exists but can't be read stops the check with a plain message naming the file rather than skipping it; a `git grep` error fails the check rather than passing it. AC4's test ignores backticked phrases with spaces (such as `git grep`) when reading 0082's words.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

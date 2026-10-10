@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, cliCopy, env } from './support/panel.mjs';
+import { readPrivateWords, privateWordsFile, filesNaming } from './support/private-words.mjs';
 
 // ---------- 0082: name Luro instead of the owner throughout the repo's files ----------
 
@@ -27,11 +28,12 @@ test('AC1: a copy of speck that cannot install itself points to luroai/speck', (
   assert.doesNotMatch(r.stderr, /\n\s+at /, 'a plain message, not a stack trace');
 });
 
-test('AC2: no tracked file but this ticket names the owner, their old handle or machine username', () => {
-  // Built from parts, so this test file doesn't contain the words it looks for.
-  const words = [].map(p => p.join(''));
-  const r = git('grep', '-l', '-i', ...words.flatMap(w => ['-e', w]), '--', '.', ':!speck/tickets/0082-*', ':!speck/tickets/done/0082-*');
-  assert.equal(r.stdout, '', `files still naming the owner:\n${r.stdout}`);
+test('AC2: no tracked file but this ticket names the owner, their old handle or machine username', (t) => {
+  // The words live outside the repo (0084), so no tracked file holds them.
+  const words = readPrivateWords();
+  if (!words.length) return t.skip(`no words listed in ${privateWordsFile()}`);
+  const files = filesNaming(words, ROOT);
+  assert.deepEqual(files, [], `files still naming the owner:\n${files.join('\n')}`);
 });
 
 test('AC3: the v0.1 handoff note is gone', () => {
