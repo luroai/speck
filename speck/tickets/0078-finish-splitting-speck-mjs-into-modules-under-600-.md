@@ -1,7 +1,7 @@
 ---
 id: "0078"
 title: "Finish splitting speck.mjs into modules under 600 lines"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:22:51.299Z"
 ---
 # 0078 · Finish splitting speck.mjs into modules under 600 lines
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0018, `scripts/speck.mjs` still holds about 2,000 lines: ticket parsing, the review loop and review pack, install and doctor, start, ship and status. Reviewers still read large parts of it every round, and an edit in one area risks breaking another.
@@ -55,3 +55,69 @@ speck's code is split into files by area under `scripts/`, none over 600 lines, 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - `speck record` (and `speck prompt --tests=`) crash with a stack trace on a missing file: `speck/ideas/2026-10-10-say-plainly-when-a-file-given-to-speck-is-missing.md`.
+  - Tidy-up: `panel.mjs` and `run.mjs` still import from `speck.mjs`, which re-exports from the new modules. Pointing them at `core.mjs` and the rest directly would drop that cycle, but the panel and build controls were out of scope (0018).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0d17537d0b53ae8c2e79d5c1246672557b73ac5d",
+    "thread_id": "01a125d0-1e13-7762-b8ca-ff5e97edb7da",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 530206,
+      "cached_input_tokens": 393472,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 863,
+      "reasoning_output_tokens": 63
+    },
+    "saved_at": "2026-10-10T12:36:31.063Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Review commands are in review.mjs, reviewers.mjs and close.mjs; pack, installation/doctor and shipping are in their respective modules. speck.mjs retains COMMANDS and the CLI entry point. The 0078 AC1 test checks these locations."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Independent line count confirms all ten files under scripts/ are below 600 lines; speck.mjs is largest at 526. The 0078 AC2 test checks every file recursively."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Successfully imported scripts/speck.mjs and inspected its exports. Explicit re-exports preserve the previous API; the two 0078 AC3 tests check availability and completeness against the original CLI."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Independent comparison found every moved implementation line unchanged apart from exports. Existing tests are unchanged. The 0078 AC4 test compares CLI transcripts against the merge-base implementation; supplied suite output reports 648 passing tests with no skips."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "install.mjs installTooling still copies the entire scripts directory. The 0078 AC5 tests exercise installed review, record, pack, doctor and ship, then verify that re-running source init refreshes the installed modules."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The CLI has been split into smaller modules while preserving its commands and exported functions. All script files meet the 600-line limit, and the tests cover installed projects and updates. No blocking problems found. I independently checked the code and imports; the full test result is the builder’s supplied run."
+  }
+}
+```
+
+</details>
