@@ -1,7 +1,7 @@
 ---
 id: "0084"
 title: "Read the owner's private words from outside the repo in 0082's check"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:14:35.849Z"
 ---
 # 0084 · Read the owner's private words from outside the repo in 0082's check
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 0082's AC2 test checks that no tracked file names the owner, so it has to know the words to look for. It holds them in the test file, split into parts and joined at runtime. Anyone reading the file can join them too, so the repo still names the owner, and the history rewrite that follows 0082 can't remove them without breaking the test.
@@ -47,7 +47,70 @@ started: "2026-10-10T13:14:35.849Z"
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 242,608
+- Elapsed since build started: 9 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "09d12ee512f3ff494869daafe910e70d659124bf",
+    "thread_id": "01a125fa-c591-7ff2-84f5-0f62debb56c6",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 241890,
+      "cached_input_tokens": 155520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 718,
+      "reasoning_output_tokens": 53
+    },
+    "saved_at": "2026-10-10T13:23:02.512Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/private-words.mjs uses os.homedir(), trims lines, ignores blanks/comments and runs case-insensitive literal git grep. AC1 tests cover parsing and matching; child-process tests set HOME to temporary folders."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "filesNaming excludes 0082's ticket paths and returns matching tracked filenames. AC2 tests cover multiple matches, exclusions, no matches, and the actual 0082 check's failure/pass messages."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "readPrivateWords returns [] for a missing list; 0082's AC2 calls t.skip for an empty list. AC3 tests verify TAP skip reporting and successful execution of the remaining tests."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The repository diff changes only one import and the AC2 test in test/luro-0082.test.mjs. The AC4 test checks whole words and string fragments against 0082's ticket."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The check now reads the owner's words from their home folder, reports matching files, and skips when no words are configured. The other existing tests are unchanged. Coverage exercises the actual check and its error paths. No blocking issues found. Independent execution was limited by the sandbox rejecting a child process; the supplied test results report all new tests passing."
+  }
+}
+```
+
+</details>
