@@ -1133,24 +1133,37 @@ function cmdSet(args) {
   const value = rest.join(' ');
   // priority is the one field that can be cleared, with `speck set <id> priority ""`.
   if (!id || !key || (!value && !(key === 'priority' && rest.length))) throw new SpeckError('Usage: speck set <id> <field> <value>');
-  if (key === 'priority' && value !== '' && !/^[1-5]$/.test(value))
-    throw new SpeckError(`priority must be a whole number from 1 to 5, or "" to clear it (got ${JSON.stringify(value)}).`);
+  checkSetValue(key, value);
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
-  if (key === 'status') {
-    if (!STATUSES.includes(value)) throw new SpeckError(`status must be one of ${STATUSES.join(', ')}.`);
-    // Cancelling records why, so it has its own command; `set` would lose the reason.
-    if (value === 'cancelled') throw new SpeckError(`Use \`speck cancel ${t.fm.id} "<reason>"\` instead: cancelling records the reason.`);
-    if (value === 'ready') {
-      const { errors } = lintTicket(t, cfg);
-      if (errors.length) throw new SpeckError(`Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}`);
-    }
+  checkSetTicket(t, cfg, key, value);
+  setTicketField(repo, t, key, value);
+  console.log(`${t.fm.id} ${key} → ${value}`);
+}
+
+// `speck set`'s checks and write, shared with the panel so the two can't drift. The checks throw a SpeckError saying
+// why, before anything is written. checkSetValue needs no ticket, so `speck set` makes it before looking one up.
+export function checkSetValue(key, value) {
+  if (key === 'priority' && value !== '' && !/^[1-5]$/.test(value))
+    throw new SpeckError(`priority must be a whole number from 1 to 5, or "" to clear it (got ${JSON.stringify(value)}).`);
+}
+
+export function checkSetTicket(t, cfg, key, value) {
+  if (key !== 'status') return;
+  if (!STATUSES.includes(value)) throw new SpeckError(`status must be one of ${STATUSES.join(', ')}.`);
+  // Cancelling records why, so it has its own command; `set` would lose the reason.
+  if (value === 'cancelled') throw new SpeckError(`Use \`speck cancel ${t.fm.id} "<reason>"\` instead: cancelling records the reason.`);
+  if (value === 'ready') {
+    const { errors } = lintTicket(t, cfg);
+    if (errors.length) throw new SpeckError(`Not ready:\n${errors.map(e => `  ✗ ${e}`).join('\n')}`);
   }
+}
+
+export function setTicketField(repo, t, key, value) {
   writeField(t, key, value);
   // Setting done moves the ticket into speck/tickets/done/, and any other status brings it back.
   if (key === 'status') placeTicket(repo, t, value);
-  console.log(`${t.fm.id} ${key} → ${value}`);
 }
 
 export function writeField(t, key, value) {

@@ -41,6 +41,10 @@ The panel sets a ticket's status and priority through the same code as `speck se
 - From the rule "the panel writes to the repo only through CLI functions" in `speck/ideas/2026-10-10-more-human-gate-actions-in-the-panel.md`. Pause, play and stop already follow it (`panelPausePlay`, `panelStop` call `pauseBuild`, `playBuild`, `stopBuild`).
 - Assumption: AC3 changes the panel's wording to the CLI's. Today the panel says `Priority must be a whole number from 1 to 5, not "<value>".` and `speck set` says `priority must be a whole number from 1 to 5, or "" to clear it (got "<value>").`
 - After 0018, so the change lands in the panel's own module.
+- AC2, AC4 and AC5 tests passed before the change: the panel's Not ready text, its own rules and its writes already matched `speck set`. They stay as guards on the refactor. AC1 and AC3 failed first.
+- The panel takes the priority from the URL without decoding it (0077), so AC3 compares with `speck set`'s message for the value the panel receives (for example `%201`).
+- `speck set` clears a priority with `""`; the panel still refuses `""` (its own rule, as before), now with `Pick a priority from 1 to 5: the panel can't clear one.`
+- Self-check: the shared write also moves a ticket to its status's folder, so a draft filed in `speck/tickets/done/` would have been moved by the panel's Ready but only half committed. The panel now refuses that draft before writing and names the `speck set` command instead (test added).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
