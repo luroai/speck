@@ -38,6 +38,8 @@ The setup skill is agent-only: it's hidden from the `/` menu, and the setup prom
 - Decided 2026-10-10: new skills are agent-only; only Capture, Ticket, Build and Ship (plus the existing review and status) are for people.
 - Checked 2026-10-10: `user-invocable: false` hides a skill from the `/` menu while Claude can still load it (Claude Code skills docs).
 - Failing before this build: none
+- Self-check: the description first had "starts it: it isn't", which isn't valid in a plain YAML scalar; reworded it and added a test that the frontmatter values have no ": ".
+- Also noted the menu change in the `/speck-setup` rows of the README and the brief, so they don't suggest typing it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -61,7 +61,7 @@ To re-check your setup at any time: `node .speck/scripts/speck.mjs doctor`.
 
 | Command | What it does |
 |---|---|
-| `/speck-setup` | Your agent takes you through setting speck up in a conversation: it checks what's there, explains each choice (base branch, test command, builder and reviewer, whether `speck run` builds skip permission prompts), asks before changing anything, and finishes once `speck doctor` passes |
+| `/speck-setup` | Your agent takes you through setting speck up in a conversation: it checks what's there, explains each choice (base branch, test command, builder and reviewer, whether `speck run` builds skip permission prompts), asks before changing anything, and finishes once `speck doctor` passes. It's hidden from the `/` menu: the setup prompt above starts it |
 | `/speck-capture` | Save an idea or the current conversation to `speck/ideas/` |
 | `/speck-ticket` | Turn an idea into small, numbered tickets that pass the size rules, or triage the inbox down to at most three decisions |
 | *you* | Approve a ticket for development: `node .speck/scripts/speck.mjs set <id> status ready` (Gate 1). Run it on the base branch: it commits the ticket, and only that file |
