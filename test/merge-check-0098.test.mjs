@@ -266,3 +266,33 @@ test('AC1: refuses plainly, changing nothing, when the base branch is missing or
   assert.match(res.stderr, /Couldn't work out the merge of trunk into speck\/0001-export-bookings: .*unrelated histories/);
   assert.deepEqual(r.snapshot(), before);
 });
+
+test('AC3 AC4: a file with a conflict-marker-size attribute is read with its own marker length', () => {
+  const r = mergeRepo({
+    base: { '.gitattributes': 'list.txt conflict-marker-size=9\n', 'list.txt': lines('a', 'b', 'c', 'd', 'e', 'f', 'g') },
+    ticket: { 'list.txt': lines('a', 'b', 'from ticket', 'c', 'd', 'e', 'f', 'g', 'ticket end') },
+    main: { 'list.txt': lines('a', 'b', 'from main', 'c', 'd', 'e', 'f', 'g', 'main end') },
+  });
+  const f = fileIn(check(r.run('1')), 'list.txt');
+  assert.match(gIn(r.wt, 'cat-file', 'blob', `${gIn(r.wt, 'merge-tree', '--write-tree', BRANCH, 'main').stdout.split('\n')[0]}:list.txt`).stdout, /^<{9} /m);
+  assert.equal(f.class, 'added-lines');
+  assert.equal(f.conflicts, 2);
+  assert.deepEqual(f.lines, [{ start: 3, end: 7 }, { start: 13, end: 17 }]);
+  // A changed base line is still logic with the longer markers.
+  const s = mergeRepo({
+    base: { '.gitattributes': '*.txt conflict-marker-size=9\n', 'a.txt': lines('a', 'old', 'z') },
+    ticket: { 'a.txt': lines('a', 'ticket', 'z') },
+    main: { 'a.txt': lines('a', 'main', 'z') },
+  });
+  const g = fileIn(check(s.run('1')), 'a.txt');
+  assert.equal(g.class, 'logic');
+  assert.deepEqual(g.lines, [{ start: 2, end: 6 }]);
+});
+
+test('AC1: a branch whose worktree folder has gone is still checked, from the checkout it was run in', () => {
+  const r = mergeRepo({ base: { 'a.txt': 'x\n' }, ticket: { 'a.txt': 'ticket\n' }, main: { 'a.txt': 'main\n' } });
+  fs.rmSync(r.wt, { recursive: true, force: true });
+  const report = check(runIn(r.dir, 'merge-check', '1'));
+  assert.equal(report.clean, false);
+  assert.deepEqual(report.files.map(f => f.path), ['a.txt']);
+});

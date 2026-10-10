@@ -1,6 +1,7 @@
 // speck merge-check: what merging the base branch into a ticket's branch would conflict on, as JSON.
 // git merge-tree does the merge in the object store only, so no branch, worktree or index changes.
 
+import fs from 'node:fs';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, worktreeList, LOCKFILES } from './core.mjs';
 
 // Runs git merge-tree for the branch (ours) and the base (theirs). Returns the merged tree and, for each conflicted
@@ -21,20 +22,34 @@ function mergeTree(repo, branch, base, config = []) {
   return { clean: r.status === 0, tree, stages };
 }
 
+// The conflict marker length git uses for each file: its conflict-marker-size attribute, read from the same
+// folder as the merge (git reads attributes from the checkout it runs in), or 7.
+function markerSizes(cwd, files) {
+  const sizes = new Map(files.map(f => [f, 7]));
+  if (!files.length) return sizes;
+  const r = sh('git', ['check-attr', '-z', 'conflict-marker-size', '--', ...files], { cwd });
+  const parts = r.status === 0 ? r.stdout.split('\0') : [];
+  for (let i = 0; i + 2 < parts.length; i += 3) if (/^[1-9]\d*$/.test(parts[i + 2])) sizes.set(parts[i], Number(parts[i + 2]));
+  return sizes;
+}
+
 // The conflicts in a merged file: each one's 1-based first and last line (markers included) and its sections.
-function conflictsIn(repo, tree, file) {
-  const r = sh('git', ['cat-file', 'blob', `${tree}:${file}`], { cwd: repo });
+function conflictsIn(cwd, tree, file, size) {
+  const r = sh('git', ['cat-file', 'blob', `${tree}:${file}`], { cwd });
   if (r.status !== 0) return [];
+  const marker = ch => new RegExp(`^\\${ch}{${size}}( |$)`);
+  const [open, mid, close] = [marker('<'), marker('|'), marker('>')];
+  const sep = '='.repeat(size);
   const out = [];
   let cur = null;
   r.stdout.split('\n').forEach((line, i) => {
     if (!cur) {
-      if (/^<{7}( |$)/.test(line)) cur = { start: i + 1, part: 'ours', ours: [], base: [], theirs: [] };
-    } else if (/^>{7}( |$)/.test(line) && cur.part === 'theirs') {
+      if (open.test(line)) cur = { start: i + 1, part: 'ours', ours: [], base: [], theirs: [] };
+    } else if (close.test(line) && cur.part === 'theirs') {
       out.push({ ...cur, end: i + 1 });
       cur = null;
-    } else if (/^\|{7}( |$)/.test(line) && cur.part === 'ours') cur.part = 'base';
-    else if (line === '=======' && cur.part !== 'theirs') cur.part = 'theirs';
+    } else if (mid.test(line) && cur.part === 'ours') cur.part = 'base';
+    else if (line === sep && cur.part !== 'theirs') cur.part = 'theirs';
     else cur[cur.part].push(line);
   });
   return out;
@@ -67,20 +82,24 @@ export function cmdMergeCheck(args) {
   const branch = branches[0];
   if (sh('git', ['rev-parse', '--verify', '-q', `refs/heads/${base}`], { cwd: repo }).status !== 0)
     throw new SpeckError(`The base branch ${base} (base_branch in speck/config.yml) doesn't exist here. Fix base_branch, then run this again.`);
-  const at = worktreeList(repo).find(w => w.branch === branch);
+  const at = worktreeList(repo).find(w => w.branch === branch && fs.existsSync(w.path));
   if (at) {
     const dirty = sh('git', ['--no-optional-locks', 'status', '--porcelain', '--untracked-files=no'], { cwd: at.path });
     if (dirty.status === 0 && dirty.stdout.trim())
       throw new SpeckError(`${branch} has uncommitted changes in ${at.path}, so a check of its commits wouldn't match what's there. Commit or stash them, then run this again.`);
   }
-  // Line ranges come from the merge as git merge would write it here; the classes from diff3, which shows the base's lines.
-  const merged = mergeTree(repo, branch, base);
-  const withBase = merged.clean ? merged : mergeTree(repo, branch, base, ['-c', 'merge.conflictStyle=diff3']);
-  const files = [...merged.stages.keys()].sort().map(file => {
-    const found = conflictsIn(repo, merged.tree, file);
+  // Line ranges come from the merge as git merge would write it in the branch's folder; the classes from diff3, which
+  // shows the base's lines.
+  const cwd = at ? at.path : repo;
+  const merged = mergeTree(cwd, branch, base);
+  const withBase = merged.clean ? merged : mergeTree(cwd, branch, base, ['-c', 'merge.conflictStyle=diff3']);
+  const paths = [...merged.stages.keys()].sort();
+  const sizes = markerSizes(cwd, paths);
+  const files = paths.map(file => {
+    const found = conflictsIn(cwd, merged.tree, file, sizes.get(file));
     return {
       path: file,
-      class: classify(file, withBase.stages.get(file) || merged.stages.get(file), conflictsIn(repo, withBase.tree, file)),
+      class: classify(file, withBase.stages.get(file) || merged.stages.get(file), conflictsIn(cwd, withBase.tree, file, sizes.get(file))),
       conflicts: Math.max(found.length, 1),
       lines: found.map(c => ({ start: c.start, end: c.end })),
     };
