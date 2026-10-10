@@ -1,7 +1,7 @@
 ---
 id: "0078"
 title: "Finish splitting speck.mjs into modules under 600 lines"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:22:51.299Z"
 ---
 # 0078 · Finish splitting speck.mjs into modules under 600 lines
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0018, `scripts/speck.mjs` still holds about 2,000 lines: ticket parsing, the review loop and review pack, install and doctor, start, ship and status. Reviewers still read large parts of it every round, and an edit in one area risks breaking another.
@@ -51,9 +51,14 @@ speck's code is split into files by area under `scripts/`, none over 600 lines, 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 531,069
+- Elapsed since build started: 14 min
+- Changed lines: 3115 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - `speck record` (and `speck prompt --tests=`) crash with a stack trace on a missing file: `speck/ideas/2026-10-10-say-plainly-when-a-file-given-to-speck-is-missing.md`.
