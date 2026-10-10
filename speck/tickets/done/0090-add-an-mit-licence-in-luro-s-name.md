@@ -1,7 +1,7 @@
 ---
 id: "0090"
 title: "Add an MIT licence in Luro's name"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T13:57:13.594Z"
+finished: "2026-10-10T14:04:55.464Z"
 
 ---
 # 0090 · Add an MIT licence in Luro's name
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `package.json` says the licence is MIT, but the repo has no licence file, so anyone finding speck on GitHub has no licence text and no copyright holder to go by.
