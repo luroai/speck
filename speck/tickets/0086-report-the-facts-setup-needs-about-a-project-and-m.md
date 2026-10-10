@@ -1,7 +1,7 @@
 ---
 id: "0086"
 title: Report the facts setup needs as JSON                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:56:49.065Z"
 ---
 # 0086 · Report the facts setup needs as JSON
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 To set speck up through a conversation, the agent needs to know what's already in place: Node, git, the repo's state, which coding agents are installed and how the project runs its tests. Today it would have to work each of these out with its own commands, differently every time, and speck's own checks only print ✓ and ✗ for a person to read.
@@ -52,12 +52,13 @@ To set speck up through a conversation, the agent needs to know what's already i
 Round 1 (codex): changes requested: F1 usesPytest searches arbitrary pyproject.toml text for the word pytest.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 2,383,184
-- Elapsed since build started: 17 min
+- Reviewer tokens: 4,078,595
+- Elapsed since build started: 81 min
 - Changed lines: 171 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -270,6 +271,75 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Approved. The command reports the requested setup facts as JSON without changing the project. The incorrect pytest suggestions are fixed and covered by meaningful tests. Independent read-only checks passed; the supplied full suite reports 707 passes, no failures and three skips. I did not rerun tests that write temporary files."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "40fb7b489f0805e230798d295c072b6163963584",
+    "thread_id": "01a12623-27ec-77e2-9e0c-016ab1eae25b",
+    "seconds": 64,
+    "usage": {
+      "input_tokens": 1691994,
+      "cached_input_tokens": 1326848,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3417,
+      "reasoning_output_tokens": 138
+    },
+    "saved_at": "2026-10-10T15:17:36.045Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The detect command remains registered and packaged through the speck bin. It prints one JSON object, handles missing git, and uses GIT_OPTIONAL_LOCKS=0 to avoid index writes. Supplied tests cover non-repositories, pre-install execution and unchanged repository snapshots."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The unchanged detection code reports OS support, Node version support, git availability and every required repository field. Tests cover staged and unstaged tracked changes, untracked files, unborn branches, detached HEAD and global git identity."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Installation is detected through speck/config.yml, and the version is read from .speck/VERSION, with null when unavailable."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "All four agents are checked through the shared onPath helper. Codex authentication uses login status. The merge preserves main's Windows doctor and init checks; install.mjs differs from merged main only by exporting onPath."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Suggestions retain the approved npm, lockfile, pytest and Makefile detection. The implementation and regression-test blobs are unchanged from round 3. The merged CLI and documentation retain both detect and config set."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/detect.mjs",
+        "issue": "The previous false pytest detection from comments and unrelated description or keyword strings remains fixed.",
+        "suggested_fix": "Completed: detection checks pytest configuration or dependency declarations, with regression coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. The merge preserves both sides' intended behaviour, and all five acceptance criteria pass. The supplied suite reports 765 passes, no failures and three skips; I inspected the code and ran the help command, but did not rerun the suite. Restore max_review_rounds to 3 before close, as agreed."
   }
 }
 ```
