@@ -1,7 +1,7 @@
 ---
 id: "0110"
 title: Recover a build that was killed                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T22:40:12.596Z"
 ---
 # 0110 · Recover a build that was killed
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build's process is killed (here by the out-of-memory killer, which also took down `speck run`), its ticket stays `building` and the panel shows it as in progress, so on 2026-10-10 five dead builds looked busy for half an hour. Nothing restarts them: `speck run` launches only ready tickets, and someone had to resume each session by hand.
@@ -48,9 +48,14 @@ A build that was killed is shown plainly as stopped, and `speck run` resumes its
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 432,533
+- Elapsed since build started: 17 min
+- Changed lines: 164 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - Where `ps` can't be run (Windows), every session counts as in use, so a killed build there is never flagged or resumed: it shows as before.
