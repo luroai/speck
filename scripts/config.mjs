@@ -14,7 +14,7 @@ const KINDS = Object.assign(Object.create(null), {
   worktree_setup: 'text', build_command: 'text', resume_command: 'text', 'commands.test': 'text', 'github.status_check': 'text',
   allow_same_model_review: 'flag', auto_ship: 'flag', worktrees: 'flag',
   reviewer_effort: 'effort', auto_ship_risk: 'risks',
-  max_parallel_builds: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
+  max_parallel_builds: 'count', max_parallel_tests: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
   'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
 });
 

@@ -40,6 +40,7 @@ Builds keep working in parallel, but take turns running the full test suite, as 
 - Measured 2026-10-10: one run of speck's suite peaked at about 1.9 GB more memory, 123 Chromium processes and 99 Node processes, on a 16-core VM with 14 GB.
 - No test that passed before this change should fail.
 - Failing before this build: none
+- Self-check: no changes. Known limits, left as they are: a turn file whose pid has been reused by another live process looks held until that process ends (the waiting message names the pid and folder); lowering `max_parallel_tests` while more runs are going doesn't stop the ones already running.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, worktreeList } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
+import { withTestTurn } from './turns.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -39,8 +40,11 @@ function shipChecks(repo, cfg, pad, branch) {
 function runTests(repo, cfg) {
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set, so speck can\'t check the tests pass before shipping. Set commands.test in speck/config.yml (for example `npm test`), commit it, then run this again.');
-  console.log(`Running tests: ${cmd}`);
-  return sh('sh', ['-c', cmd], { cwd: repo, stdio: 'inherit' }).status === 0;
+  // The run takes a turn, as `speck test` does, so ships and builds don't all run the suite at once.
+  return withTestTurn(repo, cfg, () => {
+    console.log(`Running tests: ${cmd}`);
+    return sh('sh', ['-c', cmd], { cwd: repo, stdio: 'inherit' }).status === 0;
+  });
 }
 
 // The refusal for tests that failed on the ticket branch. It runs the tests on the base branch as it is, in a
