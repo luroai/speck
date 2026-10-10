@@ -104,6 +104,13 @@ export function cmdRun() {
     }
   };
 
+  // True for a build that was killed while its ticket is building or reviewing, which is left without an exit so the
+  // next check resumes it. Any other build that has gone gets its exit recorded, as before.
+  const killedInHand = id => {
+    if (!buildKilled(runsDir(repo), id)) return false;
+    try { return ['building', 'reviewing'].includes(statusData(repo).tickets.find(t => t.id === id)?.status); } catch { return true; }
+  };
+
   const finished = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
@@ -113,7 +120,8 @@ export function cmdRun() {
       return tick();
     } else {
       console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
-      recordExit(id, recordFile, signal ? null : code);
+      // A build killed by a signal is left without an exit, so the next check can resume it.
+      if (!signal || !killedInHand(id)) recordExit(id, recordFile, signal ? null : code);
     }
     if (!failed) reportIfStillReady(id, log);
     tick();
@@ -142,7 +150,7 @@ export function cmdRun() {
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       const pid = rec.pid;
-      if (!(Number.isInteger(pid) && pid > 0 && pid !== process.pid && pidAlive(pid))) { recordExit(id, file, null); continue; }
+      if (!(Number.isInteger(pid) && pid > 0 && pid !== process.pid && pidAlive(pid))) { if (!killedInHand(id)) recordExit(id, file, null); continue; }
       launched.add(id);
       running.add(id);
       const session = rec.session ?? 'unknown';
@@ -156,7 +164,7 @@ export function cmdRun() {
       adopted.delete(id);
       running.delete(id);
       const byStop = stoppedBySpeck(b.file);
-      recordExit(id, b.file, null);
+      if (!killedInHand(id)) recordExit(id, b.file, null);
       if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
       console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
       reportIfStillReady(id, b.log);
@@ -164,20 +172,50 @@ export function cmdRun() {
   };
 
   const launch = id => {
-    launched.add(id);
-    running.add(id);
     const session = crypto.randomUUID();
     const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, session));
+    const started = new Date().toISOString();
+    const record = pid => `${JSON.stringify({ id, session, cwd: repo, started, pid, command: argv }, null, 2)}\n`;
+    startBuild(id, argv, repo, session, 'w', record);
+  };
+
+  // Carries on a build that was killed, once: its own session, from the folder it started in, logging to the end of
+  // its log. Its record keeps everything, with the time it was resumed added, so it's never resumed a second time.
+  const resumeKilled = (id, rec) => {
+    const argv = resumeArgv(words, id, rec.session);
+    if (!argv)
+      return reportStopped(id, rec, `speck run can't resume it: ${typeof rec.session === 'string' && rec.session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session'}`);
+    const recordFile = path.join(runsDir(repo), `${id}.json`);
+    const resumed = { ...rec, resumed: new Date().toISOString(), resume_command: argv };
+    // Saved before the build carries on, so a record that can't be saved stops it being resumed at all.
+    try { saveRecord(recordFile, resumed); } catch (e) { return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
+    const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
+    console.log(`${id} build (session ${rec.session}) stopped unexpectedly, so speck run is resuming it once.`);
+    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...resumed, pid: pid ?? rec.pid }, null, 2)}\n`);
+  };
+
+  // A killed build speck run won't resume, said once per speck run, with the command that resumes it by hand.
+  const stoppedReported = new Set();
+  const reportStopped = (id, rec, why) => {
+    if (stoppedReported.has(id)) return;
+    stoppedReported.add(id);
+    console.log(`${id} build (session ${rec.session ?? 'unknown'}) stopped unexpectedly, and ${why}. ${resumeHint(cfg, rec)}`);
+  };
+
+  // Starts a build in its own process group, logging to <id>.log (opened with `flags`), and keeps its run record:
+  // record(pid) is its text, written with pid null before it starts and again with its pid once it has.
+  const startBuild = (id, argv, cwd, session, flags, record) => {
+    launched.add(id);
+    running.add(id);
     const dir = runsDir(repo);
     const log = path.join(dir, `${id}.log`);
     const recordFile = path.join(dir, `${id}.json`);
-    const record = pid => `${JSON.stringify({ id, session, cwd: repo, started: new Date().toISOString(), pid, command: argv }, null, 2)}\n`;
     let fd = null, child;
     try {
       // Written before the build starts, so a record that can't be written stops the build from starting at all.
-      fs.writeFileSync(recordFile, record(null));
-      fd = fs.openSync(log, 'w');
-      child = spawn(argv[0], argv.slice(1), { cwd: repo, detached: true, stdio: ['ignore', fd, fd], env: { ...process.env, [BUILD_ENV]: session } });
+      if (flags === 'w') fs.writeFileSync(recordFile, record(null));
+      fd = fs.openSync(log, flags);
+      child = spawn(argv[0], argv.slice(1), { cwd, detached: true, stdio: ['ignore', fd, fd], env: { ...process.env, [BUILD_ENV]: session } });
     } catch (e) { if (fd !== null) fs.closeSync(fd); return finished(id, log, null, null, e.message); }
     fs.closeSync(fd);
     let done = false;
@@ -188,7 +226,7 @@ export function cmdRun() {
       try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {
         console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${session}.`);
       }
-      console.log(`Launched ${id} (session ${session}). Log: ${path.relative(repo, log)}`);
+      console.log(`${flags === 'a' ? 'Resumed' : 'Launched'} ${id} (session ${session}). Log: ${path.relative(repo, log)}`);
     }
   };
 
@@ -200,6 +238,15 @@ export function cmdRun() {
       if (msg !== lastError) console.error(`speck run couldn't read the tickets, and will try again: ${msg}`);
       lastError = msg;
       return;
+    }
+    // Builds that were killed with their ticket in hand: each resumed once.
+    const runs = runsDir(repo);
+    for (const t of tickets) {
+      if (running.has(t.id) || (t.status !== 'building' && t.status !== 'reviewing')) continue;
+      const rec = buildKilled(runs, t.id);
+      if (!rec) continue;
+      if (Object.hasOwn(rec, 'resumed')) { reportStopped(t.id, rec, 'speck run had already resumed it once, so it won\'t resume it again'); continue; }
+      if (running.size < max) resumeKilled(t.id, rec);
     }
     for (const t of tickets) {
       if (running.size >= max) break;
@@ -222,6 +269,32 @@ export function cmdRun() {
   adoptEarlierBuilds();
   tick();
   setInterval(tick, pollMs);
+}
+
+// What a killed build is told when speck run resumes it.
+const resumeMessage = id => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with /speck-build ${id} from where you left off.`;
+
+// build_command turned into the command that resumes a build's session: --session-id {session} becomes
+// --resume {session}, and the one word with {id} in it (the prompt) becomes resumeMessage. null if it has neither.
+function resumeArgv(words, id, session) {
+  if (typeof session !== 'string' || !session) return null;
+  const at = words.findIndex((w, i) => w === '--session-id' && words[i + 1] === '{session}');
+  const prompts = words.flatMap((w, i) => (w.includes('{id}') ? [i] : []));
+  if (at < 0 || prompts.length !== 1) return null;
+  return words.map((w, i) => (i === at ? '--resume' : i === prompts[0] ? resumeMessage(id) : w.replace(/\{session\}/g, session)));
+}
+
+// A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
+const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);
+
+// How to resume a killed build by hand, from resume_command in speck/config.yml (the default if it isn't set).
+export function resumeHint(cfg, rec) {
+  const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
+  if (!session) return 'Run /speck-build to carry it on.';
+  const cmd = !Object.hasOwn(cfg, 'resume_command') ? DEFAULT_RESUME_COMMAND : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
+  if (!cmd) return `Resume session ${session} to carry it on.`;
+  const cwd = typeof rec.cwd === 'string' && rec.cwd ? `cd ${shellWord(rec.cwd)} && ` : '';
+  return `To carry it on, run: ${cwd}${cmd.split('{session}').join(shellWord(session))}`;
 }
 
 // Whether the ticket at `rel` is ready in the base branch's latest commit. A ticket set ready but not committed, or
@@ -364,6 +437,37 @@ function stoppedBySpeck(recordFile) {
     const mark = JSON.parse(fs.readFileSync(recordFile.replace(/\.json$/, '.stopped'), 'utf8'));
     return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && Number.isInteger(mark.pid) && mark.pid === rec.pid && mark.session === rec.session;
   } catch { return false; }
+}
+
+// True if the build's log holds the result a stream-json build writes as it ends by itself. A build that was killed
+// never writes one. A build_command without stream-json output writes none either, so each of its ends counts as a kill.
+function logEnded(log) {
+  let text;
+  try { text = fs.readFileSync(log, 'utf8'); } catch { return false; }
+  return text.split('\n').some(l => { if (!l.startsWith('{')) return false; try { return JSON.parse(l)?.type === 'result'; } catch { return false; } });
+}
+
+// The run record of a build that was killed: no exit recorded, a pid that has gone, not ended by `speck stop`, and
+// no sign in its log that it ended by itself. null for any other build, or no readable record.
+export function buildKilled(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return null;
+  const file = path.join(runs, `${id}.json`);
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+  if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) return null;
+  if (!Number.isInteger(rec.pid) || rec.pid <= 0 || pidAlive(rec.pid)) return null;
+  if (stoppedBySpeck(file) || logEnded(path.join(runs, `${id}.log`)) || sessionInUse(rec.session)) return null;
+  return rec;
+}
+
+// True if a running process names the session as a word of its command line, as a build resumed by hand does
+// (`claude --resume <session>`). If processes can't be listed it's taken as in use, so a session is never resumed twice.
+function sessionInUse(session) {
+  if (typeof session !== 'string' || !session) return false;
+  const r = sh('ps', ['-A', '-ww', '-o', 'args=']);
+  if (r.status !== 0) return true;
+  return r.stdout.split('\n').some(l => l.split(/[\s=]+/).includes(session));
 }
 
 // The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.

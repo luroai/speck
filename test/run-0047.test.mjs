@@ -47,7 +47,8 @@ test('0047 AC2: a build left running counts towards max_parallel_builds while it
 });
 
 test('0047 AC3: when a build left running stops, its run file gets exited and exit_code null, keeping the other fields, and speck run says so', async () => {
-  const r = runRepo({ tickets: [['0001', { status: 'building' }]] });
+  // Blocked rather than building: a killed build whose ticket is building is resumed instead (0110).
+  const r = runRepo({ tickets: [['0001', { status: 'blocked' }]] });
   const b = leftRunning(r.dir, '0001', { extra: 'kept' });
   const run = startRun(r.dir);
   try {

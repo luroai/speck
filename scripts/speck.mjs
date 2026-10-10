@@ -16,7 +16,7 @@ import { cmdDetect } from './detect.mjs';
 import { cmdConfig } from './config.mjs';
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
-import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows } from './run.mjs';
+import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -437,15 +437,23 @@ function buildRunning(runs, id, leads) {
     && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid) && leads(rec.pid);
 }
 
+// A ticket a build has in hand, which a killed build leaves behind.
+const inHand = t => t.fm.status === 'building' || t.fm.status === 'reviewing';
+
+// The main checkout's speck/.cache/runs/, where speck run keeps its records and logs.
+function runsOf(repo) {
+  let main = repo;
+  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
+  return path.join(main, 'speck', '.cache', 'runs');
+}
+
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
 export function statusData(repo) {
   const cfg = loadConfig(repo);
   const tickets = statusTickets(repo, cfg);
   const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
-  let main = repo;
-  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
-  const runs = path.join(main, 'speck', '.cache', 'runs');
+  const runs = runsOf(repo);
   // Whether a pid leads its own process group, as a build speck run launched does. ps runs once, and only if needed.
   let rows = null;
   const leads = pid => { try { rows ??= processRows(); } catch { rows = []; } return rows.some(([p, , g]) => p === pid && g === pid); };
@@ -481,6 +489,7 @@ export function statusData(repo) {
       session: buildSession(runs, t.fm.id),
       paused: buildPaused(runs, t.fm.id),
       build_running: buildRunning(runs, t.fm.id, leads),
+      build_stopped: inHand(t) && !!buildKilled(runs, t.fm.id),
     };
   });
   entries.sort(byPriority);
@@ -497,7 +506,8 @@ export function statusData(repo) {
 function cmdStatus(args = []) {
   const repo = findRepoRoot();
   if (args.includes('--json')) return console.log(JSON.stringify(statusData(repo), null, 2));
-  const tickets = statusTickets(repo, loadConfig(repo));
+  const cfg = loadConfig(repo), runs = runsOf(repo);
+  const tickets = statusTickets(repo, cfg);
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
@@ -507,6 +517,8 @@ function cmdStatus(args = []) {
     for (const { t, priority } of group) {
       console.log(`  ${t.fm.id}${TYPES.includes(t.fm.type) ? ` ${t.fm.type}` : ''}  P${priority === null ? '-' : typeof priority === 'object' ? JSON.stringify(priority) : priority}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
+      const killed = inHand(t) ? buildKilled(runs, t.fm.id) : null;
+      if (killed) console.log(`        ! Build stopped unexpectedly. ${resumeHint(cfg, killed)}`);
       if (s === 'blocked') {
         const q = contentLines(t.sections['blocked question']).join(' ');
         if (q) console.log(`        ? ${q}`);
