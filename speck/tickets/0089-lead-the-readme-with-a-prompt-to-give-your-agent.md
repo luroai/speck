@@ -37,6 +37,7 @@ The README's first step is a short prompt to copy into your coding agent, which 
 
 ## Notes
 - Checked 2026-10-10: `npx` assumes `--yes` when standard input isn't a terminal, as when an agent runs it, so the prompt doesn't need `-y` (npm 10 `npm exec` docs).
+- Self-check: no changes. Checked that `speck init` works in an empty folder that isn't a git repo yet, so the prompt's order (init, then the setup skill) holds for a new project too. The tag `v0.1.0` doesn't exist yet; the release (0092) creates it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

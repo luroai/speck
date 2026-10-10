@@ -18,21 +18,36 @@ Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremo
 
 > Status: v0.1, early. It works end to end on a local machine. Expect rough edges.
 
+## Get started
+
+Open [Claude Code](https://claude.com/claude-code) in the folder of the project you want to build, or in an empty folder for a new one, and paste this:
+
+```text
+Set up speck in this folder. If Node.js 20 or newer isn't installed, offer to
+install it first. Then run `npx github:luroai/speck#v0.1.0 init` and follow
+the speck-setup skill it installs. Ask me before changing anything on my
+machine or in git.
+```
+
+Your agent checks what's there, explains each choice in plain words and waits for your answer before it installs anything, makes a commit or changes a setting. When it's done, speck is ready to build your first ticket.
+
 ## Requirements
 
-- A builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Claude Code](https://claude.com/claude-code), [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Set it as `builder:` in `speck/config.yml`, so `speck doctor` checks the right tool. Claude Code is the default and the one most tested.
-- [Codex CLI](https://github.com/openai/codex) (default reviewer), or any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
-- Node.js 20+ and git
+- macOS or Linux
+- [Claude Code](https://claude.com/claude-code), or another builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Set it as `builder:` in `speck/config.yml`, so `speck doctor` checks the right tool. Claude Code is the default and the one most tested.
+- git
+- Node.js 20 or newer, which your agent can install for you
+- Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
 
-## Install
+## Without an agent
 
-In the folder of the project you want to build, run:
+To install speck yourself, run this in the folder of the project you want to build:
 
 ```bash
 npx github:luroai/speck init
 ```
 
-That's it. This one command:
+This one command:
 - sets up `speck/` (config, ideas and tickets);
 - adds the speck skills to `.claude/skills/` and `.agents/skills/`, so Claude Code, Codex, cptr and other agents all find them;
 - puts the `speck` command in `.speck/`;
