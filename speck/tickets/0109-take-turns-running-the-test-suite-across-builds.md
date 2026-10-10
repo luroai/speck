@@ -1,7 +1,7 @@
 ---
 id: "0109"
 title: "Take turns running the test suite across builds"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T21:55:36.531Z"
 ---
 # 0109 · Take turns running the test suite across builds
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Builds run in parallel, and each one runs the project's whole test suite several times: before changing anything, after building and when shipping. Speck's own suite opens about 15 headless browsers at once and uses about 1.9 GB. On 2026-10-10, five builds reached their tests at the same moment and the machine ran out of memory, which killed every build and `speck run`. A project with a heavy suite will hit the same wall.
@@ -46,9 +46,16 @@ Builds keep working in parallel, but take turns running the full test suite, as 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The turn records the speck wrapper's pid, while cmdTest starts the suite in a child shell through spawnSync.; F2 Stale recovery-file deletion is not atomic with its ownership check.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,981,738
+- Elapsed since build started: 33 min
+- Changed lines: 180 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - A turn is held by the speck process or the shell running the tests. If that shell is killed on its own while the tests it started keep running, the turn is freed early.
