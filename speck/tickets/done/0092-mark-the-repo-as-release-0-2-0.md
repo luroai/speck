@@ -1,7 +1,7 @@
 ---
 id: "0092"
 title: "Mark the repo as release 0.2.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0086", "0087", "0088", "0089", "0090", "0091"]                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T15:41:46.479Z"
+finished: "2026-10-10T15:46:35.132Z"
 
 ---
 # 0092 · Mark the repo as release 0.2.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The repo still calls itself the private 0.1 build: `package.json` says 0.1.0, the README says "v0.1, early", and there's no record of what's changed. A first public release needs a version number people can install and a plain list of what's in it.
