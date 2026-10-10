@@ -39,6 +39,8 @@ Changing a setting today means editing `speck/config.yml` by hand. An agent sett
 
 ## Notes
 - Used by the setup skill (0088) for every choice the user makes.
+- Self-check: added a test that a value holding a newline is written on one line and reads back exactly.
+- Three tests in luro-0082 and private-words-0084 already fail on main: they read speck/ideas/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md, which was filed into speck/ideas/done/. Not this ticket's change.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

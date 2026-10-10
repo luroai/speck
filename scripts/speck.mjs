@@ -11,6 +11,7 @@ import { cmdPack } from './pack.mjs';
 import { cmdClose } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
 import { cmdShip } from './ship.mjs';
+import { cmdConfig } from './config.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows } from './run.mjs';
 
@@ -489,6 +490,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first; priority "" clears it)
+  speck config set <key> <value>      change one setting in speck/config.yml, checked first (nested: commands.test)
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
@@ -510,7 +512,7 @@ const HELP = `speck: small tickets, independent review, you merge.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, new: cmdNew, lint: cmdLint, set: cmdSet, config: cmdConfig, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, ship: cmdShip };
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {

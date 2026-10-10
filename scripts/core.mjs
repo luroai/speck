@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const TEMPLATES = path.join(ROOT, 'templates');
 export const STATUSES = ['draft', 'ready', 'building', 'reviewing', 'blocked', 'approved', 'done', 'cancelled'];
-const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+export const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 const LOCKFILES = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|poetry\.lock|uv\.lock|Pipfile\.lock|Cargo\.lock|Gemfile\.lock|go\.sum|composer\.lock)$/;
 const TESTFILES = /(^|\/)(test|tests|__tests__|spec)\/|\.(test|spec)\.[a-z]+$|_test\.[a-z]+$|(^|\/)test_[^/]+$/;
 export const RISKY = /(auth|login|password|session|token|secret|\.env|payment|billing|stripe|migration|migrate|schema\.sql|terraform|\.tf$|dockerfile|docker-compose|\.github\/workflows|infra\/|deploy)/i;
@@ -64,7 +64,7 @@ export function parseYaml(text) {
   return root;
 }
 
-function stripComment(line) {
+export function stripComment(line) {
   let inS = false, inD = false;
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
