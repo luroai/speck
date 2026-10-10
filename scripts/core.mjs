@@ -307,7 +307,8 @@ function homePathWarnings(text) {
   home = (home || '').replace(/[\\/]+$/, '');
   if (!home || !path.isAbsolute(home)) return [];
   const esc = home.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(`(?<![\\w.-])${esc}(?![\\w-]|\\.[\\w-])`);
+  const name = '[\\p{L}\\p{N}\\p{M}_-]'; // a character that could continue a folder name, in any script
+  const re = new RegExp(`(?<!${name}|\\.)${esc}(?!${name}|\\.${name})`, 'u');
   return text.split('\n').flatMap((l, i) => re.test(l)
     ? [`Line ${i + 1} contains your home folder's path (${home}). Write it as a \`~/\` path instead, so it doesn't publish your username.`]
     : []);

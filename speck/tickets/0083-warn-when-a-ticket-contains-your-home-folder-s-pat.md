@@ -1,7 +1,7 @@
 ---
 id: "0083"
 title: "Warn when a ticket contains your home folder's path"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:55:01.787Z"
 ---
 # 0083 · Warn when a ticket contains your home folder's path
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Tickets are committed and often published, and an absolute path from the writer's machine can slip into one. That path usually contains their username. It happened in 0053, and nobody noticed until much later.
@@ -51,3 +51,70 @@ Tickets are committed and often published, and an absolute path from the writer'
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b222442dce590523b08bbe76220aeee06200ea6e",
+    "thread_id": "01a125e6-418e-7cf0-86a4-298c9d1277a8",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 317840,
+      "cached_input_tokens": 234112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1177,
+      "reasoning_output_tokens": 49
+    },
+    "saved_at": "2026-10-10T13:00:52.833Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/core.mjs homePathWarnings supplies line numbers and ~/ suggestions; cmdLint prints ! warnings. test/lint-0083.test.mjs exercises descendants, standalone paths, punctuation, multiple lines and literal regex characters."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The ASCII \\w boundary in homePathWarnings incorrectly matches /home/anné/x when home is /home/ann, reproduced with an in-memory call to lintTicket. Existing AC2 tests cover ASCII suffixes only."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdLint fails only for errors, and checkSetTicket checks only errors before ready. The AC3 CLI test exercises successful lint and set status ready with a home-path warning."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "homePathWarnings catches homedir failures and skips empty or root paths. AC4 tests exercise root and empty homes; an independent in-memory check with os.homedir throwing returned no home warning."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "homePathWarnings treats non-ASCII letters as delimiters. With home /home/ann, a ticket containing /home/anné/x gets a warning even though it refers to a different folder, violating AC2.",
+        "suggested_fix": "Use boundaries that recognise Unicode folder-name continuations and add a regression test for /home/anné with home /home/ann.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The warning includes useful line numbers and replacement advice, and does not block lint or readiness. One matching bug needs fixing: other folder names containing non-ASCII letters can trigger false warnings. The change otherwise stays within scope."
+  }
+}
+```
+
+</details>

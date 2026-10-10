@@ -125,3 +125,10 @@ test('0083 AC1, AC2: a home folder with regex characters in it is matched litera
   assert.equal(w.length, 1, out.stdout);
   assert.match(w[0], new RegExp(`[Ll]ine ${r.lineOf('Mine:')}\\b`));
 });
+
+test('0083 AC2: a path that continues the home folder name with a non-ASCII letter gets no warning', () => {
+  const r = repo();
+  r.notes(`- Someone else: ${r.fakeHome}é/x and ${r.fakeHome}名 and /mnté${r.fakeHome}/x`);
+  const out = r.run(['lint', '1']);
+  assert.deepEqual(homeWarnings(out.stdout), [], out.stdout);
+});
