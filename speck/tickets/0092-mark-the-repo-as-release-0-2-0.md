@@ -38,6 +38,8 @@ The repo describes itself as release 0.2.0, ready for the maintainer to tag `v0.
 
 ## Notes
 - Decided 2026-10-10: version 0.2.0, distributed as a GitHub tag only.
+- The tests check the changelog's shape (a 0.2.0 section, a few headings, items under them). Whether each line is true and plain English is for the reviewer to check by reading it against the done tickets and the code.
+- Self-check: no changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

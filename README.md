@@ -16,7 +16,7 @@ idea → ticket → [you: Ready for Dev] → agent builds → second agent revie
 
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
-> Status: v0.1, early. It works end to end on a local machine. Expect rough edges.
+> Status: 0.2.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -24,7 +24,7 @@ Open [Claude Code](https://claude.com/claude-code) in the folder of the project 
 
 ```text
 Set up speck in this folder. If Node.js 20 or newer isn't installed, offer to
-install it first. Then run `npx github:luroai/speck#v0.1.0 init` and follow
+install it first. Then run `npx github:luroai/speck#v0.2.0 init` and follow
 the speck-setup skill it installs. Ask me before changing anything on my
 machine or in git.
 ```
