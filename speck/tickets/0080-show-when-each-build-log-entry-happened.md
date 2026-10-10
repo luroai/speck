@@ -1,7 +1,7 @@
 ---
 id: "0080"
 title: "Show when each build log entry happened"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:12:28.941Z"
 ---
 # 0080 · Show when each build log entry happened
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 The panel's build log shows what a build did but not when. Reading it, you can't tell whether a step took seconds or twenty minutes, or how long ago the build last did anything.
@@ -47,7 +47,70 @@ Each entry in the panel's build log shows the time it happened.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 232,607
+- Elapsed since build started: 6 min
+- Changed lines: 22 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "465867c39b0260bfefc1ca2a92305729487518f6",
+    "thread_id": "01a125bf-cb34-7f00-ae46-6c5b259bdfcb",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 231680,
+      "cached_input_tokens": 148864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 927,
+      "reasoning_output_tokens": 25
+    },
+    "saved_at": "2026-10-10T12:18:41.194Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs readableLog prefixes agent text, tool calls and failed tool results using local Date getters. scripts/panel.mjs panelLog enables times. AC1 unit tests and the real panel endpoint test exercise this, including midnight rollover; independent read-only formatter assertions passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "readableLog prefixes each text block only once and leaves result and plain lines unchanged. AC2 tests exercise multiline text, blank lines, plain output, final results, Build ended and duplicate-result suppression."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "readableLog clock checks timestamp type, date prefix and successful parsing, otherwise returning an empty prefix. AC3 tests exercise missing and unreadable values alongside valid surrounding events; independent malformed-timestamp assertions passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Only panelLog opts into times. scripts/speck.mjs buildExit and scripts/run.mjs log-tail reporting retain default formatting. AC4 tests exercise the real state endpoint and speck run output, without mocking the formatter."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel’s build log now shows local times on entry starts, while continuation lines and other output retain their existing format. All four criteria have meaningful test coverage. Independent formatter checks passed; the supplied full-suite report shows 632 passing tests. No blocking issues or unrelated changes found."
+  }
+}
+```
+
+</details>
