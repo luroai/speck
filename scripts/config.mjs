@@ -15,7 +15,7 @@ const KINDS = Object.assign(Object.create(null), {
   allow_same_model_review: 'flag', auto_ship: 'flag', worktrees: 'flag',
   reviewer_effort: 'effort', auto_ship_risk: 'risks',
   max_parallel_builds: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
-  'limits.max_review_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
+  'limits.max_review_rounds': 'count', 'limits.max_merge_rounds': 'count', 'limits.escalate_after_repeat_disputes': 'count', 'limits.max_ticket_body_lines': 'count',
 });
 
 // The value as speck will read it, or a SpeckError saying what's allowed.

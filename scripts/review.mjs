@@ -13,7 +13,7 @@ export function stripRounds(text) {
 }
 
 function roundBlock(rec) {
-  return `<details><summary>Round ${rec.meta.round} · ${rec.meta.reviewer} · ${rec.verdict.verdict}</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>`;
+  return `<details><summary>Round ${rec.meta.round} · ${rec.meta.reviewer} · ${rec.verdict.verdict}${rec.meta.merge ? ' · merge round' : ''}</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>`;
 }
 
 // Adds rounds to the end of the Review rounds section, creating it at the end of the ticket if needed. Nothing else changes.
@@ -97,6 +97,24 @@ export function validateVerdict(v) {
   return v;
 }
 
+// A merge round re-reviews a merge of the base branch made after an approval: the round after an approved one when the
+// branch has merged the base branch in since, and each round after that until one approves. Merge rounds don't count
+// towards max_review_rounds. `merged` says whether the branch merged the base branch in since the last round.
+export function isMergeRound(prior, merged) {
+  const last = prior[prior.length - 1];
+  if (!last) return false;
+  return last.verdict.verdict === 'approve' ? merged : last.meta?.merge === true;
+}
+
+// The merge rounds in a row at the end of `all` since the last approval before them: the ones max_merge_rounds caps.
+export function mergeRun(all) {
+  let n = 0;
+  for (let i = all.length - 1; i >= 0 && all[i].meta?.merge && !(n && all[i].verdict.verdict === 'approve'); i--) n++;
+  return n;
+}
+
+export const ordinaryRounds = all => all.filter(r => !r.meta?.merge).length;
+
 // Decide what the builder must do next, given all rounds so far.
 export function nextAction(all, cfg) {
   const last = all[all.length - 1];
@@ -110,7 +128,10 @@ export function nextAction(all, cfg) {
     const repeated = [...recent[0]].filter(id => recent.every(s => s.has(id)));
     if (repeated.length) return { action: 'block', reason: `Builder and reviewer disagree on ${repeated.join(', ')} for ${n} rounds in a row. Needs your decision.` };
   }
-  if (all.length >= cfg.limits.max_review_rounds) return { action: 'block', reason: `No approval after ${all.length} review rounds.` };
+  if (last.meta?.merge) {
+    const run = mergeRun(all);
+    if (run >= cfg.limits.max_merge_rounds) return { action: 'block', reason: `No approval after ${run} merge rounds in a row re-reviewing the merge of ${cfg.base_branch || 'the base branch'} (limits.max_merge_rounds).` };
+  } else if (ordinaryRounds(all) >= cfg.limits.max_review_rounds) return { action: 'block', reason: `No approval after ${ordinaryRounds(all)} review rounds.` };
   return { action: 'fix' };
 }
 
@@ -189,14 +210,18 @@ function reviewSetup(repo, id, opts) {
   const ticket = findTicket(repo, id);
   const prior = rounds(repo, id);
   const round = prior.length + 1;
-  if (round > cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
+  const { base, sinceSha, merged } = reviewSince(repo, cfg, prior);
+  const merge = isMergeRound(prior, merged);
+  // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
+  const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
+  if (merge && used >= cfg.limits.max_merge_rounds) throw new SpeckError(`Max merge rounds (${cfg.limits.max_merge_rounds}) reached. Block the ticket.`, 3);
+  if (!merge && ordinaryRounds(prior) >= cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
   requireCommitted(repo, ticket, 'Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
-  const { base, sinceSha, merged } = reviewSince(repo, cfg, prior);
   const diff = reviewDiff(repo, sinceSha);
   const tests = opts.tests ? fs.readFileSync(opts.tests, 'utf8') : '(no test output provided)';
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
-  return { cfg, ticket, prior, round, head, base, sinceSha, merged, diff, tests, response };
+  return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, diff, tests, response };
 }
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
@@ -210,7 +235,7 @@ function reviewRound(repo, id, opts, run) {
 }
 
 function runCodexReview(repo, id, s) {
-  const { cfg, ticket, prior, round, head, sinceSha, merged, diff, tests, response } = s;
+  const { cfg, ticket, prior, round, head, sinceSha, merged, merge, diff, tests, response } = s;
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });
 
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
@@ -232,7 +257,7 @@ function runCodexReview(repo, id, s) {
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage });
 }
 
 function printRound(rec, cfg, all) {
@@ -285,7 +310,10 @@ export function cmdRecord(args) {
   // A resumed reviewer keeps the settings it started with, saved by `speck reviewer-settings`.
   const saved = path.join(cacheDir(repo, id), 'reviewer-settings.json');
   const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));
-  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim() });
+  const prior = rounds(repo, id);
+  // Whether the base branch was merged in only matters after an approval, so it's only looked up then.
+  const merge = isMergeRound(prior, prior.at(-1)?.verdict.verdict === 'approve' && reviewSince(repo, cfg, prior).merged);
+  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}) });
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }

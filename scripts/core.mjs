@@ -92,7 +92,7 @@ function scalar(v) {
 export function loadConfig(repo) {
   const cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
   const limits = {
-    max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3,
+    max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3, max_merge_rounds: 2,
     escalate_after_repeat_disputes: 2, max_ticket_body_lines: 40, ...(cfg.limits || {}),
   };
   return { base_branch: 'main', branch_prefix: 'speck/', builder: 'claude', reviewer: 'codex',
