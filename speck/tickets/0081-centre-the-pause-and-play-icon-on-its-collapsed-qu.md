@@ -51,6 +51,8 @@ The pause and play icon sits vertically centred on its collapsed queue row.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (Delivery log only, no inbox note): the icon's offset in `.q .toggle-build` hard-codes the progress bar's height (8px margin, 3px border, 5px padding, 15px label). It is a known limit rather than a defect: the 0081 browser tests fail if the bar's spacing changes without it.
+- Round 1 moved a refused pause or play's reason from between the top row and the progress bar to under the bar, so the icon stays centred; the 0071 tests were updated to find it there.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -118,6 +120,75 @@ The pause and play icon sits vertically centred on its collapsed queue row.
     ],
     "escalation_question": "",
     "summary": "The icons are centred in normal rows, stay put when opened, and remain clickable. Rows without icons retain their layout. A refused pause or play request breaks the centring, so that error case needs fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d377ff208527f71308ee77cde87181386b649abc",
+    "thread_id": "01a125b2-d095-71e1-ad0e-05c8c87bed90",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 498537,
+      "cached_input_tokens": 361216,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1432,
+      "reasoning_output_tokens": 90
+    },
+    "saved_at": "2026-10-10T12:08:34.783Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html positions .toggle-build relative to .top; queueItem now places refusal messages after .stages. test/panel-0081.test.mjs AC1 and the refused-pause browser test measure centring within 1px; both pass in the supplied run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "0081 AC2 checks the play icon and its measured midpoint. The new refusal browser test also checks a refused play request. Both pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "0081 AC3 measures both icons before and after opening, including continued centring. The new refusal test verifies their positions remain unchanged when opened with a multiline error. Both pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "0081 AC4 verifies real browser clicks send pause/play requests, preserve collapsed and open states, and hit a button at least 16 × 14px. toggleIcon retains stopPropagation. The test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "0081 AC5 compares title, tags, counter and progress-bar geometry for rows without icons against commit 9ff5e4c. It passes without skipping in the supplied run."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Refusal messages previously moved the progress bar down without moving the icon, breaking centring. Resolved: queueItem now appends the message below the progress bar, with browser regression coverage for refused pause and play requests.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The pause and play icons are centred and stay in place when rows open, including after refused requests. Clicking still works, and rows without icons retain their layout. The earlier issue is fixed; all 618 supplied tests pass with none skipped. Approved."
   }
 }
 ```
