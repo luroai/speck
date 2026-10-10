@@ -212,7 +212,9 @@ function reviewSetup(repo, id, opts) {
   const round = prior.length + 1;
   const { base, sinceSha, merged } = reviewSince(repo, cfg, prior);
   const merge = isMergeRound(prior, merged);
-  if (merge && mergeRun(prior) >= cfg.limits.max_merge_rounds) throw new SpeckError(`Max merge rounds (${cfg.limits.max_merge_rounds}) reached. Block the ticket.`, 3);
+  // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
+  const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
+  if (merge && used >= cfg.limits.max_merge_rounds) throw new SpeckError(`Max merge rounds (${cfg.limits.max_merge_rounds}) reached. Block the ticket.`, 3);
   if (!merge && ordinaryRounds(prior) >= cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
   requireCommitted(repo, ticket, 'Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();

@@ -152,6 +152,25 @@ test('0097 AC2: speck review refuses another merge round once max_merge_rounds i
   assert.equal(r.saved().length, 3);
 });
 
+test('0097 AC2 (F1): a new merge after a merge approved in its last allowed round gets a merge round', () => {
+  const r = mergeRepo();
+  r.mergeMain();
+  assert.equal(r.record('changes_requested').status, 10);
+  r.work();
+  assert.equal(r.record('approve').status, 0, 'the merge is approved in its second, last allowed round');
+  gIn(r.wt, 'commit', '-qam', 'rounds');
+  fs.writeFileSync(path.join(r.dir, 'shared.txt'), 'main side again\n');
+  r.g('commit', '-qam', 'main moves on again');
+  gIn(r.wt, 'merge', '-q', 'main');
+  fs.writeFileSync(path.join(r.wt, 'shared.txt'), 'feature\nmain side again\n');
+  gIn(r.wt, 'add', 'shared.txt');
+  assert.equal(gIn(r.wt, 'commit', '-q', '--no-edit').status, 0);
+  const res = spawnReview(r.wt, 'approve');
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  assert.equal(r.saved()[3].meta.merge, true);
+  assert.equal(r.next(), 'ship');
+});
+
 test('0097 AC3: Review rounds, the review log and the review pack mark merge rounds', () => {
   const r = mergeRepo();
   r.mergeMain();
