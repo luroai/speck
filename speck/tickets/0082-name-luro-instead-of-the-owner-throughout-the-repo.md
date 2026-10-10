@@ -42,7 +42,7 @@ The repo's files point to `luroai/speck` and refer to Luro or "the maintainer", 
 - This ticket's own file names the old handle and name so the reviewer can check AC2. The later history rewrite replaces them in every file and commit, this one included.
 - Known places on 2026-10-10: `README.md`, `docs/brief.md` (install row, success measure), `docs/HANDOFF.md`, `docs/panel-mockup.html`, the install message in `scripts/install.mjs`, `speck/ideas/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md` (pilot line), `speck/tickets/done/0053-…` (example path).
 - Assumption: deleting `docs/HANDOFF.md` rather than editing it (AC3).
-- Unverified: `npx github:luroai/speck init` works only once the repo is at `luroai/speck`. The owner moves it, so the builder can't check this.
+- Checked 2026-10-10: `npx github:luroai/speck init` uses npm's `github:<user>/<repo>` spec, and `git ls-remote https://github.com/luroai/speck` answers, so the repo is already at `luroai/speck`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
