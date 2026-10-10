@@ -1,7 +1,7 @@
 ---
 id: "0097"
 title: "Keep merge-only review rounds out of the round limit"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-a-shipping-agent-that-heals-the-build.md"  
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T18:38:16.364Z"
+finished: "2026-10-10T21:55:21.154Z"
 
 ---
 # 0097 · Keep merge-only review rounds out of the round limit
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When an approved ticket has to merge the base branch in before it can ship, the reviewer checks the merge in another round, and that round counts towards `max_review_rounds`. A ticket approved in its last allowed round then can't be re-reviewed at all, as 0086 found on 2026-10-10, and someone has to raise the limit by hand.
