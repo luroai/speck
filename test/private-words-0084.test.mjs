@@ -96,3 +96,14 @@ test('AC4: 0082\'s test file no longer holds the words, whole or in parts', () =
   const parts = literals.filter(s => words.some(w => w.includes(s)));
   assert.deepEqual(parts, [], 'no string in the file is a piece of a word');
 });
+
+test('AC1: a list that exists but can\'t be read stops the check with a plain message naming it', () => {
+  const h = home();
+  fs.mkdirSync(path.join(h, '.config', 'speck', 'private-words'), { recursive: true });
+  assert.throws(() => readPrivateWords(h), e => /^Can't read .*private-words \(EISDIR\)\. Make it a readable file/.test(e.message));
+});
+
+test('AC2: a git grep error fails the check rather than passing it', () => {
+  const notRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0084-norepo-'));
+  assert.throws(() => filesNaming(['alpha'], notRepo), /git grep failed/);
+});
