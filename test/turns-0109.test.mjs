@@ -55,7 +55,7 @@ function speckAsync(cwd, ...a) {
 function holdTurn(main, pid, n = 0) {
   const dir = path.join(main, 'speck', '.cache', 'tests');
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, `slot-${n}.lock`), JSON.stringify({ pid, cwd: '/somewhere/else' }));
+  fs.writeFileSync(path.join(dir, `slot-${n}.g0.lock`), JSON.stringify({ pid, cwd: '/somewhere/else' }));
 }
 
 // A process that runs until killed, and the pid of one that has already ended.
@@ -180,7 +180,7 @@ test('0109 AC4: a turn held by a process that has died is freed', () => {
 test('0109 AC4: a turn file that can\'t be read as one is freed too', () => {
   const { dir } = testRepo({ cmd: 'echo ran' });
   holdTurn(dir, 0);
-  fs.writeFileSync(path.join(dir, 'speck', '.cache', 'tests', 'slot-0.lock'), 'not json');
+  fs.writeFileSync(path.join(dir, 'speck', '.cache', 'tests', 'slot-0.g0.lock'), 'not json');
   const res = speck(dir, 'test');
   assert.equal(res.status, 0, res.stderr);
   assert.doesNotMatch(res.stdout, WAITING);
@@ -199,6 +199,37 @@ test('0109 AC4: a turn whose process dies while another waits is handed on', asy
     assert.equal(res.status, 0, res.stderr);
     assert.match(res.stdout, /^ran$/m);
   } finally { holder.kill(); }
+});
+
+test('0109 AC4: a speck test killed outright keeps its turn while the tests it started are still running', async () => {
+  const log = path.join(fs.realpathSync(os.tmpdir()), 'log.txt');
+  const { dir, wt } = testRepo({ cmd: `echo start >> ${log}; sleep 2; echo end >> ${log}` });
+  const first = speckAsync(dir, 'test');
+  await until(() => readLog(log).length, 'the first run started');
+  const exited = new Promise(r => first.child.once('exit', r));
+  first.child.kill('SIGKILL'); // the tests it started carry on without it
+  await exited; // not first.done: the orphaned tests hold its output open until they end
+  const b = await speckAsync(wt, 'test').done;
+  assert.equal(b.status, 0, b.stderr);
+  assert.match(b.stdout, WAITING, 'the second run waited for the orphaned tests');
+  assert.deepEqual(readLog(log), ['start', 'end', 'start', 'end'], 'the runs never overlapped');
+});
+
+test('0109 AC4: many runs taking over a dead turn at once never overlap', async () => {
+  const marks = fs.mkdtempSync(path.join(os.tmpdir(), 'marks-'));
+  // mkdir fails if another run is inside the command at the same time.
+  const cmd = `mkdir ${marks}/running || exit 7; sleep 0.2; rmdir ${marks}/running`;
+  const { dir, wt } = testRepo({ cmd });
+  for (let round = 0; round < 2; round++) {
+    const tests = path.join(dir, 'speck', '.cache', 'tests');
+    if (fs.existsSync(tests)) for (const f of fs.readdirSync(tests)) fs.rmSync(path.join(tests, f));
+    holdTurn(dir, deadPid());
+    holdTurn(dir, deadPid());
+    fs.renameSync(path.join(tests, 'slot-0.g0.lock'), path.join(tests, 'slot-0.g3.lock'));
+    holdTurn(dir, deadPid());
+    const runs = await Promise.all(Array.from({ length: 8 }, (_, i) => speckAsync(i % 2 ? wt : dir, 'test').done));
+    for (const r of runs) assert.equal(r.status, 0, `a run overlapped another: ${r.stdout}${r.stderr}`);
+  }
 });
 
 test('0109 AC5: max_parallel_tests is in the config template', () => {

@@ -31,54 +31,77 @@ function turnsDir(repo) {
 
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
 const parse = text => { try { const v = JSON.parse(text); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
-// A turn file whose process is alive. One that can't be read as a turn, or whose process has gone, is free to take.
-const busy = text => { const { pid } = parse(text); return Number.isInteger(pid) && pid > 0 && pidAlive(pid); };
+const alive = pid => Number.isInteger(pid) && pid > 0 && pidAlive(pid);
+const runFile = (dir, run) => (typeof run === 'string' && /^[0-9a-f-]+$/.test(run) ? path.join(dir, `run.${run}.pid`) : null);
 
-// Takes turn `n` if it's free: true when it's ours. A turn is the file slot-<n>.lock, holding the pid and folder of the
-// process that took it. Our file is made complete and then linked into place, which is atomic, so nobody sees half of
-// it. A turn whose process has gone is taken over, but only while holding slot-<n>.recover, so two waiters can't both
-// take over the same one.
-function takeTurn(dir, n, mine) {
-  const lock = path.join(dir, `slot-${n}.lock`), recover = path.join(dir, `slot-${n}.recover`);
-  const link = to => { try { fs.linkSync(mine, to); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
-  if (link(lock)) return true;
-  const held = read(lock);
-  if (held === null) return link(lock); // freed just now
-  if (busy(held)) return false;
-  if (!link(recover)) {
-    // A waiter that died while taking over leaves its recovery file behind: clear it so the next try can go ahead.
-    const other = read(recover);
-    if (other !== null && !busy(other) && read(recover) === other) fs.rmSync(recover, { force: true });
-    return false;
-  }
-  try {
-    if (read(lock) === held) fs.rmSync(lock, { force: true });
-    return link(lock);
-  } finally { fs.rmSync(recover, { force: true }); }
+// A claim on a turn is held while the speck process that made it is alive, or the shell running its tests is: that
+// shell writes its pid to run.<run>.pid, so tests left running by a speck process that was killed still hold it. A
+// claim that can't be read as one, or whose processes have both gone, is free to take over.
+function busy(dir, text) {
+  const { pid, run } = parse(text);
+  if (alive(pid)) return true;
+  const file = runFile(dir, run);
+  return !!file && alive(Number(read(file)));
 }
 
-// The turns being held, for the message saying what a run waits for.
+// The claims on turn `n`, oldest first. Each is a file slot-<n>.g<k>.lock, and the turn belongs to the one with the
+// highest k.
+function claims(dir, n) {
+  const re = new RegExp(`^slot-${n}\\.g(\\d+)\\.lock$`);
+  return fs.readdirSync(dir).flatMap(f => { const m = f.match(re); return m ? [{ k: Number(m[1]), file: path.join(dir, f) }] : []; })
+    .sort((a, b) => a.k - b.k);
+}
+
+// Claims turn `n` if it's free, returning the claim's file, or null. Our claim file is made complete and then linked
+// into place as the next claim, which is atomic, so only one process gets each number and nobody sees half a file.
+// Nothing ever deletes a claim that's in use: a turn whose processes have gone is taken over by claiming the next
+// number. A process that claimed from a listing already out of date finds a later claim afterwards and withdraws.
+function takeTurn(dir, n, mine) {
+  const all = claims(dir, n);
+  const top = all.at(-1);
+  if (top) { const text = read(top.file); if (text !== null && busy(dir, text)) return null; }
+  const k = top ? top.k + 1 : 0;
+  const file = path.join(dir, `slot-${n}.g${k}.lock`);
+  try { fs.linkSync(mine, file); } catch (e) { if (e.code === 'EEXIST') return null; throw e; }
+  if (claims(dir, n).some(c => c.k > k)) { fs.rmSync(file, { force: true }); return null; }
+  // Older claims are of no use now: clear those whose processes have gone.
+  for (const c of all) {
+    const text = read(c.file);
+    if (text === null || busy(dir, text)) continue;
+    fs.rmSync(c.file, { force: true });
+    const run = runFile(dir, parse(text).run);
+    if (run) fs.rmSync(run, { force: true });
+  }
+  return file;
+}
+
+// The runs holding turns, for the message saying what a run waits for.
 function holders(dir, max) {
   const out = [];
   for (let n = 0; n < max; n++) {
-    const text = read(path.join(dir, `slot-${n}.lock`));
-    if (text !== null && busy(text)) { const { pid, cwd } = parse(text); out.push(`process ${pid}${typeof cwd === 'string' ? ` in ${cwd}` : ''}`); }
+    const top = claims(dir, n).at(-1);
+    const text = top && read(top.file);
+    if (text && busy(dir, text)) { const { pid, cwd } = parse(text); out.push(`process ${pid}${typeof cwd === 'string' ? ` in ${cwd}` : ''}`); }
   }
   return out;
 }
 
-// Runs fn once this process has a turn, waiting for one if max_parallel_tests runs are already going, and frees the
-// turn afterwards. A turn left by a process that was killed is freed when someone next needs it.
-export function withTestTurn(repo, cfg, fn) {
+// Runs the test command `cmd` in `repo` once this process has a turn, waiting for one if max_parallel_tests runs are
+// already going, and frees the turn afterwards. A turn left by a run that was killed is freed when someone next needs
+// it. onStart runs once the turn is ours. Returns spawnSync's result.
+export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}) {
   const max = maxParallelTests(cfg);
   const dir = turnsDir(repo);
-  const text = JSON.stringify({ pid: process.pid, cwd: repo });
-  const mine = path.join(dir, `turn.${process.pid}.${crypto.randomUUID()}.tmp`);
+  const run = crypto.randomUUID();
+  const text = JSON.stringify({ pid: process.pid, cwd: repo, run });
+  // Files left by speck processes killed while waiting.
+  for (const f of fs.readdirSync(dir)) { const m = f.match(/^turn\.(\d+)\..*\.tmp$/); if (m && !alive(Number(m[1]))) fs.rmSync(path.join(dir, f), { force: true }); }
+  const mine = path.join(dir, `turn.${process.pid}.${run}.tmp`);
   fs.writeFileSync(mine, text);
   let lock = null, said = false;
   try {
     for (;;) {
-      for (let n = 0; n < max && !lock; n++) if (takeTurn(dir, n, mine)) lock = path.join(dir, `slot-${n}.lock`);
+      for (let n = 0; n < max && !lock; n++) lock = takeTurn(dir, n, mine);
       if (lock) break;
       if (!said) {
         const going = holders(dir, max);
@@ -88,7 +111,15 @@ export function withTestTurn(repo, cfg, fn) {
       sleep(POLL_MS);
     }
   } finally { fs.rmSync(mine, { force: true }); }
-  try { return fn(); } finally { if (read(lock) === text) fs.rmSync(lock, { force: true }); }
+  const pids = runFile(dir, run);
+  try {
+    onStart();
+    // The shell records its pid, then becomes the test command's shell, as `sh -c <cmd>` would run it.
+    return sh('sh', ['-c', 'printf %s "$$" > "$1" && exec sh -c "$2"', 'sh', pids, cmd], { cwd: repo, stdio: 'inherit' });
+  } finally {
+    if (read(lock) === text) fs.rmSync(lock, { force: true });
+    fs.rmSync(pids, { force: true });
+  }
 }
 
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code.
@@ -98,6 +129,6 @@ export function cmdTest(args) {
   const cfg = loadConfig(repo);
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set. Set commands.test in speck/config.yml (for example `speck config set commands.test "npm test"`), then run this again.');
-  const r = withTestTurn(repo, cfg, () => sh('sh', ['-c', cmd], { cwd: repo, stdio: 'inherit' }));
+  const r = runTestsInTurn(repo, cfg, cmd);
   if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
 }
