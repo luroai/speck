@@ -1,7 +1,7 @@
 ---
 id: "0098"
 title: "Report what merging the base branch would conflict on"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-10-a-shipping-agent-that-heals-the-build.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-10T18:38:13.481Z"
 
 ---
 # 0098 · Report what merging the base branch would conflict on
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 To decide whether a conflict is safe to resolve without another review, the shipping agent needs to know what kind of conflict it is. Working that out by reading conflict markers is slow, and agents would each do it differently.
