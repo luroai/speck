@@ -43,6 +43,8 @@ The repo's files point to `luroai/speck` and refer to Luro or "the maintainer", 
 - Known places on 2026-10-10: `README.md`, `docs/brief.md` (install row, success measure), `docs/HANDOFF.md`, `docs/panel-mockup.html`, the install message in `scripts/install.mjs`, `speck/ideas/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md` (pilot line), `speck/tickets/done/0053-…` (example path).
 - Assumption: deleting `docs/HANDOFF.md` rather than editing it (AC3).
 - Checked 2026-10-10: `npx github:luroai/speck init` uses npm's `github:<user>/<repo>` spec, and `git ls-remote https://github.com/luroai/speck` answers, so the repo is already at `luroai/speck`.
+- `test/product-0068.test.mjs` listed `docs/HANDOFF.md` among the docs it checks for `product.md` mentions. With the file deleted (AC3) it's dropped from that list; the check on every other file is unchanged.
+- Self-check: the AC2 test first split the old handle in two, which still contained the name, so the test file failed its own check; it now splits it further. Also checked that no tracked file has the surname or email address, and that `package.json` has no author or repository field to update.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

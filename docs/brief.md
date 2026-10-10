@@ -184,7 +184,7 @@ Out of scope for v0.1:
 
 - speck builds itself: from ticket 0002 onwards, every change goes through speck.
 - At least 20 tickets shipped through speck, with published actuals (median time, cost, review rounds, share blocked).
-- Someone other than Luro installs it and ships a ticket.
+- Someone other than the maintainer installs it and ships a ticket.
 
 ## Open questions
 
