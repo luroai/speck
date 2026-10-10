@@ -1,7 +1,7 @@
 ---
 id: "0108"
 title: "Build only tickets whose ready status is committed"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T19:51:22.377Z"
 ---
 # 0108 · Build only tickets whose ready status is committed
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck set <id> status ready` doesn't commit the ticket, but `speck run` launches any ticket marked ready, committed or not. `speck start` then refuses the uncommitted ticket, so on 2026-10-10 five builds (0095, 0097–0100) each committed their own ticket on `main` in the shared checkout to get past it, with five different commit messages. Builders changing `main` to get past a refusal is exactly the improvising speck must stop.
@@ -47,9 +47,14 @@ A ticket is built only once its ready status is committed, setting a ticket read
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 298,114
+- Elapsed since build started: 14 min
+- Changed lines: 68 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - To the inbox: speck/ideas/2026-10-10-put-a-stopped-build-back-in-the-queue.md (a stopped build can't be set ready again with `speck set` now that it commits only on the base branch). Checked against speck/ideas/2026-10-09-resume-a-build-stopped-before-it-started.md and ticket 0110, which cover other cases.
