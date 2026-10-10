@@ -1,7 +1,7 @@
 ---
 id: "0086"
 title: Report the facts setup needs as JSON                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T13:56:49.065Z"
+finished: "2026-10-10T15:19:18.854Z"
 
 ---
 # 0086 · Report the facts setup needs as JSON
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 To set speck up through a conversation, the agent needs to know what's already in place: Node, git, the repo's state, which coding agents are installed and how the project runs its tests. Today it would have to work each of these out with its own commands, differently every time, and speck's own checks only print ✓ and ✗ for a person to read.
