@@ -41,6 +41,7 @@ A `speck-setup` skill lets your agent take you through setting speck up in a con
 - The skill is the conversation; `speck detect` and `speck config set` are the facts and the writes. The CLI never asks questions.
 - Decided 2026-10-10: assume Claude Code is installed; support new and existing projects; macOS and Linux only.
 - A skill can't be fully tested automatically. Tests should cover AC1 and that the skill names each step; the reviewer checks the rest by reading it.
+- Self-check: an existing project with code but no commits had no first commit, so speck couldn't branch from it. The skill now asks for one (checking `.gitignore` first) before the base branch is set, with a test.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
