@@ -124,3 +124,72 @@ To set speck up through a conversation, the agent needs to know what's already i
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d1f0086e4d9aa8d3c5b42192926f753ecc3dc77f",
+    "thread_id": "01a12623-27ec-77e2-9e0c-016ab1eae25b",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 803556,
+      "cached_input_tokens": 650624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1794,
+      "reasoning_output_tokens": 138
+    },
+    "saved_at": "2026-10-10T14:10:10.213Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cmdDetect and gitFacts remain unchanged. test/detect-0086.test.mjs AC1 tests cover JSON output, non-repos, missing git, package-bin execution and unchanged folder/git snapshots."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "osFacts, nodeFacts and gitFacts report all required fields. AC2 tests cover platform/version support, tracked changes, branches, commits and git identity."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "speckFacts reports installation and reads .speck/VERSION. Both AC3 tests exercise absent and installed speck, including a missing version."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "agentFacts checks all four executables and codex login status. AC4 tests exercise PATH presence and successful/failed authentication checks."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "AC5 tests meaningfully cover command suggestions and the new comment regressions. However, usesPytest still matches arbitrary quoted text. An independent in-memory check with description = \"pytest alternative using unittest\" and a Makefile test target returned pytest instead of make test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/detect.mjs",
+        "issue": "The comment cases are fixed, but detection still treats unrelated TOML strings as pytest dependencies. The pattern [\"']pytest\\b matches description = \"pytest alternative using unittest\", incorrectly overriding a valid Makefile test command. This leaves the original requirement to ignore unrelated text incomplete.",
+        "suggested_fix": "Match pytest within dependency declarations or pytest configuration tables, rather than arbitrary quoted strings. Add a regression test for a project description beginning with pytest, alongside a Makefile test target.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The comment handling fix works, and the other four criteria remain satisfied. One related issue remains: a project description mentioning pytest can still produce the wrong test command. I confirmed this without writing files. The supplied suite reports no failures; I did not rerun tests that create temporary files."
+  }
+}
+```
+
+</details>

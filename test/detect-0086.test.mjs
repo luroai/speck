@@ -292,6 +292,10 @@ test('0086 AC5: pytest for a Python project that uses pytest, and nothing for on
     ['pyproject.toml', '[project.optional-dependencies]\ntest = ["pytest>=8"]\n'],
     ['pyproject.toml', '[tool.poetry.group.dev.dependencies]\npytest = "^8.0"  # tests\n'],
     ['pyproject.toml', '[project]\ndependencies = [\n  "requests",\n  \'pytest\',\n]\n'],
+    ['pyproject.toml', '[project]\noptional-dependencies = { test = ["pytest[testing] ; python_version >= \\"3.9\\""] }\n'],
+    ['pyproject.toml', '[dependency-groups]\ndev = ["ruff", "pytest==8.3"]\n'],
+    ['pyproject.toml', '[tool.hatch.envs.test]\ndependencies = ["pytest"]\n'],
+    ['pyproject.toml', '[tool.poetry.group.dev.dependencies]\npytest = { version = "^8" }\n'],
     ['setup.cfg', '[tool:pytest]\ntestpaths = tests\n'],
     ['tox.ini', '[pytest]\n'],
     ['requirements-dev.txt', 'black\npytest==8.0\n'],
@@ -305,18 +309,26 @@ test('0086 AC5: pytest for a Python project that uses pytest, and nothing for on
   // Review round 1 F1: a comment that mentions pytest is not pytest in use.
   const none = [['pyproject.toml', '[project]\nname = "x"\n'], ['pyproject.toml', '# pytest is not used here\n[project]\nname = "x"\n'],
     ['pyproject.toml', '[project]\nname = "x" # we dropped "pytest" and [tool.pytest]\n# pytest = "^8"\n'], ['requirements.txt', '# pytest\nrequests\n'],
-    ['setup.cfg', '# [tool:pytest]\n[metadata]\n'], ['tox.ini', '; [pytest]\n# [pytest]\n'],['requirements.txt', 'requests\npytest-is-not-here-but-pytestish\n'], ['setup.cfg', '[metadata]\nname = x\n']];
+    ['setup.cfg', '# [tool:pytest]\n[metadata]\n'], ['tox.ini', '; [pytest]\n# [pytest]\n'],
+    // Review round 2 F1: a string that isn't a dependency, such as a description or keyword, is not pytest in use.
+    ['pyproject.toml', '[project]\nname = "x"\ndescription = "pytest alternative using unittest"\n'],
+    ['pyproject.toml', '[project]\ndescription = "pytest"\nkeywords = ["pytest", "testing"]\ndependencies = ["requests"]\n'],
+    ['pyproject.toml', '[tool.ruff]\nexclude = ["pytest"]\n[tool.poetry]\npytest = "not a dependency table"\n'],
+    ['pyproject.toml', '[project]\ndependencies = ["pytest-like-tool>=1"]\n'],
+    ['requirements.txt', 'requests\npytest-is-not-here-but-pytestish\n'], ['setup.cfg', '[metadata]\nname = x\n']];
   for (const [file, text] of none) {
     const dir = tmp('speck-detect-');
     fs.writeFileSync(path.join(dir, file), text);
     assert.equal(suggestCommands(dir).test_command, null, `${file}: ${text}`);
   }
-  // F1: with a Makefile test target too, the comment doesn't override it.
-  const dir = tmp('speck-detect-');
-  fs.writeFileSync(path.join(dir, 'pyproject.toml'), '# pytest is not used here\n[project]\nname = "x"\n');
-  fs.writeFileSync(path.join(dir, 'Makefile'), 'test:\n\t./run-tests\n');
-  assert.equal(suggestCommands(dir).test_command, 'make test');
-  assert.equal(detect(dir).json.suggestions.test_command, 'make test');
+  // F1: with a Makefile test target too, a comment or description doesn't override it.
+  for (const text of ['# pytest is not used here\n[project]\nname = "x"\n', '[project]\nname = "x"\ndescription = "pytest alternative using unittest"\n']) {
+    const dir = tmp('speck-detect-');
+    fs.writeFileSync(path.join(dir, 'pyproject.toml'), text);
+    fs.writeFileSync(path.join(dir, 'Makefile'), 'test:\n\t./run-tests\n');
+    assert.equal(suggestCommands(dir).test_command, 'make test', text);
+    assert.equal(detect(dir).json.suggestions.test_command, 'make test', text);
+  }
 });
 
 test('0086 AC5: make test for a Makefile with a test target, and nothing without one', () => {

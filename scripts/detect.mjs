@@ -86,24 +86,47 @@ function npmTest(dir) {
   return typeof test === 'string' && test.trim() !== '' && !NPM_DEFAULT_TEST.test(test);
 }
 
-// A TOML file without its comments: each line up to a # that isn't inside a string.
-function tomlWithoutComments(text) {
-  return text.split('\n').map(line => {
-    let quote = null;
+// A requirement for pytest itself, such as `pytest`, `pytest>=8` or `pytest[testing] ; python_version >= "3.9"`.
+const PYTEST_REQUIREMENT = /^\s*pytest\s*(?:\[[^\]]*\]\s*)?(?:[=<>!~;@(]|$)/;
+// Tables such as [project.optional-dependencies], [dependency-groups] or [tool.poetry.group.dev.dependencies].
+const DEPENDENCY_TABLE = /(?:^|\.)(?:[\w-]*dependencies|dependency-groups)(?:\.|$)/;
+// Keys such as `dependencies`, `dev-dependencies` or `requires`, in any table.
+const DEPENDENCY_KEY = /dependencies$|^requires$/;
+
+// Whether a pyproject.toml uses pytest: pytest's own settings table, or pytest declared as a dependency.
+// Comments and other strings, such as a description that mentions pytest, don't count.
+function pyprojectUsesPytest(text) {
+  let table = '', key = '';
+  let depth = 0; // open [ and { in the current value
+  for (const line of text.split('\n')) {
+    if (depth === 0) {
+      const header = line.match(/^\s*\[\[?\s*([^\]]+?)\s*\]\]?/);
+      if (header) { table = header[1].replace(/["'\s]/g, ''); key = ''; if (/^tool\.pytest(?:\.|$)/.test(table)) return true; continue; }
+      const k = line.match(/^\s*([\w."'-]+?)\s*=/);
+      if (k) {
+        key = k[1].replace(/["']/g, '').split('.').pop();
+        if (key === 'pytest' && DEPENDENCY_TABLE.test(table)) return true; // Poetry: pytest = "^8"
+      }
+    }
+    const deps = DEPENDENCY_TABLE.test(table) || DEPENDENCY_KEY.test(key);
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
-      if (quote) { if (ch === '\\' && quote === '"') i++; else if (ch === quote) quote = null; }
-      else if (ch === '"' || ch === "'") quote = ch;
-      else if (ch === '#') return line.slice(0, i);
+      if (ch === '#') break;
+      if (ch === '"' || ch === "'") {
+        let s = '', j = i + 1;
+        for (; j < line.length && line[j] !== ch; j++) s += ch === '"' && line[j] === '\\' ? line[++j] ?? '' : line[j];
+        if (deps && PYTEST_REQUIREMENT.test(s)) return true;
+        i = j;
+      } else if (ch === '[' || ch === '{') depth++;
+      else if ((ch === ']' || ch === '}') && depth > 0) depth--;
     }
-    return line;
-  }).join('\n');
+  }
+  return false;
 }
 
-// pytest's own settings table, a quoted requirement such as "pytest>=8", or a Poetry-style `pytest = "^8"` key.
 function usesPytest(dir) {
   if (isFile(path.join(dir, 'pytest.ini')) || isFile(path.join(dir, 'conftest.py'))) return true;
-  if (/^\s*\[tool\.pytest\b|["']pytest\b|^\s*pytest\s*=/m.test(tomlWithoutComments(read(dir, 'pyproject.toml') || ''))) return true;
+  if (pyprojectUsesPytest(read(dir, 'pyproject.toml') || '')) return true;
   if (/^\s*\[tool:pytest\]/m.test(read(dir, 'setup.cfg') || '')) return true;
   if (/^\s*\[pytest\]/m.test(read(dir, 'tox.ini') || '')) return true;
   let files = [];
