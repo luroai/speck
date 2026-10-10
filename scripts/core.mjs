@@ -1,6 +1,7 @@
 // speck's shared code: small utilities, config, tickets, their header and lint, and diff size.
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -293,7 +294,24 @@ export function lintTicket(ticket, cfg) {
   const body = ['problem', 'outcome', 'acceptance criteria', 'out of scope', 'notes']
     .reduce((n, s) => n + contentLines(sections[s]).length, 0);
   if (body > L.max_ticket_body_lines) errors.push(`Ticket body is ${body} lines (max ${L.max_ticket_body_lines}). It's too big for one agent: split it.`);
+  warnings.push(...homePathWarnings(ticket.raw));
   return { errors, warnings, acceptanceCriteria: ac };
+}
+
+// Tickets are committed and often published, so warn about each line holding the user's home folder path, which
+// usually contains their username. The path must stand on its own: not inside a longer path (/mnt/home/ann) or a
+// longer name (/home/ann2). A home folder that can't be found, isn't absolute or is the root checks nothing.
+function homePathWarnings(text) {
+  let home = '';
+  try { home = os.homedir(); } catch { /* no home folder */ }
+  home = (home || '').replace(/[\\/]+$/, '');
+  if (!home || !path.isAbsolute(home)) return [];
+  const esc = home.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const name = '[\\p{L}\\p{N}\\p{M}_-]'; // a character that could continue a folder name, in any script
+  const re = new RegExp(`(?<!${name}|\\.)${esc}(?!${name}|\\.${name})`, 'u');
+  return text.split('\n').flatMap((l, i) => re.test(l)
+    ? [`Line ${i + 1} contains your home folder's path (${home}). Write it as a \`~/\` path instead, so it doesn't publish your username.`]
+    : []);
 }
 
 // ---------- diff size ----------
