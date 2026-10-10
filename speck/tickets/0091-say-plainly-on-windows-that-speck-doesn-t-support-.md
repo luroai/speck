@@ -1,7 +1,7 @@
 ---
 id: "0091"
 title: "Say plainly on Windows that speck doesn't support it yet"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:57:08.603Z"
 ---
 # 0091 · Say plainly on Windows that speck doesn't support it yet
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck supports only macOS and Linux for now, and parts of it, such as pausing and stopping builds, rely on them. On Windows, `speck init` and `speck doctor` say nothing about this, so someone there finds out only when something fails.
@@ -44,9 +44,14 @@ On Windows, `speck doctor` and `speck init` say plainly that speck doesn't suppo
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 337,261
+- Elapsed since build started: 4 min
+- Changed lines: 19 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: three tests read an idea note that has since been filed in speck/ideas/done/, so they fail on main (speck/ideas/2026-10-10-fix-tests-that-read-a-filed-idea-note.md).
 
