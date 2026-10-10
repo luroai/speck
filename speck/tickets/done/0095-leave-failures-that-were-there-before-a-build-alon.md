@@ -1,7 +1,7 @@
 ---
 id: "0095"
 title: "Leave failures that were there before a build alone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-keep-builders-to-their-own-ticket.md"      
 after: []                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T18:38:12.991Z"
+finished: "2026-10-10T19:51:09.503Z"
 
 ---
 # 0095 · Leave failures that were there before a build alone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A builder that finds tests already failing on `main` can "fix" them inside its own ticket, especially when a criterion asks for the suite to pass. On 2026-10-10, 0090 (add a licence) fixed an unrelated test, the reviewer accepted it, and the fix then conflicted with 0086. The build skill already says to keep to the ticket, but nothing tells the builder or reviewer how to treat failures that were there before.
