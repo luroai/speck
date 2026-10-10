@@ -1,7 +1,7 @@
 ---
 id: "0088"
 title: "Set up speck through a conversation with your agent"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T15:19:34.126Z"
 ---
 # 0088 · Set up speck through a conversation with your agent
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Getting speck working needs Node, git, a clean repo, a test command, a builder and a reviewer, and choices most people can't make alone, like which reviewer to trust or whether builds may skip permission prompts. `speck init` sets up the files and `speck doctor` lists what's missing, but someone without a technical background still has to fix each gap themselves.
@@ -47,9 +47,15 @@ A `speck-setup` skill lets your agent take you through setting speck up in a con
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The first ticket is created before builder/reviewer selection.; F2 For an empty folder where git has already been initialised but speck is absent, step 1 invokes section 3's base-branch configuration before step 2 installs speck.; F3 Reviewer selection unconditionally proposes Codex whenever it is installed, including when the user has just selected Codex as builder.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,109,358
+- Elapsed since build started: 12 min
+- Changed lines: 96 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
