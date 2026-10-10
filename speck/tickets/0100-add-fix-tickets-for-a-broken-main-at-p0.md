@@ -1,7 +1,7 @@
 ---
 id: "0100"
 title: "Add fix tickets for a broken main at P0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T18:38:18.271Z"
 ---
 # 0100 · Add fix tickets for a broken main at P0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When `main` breaks, every ship stops until it's fixed, so the fix must come before everything else. speck's tickets have only one type besides the default (`bug`) and priorities 1 to 5, so a fix can't be marked or ordered ahead of everything else.
@@ -44,9 +44,14 @@ Fix tickets are a ticket type of their own, for a broken `main`, at priority 0 (
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 481,882
+- Elapsed since build started: 67 min
+- Changed lines: 66 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - `speck set <id> type …` can leave P0 on a ticket that's no longer a fix ticket: speck/ideas/2026-10-10-refuse-a-type-change-that-strands-p0.md.
