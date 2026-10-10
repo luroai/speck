@@ -1,7 +1,7 @@
 ---
 id: "0018"
-title: "Split speck.mjs into modules by area"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+title: Move the panel and build-control code into their own modules                # one outcome, no "and"
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,30 +14,34 @@ after: []                # ticket ids that must be done first
 created: 2026-10-09
 
 ---
-# 0018 · Split speck.mjs into modules by area
+# 0018 · Move the panel and build-control code into their own modules
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
-`scripts/speck.mjs` is about 1,340 lines in one file. Reviewers read large parts of it every round, which is a big share of the 400k–500k reviewer tokens a ticket costs, and an edit in one area risks breaking another.
+`scripts/speck.mjs` is 2,769 lines in one file, about twice its size when this ticket was first written. Reviewers read large parts of it every round, which is a big share of the reviewer tokens a ticket costs, and an edit in one area risks breaking another. The panel's server and the build controls (`run`, `pause`, `play`, `stop`) are about 750 of those lines and are where it has grown fastest.
 
 ## Outcome
-speck's code is split into files by area under `scripts/`, and speck works exactly as before.
+The panel's server and the build controls live in their own files under `scripts/`, not in `speck.mjs`, and speck works exactly as before.
 
 ## Acceptance criteria
-1. The review code (reviewing, recording, `prompt`, `diff`, `next`, `reviewer-settings` and the review pack), the install and doctor code, and the ship code (including `--auto`) each live in their own file under `scripts/`. `scripts/speck.mjs` keeps the commands' entry point. No file under `scripts/` is over 600 lines; if `speck.mjs` still is, more areas move out too.
-2. Every function that tests or other code import from `scripts/speck.mjs` today can still be imported from there.
-3. Every CLI command gives the same output and exit code as before, and the full test suite passes unchanged.
-4. A project installed with `speck init` (which copies `scripts/` into `.speck/`) runs `review`, `record`, `pack`, `doctor` and `ship` from `.speck/scripts/speck.mjs`, and re-running `init` there still updates `.speck/`.
+1. The code for `speck panel` (its server, requests and writes) is in one file under `scripts/`, and the code for `speck run`, `pause`, `play` and `stop` is in another. Neither is left in `scripts/speck.mjs`, which keeps the commands' entry point and is at least 600 lines shorter than before.
+2. Every name `scripts/speck.mjs` exports today can still be imported from it.
+3. Every CLI command gives the same output and exit code as before. The test suite passes with no test changed, except the helpers in `test/support/` that copy the CLI, which may copy the whole `scripts/` folder instead of `speck.mjs` alone.
+4. While `speck panel` runs, a change to any `.mjs` file under `scripts/`, the new ones included, makes it hand over to a server on the new code, as a change to `speck.mjs` does today (0067).
+5. In a project set up with `speck init`, the new files are in `.speck/scripts/`, and `speck panel` started from `.speck/scripts/speck.mjs` serves its page.
 
 ## Out of scope
 - Changing any behaviour, message or output.
-- The test file (0020).
+- The rest of the split (review, review pack, install and doctor, ship): 0078.
+- Making the panel's ready and priority writes use `speck set`'s code: 0079.
 
 ## Notes
-- Pre-check: AC1 used to fix what stays in `speck.mjs` and also cap every file at 600 lines, which could contradict each other. Now the cap wins.
-- Checked 2026-10-09: `speck init` copies the whole `scripts/` folder into `.speck/` (installTooling), so new module files install without changes.
-- This is a pure move. 0019 was merged in once `max_changed_lines` went up to 5,000.
+- This is a pure move. Rewritten 2026-10-10: the original scope (review, install and doctor, ship, and a 600-line cap on every file) moved to 0078. A moved line counts twice against `max_changed_lines` (deleted and added), so the whole split in one ticket would come close to 5,000.
+- Decided 2026-10-10: the framework and the panel stay in one repo, with a module boundary instead (`speck/ideas/2026-10-10-more-human-gate-actions-in-the-panel.md`).
+- Checked 2026-10-10: `speck init` copies the whole `scripts/` folder into `.speck/` (`installTooling`), so new module files install without changes.
+- Checked 2026-10-10: the panel's restart watches every `.mjs` file in the CLI's own folder (`panelCode`), and each server process imports the module named in `SPECK_PANEL_CODE_URL`. `cliCopy` in `test/support/panel.mjs` copies only `speck.mjs` today.
+- Rough size: about 750 lines move, so about 1,500 counted.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
