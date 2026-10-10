@@ -1,7 +1,7 @@
 ---
 id: "0110"
 title: Recover a build that was killed                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T22:40:12.596Z"
 ---
 # 0110 · Recover a build that was killed
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build's process is killed (here by the out-of-memory killer, which also took down `speck run`), its ticket stays `building` and the panel shows it as in progress, so on 2026-10-10 five dead builds looked busy for half an hour. Nothing restarts them: `speck run` launches only ready tickets, and someone had to resume each session by hand.
@@ -52,3 +52,64 @@ A build that was killed is shown plainly as stopped, and `speck run` resumes its
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- Where `ps` can't be run (Windows), every session counts as in use, so a killed build there is never flagged or resumed: it shows as before.
+- If a resumed build fails to start at all, the next check says speck run had already resumed it once. The resume command it prints is right, but the wording could say the resume failed to start.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3d056ca12163f9a965463c2b4424f8259d5584ac",
+    "thread_id": "01a12808-5509-7890-9f01-2c856cfb0756",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 431721,
+      "cached_input_tokens": 315008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 812,
+      "reasoning_output_tokens": 151
+    },
+    "saved_at": "2026-10-10T22:57:03.893Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs buildKilled detects the stopped build; scripts/speck.mjs statusData and cmdStatus expose it; templates/panel.html panelModel displays the required label and stops progress animation. Four 0110 AC1 tests exercise these behaviours and passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/run.mjs resumeKilled, resumeArgv and startBuild preserve the session and record, append to the existing log, and use the normal process handling. Passing 0110 AC2 integration tests verify arguments, message, folder, session environment, record preservation, running status, pause and play."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "resumeKilled persists the resumed marker before launching; tick refuses another automatic resume. Passing 0110 AC3 tests cover a second kill, a later runner restart, stopped status and the manual resume command."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "buildKilled excludes stop markers, recorded exits, closing result events and sessions already running. finished records normal exits. Passing 0110 AC4 tests cover stopped builds, completed builds with and without recorded exits, and normal exit after resumption."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Killed builds now show clearly as stopped and automatically continue their existing session once, keeping their log and build controls. A second kill leaves a manual resume command. The tests exercise real processes and cover the required exclusions. No blocking issues found. I inspected the code and supplied passing test results; I did not rerun tests in the read-only review."
+  }
+}
+```
+
+</details>
