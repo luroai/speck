@@ -1,7 +1,7 @@
 ---
 id: "0018"
 title: Move the panel and build-control code into their own modules                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ started: "2026-10-10T11:56:49.356Z"
 ---
 # 0018 · Move the panel and build-control code into their own modules
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 `scripts/speck.mjs` is 2,769 lines in one file, about twice its size when this ticket was first written. Reviewers read large parts of it every round, which is a big share of the reviewer tokens a ticket costs, and an edit in one area risks breaking another. The panel's server and the build controls (`run`, `pause`, `play`, `stop`) are about 750 of those lines and are where it has grown fastest.
@@ -44,9 +44,11 @@ The panel's server and the build controls live in their own files under `scripts
 - Checked 2026-10-10: the panel's restart watches every `.mjs` file in the CLI's own folder (`panelCode`), and each server process imports the module named in `SPECK_PANEL_CODE_URL`. `cliCopy` in `test/support/panel.mjs` copies only `speck.mjs` today.
 - Rough size: about 750 lines move, so about 1,500 counted.
 - Built so far (2026-10-10): the move is done (`scripts/panel.mjs`, `scripts/run.mjs`, `speck.mjs` down from 2,769 to 2,022 lines, 1,549 changed lines), `cliCopy` copies the whole `scripts/` folder, and the 0018 tests pass. The panel's servers still import `speck.mjs` (`SPECK_PANEL_CODE_URL`), which re-exports `panelServer`. 609 of 617 tests pass, and the 8 failures are the 0067 tests in the blocked question.
+- Answered 2026-10-10 (blocked question, option a): the user agreed that `test/panel-0067.test.mjs` may change only which file its code edits target, `speck.mjs` → `panel.mjs`, since the panel's code now lives there. Nothing else in the tests changes. All 12 of its tests pass with that change.
+- Self-check: no changes. The moved lines match the removed ones exactly apart from `export` keywords and imports, `SPECK_PANEL_CODE_URL` still names `speck.mjs`, and each module loads whichever is imported first (no top-level use of an import).
 
 ## Blocked question
-AC3 says no test may change, but 8 tests in `test/panel-0067.test.mjs` change the panel's code by editing strings in the copied `speck.mjs` (`'X-Content-Type-Options'`, `'Not found.'`, `const PANEL_PORT` and the restart message), and those strings now live in `scripts/panel.mjs`, so the edits miss and the tests fail. May I change only which file those edits target in `panel-0067.test.mjs` (`speck.mjs` → `panel.mjs`), with nothing else in the tests changed? Options: (a) yes, retarget the edits (recommended: a trial copy with just that change passes all 12 of its tests); (b) no, keep those strings in `speck.mjs`, which breaks AC1's "neither is left in `speck.mjs`"; (c) widen `cliCopy` in `test/support/` instead, which can't work, since the tests edit `c.cli` and must run it as the CLI.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->

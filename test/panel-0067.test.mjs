@@ -8,6 +8,8 @@ import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf,
 // ---------- 0067: speck panel restarts by itself when its code changes ----------
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
+// The panel's code, in the CLI copy: it has been in scripts/panel.mjs since 0018.
+const code = c => c.cli.replace(/speck\.mjs$/, 'panel.mjs');
 // Polls `check` until it's true, failing after `ms`. Resolves with how long it took.
 async function within(ms, check, what) {
   const t0 = Date.now();
@@ -20,10 +22,10 @@ async function within(ms, check, what) {
 
 // Changes the copied CLI's code: every response gets an X-Speck-Test header, and 404s say which version answered.
 function edit(c, version) {
-  const src = fs.readFileSync(c.cli, 'utf8')
+  const src = fs.readFileSync(code(c), 'utf8')
     .replace(/'X-Content-Type-Options': 'nosniff',( 'X-Speck-Test': '[^']*',)?/, `'X-Content-Type-Options': 'nosniff', 'X-Speck-Test': '${version}',`)
     .replace(/'Not found\.( [^\\']*)?\\n'/, `'Not found. ${version}\\n'`);
-  fs.writeFileSync(c.cli, src);
+  fs.writeFileSync(code(c), src);
 }
 // Every server process of the panel started from `c`, which aren't all children of the process you start, since each
 // server starts the next. The CLI copy's folder is in their environment, so they're found by it.
@@ -62,8 +64,8 @@ test('0067 AC1: a change that leaves the code as it was causes no restart', asyn
   const { c, port, p } = await served();
   try {
     const now = new Date();
-    fs.utimesSync(c.cli, now, now);
-    fs.writeFileSync(c.cli, fs.readFileSync(c.cli, 'utf8'));
+    fs.utimesSync(code(c), now, now);
+    fs.writeFileSync(code(c), fs.readFileSync(code(c), 'utf8'));
     await wait(2500);
     assert.equal(restarts(p), 0);
     assert.equal((await request(port, { pathName: '/nope' })).body, 'Not found.\n');
@@ -128,8 +130,8 @@ test('0067 AC3: several changes close together cause one restart once they settl
 test('0067 AC4: new code that fails to start leaves the old server serving, shows the error and the next change tries again', async () => {
   const { c, port, p } = await served();
   try {
-    const good = fs.readFileSync(c.cli, 'utf8');
-    fs.writeFileSync(c.cli, `${good}\nfunction broken( {\n`);
+    const good = fs.readFileSync(code(c), 'utf8');
+    fs.writeFileSync(code(c), `${good}\nfunction broken( {\n`);
     const state = async () => JSON.parse((await request(port, { pathName: '/api/state' })).body);
     await within(5000, async () => (await state()).restart_error, 'the restart error in /api/state');
     const err = (await state()).restart_error;
@@ -138,11 +140,11 @@ test('0067 AC4: new code that fails to start leaves the old server serving, show
     assert.equal((await request(port, { pathName: '/nope' })).body, 'Not found.\n', 'the old code still serves');
     assert.ok(Array.isArray((await state()).tickets));
     // A code change that throws when it loads, rather than failing to parse.
-    fs.writeFileSync(c.cli, good.replace("const PANEL_PORT = 4777;", "const PANEL_PORT = 4777; throw new Error('boom 0067');"));
+    fs.writeFileSync(code(c), good.replace("const PANEL_PORT = 4777;", "const PANEL_PORT = 4777; throw new Error('boom 0067');"));
     await within(5000, async () => (await state()).restart_error === 'Error: boom 0067', 'the second error');
     assert.equal((await request(port, { pathName: '/nope' })).body, 'Not found.\n', 'the old code still serves');
     // The next change that works is picked up, and the error goes.
-    fs.writeFileSync(c.cli, good);
+    fs.writeFileSync(code(c), good);
     edit(c, 'v3');
     await within(5000, async () => (await request(port, { pathName: '/nope' })).body === 'Not found. v3\n', 'the fixed code');
     assert.equal((await state()).restart_error, undefined);
@@ -153,11 +155,11 @@ test('0067 AC4: new code that fails to start leaves the old server serving, show
 test('0067 AC4: putting the running code back clears the error without a restart', async () => {
   const { c, port, p } = await served();
   try {
-    const good = fs.readFileSync(c.cli, 'utf8');
-    fs.writeFileSync(c.cli, `${good}\nfunction broken( {\n`);
+    const good = fs.readFileSync(code(c), 'utf8');
+    fs.writeFileSync(code(c), `${good}\nfunction broken( {\n`);
     const state = async () => JSON.parse((await request(port, { pathName: '/api/state' })).body);
     await within(5000, async () => (await state()).restart_error, 'the restart error');
-    fs.writeFileSync(c.cli, good);
+    fs.writeFileSync(code(c), good);
     await within(5000, async () => (await state()).restart_error === undefined, 'the error cleared');
     assert.equal(restarts(p), 0);
   } finally { await stop(p); }
@@ -208,7 +210,7 @@ test('0067 AC5: Ctrl+C while new code is still starting stops that process too',
   const { c, p } = await served();
   try {
     // New code that takes 4 seconds to load, so it's still starting when Ctrl+C comes.
-    fs.writeFileSync(c.cli, fs.readFileSync(c.cli, 'utf8').replace('const PANEL_PORT = 4777;', 'const PANEL_PORT = 4777; { const t0 = Date.now(); while (Date.now() - t0 < 4000); }'));
+    fs.writeFileSync(code(c), fs.readFileSync(code(c), 'utf8').replace('const PANEL_PORT = 4777;', 'const PANEL_PORT = 4777; { const t0 = Date.now(); while (Date.now() - t0 < 4000); }'));
     let kids = [];
     await within(5000, () => (kids = children(p, c)).length >= 2, 'the new server process to start');
     const exited = new Promise(res => p.child.on('exit', res));
@@ -221,7 +223,7 @@ test('0067 AC5: Ctrl+C while new code is still starting stops that process too',
 test('0067 AC1: a change to the code that watches and restarts is picked up too, with no command from the user', async () => {
   const { c, port, p } = await served();
   try {
-    const say = text => fs.writeFileSync(c.cli, fs.readFileSync(c.cli, 'utf8').replace(/the code changed, so it restarted with the new code\.|RESTART-V\d/, text));
+    const say = text => fs.writeFileSync(code(c), fs.readFileSync(code(c), 'utf8').replace(/the code changed, so it restarted with the new code\.|RESTART-V\d/, text));
     say('RESTART-V2');
     await within(5000, () => restarts(p) === 1, 'the first restart');
     assert.doesNotMatch(p.out(), /RESTART-V2/, 'the old code announced the first restart');
