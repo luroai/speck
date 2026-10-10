@@ -1,7 +1,7 @@
 ---
 id: "0079"
 title: "Make the panel's ticket writes use the same code as speck set"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:12:28.556Z"
 ---
 # 0079 · Make the panel's ticket writes use the same code as speck set
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's Ready and priority buttons (0042, 0077) each have their own copy of the checks and the field write that `speck set` does, while pause, play and stop already call the same code as the CLI. Two copies drift: a rule added to `speck set` wouldn't apply in the panel, and an out-of-range priority already gets different wording in each.
@@ -54,3 +54,67 @@ The panel sets a ticket's status and priority through the same code as `speck se
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Known limit: `commitTicketOnly` commits one path, so a panel write that moves a ticket between folders can't be committed in one go; the panel refuses the one case that would (a draft filed in `speck/tickets/done/`).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2cbdcfa35f12fe474b2cf5c681d6fa10e21d1834",
+    "thread_id": "01a125c2-0198-76c2-80cc-47cb501be125",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 332353,
+      "cached_input_tokens": 237312,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 726,
+      "reasoning_output_tokens": 28
+    },
+    "saved_at": "2026-10-10T12:21:03.121Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs uses checkSetValue, checkSetTicket and setTicketField, as does cmdSet in scripts/speck.mjs. The two AC1 tests check removal of duplicate logic and exercise injected shared rules through real panel requests; both passed in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSetReady returns the shared checkSetTicket error before writing. The AC2 integration test compares the exact CLI refusal text and verifies unchanged files and commit history; it passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelSetPriority uses checkSetValue for invalid priorities. The AC3 integration test compares exact CLI messages for nine invalid values and verifies no file or commit changes; it passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both panel functions retain draft and base-branch checks, commitTicketOnly, commit messages and success responses. The AC4 integration test exercises these safeguards; existing 0042 and 0077 tests cover commit rollback and staged changes. All passed in the supplied output."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Both panel functions and cmdSet use setTicketField. The two AC5 integration tests compare complete file contents after Ready and priority writes against actual CLI writes; both passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now shares the CLI’s validation and ticket-writing code, including its error messages, while retaining its commit safeguards. The tests exercise real CLI and panel behaviour and cover every criterion. No blocking issues found. I inspected the code and tests; I did not rerun tests because this review is read-only and they create temporary repositories."
+  }
+}
+```
+
+</details>
