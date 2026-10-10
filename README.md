@@ -99,4 +99,4 @@ See [`docs/brief.md`](docs/brief.md).
 
 ## Licence
 
-MIT
+MIT. See [LICENSE](LICENSE).
