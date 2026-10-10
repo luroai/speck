@@ -38,6 +38,7 @@ A build that was killed is shown plainly as stopped, and `speck run` resumes its
 ## Notes
 - 0045 flags a build that finished without shipping; this covers a build that was killed before it finished.
 - On 2026-10-10 the five builds were resumed by hand with `claude --resume <session> -p …`, which carried on cleanly from each worktree.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
