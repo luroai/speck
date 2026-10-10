@@ -1,7 +1,7 @@
 ---
 id: "0087"
 title: "Change a speck setting from the command line"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:56:59.164Z"
 ---
 # 0087 · Change a speck setting from the command line
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Changing a setting today means editing `speck/config.yml` by hand. An agent setting speck up for someone (0088) would have to edit YAML directly, where one wrong indent or unquoted value breaks every speck command, and nothing checks the value is one speck accepts.
@@ -46,9 +46,15 @@ Changing a setting today means editing `speck/config.yml` by hand. An agent sett
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 setConfigText updates a shadowed child in an earlier duplicate section instead of adding it to the section speck actually reads.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 852,622
+- Elapsed since build started: 11 min
+- Changed lines: 138 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Three tests (luro-0082 AC4, and two in private-words-0084 that run it) fail on main because the idea note they read was filed into speck/ideas/done/. Sent to the inbox: speck/ideas/2026-10-10-fix-the-test-that-reads-a-filed-idea-note.md.
