@@ -1,7 +1,7 @@
 ---
 id: "0073"
 title: "Stop a build from its open queue row"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T07:37:17.637Z"
 ---
 # 0073 · Stop a build from its open queue row
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Stopping a build for good with `speck stop` (0072) means leaving the panel for a terminal. It's also the one control that ends a build, so it shouldn't sit where a stray click hits it.
@@ -49,3 +49,58 @@ An open queue ticket with a running or paused build has a Stop build button, whi
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: the panel server stops a build in its own process, so while a stop runs (a few seconds at most) it answers no other request, and the page's polls wait. No inbox note.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "adc178ed26d2acc214bd737588600745db2a1039",
+    "thread_id": "01a124c3-d45d-7381-9f00-9e34a6a1e5f2",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 241936,
+      "cached_input_tokens": 152960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 657,
+      "reasoning_output_tokens": 76
+    },
+    "saved_at": "2026-10-10T07:43:25.330Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: panelModel restricts pausable to building/reviewing tickets with a running build and no exit; queueItem adds stopButton only in open details. Both AC1 tests in test/panel-0073.test.mjs exercise eligible and ineligible rows and passed in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: stopButton stops click propagation; stopBuild confirms before sending and returns unchanged on cancellation. scripts/speck.mjs: panelStop and cmdStop call the same stopBuild implementation. AC2 tests cover confirmation, cancellation, duplicate clicks, process termination, blocking and committing the ticket, and paused builds; all passed in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs: panelServer checks the same origins and sameToken as Set ready before calling panelStop. templates/panel.html stores and renders refusal reasons under the button. AC3 tests cover missing/incorrect credentials, unchanged processes and repository state, refusal persistence, replacement and cleanup; all passed in the supplied output."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The open queue row now offers a confirmed Stop build action for running and paused builds. It uses the existing command’s stopping behaviour and the panel’s request protections. The tests exercise the interface and real process termination; I found no blocking issues or unrelated changes. Tests were inspected alongside the supplied passing results, rather than rerun in this read-only review."
+  }
+}
+```
+
+</details>
