@@ -1,7 +1,7 @@
 ---
 id: "0073"
 title: "Stop a build from its open queue row"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T07:37:17.637Z"
 ---
 # 0073 · Stop a build from its open queue row
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Stopping a build for good with `speck stop` (0072) means leaving the panel for a terminal. It's also the one control that ends a build, so it shouldn't sit where a stray click hits it.
@@ -45,9 +45,14 @@ An open queue ticket with a running or paused build has a Stop build button, whi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 242,593
+- Elapsed since build started: 6 min
+- Changed lines: 77 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: the panel server stops a build in its own process, so while a stop runs (a few seconds at most) it answers no other request, and the page's polls wait. No inbox note.
