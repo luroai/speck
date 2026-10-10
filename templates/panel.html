@@ -96,6 +96,11 @@
   .q .toggle-build.pause::before { left: 4px; } .q .toggle-build.pause::after { left: 9px; }
   .q .toggle-build.play::before { content: ''; position: absolute; top: 2px; left: 5px; border: 5px solid transparent; border-left: 8px solid currentColor; border-right: 0; }
   .q .toggle-refused { margin: 4px 0 0 34px; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
+  /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
+  .q .stop-build { font: inherit; font-size: 11px; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--bad); border: 1px solid var(--line); cursor: pointer; }
+  .q .stop-build:hover { border-color: var(--bad); }
+  .q .stop-build:disabled { cursor: default; opacity: .6; }
+  .q .stop-refused { margin: 4px 0 0 34px; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .q .indent { margin-left: 34px; }
   .question { margin: 6px 0 4px 34px; padding: 6px 10px; border-left: 2px solid var(--warn); background: #2a2621; color: #ddd3c4; }
   .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 8px 0 4px 34px; }
@@ -608,7 +613,7 @@ function linkTarget(s, from) {
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
 const LOG_MS = 1000; // how often an open queue ticket's log is asked for
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause and play
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause, play and stop
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -658,6 +663,8 @@ let priorityMenu = null; // the id of the draft whose priority menu is open, or 
 const priorityRefused = new Map(); // id → why the server refused to set its priority, until the next click on its tag
 const toggling = new Set(); // ids whose pause or play request hasn't been answered yet
 const toggleRefused = new Map(); // id → why the server refused to pause or play its build, until the next click on its icon
+const stopping = new Set(); // ids whose stop request hasn't been answered yet
+const stopRefused = new Map(); // id → why the server refused to stop its build, until the next click on its Stop build button
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
 const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
@@ -986,9 +993,45 @@ function queueItem(t) {
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
+    if (t.pausable) {
+      q.appendChild(stopButton(t));
+      if (stopRefused.has(id)) q.appendChild(el('div', 'stop-refused', stopRefused.get(id)));
+    }
     q.appendChild(logBox(id));
   }
   return q;
+}
+// An open building or reviewing ticket whose build speck run launched and is running or paused has a Stop build button.
+// It asks first, and opens or closes nothing.
+function stopButton(t) {
+  const id = String(t.id), pending = stopping.has(id);
+  const b = el('button', 'stop-build', pending ? 'Stopping…' : 'Stop build');
+  b.type = 'button';
+  b.disabled = pending;
+  b.title = 'End this build and every process it started, and block its ticket, as speck stop does';
+  b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) stopBuild(id); });
+  return b;
+}
+// The server stops the build as speck stop does; the next poll shows the ticket blocked. A refusal shows under the
+// button until the next click on it. Cancelling the question changes nothing.
+async function stopBuild(id) {
+  if (stopping.has(id)) return;
+  if (typeof confirm !== 'function' || !confirm(`Stop ${id}'s build? It ends the build and every process it started, and blocks the ticket. Its branch, worktree and commits are kept.`)) return;
+  stopRefused.delete(id);
+  stopping.add(id);
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/stop`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (!res.ok) {
+      let why = null;
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      stopRefused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
+    }
+  } catch {
+    stopRefused.set(id, "Couldn't reach the panel server, so the build wasn't stopped.");
+  }
+  stopping.delete(id);
+  render();
 }
 // A pause icon on a building or reviewing ticket whose build speck run launched and is running, or a play icon while
 // it's paused. Clicking it pauses or plays the build, and opens or closes nothing.
@@ -1234,6 +1277,8 @@ function render() {
   // A menu whose ticket isn't showing any more is closed, so it can't catch the next click.
   if (priorityMenu !== null && (shapingView !== 'tickets' || !m.drafts.some(t => String(t.id) === priorityMenu))) priorityMenu = null;
   shapingToggle(m);
+  // A refused stop's reason goes once its ticket has no Stop build button, so a later build of it doesn't show it.
+  for (const id of stopRefused.keys()) if (!m.queue.some(t => String(t.id) === id && t.pausable)) stopRefused.delete(id);
   if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
@@ -1243,7 +1288,7 @@ function render() {
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
-  const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), toggleRefused.get(String(t.id)) ?? null], queueItem,
+  const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), toggleRefused.get(String(t.id)) ?? null, stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
   startCounters(m.queue.flatMap((t, i) => (t.counter !== null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : [])));

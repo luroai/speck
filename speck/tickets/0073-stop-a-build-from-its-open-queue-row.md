@@ -37,6 +37,9 @@ An open queue ticket with a running or paused build has a Stop build button, whi
 ## Notes
 - After 0063, which adds a Full ticket button to the same open details, 0071, which adds the pause and play requests this follows, and 0072, which does the stopping.
 - product.md's Queue description needs updating.
+- product.md no longer exists (removed by 0068), so README's `speck stop` row says what the panel's Stop build button does instead.
+- The server stops the build in its own process, as `speck stop` does, so it answers other requests only once the stop is done (a few seconds at most).
+- Self-check: a refused stop's reason is now dropped once its ticket has no Stop build button, so building it again later doesn't show the old reason; test added.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

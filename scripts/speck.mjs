@@ -1819,6 +1819,15 @@ function panelPausePlay(repo, id, what) {
   catch (e) { if (e instanceof SpeckError) return { status: 409, body: { error: e.message } }; throw e; }
 }
 
+// The panel's Stop build button: stops a build exactly as `speck stop <id>` does, refusing for the same reasons with the
+// same words.
+function panelStop(repo, id) {
+  try { findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
+  const lines = [];
+  try { stopBuild(repo, [id], line => lines.push(line)); } catch (e) { if (e instanceof SpeckError) return { status: 409, body: { error: e.message } }; throw e; }
+  return { status: 200, body: { ok: true, message: lines.join('\n') } };
+}
+
 // The panel's other write: set a draft ticket's priority, as `speck set <id> priority <n>` does, and commit only that
 // ticket. `value` is from the URL, so anything but 1 to 5 is refused. Every refusal comes before the first write.
 function panelSetPriority(repo, id, value) {
@@ -1920,7 +1929,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each build's log to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n> and POST /api/tickets/<id>/pause or /play. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n> and POST /api/tickets/<id>/pause, /play or /stop. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -1978,12 +1987,12 @@ export async function panelServer() {
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
-    const toggle = where.match(/^\/api\/tickets\/(\d{1,4})\/(pause|play)$/);
+    const toggle = where.match(/^\/api\/tickets\/(\d{1,4})\/(pause|play|stop)$/);
     if (req.method === 'POST' && toggle) {
       if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
-        const out = panelPausePlay(repo, toggle[1], toggle[2]);
+        const out = toggle[2] === 'stop' ? panelStop(repo, toggle[1]) : panelPausePlay(repo, toggle[1], toggle[2]);
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
@@ -2470,8 +2479,8 @@ function buildTicket(repo, cfg, id) {
 
 // Ends the build, then blocks its ticket and commits that where the build keeps it. A <id>.stopped mark is left first,
 // so speck run knows the build ended because of this rather than reporting it as a build that stopped or failed.
-function cmdStop(args) {
-  const repo = findRepoRoot();
+// `say` gets each line it reports, for `speck stop` to print and the panel's Stop build button to answer with.
+function stopBuild(repo, args, say) {
   const cfg = loadConfig(repo);
   const b = runRecord(repo, args, 'stop');
   if (!b.running) throw new SpeckError(`${b.id} has no running or paused build launched by speck run, so there's nothing to stop.`);
@@ -2495,12 +2504,12 @@ function cmdStop(args) {
   if (left.length)
     throw new SpeckError(`Couldn't end all of ${b.id}'s build: process${left.length === 1 ? '' : 'es'} ${left.join(', ')} ${left.length === 1 ? 'is' : 'are'} still running. End ${left.length === 1 ? 'it' : 'them'} with \`kill -9 ${left.join(' ')}\`. Its ticket is unchanged.`);
   fs.rmSync(b.mark, { force: true });
-  console.log(`${b.id} stopped (session ${b.rec.session ?? 'unknown'}).`);
+  say(`${b.id} stopped (session ${b.rec.session ?? 'unknown'}).`);
 
   const now = ticketCommit();
   if (now !== mark.ticket_commit) try { saveRecord(stopMark, { ...mark, ticket_commit: now }); } catch { /* the earlier commit stays: it's still held */ }
   const { at, t } = buildTicket(repo, cfg, b.id);
-  if (['approved', 'done', 'cancelled'].includes(t.fm.status)) { console.log(`Its ticket is ${t.fm.status}, so it was left as it is.`); return; }
+  if (['approved', 'done', 'cancelled'].includes(t.fm.status)) { say(`Its ticket is ${t.fm.status}, so it was left as it is.`); return; }
   const d = new Date();
   const question = `Stopped by you on ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.`;
   const comments = old => (old.match(/<!--[\s\S]*?-->/g) || []).map(c => `${c}\n`).join('');
@@ -2511,8 +2520,9 @@ function cmdStop(args) {
   const commit = commitTicketOnly(at, t.file, t.raw, `speck(${b.id}): stopped`);
   if (commit.status !== 0)
     throw new SpeckError(`${b.id}'s build is stopped, but its ticket couldn't be committed in ${at}, so it's unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run \`speck set ${b.id} status blocked\` there and commit it.`);
-  console.log(`${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`);
+  say(`${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`);
 }
+function cmdStop(args) { stopBuild(findRepoRoot(), args, line => console.log(line)); }
 
 function cmdDiffstat() {
   const repo = findRepoRoot();
