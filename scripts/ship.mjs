@@ -1,6 +1,8 @@
 // speck ship: the user's gate, merging an approved ticket into the base branch (or --auto, when config allows it).
 
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, worktreeList } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
 
@@ -39,6 +41,30 @@ function runTests(repo, cfg) {
   if (!cmd) throw new SpeckError('No test command is set, so speck can\'t check the tests pass before shipping. Set commands.test in speck/config.yml (for example `npm test`), commit it, then run this again.');
   console.log(`Running tests: ${cmd}`);
   return sh('sh', ['-c', cmd], { cwd: repo, stdio: 'inherit' }).status === 0;
+}
+
+// The refusal for tests that failed on the ticket branch. It runs the tests on the base branch as it is, in a
+// temporary worktree it removes afterwards, so a broken base branch isn't blamed on the ticket.
+function testFailure(repo, cfg, base, sha) {
+  const failed = 'Tests failed on the approved branch, so nothing was shipped.';
+  const at = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-base-')), 'base');
+  console.log(`Checking whether ${base}'s own tests pass, in a temporary worktree at ${at}.`);
+  try {
+    const added = sh('git', ['worktree', 'add', '-q', '--detach', at, sha], { cwd: repo });
+    if (added.status !== 0) return new SpeckError(`${failed} Couldn't check ${base}'s own tests (${added.stderr.trim().split('\n').pop()}).`);
+    const setup = String(cfg.worktree_setup || '').trim();
+    if (setup) {
+      console.log(`Running worktree_setup in the temporary worktree: ${setup}`);
+      const r = sh('sh', ['-c', setup], { cwd: at });
+      if (r.status !== 0) return new SpeckError(`${failed} Couldn't check ${base}'s own tests: worktree_setup (${setup}) failed with exit ${r.status} there.`);
+    }
+    if (runTests(at, cfg)) return new SpeckError(`${failed} ${base}'s tests pass, so the failure comes from this ticket's change.`);
+    return new SpeckError(`Tests failed on the approved branch, and ${base}'s own tests are failing too, so this isn't the ticket's fault. Nothing was shipped. Fix ${base}, then ship again.`, 14);
+  } finally {
+    sh('git', ['worktree', 'remove', '--force', at], { cwd: repo });
+    fs.rmSync(path.dirname(at), { recursive: true, force: true });
+    sh('git', ['worktree', 'prune'], { cwd: repo });
+  }
 }
 
 // Checks the remote's base branch before anything changes. Returns the commit to fast-forward the local base to, if any.
@@ -124,7 +150,7 @@ export function shipTicket(repo, id) {
   const back = () => git(['checkout', '-q', start], work);
   try {
     shipChecks(work, cfg, pad, branch);
-    if (!runTests(work, cfg)) throw new SpeckError('Tests failed on the approved branch, so nothing was shipped.');
+    if (!runTests(work, cfg)) throw testFailure(work, cfg, base, catchUp || baseSha);
     clash(', made while the tests ran');
   } catch (e) { back(); throw e; }
   // Close the ticket on the branch, so the merge is what makes it done.

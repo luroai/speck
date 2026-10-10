@@ -85,7 +85,7 @@ test('0048 AC1: speck ship --auto also exits 13 on a conflict', () => {
 });
 
 test('0048 AC1: other refusals keep their codes', () => {
-  const failing = shipRepo({ test: 'false' });
+  const failing = shipRepo({ test: '! grep -q feature shared.txt' }); // fails on the ticket branch only: main's own failing tests exit 14 (0099)
   fs.writeFileSync(path.join(failing.dir, 'shared.txt'), 'main side\n');
   failing.g('commit', '-qam', 'main moves on');
   assert.equal(runIn(failing.dir, 'ship', '1').status, 1, 'failed tests');

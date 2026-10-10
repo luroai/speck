@@ -37,6 +37,9 @@ When a ship's tests fail, `speck ship` checks the base branch too, and says plai
 
 ## Notes
 - Today a test failure in `speck ship` exits 1.
+- The base branch is tested at the commit the ship would merge into: the local base, or the remote's when ship has just fetched new commits. The temporary worktree gets `worktree_setup`, as a build's worktree does; if that fails, ship refuses with exit 1 as before and says it couldn't check the base branch.
+- `0048 AC1: other refusals keep their codes` used a test command that fails on main too, which AC2 now makes exit 14. Its command now fails only on the ticket branch, so it still checks that a failed-tests refusal exits 1. The exit-14 message keeps the opening "Tests failed on the approved branch", so 0027 AC4's check stands unchanged.
+- Self-check: no changes (the worktree_setup failure path and removing the worktree on every path were already covered by tests).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
