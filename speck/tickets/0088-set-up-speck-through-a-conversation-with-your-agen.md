@@ -52,6 +52,10 @@ A `speck-setup` skill lets your agent take you through setting speck up in a con
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
+Follow-ups:
+- `build_command` stays Claude-specific when setup picks a Codex, Cursor or Gemini builder. Saved to the inbox: `speck/ideas/2026-10-10-match-build-command-to-the-chosen-builder.md`.
+- Known limit: `git init -b main` needs git 2.28 or newer. Older systems would need `git init` then `git symbolic-ref HEAD refs/heads/main`.
+
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
 
@@ -134,6 +138,91 @@ A `speck-setup` skill lets your agent take you through setting speck up in a con
     ],
     "escalation_question": "",
     "summary": "The conversational setup guide is installed correctly and covers the requested explanations and permission checks. Three sequencing and agent-selection problems can leave users with a failing setup or an unusable first ticket. The reported tests pass, but their text checks miss these paths."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b7bdbd3232650c17260d9cc2e8feb22871a6341d",
+    "thread_id": "01a1266d-4c3b-71b0-b5b3-22f3061a1f64",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 723197,
+      "cached_input_tokens": 549760,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2241,
+      "reasoning_output_tokens": 164
+    },
+    "saved_at": "2026-10-10T15:31:33.688Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/setup-0088.test.mjs AC1 tests exercise init, verify identical skill contents in both folders, and check repository symlinks. All pass in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "SKILL.md Rules and sections 1–2 require starting with detect, consent before machine/git changes, and config set for settings. The corresponding AC2 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "SKILL.md section 3 stops on tracked changes, confirms the base branch, warns about direct pushes and pull-request protection, and runs the proposed test command once. AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "SKILL.md section 4 installs speck before recording the branch, makes the first commit, chooses agents before creating the draft scaffold ticket, and explains the passing-test requirement. AC4 and review F1/F2 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "SKILL.md sections 5–7 select reviewers relative to the builder, require consent for same-family review, explain skipped permission prompts, and finish with doctor and next steps. AC5 and review F3 tests pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md",
+        "issue": "Previously, the first ticket copied agent settings before the user chose them. Section 4 now completes sections 5–6 before speck new, matching cmdNew's copying behaviour.",
+        "suggested_fix": "Implemented; retain the review F1 ordering check.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md",
+        "issue": "Previously, an already initialised empty repository attempted branch configuration before installation. Section 4 now explicitly defers that write until after init.",
+        "suggested_fix": "Implemented; retain the review F2 ordering check.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md",
+        "issue": "Previously, a Codex builder was automatically paired with Codex. Section 5 now provides a separate Codex-builder path and explicitly requires agreement for every same-family pairing.",
+        "suggested_fix": "Implemented; retain the review F3 consent check.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The setup guide now meets all five criteria, and all three previous blockers are resolved. The supplied suite reports 784 passing tests and no failures. Conversation behaviour was checked by reading the instructions, as the ticket requires. Ready for the product owner to consider merging."
   }
 }
 ```
