@@ -41,6 +41,8 @@ To set speck up through a conversation, the agent needs to know what's already i
 - The CLI never asks questions; the agent does. Everything here is a fact, not a decision.
 - Missing tools and unknown values are `false` or `null` in the JSON, never errors.
 - Checked 2026-10-10: `npx github:<owner>/<repo>` runs the package's `speck` bin with the given arguments, and `#<tag>` pins a git ref (npm 10 `package-spec` docs).
+- Outside the ticket: `test/luro-0082.test.mjs` read the setup idea note from `speck/ideas/`, but b455507 filed it in `speck/ideas/done/`, so it and the two 0084 tests that run it failed on main. The test now reads it from `done/` (a path change only, the assertion is unchanged), so the suite is green for ship.
+- Self-check: git status ran with optional locks off so it can't refresh the index (a test makes the index stale to prove it); package.json that's malformed, not an object or has `__proto__` scripts suggests nothing; the CLI uses nothing newer than Node 16, so an old Node can still report itself.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

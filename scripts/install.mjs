@@ -60,7 +60,7 @@ const BUILDERS = {
 };
 
 // True if `cmd` is an executable file: a path as given, or a name found on the PATH. Nothing is run.
-function onPath(cmd) {
+export function onPath(cmd) {
   const ok = f => { try { fs.accessSync(f, fs.constants.X_OK); return fs.statSync(f).isFile(); } catch { return false; } };
   if (cmd.includes('/') || cmd.includes(path.sep)) return ok(cmd);
   const exts = process.platform === 'win32' ? ['', ...(process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')] : [''];

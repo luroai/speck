@@ -43,7 +43,7 @@ test('AC3: the v0.1 handoff note is gone', () => {
 
 test('AC4: the sentences that named the owner now say "the maintainer", and the example path starts with ~/', () => {
   assert.match(read('docs/brief.md'), /Someone other than the maintainer installs it and ships a ticket\./);
-  const idea = read('speck/ideas/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md');
+  const idea = read('speck/ideas/done/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md'); // filed in done/ when ticketed (0086-0089)
   assert.match(idea, /Pilot: the maintainer adds speck to one of their existing projects using only the prompt\./);
   const done = fs.readdirSync(path.join(ROOT, 'speck/tickets/done')).find(f => f.startsWith('0053-'));
   assert.match(read(`speck/tickets/done/${done}`), /for example `~\/projects\/speck\.worktrees\/speck\/0052-/);
