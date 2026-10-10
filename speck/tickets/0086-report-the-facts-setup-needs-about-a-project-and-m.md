@@ -1,7 +1,7 @@
 ---
 id: "0086"
 title: Report the facts setup needs as JSON                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T13:56:49.065Z"
 ---
 # 0086 · Report the facts setup needs as JSON
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 To set speck up through a conversation, the agent needs to know what's already in place: Node, git, the repo's state, which coding agents are installed and how the project runs its tests. Today it would have to work each of these out with its own commands, differently every time, and speck's own checks only print ✓ and ✗ for a person to read.
@@ -48,9 +48,16 @@ To set speck up through a conversation, the agent needs to know what's already i
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 usesPytest searches arbitrary pyproject.toml text for the word pytest.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 2,383,184
+- Elapsed since build started: 17 min
+- Changed lines: 171 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: suggest the test command for the package manager the lockfile shows (`pnpm test`, `yarn test`, `bun test`), not always `npm test` (speck/ideas/2026-10-10-suggest-the-test-command-for-the-project-s-package-manager.md).
