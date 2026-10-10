@@ -1,7 +1,7 @@
 ---
 id: "0079"
 title: "Make the panel's ticket writes use the same code as speck set"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0018"]                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T12:12:28.556Z"
+finished: "2026-10-10T12:22:40.876Z"
 
 ---
 # 0079 · Make the panel's ticket writes use the same code as speck set
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel's Ready and priority buttons (0042, 0077) each have their own copy of the checks and the field write that `speck set` does, while pause, play and stop already call the same code as the CLI. Two copies drift: a rule added to `speck set` wouldn't apply in the panel, and an out-of-range priority already gets different wording in each.
