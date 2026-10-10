@@ -1,6 +1,6 @@
 # Keep builders to their own ticket
 
-Captured: 2026-10-10 · Status: idea
+Captured: 2026-10-10 · Status: ticketed (0095, 0096)
 
 ## What
 Tighten the build, review and ticket skills so builders never fix problems outside their ticket, even when a criterion seems to need it. "Ideally we don't want agents going rogue."

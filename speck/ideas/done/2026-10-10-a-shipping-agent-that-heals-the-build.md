@@ -1,6 +1,6 @@
 # A shipping agent that heals the build
 
-Captured: 2026-10-10 · Status: idea
+Captured: 2026-10-10 · Status: ticketed (0094, 0097, 0098, 0099, 0100, 0101, 0102, 0103, 0104, 0105)
 
 ## What
 A third agent in the pipeline, separate from the builder and reviewer, owns everything from "approved" to "shipped". Builds run in parallel, but the shipping agent ships one ticket at a time, in order. It handles merges, conflicts, catch-ups and a broken `main` itself, and only asks the user when a real decision is needed. "Like a self-healing build process."
