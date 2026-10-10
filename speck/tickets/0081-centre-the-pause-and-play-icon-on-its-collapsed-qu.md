@@ -1,7 +1,7 @@
 ---
 id: "0081"
 title: "Centre a build's pause icon on its collapsed queue row"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:00:13.924Z"
 ---
 # 0081 · Centre a build's pause icon on its collapsed queue row
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In a collapsed queue row, a running build's pause icon, or a paused build's play icon, lines up with the title line, so it sits near the top of the row, above the progress bar. It looks out of place next to the two lines it controls.
@@ -51,3 +51,75 @@ The pause and play icon sits vertically centred on its collapsed queue row.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5791f15569a6413437ffc23f9bd596cf431695d8",
+    "thread_id": "01a125b2-d095-71e1-ad0e-05c8c87bed90",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 228597,
+      "cached_input_tokens": 146688,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 895,
+      "reasoning_output_tokens": 90
+    },
+    "saved_at": "2026-10-10T12:04:35.265Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.html: queueItem inserts .toggle-refused between .top and .stages, while .toggle-build uses a fixed offset from .top. A refusal therefore moves the stage labels down without moving the pause icon. The 0081 AC1 browser test covers only the normal layout."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The same fixed positioning and refusal layout affect the play icon. test/panel-0081.test.mjs AC2 exercises a paused build but no refusal message."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "test/panel-0081.test.mjs AC3 measures both icons before and after opening; the supplied results pass. Positioning is anchored to .top rather than the expanded row."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "0081 AC4 uses real browser mouse events, verifies pause/play requests, unchanged collapsed/open state and a 16 × 14px button. toggleIcon stops click propagation; dimensions remain unchanged."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "0081 AC5 compares actual browser geometry against commit 9ff5e4c for rows without icons, including title, tags, counter and stages. The supplied run passes without skipping. The committed change contains only the ticket, CSS and new tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "A refused pause or play request breaks the required centring. queueItem places the refusal message between the title and progress bar, increasing the distance to the stage labels, but the icon remains at its fixed offset from the title. Existing refusal handling preserves this message through refreshes.",
+        "suggested_fix": "Make the icon track the actual midpoint when a refusal message is present, or place the message below the progress bar. Add browser coverage for refused pause and play requests that measures the midpoint after the message appears.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The icons are centred in normal rows, stay put when opened, and remain clickable. Rows without icons retain their layout. A refused pause or play request breaks the centring, so that error case needs fixing before merge."
+  }
+}
+```
+
+</details>

@@ -20,9 +20,11 @@ const board = () => ({
 });
 
 // Serves `html` as the panel, a fixed board as /api/state, and records each pause or play it is sent.
-function stub(html) {
+// With `refuse`, it refuses each one, with a reason long enough to take more than one line.
+function stub(html, { refuse = false } = {}) {
   const sent = [];
   const server = http.createServer((req, res) => {
+    if (req.method === 'POST' && refuse) { sent.push(req.url); res.writeHead(409, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ error: `Refused. ${'This build could not be changed. '.repeat(40)}` })); }
     if (req.method === 'POST') { sent.push(req.url); res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"ok":true}'); }
     if (req.url === '/api/state') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify(board())); }
     if (/\/log$/.test(req.url)) { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"text":"","truncated":false}'); }
@@ -33,8 +35,8 @@ function stub(html) {
 }
 
 // Opens `html` in the browser and waits for the queue. Returns the browser and its server.
-async function open(html = page()) {
-  const s = await stub(html);
+async function open(html = page(), opts) {
+  const s = await stub(html, opts);
   const b = await browserPage(`http://127.0.0.1:${s.port}/`);
   await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the queue');
   return { b, s, close: async () => { await b.close(); await s.close(); } };
@@ -53,7 +55,7 @@ const layout = id => `(() => {
 const centre = l => (l.icon.top + l.icon.bottom) / 2;
 const middle = l => (l.top.top + l.stages.bottom) / 2;
 const clickAt = async (b, sel) => {
-  const [x, y] = await b.js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  const [x, y] = await b.js(`(() => { const n = document.querySelector(${JSON.stringify(sel)}); n.scrollIntoView({ block: 'center' }); const r = n.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
   await b.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
   await b.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
   await b.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1 });
@@ -113,6 +115,24 @@ test('0081 AC4: clicking the icon pauses or plays the build without opening the 
     for (let i = 0; i < 50 && w.s.sent.length === n; i++) await new Promise(r => setTimeout(r, 100));
     assert.equal(w.s.sent.length, n + 1);
     assert.equal((await w.b.js(layout('0001'))).open, true, 'the open row stays open');
+  } finally { await w.close(); }
+});
+
+test('0081 AC1, AC2, AC3: a refused pause or play leaves the icon centred, collapsed and open', chrome, async () => {
+  const w = await open(page(), { refuse: true });
+  try {
+    for (const id of ['0001', '0002']) {
+      await clickAt(w.b, `${rowSel(id)} .toggle-build`);
+      await w.b.until(`document.querySelector('${rowSel(id)} .toggle-refused')`, `${id}'s refusal`);
+      assert.ok(await w.b.js(`document.querySelector('${rowSel(id)} .toggle-refused').getBoundingClientRect().height > 40`), 'the reason takes more than one line');
+      const shut = await w.b.js(layout(id));
+      assert.equal(shut.open, false);
+      assert.ok(Math.abs(centre(shut) - middle(shut)) <= 1, `${id}: icon centre ${centre(shut)}px, row middle ${middle(shut)}px`);
+      await clickAt(w.b, `${rowSel(id)} .top .title`);
+      await w.b.until(`document.querySelector('${rowSel(id)}').classList.contains('open')`, `${id} to open`);
+      const opened = await w.b.js(layout(id));
+      assert.ok(Math.abs(opened.icon.top - shut.icon.top) <= 1, `${id}: icon top ${opened.icon.top}px open, ${shut.icon.top}px collapsed`);
+    }
   } finally { await w.close(); }
 });
 

@@ -975,12 +975,13 @@ function queueItem(t) {
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
   const q = el('div', `${cls}${isOpen ? ' open' : ''}`, null, top);
-  if (toggleRefused.has(id)) q.appendChild(el('div', 'toggle-refused', toggleRefused.get(id)));
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
   const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red && !t.paused; // an agent is at work on it
   for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : moving ? 'now moving' : 'now') : null, s.label));
   q.appendChild(bar);
+  // Under the progress bar, so the bar stays right under the top row and the icon stays centred on the two (0081).
+  if (toggleRefused.has(id)) q.appendChild(el('div', 'toggle-refused', toggleRefused.get(id)));
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));
     if (isOpen) { q.appendChild(fullButton(t)); q.appendChild(logBox(id)); }
@@ -1048,7 +1049,7 @@ function toggleIcon(t) {
   return b;
 }
 // The server pauses or plays the build as speck pause or speck play does. Until the next poll the icon shows what it
-// did; a refusal shows under the top row until the next click on the icon.
+// did; a refusal shows under the progress bar until the next click on the icon.
 async function toggleBuild(id, what) {
   if (toggling.has(id)) return;
   toggleRefused.delete(id);
