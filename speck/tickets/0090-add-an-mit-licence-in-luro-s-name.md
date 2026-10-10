@@ -36,6 +36,8 @@ The repo has a standard MIT licence file in Luro's name, and the README points t
 
 ## Notes
 - Decided 2026-10-10: MIT, copyright Luro.
+- AC3: on main, `test/luro-0082.test.mjs` AC4 (and the two 0084 tests that run it) failed because b455507 moved the setup idea note to `speck/ideas/done/`. The build points that one read at the new path, with the assertion unchanged, so the full suite can pass.
+- Self-check: no changes (LICENSE matches the standard MIT text byte for byte in the test; npm packs LICENSE whatever `files` says, so `package.json` needs no change).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
