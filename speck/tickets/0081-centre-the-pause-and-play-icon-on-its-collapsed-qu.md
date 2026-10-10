@@ -1,7 +1,7 @@
 ---
 id: "0081"
 title: "Centre a build's pause icon on its collapsed queue row"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:00:13.924Z"
 ---
 # 0081 · Centre a build's pause icon on its collapsed queue row
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In a collapsed queue row, a running build's pause icon, or a paused build's play icon, lines up with the title line, so it sits near the top of the row, above the progress bar. It looks out of place next to the two lines it controls.
@@ -47,9 +47,15 @@ The pause and play icon sits vertically centred on its collapsed queue row.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A refused pause or play request breaks the required centring.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 729,461
+- Elapsed since build started: 8 min
+- Changed lines: 12 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox note): the icon's offset in `.q .toggle-build` hard-codes the progress bar's height (8px margin, 3px border, 5px padding, 15px label). It is a known limit rather than a defect: the 0081 browser tests fail if the bar's spacing changes without it.
 - Round 1 moved a refused pause or play's reason from between the top row and the progress bar to under the bar, so the icon stays centred; the 0071 tests were updated to find it there.
