@@ -1,7 +1,7 @@
 ---
 id: "0099"
 title: "Tell a failing main apart from a failing ticket when shipping"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T18:38:10.812Z"
 ---
 # 0099 · Tell a failing main apart from a failing ticket when shipping
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck ship` runs the tests on the ticket's branch. When they fail because `main` itself is broken, it gives the same refusal as a broken ticket, so every waiting ship fails with a message that blames the ticket. On 2026-10-10 that's what stopped 0087, 0090 and 0091.
@@ -49,3 +49,70 @@ When a ship's tests fail, `speck ship` checks the base branch too, and says plai
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f4b5d761c5c6d15849c51ed5d665787835de41b3",
+    "thread_id": "01a1274f-1570-75d3-974d-c8706340e9fc",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 375111,
+      "cached_input_tokens": 273920,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 734,
+      "reasoning_output_tokens": 42
+    },
+    "saved_at": "2026-10-10T19:34:43.707Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs:testFailure creates a detached temporary worktree at catchUp || baseSha, runs setup and tests, and removes it in finally. test/ship-0099.test.mjs covers the second test run, separate directory, cleanup and setup failure; builder output reports these passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "testFailure returns SpeckError with code 14 and the required message when both runs fail. The AC2 tests exercise normal, automatic and non-worktree shipping; builder output reports all passing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "testFailure keeps default exit code 1 and adds that main's tests pass. The AC3 test exercises branch failure with base success and asserts both code and message; builder output reports it passing."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The AC4 test checks branches, checkout contents, stash and worktree lists for ordinary fixtures, but testFailure also runs repository-wide git worktree prune, which can remove unrelated stale worktree records."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "testFailure's finally block runs git worktree prune for the entire repository. On a refused ship this can delete unrelated expired worktree registrations whose directories are missing, violating the requirement that nothing else changes. The current preservation test has no unrelated stale worktree, so it misses this side effect.",
+        "suggested_fix": "Remove the global prune and keep cleanup scoped to the temporary worktree. If removal fails, handle that temporary registration specifically. Add a regression test with an unrelated stale worktree registration and assert it survives both refusal outcomes.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change correctly distinguishes failing base tests from a ticket-only failure and returns the requested messages and exit codes. One cleanup step can also remove unrelated worktree records during a refusal; that must be fixed before merge. I inspected the code and tests; I did not rerun tests in the read-only environment."
+  }
+}
+```
+
+</details>

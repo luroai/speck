@@ -49,9 +49,11 @@ function testFailure(repo, cfg, base, sha) {
   const failed = 'Tests failed on the approved branch, so nothing was shipped.';
   const at = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-base-')), 'base');
   console.log(`Checking whether ${base}'s own tests pass, in a temporary worktree at ${at}.`);
+  let admin = null; // git's own record of the temporary worktree
   try {
     const added = sh('git', ['worktree', 'add', '-q', '--detach', at, sha], { cwd: repo });
     if (added.status !== 0) return new SpeckError(`${failed} Couldn't check ${base}'s own tests (${added.stderr.trim().split('\n').pop()}).`);
+    admin = path.resolve(at, git(['rev-parse', '--git-dir'], at).trim());
     const setup = String(cfg.worktree_setup || '').trim();
     if (setup) {
       console.log(`Running worktree_setup in the temporary worktree: ${setup}`);
@@ -61,9 +63,10 @@ function testFailure(repo, cfg, base, sha) {
     if (runTests(at, cfg)) return new SpeckError(`${failed} ${base}'s tests pass, so the failure comes from this ticket's change.`);
     return new SpeckError(`Tests failed on the approved branch, and ${base}'s own tests are failing too, so this isn't the ticket's fault. Nothing was shipped. Fix ${base}, then ship again.`, 14);
   } finally {
-    sh('git', ['worktree', 'remove', '--force', at], { cwd: repo });
+    // Only this worktree's record goes: a repo-wide prune would also drop other worktrees whose folders are missing.
+    const removed = sh('git', ['worktree', 'remove', '--force', at], { cwd: repo });
     fs.rmSync(path.dirname(at), { recursive: true, force: true });
-    sh('git', ['worktree', 'prune'], { cwd: repo });
+    if (removed.status !== 0 && admin) fs.rmSync(admin, { recursive: true, force: true });
   }
 }
 

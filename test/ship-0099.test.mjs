@@ -118,3 +118,29 @@ test('0099 AC4: either way, nothing else changes', () => {
     }
   }
 });
+
+test('0099 AC4 (review F1): another worktree whose folder is missing is still listed afterwards', () => {
+  for (const check of ['false', 'grep -q base shared.txt']) {
+    const r = failingShip(check);
+    const stale = path.join(fs.realpathSync(os.tmpdir()), `stale-${Math.random().toString(36).slice(2)}`);
+    assert.equal(gIn(r.dir, 'worktree', 'add', '-q', '-b', 'other', stale, 'main').status, 0);
+    fs.rmSync(stale, { recursive: true, force: true });
+    const before = r.worktrees();
+    assert.match(before, /prunable/, 'git sees it as missing');
+    assert.notEqual(runIn(r.dir, 'ship', '1').status, 0);
+    assert.equal(r.worktrees(), before, check);
+  }
+});
+
+test('0099 AC4 (review F1): if git can\'t remove the temporary worktree, its record and folder still go', () => {
+  // A locked worktree can't be removed with a single --force, so the test command locks the one main's tests run in.
+  const r = failingShip('if grep -q base shared.txt; then git worktree lock "$(pwd -P)"; fi; false');
+  const before = r.worktrees();
+  const res = runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 14, res.stderr);
+  noTrace(res);
+  const ran = r.ran();
+  assert.equal(ran.length, 2);
+  assert.equal(fs.existsSync(ran[1]), false);
+  assert.equal(r.worktrees(), before);
+});
