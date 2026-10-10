@@ -1,7 +1,7 @@
 ---
 id: "0073"
 title: "Stop a build from its open queue row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0063", "0071", "0072"]                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-10T07:37:17.637Z"
+finished: "2026-10-10T07:44:59.105Z"
 
 ---
 # 0073 · Stop a build from its open queue row
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Stopping a build for good with `speck stop` (0072) means leaving the panel for a terminal. It's also the one control that ends a build, so it shouldn't sit where a stray click hits it.
