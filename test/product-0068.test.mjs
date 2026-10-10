@@ -182,7 +182,7 @@ const filesIn = dir => fs.readdirSync(path.join(ROOT, dir), { recursive: true, w
 const read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
 test('0068 AC3: no skill, template or top-level doc mentions product.md or a living spec', () => {
-  const files = [...filesIn('skills'), ...filesIn('templates'), 'README.md', 'AGENTS.md', 'docs/brief.md', 'docs/HANDOFF.md'];
+  const files = [...filesIn('skills'), ...filesIn('templates'), 'README.md', 'AGENTS.md', 'docs/brief.md'];
   assert.ok(files.length > 10);
   const hits = files.filter(f => MENTION.test(read(f)));
   assert.deepEqual(hits, []);

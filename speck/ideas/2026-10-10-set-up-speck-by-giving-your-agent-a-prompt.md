@@ -17,5 +17,5 @@ The target is PMs and programme managers without a technical background. Today `
 - New project: `git init`, `.gitignore`, git identity, first commit, then ticket 0001 "scaffold the app with a test runner", because `speck ship` refuses without a passing `commands.test`.
 - Both: propose a builder and reviewer, explain same-model review when only Claude is present, and get explicit consent before `--dangerously-skip-permissions` in `build_command`.
 - Suggested models must be data that ships with each release (or blank for the agent's default), not hard-coded, since names go stale.
-- Pilot: Luro adds speck to one of their existing projects using only the prompt. Anything done by hand becomes backlog.
+- Pilot: the maintainer adds speck to one of their existing projects using only the prompt. Anything done by hand becomes backlog.
 - Open: `SETUP.md` fetched by URL, or a skill installed first?
