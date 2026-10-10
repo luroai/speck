@@ -1,7 +1,7 @@
 ---
 id: "0083"
 title: "Warn when a ticket contains your home folder's path"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T12:55:01.787Z"
 ---
 # 0083 · Warn when a ticket contains your home folder's path
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Tickets are committed and often published, and an absolute path from the writer's machine can slip into one. That path usually contains their username. It happened in 0053, and nobody noticed until much later.
@@ -47,9 +47,15 @@ Tickets are committed and often published, and an absolute path from the writer'
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 homePathWarnings treats non-ASCII letters as delimiters.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 911,413
+- Elapsed since build started: 8 min
+- Changed lines: 18 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
@@ -113,6 +119,70 @@ Tickets are committed and often published, and an absolute path from the writer'
     ],
     "escalation_question": "",
     "summary": "The warning includes useful line numbers and replacement advice, and does not block lint or readiness. One matching bug needs fixing: other folder names containing non-ASCII letters can trigger false warnings. The change otherwise stays within scope."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cd0133670a33fb14c8d2a56e11c4d015e5b0af64",
+    "thread_id": "01a125e6-418e-7cf0-86a4-298c9d1277a8",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 590352,
+      "cached_input_tokens": 452480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2044,
+      "reasoning_output_tokens": 49
+    },
+    "saved_at": "2026-10-10T13:03:08.421Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/core.mjs homePathWarnings generates line numbers and ~/ advice; scripts/speck.mjs cmdLint prints ! warnings. AC1 tests in test/lint-0083.test.mjs cover descendants, standalone paths, punctuation and multiple lines; supplied results pass. Independent read-only matching checks also pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "homePathWarnings now uses Unicode-aware boundaries. AC2 tests cover absent paths, similar names and embedded paths, including the new non-ASCII regression test; supplied results pass. Independent checks confirm accented letters, Chinese characters and combining marks do not trigger false warnings."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "cmdLint fails only for errors; checkSetTicket checks only errors before ready. The AC3 test exercises successful lint and set status ready with a home-path warning and passes in the supplied results."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "homePathWarnings catches os.homedir failures and skips empty, root and relative paths. AC4 tests pass in the supplied results; independent read-only checks confirm empty, root and throwing homedir cases return no home warnings."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "The previous ASCII boundary incorrectly warned about different folder names containing non-ASCII letters. Unicode-aware boundaries now fix this, with a CLI regression test.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Tickets containing your home folder path receive a warning with a line number and replacement advice, without blocking readiness. The false warning for non-ASCII folder names is fixed. All four criteria pass, with no blocking concerns remaining."
   }
 }
 ```
