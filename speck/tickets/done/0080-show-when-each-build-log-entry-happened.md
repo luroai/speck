@@ -1,7 +1,7 @@
 ---
 id: "0080"
 title: "Show when each build log entry happened"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0018"]                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-10T12:12:28.941Z"
+finished: "2026-10-10T12:20:27.677Z"
 
 ---
 # 0080 · Show when each build log entry happened
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel's build log shows what a build did but not when. Reading it, you can't tell whether a step took seconds or twenty minutes, or how long ago the build last did anything.
