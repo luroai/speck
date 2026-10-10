@@ -39,6 +39,9 @@ The pause and play icon sits vertically centred on its collapsed queue row.
 ## Notes
 - Measured 2026-10-10 in the running panel: the row's title line spans 119–139px, the stage labels end at 170px (midpoint 144.5px), and the icon spans 120–134px (centre 127px), so it's about 17px high.
 - The panel tests already drive a headless browser (`test/support/panel.mjs`), so positions can be measured.
+- The icon is placed against the top row's middle plus half the progress bar's fixed height (the body's line height is 1.5, so a stage label is 15px). If the bar's spacing or font size changes, that offset in `.q .toggle-build` needs changing with it; the 0081 browser tests catch it.
+- AC5's test compares rows without the icon against the panel as it was at commit 9ff5e4c, and skips if that commit isn't in the clone.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

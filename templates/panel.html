@@ -89,8 +89,11 @@
   .q .rank { font-family: "Liberation Mono", monospace; color: var(--accent); font-size: 12px; }
   .q.wait { opacity: .5; }
   .q.wait .rank { color: var(--muted); }
-  /* A running build's pause icon (two bars), or a paused one's play icon (a triangle), in the rank space */
-  .q .toggle-build { position: relative; width: 16px; height: 14px; padding: 0; vertical-align: -2px; background: none; border: 0; color: var(--muted); cursor: pointer; }
+  /* A running build's pause icon (two bars), or a paused one's play icon (a triangle), in the rank space. It is centred
+     between the top row and the bottom of the progress bar under it: half the top row, plus half the bar (8px margin, 3px
+     border, 5px padding and a 15px label) less half the icon. Opening the row leaves it there, as the top row doesn't move. */
+  .q .top { position: relative; }
+  .q .toggle-build { position: absolute; left: 0; top: calc(50% + 15.5px - 7px); width: 16px; height: 14px; padding: 0; background: none; border: 0; color: var(--muted); cursor: pointer; }
   .q .toggle-build:hover { color: var(--text); }
   .q .toggle-build.pause::before, .q .toggle-build.pause::after { content: ''; position: absolute; top: 2px; width: 3px; height: 10px; background: currentColor; }
   .q .toggle-build.pause::before { left: 4px; } .q .toggle-build.pause::after { left: 9px; }
