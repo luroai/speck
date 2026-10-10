@@ -1,7 +1,7 @@
 ---
 id: "0099"
 title: "Tell a failing main apart from a failing ticket when shipping"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-10-a-shipping-agent-that-heals-the-build.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-10T18:38:10.812Z"
 
 ---
 # 0099 · Tell a failing main apart from a failing ticket when shipping
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `speck ship` runs the tests on the ticket's branch. When they fail because `main` itself is broken, it gives the same refusal as a broken ticket, so every waiting ship fails with a message that blames the ticket. On 2026-10-10 that's what stopped 0087, 0090 and 0091.
