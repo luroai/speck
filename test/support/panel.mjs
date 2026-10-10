@@ -44,10 +44,10 @@ export const freePort = () => new Promise(resolve => {
   const s = net.createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); });
 });
 
-// Starts `speck panel` (from `cli`, or the repo's own CLI) and resolves once it has printed its URL.
-export function startPanel(cwd, args, cli = CLI) {
+// Starts `speck panel` (from `cli`, or the repo's own CLI), with `extraEnv` added to its environment, and resolves once it has printed its URL.
+export function startPanel(cwd, args, cli = CLI, extraEnv = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [cli, 'panel', ...args], { cwd, env });
+    const child = spawn(process.execPath, [cli, 'panel', ...args], { cwd, env: { ...env, ...extraEnv } });
     let out = '', err = '';
     const done = setTimeout(() => { child.kill(); reject(new Error(`panel didn't start: ${out}${err}`)); }, 10000);
     child.stdout.on('data', d => { out += d; if (/http:\/\/127\.0\.0\.1:\d+/.test(out)) { clearTimeout(done); resolve({ child, out: () => out }); } });

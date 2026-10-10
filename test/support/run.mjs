@@ -79,3 +79,14 @@ export const killAll = pids => { for (const p of pids) try { process.kill(p, 'SI
 export const stopRun = async r => { if (r.child.exitCode === null) { r.child.kill('SIGINT'); await r.exited; } };
 export const record = (dir, id) => JSON.parse(fs.readFileSync(path.join(dir, 'speck', '.cache', 'runs', `${id}.json`), 'utf8'));
 export const runOnce = (dir, extraEnv = {}) => spawnSync(process.execPath, [CLI, 'run'], { cwd: dir, encoding: 'utf8', env: { ...env, ...extraEnv }, timeout: 10000 });
+
+// A build left running by an earlier speck run: a process that isn't speck run's child, and its run file (0047).
+export function leftRunning(dir, id, rec = {}) {
+  const p = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { detached: true, stdio: 'ignore' });
+  p.unref();
+  const runs = path.join(dir, 'speck', '.cache', 'runs');
+  fs.mkdirSync(runs, { recursive: true });
+  const full = { id, session: `old-${id}`, cwd: dir, started: '2026-10-09T10:00:00.000Z', pid: p.pid, command: ['claude', id], ...rec };
+  fs.writeFileSync(path.join(runs, `${id}.json`), JSON.stringify(full, null, 2));
+  return { pid: p.pid, rec: full };
+}

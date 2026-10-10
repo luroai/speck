@@ -90,14 +90,14 @@ function sameToken(given, token) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-// The tail of a build's log from `speck run`, for the panel: its last 200 lines, from the main checkout, with trailing
-// blank lines dropped, and whether it has more. A ticket with no log gets empty text. Reads only, writing nothing.
+// The tail of a build's log from `speck run`, for the panel: its last 200 lines, each entry with its time, from the main
+// checkout, with trailing blank lines dropped, and whether it has more. A ticket with no log gets empty text. Reads only, writing nothing.
 const PANEL_LOG_LINES = 200;
 function panelLog(repo, id) {
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   let text;
-  try { text = readableLog(fs.readFileSync(path.join(main, 'speck', '.cache', 'runs', `${padId(id)}.log`), 'utf8')); }
+  try { text = readableLog(fs.readFileSync(path.join(main, 'speck', '.cache', 'runs', `${padId(id)}.log`), 'utf8'), { times: true }); }
   catch (e) { if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return { text: '', truncated: false }; throw e; }
   const lines = text.split('\n');
   while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
