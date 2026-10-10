@@ -38,6 +38,7 @@ A ticket is built only once its ready status is committed, setting a ticket read
 ## Notes
 - After 0095 (also changes the build skill) and 0100 (also changes `speck set`), to avoid merge conflicts.
 - `speck start` already refuses an uncommitted ticket; that refusal is what the builders worked around.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
