@@ -67,17 +67,22 @@ function onPath(cmd) {
   return (process.env.PATH || '').split(path.delimiter).filter(Boolean).some(d => exts.some(e => ok(path.join(d, cmd + e))));
 }
 
-export function doctorChecks(repo, cfg = {}) {
+// `platform` is process.platform unless given, so tests can check what Windows sees.
+export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   const reviewer = cfg.reviewer || 'codex';
   const builder = cfg.builder || 'claude';
-  const checks = [
+  const checks = [];
+  // Parts of speck, such as pausing and stopping builds, rely on macOS or Linux.
+  if (platform === 'win32') checks.push(check('Windows isn\'t supported yet: speck supports macOS and Linux for now', false,
+    'Use WSL (Windows Subsystem for Linux) and run speck there: https://learn.microsoft.com/windows/wsl/install'));
+  checks.push(
     check('Node.js 20 or newer', Number(process.versions.node.split('.')[0]) >= 20,
       'Install the latest Node.js LTS from https://nodejs.org, then open a new terminal.'),
     check('git', runs('git', ['--version']),
       'Install git from https://git-scm.com/downloads.'),
     check('This folder is a git repository', runs('git', ['-C', repo, 'rev-parse', '--git-dir']),
       'Run `git init` here, or run speck from inside your project folder.'),
-  ];
+  );
   // Only the configured builder is checked. speck can't check one it doesn't know, and that isn't a failure.
   // hasOwn, so a name like `constructor` or `toString` is an unknown builder, not a built-in object property.
   if (Object.hasOwn(BUILDERS, builder)) {
@@ -109,11 +114,11 @@ function printChecks(checks) {
   return checks.every(c => c.ok || c.optional);
 }
 
-export function cmdDoctor() {
+export function cmdDoctor(args, platform = process.platform) {
   let repo = process.cwd(), cfg = {};
   try { repo = findRepoRoot(); cfg = loadConfig(repo); } catch {}
   console.log('Checking what speck needs:');
-  const ok = printChecks(doctorChecks(repo, cfg));
+  const ok = printChecks(doctorChecks(repo, cfg, platform));
   console.log(ok ? '\nAll set.' : '\nFix the ✗ items above, then run this again.');
   if (!ok) throw new SpeckError('', 1);
 }
@@ -189,7 +194,7 @@ function fileTicketedIdeas(repo) {
   }
 }
 
-export function cmdInit(args) {
+export function cmdInit(args, platform = process.platform) {
   const repo = process.cwd();
   const force = args.includes('--force');
   console.log(`speck ${VERSION}: setting up ${repo}\n`);
@@ -246,7 +251,7 @@ export function cmdInit(args) {
   let ready = true;
   if (!args.includes('--skip-checks')) {
     console.log('\nChecking what speck needs:');
-    ready = printChecks(doctorChecks(repo, cfg));
+    ready = printChecks(doctorChecks(repo, cfg, platform));
   }
   console.log(`
 ${ready ? 'speck is installed.' : 'speck is installed, but fix the ✗ items above before building a ticket. Run `node .speck/scripts/speck.mjs doctor` to check again.'}
