@@ -39,6 +39,7 @@ The test suite gives the same results before and after the history rewrite.
 ## Notes
 - Found by a trial rewrite with `git filter-repo` in a scratch copy: 684 tests, 1 failure (0084 AC4) and 4 skips (0081 AC5, plus the three 0078 skips that also happen today).
 - Checked 2026-10-10: `9ff5e4c` in `test/panel-0081.test.mjs` is the only fixed commit id in `test/`, `scripts/`, `skills/` and `templates/`.
+- Self-check: the AC2 test's word was a random UUID, which could share two characters with a string in 0082's test file and fail by chance, so it is now a fixed word of letters no string there is made of; the AC2 check of 0084's source looks only for a read of this repo's tickets, as 0084's AC2 fixture names ticket paths.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
