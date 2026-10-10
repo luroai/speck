@@ -106,23 +106,24 @@ test('0071 AC3: a refusal shows its reason under the top row until the next clic
   p.press(toggle(rowOf(p, '0001')));
   await p.settle();
   let row = rowOf(p, '0001');
-  assert.equal(row.children[1].textContent, "0001 has no running build launched by speck run, so there's nothing to pause.");
+  assert.equal(row.children[1].className, 'stages', 'under the progress bar (0081)');
+  assert.equal(row.children[2].textContent, "0001 has no running build launched by speck run, so there's nothing to pause.");
   assert.equal(toggle(row).title, 'Pause build', 'still shown as running');
   p.timers.shift()(); // the next poll: the reason stays
   await p.settle();
   row = rowOf(p, '0001');
-  assert.match(row.children[1].textContent, /nothing to pause/);
+  assert.match(row.children[2].textContent, /nothing to pause/);
   click(topOf(row)); // opening the row leaves it too
   await p.settle();
-  assert.match(rowOf(p, '0001').children[1].textContent, /nothing to pause/);
+  assert.match(rowOf(p, '0001').children[2].textContent, /nothing to pause/);
   answer = { ok: false, status: 403, json: async () => { throw new Error('not JSON'); } };
   p.press(toggle(rowOf(p, '0001')));
   await p.settle();
-  assert.equal(rowOf(p, '0001').children[1].textContent, 'The server refused (403).', 'the next click replaces it');
+  assert.equal(rowOf(p, '0001').children[2].textContent, 'The server refused (403).', 'the next click replaces it');
   answer = { ok: true, status: 200, json: async () => ({ ok: true }) };
   p.press(toggle(rowOf(p, '0001')));
   await p.settle();
-  assert.equal(rowOf(p, '0001').children[1].className, 'stages', 'a click that works clears it');
+  assert.ok(!rowOf(p, '0001').children.some(n => n.className === 'toggle-refused'), 'a click that works clears it');
 });
 
 test('0071 AC3: no answer from the server says so under the top row', async () => {
@@ -130,7 +131,7 @@ test('0071 AC3: no answer from the server says so under the top row', async () =
   await p.settle();
   p.press(toggle(rowOf(p, '0002')));
   await p.settle();
-  assert.match(rowOf(p, '0002').children[1].textContent, /Couldn't reach the panel server/);
+  assert.match(rowOf(p, '0002').children[2].textContent, /Couldn't reach the panel server/);
 });
 
 test('0071 AC4: a paused build has no moving dot and says "Paused" beside its counter', async () => {
