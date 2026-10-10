@@ -51,6 +51,8 @@ A review round that checks only a merge after an approval doesn't count towards 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. The idea this ticket replaces, `speck/ideas/2026-10-09-allow-one-more-review-round-without-editing-config.md`, is still in the inbox; the shaping chat can move it to `speck/ideas/done/`.
+- Build was interrupted once (machine out of memory with five suites running) and resumed; tests then ran with `--test-concurrency=2`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -113,6 +115,70 @@ A review round that checks only a merge after an approval doesn't count towards 
     ],
     "escalation_question": "",
     "summary": "Merge reviews now have separate limits and clear labels, with meaningful tests covering most behaviour. One bug still prevents a later merge from being reviewed when the previous merge used its full allowance before approval. Fix that reset before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "09edf909d14de3e25ce25d2dbe924d2fa13b4582",
+    "thread_id": "01a12757-ba38-7dd3-8982-ad795ee93a28",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 721207,
+      "cached_input_tokens": 552448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1395,
+      "reasoning_output_tokens": 55
+    },
+    "saved_at": "2026-10-10T19:48:53.331Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/review.mjs: isMergeRound, ordinaryRounds, reviewSetup and nextAction classify merge rounds and exclude them from max_review_rounds. AC1 tests in test/review-0097.test.mjs exercise real merges, record and command review; supplied output shows all passing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "loadConfig defaults max_merge_rounds to 2; config.mjs accepts it as a count. reviewSetup and nextAction enforce the limit and reset after approval. AC2 tests, including the new F1 regression using a second real merge and speck review, all pass in supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "roundBlock, close.mjs reviewLogLines and pack.mjs reviewPack mark merge rounds. AC3 integration tests verify ticket records, review logs and pack labels; supplied output shows them passing."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "nextAction retains repeated-dispute checks across all rounds and counts ordinary rounds separately. AC4 tests cover repeated disputes across merge rounds and ordinary-round behaviour; supplied output shows both passing."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review.mjs",
+        "issue": "Previously, a new merge was refused when the preceding merge run approved on its final allowed round. Resolved: reviewSetup now resets consumed rounds to zero after approval, while preserving historical counts for the pack. The new integration regression exercises the previously failing command path.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Merge reviews now have their own configurable allowance and clear labels, without consuming ordinary review rounds. The reset bug is fixed and covered by a meaningful regression test. All acceptance criteria pass, with no remaining blocking findings."
   }
 }
 ```
