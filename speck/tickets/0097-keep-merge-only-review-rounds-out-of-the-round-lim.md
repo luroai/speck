@@ -38,6 +38,10 @@ A review round that checks only a merge after an approval doesn't count towards 
 ## Notes
 - speck already detects a merge since the last round (`merged` in `reviewSince`) and tells the reviewer.
 - Replaces `speck/ideas/2026-10-09-allow-one-more-review-round-without-editing-config.md`.
+- Interpretation of AC1 with AC2: a merge round that doesn't approve is followed by a fix round re-reviewing the same merge. Taken strictly, AC1 would make that an ordinary round, which a ticket approved in its last allowed round can't have (the 0086 problem again), and "merge rounds in a row without an approval" could then never exceed one. So the rounds after a merge round, until one approves, are merge rounds too (`isMergeRound` in `scripts/review.mjs`), and `max_merge_rounds` caps that run. An approval ends the run, so a later merge starts a new one.
+- Merge rounds are recorded as `"merge": true` in the round's meta. Rounds saved before this change have no flag and count as ordinary rounds.
+- The 0048 test of the Delivery log after a merge re-review now expects `- Review rounds: 2, 1 of them a merge round`, the AC3 wording for its merge round.
+- Self-check: `speck record` now looks up whether the base branch was merged in only when the previous round approved, so a record that isn't after an approval can't fail on that lookup.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

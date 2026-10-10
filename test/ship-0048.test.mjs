@@ -189,7 +189,7 @@ test('0048 AC2/AC4: after the merge, the re-review, speck close and a second shi
   assert.equal(close.status, 0, close.stderr);
   const log = read(r.wt, TICKET).split('## Delivery log')[1];
   assert.equal(log.match(/^- Review rounds:/gm).length, 1, 'the earlier close\'s figures are replaced, not repeated');
-  assert.match(log, /^- Review rounds: 2$/m);
+  assert.match(log, /^- Review rounds: 2, 1 of them a merge round$/m); // 0097: round 2 re-reviews the merge
   assert.equal(log.match(/^- Changed lines:/gm).length, 1);
   assert.match(log, /^- Follow-up: keep this idea$/m);
   const ship = runIn(r.dir, 'ship', '1');

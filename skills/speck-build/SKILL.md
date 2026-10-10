@@ -81,7 +81,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
      2. Resolve each conflict keeping the intent of both sides: the base branch's change and this ticket's. Stage each resolved file by name.
      3. Run the tests (`<test command> 2>&1 | tee /tmp/speck-<id>-tests.txt`) and fix anything the merge broke.
      4. Commit the merge (`speck(<id>): merge <base_branch>`).
-     5. Run a review round as in section 4 (`speck review <id>` accepts the `approved` ticket and sets it to `reviewing`). Its response file lists each file you resolved and how. The reviewer sees the branch's whole change against the base branch as merged. Take turns as usual until `speck next <id>` says `ship` or `block`. The round counts towards `max_review_rounds`.
+     5. Run a review round as in section 4 (`speck review <id>` accepts the `approved` ticket and sets it to `reviewing`). Its response file lists each file you resolved and how. The reviewer sees the branch's whole change against the base branch as merged. Take turns as usual until `speck next <id>` says `ship` or `block`. This merge round, and any rounds after it until the reviewer approves, don't count towards `max_review_rounds`. They have their own limit, `max_merge_rounds`.
      6. On `ship`, run `speck close <id>`, then `speck ship <id> --auto` again.
      If it exits with 13 again after two merges, block the ticket (section 6) with the conflicting files in the question.
    - If any other check refused, report the reason as the ship skill describes. Don't work around it.

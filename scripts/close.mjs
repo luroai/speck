@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, changedLines, posix, writeField } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
-import { who, reviewTotals } from './pack.mjs';
+import { who, reviewTotals, roundsLine } from './pack.mjs';
 
 // ---------- close (write the logs, set approved and commit, once the reviewer has approved) ----------
 
@@ -27,7 +27,7 @@ function reviewLogLines(all) {
   return all.map(r => {
     const fresh = r.verdict.findings.filter(f => f.severity === 'blocking' && !seen.has(f.id));
     for (const f of r.verdict.findings) seen.add(f.id);
-    return `Round ${r.meta.round} (${r.meta.reviewer}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
+    return `Round ${r.meta.round} (${r.meta.reviewer}${r.meta.merge ? ', merge round' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
       .replace(/\.\.$/, '.');
   });
 }
@@ -83,7 +83,7 @@ export function cmdClose(args) {
   const { tokens, elapsed } = reviewTotals(t, all);
   const diff = changedLines(repo, cfg.base_branch);
   const figures = [
-    `- Review rounds: ${all.length}`,
+    `- ${roundsLine(all)}`,
     `- Reviewer: ${who(all[all.length - 1].meta)}`,
     `- Reviewer tokens: ${tokens}`,
     `- ${elapsed}`,
