@@ -1,7 +1,7 @@
 ---
 id: "0098"
 title: "Report what merging the base branch would conflict on"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-10T18:38:13.481Z"
 ---
 # 0098 · Report what merging the base branch would conflict on
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 To decide whether a conflict is safe to resolve without another review, the shipping agent needs to know what kind of conflict it is. Working that out by reading conflict markers is slow, and agents would each do it differently.
@@ -49,9 +49,15 @@ To decide whether a conflict is safe to resolve without another review, the ship
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The conflict parser ignores Git's conflict-marker-size attribute.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,284,241
+- Elapsed since build started: 67 min
+- Changed lines: 114 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - The build was killed once when the machine ran out of memory (five test suites at once), and then resumed. Later full runs used `--test-concurrency=2`.
 - Follow-ups:
