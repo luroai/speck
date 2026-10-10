@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TEMPLATES, STATUSES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdClose } from './close.mjs';
@@ -38,13 +38,13 @@ function cmdNew(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const title = args.filter(a => !a.startsWith('--')).join(' ').trim();
-  if (!title) throw new SpeckError('Usage: speck new <title> [--source=path] [--type=bug]');
+  if (!title) throw new SpeckError('Usage: speck new <title> [--source=path] [--type=bug|fix]');
   const source = (args.find(a => a.startsWith('--source=')) || '').slice(9);
-  // Every --type must be --type=bug, so a mistyped or second value creates nothing.
+  // Every --type must be --type=bug or every one --type=fix, so a mistyped or second, different value creates nothing.
   const types = args.filter(a => a === '--type' || a.startsWith('--type=')).map(a => a.slice(7));
-  const badType = types.find(v => v !== 'bug');
-  if (badType !== undefined) throw new SpeckError(`--type must be --type=bug (got "${badType}"). Leave it out for any other ticket.`);
-  const type = types.length ? 'bug' : '';
+  const badType = types.find(v => !TYPES.includes(v) || v !== types[0]);
+  if (badType !== undefined) throw new SpeckError(`--type must be --type=bug or --type=fix, given once (got "${badType}"). Leave it out for any other ticket.`);
+  const type = types[0] || '';
   // The source is checked before anything is written, so a mistyped path creates no ticket.
   // A note in speck/ideas/ that has already been filed in speck/ideas/done/ is found there.
   let sourceFile = source && path.resolve(repo, source);
@@ -71,6 +71,8 @@ function cmdNew(args) {
   const target = note && STATUS_LINE.test(note) && filed ? filed : sourceFile;
   text = setField(text, 'source', JSON.stringify(target && target !== path.resolve(repo, source) ? repoPath(repo, target) : source));
   if (type) text = setField(text, 'type', type);
+  // A fix ticket mends a broken base branch, which holds up every ship, so it starts at priority 0, ahead of everything.
+  if (type === 'fix') text = setField(text, 'priority', 0);
   text = syncHeader(setField(text, 'created', new Date().toISOString().slice(0, 10)));
   const file = path.join(ticketsDir(repo), `${id}-${slugify(title)}.md`);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -112,11 +114,13 @@ function cmdSet(args) {
 // `speck set`'s checks and write, shared with the panel so the two can't drift. The checks throw a SpeckError saying
 // why, before anything is written. checkSetValue needs no ticket, so `speck set` makes it before looking one up.
 export function checkSetValue(key, value) {
-  if (key === 'priority' && value !== '' && !/^[1-5]$/.test(value))
-    throw new SpeckError(`priority must be a whole number from 1 to 5, or "" to clear it (got ${JSON.stringify(value)}).`);
+  if (key === 'priority' && value !== '' && !/^[0-5]$/.test(value))
+    throw new SpeckError(`priority must be a whole number from 1 to 5, 0 on a fix ticket, or "" to clear it (got ${JSON.stringify(value)}).`);
 }
 
 export function checkSetTicket(t, cfg, key, value) {
+  if (key === 'priority' && value === '0' && ticketType(t) !== 'fix')
+    throw new SpeckError(`priority must be a whole number from 1 to 5 (got "0"): priority 0 is only for a fix ticket, and ${t.fm.id} isn't one.`);
   if (key !== 'status') return;
   if (!STATUSES.includes(value)) throw new SpeckError(`status must be one of ${STATUSES.join(', ')}.`);
   // Cancelling records why, so it has its own command; `set` would lose the reason.
@@ -454,11 +458,11 @@ function cmdStatus(args = []) {
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
-    const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, priority: ticketPriority(t) })).sort(byPriority);
+    const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);
     if (!group.length) continue;
     console.log(`\n${s.toUpperCase()} (${group.length})${s === 'approved' ? ': waiting for you. Read `speck pack <id>`, then run /speck-ship <id>' : ''}`);
     for (const { t, priority } of group) {
-      console.log(`  ${t.fm.id}${t.fm.type === 'bug' ? ' bug' : ''}  P${priority === null ? '-' : typeof priority === 'object' ? JSON.stringify(priority) : priority}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
+      console.log(`  ${t.fm.id}${TYPES.includes(t.fm.type) ? ` ${t.fm.type}` : ''}  P${priority === null ? '-' : typeof priority === 'object' ? JSON.stringify(priority) : priority}  ${t.fm.size}/${t.fm.risk}  ${t.fm.title}`);
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
       if (s === 'blocked') {
         const q = contentLines(t.sections['blocked question']).join(' ');

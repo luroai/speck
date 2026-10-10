@@ -37,6 +37,8 @@ Fix tickets are a ticket type of their own, for a broken `main`, at priority 0 (
 
 ## Notes
 - Bug tickets (0049) are the model for the type and its mark.
+- A fix ticket sorts ahead of every other ticket whatever its priority, so a fix ticket set to P3 still comes before a P1. A priority that's invalid for its ticket (0 on a non-fix ticket, or a negative one) now sorts with the tickets that have none, as the existing comment on `byPriority` already said.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -44,7 +44,9 @@
   .tag.high { color: var(--bad); border-color: #5c3330; }
   :root { --bug: #e07bb5; } /* the bug tag's own colour */
   .tag.bug { color: var(--bug); border-color: #5c3550; }
-  #shipped .tag.bug { margin-left: 8px; }
+  :root { --fix: #e6cf5c; } /* the fix tag's own colour */
+  .tag.fix { color: var(--fix); border-color: #5c5330; }
+  #shipped .tag.bug, #shipped .tag.fix { margin-left: 8px; }
   .prio { position: relative; display: inline-block; }
   .tag.pick { cursor: pointer; }
   .tag.pick:hover { color: var(--text); border-color: var(--muted); }
@@ -634,11 +636,11 @@ function chainIcon(t) {
   if (icon) icon.title = t.chain ? `Starts a chain: unlocks ${t.unlocks.join(', ')}` : `Waiting on ${t.waiting_on.join(', ')}`;
   return icon;
 }
-// A "bug" tag for a bug ticket, or nothing.
-const bugTag = t => (t.type === 'bug' ? el('span', 'tag bug', 'bug') : null);
+// A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
+const typeTag = t => (t.type === 'bug' || t.type === 'fix' ? el('span', `tag ${t.type}`, t.type) : null);
 // `pick`: the priority tag opens the menu that sets it (a draft in the Tickets list).
 function tags(t, icon, pick) {
-  const row = el('div', 'row', null, el('span', 'id', t.id), bugTag(t), icon, el('span', 'title', t.title));
+  const row = el('div', 'row', null, el('span', 'id', t.id), typeTag(t), icon, el('span', 'title', t.title));
   if (t.priority !== undefined && t.priority !== null && t.priority !== '') {
     const tag = el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`);
     row.appendChild(pick ? priorityPicker(t, tag) : tag);
@@ -1307,7 +1309,7 @@ function render() {
   // The shipped time turns from the time alone to date and time after midnight, so it is put right on a kept row.
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), () => null, t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
-    const name = el('td', null, null, el('span', 'id', t.id), bugTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
+    const name = el('td', null, null, el('span', 'id', t.id), typeTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
     return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, fullButton(t)));
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => setText(tr.children[2], t.when) }), 'Nothing shipped yet.');
   const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
