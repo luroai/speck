@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn, spawnSync } from 'node:child_process';
-import { runRepo, startRun, until, alive, killAll, stopRun, record } from './support/run.mjs';
+import { spawnSync } from 'node:child_process';
+import { runRepo, startRun, until, alive, killAll, stopRun, record, leftRunning } from './support/run.mjs';
 
 // ---------- 0047: don't relaunch a build that's still running when speck run restarts ----------
 
@@ -12,15 +12,6 @@ const runsPath = (dir, f) => path.join(dir, 'speck', '.cache', 'runs', f);
 const wait = ms => new Promise(res => setTimeout(res, ms));
 const count = (text, re) => (text.match(new RegExp(re.source, `${re.flags.replace('g', '')}g`)) || []).length;
 
-// A build left running by an earlier speck run: a process that isn't speck run's child, and its run file.
-function leftRunning(dir, id, rec = {}) {
-  const p = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { detached: true, stdio: 'ignore' });
-  p.unref();
-  fs.mkdirSync(runsPath(dir, ''), { recursive: true });
-  const full = { id, session: `old-${id}`, cwd: dir, started: '2026-10-09T10:00:00.000Z', pid: p.pid, command: ['claude', id], ...rec };
-  fs.writeFileSync(runsPath(dir, `${id}.json`), JSON.stringify(full, null, 2));
-  return { pid: p.pid, rec: full };
-}
 // The pid of a process that has already exited.
 const deadPid = () => spawnSync(process.execPath, ['-e', 'process.pid'], { stdio: 'ignore' }).pid;
 

@@ -41,6 +41,7 @@ Each entry in the panel's build log shows the time it happened.
 - Checked 2026-10-10: in Claude Code's `--output-format stream-json` logs (`speck/.cache/runs/0018.log`, `0073.log`), `assistant` and `user` events carry `"timestamp"` as ISO 8601 UTC, for example `2026-10-10T11:56:45.034Z`. `result` and `system` events have none.
 - Tests should set `TZ` so the expected local time is fixed.
 - Assumption: AC4 keeps the failure message and `speck run`'s output without times. Say if you want times there too.
+- Self-check: a timestamp must start like an ISO 8601 date (`YYYY-MM-DDT`) as well as parse, so strings such as `1`, which `Date` reads as a year, show no time; tests cover these and out-of-range dates.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

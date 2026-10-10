@@ -1610,29 +1610,37 @@ function selfCheck(lines) {
 // A build log as people read it. With `--output-format stream-json`, Claude Code writes one JSON event per line as it
 // works: these become the agent's text and one line per tool call ("→ Bash: run the tests"), and the rest (tool output,
 // session and rate-limit events) are left out. Any other line, such as plain `claude -p` output or an error, is kept as is.
+// With `times`, each agent message, tool call and failed tool result starts with its event's local time (`HH:MM:SS `),
+// when the event has an ISO 8601 timestamp that reads as a date.
 const LOG_DETAIL = 200;
-export function readableLog(text) {
+export function readableLog(text, { times = false } = {}) {
   const out = [];
   let last = null; // the agent's latest text, so the result that repeats it isn't shown twice
   const short = s => { s = String(s).replace(/\s+/g, ' ').trim(); return s.length > LOG_DETAIL ? `${s.slice(0, LOG_DETAIL - 1)}…` : s; };
+  const two = n => String(n).padStart(2, '0');
+  const clock = t => {
+    const d = times && typeof t === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(t) ? new Date(t) : null;
+    return d && !Number.isNaN(d.getTime()) ? `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())} ` : '';
+  };
   for (const line of String(text ?? '').split('\n')) {
     let e = null;
     if (line.startsWith('{')) { try { e = JSON.parse(line); } catch { /* not an event */ } }
     if (!e || typeof e !== 'object' || typeof e.type !== 'string') { out.push(line); continue; }
+    const at = clock(e.timestamp);
     if (e.type === 'assistant' && Array.isArray(e.message?.content)) {
       for (const b of e.message.content) {
-        if (b?.type === 'text' && typeof b.text === 'string' && b.text.trim()) { out.push(b.text.trim(), ''); last = b.text.trim(); }
+        if (b?.type === 'text' && typeof b.text === 'string' && b.text.trim()) { out.push(at + b.text.trim(), ''); last = b.text.trim(); }
         else if (b?.type === 'tool_use') {
           const i = b.input && typeof b.input === 'object' ? b.input : {};
           const what = i.description || i.command || i.file_path || i.path || i.pattern || i.url || i.query || i.prompt || i.skill || '';
-          out.push(`→ ${b.name || 'tool'}${what ? `: ${short(what)}` : ''}`);
+          out.push(`${at}→ ${b.name || 'tool'}${what ? `: ${short(what)}` : ''}`);
         }
       }
     } else if (e.type === 'user' && Array.isArray(e.message?.content)) {
       for (const b of e.message.content) {
         if (b?.type !== 'tool_result' || b.is_error !== true) continue;
         const c = typeof b.content === 'string' ? b.content : Array.isArray(b.content) ? b.content.map(x => x?.text || '').join(' ') : '';
-        out.push(`  ✗ ${short(c) || 'failed'}`);
+        out.push(`${at}  ✗ ${short(c) || 'failed'}`);
       }
     } else if (e.type === 'result') {
       const r = typeof e.result === 'string' ? e.result.trim() : '';
