@@ -300,6 +300,9 @@ export function lintTicket(ticket, cfg) {
     .reduce((n, s) => n + contentLines(sections[s]).length, 0);
   if (body > L.max_ticket_body_lines) errors.push(`Ticket body is ${body} lines (max ${L.max_ticket_body_lines}). It's too big for one agent: split it.`);
   warnings.push(...homePathWarnings(ticket.raw));
+  const priv = privateWordProblems(ticket.raw);
+  errors.push(...priv.errors);
+  warnings.push(...priv.warnings);
   return { errors, warnings, acceptanceCriteria: ac };
 }
 
@@ -338,6 +341,27 @@ function homePathWarnings(text) {
   return text.split('\n').flatMap((l, i) => re.test(l)
     ? [`Line ${i + 1} contains your home folder's path (${home}). Write it as a \`~/\` path instead, so it doesn't publish your username.`]
     : []);
+}
+
+// Words the user keeps out of the repo, such as their real name, one per line in ~/.config/speck/private-words
+// (blank lines and # lines skipped). Each line of the ticket holding one, in any case and matched literally, is an
+// error that names the line but not the word. A missing file checks nothing; one that can't be read is a warning.
+function privateWordProblems(text) {
+  let home = '';
+  try { home = os.homedir(); } catch { /* no home folder */ }
+  if (!home) return { errors: [], warnings: [] };
+  let list;
+  try { list = fs.readFileSync(path.join(home, '.config', 'speck', 'private-words'), 'utf8'); }
+  catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return { errors: [], warnings: [] };
+    return { errors: [], warnings: [`Can't read ~/.config/speck/private-words (${e.code || e.message}), so this ticket wasn't checked for your private words. Make it a readable file, or remove it to skip the check.`] };
+  }
+  const words = list.split('\n').map(l => l.trim().toLowerCase()).filter(l => l && !l.startsWith('#'));
+  if (!words.length) return { errors: [], warnings: [] };
+  const errors = text.split('\n').flatMap((l, i) => words.some(w => l.toLowerCase().includes(w))
+    ? [`Line ${i + 1} contains one of your private words (from ~/.config/speck/private-words). Take it out before setting the ticket ready.`]
+    : []);
+  return { errors, warnings: [] };
 }
 
 // ---------- diff size ----------

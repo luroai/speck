@@ -41,6 +41,8 @@ Tickets are committed and often published, so a ticket can leak words you'd rath
 - Same file and format as 0084's check (`test/support/private-words.mjs`), so the words you already list there work.
 - Lint already warns about your home folder's path in a ticket (0083). That stays a warning; this is an error, because the words are ones you've chosen to keep private.
 - Failing before this build: none
+- The home folder is `os.homedir()`, as 0083's check and 0084's word list use it: `$HOME` when set, otherwise the system's record of the user. That lets the tests use a fake home folder.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
