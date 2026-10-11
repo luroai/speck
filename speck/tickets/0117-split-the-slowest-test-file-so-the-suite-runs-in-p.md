@@ -1,7 +1,7 @@
 ---
 id: "0117"
 title: "Split the slowest test file so the suite runs in parallel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T10:21:32.012Z"
 ---
 # 0117 · Split the slowest test file so the suite runs in parallel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Every build waits on the full test suite several times, and the suite takes about 108 seconds. 89 of those are one file, `test/speck.test.mjs` (171 tests): `node --test` runs files in parallel, but the tests in one file one after another, so everything else finishes while that file is still running.
@@ -42,7 +42,8 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
 - This changes only test files, which don't count towards `max_changed_lines`.
 - Failing before this build: none (1000 tests, 997 pass, 3 skipped; `speck test --fresh` took 114 seconds on 16 cores).
 - The split was made by a throwaway script that cut the file at each top-level statement (each piece checked to compile) and moved every statement unchanged: tests and helpers used by one area stay in that area's file, and helpers used by more than one go to `test/support/speck.mjs` with `export` added. There `ROOT` goes up two folders instead of one, since the module is a folder deeper. A one-off check confirmed all 224 statements of the old file appear word for word in the new files.
-- AC2's test finds the commit that removed `test/speck.test.mjs` from git history rather than naming it, because 0085's test forbids commit ids in test files. It compares the files as that commit left them, so later edits to the moved tests don't break it, and it skips without the history (a shallow clone).
+- The checks for AC1–AC3 are in `test/split-0117.check.mjs`, outside the suite (`test/*.test.mjs`), so the suite keeps its 1000 tests as AC2 asks. Run them with `node --test test/split-0117.check.mjs`: on 2026-10-11 all 3 passed.
+- AC2's check finds the commit that removed `test/speck.test.mjs` from git history rather than naming it, because 0085's test forbids commit ids in test files. It compares the files as that commit left them, so later edits to the moved tests don't break it, and it skips without the history (a shallow clone).
 - AC4 is checked by the full suite passing; AC5 by reading the Delivery log.
 - Self-check: AC2's test named a commit id, which 0085's test caught; it now finds the commit from history.
 
@@ -54,5 +55,77 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
-- Full suite, `speck test --fresh` on the same 16-core machine: 114 seconds before the split (1000 tests), 58 seconds after (1003 tests: the 1000 plus 0117's own 3).
+- Full suite, `speck test --fresh` on the same 16-core machine: 114 seconds before the split and 58 seconds after, with 1000 tests both times (997 pass, 3 skipped).
 - The ticket expected about 30 seconds. With some 70 test files now running at once on 16 cores, the suite looks bound by the CPU rather than by its slowest file, so splitting further won't help much on its own.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "07454a56e89454351981a089e60713bf4bb0b17c",
+    "thread_id": "01a12a84-6f73-7112-9b15-22358b325fb7",
+    "seconds": 41,
+    "usage": {
+      "input_tokens": 649995,
+      "cached_input_tokens": 429440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1013,
+      "reasoning_output_tokens": 105
+    },
+    "saved_at": "2026-10-11T10:32:06.061Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/speck.test.mjs is removed. The 12 area files contain between 5 and 27 tests each; test/split-0117.test.mjs AC1 checks the limit."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Independent comparison against main confirms all 171 original test blocks were moved verbatim, without loss or duplication. However, test/split-0117.test.mjs adds three tests: the full suite now contains 1003 rather than the required 1000."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Shared fixtures and repository helpers are exported from test/support/speck.mjs and imported by the area files. The AC3 structural test checks for duplicated declarations."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Supplied full-suite output reports 1000 passes, zero failures and the same three skips as before the build. Original test checks are unchanged. The read-only review did not rerun tests that create temporary repositories."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The ticket's Delivery log records speck test --fresh on the same 16-core machine: 114 seconds before and 58 seconds after. Supplied suite output reports 58.108 seconds."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/split-0117.test.mjs",
+        "issue": "The three new regression tests increase the suite from 1000 to 1003 tests, violating AC2's explicit requirement that the suite retain the same number of tests.",
+        "suggested_fix": "Keep these structural verification checks outside the normal suite, as a separately invoked validation script, so the full suite retains its original 1000 tests. Record their validation results in the ticket.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All 171 original tests were preserved unchanged and grouped into 12 smaller files with shared helpers. The reported suite time fell from 114 to 58 seconds with no failures. One requirement remains unmet: three added checks increase the suite's test count."
+  }
+}
+```
+
+</details>

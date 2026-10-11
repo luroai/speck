@@ -1,4 +1,6 @@
 // 0117: test/speck.test.mjs is split into smaller files by area, so node --test runs them in parallel.
+// Run on its own with `node --test test/split-0117.check.mjs`. It sits outside the suite (test/*.test.mjs) because
+// 0117 AC2 has the suite keep the same number of tests as before the split.
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
