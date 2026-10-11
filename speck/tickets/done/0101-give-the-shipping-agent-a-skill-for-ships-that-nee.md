@@ -1,7 +1,7 @@
 ---
 id: "0101"
 title: "Give the shipping agent a skill for ships that need help"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-a-shipping-agent-that-heals-the-build.md"  
 after: ["0097", "0098", "0099", "0100"]                # ticket ids that must be done first
 created: 2026-10-10
 started: "2026-10-11T08:18:17.251Z"
+finished: "2026-10-11T08:49:43.289Z"
 
 ---
 # 0101 · Give the shipping agent a skill for ships that need help
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a ship can't go through cleanly, someone has to merge the base branch in, resolve conflicts, get the merge re-reviewed and ship again, or notice that `main` is broken. Today that's the builder improvising or the user stepping in. Speck needs one agent whose only job is this, which only asks the user about real decisions.
