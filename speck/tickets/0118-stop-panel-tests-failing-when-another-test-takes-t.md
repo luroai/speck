@@ -1,7 +1,7 @@
 ---
 id: "0118"
 title: "Stop panel tests failing when another test takes their port"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T10:35:54.329Z"
 ---
 # 0118 · Stop panel tests failing when another test takes their port
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Panel tests fail now and then with "Port … is already in use, so the panel didn't start". The helper `freePort()` in `test/support/panel.mjs` finds a free port, releases it, and the panel is started on it a moment later. Meanwhile another test file running in parallel can take the same port. It stopped 0097 shipping, and it cost 0111's build a re-run. Each time, the builder had to work out that it wasn't their change.
@@ -46,9 +46,15 @@ A panel test no longer fails because another test took the port it picked.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new free-port test reintroduces the exact race this ticket fixes.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,069,324
+- Elapsed since build started: 6 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
