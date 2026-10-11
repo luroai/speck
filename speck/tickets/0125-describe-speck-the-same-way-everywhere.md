@@ -1,7 +1,7 @@
 ---
 id: "0125"
 title: "Describe speck the same way everywhere"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T14:27:44.427Z"
 
 ---
 # 0125 · Describe speck the same way everywhere
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck describes itself in different words in different places. `package.json` and `speck help` say "small tickets, independent review, you merge", where the README says "You ship". `speck help` says `speck doctor` checks GitHub, which speck no longer needs. And `speck init`'s next steps describe an older way of working: typing `/speck-capture` and shipping each ticket by hand, with no mention of `speck run` or the panel. A first-time user gets a different picture from each.
