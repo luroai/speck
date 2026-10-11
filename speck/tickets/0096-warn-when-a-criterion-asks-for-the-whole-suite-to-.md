@@ -36,6 +36,9 @@ Tickets ask that no test that passed before the change fails, and `speck lint` w
 - Rewording existing tickets.
 - Builder and reviewer behaviour (0095).
 
+## Notes
+- Failing before this build: none
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
