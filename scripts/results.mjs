@@ -74,11 +74,11 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
   try {
     const r = runTestsInTurn(repo, cfg, cmd, onStart, keep);
     const exit = (() => { try { return fs.readFileSync(keep.exit, 'utf8').trim(); } catch { return ''; } })();
-    // No exit code means the run was stopped before the tests ended. Codes over 128 are tests killed by a signal.
-    if (!/^\d+$/.test(exit)) return { status: r.status === 0 ? 1 : r.status, signal: r.signal };
+    // No exit code means the run was stopped before the tests ended, or a signal stopped them: nothing is recorded.
+    if (!/^\d+$/.test(exit)) return { status: r.status === 0 ? 1 : r.status, signal: r.signal || exit.match(/^signal (\w+)$/)?.[1] || null };
     const status = Number(exit);
     const after = testedCode(repo, cmd);
-    if (status <= 128 && after && after.key === code.key) {
+    if (after && after.key === code.key) {
       let output = '';
       try { output = fs.readFileSync(keep.output, 'utf8'); } catch { /* no output */ }
       record(repo, code, cmd, status, output);

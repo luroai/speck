@@ -235,3 +235,27 @@ test('0112 AC1 AC2: speck ship records its result, which the next build on the s
   assert.equal(c.runs(), 1, 'the shipped code was already tested');
   assert.match(next.stdout, REUSED);
 });
+
+test('0112 AC1 AC2: a failure that ends normally with an exit code above 128 is recorded and reused', () => {
+  const c = counted(200, 'not ok 1 - big exit');
+  const r = testRepo(c.cmd);
+  assert.equal(speck(r.dir, 'test').status, 200);
+  const again = speck(r.dir, 'test');
+  assert.equal(again.status, 200);
+  assert.equal(c.runs(), 1);
+  assert.match(again.stdout, REUSED);
+  assert.match(again.stdout, /not ok 1 - big exit/);
+});
+
+test('0112 AC1: tests stopped by a signal record nothing, and say they were stopped', () => {
+  const c = counted(0);
+  const r = testRepo(`echo run >> ${c.log}; kill -TERM $$`);
+  const first = speck(r.dir, 'test');
+  assert.notEqual(first.status, 0);
+  noTrace(first);
+  assert.match(first.stderr, /stopped by SIGTERM/);
+  const again = speck(r.dir, 'test');
+  assert.notEqual(again.status, 0);
+  assert.equal(c.runs(), 2, 'the second run ran the suite');
+  assert.doesNotMatch(again.stdout, REUSED);
+});

@@ -45,9 +45,12 @@ const runFiles = (dir, run) => (typeof run === 'string' && /^[0-9a-f-]+$/.test(r
 // as `sh -c <cmd>` would run it. If the started folder is already there, a waiter has taken the turn over from this run,
 // so it stops without running anything.
 export const TEST_SHELL = 'printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && exec sh -c "$3"';
-// The same, keeping a copy of the output in file $4 and the test command's exit code in file $5 (0112). The shell
-// whose pid it records waits for the tests, so it's alive while they run.
-export const TEST_SHELL_KEPT = 'printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && { sh -c "$3" 2>&1; echo $? > "$5"; } | tee "$4"';
+// The same, keeping a copy of the output in file $4 (0112). Node ($6) runs the test command and writes how it ended to
+// file $5: its exit code, or `signal <name>` if a signal stopped it, which a shell's $? can't tell from an exit code.
+// The shell whose pid it records waits for the tests, so it's alive while they run.
+const ENDED = 'const r = require("child_process").spawnSync("sh", ["-c", process.argv[1]], { stdio: "inherit" });'
+  + ' require("fs").writeFileSync(process.argv[2], r.signal ? `signal ${r.signal}` : String(r.status)); process.exit(r.status ?? 1);';
+export const TEST_SHELL_KEPT = `printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && "$6" -e '${ENDED}' "$3" "$5" 2>&1 | tee "$4"`;
 
 // Whether a claim on a turn is held: while the speck process that made it is alive, or the shell running its tests
 // is, so tests left running by a speck process that was killed still hold it. A claim that can't be read as one is
@@ -145,7 +148,7 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, keep = null) 
   const files = runFiles(dir, run);
   try {
     onStart();
-    const shell = keep ? [TEST_SHELL_KEPT, 'sh', files.pid, files.started, cmd, keep.output, keep.exit] : [TEST_SHELL, 'sh', files.pid, files.started, cmd];
+    const shell = keep ? [TEST_SHELL_KEPT, 'sh', files.pid, files.started, cmd, keep.output, keep.exit, process.execPath] : [TEST_SHELL, 'sh', files.pid, files.started, cmd];
     return sh('sh', ['-c', ...shell], { cwd: repo, stdio: 'inherit' });
   } finally {
     if (read(lock) === text) forget(lock, text, true);
