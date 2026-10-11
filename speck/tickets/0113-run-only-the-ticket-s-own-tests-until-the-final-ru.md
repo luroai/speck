@@ -1,7 +1,7 @@
 ---
 id: "0113"
 title: "Run only the ticket's own tests until the final run"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T10:12:02.019Z"
 ---
 # 0113 · Run only the ticket's own tests until the final run
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 While writing tests and fixing code, a build re-runs the whole suite each time, though only the ticket's own tests are changing. Each run costs about 100 seconds here, and the full suite only needs to run when the work is finished.
@@ -50,3 +50,62 @@ Builds run only the ticket's own test files while they work, and the whole suite
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none. Known limit: `speck test --files` doesn't take a `max_parallel_tests` turn, so several builds' partial runs can overlap with a full run.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "21074fcd5bea119b9a34f736277782cad04f65d8",
+    "thread_id": "01a12a7a-7b56-7220-9e5d-a392444a7fca",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 441480,
+      "cached_input_tokens": 324992,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 722,
+      "reasoning_output_tokens": 53
+    },
+    "saved_at": "2026-10-11T10:21:02.614Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/config.yml defines test_files as blank with a {files} comment. scripts/config.mjs accepts and validates commands.test_files. The three AC1 tests in test/files-0113.test.mjs cover these behaviours and passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs cmdTest substitutes shell-quoted file paths, returns the command's exit code and announces the blank-setting fallback. AC2 CLI tests cover selection, exit codes, fallback, subfolder paths, special characters and missing arguments; all passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md sections 2 and 3 require speck test --files for the initial failing tests and implementation iterations. The AC3 skill test checks both instructions and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The build and review skills retain full-suite checks at every required point. scripts/ship.mjs continues using commands.test through testRun. AC4 tests verify the instructions and exercise shipping with test_files configured; all passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change lets builds run their own test files while retaining full-suite checks before review and shipping. File names are safely quoted, and partial results cannot replace a full-suite result. The supplied suite reports 997 passes, no failures and three skips. Repository inspection found no blocking issues; tests were not rerun in the read-only review."
+  }
+}
+```
+
+</details>
