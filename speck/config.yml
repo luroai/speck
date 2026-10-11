@@ -25,6 +25,7 @@ resume_command: 'claude --resume {session}'
 
 commands:
   test: "npm test"
+  test_files: node --test {files}
 
 limits:
   max_acceptance_criteria: 10

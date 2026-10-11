@@ -21,13 +21,13 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 ## 2. Tests first
 
 1. For each acceptance criterion, write at least one test that checks it. Name or comment each test with its criterion number (for example `AC2`). Put this ticket's new tests in a new test file of their own (for example `test/<area>-<id>.test.mjs`) rather than adding to the end of a shared one, and move any helpers they share into a support module, so tickets don't clash when they're merged.
-2. Run the tests (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`). The new tests should fail. If a test passes before you've written any code, either the criterion is already met or the test is wrong, so look into it.
+2. Run only this ticket's own test files: `speck test --files <file>…`. It runs `commands.test_files` from `speck/config.yml` with those files, or the whole suite when that's blank. The new tests should fail. If a test passes before you've written any code, either the criterion is already met or the test is wrong, so look into it.
 3. If the project has no test setup, add the lightest standard one for its stack. If nothing can be tested automatically (for example, a pure copy change), say so in the ticket's Notes and describe how a reviewer can check it by reading the code.
 
 ## 3. Implement
 
 1. Write the simplest change that makes the tests pass, within the ticket's scope. Don't touch anything listed as out of scope, and don't make unrelated changes.
-2. Run the tests until they pass. Keep the full output: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`.
+2. Run the ticket's own test files (`speck test --files <file>…`) until they pass. Once they pass, run the whole suite and keep the full output: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`. Fix anything it breaks.
 3. **Size guard:** run `speck diffstat`. If it exits 2 (over the limit), stop. Don't push on. Block the ticket (see section 6) and give a proposed split as the question.
 4. **Self-check.** Before the first review round, go over your change the way an adversarial reviewer would. This is not a review or an approval: it catches what you can, and the reviewer still decides. Check:
    - **Unusual input:** empty, missing, malformed or repeated values, and names that are built in rather than missing (for example `constructor` or `__proto__` used as a key).
@@ -36,7 +36,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Claims:** every sentence you added to docs or skills matches the code, and a test covers it. Narrow any claim the code doesn't fully back.
    - **Scope:** nothing outside the ticket changed, and nothing it puts out of scope was touched.
 
-   For each problem you find, add a test that fails, fix it, and re-run the tests. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
+   For each problem you find, add a test that fails, fix it, and re-run the tests: the ticket's own test files with `speck test --files`, then the whole suite with `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
 5. Commit (`speck(<id>): <summary>`), staging each file you changed by name (see Rules). There's no separate status step: the first review round sets the ticket to `reviewing`.
 
 ## 4. Review loop
@@ -44,7 +44,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 Follow the `speck-review` skill (in the folder next to this one) exactly. In short:
 - Spawn the reviewer configured on the ticket (`reviewer:`).
 - Take turns with it until `speck next <id>` returns `ship` or `block`.
-- Fix or dispute each blocking finding, re-run the tests and commit before every round.
+- Fix or dispute each blocking finding, re-run the whole suite (`speck test`, not `--files`) and commit before every review round.
 
 ## 5. Approved
 

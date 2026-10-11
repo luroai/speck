@@ -26,6 +26,7 @@ resume_command: 'claude --resume {session}'
 
 commands:
   test: ""                       # e.g. npm test, pytest
+  test_files: ""                 # runs only the given test files while a build works, {files} standing for them, e.g. node --test {files}. Blank: the whole suite
 
 limits:
   max_acceptance_criteria: 5

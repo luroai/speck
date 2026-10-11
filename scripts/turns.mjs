@@ -155,13 +155,29 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, keep = null) 
   }
 }
 
+// A word the shell reads back as exactly `s`.
+const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
+
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
-// for the same code is reused instead, unless --fresh.
+// for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
+// those files (0113), from the repo root, without a turn or a recorded result, as it isn't a full run.
 export function cmdTest(args) {
+  const files = args[0] === '--files' ? args.slice(1) : null;
   const fresh = args.length === 1 && args[0] === '--fresh';
-  if (args.length && !fresh) throw new SpeckError('Usage: speck test [--fresh]');
+  if (files && !files.length) throw new SpeckError('Usage: speck test --files <file>… (name at least one test file)');
+  if (args.length && !fresh && !files) throw new SpeckError('Usage: speck test [--fresh], or speck test --files <file>…');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
+  const only = files && String(cfg.commands?.test_files || '').trim();
+  if (only) {
+    if (!only.includes('{files}')) throw new SpeckError(`commands.test_files in speck/config.yml has no {files} to stand for the test files (got ${JSON.stringify(only)}). Fix it with \`speck config set commands.test_files "node --test {files}"\`, then run this again.`);
+    // Relative to the repo root, where the command runs. One starting with - gets ./ so it isn't read as an option.
+    const words = files.map(f => { const rel = path.relative(repo, path.resolve(f)) || '.'; return shellWord(rel.startsWith('-') ? `./${rel}` : rel); });
+    const r = sh('sh', ['-c', only.replaceAll('{files}', () => words.join(' '))], { cwd: repo, stdio: 'inherit' });
+    if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
+    return;
+  }
+  if (files) console.log('commands.test_files is blank in speck/config.yml, so this runs the whole suite (commands.test) instead.');
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set. Set commands.test in speck/config.yml (for example `speck config set commands.test "npm test"`), then run this again.');
   const r = testRun(repo, cfg, cmd, { reuse: fresh ? 'none' : 'any', hint: ' Run `speck test --fresh` to run the suite anyway.' });

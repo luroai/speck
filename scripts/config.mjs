@@ -12,6 +12,7 @@ const USAGE = 'Usage: speck config set <key> <value>';
 const KINDS = Object.assign(Object.create(null), {
   base_branch: 'text', branch_prefix: 'text', builder: 'text', reviewer: 'text', reviewer_model: 'text',
   worktree_setup: 'text', build_command: 'text', resume_command: 'text', 'commands.test': 'text', 'github.status_check': 'text',
+  'commands.test_files': 'files',
   allow_same_model_review: 'flag', auto_ship: 'flag', worktrees: 'flag',
   reviewer_effort: 'effort', auto_ship_risk: 'risks',
   max_parallel_builds: 'count', max_parallel_tests: 'count', 'limits.max_acceptance_criteria': 'count', 'limits.max_changed_lines': 'count',
@@ -35,6 +36,8 @@ export function checkConfigValue(key, value) {
     if (!/^\d+$/.test(value) || !Number.isSafeInteger(n) || n < 1) throw new SpeckError(`${key} must be a whole number of 1 or more (got ${JSON.stringify(value)}).`);
     return n;
   }
+  if (kind === 'files' && value.trim() && !value.includes('{files}'))
+    throw new SpeckError(`${key} must be blank or a command with {files} standing for the test files (for example "node --test {files}"), got ${JSON.stringify(value)}.`);
   if (kind === 'risks') {
     // low, high, "low,high", "low high" or "[low, high]".
     const parts = value.trim().replace(/^\[(.*)\]$/, '$1').split(/\s*,\s*|\s+/);
