@@ -1,7 +1,7 @@
 ---
 id: "0121"
 title: Refuse a ticket that contains one of your private words                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-11-stop-tests-depending-on-files-under-speck.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T12:18:35.680Z"
 
 ---
 # 0121 · Refuse a ticket that contains one of your private words
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Tickets are committed and often published, so a ticket can leak words you'd rather keep out of the repo, such as your real name or an old alias. Today only one of speck's own tests checks for them (0084), by scanning the whole repo. Since 0112 reuses test results whenever nothing outside `speck/` has changed, that test can miss a word added in a new ticket.
