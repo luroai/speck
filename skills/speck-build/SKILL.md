@@ -113,9 +113,10 @@ The base branch's own tests are failing. Change no code: not in this ticket's br
 
 While getting a ship through, apart from blocking after two merges (above), ask the user only when two tickets contradict each other, or when `speck next <id>` says `block` during a merge round. Nothing else is a reason to ask.
 
-1. Write one question under `## Blocked question` in the ticket. Write it in plain words, without git terms (no merge, branch, conflict or commit): say what each ticket wants, the options, and which one you recommend and why. Make it answerable in a sentence.
-2. Run `speck set <id> status blocked`, then commit the ticket and any work in progress, staged by name.
-3. Stop, and tell the user the question and how to resume: answer it, then run `/speck-build <id>`.
+1. If you stopped partway through resolving a merge (two tickets contradict each other), undo it first with `git merge --abort`. That puts the ticket branch back as the reviewer approved it, without choosing either ticket's side, and lets the next steps commit. Don't commit a half-resolved merge.
+2. Write one question under `## Blocked question` in the ticket. Write it in plain words, without git terms (no merge, branch, conflict or commit): say what each ticket wants, the options, and which one you recommend and why. Make it answerable in a sentence.
+3. Run `speck set <id> status blocked`, then commit the ticket and any work in progress, staged by name.
+4. Stop, and tell the user the question and how to resume: answer it, then run `/speck-build <id>`. On resuming after an undone merge, record the answer in the ticket's Notes and start "Conflict" again from step 1, resolving the clash the way the user chose.
 
 ## 6. Block
 

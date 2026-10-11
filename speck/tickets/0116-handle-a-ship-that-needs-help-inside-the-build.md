@@ -1,7 +1,7 @@
 ---
 id: "0116"
 title: "Handle a ship that needs help inside the build"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T11:19:50.797Z"
 ---
 # 0116 · Handle a ship that needs help inside the build
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 0101 added the `speck-integrate` skill for a ship queue to start, but the queue (0102–0105) was cancelled when speck moved to one build at a time. Nothing starts the skill, so its handling of conflicts and of a failing base branch never runs.
@@ -52,3 +52,75 @@ started: "2026-10-11T11:19:50.797Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "64cd5088717e7cf13195e8cadb025ce298023956",
+    "thread_id": "01a12ab9-509f-7c33-8806-468d20d32e8b",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 122649,
+      "cached_input_tokens": 73344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1016,
+      "reasoning_output_tokens": 167
+    },
+    "saved_at": "2026-10-11T11:29:49.458Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md, Conflict, specifies merge-check, all four file classes, tests, merge review and blocking after two unsuccessful merges. Corresponding AC1 tests in test/build-0116.test.mjs passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Base branch failing specifies no code changes, deduplication, creation of a fix ticket, setting eligible drafts ready and stopping with the original ticket approved. The corresponding AC2 instruction tests passed."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Asking the user specifies plain language, options and a recommendation, but requires committing while contradictory files can still be unresolved. The passing AC3 text tests do not check this failure."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/install.mjs, installTooling, removes retired skill directories and links. Passing AC4 tests exercise initial installation and removal of old copies and broken links, and check the brief."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0116-tests.txt: 1055 tests, 1052 passed, 3 skipped, zero failures. Changes to existing tests match the explicitly permitted retirement of speck-integrate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-build/SKILL.md",
+        "issue": "Conflict step 2 sends contradictory changes directly to Asking the user while the merge still has unresolved files. Asking step 2 then requires committing the ticket and work in progress. Git refuses a commit with unresolved index entries, so this prescribed blocking path cannot complete without inventing a resolution to the very decision awaiting the user.",
+        "suggested_fix": "Specify how to leave the unfinished merge safely before recording and committing the blocked question, without choosing either ticket's intent. Add a check covering this path rather than only checking that the blocking commands appear in the text.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The build now contains shipping recovery steps, and installation removes the retired skill. The recorded suite passes. One recovery path needs fixing: when two tickets contradict each other, the instructions attempt a commit that Git will refuse because the files remain unresolved."
+  }
+}
+```
+
+</details>

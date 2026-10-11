@@ -174,3 +174,33 @@ test('0116 AC2 self-check: if setting the fix ticket ready is refused, it stays 
   assert.match(s, /leave it `draft` and say so in step 4/);
   assert.match(s, /whether it's ready or still a draft/);
 });
+
+test('0116 AC3 F1: a contradiction found partway through a merge undoes the merge before the question is committed', () => {
+  const s = part('Asking the user');
+  assert.match(s, /`git merge --abort`/);
+  assert.match(s, /without choosing either ticket's side/);
+  assert.match(s, /Don't commit a half-resolved merge/);
+  assert.ok(s.indexOf('git merge --abort') < s.indexOf('`speck set <id> status blocked`'), 'undone before the blocked commit');
+  assert.match(s, /start "Conflict" again from step 1/);
+});
+
+test('0116 AC3 F1: aborting a half-resolved merge lets the blocked question be committed', () => {
+  const dir = initRepo();
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' });
+  g('config', 'user.email', 't@example.com'); g('config', 'user.name', 't');
+  fs.writeFileSync(path.join(dir, 'shared.txt'), 'base\n'); g('add', 'shared.txt'); g('commit', '-qm', 'base');
+  g('checkout', '-qb', 'ticket');
+  fs.writeFileSync(path.join(dir, 'shared.txt'), 'ticket\n'); g('commit', '-qam', 'ticket');
+  const approved = g('rev-parse', 'HEAD').stdout;
+  g('checkout', '-q', 'main');
+  fs.writeFileSync(path.join(dir, 'shared.txt'), 'other\n'); g('commit', '-qam', 'other');
+  g('checkout', '-q', 'ticket');
+  assert.notEqual(g('merge', 'main').status, 0, 'the merge conflicts');
+  fs.writeFileSync(path.join(dir, 'question.md'), 'q\n'); g('add', 'question.md');
+  assert.notEqual(g('commit', '-qm', 'blocked').status, 0, 'git refuses to commit a half-resolved merge');
+  assert.equal(g('merge', '--abort').status, 0);
+  assert.equal(g('rev-parse', 'HEAD').stdout, approved, 'back where the reviewer approved it');
+  assert.equal(fs.readFileSync(path.join(dir, 'shared.txt'), 'utf8'), 'ticket\n');
+  fs.writeFileSync(path.join(dir, 'question.md'), 'q\n'); g('add', 'question.md');
+  assert.equal(g('commit', '-qm', 'blocked').status, 0, 'the blocked question commits once the merge is undone');
+});
