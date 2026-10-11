@@ -54,20 +54,20 @@ const AGENTS_SECTION = '## speck\n\nThis repo uses speck. Work only from a `read
 // Headings may be indented by up to three spaces, and lines inside fenced code blocks aren't headings.
 // Returns the new text and what it did: added, replaced, current (already up to date) or unheaded (speck is mentioned without the heading, so it's left alone).
 export function syncAgentsSection(text) {
-  let start = -1, end = text.length, fence = null, prev = null;
+  let start = -1, end = text.length, fence = null, para = null; // para: where the paragraph that an underline would make a heading starts
   for (let at = 0; at < text.length;) {
     const eol = text.indexOf('\n', at);
     const lineEnd = eol === -1 ? text.length : eol + 1;
     const line = text.slice(at, lineEnd).replace(/\r?\n$/, '');
     const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line);
-    // A plain text line that a `=` or `-` underline would turn into a heading: not blank, indented code, a heading, a quote or a list item.
-    const plain = !fence && !marker && /\S/.test(line) && !/^ {4}|^\t|^ {0,3}(#|>|[-*+](\s|$)|\d{1,9}[.)](\s|$))/.test(line);
     if (fence) { if (marker && marker[1][0] === fence[0] && marker[1].length >= fence.length && !line.slice(marker[0].length).trim()) fence = null; }
-    else if (marker) fence = marker[1];
-    else if (start === -1 && /^ {0,3}## speck[ \t]*$/.test(line)) start = at;
+    else if (marker) { fence = marker[1]; para = null; }
+    else if (start === -1 && /^ {0,3}## speck[ \t]*$/.test(line)) { start = at; para = null; }
     else if (start !== -1 && /^ {0,3}#{1,2}(?:[ \t]|$)/.test(line)) { end = at; break; }
-    else if (start !== -1 && prev && /^ {0,3}(=+|-+)[ \t]*$/.test(line)) { end = prev; break; }
-    prev = start !== -1 && at !== start && plain ? at : null;
+    else if (start !== -1 && para !== null && /^ {0,3}(=+|-+)[ \t]*$/.test(line)) { end = para; break; }
+    // Blank lines, other headings, quotes, list items and rules end a paragraph; any other line starts one or carries it on.
+    else if (!/\S/.test(line) || /^ {0,3}(#|>|[-*+](\s|$)|\d{1,9}[.)](\s|$)|([-*_])([ \t]*\4){2,}[ \t]*$)/.test(line)) para = null;
+    else if (para === null && !/^( {4}|\t)/.test(line)) para = at;
     at = lineEnd;
   }
   if (start === -1) {

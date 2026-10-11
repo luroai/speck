@@ -123,3 +123,13 @@ test('0123 AC1, AC2: an underlined heading ends the section, but a list item or 
   r.init();
   assert.equal(r.agents(), `# Mine\n\n${current().trimEnd()}\n\n## Other\n`);
 });
+
+test('0123 AC1, AC2: an underlined heading over several lines is kept whole, and so is a rule after a rule', () => {
+  const after = 'Project\nrequirements\n------------\n\nKeep me.\n';
+  const r = repo(`# Mine\n\n${OLD}\n${after}`);
+  r.init();
+  assert.equal(r.agents(), `# Mine\n\n${current().trimEnd()}\n\n${after}`);
+  const rules = repo(`# Mine\n\n${OLD}\n---\n---\n\n## Other\n`);
+  rules.init();
+  assert.equal(rules.agents(), `# Mine\n\n${current().trimEnd()}\n\n## Other\n`);
+});
