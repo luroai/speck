@@ -41,6 +41,7 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 - Decided 2026-10-10: new skills are agent-only; only Capture, Ticket, Build and Ship (plus the existing review and status) are for people.
 - Checked 2026-10-10: `user-invocable: false` in a skill's frontmatter hides it from the `/` menu while Claude can still load it (Claude Code skills docs).
 - A skill is text: tests can check AC1 and that each step is named; the reviewer checks the rest by reading it.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
