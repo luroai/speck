@@ -1,7 +1,7 @@
 ---
 id: "0106"
 title: Prepare release 0.3.0                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0124", "0125"]                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-11T14:35:05.249Z"
 
 ---
 # 0106 · Prepare release 0.3.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck has no release process. Every ship pushes straight to `main`, so anyone installing from `main` gets whatever shipped minutes ago, and the 0.2.0 tag was only created on 11 October, a day after the README's setup prompt started pointing at it. A lot has shipped since 0.2.0, and none of it is in a release.
