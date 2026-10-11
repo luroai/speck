@@ -1,7 +1,7 @@
 ---
 id: "0122"
 title: "Stop speck's tests reading this repo's own speck folder"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-11
 ---
 # 0122 · Stop speck's tests reading this repo's own speck folder
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0112, `speck test` and `speck ship` reuse a test result when nothing outside `speck/` has changed. Some of speck's own tests read this repo's files under `speck/`: its config, done tickets and filed idea notes, and the private-words check scans them all. A change there can then pass or fail on a reused result that a fresh run would give differently.
