@@ -48,6 +48,8 @@ Tickets ask that no test that passed before the change fails, and `speck lint` w
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox.
+- Known limit: the warning matches a fixed list of phrasings (full, whole or entire suite, or all tests, then pass, passes, passed, passing or green, optionally after words like must, should or still). Other wordings, such as "every test passes", "the test suite passes" or "npm test passes", get no warning.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -118,6 +120,78 @@ Tickets ask that no test that passed before the change fails, and `speck lint` w
     ],
     "escalation_question": "",
     "summary": "The writing guidance and advisory warning behaviour are implemented, with honest integration tests. However, the warning misses common ways of requiring all tests to pass and can flag unrelated wording. These detection errors need fixing before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fbb00e35ecb83ef1eace95eb6a1d2b9f768d8632",
+    "thread_id": "01a12a11-b6c0-73f1-b3a4-43f9fb1d3c88",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 742283,
+      "cached_input_tokens": 563328,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1635,
+      "reasoning_output_tokens": 29
+    },
+    "saved_at": "2026-10-11T08:29:46.717Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md requires the replacement wording and forbids whole-suite passing wording. The AC1 test in test/lint-0096.test.mjs passes in the supplied run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/core.mjs lintTicket, wholeCriteria and asksWholeSuite detect full/whole/entire suites and all tests, including must/should and wrapped criteria. Independent read-only probes confirm the earlier failing examples now warn. AC2 CLI tests verify '! ', criterion identification and suggested wording; all pass in the supplied run."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs prints warnings separately and uses only lint errors to block readiness. Both AC3 CLI tests in test/lint-0096.test.mjs pass in the supplied run."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "asksWholeSuite uses a word boundary and excludes quoted wording. AC4 negative tests pass in the supplied run; independent probes confirm 'passively' and the recommended wording produce no warning."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "The detector previously missed must/should requirements and wrapped criteria. The helper-word matching and wholeCriteria now address these cases, with passing regression tests.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "The detector previously matched 'passively'. Complete-word matching now prevents this false warning, with a passing regression test.",
+        "suggested_fix": "Completed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The warning and writing guidance meet the ticket’s criteria. Both earlier problems are fixed and covered by meaningful tests. The supplied suite reports 942 passing tests, no failures and three skips. No blocking concerns remain."
   }
 }
 ```
