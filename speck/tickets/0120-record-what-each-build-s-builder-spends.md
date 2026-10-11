@@ -40,7 +40,7 @@ The panel shows what each build's builder spent, beside what its reviewer spent.
 ## Notes
 - Measured 2026-10-11: Claude Code's final `result` line in `speck/.cache/runs/<id>.log` has `usage` (`input_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens`, `output_tokens`) and `total_cost_usd`.
 - On a subscription, the cost is a guide rather than a bill.
-- Unverified: whether a build resumed after being killed (0110) writes its usage into the same log. The builder should check.
+- Checked 2026-10-11: a build resumed after being killed (0110) appends to the same `speck/.cache/runs/<id>.log` (opened with `a`). A log can hold several `result` lines: one per resumed process and one per turn a background task's notification starts. In the 0099 log, `total_cost_usd` and `modelUsage` on each `result` line are cumulative for the whole session, including the run before the kill, while `usage` covers only that one turn. So the builder's tokens are taken from the last `result` line's `modelUsage` (summed over models), falling back to its `usage` when there's no `modelUsage`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
