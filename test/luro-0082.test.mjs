@@ -45,6 +45,8 @@ test('AC4: the brief\'s sentence that named the owner now says "the maintainer"'
   assert.match(read('docs/brief.md'), /Someone other than the maintainer installs it and ships a ticket\./);
 });
 
-test('AC5: the panel mockup shows luroai/speck', () => {
-  assert.match(read('docs/panel-mockup.html'), /<code>luroai\/speck<\/code>/);
+test('AC5: the panel mockup is gone', () => {
+  // 0126 removed the mockup, so it can no longer name anyone.
+  assert.equal(fs.existsSync(path.join(ROOT, 'docs', 'panel-mockup.html')), false);
+  assert.equal(git('ls-files', 'docs/panel-mockup.html').stdout, '');
 });
