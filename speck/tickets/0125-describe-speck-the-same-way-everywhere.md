@@ -36,6 +36,9 @@ speck describes itself in different words in different places. `package.json` an
 - The README and the brief, already up to date.
 - The setup skill's own wording.
 
+## Notes
+- Failing before this build: none
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
