@@ -1,6 +1,6 @@
 # Put a stopped build back in the queue
 
-Captured: 2026-10-10 · Status: inbox
+Captured: 2026-10-10 · Status: dropped
 From ticket: 0108
 
 ## What

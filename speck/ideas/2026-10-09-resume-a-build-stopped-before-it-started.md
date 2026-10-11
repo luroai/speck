@@ -1,6 +1,7 @@
 # Resume a build stopped before it started its ticket
 
 Captured: 2026-10-09 · Status: inbox
+Triaged: 1
 From ticket: 0072
 
 ## What

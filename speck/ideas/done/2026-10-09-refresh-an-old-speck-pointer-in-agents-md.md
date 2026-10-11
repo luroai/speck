@@ -1,6 +1,6 @@
 # Refresh an old speck pointer in AGENTS.md
 
-Captured: 2026-10-09 · Status: inbox
+Captured: 2026-10-09 · Status: ticketed (0123)
 From ticket: 0068
 
 ## What

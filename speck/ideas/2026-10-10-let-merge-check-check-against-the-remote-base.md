@@ -1,6 +1,7 @@
 # Let merge-check check against the remote's base branch
 
 Captured: 2026-10-10 · Status: inbox
+Triaged: 1
 From ticket: 0098
 
 ## What

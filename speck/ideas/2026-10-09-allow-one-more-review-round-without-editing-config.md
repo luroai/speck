@@ -1,6 +1,6 @@
 # Allow one more review round without editing config
 
-Captured: 2026-10-09 · Status: inbox
+Captured: 2026-10-09 · Status: dropped
 From ticket: 0061
 
 ## What

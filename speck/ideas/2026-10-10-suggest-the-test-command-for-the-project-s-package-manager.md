@@ -1,6 +1,7 @@
 # Suggest the test command for the project's package manager
 
 Captured: 2026-10-10 · Status: inbox
+Triaged: 1
 From ticket: 0086
 
 ## What

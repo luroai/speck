@@ -1,6 +1,7 @@
 # Stop asking for a log once its build has ended
 
 Captured: 2026-10-09 · Status: inbox
+Triaged: 1
 From ticket: 0052
 
 ## What

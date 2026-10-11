@@ -1,6 +1,6 @@
 # Stop tests depending on files under speck/
 
-Captured: 2026-10-11 · Status: inbox
+Captured: 2026-10-11 · Status: ticketed (0121, 0122)
 From ticket: 0112
 
 ## What

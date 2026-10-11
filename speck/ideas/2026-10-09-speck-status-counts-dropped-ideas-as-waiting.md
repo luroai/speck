@@ -1,6 +1,7 @@
 # speck status counts dropped ideas as waiting
 
 Captured: 2026-10-09 · Status: inbox
+Triaged: 1
 From ticket: 0037
 
 ## What

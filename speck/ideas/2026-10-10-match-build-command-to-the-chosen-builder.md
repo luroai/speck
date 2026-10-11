@@ -1,6 +1,7 @@
 # Match build_command to the chosen builder
 
 Captured: 2026-10-10 · Status: inbox
+Triaged: 1
 From ticket: 0088
 
 ## What

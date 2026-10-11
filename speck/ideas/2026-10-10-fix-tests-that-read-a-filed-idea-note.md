@@ -1,6 +1,6 @@
 # Fix the tests that read a filed idea note
 
-Captured: 2026-10-10 · Status: inbox
+Captured: 2026-10-10 · Status: dropped
 From ticket: 0091
 
 ## What
