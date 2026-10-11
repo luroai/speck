@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.mjs';
+import { testRun } from './results.mjs';
 
 const POLL_MS = 500;
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -17,17 +18,20 @@ export function maxParallelTests(cfg) {
   return max;
 }
 
-// The queue's folder, in the main checkout's speck/.cache/ (which git ignores), so every worktree shares it.
-function turnsDir(repo) {
+// A folder `name` in the main checkout's speck/.cache/ (which git ignores), so every worktree shares it.
+export function sharedCacheDir(repo, name) {
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   const root = path.join(main, 'speck', '.cache');
-  const dir = path.join(root, 'tests');
+  const dir = path.join(root, name);
   fs.mkdirSync(dir, { recursive: true });
   const ignore = path.join(root, '.gitignore');
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, '# Working files for reviews in progress. Review history is in each ticket.\n*\n');
   return dir;
 }
+
+// The queue's folder.
+const turnsDir = repo => sharedCacheDir(repo, 'tests');
 
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
 const parse = text => { try { const v = JSON.parse(text); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
@@ -41,6 +45,9 @@ const runFiles = (dir, run) => (typeof run === 'string' && /^[0-9a-f-]+$/.test(r
 // as `sh -c <cmd>` would run it. If the started folder is already there, a waiter has taken the turn over from this run,
 // so it stops without running anything.
 export const TEST_SHELL = 'printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && exec sh -c "$3"';
+// The same, keeping a copy of the output in file $4 and the test command's exit code in file $5 (0112). The shell
+// whose pid it records waits for the tests, so it's alive while they run.
+export const TEST_SHELL_KEPT = 'printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && { sh -c "$3" 2>&1; echo $? > "$5"; } | tee "$4"';
 
 // Whether a claim on a turn is held: while the speck process that made it is alive, or the shell running its tests
 // is, so tests left running by a speck process that was killed still hold it. A claim that can't be read as one is
@@ -106,8 +113,9 @@ function holders(dir, max) {
 
 // Runs the test command `cmd` in `repo` once this process has a turn, waiting for one if max_parallel_tests runs are
 // already going, and frees the turn afterwards. A turn left by a run that was killed is freed when someone next needs
-// it. onStart runs once the turn is ours. Returns spawnSync's result.
-export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}) {
+// it. onStart runs once the turn is ours. With `keep` ({ output, exit }: two file paths), the output, stdout and
+// stderr together, is copied to keep.output and the exit code written to keep.exit. Returns spawnSync's result.
+export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, keep = null) {
   const max = maxParallelTests(cfg);
   const dir = turnsDir(repo);
   const run = crypto.randomUUID();
@@ -137,19 +145,22 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}) {
   const files = runFiles(dir, run);
   try {
     onStart();
-    return sh('sh', ['-c', TEST_SHELL, 'sh', files.pid, files.started, cmd], { cwd: repo, stdio: 'inherit' });
+    const shell = keep ? [TEST_SHELL_KEPT, 'sh', files.pid, files.started, cmd, keep.output, keep.exit] : [TEST_SHELL, 'sh', files.pid, files.started, cmd];
+    return sh('sh', ['-c', ...shell], { cwd: repo, stdio: 'inherit' });
   } finally {
     if (read(lock) === text) forget(lock, text, true);
   }
 }
 
-// `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code.
+// `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
+// for the same code is reused instead, unless --fresh.
 export function cmdTest(args) {
-  if (args.length) throw new SpeckError('Usage: speck test');
+  const fresh = args.length === 1 && args[0] === '--fresh';
+  if (args.length && !fresh) throw new SpeckError('Usage: speck test [--fresh]');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set. Set commands.test in speck/config.yml (for example `speck config set commands.test "npm test"`), then run this again.');
-  const r = runTestsInTurn(repo, cfg, cmd);
+  const r = testRun(repo, cfg, cmd, { reuse: fresh ? 'none' : 'any', hint: ' Run `speck test --fresh` to run the suite anyway.' });
   if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
 }

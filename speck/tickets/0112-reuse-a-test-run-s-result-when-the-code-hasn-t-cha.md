@@ -41,6 +41,8 @@ A build runs the whole test suite (about 100 seconds here) six or seven times, i
 - Excluding `speck/` matters because ticket commits change only `speck/`, so a ship's merge after the user has committed tickets still matches the builder's last run.
 - Known risk: a test that reads files under `speck/` (as some tests in this repo do) could reuse a result that would now differ. `--fresh` is the way out; the builder should list any such tests it finds as a follow-up.
 - Failing before this build: none
+- Self-check: no changes. Checked repeated and unknown flags, unreadable or partial recorded results, files changing during a run, a run stopped before the tests end (nothing recorded), and that every claim added to the brief has a test.
+- Tests here that read files under `speck/` (and so could reuse a stale result): test/luro-0082.test.mjs (speck/tickets/done), test/product-0068.test.mjs (speck/product.md), test/speck.test.mjs (speck/config.yml). Listed as a follow-up.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
