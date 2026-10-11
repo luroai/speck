@@ -205,3 +205,33 @@ test('AC1: a commit made on the base branch while ship waited is kept if the mer
   assert.equal(read(r.dir, 'shared.txt'), 'late\n');
   assert.equal(r.statusIn(r.wt), 'approved');
 });
+
+test('AC3: a staged rename of a file the ticket changes refuses at once (review F1)', () => {
+  const r = shipRepo();
+  r.g('mv', 'shared.txt', 'renamed.txt');
+  const before = r.snapshot();
+  const res = runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 1, res.stderr + res.stdout);
+  assert.doesNotMatch(res.stdout, /waiting/i);
+  assert.match(res.stderr, /shared\.txt -> renamed\.txt/);
+  assert.match(res.stderr, /Nothing was shipped/);
+  assert.deepEqual(r.snapshot(), before);
+});
+
+test('AC1: one ship says it is waiting only once, even when the tests stage more after an earlier wait (review F2)', async () => {
+  const r = shipRepo({ test: 'cd {main} && printf "mine\\n" > notes.txt && git add notes.txt' });
+  fs.writeFileSync(path.join(r.dir, 'other.txt'), 'mine\n');
+  r.g('add', 'other.txt');
+  const s = shipAsync(r, { SPECK_SHIP_POLL_MS: '100' });
+  await s.waitFor(/waiting/i);
+  r.g('commit', '-qm', 'other');
+  // The tests then stage notes.txt: commit it once it's there.
+  for (const end = Date.now() + 20000; !r.g('diff', '--cached', '--name-only').includes('notes.txt'); await delay(50))
+    assert.ok(Date.now() < end, `notes.txt never staged. stdout: ${s.out.stdout}`);
+  r.g('commit', '-qm', 'notes');
+  const res = await s.done;
+  assert.equal(res.status, 0, res.stderr + res.stdout);
+  assert.equal(res.stdout.match(/waiting/gi).length, 1, res.stdout);
+  shipped(r);
+  assert.equal(gIn(r.dir, 'show', 'main:notes.txt').stdout, 'mine\n');
+});

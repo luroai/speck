@@ -102,12 +102,20 @@ function shipFolders(repo, branch, base) {
   return { main, work, mergeAt: baseAt || work, linked: branchAt && branchAt !== main ? branchAt : null };
 }
 
-// Tracked files with uncommitted changes, staged or not. --no-optional-locks keeps git status from rewriting the
+// Each tracked file with uncommitted changes, staged or not: its paths (a rename or copy has two, `from` first), its
+// name as git shows it, and whether the change is staged. --no-optional-locks keeps git status from rewriting the
 // index, so checking again and again while ship waits never gets in the way of your own `git commit`.
-const status = dir => git(['--no-optional-locks', 'status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(Boolean);
-const changedFiles = dir => status(dir).map(l => l.slice(3));
-// Tracked files with changes in the index.
-const stagedFiles = dir => status(dir).filter(l => l[0] !== ' ').map(l => l.slice(3));
+function changes(dir) {
+  const parts = git(['--no-optional-locks', 'status', '--porcelain', '-z', '--untracked-files=no'], dir).split('\0');
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    if (!parts[i]) continue;
+    const xy = parts[i].slice(0, 2), paths = [parts[i].slice(3)];
+    if (/[RC]/.test(xy)) paths.unshift(parts[++i]);
+    out.push({ paths, name: paths.join(' -> '), staged: xy[0] !== ' ' });
+  }
+  return out;
+}
 
 // How long ship waits for staged changes in the base checkout to clear (0115). SPECK_SHIP_MINUTE_MS and
 // SPECK_SHIP_POLL_MS shorten a minute and the time between checks, for speck's own tests.
@@ -150,23 +158,23 @@ export function shipTicket(repo, id) {
   // builds ship, unless they're staged (git won't merge over a changed index) or in a file the ticket changes.
   // When staged files are all that's in the way, it waits for them to be committed or unstaged, up to
   // ship_wait_minutes in all, changing nothing meanwhile.
-  let waitLeft = waitMinutes * envMs('SPECK_SHIP_MINUTE_MS', 60000);
+  let waitLeft = waitMinutes * envMs('SPECK_SHIP_MINUTE_MS', 60000), told = false;
   const clash = when => {
     // Without a worktree, the ship runs in this folder, which was clean before the tests, so any change at all stops it.
     if (mergeAt === work) {
-      const changed = changedFiles(work);
+      const changed = changes(work).map(c => c.name);
       if (changed.length) throw new SpeckError(`These files in ${work} have uncommitted changes${when}: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
       return;
     }
     const touched = new Set(git(['diff', '--name-only', `${base}...${branch}`], repo).split('\n').filter(Boolean));
-    const inWay = () => {
-      const staged = new Set(stagedFiles(mergeAt));
-      return changedFiles(mergeAt).filter(f => staged.has(f) || touched.has(f));
-    };
-    const stagedOnly = files => files.length && !files.some(f => touched.has(f));
+    const clashes = c => c.paths.some(f => touched.has(f));
+    const inWay = () => changes(mergeAt).filter(c => c.staged || clashes(c));
+    const stagedOnly = files => files.length && !files.some(clashes);
     let files = inWay();
     if (stagedOnly(files) && waitLeft > 0) {
-      console.log(`These files in ${mergeAt}, where ${base} is checked out, are staged${when}: ${files.join(', ')}. git won't merge over staged changes, so speck ship is waiting up to ${waitMinutes} minutes for them to be committed or unstaged.`);
+      // Said once per ship, even if the tests stage something else after an earlier wait.
+      if (!told) console.log(`These files in ${mergeAt}, where ${base} is checked out, are staged${when}: ${files.map(c => c.name).join(', ')}. git won't merge over staged changes, so speck ship is waiting up to ${waitMinutes} minutes for them to be committed or unstaged.`);
+      told = true;
       const poll = envMs('SPECK_SHIP_POLL_MS', POLL_MS);
       const until = Date.now() + waitLeft;
       while (stagedOnly(files) && Date.now() < until) {
@@ -176,8 +184,7 @@ export function shipTicket(repo, id) {
       waitLeft = until - Date.now();
     }
     if (files.length) {
-      const staged = new Set(stagedFiles(mergeAt));
-      const why = files.map(f => staged.has(f) ? `${f} (staged)` : `${f} (the ticket changes it too)`);
+      const why = files.map(c => c.staged ? `${c.name} (staged)` : `${c.name} (the ticket changes it too)`);
       throw new SpeckError(`These files in ${mergeAt}, where ${base} is checked out, have uncommitted changes${when} that stop the merge: ${why.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them (git won't merge over staged changes, even in other files), then ship again.`);
     }
   };
