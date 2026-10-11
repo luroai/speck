@@ -42,6 +42,7 @@ Setup spots another workflow, and rules that clash with speck, explains each in 
 - Checked 2026-10-11: GitHub Spec Kit keeps its files in `.specify/` (for example `.specify/feature.json`, per its quickstart), and Kiro in `.kiro/` (`.kiro/steering/` in the project root, per its steering docs; `~/.kiro/` is global, not the project).
 - Decided 2026-10-11: spot and ask, never remove.
 - Failing before this build: none
+- Self-check: the setup skill said to turn `auto_ship` off, but it's off by default, so it now says to keep it off and that `worktrees` is on by default (with a test against the config template); the brief now describes `other_workflows` and setup's new check.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
