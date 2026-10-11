@@ -1,7 +1,7 @@
 ---
 id: "0117"
 title: "Split the slowest test file so the suite runs in parallel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-11-make-the-test-suite-faster.md"             
 after: []                # ticket ids that must be done first
 created: 2026-10-11
 started: "2026-10-11T10:21:32.012Z"
+finished: "2026-10-11T10:35:27.015Z"
 
 ---
 # 0117 · Split the slowest test file so the suite runs in parallel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every build waits on the full test suite several times, and the suite takes about 108 seconds. 89 of those are one file, `test/speck.test.mjs` (171 tests): `node --test` runs files in parallel, but the tests in one file one after another, so everything else finishes while that file is still running.
