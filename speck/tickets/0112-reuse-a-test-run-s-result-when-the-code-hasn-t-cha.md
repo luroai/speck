@@ -40,6 +40,7 @@ A build runs the whole test suite (about 100 seconds here) six or seven times, i
 ## Notes
 - Excluding `speck/` matters because ticket commits change only `speck/`, so a ship's merge after the user has committed tickets still matches the builder's last run.
 - Known risk: a test that reads files under `speck/` (as some tests in this repo do) could reuse a result that would now differ. `--fresh` is the way out; the builder should list any such tests it finds as a follow-up.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
