@@ -37,6 +37,9 @@ Re-running `speck init` brings the speck section of AGENTS.md up to date with th
 - CLAUDE.md, which only imports AGENTS.md.
 - Keeping edits someone made inside speck's own section: they're replaced, and show in `git diff`.
 
+## Notes
+- Failing before this build: none
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
