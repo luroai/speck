@@ -1,7 +1,7 @@
 ---
 id: "0113"
 title: "Run only the ticket's own tests until the final run"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-11-one-build-at-a-time.md"               # e.g
 after: []                # ticket ids that must be done first
 created: 2026-10-11
 started: "2026-10-11T10:12:02.019Z"
+finished: "2026-10-11T10:21:09.434Z"
 
 ---
 # 0113 · Run only the ticket's own tests until the final run
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 While writing tests and fixing code, a build re-runs the whole suite each time, though only the ticket's own tests are changing. Each run costs about 100 seconds here, and the full suite only needs to run when the work is finished.
