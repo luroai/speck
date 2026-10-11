@@ -43,6 +43,7 @@ The reviewer gets a short summary of the test run that keeps everything it needs
 ## Notes
 - Measured 2026-10-11: `/tmp/speck-0113-tests.txt` was 247 KB for 968 tests.
 - Most tests in this repo already start with their ticket's id (for example `0077 AC2: …`).
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
