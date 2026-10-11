@@ -1,7 +1,7 @@
 ---
 id: "0101"
 title: "Give the shipping agent a skill for ships that need help"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T08:18:17.251Z"
 ---
 # 0101 · Give the shipping agent a skill for ships that need help
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ship can't go through cleanly, someone has to merge the base branch in, resolve conflicts, get the merge re-reviewed and ship again, or notice that `main` is broken. Today that's the builder improvising or the user stepping in. Speck needs one agent whose only job is this, which only asks the user about real decisions.
@@ -50,9 +50,15 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Repeated shipping conflicts introduce a third reason to ask the user, contrary to AC4.; F2 An existing fix ticket may already be building, reviewing or approved in another worktree.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,194,293
+- Elapsed since build started: 30 min
+- Changed lines: 68 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
