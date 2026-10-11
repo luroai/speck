@@ -52,3 +52,10 @@ No test in this repo reads this repo's own files under `speck/`, so a reused res
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Removed (no whole test was removed; these assertions were, as one-off changes already recorded in their tickets):
+- `test/luro-0082.test.mjs` AC4: the checks that a done idea note says "the maintainer" and that 0053's done ticket gives a path starting with `~/`. 0082 records those edits; the brief's check stays. The test is renamed to match.
+- `test/product-0068.test.mjs` AC4: the check that `speck/product.md` is gone from this repo. 0068 records its removal; the check that no test reads it stays.
+- `test/worktrees.test.mjs` 0028 AC4: the check that this repo's `speck/config.yml` turns worktrees on. 0028 records it; the check on the config template stays.
+
+Known limit: the AC3 check finds paths built from the repo's root (`ROOT`, `REPO`, `HERE`) and calls to helpers defined over it. It wouldn't find, say, `git show HEAD:speck/…` run in the repo, or the CLI run with the repo as its folder.
