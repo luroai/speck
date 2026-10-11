@@ -41,6 +41,10 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
 - Measured 2026-10-11 on 16 cores: the full suite takes 108 seconds and `test/speck.test.mjs` 89 alone. The next slowest file, `test/run.test.mjs`, takes 27, so expect about 30 seconds afterwards.
 - This changes only test files, which don't count towards `max_changed_lines`.
 - Failing before this build: none (1000 tests, 997 pass, 3 skipped; `speck test --fresh` took 114 seconds on 16 cores).
+- The split was made by a throwaway script that cut the file at each top-level statement (each piece checked to compile) and moved every statement unchanged: tests and helpers used by one area stay in that area's file, and helpers used by more than one go to `test/support/speck.mjs` with `export` added. There `ROOT` goes up two folders instead of one, since the module is a folder deeper. A one-off check confirmed all 224 statements of the old file appear word for word in the new files.
+- AC2's test finds the commit that removed `test/speck.test.mjs` from git history rather than naming it, because 0085's test forbids commit ids in test files. It compares the files as that commit left them, so later edits to the moved tests don't break it, and it skips without the history (a shallow clone).
+- AC4 is checked by the full suite passing; AC5 by reading the Delivery log.
+- Self-check: AC2's test named a commit id, which 0085's test caught; it now finds the commit from history.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -50,3 +54,5 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Full suite, `speck test --fresh` on the same 16-core machine: 114 seconds before the split (1000 tests), 58 seconds after (1003 tests: the 1000 plus 0117's own 3).
+- The ticket expected about 30 seconds. With some 70 test files now running at once on 16 cores, the suite looks bound by the CPU rather than by its slowest file, so splitting further won't help much on its own.
