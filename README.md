@@ -23,7 +23,7 @@ Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremo
 
 ## Get started
 
-Open [Claude Code](https://claude.com/claude-code) in the folder of the project you want to build, or in an empty folder for a new one, and paste this:
+Paste this prompt into your coding agent, opened in the folder of the project you want to build, or in an empty folder for a new one. [Claude Code](https://claude.com/claude-code) is the agent speck is most tested with.
 
 ```text
 Set up speck in this folder. If Node.js 20 or newer isn't installed, offer to
