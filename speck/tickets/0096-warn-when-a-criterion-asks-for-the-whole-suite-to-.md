@@ -1,7 +1,7 @@
 ---
 id: "0096"
 title: "Warn when a criterion asks for the whole suite to pass"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-10-keep-builders-to-their-own-ticket.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0100"]                # ticket ids that must be done first
 created: 2026-10-10
+started: "2026-10-11T08:18:15.053Z"
 
 ---
 # 0096 · Warn when a criterion asks for the whole suite to pass
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A criterion like "the full test suite passes" can't be met when `main` is already broken, so it pushes the builder to fix things outside the ticket. That's how 0090 came to fix an unrelated test.
