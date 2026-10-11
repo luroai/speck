@@ -46,6 +46,8 @@ speck has no stated position on parallel builds. Without one, tickets keep addin
 - Decided 2026-10-11 with the user. Already done outside tickets: `max_parallel_builds` set to 1 in `speck/config.yml`, and 0102–0105 cancelled.
 - Write it in British English, in the brief's plain style.
 - Failing before this build: none
+- The brief's `speck-integrate` row kept "ship queue" (test 0101 checks for it) but now says nothing starts the skill and that each build ships its own ticket. The skill itself still calls its reader "the shipping agent": 0116 removes it, so it's left alone here.
+- Self-check: the new test file loads the clean-up helper first, as every test file must. `split-0018`'s panel hand-over test failed once with a socket hang-up and passed on three runs alone and on the next full run; this change touches no code.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

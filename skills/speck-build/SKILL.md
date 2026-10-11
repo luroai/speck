@@ -20,7 +20,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## 2. Tests first
 
-1. For each acceptance criterion, write at least one test that checks it. Name or comment each test with its criterion number (for example `AC2`). Put this ticket's new tests in a new test file of their own (for example `test/<area>-<id>.test.mjs`) rather than adding to the end of a shared one, and move any helpers they share into a support module, so builds running in parallel don't clash.
+1. For each acceptance criterion, write at least one test that checks it. Name or comment each test with its criterion number (for example `AC2`). Put this ticket's new tests in a new test file of their own (for example `test/<area>-<id>.test.mjs`) rather than adding to the end of a shared one, and move any helpers they share into a support module, so tickets don't clash when they're merged.
 2. Run the tests (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`). The new tests should fail. If a test passes before you've written any code, either the criterion is already met or the test is wrong, so look into it.
 3. If the project has no test setup, add the lightest standard one for its stack. If nothing can be tested automatically (for example, a pure copy change), say so in the ticket's Notes and describe how a reviewer can check it by reading the code.
 
