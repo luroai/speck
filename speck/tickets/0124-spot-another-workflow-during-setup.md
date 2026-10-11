@@ -1,7 +1,7 @@
 ---
 id: "0124"
 title: "Spot another workflow during setup"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T13:12:23.032Z"
 ---
 # 0124 · Spot another workflow during setup
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Setting speck up in a project that already uses another workflow, such as OpenSpec, leaves both running. Agents then get conflicting instructions: work from the other workflow's specs and changes, or only from speck's tickets. The project's own agent rules can also contradict how speck works, for example by banning git worktrees or requiring every change to go through a pull request, so builds fail or break the project's rules. Today setup says nothing about either.
@@ -48,9 +48,15 @@ Setup spots another workflow, and rules that clash with speck, explains each in 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The combined pull-request/particular-reviewer example recommends keeping auto_ship off for both conflicts.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 357,018
+- Elapsed since build started: 8 min
+- Changed lines: 55 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - `speck detect` lists work in progress only for OpenSpec. For GitHub Spec Kit and Kiro, setup asks the user instead.
