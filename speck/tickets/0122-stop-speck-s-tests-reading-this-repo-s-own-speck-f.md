@@ -39,6 +39,7 @@ No test in this repo reads this repo's own files under `speck/`, so a reused res
 ## Notes
 - Known readers from 0112's build: `test/luro-0082.test.mjs` (done tickets and an idea note), `test/product-0068.test.mjs` (`speck/product.md`), `test/worktrees.test.mjs` (the repo's `speck/config.yml`). The builder should search for others.
 - After this, tickets are checked for private words by `speck lint` (0121) instead, at the moment they're set ready.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
