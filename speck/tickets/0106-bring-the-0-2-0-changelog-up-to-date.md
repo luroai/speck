@@ -42,6 +42,7 @@ speck is ready to be released as 0.3.0, with a repeatable way to release that ke
 - Between this ticket shipping and the tag being pushed, the README's prompt points at a tag that doesn't exist yet, so tag straight after it ships.
 - Waits for 0124 and 0125, so they're in the release.
 - Failing before this build: none
+- Self-check: checked each changelog line against its ticket's criteria, and narrowed the staged-changes line to say `speck ship` waits only up to `ship_wait_minutes`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

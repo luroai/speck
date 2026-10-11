@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.3.0 · 11 October 2026
+
+What's new since 0.2.0. Most of it makes builds that run while you work safer and quicker, and makes shipping cope on its own when something gets in the way.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.3.0 init`.
+- Setup spots another ticket workflow, or rules that clash with speck, in your project. It explains each one in plain words and asks what to do, without removing or editing anything itself.
+- Re-running `speck init` brings an old speck section in AGENTS.md up to date.
+- The setup skill no longer shows in the `/` menu. The prompt in the README still starts it.
+- The README, `speck help`, `speck init` and `package.json` describe speck the same way.
+
+### Tickets
+
+- `speck start` waits for every ticket in a ticket's `after:` list to ship, and says which ones it's still waiting for.
+- Setting a ticket ready commits it, and a build starts only from a ready status that's committed.
+- speck refuses to change or cancel a ticket from your main checkout while it's being built.
+- `speck lint` refuses a ticket that contains one of your private words, listed in `~/.config/speck/private-words`, and warns when a criterion asks for the whole test suite to pass.
+
+### Building and reviewing
+
+- `speck run` builds one ticket at a time by default. A build that was killed shows as stopped, and `speck run` resumes it once by itself.
+- Tests that already fail before a build starts are recorded and left alone. The builder doesn't fix them, and the reviewer treats a fix to one as out of scope.
+- Builds run only the ticket's own tests while they work, and the whole suite where it counts. Full test runs take turns across builds, as many at a time as `max_parallel_tests` allows.
+- `speck test` and `speck ship` reuse a test result for code that's already been tested. `speck test --fresh` runs the suite anyway.
+- The reviewer gets a short summary of the test output instead of all of it.
+- The panel shows what each build's builder spent, beside what its reviewer spent.
+
+### Shipping
+
+- When a ship conflicts, the build sorts each file by the kind of conflict, with `speck merge-check`, and resolves it. Merge review rounds have their own limit, `max_merge_rounds`, and the ticket is blocked with a plain question if it still conflicts after two merges.
+- When a ship's tests fail, `speck ship` checks your base branch too and says plainly when it's the base branch that's failing. The build then opens a fix ticket for it, at priority 0, ahead of everything else.
+- When staged changes in your main checkout are all that stops a ship, `speck ship` waits up to `ship_wait_minutes` for them to clear, then ships.
+
 ## 0.2.0 · 10 October 2026
 
 The first public release, a preview. It covers what you can do now that the private 0.1.0 build couldn't. That build had the ticket, idea and config formats, the capture, ticket, build, review, ship and status skills, the Codex and Claude subagent reviewers, and `speck init`.
