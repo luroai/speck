@@ -1,7 +1,7 @@
 ---
 id: "0114"
 title: "Refuse edits to a ticket that's being built"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-11-one-build-at-a-time.md"               # e.g
 after: []                # ticket ids that must be done first
 created: 2026-10-11
 started: "2026-10-11T10:42:56.503Z"
+finished: "2026-10-11T10:49:21.820Z"
 
 ---
 # 0114 · Refuse edits to a ticket that's being built
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 With one build at a time, the user keeps editing tickets on the base branch while a build runs. If they change the ticket being built, its file differs on both sides and the ship's merge conflicts, stopping a build that had nothing wrong with it.
