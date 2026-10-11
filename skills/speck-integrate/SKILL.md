@@ -37,7 +37,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 7. Take turns with the reviewer as the `speck-review` skill says, until `speck next <id>` says `ship` or `block`. Fix each blocking finding, re-run the tests and commit before every round.
    - On `ship`: run `speck close <id>`, then `speck ship <id>` again, and go back to step 3 of "Start" with what it says.
    - On `block`: ask the user (see "Asking the user").
-8. If `speck ship <id>` exits with 13 again after two merges, ask the user, naming the parts of the product that keep clashing.
+8. If `speck ship <id>` exits with 13 again after two merges, stop without asking the user: leave the ticket `approved` and report that new changes keep arriving in the same files, naming them. The ship queue tries it again later. Ask only if the clash turns out to be two tickets contradicting each other.
 
 ## Base branch failing
 
@@ -45,7 +45,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 1. Look for an open fix ticket: a ticket in `speck/tickets/` (not `speck/tickets/done/`) with `type: fix`. If one already covers this failure (the same failing tests, or the same cause), don't make another: go to step 3 with that ticket.
 2. Otherwise, in the main checkout on the base branch, create one: `speck new "<title>" --type=fix`. Give it a title saying what's broken, and fill in its Problem, Outcome and Acceptance criteria in plain words: which tests fail on the base branch, what they show, and that they must pass again. Don't guess at a cause you haven't seen in the output. Commit only that ticket file, staged by name (`speck(<fix-id>): fix ticket`).
-3. Read `auto_fix_main` in `speck/config.yml` (missing counts as `false`). In the main checkout, run `speck set <fix-id> status ready` only when `auto_fix_main` is `true`. Otherwise leave it `draft`, for the user to approve.
+3. Read `auto_fix_main` in `speck/config.yml` (missing counts as `false`). Leave the fix ticket as it is unless it's `draft` in the main checkout and has no branch yet (`git branch --list '<branch_prefix><fix-id>-*'` prints nothing): one that's ready, building, reviewing, approved or blocked is already on its way, and setting it ready would undo that. In the main checkout, run `speck set <fix-id> status ready` on a draft one only when `auto_fix_main` is `true`. Otherwise leave it `draft`, for the user to approve.
 4. Then stop. Leave this ticket `approved`, and report in plain words: the base branch's tests are failing, which fix ticket covers it, and whether it's ready or waiting for the user's approval. The ship queue tries this ticket again once the fix has shipped.
 
 ## Asking the user

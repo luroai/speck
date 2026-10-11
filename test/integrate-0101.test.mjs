@@ -133,3 +133,20 @@ test('AC2 self-check: the merge round gets a fresh response file, not one left f
 test('AC3 self-check: an existing open fix ticket is still set ready when auto_fix_main allows it', () => {
   assert.match(section(body(), 'Base branch failing'), /don't make another: go to step 3 with that ticket/);
 });
+
+test('AC4 F1: repeated conflicts stop without a question; only the two named reasons ask the user', () => {
+  const text = body();
+  const conflict = section(text, 'Conflict');
+  assert.match(conflict, /exits with 13 again after two merges, stop without asking the user/);
+  // Every place outside "Asking the user" that sends the agent there names one of the two reasons.
+  for (const s of [section(text, 'Start'), conflict, section(text, 'Base branch failing'), section(text, 'Rules')])
+    for (const line of s.split('\n').filter(l => /ask the user|Asking the user/i.test(l) && !/without asking the user/.test(l)))
+      assert.match(line, /contradict|`block`/, line);
+});
+
+test('AC3 F2: only a draft fix ticket with no branch yet is set ready; one already on its way is left as it is', () => {
+  const s = section(body(), 'Base branch failing');
+  assert.match(s, /unless it's `draft` in the main checkout and has no branch yet/);
+  assert.match(s, /git branch --list '<branch_prefix><fix-id>-\*'/);
+  assert.match(s, /ready, building, reviewing, approved or blocked is already on its way/);
+});

@@ -1,7 +1,7 @@
 ---
 id: "0101"
 title: "Give the shipping agent a skill for ships that need help"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T08:18:17.251Z"
 ---
 # 0101 · Give the shipping agent a skill for ships that need help
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a ship can't go through cleanly, someone has to merge the base branch in, resolve conflicts, get the merge re-reviewed and ship again, or notice that `main` is broken. Today that's the builder improvising or the user stepping in. Speck needs one agent whose only job is this, which only asks the user about real decisions.
@@ -54,3 +54,83 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "66f092b4f09b9bdf0cfdafa019600c91a7f9d16d",
+    "thread_id": "01a12a22-a557-72d2-8e64-6ba58d5d9fc7",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 412651,
+      "cached_input_tokens": 303360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 887,
+      "reasoning_output_tokens": 39
+    },
+    "saved_at": "2026-10-11T08:45:11.284Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-integrate/SKILL.md frontmatter meets the requirements; scripts/install.mjs installTooling discovers it for both folders. The supplied AC1 installation tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The Conflict section specifies classification, preserving both sides, rebuilding lockfiles, testing and mandatory merge review before shipping. AC2 text tests pass in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Base branch failing steps 1 and 3 reuse any open fix ticket and unconditionally set it ready when auto_fix_main is true, including tickets already building, reviewing or approved."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Conflict step 8 asks the user after two merges even without contradictory tickets or a blocked review round. The AC4 test checks only the Asking the user section and misses this exception."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Rules section limits changes to merge needs, reserves base merges and pushes for speck ship, and prohibits editing Review rounds. Corresponding text tests pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-integrate/SKILL.md:40",
+        "issue": "Repeated shipping conflicts introduce a third reason to ask the user, contrary to AC4. New compatible changes arriving during shipping do not necessarily mean tickets contradict each other.",
+        "suggested_fix": "Remove this unconditional question. Ask only after establishing contradictory requirements or when speck next blocks the merge round; otherwise report and stop if retries must be bounded. Extend the test to inspect all question paths.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "skills/speck-integrate/SKILL.md:46",
+        "issue": "An existing fix ticket may already be building, reviewing or approved in another worktree. Sending it through status ready can reset its progress or act on the stale main-checkout copy, rather than simply reusing the ongoing fix.",
+        "suggested_fix": "Check the existing ticket's authoritative status, including its worktree. Preserve ongoing or approved fixes and only promote eligible draft tickets when auto_fix_main is true. Add text checks for these status guards.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new skill is installed correctly and requires independent review after resolving shipping conflicts. Two instructions need correction: it asks the owner about routine repeated conflicts, and it can reset an existing repair ticket that is already underway. The supplied tests pass but miss these cases."
+  }
+}
+```
+
+</details>
