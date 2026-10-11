@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId, ticketsElsewhere, checkNotBeingBuilt } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
@@ -108,6 +108,7 @@ function cmdSet(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
+  checkNotBeingBuilt(repo, cfg, t);
   checkSetTicket(t, cfg, key, value);
   // Setting ready commits the ticket, as the panel does, since `speck start` and `speck run` need it committed on the
   // base branch. Every refusal comes before the first write.
@@ -168,6 +169,7 @@ function cmdCancel(args) {
   const t = findTicket(repo, id);
   // Every refusal comes before the first write, so a refused cancel changes nothing.
   if (blank(reason)) throw new SpeckError(`Give a reason: speck cancel ${t.fm.id} "<reason>".`);
+  checkNotBeingBuilt(repo, loadConfig(repo), t, 'cancel');
   if (t.fm.status === 'done') throw new SpeckError(`Ticket ${t.fm.id} is done, so it can't be cancelled: delivered work is part of the record.`);
   if (t.fm.status === 'cancelled') throw new SpeckError(`Ticket ${t.fm.id} is already cancelled.`);
   // Stored as a JSON string, so text like `false`, `0` or `a "quoted" word` reads back exactly as typed. A reason kept from an earlier cancel is replaced in place.
@@ -294,17 +296,6 @@ function finishStart(dir, pad) {
   writeField(findTicket(dir, pad), 'status', 'building');
   git(['add', '-A', '--', 'speck/tickets'], dir);
   git(['commit', '-q', '-m', `speck(${pad}): start`], dir);
-}
-
-// Tickets being built in other worktrees, read from that worktree's copy, which has the real status.
-function ticketsElsewhere(repo, cfg) {
-  const here = fs.realpathSync(repo);
-  const ticketBranch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d{4})-`);
-  return worktreeList(repo).flatMap(w => {
-    const m = w.branch && w.branch.match(ticketBranch);
-    if (!m || w.path === here || !fs.existsSync(w.path)) return [];
-    try { return [{ ...findTicket(w.path, m[1]), at: w.path }]; } catch { return []; }
-  });
 }
 
 // Every ticket once. A ticket being built elsewhere replaces this checkout's copy of it, so it shows under its real status.
