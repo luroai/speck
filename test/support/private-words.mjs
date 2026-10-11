@@ -18,10 +18,12 @@ export function readPrivateWords(home = os.homedir()) {
   return text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
 }
 
-// Tracked files, apart from 0082's ticket file, that contain any of the words (case-insensitive, literal).
+// Tracked files outside speck/ that contain any of the words (case-insensitive, literal). Files under speck/ are
+// skipped: a test result is reused while nothing outside speck/ changes (0112), and tickets are checked for the
+// words by speck lint (0121).
 export function filesNaming(words, cwd) {
-  const r = spawnSync('git', ['grep', '-l', '-i', '-F', ...words.flatMap(w => ['-e', w]), '--', '.',
-    ':!speck/tickets/0082-*', ':!speck/tickets/done/0082-*'], { cwd, encoding: 'utf8' });
+  const r = spawnSync('git', ['grep', '-l', '-i', '-F', ...words.flatMap(w => ['-e', w]), '--', '.', ':!speck/'],
+    { cwd, encoding: 'utf8' });
   if (r.status > 1 || r.error) throw new Error(`git grep failed: ${r.stderr || r.error?.message}`);
   return r.stdout.split('\n').filter(Boolean);
 }

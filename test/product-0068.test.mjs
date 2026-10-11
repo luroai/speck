@@ -206,8 +206,7 @@ test('0068 AC3: the capture and ticket overlap checks compare against idea notes
   for (const text of [check, step, ticket]) assert.doesNotMatch(text, MENTION);
 });
 
-test('0068 AC4: speck/product.md is gone from this repo and no test reads it', () => {
-  assert.ok(!fs.existsSync(path.join(ROOT, 'speck', 'product.md')));
+test('0068 AC4: no test reads speck/product.md', () => {
   const self = path.join('test', 'product-0068.test.mjs');
   const others = filesIn('test').filter(f => f.endsWith('.mjs') && f !== self);
   assert.ok(others.length > 10);

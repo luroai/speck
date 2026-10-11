@@ -127,7 +127,7 @@ export function commandRepo({ command = '{bin} --model {model} --effort {effort}
   fs.writeFileSync(fake, `#!${process.execPath}
 const fs = require('fs');
 const stdin = fs.readFileSync(0, 'utf8');
-const ticketStatus = (fs.readFileSync('speck/tickets/' + fs.readdirSync('speck/tickets').find(n => n.startsWith('0001-')), 'utf8').match(/^status: (\\S+)/m) || [])[1];
+const ticketStatus = (fs.readFileSync('speck/tickets/' + fs.readdirSync('speck/tickets').find(n => n.startsWith('0001-')), 'utf8').match(/^status: (\\S+)/m) || [])[1]; // reads a temporary repo
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin, ticketStatus }) + '\\n');
 const v = process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(changesVerdict))};
 const mode = process.env.FAKE_MODE || 'raw';

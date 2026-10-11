@@ -28,7 +28,7 @@ test('AC1: a copy of speck that cannot install itself points to luroai/speck', (
   assert.doesNotMatch(r.stderr, /\n\s+at /, 'a plain message, not a stack trace');
 });
 
-test('AC2: no tracked file but this ticket names the owner, their old handle or machine username', (t) => {
+test('AC2: no tracked file outside speck/ names the owner, their old handle or machine username', (t) => {
   // The words live outside the repo (0084), so no tracked file holds them.
   const words = readPrivateWords();
   if (!words.length) return t.skip(`no words listed in ${privateWordsFile()}`);
@@ -41,12 +41,8 @@ test('AC3: the v0.1 handoff note is gone', () => {
   assert.equal(git('ls-files', 'docs/HANDOFF.md').stdout, '');
 });
 
-test('AC4: the sentences that named the owner now say "the maintainer", and the example path starts with ~/', () => {
+test('AC4: the brief\'s sentence that named the owner now says "the maintainer"', () => {
   assert.match(read('docs/brief.md'), /Someone other than the maintainer installs it and ships a ticket\./);
-  const idea = read('speck/ideas/done/2026-10-10-set-up-speck-by-giving-your-agent-a-prompt.md');
-  assert.match(idea, /Pilot: the maintainer adds speck to one of their existing projects using only the prompt\./);
-  const done = fs.readdirSync(path.join(ROOT, 'speck/tickets/done')).find(f => f.startsWith('0053-'));
-  assert.match(read(`speck/tickets/done/${done}`), /for example `~\/projects\/speck\.worktrees\/speck\/0052-/);
 });
 
 test('AC5: the panel mockup shows luroai/speck', () => {
