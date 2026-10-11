@@ -1,6 +1,6 @@
 # speck — product brief
 
-Status: 0.2.0, a public preview · 10 October 2026
+Status: 0.2.0, a public preview · 11 October 2026
 
 ## Thesis
 
@@ -12,18 +12,19 @@ OpenSpec showed the value of keeping specs in the repo. speck keeps that idea bu
 
 ## Who it's for
 
-- **Primary:** PMs and non-technical founders who can write a good ticket but can't review code line by line, and who want to ship personal or small-team projects quickly without giving up quality.
+- **Primary:** product-minded builders, such as PMs and founders, who can write a good ticket but don't want to review code line by line, and who want to ship personal or small-team projects quickly without giving up quality. They're comfortable setting speck up through a conversation with their agent and running it on their own machine.
 - **Secondary:** engineers who want a lightweight, auditable loop of ticket, agent build, independent review and merge.
+- **Where it's heading:** people who'd rather not have a development setup at all. That needs speck hosted, with builds running in the cloud, which is a deliberate later step (see "Where it's heading" below).
 - **Not for:** large multi-team specification, or work that needs design documents spanning many changes. Use OpenSpec or similar for that.
 
 ## Principles
 
-1. **The repo is the source of truth.** Ideas, tickets and review transcripts are Markdown files in the repo, beside the code they describe. Any tool, including the future board, reads and writes these files and nothing else.
+1. **The repo is the source of truth.** Ideas, tickets and review transcripts are Markdown files in the repo, beside the code they describe. Any tool, including the panel, reads and writes these files and nothing else.
 2. **Small tickets only.** A ticket is one agent, one sitting, one branch. If a ticket is too big for that, it gets split. It never gets stretched.
 3. **Review is adversarial and independent by default.** The builder never reviews its own work. A separate reviewer, preferably a different model, must approve it.
 4. **Humans hold two gates.** Gate 1 is moving a ticket to `ready`. Gate 2 is shipping it with `/speck-ship`, which merges it. Agents never merge or ship unless the user runs `/speck-ship`. The one exception is auto-ship: if you set `auto_ship: true` in `speck/config.yml`, the build ships a ticket as soon as the reviewer approves it, for the risks listed in `auto_ship_risk`. It's off by default.
 5. **Evidence over trust.** Every approved ticket has a review pack (`speck pack <id>`) that a non-coder can judge: each acceptance criterion with its result, a plain-English change summary, and flagged risks.
-6. **Measure actuals.** Every ticket records attempts, review rounds, time and cost. That data is the product's proof.
+6. **Measure actuals.** Every ticket records its review rounds, time and the reviewer's tokens, and builds that `speck run` starts record the builder's tokens and cost. That data is the product's proof.
 7. **One build at a time.** speck runs one build at a time (WIP 1), each in its own worktree, so you keep shaping ideas and tickets on the base branch while builds and ships are handled. You can create tickets, set them ready and walk away. Each build ships its own ticket: there is no separate shipping agent. Why:
    - **Your attention is the bottleneck.** speck's value is its gates, and what limits it is your attention, not agent time.
    - **It keeps things simple.** Each build starts from the latest base branch, so order, `after:` dependencies, conflicts and a broken base branch stay simple.
@@ -40,11 +41,14 @@ idea / conversation
   → /speck-ticket         → speck/tickets/0007-<slug>.md   (status: draft)
   → decide against it     → speck cancel 0007 "<reason>"    (status: cancelled,
                             filed in speck/tickets/done/)
-  → you edit and approve  → status: ready                  [GATE 1]
+  → you edit and approve  → speck set 0007 status ready,     [GATE 1]
+                            or Set ready in the panel: commits the ticket
+  → speck run             → starts /speck-build for the next ready ticket, one at a time,
+                            highest priority first, once its after: tickets have shipped
   → /speck-build 0007     → speck start: branch speck/0007-<slug> in its own worktree
        tests from acceptance criteria → implementation → tests pass
        → builder self-check (edge cases, error paths, claims, scope)
-       → review loop with reviewer subagent (see below)
+       → review loop with an independent reviewer (see below)
        → approved?  yes → logs filled in, status: approved (waits on its branch, no PR),
                           or shipped straight away if auto_ship allows it
                     no, after max rounds → status: blocked + question for you
@@ -80,6 +84,8 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
 - **Builder:** writes tests and code. It can fix a finding or dispute it with a reason. It cannot approve.
 - **Reviewer:** reads the ticket, the diff and the test output. It runs read-only and cannot edit code. It is the only party that can approve.
 
+The reviewer gets a summary of the test output rather than all of it: when the output is TAP, as `node --test` writes it, speck keeps the run's totals, every failing test with its details and every test named with the ticket's id, and says where the full output is. Other formats are sent in full.
+
 **Protocol**
 
 1. **Round 1.** The builder spawns the reviewer with the ticket, the diff against the base branch and the test output. The reviewer returns a structured verdict (`templates/review-verdict.schema.json`):
@@ -102,7 +108,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
 
 **Records:** each round is saved in the ticket file itself, in a `## Review rounds` section at the end that only speck writes. Each round is a collapsed `<details>` block with a one-line summary (round, reviewer, verdict, and "merge round" for a merge round) and the full record as a `json` code block, so a ticket is one file holding its whole history, and it moves into `done/` with its rounds. The section is left out of the reviewer's diff and prompt, and `speck lint` reports an error if a round isn't valid JSON or the rounds are out of order. A short summary also goes into the ticket's Review log. The review pack (`speck pack <id>`) is built from the recorded rounds. Working files for a review in progress go in `speck/.cache/`, which git ignores.
 
-**Reviewer adapters (v0.1)**
+**Reviewer adapters**
 
 | Adapter | How it runs | Notes |
 |---|---|---|
@@ -151,7 +157,7 @@ Every ticket opens with a header rendered from its frontmatter, such as `# 0007 
 
 Idea notes are filed the same way. `speck new --source=speck/ideas/<file>.md` sets the note to `ticketed (<id>)` and moves it into `speck/ideas/done/` under the same name, and the ticket's `source:` points there. Later tickets from the same idea take it from `speck/ideas/done/` (the old path still finds it), and re-running `speck init` files any ticketed note left in `speck/ideas/` and updates the tickets that point at it. So `speck/ideas/` holds only ideas still waiting to be shaped.
 
-## Skills and commands (v0.1)
+## Skills and commands
 
 | Command | Does |
 |---|---|
@@ -163,6 +169,15 @@ Idea notes are filed the same way. `speck new --source=speck/ideas/<file>.md` se
 | `/speck-capture` | Turns an idea or the current conversation into `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into a numbered draft ticket. Runs the size checks and proposes splits, then pre-checks each criterion for more than one reading and checks the external facts it relies on. Also triages the inbox: drops covered notes and puts at most three to you to ticket or drop. |
 | `speck cancel <id> "<reason>"` | Cancels a ticket you've decided against: records the reason and the date, sets it to `cancelled` and files it in `speck/tickets/done/`. Refuses a blank reason, a `done` ticket or an already-cancelled one. |
+| `speck new "<title>" [--source=<idea>]` | Creates the next numbered draft ticket, filling in the builder and reviewer from config. With `--source`, it files the idea note in `speck/ideas/done/`. `--type=bug` or `--type=fix` marks a bug or a fix for a broken base branch (priority 0). |
+| `speck lint <id>` | Checks a ticket against the size rules: ✗ for what stops it being ready, ! for warnings. |
+| `speck set <id> <field> <value>` | Changes a ticket field. `status ready` runs the lint first and commits the ticket, and only that file, so `speck run` can start it. |
+| `speck status [--json]` | Tickets by status, blocked first. `--json` gives everything, for programs such as the panel. |
+| `speck panel [--port <n>]` | The control panel in your browser, at `http://127.0.0.1:4777`: Plan (drafts, ideas and the inbox, with Set ready and priority), Build (the queue, live logs, pause, play and stop, blocked questions) and Shipped (what's shipped, with times, review rounds and tokens). It restarts itself when its code changes. |
+| `speck run` | Watches for ready tickets committed on the base branch and starts `build_command` for each in turn, highest priority first, skipping any whose `after:` tickets haven't shipped. `max_parallel_builds` is 1 (see principle 7). A build that was killed is resumed once. When a build ends, it records the builder's tokens and cost from Claude Code's `stream-json` log. |
+| `speck pause <id>` / `speck play <id>` / `speck stop <id>` | Hold a build `speck run` started, with every process it started, carry it on, or end it for good and block its ticket, keeping its branch and work. macOS and Linux only. |
+| `speck pack <id>` | Prints the review pack. |
+| `speck merge-check <id>` | Reports, as JSON, what merging the base branch into the ticket's branch would conflict on, and the class of each file: `added-lines`, `lockfile`, `ticket` or `logic`. |
 | `speck start <id>` | Starts a `ready` ticket: its branch in its own git worktree beside your checkout (with `worktrees: true`), `worktree_setup` run there, status `building`, committed. Prints the folder the build works in. |
 | `speck test` | Runs `commands.test` in this checkout and exits with its exit code. No more than `max_parallel_tests` (default 1) full test runs go at once in a repo, from any of its worktrees: a run beyond that waits, saying once what it's waiting for, and starts when one ends. The build and review skills run the tests this way, and `speck ship`'s test runs take a turn too. A turn held by a process that has died is freed. A run with no uncommitted changes outside `speck/` records its result (pass or fail, a failure's output, the test command) against the commit's files outside `speck/`, in a cache every worktree shares. A later `speck test` on the same files with the same test command prints that result, saying which commit it's from and when, and exits with its exit code without running the suite. `speck test --fresh` always runs it. `speck test --files <file>…` runs only those files with `commands.test_files` (`{files}` stands for them), from the repo root, without a turn or a recorded result; when that's blank, it says so in one line and runs the whole suite instead. The build skill runs only the ticket's own test files while it checks that they fail and fixes until they pass, and the whole suite before it changes anything, once its own tests pass, before every review round and after merging the base branch in. `speck ship` always runs the whole suite. |
 | `/speck-build <id>` | Takes a `ready` ticket: `speck start`, then in its worktree: tests from acceptance criteria, implementation, then the review loop. Ends at `approved`, with no PR, or shipped with `auto_ship` on. When the ship hits a conflict (exit 13), it merges the base branch in, resolves each file by its `speck merge-check` class (both sides' added lines kept, lockfiles rebuilt with the project's install command, logic changes keeping the intent of both sides), runs the tests and gets the merge a merge round before shipping again, and blocks the ticket if it still conflicts after two merges. When the base branch's own tests fail (exit 14), it changes no code, creates one fix ticket unless an open one covers it, sets it ready unless it's already on its way, and stops, leaving its own ticket `approved`. It asks the user only when two tickets contradict each other or a merge round blocks. |
@@ -172,36 +187,27 @@ Idea notes are filed the same way. `speck new --source=speck/ideas/<file>.md` se
 
 Agents never merge or ship unless the user runs `/speck-ship`. Shipping pushes the base branch directly, so it mustn't be protected by a "require a pull request" rule.
 
-## Two projects
+## Where it's heading
 
-1. **speck (this repo):** the file format, the skills, the review loop and the CLI. It's useful entirely on its own.
-2. **speck board (later):** a local kanban app over `speck/`. Columns map to ticket status, and moving a card to Ready for Dev is Gate 1 and starts `/speck-build`. It reads and writes the same files, and shipping stays with `/speck-ship`. Captured as an idea in `speck/ideas/`.
+speck runs on your own machine today: the panel is a local page over your repo, and builds run in worktrees beside your checkout. That suits people comfortable with a local setup, and it keeps everything in the repo with no service to trust.
 
-## v0.1 scope
+A hosted version, where the repo lives on GitHub, builds run in the cloud and the panel is a page you sign in to, would suit people who don't want a development setup at all. It's a bigger, deliberate step, not something to grow ticket by ticket. A hosted page that drives builds on someone's own machine is ruled out: it would be a remote-control channel into a machine where builds skip permission prompts.
 
-In scope:
-- the ticket, idea and config formats;
-- the capture, ticket, build, review, ship and status skills for Claude Code as builder;
-- the `codex` and `claude-subagent` reviewer adapters;
-- `speck init`;
-- a README with one real worked example and its actuals.
-
-Out of scope for v0.1:
-- dependency graphs;
+Not yet:
+- Windows (speck says so plainly and suggests WSL);
 - Jira or GitHub Issues sync;
-- the board;
-- builders other than Claude Code;
-- hosted or remote runs (GitHub Actions comes later).
+- pull requests as the way to ship (`speck/ideas/2026-10-08-pr-ship-mode.md`);
+- dependency graphs beyond each ticket's `after:` list;
+- hosted or cloud builds.
 
 ## Success measures
 
-- speck builds itself: from ticket 0002 onwards, every change goes through speck.
-- At least 20 tickets shipped through speck, with published actuals (median time, cost, review rounds, share blocked).
+- ✅ speck builds itself: its features go through its own tickets, builds and reviews.
+- ✅ At least 20 tickets shipped through speck, with published actuals: 104 by 11 October 2026, with a median of 12 minutes and 2 review rounds each (see the README).
 - Someone other than the maintainer installs it and ships a ticket.
 
 ## Open questions
 
-- Licence: MIT is set in the manifests as a placeholder. Confirm before publishing.
 - Package name: `speck` is taken on npm and PyPI. `speck-dev` is set in `package.json` (private). It installs a `speck` command.
 - PR ship mode for teams: bring back GitHub PRs as an option (`ship: pr`), with the GitHub self-approval question that comes with it (ticket 0002). Parked in `speck/ideas/2026-10-08-pr-ship-mode.md`.
 - Resolved 8 October 2026: `codex exec resume` accepts `--output-schema` and keeps the session's memory. Verified end to end.

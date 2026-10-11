@@ -525,7 +525,7 @@ test('0032 AC2: when two parallel tickets change the same lines, the second ship
 
 test('0032 AC4: the brief no longer puts parallel tickets out of scope, but dependency graphs stay out', () => {
   const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
-  const out = brief.split('Out of scope for v0.1:')[1].split('\n\n')[0];
+  const out = brief.split('Not yet:')[1].split('\n\n')[0];
   assert.doesNotMatch(out, /parallel/i);
   assert.match(out, /dependency graphs/i);
 });
