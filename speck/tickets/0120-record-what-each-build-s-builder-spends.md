@@ -1,7 +1,7 @@
 ---
 id: "0120"
 title: "Record what each build's builder spends"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T11:12:25.911Z"
 ---
 # 0120 · Record what each build's builder spends
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck records only the reviewer's tokens, so the panel's "median tokens" leaves out the builder, which is probably the larger spend: 0.5–2.8M tokens read and $0.50–2.18 per build, as Claude Code reports it, for five builds on 11 October. Without that, you can't see what a build costs or judge changes meant to cut it, such as choosing the builder's model per ticket.
@@ -49,9 +49,14 @@ The panel shows what each build's builder spent, beside what its reviewer spent.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 107,804
+- Elapsed since build started: 6 min
+- Changed lines: 72 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: builder spend lives only in the main checkout's `speck/.cache/runs/<id>.json`, so it's per machine and is replaced if the ticket is ever launched again.
 
