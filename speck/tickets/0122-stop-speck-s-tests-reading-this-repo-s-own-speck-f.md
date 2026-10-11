@@ -1,7 +1,7 @@
 ---
 id: "0122"
 title: "Stop speck's tests reading this repo's own speck folder"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T12:25:08.256Z"
 ---
 # 0122 · Stop speck's tests reading this repo's own speck folder
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0112, `speck test` and `speck ship` reuse a test result when nothing outside `speck/` has changed. Some of speck's own tests read this repo's files under `speck/`: its config, done tickets and filed idea notes, and the private-words check scans them all. A change there can then pass or fail on a reused result that a fresh run would give differently.
@@ -48,9 +48,15 @@ No test in this repo reads this repo's own files under `speck/`, so a reused res
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The regression guard misses ordinary reads merely formatted across lines, even using the recognised ROOT variable.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 307,282
+- Elapsed since build started: 10 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Removed (no whole test was removed; these assertions were, as one-off changes already recorded in their tickets):
@@ -121,6 +127,70 @@ Known limit: the AC3 check reads the tests' source, on one line or across severa
     ],
     "escalation_question": "",
     "summary": "The existing dependencies on the repo’s speck folder have been removed, and the full suite passes. However, the new safeguard misses common ways of reading that folder, including an ordinary multiline path. Fix that protection before merge so the same stale-test-result problem cannot quietly return."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "54afd414c6b17ff506a4ed95b4159e95569eda89",
+    "thread_id": "01a12af2-6b5a-7212-8ff1-d74ce810e32c",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 203971,
+      "cached_input_tokens": 150528,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1586,
+      "reasoning_output_tokens": 18
+    },
+    "saved_at": "2026-10-11T12:34:36.740Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The original repo reads remain removed from luro-0082.test.mjs, product-0068.test.mjs and worktrees.test.mjs. The passing 0122 AC1 test scans test files and support modules. The marked relative read in support/speck.mjs belongs to a generated reviewer executed in a temporary repo."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "support/private-words.mjs filesNaming excludes speck/ through its Git pathspec. The passing 0122 AC2 fixture checks exclusions and matching tracked files outside speck/, including docs/speck/ and speckle.md."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "readsRepoSpeck now matches the whole source. Independent probes confirm it catches multiline root paths, multiline helper calls and direct relative reads. Passing AC3 tests cover these forms, temporary-repo exceptions and reported line numbers."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The full output at /tmp/speck-0122-tests.txt confirms 1079 tests: 1076 passing, 3 skipped, zero failures. The Delivery log documents each removed assertion and why; no whole test was removed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/repo-speck.mjs",
+        "issue": "The previous guard missed multiline root-based reads and direct repo-relative reads.",
+        "suggested_fix": "Match across lines and detect relative reads, with regression coverage that preserves temporary-repo cases.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The existing reads of this repo’s speck folder have been removed, and the safeguard now catches the multiline and relative reads identified in round one. All tests pass. The source-based guard has documented limits, but there are no remaining blocking findings."
   }
 }
 ```
