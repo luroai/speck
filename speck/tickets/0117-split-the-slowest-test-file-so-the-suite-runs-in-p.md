@@ -1,7 +1,7 @@
 ---
 id: "0117"
 title: "Split the slowest test file so the suite runs in parallel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T10:21:32.012Z"
 ---
 # 0117 · Split the slowest test file so the suite runs in parallel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every build waits on the full test suite several times, and the suite takes about 108 seconds. 89 of those are one file, `test/speck.test.mjs` (171 tests): `node --test` runs files in parallel, but the tests in one file one after another, so everything else finishes while that file is still running.
@@ -51,9 +51,15 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The three new regression tests increase the suite from 1000 to 1003 tests, violating AC2's explicit requirement that the suite retain the same number of tests.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,695,794
+- Elapsed since build started: 13 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Full suite, `speck test --fresh` on the same 16-core machine: 114 seconds before the split and 58 seconds after, with 1000 tests both times (997 pass, 3 skipped).
 - The ticket expected about 30 seconds. With some 70 test files now running at once on 16 cores, the suite looks bound by the CPU rather than by its slowest file, so splitting further won't help much on its own.
