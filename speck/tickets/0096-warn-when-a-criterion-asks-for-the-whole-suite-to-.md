@@ -38,6 +38,7 @@ Tickets ask that no test that passed before the change fails, and `speck lint` w
 
 ## Notes
 - Failing before this build: none
+- Self-check: quoted text in a criterion ("…", “…”, `…`) no longer counts, so a criterion that only talks about the wording (like this ticket's AC1) gets no warning.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

@@ -294,12 +294,21 @@ export function lintTicket(ticket, cfg) {
   const ac = contentLines(sections['acceptance criteria']).filter(l => /^\d+\.\s+\S/.test(l));
   if (ac.length === 0) errors.push('No numbered acceptance criteria.');
   if (ac.length > L.max_acceptance_criteria) errors.push(`${ac.length} acceptance criteria (max ${L.max_acceptance_criteria}). Split the ticket.`);
+  ac.forEach((c, i) => { if (asksWholeSuite(c)) warnings.push(`Criterion ${i + 1} asks for the whole test suite to pass ("${c.replace(/^\d+\.\s+/, '')}"). That can't be met when the base branch is already broken. Write "no test that passed before this change fails" instead.`); });
   if (!contentLines(sections['out of scope']).filter(l => l !== '-').length) warnings.push('"Out of scope" is empty. Say what this ticket will not do.');
   const body = ['problem', 'outcome', 'acceptance criteria', 'out of scope', 'notes']
     .reduce((n, s) => n + contentLines(sections[s]).length, 0);
   if (body > L.max_ticket_body_lines) errors.push(`Ticket body is ${body} lines (max ${L.max_ticket_body_lines}). It's too big for one agent: split it.`);
   warnings.push(...homePathWarnings(ticket.raw));
   return { errors, warnings, acceptanceCriteria: ac };
+}
+
+// A criterion asks for the whole suite to pass when it names the full, whole or entire (test) suite, or all tests,
+// and says they pass. Quoted text only talks about such wording, so it doesn't count.
+function asksWholeSuite(criterion) {
+  criterion = criterion.replace(/"[^"]*"|“[^”]*”|`[^`]*`/g, '');
+  return /\b(?:full|whole|entire)\s+(?:test\s+)?suite\s+(?:still\s+)?pass/i.test(criterion)
+    || /\ball\s+(?:of\s+)?(?:the\s+)?(?:existing\s+)?tests\s+(?:still\s+)?pass/i.test(criterion);
 }
 
 // Tickets are committed and often published, so warn about each line holding the user's home folder path, which
