@@ -18,7 +18,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Title:** one outcome, imperative, with no "and" joining two outcomes. Change it with `speck set <id> title "…"` so the ticket's header heading stays in sync. Don't edit the `# <id> · <title>` heading or `**Status:**` line under the frontmatter by hand: speck rewrites them.
    - **Problem:** who is affected and why it matters, in 1–3 sentences.
    - **Outcome:** what is true when it ships.
-   - **Acceptance criteria:** 1–5 numbered, testable statements about behaviour, not implementation. Each one will become a test before any code is written, so make it checkable: inputs, expected result and edge cases.
+   - **Acceptance criteria:** 1–5 numbered, testable statements about behaviour, not implementation. Each one will become a test before any code is written, so make it checkable: inputs, expected result and edge cases. For a suite-wide criterion, write "no test that passed before this change fails", never "the full test suite passes" or similar: the base branch may already have failing tests, and the builder mustn't fix them. `speck lint` warns about the second form.
    - **Out of scope:** what this ticket deliberately won't do. Point to sibling tickets where relevant.
    - **Notes:** constraints and decisions only. No design essays.
    - **Estimate:** `size` S (a small, contained change) or M (several files or one new component). If it feels L, split it. Set `risk: high` if it touches auth, payments, data deletion, migrations, infrastructure or secrets. Set `priority` from 1 to 5 if the user gave one; otherwise use 3. Keep priority 0 for fix tickets: only they can have it.
