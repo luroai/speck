@@ -12,18 +12,18 @@ import { ROOT, CLI } from './support/panel.mjs';
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const pkg = () => JSON.parse(read('package.json'));
 
-test('AC1: package.json is version 0.2.0 and names the GitHub repository', () => {
-  assert.equal(pkg().version, '0.2.0');
+test('AC1: package.json has a version and names the GitHub repository', () => {
+  assert.match(pkg().version, /^\d+\.\d+\.\d+$/);
   assert.equal(pkg().repository, 'github:luroai/speck');
 });
 
-test('AC1: speck init prints speck 0.2.0', () => {
+test('AC1: speck init prints the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 0\.2\.0: /m);
-  assert.equal(fs.readFileSync(path.join(dir, '.speck', 'VERSION'), 'utf8').trim(), '0.2.0');
+  assert.ok(r.stdout.split('\n').some(l => l.startsWith(`speck ${pkg().version}: `)), r.stdout);
+  assert.equal(fs.readFileSync(path.join(dir, '.speck', 'VERSION'), 'utf8').trim(), pkg().version);
 });
 
 test('AC2: CHANGELOG.md has a 0.2.0 section grouped under a few headings', () => {
@@ -36,16 +36,16 @@ test('AC2: CHANGELOG.md has a 0.2.0 section grouped under a few headings', () =>
   assert.match(m[1], /0\.1\.0/, 'it says what changed since the private 0.1.0');
 });
 
-test('AC3: the README and brief status lines say 0.2.0, a public preview, not v0.1', () => {
+test('AC3: the README and brief status lines say the current version, a public preview, not v0.1', () => {
   const readme = read('README.md').match(/^> Status:.*$/m)?.[0] || '';
   const brief = read('docs/brief.md').match(/^Status:.*$/m)?.[0] || '';
   for (const line of [readme, brief]) {
-    assert.match(line, /0\.2\.0/);
+    assert.ok(line.includes(pkg().version), line);
     assert.match(line, /public preview/);
     assert.doesNotMatch(line, /v0\.1\b/);
   }
 });
 
-test('AC4: the README setup prompt names v0.2.0', () => {
-  assert.match(read('README.md'), /npx github:luroai\/speck#v0\.2\.0 init/);
+test('AC4: the README setup prompt names the current version', () => {
+  assert.ok(read('README.md').includes(`npx github:luroai/speck#v${pkg().version} init`));
 });

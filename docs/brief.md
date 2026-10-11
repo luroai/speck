@@ -1,6 +1,6 @@
 # speck — product brief
 
-Status: 0.2.0, a public preview · 11 October 2026
+Status: 0.3.0, a public preview · 11 October 2026
 
 ## Thesis
 
@@ -188,6 +188,12 @@ Idea notes are filed the same way. `speck new --source=speck/ideas/<file>.md` se
 | `/speck-status` | Lists tickets by status: approved (waiting for you) first, then blocked with their questions, then cancelled with their reasons |
 
 Agents never merge or ship unless the user runs `/speck-ship`. Shipping pushes the base branch directly, so it mustn't be protected by a "require a pull request" rule.
+
+## Releases
+
+`main` moves with every ship, so it's whatever shipped last. Releases are tagged versions (`v0.3.0`), and the README always points at the latest release, so anyone following its setup prompt gets a fixed version rather than `main`.
+
+A release is an ordinary ticket. It sets the version in `package.json`, adds the release's section at the top of `CHANGELOG.md` and points the README's setup prompt at the new tag. A test fails if those three don't name the same version. Once the release ticket has shipped, the maintainer creates and pushes the tag straight away, as shipping is theirs: until then, the README's prompt points at a tag that doesn't exist yet.
 
 ## Where it's heading
 

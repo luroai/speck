@@ -1,6 +1,6 @@
 {
   "name": "speck-dev",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Small tickets. Independent review. You ship. A repo-native ticket workflow for AI coding agents.",
   "repository": "github:luroai/speck",
   "private": true,
