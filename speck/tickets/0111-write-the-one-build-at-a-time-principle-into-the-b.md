@@ -45,6 +45,7 @@ speck has no stated position on parallel builds. Without one, tickets keep addin
 ## Notes
 - Decided 2026-10-11 with the user. Already done outside tickets: `max_parallel_builds` set to 1 in `speck/config.yml`, and 0102–0105 cancelled.
 - Write it in British English, in the brief's plain style.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
