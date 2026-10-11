@@ -270,7 +270,7 @@ test('0028 AC3: speck start refuses, changing nothing, for a ticket that is not 
   assert.equal(tooling.g('rev-parse', '--verify', '-q', tooling.branch), '');
 });
 
-test('0028 AC4: with worktrees off, speck start branches in the current checkout; new projects and this repo turn worktrees on', () => {
+test('0028 AC4: with worktrees off, speck start branches in the current checkout; new projects turn worktrees on', () => {
   const off = startRepo({ config: { worktrees: 'false' } });
   const res = off.run('start', '1');
   assert.equal(res.status, 0, res.stderr);
@@ -283,7 +283,6 @@ test('0028 AC4: with worktrees off, speck start branches in the current checkout
   const tpl = parseYaml(fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8'));
   assert.equal(tpl.worktrees, true);
   assert.equal(tpl.worktree_setup, '');
-  assert.equal(parseYaml(fs.readFileSync(path.join(ROOT, 'speck', 'config.yml'), 'utf8')).worktrees, true);
 });
 
 test('0028 AC5: the build skill starts with speck start and works only in the printed worktree, resuming there', () => {

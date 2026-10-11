@@ -40,6 +40,9 @@ No test in this repo reads this repo's own files under `speck/`, so a reused res
 - Known readers from 0112's build: `test/luro-0082.test.mjs` (done tickets and an idea note), `test/product-0068.test.mjs` (`speck/product.md`), `test/worktrees.test.mjs` (the repo's `speck/config.yml`). The builder should search for others.
 - After this, tickets are checked for private words by `speck lint` (0121) instead, at the moment they're set ready.
 - Failing before this build: none
+- Readers found: the three in the note above, `test/product-0068.test.mjs` (`speck/product.md`), and the private-words scan in `test/support/private-words.mjs`, which both 0082's and 0084's checks use. No other test builds a path into this repo's `speck/` folder or runs the CLI there.
+- AC4 can't be checked by a test of its own: the full suite went from 1073 tests (1070 passing, 3 skipped) to 1078 (1075 passing, 3 skipped), with no test file or test removed whole. Only assertions inside three tests were removed (see the Delivery log).
+- Self-check: narrowed the AC1 test's name to what the check finds (a path built into `speck/`), and stopped it flagging a `\/` inside a regex as a path.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
