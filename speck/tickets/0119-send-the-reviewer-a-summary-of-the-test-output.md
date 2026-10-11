@@ -1,7 +1,7 @@
 ---
 id: "0119"
 title: "Send the reviewer a summary of the test output"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T11:03:24.826Z"
 ---
 # 0119 · Send the reviewer a summary of the test output
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every review round puts the builder's full test output in the reviewer's prompt. Here that's about 245 KB, or about 60,000 tokens, nearly all of it passing tests from other tickets. The reviewer re-reads it on every model call in the round, so it's likely over half of the 280k–1.26M input tokens a ticket's review costs, and it makes each round slower.
@@ -50,9 +50,15 @@ The reviewer gets a short summary of the test run that keeps everything it needs
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Ticket matching uses the whole suite ancestry rather than the test's own name.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 265,555
+- Elapsed since build started: 7 min
+- Changed lines: 82 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
