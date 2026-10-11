@@ -1,7 +1,7 @@
 ---
 id: "0112"
 title: "Reuse a test run's result when the code hasn't changed"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T09:59:34.988Z"
 ---
 # 0112 · Reuse a test run's result when the code hasn't changed
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build runs the whole test suite (about 100 seconds here) six or seven times, including its ship, which is 10–12 minutes of a 15–20 minute build. Some of those runs test code that has already been tested unchanged: with one build at a time, the last ship has just run the suite on the base branch the build starts from, and a ship often re-tests exactly what the builder's last run tested.
@@ -48,9 +48,15 @@ A build runs the whole test suite (about 100 seconds here) six or seven times, i
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Exit codes above 128 do not necessarily indicate a signal.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,258,832
+- Elapsed since build started: 12 min
+- Changed lines: 137 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
