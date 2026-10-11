@@ -1,7 +1,7 @@
 ---
 id: "0119"
 title: "Send the reviewer a summary of the test output"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-11-spend-fewer-tokens-per-build.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T11:03:24.826Z"
 
 ---
 # 0119 · Send the reviewer a summary of the test output
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Every review round puts the builder's full test output in the reviewer's prompt. Here that's about 245 KB, or about 60,000 tokens, nearly all of it passing tests from other tickets. The reviewer re-reads it on every model call in the round, so it's likely over half of the 280k–1.26M input tokens a ticket's review costs, and it makes each round slower.
