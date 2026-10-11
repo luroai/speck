@@ -1,7 +1,7 @@
 ---
 id: "0101"
 title: "Give the shipping agent a skill for ships that need help"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T08:18:17.251Z"
 ---
 # 0101 · Give the shipping agent a skill for ships that need help
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 When a ship can't go through cleanly, someone has to merge the base branch in, resolve conflicts, get the merge re-reviewed and ship again, or notice that `main` is broken. Today that's the builder improvising or the user stepping in. Speck needs one agent whose only job is this, which only asks the user about real decisions.
@@ -44,7 +44,7 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 - Failing before this build: none
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+AC2 says a conflict that only needs both sides' added lines kept, or a lockfile rebuilt, ships with no extra review once the tests pass. But `speck ship` refuses any ticket whose files outside `speck/` changed after the reviewer approved, and merging the base branch in always changes them (`scripts/ship.mjs`, `shipChecks`). So today every merge needs a review round before it can ship. Which should 0101 do? (a) Narrow AC2: the skill sends every conflict merge to a merge round (these already don't count towards `max_review_rounds`, 0097), and a new idea covers letting `speck ship` accept a simple merge without another review. (b) Widen 0101 so `speck ship` accepts a base-branch merge after approval when every conflict in it was `added-lines` or `lockfile`. (c) A separate ticket does (b) first and 0101 waits for it. I recommend (a): it keeps 0101 a skill-only change and works today. The cost is one extra review round for each simple merge until the follow-up ships.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
