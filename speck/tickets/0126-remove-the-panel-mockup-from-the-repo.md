@@ -1,7 +1,7 @@
 ---
 id: "0126"
 title: "Remove the panel mockup from the repo"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T15:13:26.394Z"
 
 ---
 # 0126 · Remove the panel mockup from the repo
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `docs/panel-mockup.html` was a design reference for the control panel (0031). The real panel in `templates/panel.html` has replaced it, but the mockup is still in the public repo, and two tests read it, so it can't simply be deleted.
