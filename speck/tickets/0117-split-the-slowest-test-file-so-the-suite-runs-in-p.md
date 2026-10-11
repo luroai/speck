@@ -40,6 +40,7 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
 ## Notes
 - Measured 2026-10-11 on 16 cores: the full suite takes 108 seconds and `test/speck.test.mjs` 89 alone. The next slowest file, `test/run.test.mjs`, takes 27, so expect about 30 seconds afterwards.
 - This changes only test files, which don't count towards `max_changed_lines`.
+- Failing before this build: none (1000 tests, 997 pass, 3 skipped; `speck test --fresh` took 114 seconds on 16 cores).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
