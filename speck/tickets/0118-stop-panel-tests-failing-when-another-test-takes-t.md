@@ -39,6 +39,7 @@ A panel test no longer fails because another test took the port it picked.
 ## Notes
 - `freePort()` is used 41 times across about 20 test files. Most go through `startPanel()`.
 - Seen 2026-10-11 with no other build running, so it's a race inside one suite run, not between builds.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
