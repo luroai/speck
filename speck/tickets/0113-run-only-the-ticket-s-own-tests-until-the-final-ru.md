@@ -38,6 +38,7 @@ Builds run only the ticket's own test files while they work, and the whole suite
 
 ## Notes
 - `/speck-setup` doesn't need to ask for `commands.test_files`: blank falls back to the whole suite.
+- Failing before this build: none (speck test reused the passing result recorded for commit dabe9cd, the same code outside speck/).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
