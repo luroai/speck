@@ -1,7 +1,7 @@
 ---
 id: "0118"
 title: "Stop panel tests failing when another test takes their port"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-11-make-the-test-suite-faster.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T10:35:54.329Z"
 
 ---
 # 0118 · Stop panel tests failing when another test takes their port
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Panel tests fail now and then with "Port … is already in use, so the panel didn't start". The helper `freePort()` in `test/support/panel.mjs` finds a free port, releases it, and the panel is started on it a moment later. Meanwhile another test file running in parallel can take the same port. It stopped 0097 shipping, and it cost 0111's build a re-run. Each time, the builder had to work out that it wasn't their change.
