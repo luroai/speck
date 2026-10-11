@@ -1,7 +1,7 @@
 ---
 id: "0123"
 title: "Bring an old speck section in AGENTS.md up to date"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-refresh-an-old-speck-pointer-in-agents-md.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T12:36:02.784Z"
 
 ---
 # 0123 · Bring an old speck section in AGENTS.md up to date
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `speck init` adds a speck section to a project's AGENTS.md, but once one is there it never updates it. Projects set up with an older speck keep its old instructions, such as "Read `speck/product.md` first", a file speck no longer creates. Their agents follow stale rules before every build, and re-running `speck init` to update speck doesn't fix it.
