@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { shipRepo, CLI, env, gIn, runIn } from './support/ship.mjs';
 
 // ---------- 0115: speck ship waits for staged changes in the base checkout to clear ----------
@@ -234,4 +234,19 @@ test('AC1: one ship says it is waiting only once, even when the tests stage more
   assert.equal(res.stdout.match(/waiting/gi).length, 1, res.stdout);
   shipped(r);
   assert.equal(gIn(r.dir, 'show', 'main:notes.txt').stdout, 'mine\n');
+});
+
+test('AC3: a staged change to a file with a non-ASCII name the ticket changes refuses at once (review round 2 F1)', () => {
+  const r = shipRepo();
+  fs.writeFileSync(path.join(r.wt, 'café.txt'), 'feature\n');
+  gIn(r.wt, 'add', 'café.txt'); gIn(r.wt, 'commit', '-qm', 'café');
+  fs.writeFileSync(path.join(r.dir, 'café.txt'), 'mine\n');
+  r.g('add', 'café.txt');
+  const before = r.snapshot();
+  const res = spawnSync(process.execPath, [CLI, 'ship', '1'], { cwd: r.dir, encoding: 'utf8', env: { ...env, SPECK_SHIP_MINUTE_MS: '20' } });
+  assert.equal(res.status, 1, res.stderr + res.stdout);
+  assert.doesNotMatch(res.stdout, /waiting/i);
+  assert.match(res.stderr, /café\.txt \(staged\)/);
+  assert.match(res.stderr, /Nothing was shipped/);
+  assert.deepEqual(r.snapshot(), before);
 });

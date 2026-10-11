@@ -166,7 +166,8 @@ export function shipTicket(repo, id) {
       if (changed.length) throw new SpeckError(`These files in ${work} have uncommitted changes${when}: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
       return;
     }
-    const touched = new Set(git(['diff', '--name-only', `${base}...${branch}`], repo).split('\n').filter(Boolean));
+    // Raw paths, as changes() reads them: without -z, git quotes names with unusual characters.
+    const touched = new Set(git(['diff', '--name-only', '-z', `${base}...${branch}`], repo).split('\0').filter(Boolean));
     const clashes = c => c.paths.some(f => touched.has(f));
     const inWay = () => changes(mergeAt).filter(c => c.staged || clashes(c));
     const stagedOnly = files => files.length && !files.some(clashes);

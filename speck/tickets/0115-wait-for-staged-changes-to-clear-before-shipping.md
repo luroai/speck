@@ -124,3 +124,75 @@ When staged changes in the base branch's checkout are all that stops a ship, `sp
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ae9f9428bc723d6faef0b6b9f44359f6f29f8071",
+    "thread_id": "01a12a9a-fccf-7b41-988a-c872bd72e5b3",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 852819,
+      "cached_input_tokens": 648448,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1823,
+      "reasoning_output_tokens": 278
+    },
+    "saved_at": "2026-10-11T10:59:14.337Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs clash() polls every 2 seconds and shares the told flag across both checks. The commit, unstage and repeated-wait integration tests in test/ship-0115.test.mjs passed in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipWaitMinutes(), templates/config.yml and scripts/config.mjs retain the default 30, positive whole-number validation and shared wait budget. All AC2 integration tests passed in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "changes() now handles both rename paths, and the F1 rename regression test passed. However, clash() reads touched paths using newline-delimited git diff output, which quotes non-ASCII and special-character paths, whereas changes() now returns raw paths. Those paths therefore fail the overlap comparison."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "changes() uses git --no-optional-locks status and the wait loop performs no writes. The test checking both checkout snapshots and index bytes/mtime during waiting passed in the supplied output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs:changes and clash",
+        "issue": "The ordinary rename case is fixed, but path comparison remains incomplete. With Git's default core.quotePath, a ticket changing café.txt produces a quoted/escaped name in git diff --name-only, while status -z returns raw café.txt. A staged edit or rename involving that file is consequently treated as unrelated and waits instead of refusing immediately. The new raw status parsing also introduces this mismatch for ordinary non-ASCII filenames.",
+        "suggested_fix": "Read the touched-file list with git diff --name-only -z and split on NUL, matching changes()'s raw paths. Add an integration test for a staged edit to a non-ASCII filename changed by the ticket, asserting immediate refusal and unchanged checkouts.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs:clash",
+        "issue": "Resolved: the shared told flag prevents repeated waiting notices across the two clash() calls. The added repeated-wait integration test exercises the original failure and passed.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The repeated notice and ordinary rename problems are fixed, and the supplied suite has no failures. One filename edge case remains: staged edits to files with non-ASCII names can wait instead of refusing immediately. Use the same filename format for both sides of the comparison before merge. Tests were inspected but not rerun."
+  }
+}
+```
+
+</details>
