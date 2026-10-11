@@ -1,7 +1,7 @@
 ---
 id: "0116"
 title: "Handle a ship that needs help inside the build"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-11-one-build-at-a-time.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T11:19:50.797Z"
 
 ---
 # 0116 · Handle a ship that needs help inside the build
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0101 added the `speck-integrate` skill for a ship queue to start, but the queue (0102–0105) was cancelled when speck moved to one build at a time. Nothing starts the skill, so its handling of conflicts and of a failing base branch never runs.
