@@ -38,6 +38,7 @@ started: "2026-10-11T11:19:50.797Z"
 
 ## Notes
 - Assumption for AC2: the fix ticket is set ready without asking, so it builds next, ahead of everything else at priority 0. This fits "set them ready and walk away". The other choice is to leave it as a draft for you.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
