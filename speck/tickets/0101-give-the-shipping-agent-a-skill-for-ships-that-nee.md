@@ -1,7 +1,7 @@
 ---
 id: "0101"
 title: "Give the shipping agent a skill for ships that need help"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T08:18:17.251Z"
 ---
 # 0101 · Give the shipping agent a skill for ships that need help
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 When a ship can't go through cleanly, someone has to merge the base branch in, resolve conflicts, get the merge re-reviewed and ship again, or notice that `main` is broken. Today that's the builder improvising or the user stepping in. Speck needs one agent whose only job is this, which only asks the user about real decisions.
@@ -28,7 +28,7 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 
 ## Acceptance criteria
 1. `speck init` installs a `speck-integrate` skill in both skill folders. It's agent-only: its frontmatter has `user-invocable: false`, so it isn't in Claude Code's `/` menu, and its description says only the ship queue starts it, never a person or another skill.
-2. For a conflict, it merges the base branch in and uses `speck merge-check` (0098): `added-lines` conflicts in lists, tables or imports keep both sides, and lockfiles are rebuilt with the project's own install command. If the tests then pass, it ships with no extra review. Any `logic` resolution keeps the intent of both sides and gets a merge round (0097) before it ships.
+2. For a conflict, it merges the base branch in and uses `speck merge-check` (0098): `added-lines` conflicts in lists, tables or imports keep both sides, lockfiles are rebuilt with the project's own install command, and any `logic` resolution keeps the intent of both sides. Once the tests pass, every conflict merge gets a merge round (0097) before it ships: nothing ships after a merge without review.
 3. When `speck ship` exits 14 (0099), it changes no code. It creates one fix ticket (0100) describing the failure in plain words, unless an open fix ticket already covers it. It sets that ticket ready only when `auto_fix_main` is true in `speck/config.yml`, then stops.
 4. It asks the user only when two tickets contradict each other, or when `speck next` blocks a merge round. It blocks the ticket with a question in plain words, without git terms, giving the options and its recommendation.
 5. It never changes a file the merge doesn't need, never merges or pushes except through `speck ship`, and never edits a ticket's Review rounds.
@@ -42,9 +42,10 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 - Checked 2026-10-10: `user-invocable: false` in a skill's frontmatter hides it from the `/` menu while Claude can still load it (Claude Code skills docs).
 - A skill is text: tests can check AC1 and that each step is named; the reviewer checks the rest by reading it.
 - Failing before this build: none
+- Answered 2026-10-11 (blocked question: `speck ship` refuses files changed after approval, so a merge can't ship unreviewed): option (a). AC2 narrowed so every conflict merge gets a merge round (0097) before it ships. Letting `speck ship` accept a simple merge without another review is a separate idea, `speck/ideas/2026-10-11-ship-a-simple-merge-without-another-review.md`.
 
 ## Blocked question
-AC2 says a conflict that only needs both sides' added lines kept, or a lockfile rebuilt, ships with no extra review once the tests pass. But `speck ship` refuses any ticket whose files outside `speck/` changed after the reviewer approved, and merging the base branch in always changes them (`scripts/ship.mjs`, `shipChecks`). So today every merge needs a review round before it can ship. Which should 0101 do? (a) Narrow AC2: the skill sends every conflict merge to a merge round (these already don't count towards `max_review_rounds`, 0097), and a new idea covers letting `speck ship` accept a simple merge without another review. (b) Widen 0101 so `speck ship` accepts a base-branch merge after approval when every conflict in it was `added-lines` or `lockfile`. (c) A separate ticket does (b) first and 0101 waits for it. I recommend (a): it keeps 0101 a skill-only change and works today. The cost is one extra review round for each simple merge until the follow-up ships.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
