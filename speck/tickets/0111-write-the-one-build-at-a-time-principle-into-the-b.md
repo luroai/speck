@@ -1,7 +1,7 @@
 ---
 id: "0111"
 title: "Write the one-build-at-a-time principle into the brief"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T09:49:24.065Z"
 ---
 # 0111 · Write the one-build-at-a-time principle into the brief
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck has no stated position on parallel builds. Without one, tickets keep adding machinery to make builds run side by side: about 20 since worktrees shipped (0028), with a five-ticket ship queue (0101–0105) next. That work makes speck harder to trust and to use. On 10 and 11 October parallel builds ran the machine out of memory, stopped 0097 shipping with a test port clash, had two builds fix the same test and left builds inheriting a broken `main`.
@@ -53,9 +53,14 @@ speck has no stated position on parallel builds. Without one, tickets keep addin
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 415,407
+- Elapsed since build started: 8 min
+- Changed lines: 15 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
