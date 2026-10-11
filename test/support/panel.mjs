@@ -105,6 +105,16 @@ export function cliCopy() {
 
 // The page's pure model function, run outside the browser.
 export const page = () => fs.readFileSync(PAGE, 'utf8');
+
+// 0126: the panel's agreed colours, copied from the old design mockup's :root block.
+export const PALETTE = '--bg: #1c1d20; --panel: #232428; --raise: #2a2b30; --line: #36383e; --line-soft: #2e3035; --text: #d6d8dd; --muted: #8a8e97; --faint: #5f636c; --accent: #7aa7f0; --ok: #62b77a; --warn: #e3a04f; --bad: #e0675d; --run: #5fa8e0; --idea: #b291e6';
+
+// Each agreed colour the page's first :root block is missing or has changed, as '--name should be #value'.
+export function paletteProblems(html) {
+  const root = (html.match(/:root \{([\s\S]*?)\}/) || [])[1] || '';
+  const vars = new Map([...root.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
+  return PALETTE.split('; ').map(d => d.split(': ')).filter(([k, v]) => vars.get(k) !== v).map(([k, v]) => `${k} should be ${v}`);
+}
 export function panelModel() {
   const m = page().match(/\/\/ ---- model[^\n]*\n([\s\S]*?)\/\/ ---- end model/);
   assert.ok(m, 'the page has a marked model section');

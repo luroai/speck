@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, stagesOf, stepText, stepState, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, nowStep, findText, top } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, stagesOf, stepText, stepState, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, nowStep, findText, top, paletteProblems } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -218,9 +218,7 @@ test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without
   const html = page();
   for (const text of ['<h2>Plan</h2>', '<h2>Build</h2>', '<h2>Shipped</h2>', 'waiting on '])
     assert.ok(html.includes(text), text);
-  const mockup = fs.readFileSync(path.join(ROOT, 'docs', 'panel-mockup.html'), 'utf8');
-  const vars = mockup.match(/:root \{[\s\S]*?\}/)[0];
-  assert.ok(html.includes(vars), 'same colour palette as the mockup');
+  assert.deepEqual(paletteProblems(html), [], 'the agreed colour palette');
   assert.match(html, /border-radius: 0 !important/, 'square corners');
   assert.doesNotMatch(html, /class="sample"/);
   assert.doesNotMatch(html, /· later/);
