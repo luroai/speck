@@ -120,6 +120,14 @@ test('0119 AC3: passing tests not named with the ticket\'s id are left out', () 
   assert.doesNotMatch(s, /duration_ms: 0\.9/, 'a passing test\'s details are left out');
 });
 
+test('0119 AC3 (F1): a passing test in a suite named with the ticket\'s id is left out unless its own name has the id', () => {
+  const tap = TAP.replace('# Subtest: a suite\n', '# Subtest: 0001 suite\n').replace('not ok 4 - a suite\n', 'not ok 4 - 0001 suite\n');
+  const s = summariseTap(tap, '0001', '/t.txt');
+  assert.doesNotMatch(s, /NESTED-PASSING-MARKER/);
+  assert.match(s, /passed: 0001 suite > 0001 AC2: nested own test/);
+  assert.match(s, /failed: 0001 suite\n/, 'the suite itself is named with the id');
+});
+
 test('0119 AC1: output before the TAP header, as speck test may print, doesn\'t stop it being TAP', () => {
   const s = summariseTap(`Waiting for a turn to run the tests.\n${TAP}`, '0001', '/t.txt');
   assert.ok(s && s.includes('# fail 2'));

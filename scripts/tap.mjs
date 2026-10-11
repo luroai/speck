@@ -26,7 +26,7 @@ function results(lines, from) {
       end = lines.indexOf(`${r[1]}  ...`, i + 2);
       if (end < 0) end = lines.length - 1;
     }
-    found.push({ path: [...open.map(o => o.name), name].join(' > '), indent, ok: r[2].toLowerCase() === 'ok', directive: (r[4] || '').toUpperCase(), start: mine ? mine.start : i, at: i, end });
+    found.push({ name, path: [...open.map(o => o.name), name].join(' > '), indent, ok: r[2].toLowerCase() === 'ok', directive: (r[4] || '').toUpperCase(), start: mine ? mine.start : i, at: i, end });
     i = end;
   }
   return found;
@@ -56,7 +56,7 @@ export function summariseTap(text, id, file) {
   const totals = lines.slice(lastTop + 1).filter(l => TOTAL.test(l)).map(l => l.trimEnd());
   const failing = all.filter(t => !t.ok && t.directive !== 'TODO');
   const named = new RegExp(`(?<!\\d)${String(id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?!\\d)`);
-  const own = all.filter(t => named.test(t.path));
+  const own = all.filter(t => named.test(t.name));
   return [
     `Test output summarised for the reviewer: the run's totals, every failing test with its details, and every test named with ${id}. The full output is in ${file}.`,
     '', 'Totals:', ...(totals.length ? totals : ['(none given: the run may have stopped early)']),
