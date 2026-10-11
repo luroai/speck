@@ -13,7 +13,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 - All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit, and so can the status change from `building` to `reviewing` that round 1 makes (or from `approved` to `reviewing`, in a re-review after merging the base branch).
 - You stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back. Untracked files don't stop `speck review` or `speck record`; modified or staged tracked files that aren't committed do.
-- The test output is fresh: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`. `speck test` runs `commands.test` from `speck/config.yml`, waiting its turn if `max_parallel_tests` test runs are already going in this repo.
+- The test output is fresh and from the whole suite: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`, never `speck test --files`. `speck test` runs `commands.test` from `speck/config.yml`, waiting its turn if `max_parallel_tests` test runs are already going in this repo.
 
 ## Reviewer model and effort
 
@@ -61,7 +61,7 @@ Respond to **every blocking finding** in a response file, `/tmp/speck-<id>-respo
 - **needs_pm** if the finding depends on a product decision. Then stop the loop and block the ticket using the build skill's section 6.
 - Minor findings don't block. Fix them if they're trivial; otherwise handle them as follow-up ideas in `/speck-build` section 5 step 1: they go in the ticket's Delivery log, and any that would need its own ticket also goes to the inbox in `speck/ideas/`.
 
-Then re-run the tests, commit (`speck(<id>): review round N fixes`), and run the next round.
+Then re-run the whole suite (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`), commit (`speck(<id>): review round N fixes`), and run the next round.
 
 ## Round 2 onwards
 

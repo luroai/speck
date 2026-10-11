@@ -39,6 +39,8 @@ Builds run only the ticket's own test files while they work, and the whole suite
 ## Notes
 - `/speck-setup` doesn't need to ask for `commands.test_files`: blank falls back to the whole suite.
 - Failing before this build: none (speck test reused the passing result recorded for commit dabe9cd, the same code outside speck/).
+- `speck test --files` runs without a test turn and records no result: `max_parallel_tests` counts full runs, and a few files' result isn't the suite's. This repo's own `speck/config.yml` now sets `commands.test_files: node --test {files}`.
+- Self-check: a file name starting with `-` is now passed as `./-…` so it isn't read as an option, and `{files}` is replaced with a function so `$&` in a name isn't expanded (test added for both).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

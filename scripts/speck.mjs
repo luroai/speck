@@ -563,6 +563,7 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck diffstat                      changed lines against the size limit
   speck test [--fresh]                run the test command, waiting for a turn if max_parallel_tests runs are going,
                                       or reuse the result for the same code (--fresh: always run it)
+  speck test --files <file>…          run only those test files with commands.test_files (blank: the whole suite)
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f]       print the reviewer prompt (for subagent reviewers)
