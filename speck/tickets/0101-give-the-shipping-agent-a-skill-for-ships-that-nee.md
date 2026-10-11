@@ -55,6 +55,10 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
+Follow-ups:
+- Known limit: nothing starts `speck-integrate` until the ship queue (0102) exists, and "the ship queue tries it again later" after repeated conflicts or a failing base branch depends on 0102 too.
+- Skipped, already captured: letting `speck ship` accept a simple merge without another review (`speck/ideas/2026-10-11-ship-a-simple-merge-without-another-review.md`).
+
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
 
@@ -129,6 +133,83 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
     ],
     "escalation_question": "",
     "summary": "The new skill is installed correctly and requires independent review after resolving shipping conflicts. Two instructions need correction: it asks the owner about routine repeated conflicts, and it can reset an existing repair ticket that is already underway. The supplied tests pass but miss these cases."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bb6a51f5f8c288d214fb18472bdc8fd47a6e495f",
+    "thread_id": "01a12a22-a557-72d2-8e64-6ba58d5d9fc7",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 779300,
+      "cached_input_tokens": 593664,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1455,
+      "reasoning_output_tokens": 39
+    },
+    "saved_at": "2026-10-11T08:47:46.015Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-integrate/SKILL.md has user-invocable: false and the required queue-only description. scripts/install.mjs installs discovered skills into both folders; AC1 installation tests pass in the supplied output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The Conflict section requires merge-check classification, preserving both sides, rebuilding lockfiles, tests and independent merge review before shipping. The AC2 instruction tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Base branch failing prohibits code changes, reuses a covering fix ticket and promotes only an unstarted draft when auto_fix_main is true. AC3 and the new AC3 F2 guard test pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Conflict step 8 now stops without a routine question. The Asking the user section restricts questions to contradictory tickets or blocked merge review and requires plain wording, options and a recommendation. AC4 and AC4 F1 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Rules section restricts changes to merge needs, reserves base merges and pushes for speck ship and prohibits manual Review rounds edits. AC5 tests pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-integrate/SKILL.md:40",
+        "issue": "Repeated shipping conflicts previously introduced an unauthorised reason to ask the user. The revised instruction stops and reports instead.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "skills/speck-integrate/SKILL.md:48",
+        "issue": "Existing fix tickets could previously be reset to ready. Promotion now requires a draft in the main checkout with no existing ticket branch, preserving ongoing work.",
+        "suggested_fix": "Implemented; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both requested fixes are complete. The skill handles shipping conflicts with independent review, records existing base failures without changing code, and preserves repairs already underway. All five criteria pass; the supplied suite reports 933 passes, no failures and three skips."
   }
 }
 ```
