@@ -15,7 +15,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the project folder (below: `speck
 - Ask before every change to the machine or to git, and wait for a yes: installing anything, `git init`, setting a git name and email, and every commit. Say what the change is and why it's needed.
 - Record every setting with `speck config set <key> <value>`. Never edit `speck/config.yml` directly. It prints the old and new value, so tell the user what changed.
 - Never push, merge or ship. Never approve a ticket: moving it to `ready` is the user's decision.
-- Leave the user's own files alone, apart from what `speck init` adds. It keeps an existing `CLAUDE.md` and `AGENTS.md` and adds a short speck section.
+- Leave the user's own files alone, apart from what `speck init` adds. It keeps an existing `CLAUDE.md` and `AGENTS.md` and adds a short speck section to `AGENTS.md`, or brings its `## speck` section up to date.
 - If a command fails, show the user the important part of its message in plain words, and say what you'll try next or what they need to do.
 
 ## 1. Start from the facts

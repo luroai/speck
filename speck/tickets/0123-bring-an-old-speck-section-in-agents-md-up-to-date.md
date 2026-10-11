@@ -39,6 +39,7 @@ Re-running `speck init` brings the speck section of AGENTS.md up to date with th
 
 ## Notes
 - Failing before this build: none
+- Self-check: made the section scan skip fenced code blocks, so a `# comment` in a code block doesn't end the section early (test added), and updated the setup skill's line on what `speck init` does to AGENTS.md.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

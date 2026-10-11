@@ -46,6 +46,36 @@ export function installTooling(repo) {
   return skills;
 }
 
+// The speck section init writes into a project's AGENTS.md (0123).
+const AGENTS_SECTION = '## speck\n\nThis repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
+
+// Adds the speck section to AGENTS.md text, or brings an existing `## speck` section up to date.
+// The section runs from its heading up to the next `#` or `##` heading, or the end of the file; nothing outside it changes.
+// Lines inside fenced code blocks aren't headings.
+// Returns the new text and what it did: added, replaced, current (already up to date) or unheaded (speck is mentioned without the heading, so it's left alone).
+export function syncAgentsSection(text) {
+  let start = -1, end = text.length, fence = null;
+  for (let at = 0; at < text.length;) {
+    const eol = text.indexOf('\n', at);
+    const lineEnd = eol === -1 ? text.length : eol + 1;
+    const line = text.slice(at, lineEnd).replace(/\r?\n$/, '');
+    const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+    if (fence) { if (marker && marker[1][0] === fence[0] && marker[1].length >= fence.length && !line.slice(marker[0].length).trim()) fence = null; }
+    else if (marker) fence = marker[1];
+    else if (start === -1 && /^## speck[ \t]*$/.test(line)) start = at;
+    else if (start !== -1 && /^#{1,2}(?:[ \t]|$)/.test(line)) { end = at; break; }
+    at = lineEnd;
+  }
+  if (start === -1) {
+    if (text.includes('This repo uses speck')) return { text, action: 'unheaded' };
+    return { text: text + '\n' + AGENTS_SECTION, action: 'added' };
+  }
+  const section = text.slice(start, end);
+  const body = section.trimEnd();
+  if (body.replace(/\r\n/g, '\n') === AGENTS_SECTION.trimEnd()) return { text, action: 'current' };
+  return { text: text.slice(0, start) + AGENTS_SECTION.trimEnd() + section.slice(body.length) + text.slice(end), action: 'replaced' };
+}
+
 function check(name, ok, fix) { return { name, ok, fix }; }
 
 function runs(cmd, args) {
@@ -239,10 +269,17 @@ export function cmdInit(args, platform = process.platform) {
   const skills = installTooling(repo);
   console.log(`updated .speck/ (the speck command)`);
   console.log(`updated ${SKILL_DIRS.join(' and ')} (${skills.length} skills)`);
-  const pointer = '\n## speck\n\nThis repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
   const agents = path.join(repo, 'AGENTS.md');
   const agentsText = fs.existsSync(agents) ? fs.readFileSync(agents, 'utf8') : '# Agent guide\n';
-  if (!agentsText.includes('This repo uses speck')) { fs.writeFileSync(agents, agentsText + pointer); console.log('updated AGENTS.md'); }
+  const section = syncAgentsSection(agentsText);
+  if (section.text !== agentsText) fs.writeFileSync(agents, section.text);
+  if (section.action === 'added') console.log('updated AGENTS.md');
+  if (section.action === 'replaced') console.log('updated AGENTS.md (its speck section was out of date)');
+  if (section.action === 'unheaded') console.log(`kept    AGENTS.md: it mentions speck but has no "## speck" section, so speck can't tell which part to update.
+        The speck instructions in it may be out of date. Compare them with the current ones:
+
+${AGENTS_SECTION.trimEnd().split('\n').map(l => l && `        ${l}`).join('\n')}
+`);
   const claude = path.join(repo, 'CLAUDE.md');
   const claudeText = fs.existsSync(claude) ? fs.readFileSync(claude, 'utf8') : '';
   if (!claudeText.includes('@AGENTS.md') && !claudeText.includes('This repo uses speck')) {
