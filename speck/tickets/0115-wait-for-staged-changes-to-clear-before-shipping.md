@@ -37,6 +37,7 @@ When staged changes in the base branch's checkout are all that stops a ship, `sp
 
 ## Notes
 - Assumption: 30 minutes as the default wait. Change it if you'd rather.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
