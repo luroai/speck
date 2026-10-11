@@ -1,7 +1,7 @@
 ---
 id: "0123"
 title: "Bring an old speck section in AGENTS.md up to date"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T12:36:02.784Z"
 ---
 # 0123 · Bring an old speck section in AGENTS.md up to date
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck init` adds a speck section to a project's AGENTS.md, but once one is there it never updates it. Projects set up with an older speck keep its old instructions, such as "Read `speck/product.md` first", a file speck no longer creates. Their agents follow stale rules before every build, and re-running `speck init` to update speck doesn't fix it.
@@ -45,9 +45,16 @@ Re-running `speck init` brings the speck section of AGENTS.md up to date with th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The section boundary recogniser ignores valid Markdown headings with one to three leading spaces.
+Round 2 (codex): changes requested: F2 Setext headings can span multiple text lines, but the new boundary logic remembers only the immediately preceding line.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 606,613
+- Elapsed since build started: 10 min
+- Changed lines: 47 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Known limits (no follow-up tickets):
