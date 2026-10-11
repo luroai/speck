@@ -43,6 +43,8 @@ A `speck-integrate` skill tells the shipping agent how to get one approved ticke
 - A skill is text: tests can check AC1 and that each step is named; the reviewer checks the rest by reading it.
 - Failing before this build: none
 - Answered 2026-10-11 (blocked question: `speck ship` refuses files changed after approval, so a merge can't ship unreviewed): option (a). AC2 narrowed so every conflict merge gets a merge round (0097) before it ships. Letting `speck ship` accept a simple merge without another review is a separate idea, `speck/ideas/2026-10-11-ship-a-simple-merge-without-another-review.md`.
+- Two existing tests assumed the old set of skills and were updated for AC1: `test/speck.test.mjs` now expects 8 skills, and `test/setup-0107.test.mjs` lets `speck-integrate` be agent-only alongside `speck-setup`.
+- Self-check: the merge round's response file is written fresh (a stale one from the build could be sent), an open fix ticket that already covers the failure is still set ready when `auto_fix_main` allows it, `speck set … ready` is run in the main checkout, and a branch not checked out anywhere stops the agent.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
