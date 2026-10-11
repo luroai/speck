@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './support/panel.mjs';
 import { filesNaming } from './support/private-words.mjs';
-import { readsRepoSpeck } from './support/repo-speck.mjs';
+import { readsRepoSpeck, MARKER } from './support/repo-speck.mjs';
 
 // ---------- 0122: speck's tests don't read this repo's own speck/ folder ----------
 
@@ -41,7 +41,7 @@ test('0122 AC2: the private-words check skips every file under speck/ and still 
   assert.deepEqual(filesNaming(['zorblat'], repo).sort(), ['README.md', 'docs/speck/x.md', 'speckle.md', 'test/a.mjs']);
 });
 
-test('0122 AC3: the check catches a path to this repo\'s speck/ folder, built directly or through a helper', () => {
+test('0122 AC3: the check catches a path to this repo\'s speck/ folder, built from its root, through a helper or relative, on one line or several', () => {
   const S = 'speck'; // kept out of the samples' text, so this file doesn't trip its own check
   for (const src of [
     `fs.readFileSync(path.join(ROOT, '${S}', 'config.yml'), 'utf8')`,
@@ -51,6 +51,11 @@ test('0122 AC3: the check catches a path to this repo\'s speck/ folder, built di
     `read(ROOT, '${S}/ideas/note.md')`,
     `const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');\nread('${S}/ideas/done/x.md');`,
     `const filesIn = dir => fs.readdirSync(path.join(ROOT, dir), { recursive: true });\nfilesIn('${S}');`,
+    `fs.readFileSync(path.join(ROOT,\n  '${S}', 'config.yml'), 'utf8')`,
+    `const read = f =>\n  fs.readFileSync(path.join(ROOT, f), 'utf8');\nread(\n  '${S}/config.yml');`,
+    `fs.readFileSync('${S}/config.yml', 'utf8')`,
+    `fs.readdirSync(\n  './${S}/tickets/done')`,
+    `fs.readFileSync(path.resolve('${S}', 'config.yml'))`,
   ]) assert.notDeepEqual(readsRepoSpeck(src), [], src);
 });
 
@@ -64,11 +69,22 @@ test('0122 AC3: the check lets through temporary repos, speck\'s own folders and
     `const CLI = path.join(ROOT, '.${S}', 'scripts', '${S}.mjs');`,
     `path.join(ROOT, 'skills', '${S}-build', 'SKILL.md')`,
     `fs.readFileSync(path.join(ROOT, 'scripts', '${S}.mjs'))`,
+    `fs.readFileSync(path.join(r.dir,\n  '${S}', 'config.yml'), 'utf8')`,
+    `assert.equal(file, path.join('${S}', 'tickets', '0001-a.md'));`,
+    `fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'));\nconst t = '${S}/tickets/0001-a.md';`,
   ]) assert.deepEqual(readsRepoSpeck(src), [], src);
+});
+
+test('0122 AC3: only a line marked as reading a temporary repo is let through, and only that line', () => {
+  const S = 'speck';
+  const src = `fs.readFileSync('${S}/config.yml'); // ${MARKER}\nfs.readFileSync('${S}/config.yml');`;
+  assert.deepEqual(readsRepoSpeck(src), [`2: fs.readFileSync('${S}/config.yml');`]);
 });
 
 test('0122 AC3: each reader found is reported with its line number and text', () => {
   const S = 'speck';
   assert.deepEqual(readsRepoSpeck(`const a = 1;\nconst b = fs.readFileSync(path.join(ROOT, '${S}', 'config.yml'));\n`),
     [`2: const b = fs.readFileSync(path.join(ROOT, '${S}', 'config.yml'));`]);
+  assert.deepEqual(readsRepoSpeck(`const a = 1;\nconst b = fs.readFileSync(path.join(ROOT,\n  '${S}', 'config.yml'));\n`),
+    ['2: const b = fs.readFileSync(path.join(ROOT,'], 'a path spread over lines is reported where it starts');
 });
