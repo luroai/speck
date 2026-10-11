@@ -57,6 +57,7 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Full suite, `speck test --fresh` on the same 16-core machine: 114 seconds before the split and 58 seconds after, with 1000 tests both times (997 pass, 3 skipped).
 - The ticket expected about 30 seconds. With some 70 test files now running at once on 16 cores, the suite looks bound by the CPU rather than by its slowest file, so splitting further won't help much on its own.
+- Follow-ups (known limits, no inbox notes): `test/split-0117.check.mjs` runs only when called by hand, so nothing re-checks the 30-test limit as the area files grow. Getting nearer 30 seconds would mean making the slow tests themselves cheaper, which this ticket left out of scope.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +125,75 @@ The tests in `test/speck.test.mjs` are spread over several smaller files, so the
     ],
     "escalation_question": "",
     "summary": "All 171 original tests were preserved unchanged and grouped into 12 smaller files with shared helpers. The reported suite time fell from 114 to 58 seconds with no failures. One requirement remains unmet: three added checks increase the suite's test count."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4b99022e8a8a472ba3f8d480712ae798059b36a4",
+    "thread_id": "01a12a84-6f73-7112-9b15-22358b325fb7",
+    "seconds": 56,
+    "usage": {
+      "input_tokens": 1043045,
+      "cached_input_tokens": 662016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1741,
+      "reasoning_output_tokens": 105
+    },
+    "saved_at": "2026-10-11T10:34:20.430Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/speck.test.mjs is removed. Its 171 tests are split across 12 area files, each containing between 5 and 27 tests, below the 30-test limit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "All 171 original test blocks are preserved verbatim, without omissions or duplicates. The three structural checks now live outside the suite glob in test/split-0117.check.mjs. The supplied fresh suite reports 1000 tests, matching the baseline."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Shared helpers live in test/support/speck.mjs and are imported by the area files. Helpers used by only one area remain local."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied fresh suite reports 997 passes, zero failures and three skips, matching the baseline outcomes. The original test blocks remain unchanged."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The Delivery log records speck test --fresh on the same 16-core machine: 114 seconds before and 58 seconds after, with 1000 tests in both runs."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/split-0117.check.mjs",
+        "issue": "Resolved: the three added structural checks no longer increase the normal suite's test count.",
+        "suggested_fix": "No further change required. The standalone command is documented in the check file and ticket Notes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The previous issue is fixed. All original tests and checks are preserved, the suite retains its original test count, and the recorded run takes about half as long. No blocking concerns remain."
   }
 }
 ```
