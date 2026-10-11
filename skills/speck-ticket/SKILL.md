@@ -43,6 +43,7 @@ When the user asks to triage the inbox (for example "triage the inbox"), clear i
 
 ## Rules
 
+- Never edit a ticket that's being built (status `building`, `reviewing`, `blocked` or `approved`): put the change in a new ticket, or wait until it ships. Editing it on the base branch makes its ship's merge conflict, so `speck set` and `speck cancel` refuse it from any checkout other than the one its branch is checked out in.
 - Don't invent requirements. If something material is unknown, put it in the summary as a question rather than guessing in the acceptance criteria.
 - Prefer two S tickets over one M ticket when they can ship independently.
 - Don't write implementation plans in the ticket. The builder decides how.

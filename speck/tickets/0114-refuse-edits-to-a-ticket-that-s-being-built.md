@@ -40,6 +40,7 @@ speck refuses to change a ticket from the base branch's checkout while it's bein
 ## Notes
 - The panel's writes only touch drafts, so they don't need changing.
 - Failing before this build: none
+- Self-check: `speck set` in a folder that isn't a git checkout no longer fails on the worktree lookup; ids are compared padded; moved `ticketsElsewhere` to core.mjs to keep speck.mjs under 600 lines.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

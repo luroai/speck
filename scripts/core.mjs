@@ -423,4 +423,26 @@ export function worktreeList(repo) {
   });
 }
 
+// Tickets being built in other worktrees, read from that worktree's copy, which has the real status.
+export function ticketsElsewhere(repo, cfg) {
+  const here = fs.realpathSync(repo);
+  const ticketBranch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d{4})-`);
+  return worktreeList(repo).flatMap(w => {
+    const m = w.branch && w.branch.match(ticketBranch);
+    if (!m || w.path === here || !fs.existsSync(w.path)) return [];
+    try { return [{ ...findTicket(w.path, m[1]), at: w.path }]; } catch { return []; }
+  });
+}
+
+// A ticket being built in another worktree is changed there, not here: a change on both sides of its file would make
+// the ship's merge conflict. Its own worktree isn't "another", so a build can still set its own status.
+const BEING_BUILT = ['building', 'reviewing', 'blocked', 'approved'];
+export function checkNotBeingBuilt(repo, cfg, t, verb = 'change') {
+  let elsewhere = [];
+  try { elsewhere = ticketsElsewhere(repo, cfg); } catch { /* not a git checkout: no other worktrees */ }
+  const there = elsewhere.find(x => padId(x.fm.id) === padId(t.fm.id) && BEING_BUILT.includes(x.fm.status));
+  if (there)
+    throw new SpeckError(`Ticket ${t.fm.id} is being built (${there.fm.status}) in\n${there.at}\nso changing it here would make its ship conflict. Wait until it ships, or ${verb} it there.`);
+}
+
 export const padId = id => String(id ?? '').padStart(4, '0');
