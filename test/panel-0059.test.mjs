@@ -10,8 +10,8 @@ import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf,
 async function served() {
   const r = panelRepo();
   const c = cliCopy();
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)], c.cli);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], c.cli);
+  const { port } = p;
   return { r, c, port, p };
 }
 

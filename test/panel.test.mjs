@@ -13,8 +13,8 @@ import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, pag
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]); // checks the panel is on the port it was given
+  const { port } = p;
   try {
     assert.match(p.out(), new RegExp(`http://127\\.0\\.0\\.1:${port}/`));
     await new Promise(res => setTimeout(res, 300));
@@ -23,8 +23,7 @@ test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the UR
     assert.equal((await request(port, { host: `localhost:${port}` })).status, 200);
   } finally { await stop(p); }
   // --port=<n> works too.
-  const port2 = await freePort();
-  const p2 = await startPanel(r.dir, [`--port=${port2}`]);
+  const p2 = await startPanel(r.dir, [`--port=${await freePort()}`]);
   await stop(p2);
 });
 
@@ -62,8 +61,8 @@ test('0031 AC1: a port in use exits non-zero naming the port, and a bad --port i
 
 test('0031 AC1: a request with any other Host header gets 403', async () => {
   const r = panelRepo();
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     for (const host of ['evil.example', `evil.example:${port}`, `127.0.0.1:${port + 1}`, '127.0.0.1', `localhost.evil.example:${port}`])
       for (const pathName of ['/', '/api/state'])
@@ -74,8 +73,8 @@ test('0031 AC1: a request with any other Host header gets 403', async () => {
 
 test('0031 AC2: / is the page, /api/state matches speck status --json, other paths 404, other methods 405', async () => {
   const r = panelRepo();
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     const home = await request(port);
     assert.equal(home.status, 200);
@@ -113,8 +112,8 @@ test('0031 AC2: the server never writes to the repo', async () => {
   };
   const before = snapshot();
   assert.equal(snapshot(), before, 'the snapshot itself changes nothing');
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     for (const pathName of ['/', '/api/state', '/nope']) await request(port, { pathName });
     await request(port, { method: 'POST', pathName: '/api/state' });
@@ -129,8 +128,8 @@ test('0031 AC4: a status change in this checkout or in another worktree shows in
   r.g('add', '-A'); r.g('commit', '-qm', 'two');
   assert.equal(r.run('start', '1').status, 0);
   const wt = r.g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).map(l => fs.realpathSync(l.slice(9)))[1];
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   const statusOf = async id => JSON.parse((await request(port, { pathName: '/api/state' })).body).tickets.find(t => t.id === id).status;
   try {
     assert.equal(await statusOf('0001'), 'building');
@@ -303,8 +302,8 @@ test('0031 AC4: when the server answers but cannot read the tickets, the page sh
 
 test('0031 AC2: an unreadable ticket gives /api/state a 500 with a plain error, and the server keeps running', async () => {
   const r = panelRepo();
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     fs.writeFileSync(path.join(r.dir, 'speck', 'tickets', '0002-broken.md'), 'no frontmatter here\n');
     const res = await request(port, { pathName: '/api/state' });
@@ -319,8 +318,8 @@ test('0031 AC1: the page header names the main checkout, even when the panel run
   const r = panelRepo({ worktrees: 'true' });
   assert.equal(r.run('start', '1').status, 0);
   const wt = r.g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).map(l => l.slice(9))[1];
-  const port = await freePort();
-  const p = await startPanel(wt, ['--port', String(port)]);
+  const p = await startPanel(wt, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     const body = (await request(port)).body;
     assert.ok(body.includes(`<code>${path.basename(r.dir)}</code>`), 'main checkout name');
@@ -604,8 +603,8 @@ test('0042 AC4: the page carries a token made afresh each time the server starts
   const r = panelRepo();
   const tokens = [];
   for (let i = 0; i < 2; i++) {
-    const port = await freePort();
-    const p = await startPanel(r.dir, ['--port', String(port)]);
+    const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+    const { port } = p;
     try { tokens.push(tokenOf((await request(port)).body)); } finally { await stop(p); }
   }
   assert.ok(tokens[0] && tokens[0].length >= 32, 'a long token is in the page');

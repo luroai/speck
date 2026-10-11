@@ -44,15 +44,40 @@ export const freePort = () => new Promise(resolve => {
   const s = net.createServer().listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); });
 });
 
-// Starts `speck panel` (from `cli`, or the repo's own CLI), with `extraEnv` added to its environment, and resolves once it has printed its URL.
-export function startPanel(cwd, args, cli = CLI, extraEnv = {}) {
+// Starts `speck panel` (from `cli`, or the repo's own CLI), with `extraEnv` added to its environment, and resolves once
+// it has printed its URL, with the port it started on. Send requests to that port (`p.port`), not the one picked: when
+// the port given with --port is taken by the time the panel starts, as another test file running alongside can take the
+// port freePort() picked, it starts the panel again on another free port (0118).
+export async function startPanel(cwd, args, cli = CLI, extraEnv = {}) {
+  for (let tries = 1; ; tries++) {
+    const i = args.findIndex(a => a === '--port' || a.startsWith('--port='));
+    const port = i < 0 ? null : args[i] === '--port' ? args[i + 1] : args[i].slice('--port='.length);
+    let p;
+    try { p = await startPanelOnce(cwd, args, cli, extraEnv); } catch (e) {
+      if (port === null || tries >= 5 || !new RegExp(`Port ${port} is already in use`).test(e.err || '')) throw e;
+      const next = String(await freePort());
+      args = args[i] === '--port' ? [...args.slice(0, i + 1), next, ...args.slice(i + 2)] : [...args.slice(0, i), `--port=${next}`, ...args.slice(i + 1)];
+      continue;
+    }
+    if (port !== null && p.port !== Number(port)) { await stop(p); assert.fail(`the panel serves on ${p.port}, not the port given with --port, ${port}`); }
+    return p;
+  }
+}
+function startPanelOnce(cwd, args, cli, extraEnv) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cli, 'panel', ...args], { cwd, env: { ...env, ...extraEnv } });
     let out = '', err = '';
     const done = setTimeout(() => { child.kill(); reject(new Error(`panel didn't start: ${out}${err}`)); }, 10000);
-    child.stdout.on('data', d => { out += d; if (/http:\/\/127\.0\.0\.1:\d+/.test(out)) { clearTimeout(done); resolve({ child, out: () => out }); } });
+    child.stdout.on('data', d => { out += d; const m = out.match(/http:\/\/127\.0\.0\.1:(\d+)/); if (m) { clearTimeout(done); resolve({ child, out: () => out, port: Number(m[1]) }); } });
     child.stderr.on('data', d => { err += d; });
-    child.on('exit', code => { clearTimeout(done); reject(Object.assign(new Error(`panel exited ${code}: ${out}${err}`), { code, out, err })); });
+    // Its message can still be on its way when it exits: wait for the end of its output (up to a second) before failing.
+    child.on('exit', code => {
+      clearTimeout(done);
+      const fail = () => reject(Object.assign(new Error(`panel exited ${code}: ${out}${err}`), { code, out, err }));
+      if (child.stderr.readableEnded) return fail();
+      const late = setTimeout(fail, 1000);
+      child.stderr.once('end', () => { clearTimeout(late); fail(); });
+    });
   });
 }
 export const stop = p => new Promise(resolve => { p.child.removeAllListeners('exit'); p.child.on('exit', resolve); p.child.kill(); });
@@ -193,8 +218,8 @@ export const readyPath = id => `/api/tickets/${id}/ready`;
 export async function readyPanel() {
   const r = panelRepo();
   r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   const token = tokenOf((await request(port)).body);
   return { r, port, p, token };
 }

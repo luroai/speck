@@ -279,8 +279,8 @@ const atBottom = `(${box}.scrollHeight - ${box}.clientHeight - ${box}.scrollTop 
 test('0052 AC1-AC5: in a real browser, the log grows by itself in a fixed box, follows at the bottom, keeps a selection scrolled up, and resets for a new build', chrome, async () => {
   const r = panelRepo();
   writeLog(r.dir, '0001', `${lines(5).join('\n')}\n`);
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`${row('0001')}`, 'the queue');
@@ -330,8 +330,8 @@ test('0052 AC1-AC5: in a real browser, the log grows by itself in a fixed box, f
 test('0052 AC3: in a real browser, a selection in repeated lines stays through unchanged and growing logs (review round 1, F1)', chrome, async () => {
   const r = panelRepo();
   writeLog(r.dir, '0001', 'working\nworking\n');
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`${row('0001')}`, 'the queue');

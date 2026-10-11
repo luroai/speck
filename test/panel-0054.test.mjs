@@ -155,8 +155,8 @@ test('0054 AC2-AC5: in a real browser, the pane opens, keeps a selection through
   const r = panelRepo();
   r.write('0002-draft.md', fm({ id: '"0002"', title: 'A draft to read', status: 'draft' }),
     `## Problem\nReading a long problem statement at Gate 1.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n2. A second criterion to select.\n## Out of scope\n- PDF export\n`);
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
   try {

@@ -24,8 +24,8 @@ const lines = n => Array.from({ length: n }, (_, i) => `line ${i + 1}`);
 
 test('0051 AC1: /api/tickets/<id>/log gives the last 200 lines, read afresh, with trailing blank lines dropped', async () => {
   const r = panelRepo();
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     assert.deepEqual(await getLog(port, '0001'), { text: '', truncated: false }, 'no log yet');
     assert.deepEqual(await getLog(port, '0042'), { text: '', truncated: false }, 'a ticket with no log, even one that does not exist');
@@ -52,8 +52,8 @@ test('0051 AC1: the log comes from the main checkout, even when the panel runs i
   assert.ok(fs.existsSync(wt), wt);
   writeLog(r.dir, '0001', 'from the main checkout\n');
   writeLog(wt, '0001', 'from the worktree\n');
-  const port = await freePort();
-  const p = await startPanel(wt, ['--port', String(port)]);
+  const p = await startPanel(wt, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     assert.deepEqual(await getLog(port, '0001'), { text: 'from the main checkout', truncated: false });
   } finally { await stop(p); }
@@ -62,8 +62,8 @@ test('0051 AC1: the log comes from the main checkout, even when the panel runs i
 test('0051 AC1: the other request rules still apply to the log path', async () => {
   const r = panelRepo();
   writeLog(r.dir, '0001', 'secret\n');
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     for (const host of ['evil.example', `evil.example:${port}`, `127.0.0.1:${port + 1}`])
       assert.equal((await request(port, { host, pathName: logPath('0001') })).status, 403, host);
@@ -293,8 +293,8 @@ const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.query
 test('0051 AC2-AC5: in a real browser, a click opens the log, its scroll position survives refreshes, and selecting the title opens nothing', chrome, async () => {
   const r = panelRepo();
   writeLog(r.dir, '0001', `\x1b[1m${lines(300).join('\n')}\x1b[0m\n`);
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`${row('0001')}`, 'the queue');

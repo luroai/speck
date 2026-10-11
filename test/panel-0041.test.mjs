@@ -197,8 +197,8 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
   const r = panelRepo(); // 0001 is ready
   r.write('0002-next.md', fm({ id: '"0002"', title: 'Next in the chain', after: '["0001"]' }));
   r.write('0003-alone.md', fm({ id: '"0003"', title: 'On its own' }));
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const cls = sel => b.js(`document.querySelector(${JSON.stringify(sel)}).className`);
   const centre = sel => b.js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
@@ -279,8 +279,8 @@ test('0041 review F1: in a real browser, text selected in an open ticket stays s
     `## Problem\nA problem statement long enough to select.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`);
   const next = after => r.write('0003-next.md', fm({ id: '"0003"', title: 'Waits on the first', ...(after ? { after: '["0002"]' } : {}) }));
   next(true);
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const item = '#shaping .item:nth-child(1)';
   try {

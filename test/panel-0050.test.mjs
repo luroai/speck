@@ -212,8 +212,8 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
   fs.mkdirSync(runs, { recursive: true });
   fs.writeFileSync(path.join(runs, '0003.json'), JSON.stringify({ id: '0003', session: 's', started: ago(6), exited: ago(1), exit_code: 1 }));
   fs.writeFileSync(path.join(runs, '0003.log'), Array.from({ length: 50 }, (_, i) => `build output line ${i + 1}`).join('\n'));
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
   // Each refresh puts in a new status pill, so a pill that isn't the one marked is a refresh since.
@@ -262,8 +262,8 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
   const r = panelRepo();
   r.write('0003-t.md', fm({ id: '"0003"', title: "'A long build'", status: 'building', started: iso(late - 5.5 * 60000) }));
   r.write('0010-t.md', fm({ id: '"0010"', title: "'Shipped late'", status: 'done', started: iso(late - 30 * 60000), finished: iso(late - 10 * 60000) }), good, 'speck/tickets/done');
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
   // The page's clock, moved by the test: every Date the page makes or asks for is `shift` ms on from the real one.

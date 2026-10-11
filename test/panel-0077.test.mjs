@@ -130,8 +130,8 @@ test('0077 AC3: a refusal shows under the ticket\'s top row until the next click
 async function priorityPanel() {
   const r = panelRepo();
   r.write('0002-two.md', fm({ id: '"0002"', title: 'Two', priority: '3              # 1 (highest) to 5' }));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   const token = tokenOf((await request(port)).body);
   return { r, port, p, token };
 }

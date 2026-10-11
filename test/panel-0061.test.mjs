@@ -201,8 +201,8 @@ test('0061 AC2-AC4: in a real browser, the pane formats Markdown, runs no HTML a
     + '## Outcome\nSee [docs](https://example.com) or [bad](javascript:window.ran=3).\n'
     + '## Acceptance criteria\n1. Some `code` here.\n2. Two.\n## Out of scope\n- PDF export\n'
     + '## Notes\n```\n  kept   spaces\n```\n');
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`[...document.querySelectorAll('#shaping .item')].some(n => n.textContent.startsWith('0002'))`, 'the ticket');

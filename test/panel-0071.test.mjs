@@ -177,8 +177,8 @@ async function buildPanel() {
   build.unref();
   fs.mkdirSync(runs(r.dir, ''), { recursive: true });
   fs.writeFileSync(runs(r.dir, '0001.json'), JSON.stringify({ session: 's-0071', pid: build.pid, cwd: r.dir }));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   const token = tokenOf((await request(port)).body);
   const done = async () => { try { process.kill(build.pid, 'SIGKILL'); } catch {} await stop(p); };
   return { r, port, token, pid: build.pid, done };
