@@ -39,6 +39,7 @@ The mockup is no longer in the repo. The tests still check that the panel uses t
 
 ## Notes
 - The colour values in AC2 are copied from the `:root` block of `docs/panel-mockup.html` as it is today, so the panel's palette stays locked to the agreed design.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
