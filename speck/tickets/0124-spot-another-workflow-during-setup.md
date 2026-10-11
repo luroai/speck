@@ -1,7 +1,7 @@
 ---
 id: "0124"
 title: "Spot another workflow during setup"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-11-spot-another-workflow-during-setup.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T13:12:23.032Z"
 
 ---
 # 0124 · Spot another workflow during setup
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Setting speck up in a project that already uses another workflow, such as OpenSpec, leaves both running. Agents then get conflicting instructions: work from the other workflow's specs and changes, or only from speck's tickets. The project's own agent rules can also contradict how speck works, for example by banning git worktrees or requiring every change to go through a pull request, so builds fail or break the project's rules. Today setup says nothing about either.
