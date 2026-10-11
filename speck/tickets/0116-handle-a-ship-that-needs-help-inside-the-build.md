@@ -39,6 +39,10 @@ started: "2026-10-11T11:19:50.797Z"
 ## Notes
 - Assumption for AC2: the fix ticket is set ready without asking, so it builds next, ahead of everything else at priority 0. This fits "set them ready and walk away". The other choice is to leave it as a draft for you.
 - Failing before this build: none
+- Removing the skill retires the tests written for it: `test/integrate-0101.test.mjs` is deleted (its checks on the conflict, base-branch and asking steps now live, against the build skill, in `test/build-0116.test.mjs`), `test/core.test.mjs` counts 7 skills instead of 8, and `test/setup-0107.test.mjs` no longer skips `speck-integrate`. No other test changed.
+- AC1 and AC3 together: blocking after two merges that still conflict is kept "as today", so the build skill names it as the one block besides the two reasons to ask in AC3, and its question is also in plain words without git terms.
+- AC2: creating the fix ticket and setting it ready are the only things the build does in the main checkout after `speck start`; the Rules allow just that.
+- Self-check: added a fallback when `speck set <fix-id> status ready` refuses (leave it draft and say so), the brief now says an open fix ticket already on its way is left alone, and pointed "ship again" at section 5 step 3 to avoid two step 3s.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

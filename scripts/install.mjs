@@ -9,6 +9,7 @@ import { splitCommand } from './reviewers.mjs';
 // ---------- install and doctor ----------
 
 const SKILLS = path.join(ROOT, 'skills');
+const RETIRED_SKILLS = ['speck-integrate']; // installed by an earlier version, removed on re-install (0116)
 export const SKILL_DIRS = ['.claude/skills', '.agents/skills']; // Claude Code reads the first; Codex, cptr and others read the second
 const VERSION = (() => {
   // From the source package, or from the VERSION file written next to an installed copy.
@@ -40,6 +41,7 @@ export function installTooling(repo) {
   for (const dir of SKILL_DIRS) {
     fs.mkdirSync(path.join(repo, dir), { recursive: true });
     for (const s of skills) place(path.join(SKILLS, s), path.join(repo, dir, s));
+    for (const s of RETIRED_SKILLS) fs.rmSync(path.join(repo, dir, s), { recursive: true, force: true });
   }
   return skills;
 }

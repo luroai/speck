@@ -92,7 +92,7 @@ test('init installs the CLI and skills into the project, and re-running refreshe
   const init = () => spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(init().status, 0);
   const names = fs.readdirSync(path.join(ROOT, 'skills')).filter(n => n.startsWith('speck-'));
-  assert.equal(names.length, 8);
+  assert.equal(names.length, 7); // 0116: speck-integrate is gone
   for (const base of ['.claude/skills', '.agents/skills']) {
     for (const n of names) {
       const md = fs.readFileSync(path.join(dir, base, n, 'SKILL.md'), 'utf8');

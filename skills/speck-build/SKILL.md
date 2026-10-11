@@ -14,7 +14,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 1. Read `speck/config.yml`, the ticket (`speck/tickets/<id>-*.md`, or `speck/tickets/done/<id>-*.md` once it's done) and the repo's AGENTS.md or CLAUDE.md.
 2. The ticket must be `ready`. If it's `draft`, stop and tell the user that it needs their approval (Gate 1). If it's `building`, `reviewing` or `blocked`, you're resuming: run `speck start <id>`, which refuses to start it again and prints where its branch is checked out. Resume in that existing worktree, run `speck next <id>` there, then continue from the right step. If it's `blocked` and the user has answered the question, record the answer in the ticket's Notes before continuing.
 3. If the ticket's Notes have any `Unverified:` facts, check each now against current documentation or the installed tool, without editing anything yet. If one turns out to be wrong, stop and tell the user before building, with the correct fact and what it changes in the ticket.
-4. Make sure your `base_branch` is up to date (pull it if it has a remote). Create the branch with `speck start <id>`: it checks the ticket is ready and committed, makes its branch from the local base branch, in its own worktree when `worktrees` is on in `speck/config.yml`, runs `worktree_setup` there, sets the ticket to `building` and commits that (`speck(<id>): start`). It prints the folder to work in. From now on, do all of your building, testing, reviewing and shipping in the printed folder, which is the ticket's own worktree when worktrees are on. Never work in the main checkout then: other sessions may be using it. If `speck start` refuses a `ready` ticket here, report its reason in plain words and stop. Don't commit the ticket, switch branches or change anything else to get past it: the user decides what happens next.
+4. Make sure your `base_branch` is up to date (pull it if it has a remote). Create the branch with `speck start <id>`: it checks the ticket is ready and committed, makes its branch from the local base branch, in its own worktree when `worktrees` is on in `speck/config.yml`, runs `worktree_setup` there, sets the ticket to `building` and commits that (`speck(<id>): start`). It prints the folder to work in. From now on, do all of your building, testing, reviewing and shipping in the printed folder, which is the ticket's own worktree when worktrees are on. Never work in the main checkout then, except to create a fix ticket in section 5: other sessions may be using it. If `speck start` refuses a `ready` ticket here, report its reason in plain words and stop. Don't commit the ticket, switch branches or change anything else to get past it: the user decides what happens next.
 5. In that folder, change each fact you checked in step 3 from `Unverified:` to `Checked <YYYY-MM-DD>: …` in the ticket's Notes, and commit it (`speck(<id>): facts checked`).
 6. In that folder, before you change anything, run the test command (`commands.test` in `speck/config.yml`) through speck: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`. It waits its turn if `max_parallel_tests` test runs are already going in this repo, and exits with the test command's exit code. Always run the full suite this way, never the test command directly. Record what fails in the ticket's Notes as `Failing before this build: <tests>`, naming each failing test, or `Failing before this build: none`. Commit it (`speck(<id>): failing before`). A test listed as failing before this build is never changed or fixed in this build, whatever the acceptance criteria say, even one asking for the whole suite to pass. List it as a follow-up in the ticket's `## Delivery log` instead.
 
@@ -77,15 +77,45 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 3. Run `speck ship <id> --auto`. It ships only if `auto_ship` is `true` in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round. Then it runs all of `speck ship`'s usual checks and the tests.
    - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, how many follow-ups went to the inbox or that none did, and anything worth a look (risk flags, follow-up ideas).
    - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), how many follow-ups went to the inbox or that none did, anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
-   - If it exits with 13, merging into the base branch hit a conflict (it names the conflicting files) and nothing changed. Bring the branch up to date and get it re-reviewed, without asking the user:
-     1. In the ticket's worktree, merge the base branch into the ticket branch: merge the ref ship's message names, which is `<base_branch>`, or `<remote>/<base_branch>` when ship had just fetched new commits from the remote (`git merge <ref>`, no rebase or squash, so the reviewed commits stay as they are).
-     2. Resolve each conflict keeping the intent of both sides: the base branch's change and this ticket's. Stage each resolved file by name.
-     3. Run the tests (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`) and fix anything the merge broke.
-     4. Commit the merge (`speck(<id>): merge <base_branch>`).
-     5. Run a review round as in section 4 (`speck review <id>` accepts the `approved` ticket and sets it to `reviewing`). Its response file lists each file you resolved and how. The reviewer sees the branch's whole change against the base branch as merged. Take turns as usual until `speck next <id>` says `ship` or `block`. This merge round, and any rounds after it until the reviewer approves, don't count towards `max_review_rounds`. They have their own limit, `max_merge_rounds`.
-     6. On `ship`, run `speck close <id>`, then `speck ship <id> --auto` again.
-     If it exits with 13 again after two merges, block the ticket (section 6) with the conflicting files in the question.
+   - If it exits with 13, merging into the base branch hit a conflict (it names the conflicting files) and nothing changed. Follow "Conflict" below, without asking the user.
+   - If it exits with 14, the tests failed on the ticket's branch and on the base branch as it is, so it isn't this ticket's fault, and nothing changed. Follow "Base branch failing" below.
    - If any other check refused, report the reason as the ship skill describes. Don't work around it.
+
+### Conflict
+
+`speck ship <id> --auto` names the ref to merge: `<base_branch>`, or `<remote>/<base_branch>` when ship had just fetched new commits from the remote. Work in the ticket's worktree.
+
+1. Run `speck merge-check <id>`. It prints one JSON object: `clean`, and for each conflicting file its `class`, how many conflicts it has and their line ranges. It checks against the local base branch, so a file that ship named but merge-check doesn't list counts as `logic`. Then merge the base branch into the ticket branch: merge the ref ship's message names (`git merge <ref>`, no rebase or squash, so the reviewed commits stay as they are).
+2. Resolve each conflicting file by its class, keeping the intent of both sides: the base branch's change and this ticket's. Stage each resolved file by name.
+   - `added-lines`: both sides only added lines, for example to a list, a table or the imports. Keep both sides' lines, in an order that fits the file, with no duplicates.
+   - `lockfile`: don't edit it by hand. Take the base branch's version (`git checkout --theirs -- <file>`), then rebuild it with the project's own install command (the one in `worktree_setup`, or the package manager's install for that lockfile, such as `npm install` for `package-lock.json`), so it has both sides' dependencies.
+   - `ticket`: a file under `speck/`. In this ticket's own file, keep the branch's status and `## Review rounds` exactly as they are, and add anything the base branch added elsewhere in it. In any other file under `speck/`, keep both sides.
+   - `logic`: anything else. Make the smallest change that keeps the intent of both sides. If both can't hold at once, the two tickets contradict each other: stop and ask (see "Asking the user").
+3. Run the tests (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`) and fix anything the merge broke, changing only what the merge needs.
+4. Commit the merge (`speck(<id>): merge <base_branch>`).
+5. Get it reviewed. Every conflict merge gets a merge round, whatever its class: `speck ship` refuses a ticket whose files changed after the reviewer approved, and the merge changed them. Run a review round as in section 4: `speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md` accepts the `approved` ticket and sets it to `reviewing`. Write the response file fresh, replacing any left from the build: it lists each file you resolved and how, with its class. The reviewer sees the branch's whole change against the base branch as merged. This merge round, and any rounds after it until the reviewer approves, don't count towards `max_review_rounds`. They have their own limit, `max_merge_rounds`.
+6. Take turns as usual until `speck next <id>` says `ship` or `block`. Fix each blocking finding, re-run the tests and commit before every round.
+   - On `ship`: run `speck close <id>`, then `speck ship <id> --auto` again, and handle its exit code as in section 5 step 3.
+   - On `block`: ask the user (see "Asking the user").
+
+If `speck ship <id> --auto` exits with 13 again after two merges, block the ticket (section 6) with the conflicting files in the question. Write it in plain words, without git terms: say that other shipped work keeps changing the same files, name them, and give the options and your recommendation.
+
+### Base branch failing
+
+The base branch's own tests are failing. Change no code: not in this ticket's branch, and not in the base branch.
+
+1. Look for an open fix ticket: a ticket in `speck/tickets/` (not `speck/tickets/done/`) with `type: fix`. If one already covers this failure (the same failing tests, or the same cause), don't make another: go to step 3 with that ticket.
+2. Otherwise, in the main checkout on the base branch (when `worktrees` is off, switch it back to the base branch first), create one: `speck new "<title>" --type=fix`. Give it a title saying what's broken, and fill in its Problem, Outcome and Acceptance criteria in plain words: which tests fail on the base branch, what they show, and that they must pass again. Don't guess at a cause you haven't seen in the test output. Commit only that ticket file, staged by name (`speck(<fix-id>): fix ticket`).
+3. In the main checkout, run `speck set <fix-id> status ready` without asking the user, so it builds next, ahead of everything else. Set only a `draft` one, and only if it has no branch yet (`git branch --list '<branch_prefix><fix-id>-*'` prints nothing): one that's ready, building, reviewing, approved or blocked is already on its way, and setting it ready would undo that. If `speck set` refuses (its lint names what's missing), fill that in and try again; if it still refuses, leave it `draft` and say so in step 4.
+4. Then stop. Leave this ticket `approved`, and tell the user in plain words: the base branch's tests are failing, which fix ticket covers it and whether it's ready or still a draft waiting for them, and that once the fix has shipped, `/speck-ship <id>` ships this ticket.
+
+### Asking the user
+
+While getting a ship through, apart from blocking after two merges (above), ask the user only when two tickets contradict each other, or when `speck next <id>` says `block` during a merge round. Nothing else is a reason to ask.
+
+1. Write one question under `## Blocked question` in the ticket. Write it in plain words, without git terms (no merge, branch, conflict or commit): say what each ticket wants, the options, and which one you recommend and why. Make it answerable in a sentence.
+2. Run `speck set <id> status blocked`, then commit the ticket and any work in progress, staged by name.
+3. Stop, and tell the user the question and how to resume: answer it, then run `/speck-build <id>`.
 
 ## 6. Block
 
@@ -99,7 +129,7 @@ Use this when the review loop says `block`, the size guard trips, or a product q
 
 - Never merge or ship unless the user runs `/speck-ship`: don't run `speck ship`, merge into the base branch or push it yourself. Shipping is the user's gate. The one exception is `speck ship <id> --auto` in section 5, which ships only when the user has turned on `auto_ship` in `speck/config.yml`.
 - Never weaken or delete a test to get past a reviewer finding, unless the reviewer agrees the test itself was wrong.
-- Never commit, stage or change files in the main checkout, before or after `speck start`, except to pull the base branch in section 1 and, when `worktrees` is off, to build on the ticket's branch there. That checkout belongs to the user and to other sessions.
+- Never commit, stage or change files in the main checkout, before or after `speck start`, except to pull the base branch in section 1, to create and set ready a fix ticket in "Base branch failing" (section 5) and, when `worktrees` is off, to build on the ticket's branch there. That checkout belongs to the user and to other sessions.
 - Stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back.
 - Never edit a ticket's `## Review rounds` section by hand. Only speck writes it.
 - Keep to the ticket. If you find other problems, list them in the Delivery log as follow-up ideas. Don't fix them.
