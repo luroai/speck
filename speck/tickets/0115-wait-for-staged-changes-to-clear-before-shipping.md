@@ -1,7 +1,7 @@
 ---
 id: "0115"
 title: "Wait for staged changes to clear before shipping"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-11-one-build-at-a-time.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-11T10:49:41.018Z"
 
 ---
 # 0115 · Wait for staged changes to clear before shipping
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `speck ship` refuses when the base branch's checkout has staged changes, because git won't merge over a changed index. With one build at a time, the user is often partway through committing tickets on the base branch, so an approved ticket can fail to ship just because of when its build finished.
