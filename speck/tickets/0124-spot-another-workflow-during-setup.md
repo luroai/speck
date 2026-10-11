@@ -39,7 +39,7 @@ Setup spots another workflow, and rules that clash with speck, explains each in 
 
 ## Notes
 - Checked 2026-10-11: OpenSpec in a real project has an `openspec/` folder (`config.yaml`, `specs/`, `changes/`, with finished changes under `changes/archive/`), `openspec-*` skills in `.claude/skills/` and `.agents/skills/`, and commands in `.claude/commands/opsx/` (a local project using OpenSpec).
-- Unverified: GitHub Spec Kit keeps its files in `.specify/`, and Kiro in `.kiro/` (from memory; check each tool's current documentation).
+- Checked 2026-10-11: GitHub Spec Kit keeps its files in `.specify/` (for example `.specify/feature.json`, per its quickstart), and Kiro in `.kiro/` (`.kiro/steering/` in the project root, per its steering docs; `~/.kiro/` is global, not the project).
 - Decided 2026-10-11: spot and ask, never remove.
 
 ## Blocked question
