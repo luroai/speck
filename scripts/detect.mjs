@@ -155,8 +155,39 @@ export function suggestCommands(dir) {
   return { test_command, worktree_setup: lock ? lock[1] : null };
 }
 
+function isDir(f) {
+  try { return fs.statSync(f).isDirectory(); } catch { return false; }
+}
+
+// The entries of a folder, or none if it can't be read.
+function entries(dir) {
+  try { return fs.readdirSync(dir, { withFileTypes: true }); } catch { return []; }
+}
+
+// The folders in dir whose names match, as paths relative to root, each ending in /.
+function foldersIn(root, dir, match) {
+  return entries(path.join(root, dir)).filter(e => match(e.name) && isDir(path.join(root, dir, e.name))).map(e => `${dir}/${e.name}/`);
+}
+
+// Other spec-driven workflows in the project, each with the paths that show it, so setup can ask what to do.
+// OpenSpec also lists its changes still in progress: each folder under openspec/changes/ other than archive.
+export function otherWorkflows(dir) {
+  const found = [];
+  const folder = name => isDir(path.join(dir, name)) ? [`${name}/`] : [];
+  const openspec = [
+    ...folder('openspec'),
+    ...['.claude/skills', '.agents/skills'].flatMap(d => foldersIn(dir, d, n => n.startsWith('openspec-'))),
+    ...entries(path.join(dir, '.claude/commands')).filter(e => e.name === 'opsx' ? isDir(path.join(dir, '.claude/commands', e.name)) : /^opsx[-:_.]/.test(e.name))
+      .map(e => `.claude/commands/${e.name}${e.name === 'opsx' ? '/' : ''}`),
+  ].sort();
+  if (openspec.length) found.push({ name: 'OpenSpec', paths: openspec, in_progress: foldersIn(dir, 'openspec/changes', n => n !== 'archive').sort() });
+  if (isDir(path.join(dir, '.specify'))) found.push({ name: 'GitHub Spec Kit', paths: ['.specify/'] });
+  if (isDir(path.join(dir, '.kiro'))) found.push({ name: 'Kiro', paths: ['.kiro/'] });
+  return found;
+}
+
 export function detectFacts(dir = process.cwd()) {
-  return { os: osFacts(), node: nodeFacts(), ...gitFacts(dir), speck: speckFacts(dir), agents: agentFacts(), suggestions: suggestCommands(dir) };
+  return { os: osFacts(), node: nodeFacts(), ...gitFacts(dir), speck: speckFacts(dir), agents: agentFacts(), suggestions: suggestCommands(dir), other_workflows: otherWorkflows(dir) };
 }
 
 export function cmdDetect() {

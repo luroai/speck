@@ -15,6 +15,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the project folder (below: `speck
 - Ask before every change to the machine or to git, and wait for a yes: installing anything, `git init`, setting a git name and email, and every commit. Say what the change is and why it's needed.
 - Record every setting with `speck config set <key> <value>`. Never edit `speck/config.yml` directly. It prints the old and new value, so tell the user what changed.
 - Never push, merge or ship. Never approve a ticket: moving it to `ready` is the user's decision.
+- Never delete, move or edit another workflow's files or the project's own rules (its `AGENTS.md`, `CLAUDE.md` and the guides they point to), apart from the speck section `speck init` adds. Point out what clashes and let the user change it.
 - Leave the user's own files alone, apart from what `speck init` adds. It keeps an existing `CLAUDE.md` and `AGENTS.md` and adds a short speck section to `AGENTS.md`, or brings its `## speck` section up to date.
 - If a command fails, show the user the important part of its message in plain words, and say what you'll try next or what they need to do.
 
@@ -25,6 +26,23 @@ Run `speck detect` (`npx github:luroai/speck detect` if speck isn't installed ye
 - **Operating system** (`os.supported`): speck supports macOS and Linux. On anything else, explain that and stop.
 - **Node** (`node.supported`): speck needs Node.js 20 or newer. If `speck detect` can't start because `node` or `npx` isn't found, or `node.supported` is false, explain that speck's commands run on Node. Ask before installing Node, then install the current LTS the usual way for their system (Homebrew on macOS if they have it, otherwise the installer from https://nodejs.org; their package manager or the Node.js website on Linux). They may need a new terminal afterwards.
 - **git** (`git.installed`): speck keeps everything in git. If it's missing, ask before installing it (`xcode-select --install` on macOS, the package manager on Linux).
+
+### Other workflows and the project's rules
+
+Do this before changing anything in the project. Never delete, move or edit the other workflow's files or the project's own rules: say what you found and let the user decide.
+
+**Another workflow.** If `other_workflows` isn't empty, name each one and the paths that show it. Explain that running two workflows gives agents conflicting instructions: one tells them to work from its own specs and changes, speck tells them to work only from speck's tickets. Recommend using speck for new work, with the other workflow's files left where they are, so nothing is lost. Ask the user to choose between that, keeping both (agents may follow either, so builds can go astray), or stopping setup here, and wait for their answer. If they choose to stop, change nothing and stop.
+
+If they choose speck, name any work still in progress in the other workflow: for OpenSpec, each folder in `in_progress` (every folder under `openspec/changes/` other than `archive`). For the others, ask the user whether any of their work is unfinished. Recommend finishing it in the other workflow, or turning it into speck tickets with `/speck-ticket`, before building with speck.
+
+**Rules that clash with speck.** Read the project's `AGENTS.md` and `CLAUDE.md`, if they exist, and any guide they point to (a linked file or an `@` import in the project). Look for rules that would clash with speck as it's being set up, for example:
+
+- a ban on git worktrees: `worktrees` is on by default, so each build would happen in its own worktree and break the rule. They could change the rule, or turn `worktrees` off.
+- a requirement that changes go through pull requests: shipping merges and pushes straight to the base branch, with no pull request, so every ship would break the rule. Keeping `auto_ship` off (its default) stops speck shipping on its own, but `/speck-ship` still bypasses pull requests, so it doesn't settle the clash. They could change the rule (or relax it for themselves, as section 3, step 3 warns), or not use speck's ship.
+- a requirement for a particular reviewer: every review is done by the reviewer in `speck/config.yml`, so a different one would break the rule. If the required reviewer is one speck can run, they could set it as the reviewer (section 5); otherwise they could change the rule.
+- limits on unattended agents: `speck run` builds without anyone watching, and `auto_ship` ships as soon as the reviewer approves. They could change the rule, or keep `auto_ship` off and leave `build_command` blank (section 6).
+
+For each clash, quote the rule, say what would happen and what the user could change: the rule itself (theirs to edit), or a speck setting. Change a speck setting only after the user agrees, with `speck config set`, once speck is installed. If nothing clashes, say so in one line.
 
 Then decide which kind of project this is and tell the user:
 
