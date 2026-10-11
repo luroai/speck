@@ -39,6 +39,7 @@ speck refuses to change a ticket from the base branch's checkout while it's bein
 
 ## Notes
 - The panel's writes only touch drafts, so they don't need changing.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
