@@ -1,7 +1,7 @@
 ---
 id: "0123"
 title: "Bring an old speck section in AGENTS.md up to date"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T12:36:02.784Z"
 ---
 # 0123 · Bring an old speck section in AGENTS.md up to date
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck init` adds a speck section to a project's AGENTS.md, but once one is there it never updates it. Projects set up with an older speck keep its old instructions, such as "Read `speck/product.md` first", a file speck no longer creates. Their agents follow stale rules before every build, and re-running `speck init` to update speck doesn't fix it.
@@ -49,3 +49,75 @@ Re-running `speck init` brings the speck section of AGENTS.md up to date with th
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ac3afdb75464900b1d52696a3e4e934af988a101",
+    "thread_id": "01a12afa-1f70-7222-9889-36bf11b82046",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 88229,
+      "cached_input_tokens": 52608,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 835,
+      "reasoning_output_tokens": 96
+    },
+    "saved_at": "2026-10-11T12:40:28.014Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The passing AC1 tests cover unindented headings and fenced blocks. However, scripts/install.mjs:66 in syncAgentsSection misses valid headings indented by up to three spaces. A read-only reproduction with '  ## Other' or '  # Other' replaced the following section too."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The AC2 test passes for an unindented boundary. The same reproduction deleted 'Keep these user rules.' outside the speck section, violating byte-for-byte preservation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "syncAgentsSection returns unchanged text for the current section; cmdInit writes only changed text. The passing AC3 test checks unchanged contents and no update message, including when another section follows."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 integration test exercises both missing AGENTS.md and an existing file without a speck section, checking the resulting contents and update message."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC5 integration test verifies that an unheaded speck mention remains unchanged and the output warns about outdated instructions and shows the current text."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/install.mjs:66",
+        "issue": "The section boundary recogniser ignores valid Markdown headings with one to three leading spaces. Updating an old speck section therefore deletes subsequent user-owned sections with such headings. This was reproduced directly using syncAgentsSection.",
+        "suggested_fix": "Recognise valid indented level-one and level-two headings as section boundaries while retaining fenced-code handling. Add regression tests verifying that these headings and all following text remain byte-for-byte unchanged.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The update works for the layouts covered by the tests, and the recorded suite has no failures. However, it can delete unrelated project instructions when the next heading is indented. Fix that preservation bug before merging."
+  }
+}
+```
+
+</details>

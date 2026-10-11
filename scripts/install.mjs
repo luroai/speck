@@ -50,20 +50,24 @@ export function installTooling(repo) {
 const AGENTS_SECTION = '## speck\n\nThis repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
 
 // Adds the speck section to AGENTS.md text, or brings an existing `## speck` section up to date.
-// The section runs from its heading up to the next `#` or `##` heading, or the end of the file; nothing outside it changes.
-// Lines inside fenced code blocks aren't headings.
+// The section runs from its heading up to the next level-one or level-two heading (`#`, `##`, or a line underlined with `=` or `-`), or the end of the file; nothing outside it changes.
+// Headings may be indented by up to three spaces, and lines inside fenced code blocks aren't headings.
 // Returns the new text and what it did: added, replaced, current (already up to date) or unheaded (speck is mentioned without the heading, so it's left alone).
 export function syncAgentsSection(text) {
-  let start = -1, end = text.length, fence = null;
+  let start = -1, end = text.length, fence = null, prev = null;
   for (let at = 0; at < text.length;) {
     const eol = text.indexOf('\n', at);
     const lineEnd = eol === -1 ? text.length : eol + 1;
     const line = text.slice(at, lineEnd).replace(/\r?\n$/, '');
     const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+    // A plain text line that a `=` or `-` underline would turn into a heading: not blank, indented code, a heading, a quote or a list item.
+    const plain = !fence && !marker && /\S/.test(line) && !/^ {4}|^\t|^ {0,3}(#|>|[-*+](\s|$)|\d{1,9}[.)](\s|$))/.test(line);
     if (fence) { if (marker && marker[1][0] === fence[0] && marker[1].length >= fence.length && !line.slice(marker[0].length).trim()) fence = null; }
     else if (marker) fence = marker[1];
-    else if (start === -1 && /^## speck[ \t]*$/.test(line)) start = at;
-    else if (start !== -1 && /^#{1,2}(?:[ \t]|$)/.test(line)) { end = at; break; }
+    else if (start === -1 && /^ {0,3}## speck[ \t]*$/.test(line)) start = at;
+    else if (start !== -1 && /^ {0,3}#{1,2}(?:[ \t]|$)/.test(line)) { end = at; break; }
+    else if (start !== -1 && prev && /^ {0,3}(=+|-+)[ \t]*$/.test(line)) { end = prev; break; }
+    prev = start !== -1 && at !== start && plain ? at : null;
     at = lineEnd;
   }
   if (start === -1) {

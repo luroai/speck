@@ -102,3 +102,24 @@ test('0123 AC1: lines in fenced code blocks are not headings, inside or before t
   r.init();
   assert.equal(r.agents(), `${example}${current().trimEnd()}\n\n## Other\n`);
 });
+
+test('0123 AC1, AC2: headings indented by up to three spaces count, and what follows them is kept byte for byte', () => {
+  for (const next of ['  ## Other\n', '   # Other\n']) {
+    const after = `${next}\nKeep these user rules.\n`;
+    const r = repo(`# Mine\n\n ${OLD}\n${after}`);
+    r.init();
+    assert.equal(r.agents(), `# Mine\n\n${current().trimEnd()}\n\n${after}`, JSON.stringify(next));
+  }
+});
+
+test('0123 AC1, AC2: an underlined heading ends the section, but a list item or a rule after a blank line does not', () => {
+  for (const line of ['=====', '-----']) {
+    const after = `Other\n${line}\n\nKeep these user rules.\n`;
+    const r = repo(`# Mine\n\n${OLD}\n${after}`);
+    r.init();
+    assert.equal(r.agents(), `# Mine\n\n${current().trimEnd()}\n\n${after}`, line);
+  }
+  const r = repo(`# Mine\n\n${OLD}\n- an old rule\n---\n\n---\n\n## Other\n`);
+  r.init();
+  assert.equal(r.agents(), `# Mine\n\n${current().trimEnd()}\n\n## Other\n`);
+});
