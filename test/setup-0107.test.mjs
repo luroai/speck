@@ -29,7 +29,7 @@ test('AC1: speck init installs it with user-invocable: false in both skill folde
 });
 
 test('AC1: the other speck skills stay in the slash menu', () => {
-  for (const name of fs.readdirSync(path.join(ROOT, 'skills')).filter(n => n !== 'speck-setup')) {
+  for (const name of fs.readdirSync(path.join(ROOT, 'skills')).filter(n => n !== 'speck-setup' && n !== 'speck-integrate')) { // 0101: speck-integrate is agent-only too
     const file = path.join(ROOT, 'skills', name, 'SKILL.md');
     if (fs.existsSync(file)) assert.doesNotMatch(frontmatter(fs.readFileSync(file, 'utf8')), /^user-invocable:/m, name);
   }
