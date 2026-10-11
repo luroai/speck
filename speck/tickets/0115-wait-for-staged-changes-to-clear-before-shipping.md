@@ -1,7 +1,7 @@
 ---
 id: "0115"
 title: "Wait for staged changes to clear before shipping"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T10:49:41.018Z"
 ---
 # 0115 · Wait for staged changes to clear before shipping
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck ship` refuses when the base branch's checkout has staged changes, because git won't merge over a changed index. With one build at a time, the user is often partway through committing tickets on the base branch, so an approved ticket can fail to ship just because of when its build finished.
@@ -45,9 +45,16 @@ When staged changes in the base branch's checkout are all that stops a ship, `sp
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A staged rename of a file changed by the ticket is classified as unrelated.; F2 The waiting notice is emitted on every clash() invocation that needs to wait.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 2,535,057
+- Elapsed since build started: 12 min
+- Changed lines: 73 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox note):
   - When the ticket branch isn't checked out anywhere and the base branch is checked out in another worktree, ship switches the folder it ran from to the ticket branch before the tests. Killing ship during a wait after the tests (as during the tests themselves) leaves that folder on the ticket branch.
