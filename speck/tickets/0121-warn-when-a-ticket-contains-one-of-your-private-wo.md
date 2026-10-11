@@ -1,7 +1,7 @@
 ---
 id: "0121"
 title: Refuse a ticket that contains one of your private words                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T12:18:35.680Z"
 ---
 # 0121 · Refuse a ticket that contains one of your private words
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Tickets are committed and often published, so a ticket can leak words you'd rather keep out of the repo, such as your real name or an old alias. Today only one of speck's own tests checks for them (0084), by scanning the whole repo. Since 0112 reuses test results whenever nothing outside `speck/` has changed, that test can miss a word added in a new ticket.
@@ -48,7 +48,75 @@ Tickets are committed and often published, so a ticket can leak words you'd rath
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 96,408
+- Elapsed since build started: 5 min
+- Changed lines: 26 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4ea898a49b7ce80f198dccb4f4952289d4f2528e",
+    "thread_id": "01a12aea-c89c-7931-9f54-5d8905c76413",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 95788,
+      "cached_input_tokens": 55040,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 620,
+      "reasoning_output_tokens": 10
+    },
+    "saved_at": "2026-10-11T12:23:38.864Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/core.mjs privateWordProblems uses os.homedir() and reads .config/speck/private-words, trimming lines and skipping blanks and comments. Four AC1 tests in test/lint-0121.test.mjs passed, exercising a fake HOME and file formatting."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "privateWordProblems checks the complete ticket text using lowercase literal includes and reports line numbers without the matched word. scripts/speck.mjs cmdLint exits non-zero and checkSetTicket refuses ready before writing. Seven AC2 tests passed, covering case, literal matching, frontmatter, multiple lines and refusal without changing draft status."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "privateWordProblems silently handles missing files and returns an actionable warning for other read failures. Three AC3 tests passed, exercising missing files, an unreadable directory and continued reporting of other lint errors."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Two AC4 tests passed, checking clean tickets and empty or comment-only lists produce no private-word diagnostics."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md documents the file location, one-word-per-line format, comments and lint behaviour. The AC5 documentation test passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Lint now blocks tickets containing your listed private words and identifies affected lines without naming the words. Missing lists are silent; unreadable lists produce helpful warnings. The tests exercise the real CLI, and the full saved test output shows no failures. Existing tests were unchanged, and no blocking issues were found."
+  }
+}
+```
+
+</details>
