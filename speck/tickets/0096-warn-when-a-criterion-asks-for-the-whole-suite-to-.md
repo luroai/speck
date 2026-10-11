@@ -1,7 +1,7 @@
 ---
 id: "0096"
 title: "Warn when a criterion asks for the whole suite to pass"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T08:18:15.053Z"
 ---
 # 0096 · Warn when a criterion asks for the whole suite to pass
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A criterion like "the full test suite passes" can't be met when `main` is already broken, so it pushes the builder to fix things outside the ticket. That's how 0090 came to fix an unrelated test.
@@ -48,3 +48,78 @@ Tickets ask that no test that passed before the change fails, and `speck lint` w
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e3b6c64fffb794dc47877bbb91bf25963c62b70e",
+    "thread_id": "01a12a11-b6c0-73f1-b3a4-43f9fb1d3c88",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 389396,
+      "cached_input_tokens": 288000,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 911,
+      "reasoning_output_tokens": 29
+    },
+    "saved_at": "2026-10-11T08:26:39.636Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md explicitly requires the replacement wording and forbids whole-suite passing criteria. test/lint-0096.test.mjs AC1 checks that instruction; the supplied run passes."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "scripts/core.mjs asksWholeSuite detects the tested simple forms, but direct read-only calls to lintTicket produce no warning for 'All tests must pass.' or 'The entire test suite should pass.'. Wrapped criteria are also missed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs prints warnings with '! ' and checks only errors when setting ready. Both AC3 integration tests exercise the real CLI and pass in the supplied run."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "A direct call to lintTicket warns for 'All tests passively document expected behaviour.', although this does not require tests to pass. The regex matches the prefix 'pass' without a word boundary."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "The detector misses ordinary requirements such as 'All tests must pass' and 'The entire test suite should pass'. It also examines only numbered first lines, missing a requirement continued onto the following line.",
+        "suggested_fix": "Recognise ordinary requirement forms, including must/should pass, and inspect complete criteria including continuation lines. Add regression tests for these cases.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/core.mjs",
+        "issue": "The unbounded 'pass' match generates false warnings for words such as 'passively', violating AC4.",
+        "suggested_fix": "Match complete passing verbs rather than arbitrary words beginning with 'pass', and add a negative regression test.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The writing guidance and advisory warning behaviour are implemented, with honest integration tests. However, the warning misses common ways of requiring all tests to pass and can flag unrelated wording. These detection errors need fixing before approval."
+  }
+}
+```
+
+</details>

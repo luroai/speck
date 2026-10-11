@@ -42,6 +42,11 @@ for (const phrase of [
   'All tests pass.',
   'All the tests still pass.',
   'all existing tests pass',
+  'All tests must pass.',
+  'The entire test suite should pass.',
+  'All tests must still pass.',
+  'The full suite continues to pass.',
+  'All tests are green.',
 ]) {
   test(`0096 AC2: "${phrase}" gets a ! warning naming the criterion and suggesting the wording`, () => {
     const r = repo(['Export button downloads a CSV.', phrase]);
@@ -83,6 +88,7 @@ for (const phrase of [
   'All tests in test/export.test.mjs are renamed to match the file.',
   'The full export runs in under a second.',
   'The whole suite of export options is listed.',
+  'All tests passively document expected behaviour.',
   'The skill says never to write "the full test suite passes".',
   'Lint flags “all tests pass” and `the whole suite passes` as wording to avoid.',
 ]) {
@@ -93,3 +99,11 @@ for (const phrase of [
     assert.equal(out.status, 0, out.stdout + out.stderr);
   });
 }
+
+test('0096 AC2: a criterion wrapped onto a second line is checked whole, and the warning quotes all of it', () => {
+  const r = repo(['Export button downloads a CSV, and once it does the full test\n   suite passes.']);
+  const w = suiteWarnings(r.run(['lint', '1']).stdout);
+  assert.equal(w.length, 1, w.join('\n'));
+  assert.match(w[0], /[Cc]riterion 1\b/);
+  assert.ok(w[0].includes('the full test suite passes'), w[0]);
+});
