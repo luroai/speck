@@ -52,6 +52,9 @@ Setup spots another workflow, and rules that clash with speck, explains each in 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- `speck detect` lists work in progress only for OpenSpec. For GitHub Spec Kit and Kiro, setup asks the user instead.
+- Run in a home folder, `speck detect` would count the global `~/.kiro/` as a project's Kiro. Setup runs in a project folder, so this is unlikely.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -119,6 +122,75 @@ Setup spots another workflow, and rules that clash with speck, explains each in 
     ],
     "escalation_question": "",
     "summary": "Detection works and setup now warns about competing workflows and unfinished work. The recorded suite has no failures. One piece of setup advice needs correction: disabling automatic shipping does not satisfy reviewer or pull-request requirements."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "aeebbbb5b8d7aafd46d1b5b36d6a983452cfd5e6",
+    "thread_id": "01a12b1c-ab8e-7651-bc0f-73b36233a11c",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 220986,
+      "cached_input_tokens": 174848,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1524,
+      "reasoning_output_tokens": 166
+    },
+    "saved_at": "2026-10-11T13:20:00.436Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/detect.mjs: otherWorkflows and detectFacts report OpenSpec, GitHub Spec Kit and Kiro with evidence paths, or an empty list. Passing AC1 tests exercise CLI output, individual detection signals and lookalikes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md requires explaining conflicting instructions before project changes, recommending speck for new work while preserving files, and waiting for the user's choice. Both AC2 instruction tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "otherWorkflows enumerates OpenSpec change folders excluding archive. The setup skill requires naming unfinished work and recommending completion or /speck-ticket before building. Both AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The setup skill requires reading AGENTS.md, CLAUDE.md and referenced guides, quoting clashes and explaining consequences and remedies. Separate pull-request and reviewer guidance now correctly addresses F1. AC4 tests and the new '0124 review F1' test pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The setup skill prohibits altering other workflow files and project rules, preserving the existing speck-init section exception, and requires user agreement before setting changes through speck config set. Both AC5 tests pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md",
+        "issue": "The previous guidance incorrectly offered disabling automatic shipping as a remedy for required reviewers and pull requests.",
+        "suggested_fix": "Completed: the guidance separates these requirements, recommends configuring the required reviewer, and explains that manual shipping still bypasses pull requests. A regression test checks the distinction.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change detects competing workflows and guides setup through unfinished work and conflicting project rules while preserving existing files. The misleading shipping and reviewer advice is corrected. All criteria pass; the recorded suite has 1,103 passing tests, three skipped and no failures."
   }
 }
 ```
