@@ -1,7 +1,7 @@
 ---
 id: "0111"
 title: "Write the one-build-at-a-time principle into the brief"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T09:49:24.065Z"
 ---
 # 0111 · Write the one-build-at-a-time principle into the brief
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck has no stated position on parallel builds. Without one, tickets keep adding machinery to make builds run side by side: about 20 since worktrees shipped (0028), with a five-ticket ship queue (0101–0105) next. That work makes speck harder to trust and to use. On 10 and 11 October parallel builds ran the machine out of memory, stopped 0097 shipping with a test port clash, had two builds fix the same test and left builds inheriting a broken `main`.
@@ -57,3 +57,65 @@ speck has no stated position on parallel builds. Without one, tickets keep addin
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+Follow-ups:
+- `templates/config.yml` still describes `max_parallel_builds` as "how many builds speck run keeps going at once", and `max_parallel_tests` as runs from any worktree. Skipped as an inbox note: it's part of removing the parallel-build machinery, which `speck/ideas/done/2026-10-11-one-build-at-a-time.md` already plans as later small tickets.
+- `skills/speck-integrate/SKILL.md` still calls its reader "the shipping agent", started by the ship queue. Skipped: ticket 0116 folds it into `/speck-build` and removes it.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ae6ecd6ff45b9bc2233de48b528d234b31155612",
+    "thread_id": "01a12a64-8c80-75a3-a0f2-950bf05ceca3",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 414634,
+      "cached_input_tokens": 303872,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 773,
+      "reasoning_output_tokens": 106
+    },
+    "saved_at": "2026-10-11T09:57:10.947Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "docs/brief.md, Principles item 7 states WIP 1, a worktree per build, continued shaping on the base branch, and creating tickets, setting them ready and walking away. Both AC1 tests in test/brief-0111.test.mjs exercise this wording and passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Principles item 7 includes all six required reasons. The AC2 test in test/brief-0111.test.mjs checks each reason against the actual brief and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Principles item 7 explicitly says each build ships its own ticket and there is no separate shipping agent. The speck-integrate row agrees. Both AC3 tests passed. The integrate skill remains unchanged as expressly deferred in the ticket."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Inspected README.md, docs/brief.md and skills for parallel-build claims; the obsolete wording has been removed. AC4 tests check these files and passed. Existing tests were not changed; supplied full-suite output reports 965 passed, zero failed and three skipped. The suite was not rerun because its temporary-file writes conflict with this review's read-only restriction."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The brief clearly states the one-build-at-a-time principle and its reasons, with each build handling its own shipping. Conflicting wording was removed from the README and build skill. The tests check the actual documents, and the reported suite has no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
