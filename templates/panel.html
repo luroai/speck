@@ -270,6 +270,8 @@ function progress(t) {
   const current = t.status === 'ready' ? -1 : approved ? 4 : done.indexOf(false); // approved: Ship is current
   return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
 }
+// An amount in US dollars, to the cent.
+const dollars = n => `$${n.toFixed(2)}`;
 // The middle value, or the mean of the two middle ones; null with no values.
 function median(values) {
   const v = [...values].sort((a, b) => a - b), mid = Math.floor(v.length / 2);
@@ -340,13 +342,17 @@ function panelModel(state) {
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
   const now = Date.now();
+  // What a ticket's builder spent, as speck run recorded it, or null when it isn't recorded.
+  const spent = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
   const done = tickets.filter(is('done')).map(t => {
     const start = time(t.started), end = time(t.finished);
     return { ...t, end, when: shippedAt(end, now), roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+      builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
       exactMinutes: start !== null && end !== null ? (end - start) / 60000 : null,
       minutes: start !== null && end !== null ? Math.round((end - start) / 60000) : null };
   });
-  // Each median covers the done tickets that have its data: both times, at least one review round, or tokens recorded.
+  // Each median covers the done tickets that have its data: both times, at least one review round, reviewer tokens or
+  // the builder's tokens or cost recorded.
   const stat = (values, round) => { const m = median(values); return { median: m === null ? null : round(m), count: values.length }; };
   // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 5.
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
@@ -378,6 +384,8 @@ function panelModel(state) {
       minutes: stat(done.filter(t => t.exactMinutes !== null).map(t => t.exactMinutes), Math.round),
       rounds: stat(done.filter(t => t.roundCount > 0).map(t => t.roundCount), n => Math.round(n * 10) / 10),
       tokens: stat(done.filter(t => t.tokens > 0).map(t => t.tokens), Math.round),
+      builderTokens: stat(done.filter(t => t.builderTokens !== null).map(t => t.builderTokens), Math.round),
+      builderCost: stat(done.filter(t => t.builderCost !== null).map(t => t.builderCost), n => Math.round(n * 100) / 100),
     },
   };
 }
@@ -1310,7 +1318,8 @@ function render() {
 
   // The shipped time turns from the time alone to date and time after midnight, so it is put right on a kept row.
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), () => null, t => {
-    const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} tokens`].filter(Boolean);
+    const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} reviewer tokens`,
+      t.builderTokens !== null ? `${t.builderTokens.toLocaleString('en-GB')} builder tokens` : null, t.builderCost !== null ? `${dollars(t.builderCost)} builder cost` : null].filter(Boolean);
     const name = el('td', null, null, el('span', 'id', t.id), typeTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
     return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, fullButton(t)));
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => setText(tr.children[2], t.when) }), 'Nothing shipped yet.');
@@ -1320,7 +1329,9 @@ function render() {
   $('shipped-stats').hidden = m.shippedTotal === 0;
   $('shipped-stats').replaceChildren(...(m.shippedTotal ? [stat(m.stats.today, 'shipped today'),
     stat(med(m.stats.minutes), 'median minutes', m.stats.minutes), stat(med(m.stats.rounds), 'median review rounds', m.stats.rounds),
-    stat(med(m.stats.tokens, n => n.toLocaleString('en-GB')), 'median tokens', m.stats.tokens)] : []));
+    stat(med(m.stats.tokens, n => n.toLocaleString('en-GB')), 'median reviewer tokens', m.stats.tokens),
+    stat(med(m.stats.builderTokens, n => n.toLocaleString('en-GB')), 'median builder tokens', m.stats.builderTokens),
+    stat(med(m.stats.builderCost, dollars), 'median builder cost', m.stats.builderCost)] : []));
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
   const status = el('div', connected ? 'pill' : 'pill off', null, el('span', connected ? 'live' : 'live off'),

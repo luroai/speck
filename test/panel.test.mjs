@@ -834,13 +834,13 @@ test('0035 AC1: the stats row is drawn above the list, and a median with nothing
   const stats = p.byId('shipped-stats');
   assert.equal(stats.hidden, false);
   assert.deepEqual(stats.children.map(c => c.textContent),
-    ['2shipped today', '4median minutes · 1 ticket', '2median review rounds · 1 ticket', '1,500median tokens · 1 ticket']);
+    ['2shipped today', '4median minutes · 1 ticket', '2median review rounds · 1 ticket', '1,500median reviewer tokens · 1 ticket', '–median builder tokens · 0 tickets', '–median builder cost · 0 tickets']);
   const html = page();
   assert.ok(html.indexOf('id="shipped-stats"') < html.indexOf('id="shipped"'), 'stats come before the list');
   const none = fakePage([{ tickets: [T('0012', 'done', { finished: iso(now), rounds: [] })], ideas: [] }]);
   await none.settle();
   assert.deepEqual(none.byId('shipped-stats').children.map(c => c.textContent),
-    ['1shipped today', '–median minutes · 0 tickets', '–median review rounds · 0 tickets', '–median tokens · 0 tickets']);
+    ['1shipped today', '–median minutes · 0 tickets', '–median review rounds · 0 tickets', '–median reviewer tokens · 0 tickets', '–median builder tokens · 0 tickets', '–median builder cost · 0 tickets']);
 });
 
 test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon HH:MM before, a dash with no finished time', async () => {

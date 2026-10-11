@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { builderSpend } from './core.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly } from './speck.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
@@ -89,14 +90,18 @@ export function cmdRun() {
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
-  // Adds the exit to a build's run record, keeping what's there, so the board can tell a build that has finished.
-  // Written to a temporary file and renamed into place, so nothing reading it sees half a record.
+  // Adds the exit to a build's run record, keeping what's there, so the board can tell a build that has finished, with
+  // what its builder spent (builderSpend) when its log says. Written to a temporary file and renamed into place, so
+  // nothing reading it sees half a record.
   const recordExit = (id, file, code) => {
     const tmp = `${file}.${process.pid}.tmp`;
     try {
       const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (!rec || typeof rec !== 'object' || Array.isArray(rec)) throw new Error('it isn\'t a JSON object');
-      fs.writeFileSync(tmp, `${JSON.stringify({ ...rec, exited: new Date().toISOString(), exit_code: code }, null, 2)}\n`);
+      let builder = null;
+      try { builder = builderSpend(fs.readFileSync(path.join(path.dirname(file), `${id}.log`), 'utf8')); } catch { /* no log */ }
+      const { builder: _, ...kept } = rec;
+      fs.writeFileSync(tmp, `${JSON.stringify({ ...kept, exited: new Date().toISOString(), exit_code: code, ...(builder ? { builder } : {}) }, null, 2)}\n`);
       fs.renameSync(tmp, file);
     } catch (e) {
       fs.rmSync(tmp, { force: true, recursive: true });

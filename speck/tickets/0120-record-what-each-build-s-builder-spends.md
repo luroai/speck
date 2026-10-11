@@ -42,6 +42,8 @@ The panel shows what each build's builder spent, beside what its reviewer spent.
 - On a subscription, the cost is a guide rather than a bill.
 - Checked 2026-10-11: a build resumed after being killed (0110) appends to the same `speck/.cache/runs/<id>.log` (opened with `a`). A log can hold several `result` lines: one per resumed process and one per turn a background task's notification starts. In the 0099 log, `total_cost_usd` and `modelUsage` on each `result` line are cumulative for the whole session, including the run before the kill, while `usage` covers only that one turn. So the builder's tokens are taken from the last `result` line's `modelUsage` (summed over models), falling back to its `usage` when there's no `modelUsage`.
 - Failing before this build: none
+- The panel's existing "median tokens" stat is relabelled "median reviewer tokens" to match the Shipped rows (AC3), so the 0035 and 0050 tests that quote those labels were updated to the new wording.
+- Self-check: moved the new helpers from speck.mjs into core.mjs so speck.mjs stays under 0078's 600-line limit; recordExit drops any stale `builder` entry before adding the new one.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
