@@ -1,7 +1,7 @@
 ---
 id: "0113"
 title: "Run only the ticket's own tests until the final run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T10:12:02.019Z"
 ---
 # 0113 · Run only the ticket's own tests until the final run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 While writing tests and fixing code, a build re-runs the whole suite each time, though only the ticket's own tests are changing. Each run costs about 100 seconds here, and the full suite only needs to run when the work is finished.
@@ -46,9 +46,14 @@ Builds run only the ticket's own test files while they work, and the whole suite
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 442,202
+- Elapsed since build started: 9 min
+- Changed lines: 39 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups: none. Known limit: `speck test --files` doesn't take a `max_parallel_tests` turn, so several builds' partial runs can overlap with a full run.
 
