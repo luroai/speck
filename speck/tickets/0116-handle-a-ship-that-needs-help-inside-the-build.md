@@ -1,7 +1,7 @@
 ---
 id: "0116"
 title: "Handle a ship that needs help inside the build"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T11:19:50.797Z"
 ---
 # 0116 · Handle a ship that needs help inside the build
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0101 added the `speck-integrate` skill for a ship queue to start, but the queue (0102–0105) was cancelled when speck moved to one build at a time. Nothing starts the skill, so its handling of conflicts and of a failing base branch never runs.
@@ -48,9 +48,15 @@ started: "2026-10-11T11:19:50.797Z"
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Conflict step 2 sends contradictory changes directly to Asking the user while the merge still has unresolved files.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 358,978
+- Elapsed since build started: 12 min
+- Changed lines: 123 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups (Delivery log only, no inbox notes):
