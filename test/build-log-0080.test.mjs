@@ -72,8 +72,8 @@ test('0080 AC3: an event with a missing or unreadable timestamp shows without a 
 test('0080 AC1, AC2: the panel\'s build log box gets the times, with trailing blank lines still dropped', async () => {
   const r = panelRepo();
   writeLog(r.dir, '0001', [text('Reading the ticket.', AT), tool('Bash', { command: 'npm test' }, LATE), ev({ type: 'result', subtype: 'success', result: 'Done.' }), ''].join('\n'));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)], undefined, { TZ });
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], undefined, { TZ });
+  const { port } = p;
   try {
     assert.deepEqual(await getJson(port, '/api/tickets/0001/log'), { text: ['17:26:45 Reading the ticket.', '', '01:35:09 → Bash: npm test', 'Done.'].join('\n'), truncated: false });
   } finally { await stop(p); }
@@ -89,8 +89,8 @@ test('0080 AC4: the failure message under a queue row has no times', async () =>
   const runs = path.join(r.dir, 'speck', '.cache', 'runs');
   writeLog(r.dir, '0001', [text('Reading the ticket.', AT), tool('Bash', { command: 'npm test' }, AT), failed('nope', AT)].join('\n'));
   fs.writeFileSync(path.join(runs, '0001.json'), JSON.stringify({ id: '0001', session: 's', started: AT, exited: LATE, exit_code: 1 }));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)], undefined, { TZ });
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], undefined, { TZ });
+  const { port } = p;
   try {
     const state = await getJson(port, '/api/state');
     const t = state.tickets.find(x => x.id === '0001');

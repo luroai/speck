@@ -38,8 +38,8 @@ const restarts = p => (p.out().match(/restarted/g) || []).length;
 
 async function served(r = panelRepo()) {
   const c = cliCopy();
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)], c.cli);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], c.cli);
+  const { port } = p;
   return { r, c, port, p };
 }
 

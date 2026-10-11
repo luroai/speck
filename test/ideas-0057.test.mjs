@@ -143,8 +143,8 @@ test('0057 AC4: the panel lists only notes in speck/ideas/', async () => {
   const r = repo();
   r.write('speck/ideas/a.md', note('idea'));
   r.write('speck/ideas/done/c.md', note('ticketed (0002)'));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)]);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = p;
   try {
     const res = await request(port, { pathName: '/api/state' });
     assert.deepEqual(JSON.parse(res.body).ideas.map(i => i.path), ['speck/ideas/a.md']);

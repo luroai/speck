@@ -125,8 +125,8 @@ test('0039 AC4: in a real browser, dragging to select text in a ticket\'s detail
     `## Problem\nReading a long problem statement at Gate 1.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n2. A second criterion to select.\n## Out of scope\n- PDF export\n`);
   fs.mkdirSync(path.join(r.dir, 'speck', 'ideas'), { recursive: true });
   fs.writeFileSync(path.join(r.dir, 'speck', 'ideas', 'note.md'), '# A parked idea\n\nStatus: idea\n\nThe note text, long enough to select across.\nAnd a second line.\n');
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     const item = '#shaping .item';

@@ -99,8 +99,8 @@ const dotLeft = id => `parseFloat(getComputedStyle(${row(id)}.querySelector('.st
 
 test('0055 AC1-AC4: in a real browser, only the in-flight step moves, side to side within itself, through refreshes, and not with reduced motion', chrome, async () => {
   const r = repoWithBoard();
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the queue');

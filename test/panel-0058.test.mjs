@@ -171,8 +171,8 @@ test('0058 AC5: the Shipped rows and the median stat keep whole minutes', async 
 test('0058 AC3 and AC4: in a real browser the counter ticks between polls, and a selection in or across it stays', chrome, async () => {
   const r = panelRepo();
   r.write('0003-t.md', fm({ id: '"0003"', title: "'A long build'", status: 'building', started: iso(Date.now() - (7 * 60 + 30) * 1000) }), good);
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
   const sub = '#queue .q .sub';

@@ -72,8 +72,8 @@ test('0018 AC4: a change to panel.mjs or run.mjs makes a running panel hand over
   const c = cliCopy();
   const dir = path.dirname(c.cli);
   for (const name of ['panel.mjs', 'run.mjs']) assert.ok(fs.existsSync(path.join(dir, name)), `the copy has ${name}`);
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)], c.cli);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], c.cli);
+  const { port } = p;
   const restarts = () => (p.out().match(/restarted with the new code/g) || []).length;
   try {
     const panelFile = path.join(dir, 'panel.mjs');
@@ -91,8 +91,8 @@ test('0018 AC4: a change to panel.mjs or run.mjs makes a running panel hand over
 test('0018 AC5: speck init installs the new modules, and the panel serves its page from .speck/scripts/speck.mjs', async () => {
   const r = panelRepo();
   for (const name of ['speck.mjs', 'panel.mjs', 'run.mjs']) assert.ok(fs.existsSync(path.join(r.dir, '.speck', 'scripts', name)), name);
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)], path.join(r.dir, '.speck', 'scripts', 'speck.mjs'));
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], path.join(r.dir, '.speck', 'scripts', 'speck.mjs'));
+  const { port } = p;
   try {
     const res = await request(port);
     assert.equal(res.status, 200);

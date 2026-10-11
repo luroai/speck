@@ -48,8 +48,8 @@ test('0079 AC1: a rule added to speck set\'s shared checks applies in the panel 
   fs.writeFileSync(file, edited);
   const r = panelRepo();
   r.write('0002-two.md', fm({ id: '"0002"', title: 'Two', priority: 3 }));
-  const port = await freePort();
-  const p = await startPanel(r.dir, ['--port', String(port)], cli);
+  const p = await startPanel(r.dir, ['--port', String(await freePort())], cli);
+  const { port } = p;
   try {
     const token = tokenOf((await request(port)).body);
     const before = headOf(r);

@@ -191,8 +191,8 @@ test('0062 AC3 and AC4: in a real browser, a refusal keeps the pane open with th
   const write = size => r.write('0002-two.md', fm({ id: '"0002"', title: 'Two', size }),
     '## Problem\nUsers cannot export their bookings.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n');
   write('S');
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const press = async sel => {
     const [x, y] = await b.js(`(r => [r.left + r.width / 2, r.top + r.height / 2])(document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect())`);

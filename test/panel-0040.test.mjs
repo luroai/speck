@@ -167,8 +167,8 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
   const ideas = path.join(r.dir, 'speck', 'ideas');
   fs.mkdirSync(ideas, { recursive: true });
   fs.writeFileSync(path.join(ideas, 'note.md'), '# A parked idea\n\nStatus: idea\n\nThe note text, long enough to select across.\n');
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
   const pill = () => b.js(`document.getElementById('pills').textContent`);

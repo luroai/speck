@@ -265,8 +265,8 @@ test('0063 AC1-AC4: in a real browser, Full ticket from the queue and Shipped op
   fs.mkdirSync(runs, { recursive: true });
   fs.writeFileSync(path.join(runs, '0002.log'), Array.from({ length: 120 }, (_, i) => `line ${i}`).join('\n'));
   r.write('0003-done.md', fm({ id: '"0003"', title: 'A shipped one', status: 'done', started: at(7), finished: at(8) }), body, 'speck/tickets/done');
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const isHidden = () => b.js(`document.getElementById('full-ticket').hidden`);
   const fullIn = sel => `[...document.querySelectorAll('${sel} button')].find(x => x.textContent === 'Full ticket')`;
@@ -301,8 +301,8 @@ test('0063 AC1-AC4: in a real browser, Full ticket from the queue and Shipped op
 test('0063 self-check: in a real browser, Set ready in the pane keeps the pane open on the ticket, with the focus in it', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
   r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     const item = `[...document.querySelectorAll('#shaping .item')].find(n => n.textContent.includes('Two'))`;

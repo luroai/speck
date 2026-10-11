@@ -61,8 +61,8 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     `## Problem\nA long ticket to scroll through.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n${criteria}\n## Out of scope\n- PDF export\n`);
   long('draft');
   for (let i = 3; i <= 40; i++) { const id = String(i).padStart(4, '0'); r.write(`${id}-d.md`, fm({ id: `"${id}"`, title: `Draft ${id}`, status: 'draft' })); }
-  const port = await freePort();
-  const panel = await startPanel(r.dir, ['--port', String(port)]);
+  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const wait = ms => new Promise(res => setTimeout(res, ms));
   const item = '#shaping .item';

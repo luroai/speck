@@ -40,6 +40,7 @@ A panel test no longer fails because another test took the port it picked.
 - `freePort()` is used 41 times across about 20 test files. Most go through `startPanel()`.
 - Seen 2026-10-11 with no other build running, so it's a race inside one suite run, not between builds.
 - Failing before this build: none
+- Self-check: no changes (checked a missing or malformed --port value, the panel exiting before its message is read, and a panel that starts on a port other than the one given, which startPanel stops and fails)
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
