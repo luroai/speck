@@ -41,6 +41,7 @@ speck is ready to be released as 0.3.0, with a repeatable way to release that ke
 - `v0.2.0` was tagged on 11 October 2026 on `3250c9a` (0092's ship).
 - Between this ticket shipping and the tag being pushed, the README's prompt points at a tag that doesn't exist yet, so tag straight after it ships.
 - Waits for 0124 and 0125, so they're in the release.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
