@@ -11,6 +11,7 @@ reviewer_effort: ""              # blank: the reviewer's own default. Otherwise 
 
 auto_ship: false                 # true: the build ships a ticket as soon as the reviewer approves it, without waiting for /speck-ship
 auto_ship_risk: [low]            # which ticket risks auto_ship covers: low, high or both
+ship_wait_minutes: 30            # how long speck ship waits for staged changes in the base branch's checkout to be committed or unstaged before it refuses
 
 worktrees: true                  # true: each build gets its own git worktree beside your checkout (speck start). false: builds branch in your checkout
 worktree_setup: ""               # run in each new worktree, for example: npm ci

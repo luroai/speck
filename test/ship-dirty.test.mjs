@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { shipRepo, remoteMoves, gIn, runIn } from './support/ship.mjs';
+import { spawnSync } from 'node:child_process';
+import { shipRepo, remoteMoves, gIn, runIn, CLI, env } from './support/ship.mjs';
 
 // ---------- Shipping while you keep editing in the main checkout ----------
 // The ticket changes shared.txt. Edits to other files in the base checkout stay there, uncommitted, through the merge.
@@ -46,12 +47,13 @@ test('ship refuses an uncommitted edit to a file the ticket changes, names it an
   assert.equal(r.statusIn(r.wt), 'approved');
 });
 
-test('ship refuses staged changes in the base checkout, even in a file the ticket does not change', () => {
+test('ship refuses staged changes in the base checkout, even in a file the ticket does not change, once its wait is up', () => {
   const r = shipRepo();
   fs.writeFileSync(path.join(r.dir, 'other.txt'), 'mine\n');
   r.g('add', 'other.txt');
   const before = r.snapshot();
-  const res = runIn(r.dir, 'ship', '1');
+  // ship waits ship_wait_minutes for staged changes to clear first (0115): a minute is shortened to 10ms here.
+  const res = spawnSync(process.execPath, [CLI, 'ship', '1'], { cwd: r.dir, encoding: 'utf8', env: { ...env, SPECK_SHIP_MINUTE_MS: '10' } });
   assert.equal(res.status, 1, res.stderr + res.stdout);
   assert.match(res.stderr, /other\.txt \(staged\)/);
   assert.match(res.stderr, /Nothing was shipped/);

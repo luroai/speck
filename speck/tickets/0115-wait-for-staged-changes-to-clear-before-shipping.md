@@ -38,6 +38,8 @@ When staged changes in the base branch's checkout are all that stops a ship, `sp
 ## Notes
 - Assumption: 30 minutes as the default wait. Change it if you'd rather.
 - Failing before this build: none
+- The existing test in `test/ship-dirty.test.mjs` for staged changes now shortens the wait (SPECK_SHIP_MINUTE_MS) and still checks the same refusal, since ship now waits before refusing (AC2).
+- Self-check: a commit made on the base branch while ship waited after the tests would have been reset away if the merge then failed (ship undid to the base commit it read before the tests), so ship now re-reads the base commit after the wait, with a test.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

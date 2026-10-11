@@ -102,10 +102,25 @@ function shipFolders(repo, branch, base) {
   return { main, work, mergeAt: baseAt || work, linked: branchAt && branchAt !== main ? branchAt : null };
 }
 
-// Tracked files with uncommitted changes, staged or not.
-const changedFiles = dir => git(['status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(Boolean).map(l => l.slice(3));
+// Tracked files with uncommitted changes, staged or not. --no-optional-locks keeps git status from rewriting the
+// index, so checking again and again while ship waits never gets in the way of your own `git commit`.
+const status = dir => git(['--no-optional-locks', 'status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(Boolean);
+const changedFiles = dir => status(dir).map(l => l.slice(3));
 // Tracked files with changes in the index.
-const stagedFiles = dir => git(['status', '--porcelain', '--untracked-files=no'], dir).split('\n').filter(l => l && l[0] !== ' ').map(l => l.slice(3));
+const stagedFiles = dir => status(dir).filter(l => l[0] !== ' ').map(l => l.slice(3));
+
+// How long ship waits for staged changes in the base checkout to clear (0115). SPECK_SHIP_MINUTE_MS and
+// SPECK_SHIP_POLL_MS shorten a minute and the time between checks, for speck's own tests.
+const POLL_MS = 2000;
+const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const envMs = (name, fallback) => Number(process.env[name]) > 0 ? Number(process.env[name]) : fallback;
+
+export function shipWaitMinutes(cfg) {
+  const n = cfg.ship_wait_minutes ?? 30;
+  if (!Number.isInteger(n) || n < 1)
+    throw new SpeckError(`ship_wait_minutes in speck/config.yml must be a whole number of 1 or more (got ${JSON.stringify(n)}). Fix it with \`speck config set ship_wait_minutes 30\`, then run this again.`);
+  return n;
+}
 
 // The files git lists, one per line and indented, after the line that says why it refused.
 function listedIn(r, why) {
@@ -122,6 +137,7 @@ export function shipTicket(repo, id) {
   const pad = String(id).padStart(4, '0');
   const base = cfg.base_branch;
   const branch = ticketBranch(repo, cfg, pad);
+  const waitMinutes = shipWaitMinutes(cfg);
   const { main, work, mergeAt, linked } = shipFolders(repo, branch, base);
   const here = fs.realpathSync(repo);
   if (!fs.existsSync(work))
@@ -132,6 +148,9 @@ export function shipTicket(repo, id) {
       : `The ticket's worktree at ${work} has uncommitted or untracked changes. Commit or remove them there, then run this again.`);
   // Uncommitted edits in the base checkout can stay through the merge, so you can keep working there while
   // builds ship, unless they're staged (git won't merge over a changed index) or in a file the ticket changes.
+  // When staged files are all that's in the way, it waits for them to be committed or unstaged, up to
+  // ship_wait_minutes in all, changing nothing meanwhile.
+  let waitLeft = waitMinutes * envMs('SPECK_SHIP_MINUTE_MS', 60000);
   const clash = when => {
     // Without a worktree, the ship runs in this folder, which was clean before the tests, so any change at all stops it.
     if (mergeAt === work) {
@@ -139,18 +158,35 @@ export function shipTicket(repo, id) {
       if (changed.length) throw new SpeckError(`These files in ${work} have uncommitted changes${when}: ${changed.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them, then ship again.`);
       return;
     }
-    const staged = new Set(stagedFiles(mergeAt));
     const touched = new Set(git(['diff', '--name-only', `${base}...${branch}`], repo).split('\n').filter(Boolean));
-    const why = changedFiles(mergeAt).flatMap(f => staged.has(f) ? [`${f} (staged)`] : touched.has(f) ? [`${f} (the ticket changes it too)`] : []);
-    if (why.length)
+    const inWay = () => {
+      const staged = new Set(stagedFiles(mergeAt));
+      return changedFiles(mergeAt).filter(f => staged.has(f) || touched.has(f));
+    };
+    const stagedOnly = files => files.length && !files.some(f => touched.has(f));
+    let files = inWay();
+    if (stagedOnly(files) && waitLeft > 0) {
+      console.log(`These files in ${mergeAt}, where ${base} is checked out, are staged${when}: ${files.join(', ')}. git won't merge over staged changes, so speck ship is waiting up to ${waitMinutes} minutes for them to be committed or unstaged.`);
+      const poll = envMs('SPECK_SHIP_POLL_MS', POLL_MS);
+      const until = Date.now() + waitLeft;
+      while (stagedOnly(files) && Date.now() < until) {
+        sleep(Math.min(poll, until - Date.now()));
+        files = inWay();
+      }
+      waitLeft = until - Date.now();
+    }
+    if (files.length) {
+      const staged = new Set(stagedFiles(mergeAt));
+      const why = files.map(f => staged.has(f) ? `${f} (staged)` : `${f} (the ticket changes it too)`);
       throw new SpeckError(`These files in ${mergeAt}, where ${base} is checked out, have uncommitted changes${when} that stop the merge: ${why.join(', ')}. Nothing was shipped and they're untouched. Commit or stash them (git won't merge over staged changes, even in other files), then ship again.`);
+    }
   };
   clash('');
   const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
   const catchUp = remoteBaseCatchUp(repo, remote, base);
   const start = git(['branch', '--show-current'], work).trim() || git(['rev-parse', 'HEAD'], work).trim();
   const branchSha = git(['rev-parse', branch], repo).trim();
-  const baseSha = git(['rev-parse', base], repo).trim();
+  let baseSha = git(['rev-parse', base], repo).trim();
   git(['checkout', '-q', branch], work);
   const back = () => git(['checkout', '-q', start], work);
   try {
@@ -158,6 +194,8 @@ export function shipTicket(repo, id) {
     if (!runTests(work, cfg)) throw testFailure(work, cfg, base, catchUp || baseSha);
     clash(', made while the tests ran');
   } catch (e) { back(); throw e; }
+  // Waiting may have let you commit to the base branch, so a failure from here puts it back to that commit, not an older one.
+  baseSha = git(['rev-parse', base], repo).trim();
   // Close the ticket on the branch, so the merge is what makes it done.
   const t = findTicket(work, pad);
   writeField(t, 'status', 'done');
