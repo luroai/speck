@@ -1,7 +1,7 @@
 ---
 id: "0015"
 title: "Ask the user to confirm before speck ship merges"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
+cancel_reason: "Goes against the one-build-at-a-time principle: the user sets tickets ready and walks away, with auto_ship shipping each one. See speck/ideas/done/2026-10-11-one-build-at-a-time.md."
+cancelled: 2026-10-11
 
 ---
 # 0015 · Ask the user to confirm before speck ship merges
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 Only Claude Code stops an agent starting `/speck-ship`, using `disable-model-invocation`. In Cursor, Codex and other agents, the "only you ship" gate is an instruction the agent is asked to follow, and the CLI ships for anyone who calls it.
