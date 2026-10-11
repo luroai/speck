@@ -38,6 +38,7 @@ speck describes itself in different words in different places. `package.json` an
 
 ## Notes
 - Failing before this build: none
+- Self-check: narrowed init's auto_ship line to tickets whose risk is in auto_ship_risk (the default covers only low risk), and tested it
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

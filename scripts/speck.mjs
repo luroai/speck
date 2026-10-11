@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// speck: small tickets, independent review, you merge.
+// speck: Small tickets. Independent review. You ship.
 // Deterministic helpers used by the speck skills. No dependencies.
 
 import fs from 'node:fs';
@@ -535,10 +535,10 @@ function cmdDiffstat() {
   if (total > cfg.limits.max_changed_lines) throw new SpeckError('Over the size limit: stop and propose a split.', 2);
 }
 
-const HELP = `speck: small tickets, independent review, you merge.
+const HELP = `speck: Small tickets. Independent review. You ship.
 
   speck init                          set up speck in this repo, or update it (re-run any time)
-  speck doctor                        check that git, GitHub, Claude Code and Codex are ready
+  speck doctor                        check that Node.js, git, the builder and the reviewer are ready
   speck detect                        print what setup needs to know about this folder and machine, as JSON
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
