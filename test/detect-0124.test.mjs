@@ -149,8 +149,17 @@ test('0124 AC1: the brief describes other_workflows in speck detect, and setup a
 
 test('0124 AC4: the skill matches speck\'s defaults: worktrees on, auto_ship off', () => {
   assert.match(section, /`worktrees` is on by default/);
-  assert.match(section, /keep `auto_ship` off \(its default\)/);
+  assert.match(section, /Keeping `auto_ship` off \(its default\)/);
   const config = fs.readFileSync(path.join(ROOT, 'templates', 'config.yml'), 'utf8');
   assert.match(config, /^worktrees: true/m);
   assert.match(config, /^auto_ship: false/m);
+});
+
+test('0124 review F1: a pull-request rule and a reviewer rule are separate clashes with their own remedies', () => {
+  const pr = section.split('\n').find(l => /requirement that changes go through pull requests/.test(l)) || '';
+  const reviewer = section.split('\n').find(l => /requirement for a particular reviewer/.test(l)) || '';
+  assert.ok(pr && reviewer && pr !== reviewer);
+  assert.match(pr, /`\/speck-ship` still bypasses pull requests/);
+  assert.doesNotMatch(reviewer, /auto_ship/);
+  assert.match(reviewer, /set it as the reviewer \(section 5\)/);
 });
