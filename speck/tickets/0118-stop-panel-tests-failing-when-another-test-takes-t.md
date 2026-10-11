@@ -50,6 +50,7 @@ A panel test no longer fails because another test took the port it picked.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -112,6 +113,70 @@ A panel test no longer fails because another test took the port it picked.
     ],
     "escalation_question": "",
     "summary": "The helper recovers from occupied ports, preserves other startup errors, and callers use the actual port. The supplied suite passed, but one new test can still fail under the same port race. Fix that assertion before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "922891f0dff442f9733551cb3e993a5db08223d2",
+    "thread_id": "01a12a8b-ccef-7822-b15e-019776a85189",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 729583,
+      "cached_input_tokens": 531840,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1289,
+      "reasoning_output_tokens": 98
+    },
+    "saved_at": "2026-10-11T10:41:30.802Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/panel.mjs startPanel retries the occupied-port diagnostic on a newly selected port. Both AC1 AC3 tests in test/panel-0118.test.mjs hold the original port open and successfully request the replacement port; both passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "startPanel propagates other startup failures with captured panel output. The AC2 test exercises missing configuration and an invalid port, checks their messages, and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "startPanelOnce returns the port from the printed URL; callers and readyPanel use p.port. The revised AC3 test checks the URL and a real HTTP request against p.port, without assuming the original port remains available. All AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied fresh whole-suite output reports 1002 passes, zero failures and three skips. Tests were not rerun during this read-only review because they create files."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0118.test.mjs",
+        "issue": "Resolved: the new test no longer requires the actual port to equal the initially picked port, so a successful retry does not fail its assertion.",
+        "suggested_fix": "Implemented: check the printed URL and HTTP response using p.port.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Panel tests now recover when another test takes their chosen port and send requests to the replacement port. Other startup errors still fail with the panel’s message. The earlier test race is fixed, the supplied suite passes, and no blocking concerns remain."
   }
 }
 ```
