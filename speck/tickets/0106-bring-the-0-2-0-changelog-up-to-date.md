@@ -1,7 +1,7 @@
 ---
 id: "0106"
 title: Prepare release 0.3.0                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T14:35:05.249Z"
 ---
 # 0106 · Prepare release 0.3.0
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 speck has no release process. Every ship pushes straight to `main`, so anyone installing from `main` gets whatever shipped minutes ago, and the 0.2.0 tag was only created on 11 October, a day after the README's setup prompt started pointing at it. A lot has shipped since 0.2.0, and none of it is in a release.
@@ -48,7 +48,75 @@ speck is ready to be released as 0.3.0, with a repeatable way to release that ke
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 138,145
+- Elapsed since build started: 4 min
+- Changed lines: 48 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0c46b9254bbcc0ce68716204b3c5db178bb8cb84",
+    "thread_id": "01a12b66-3491-7763-a918-20c17764aaab",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 137390,
+      "cached_input_tokens": 95104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 755,
+      "reasoning_output_tokens": 34
+    },
+    "saved_at": "2026-10-11T14:38:35.469Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json sets 0.3.0. test/release-0106.test.mjs exercises the real init command and checks its 0.3.0 output; the saved full test output confirms both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds four plain-English groups covering changes recorded since v0.2.0. git diff v0.2.0 -- CHANGELOG.md confirms the old section is unchanged. Both AC2 tests passed, including the section hash check."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md names v0.3.0 in the setup prompt; README.md and docs/brief.md describe 0.3.0 as a public preview. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "test/support/release.mjs compares all three release versions. Passing AC4 tests exercise mismatches and missing values, including an older matching changelog section. test/release-0092.test.mjs now checks the current package version."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md's Releases section covers moving main, tagged releases, the README's release reference and maintainer tagging after shipping. The AC5 content test passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release version, setup prompt and documentation agree on 0.3.0. The changelog preserves 0.2.0 and describes the new features, and tests guard against version mismatches. The saved full suite output confirms zero failures. Ready for merge; the maintainer must create and push the release tag immediately after shipping."
+  }
+}
+```
+
+</details>
