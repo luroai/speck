@@ -1,7 +1,7 @@
 ---
 id: "0096"
 title: "Warn when a criterion asks for the whole suite to pass"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T08:18:15.053Z"
 ---
 # 0096 · Warn when a criterion asks for the whole suite to pass
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A criterion like "the full test suite passes" can't be met when `main` is already broken, so it pushes the builder to fix things outside the ticket. That's how 0090 came to fix an unrelated test.
@@ -44,9 +44,15 @@ Tickets ask that no test that passed before the change fails, and `speck lint` w
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The detector misses ordinary requirements such as 'All tests must pass' and 'The entire test suite should pass'.; F2 The unbounded 'pass' match generates false warnings for words such as 'passively', violating AC4.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,134,225
+- Elapsed since build started: 12 min
+- Changed lines: 24 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox.
 - Known limit: the warning matches a fixed list of phrasings (full, whole or entire suite, or all tests, then pass, passes, passed, passing or green, optionally after words like must, should or still). Other wordings, such as "every test passes", "the test suite passes" or "npm test passes", get no warning.
