@@ -49,6 +49,9 @@ When staged changes in the base branch's checkout are all that stops a ship, `sp
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox note):
+  - When the ticket branch isn't checked out anywhere and the base branch is checked out in another worktree, ship switches the folder it ran from to the ticket branch before the tests. Killing ship during a wait after the tests (as during the tests themselves) leaves that folder on the ticket branch.
+  - A wait after the tests says nothing new if one before the tests already said it was waiting, as AC1 asks; the shared budget still caps the total at `ship_wait_minutes`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -191,6 +194,78 @@ When staged changes in the base branch's checkout are all that stops a ship, `sp
     ],
     "escalation_question": "",
     "summary": "The repeated notice and ordinary rename problems are fixed, and the supplied suite has no failures. One filename edge case remains: staged edits to files with non-ASCII names can wait instead of refusing immediately. Use the same filename format for both sides of the comparison before merge. Tests were inspected but not rerun."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "79757678743649372b142772d221019cb4cef3f5",
+    "thread_id": "01a12a9a-fccf-7b41-988a-c872bd72e5b3",
+    "seconds": 62,
+    "usage": {
+      "input_tokens": 1227993,
+      "cached_input_tokens": 864000,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2408,
+      "reasoning_output_tokens": 278
+    },
+    "saved_at": "2026-10-11T11:01:53.161Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Shipping announces the staged files once, polls every two seconds and resumes when they are committed or unstaged. The repeated-wait regression passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The shared waiting budget uses ship_wait_minutes, defaults to 30 and refuses on expiry. Configuration accepts positive whole numbers; timeout and invalid-setting tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Overlapping changes refuse immediately. Both status and ticket-diff paths now use NUL delimiters, correctly handling renames and non-ASCII filenames; regression tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Waiting uses read-only Git queries with optional index locking disabled. Tests confirm both checkouts, including their index files, remain unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "Path parsing previously missed overlaps involving staged renames or quoted non-ASCII filenames.",
+        "suggested_fix": "Read both status and ticket-diff paths with NUL delimiters and compare raw paths.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "Shipping previously repeated its waiting announcement when tests staged more changes after an earlier wait.",
+        "suggested_fix": "Share the announcement flag across all waiting checks within one ship operation.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both earlier findings are fixed. Shipping waits for unrelated staged changes, refuses overlapping edits immediately and leaves both checkouts untouched while waiting. The supplied suite reports 1,034 passes, no failures and three skips."
   }
 }
 ```
