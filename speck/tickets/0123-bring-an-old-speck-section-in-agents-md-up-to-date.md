@@ -50,6 +50,10 @@ Re-running `speck init` brings the speck section of AGENTS.md up to date with th
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
+Known limits (no follow-up tickets):
+- Only a heading spelled exactly `## speck` (indented up to three spaces) counts as speck's section. A `## Speck` or `### speck` heading with the old text gets the "may be out of date" warning instead and is left alone.
+- The section boundary follows the common Markdown rules (ATX and setext headings, fenced code, rules, lists and quotes), not every CommonMark corner case, such as an HTML block holding a heading-like line.
+
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
 
@@ -193,6 +197,83 @@ Re-running `speck init` brings the speck section of AGENTS.md up to date with th
     ],
     "escalation_question": "",
     "summary": "The original indentation bug is fixed, and the recorded suite passes. However, the added handling for underlined headings can delete the first line of a multiline heading belonging to the project. That preservation bug still needs fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3747130e260df11592c8c150044ab7b62279c777",
+    "thread_id": "01a12afa-1f70-7222-9889-36bf11b82046",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 302005,
+      "cached_input_tokens": 254336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2531,
+      "reasoning_output_tokens": 148
+    },
+    "saved_at": "2026-10-11T12:45:50.791Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/install.mjs syncAgentsSection replaces stale sections and recognises same-level or higher headings, including indented and multiline setext headings, while skipping fenced code. The corresponding AC1 integration tests pass; independent read-only checks confirmed the repaired boundaries."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "syncAgentsSection preserves the original prefix and suffix. Passing AC2 tests check exact contents, including mixed line endings, indented boundaries and complete multiline headings. Independent checks confirmed preservation for both previous findings."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 integration test verifies unchanged contents and no update message. cmdInit writes only changed text; independent checks confirmed updates are idempotent."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 integration test verifies section addition and update messages for both missing AGENTS.md and an existing file without a speck section."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC5 integration test verifies that unheaded speck instructions remain unchanged, with a warning and the current text displayed for comparison."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/install.mjs:syncAgentsSection",
+        "issue": "Indented headings previously caused subsequent user sections to be deleted. The fix remains effective, supported by regression tests and independent checks.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/install.mjs:syncAgentsSection",
+        "issue": "Multiline setext headings previously lost their first line. Tracking the paragraph start now preserves the whole heading; the new regression test passes and an independent reproduction confirms the fix.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Re-running init now refreshes outdated speck instructions, preserves surrounding project instructions and warns when it cannot identify a section safely. Both preservation bugs are fixed. All acceptance criteria pass, and the recorded suite has 1,086 passing tests, three skips and no failures."
   }
 }
 ```
