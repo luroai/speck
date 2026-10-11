@@ -1,7 +1,7 @@
 ---
 id: "0118"
 title: "Stop panel tests failing when another test takes their port"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-11T10:35:54.329Z"
 ---
 # 0118 · Stop panel tests failing when another test takes their port
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Panel tests fail now and then with "Port … is already in use, so the panel didn't start". The helper `freePort()` in `test/support/panel.mjs` finds a free port, releases it, and the panel is started on it a moment later. Meanwhile another test file running in parallel can take the same port. It stopped 0097 shipping, and it cost 0111's build a re-run. Each time, the builder had to work out that it wasn't their change.
@@ -50,3 +50,70 @@ A panel test no longer fails because another test took the port it picked.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "73950426a3119339cdef4eb2320cc1328c3a97f3",
+    "thread_id": "01a12a8b-ccef-7822-b15e-019776a85189",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 337648,
+      "cached_input_tokens": 219648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 804,
+      "reasoning_output_tokens": 98
+    },
+    "saved_at": "2026-10-11T10:40:00.698Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "startPanel in test/support/panel.mjs retries occupied ports, and both held-port tests exercise this successfully. However, test/panel-0118.test.mjs:39 asserts p.port === asked after releasing asked, so that test still fails if another test takes its picked port."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "startPanel retries only the occupied-port diagnostic; the AC2 test in test/panel-0118.test.mjs exercises missing configuration and an invalid port, checking the panel's messages. Both passed in the supplied output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "startPanelOnce returns the printed port; updated callers and readyPanel use p.port. The held-port tests make real HTTP requests to the replacement port and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The supplied whole-suite output reports 1002 passes, zero failures and three skips. No previously passing test is reported failing. Tests were not rerun because they create files and this review is read-only."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0118.test.mjs:39",
+        "issue": "The new free-port test reintroduces the exact race this ticket fixes. Between freePort() releasing asked and startPanel binding it, another parallel test can take asked. The helper then successfully retries, but assert.equal(p.port, asked) fails the suite.",
+        "suggested_fix": "Remove the requirement that the returned port equal the initially released port in this test. Check the printed URL and successful requests against p.port; startPanel already verifies each successful attempt uses the port supplied to that attempt.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The helper recovers from occupied ports, preserves other startup errors, and callers use the actual port. The supplied suite passed, but one new test can still fail under the same port race. Fix that assertion before merging."
+  }
+}
+```
+
+</details>

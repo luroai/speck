@@ -31,12 +31,13 @@ for (const [label, form] of [['--port <n>', port => ['--port', String(port)]], [
   });
 }
 
-test('0118 AC3: a panel on a free port reports that port', async () => {
+test('0118 AC3: a panel reports the port it started on', async () => {
   const r = panelRepo();
-  const asked = await freePort(); // only to compare: requests go to p.port
-  const p = await startPanel(r.dir, ['--port', String(asked)]);
+  // Not compared with the picked port, which another test can take first; startPanel itself checks the panel is on the
+  // port its last attempt gave it.
+  const p = await startPanel(r.dir, ['--port', String(await freePort())]);
   try {
-    assert.equal(p.port, asked);
+    assert.match(p.out(), new RegExp(`http://127\\.0\\.0\\.1:${p.port}/`));
     assert.equal((await request(p.port)).status, 200);
   } finally { await stop(p); }
   const { port: readyPort, p: rp } = await readyPanel();
