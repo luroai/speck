@@ -302,10 +302,13 @@ ${ready ? 'speck is installed.' : 'speck is installed, but fix the ✗ items abo
 Next:
   1. Commit the new files so everyone working on this repo gets speck.
   2. Set commands.test in speck/config.yml (the command that runs your tests).
-  3. Open your coding agent in this folder and type /speck-capture to save your first idea.
+  3. Open your coding agent in this folder and type /speck-ticket to shape an idea into small tickets.
+  4. Read each draft ticket, then set it ready, in the panel or with \`node .speck/scripts/speck.mjs set <id> status ready\`.
+  5. Start \`node .speck/scripts/speck.mjs run\`. It builds your ready tickets one at a time, each reviewed on its own branch.
+  6. Follow along in \`node .speck/scripts/speck.mjs panel\`.
 
-Each ticket is built and reviewed on its own branch and then waits as "approved".
-Read it with \`node .speck/scripts/speck.mjs pack <id>\`, then type /speck-ship <id> to merge it into ${cfg.base_branch}.
+An approved ticket waits for you: read it with \`node .speck/scripts/speck.mjs pack <id>\`, then type /speck-ship <id> to merge it into ${cfg.base_branch}.
+With auto_ship on in speck/config.yml, a ticket whose risk is in auto_ship_risk ships by itself once the reviewer approves it.
 
 To update speck later, run the same install command again.`);
 }
