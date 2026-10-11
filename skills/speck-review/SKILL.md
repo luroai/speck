@@ -13,7 +13,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 - All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit, and so can the status change from `building` to `reviewing` that round 1 makes (or from `approved` to `reviewing`, in a re-review after merging the base branch).
 - You stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back. Untracked files don't stop `speck review` or `speck record`; modified or staged tracked files that aren't committed do.
-- The test output is fresh and from the whole suite: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`, never `speck test --files`. `speck test` runs `commands.test` from `speck/config.yml`, waiting its turn if `max_parallel_tests` test runs are already going in this repo.
+- The test output is fresh and from the whole suite: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`, never `speck test --files`. When it's TAP, as `node --test` writes it, the reviewer gets a summary instead of the full output: the run's totals, every failing test with its details, and every test whose name contains the ticket's id, with the path of the full output file. `speck test` runs `commands.test` from `speck/config.yml`, waiting its turn if `max_parallel_tests` test runs are already going in this repo.
 
 ## Reviewer model and effort
 

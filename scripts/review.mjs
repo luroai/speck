@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
 import { fullPrompt, runCommandReview } from './reviewers.mjs';
+import { testOutput } from './tap.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -219,7 +220,7 @@ function reviewSetup(repo, id, opts) {
   requireCommitted(repo, ticket, 'Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const diff = reviewDiff(repo, sinceSha);
-  const tests = opts.tests ? fs.readFileSync(opts.tests, 'utf8') : '(no test output provided)';
+  const tests = testOutput(opts.tests, ticket.fm.id || id);
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
   return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, diff, tests, response };
 }
@@ -342,7 +343,7 @@ export function cmdPrompt(args) {
   const base = git(['merge-base', cfg.base_branch, 'HEAD'], repo).trim();
   const diff = reviewDiff(repo, base);
   const testsArg = args.find(a => a.startsWith('--tests='));
-  const tests = testsArg ? fs.readFileSync(testsArg.slice(8), 'utf8') : '(no test output provided)';
+  const tests = testOutput(testsArg?.slice(8), t.fm.id || args[0]);
   console.log(fullPrompt(repo, t, cfg, diff, tests));
 }
 
