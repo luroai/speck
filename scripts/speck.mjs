@@ -561,7 +561,8 @@ const HELP = `speck: small tickets, independent review, you merge.
   speck play <id>                     carry a paused build on from where it was paused
   speck stop <id>                     end a build speck run launched for good, and block its ticket
   speck diffstat                      changed lines against the size limit
-  speck test                          run the test command, waiting for a turn if max_parallel_tests runs are going
+  speck test [--fresh]                run the test command, waiting for a turn if max_parallel_tests runs are going,
+                                      or reuse the result for the same code (--fresh: always run it)
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f]       print the reviewer prompt (for subagent reviewers)
