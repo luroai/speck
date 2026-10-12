@@ -1,7 +1,7 @@
 ---
 id: "0139"
 title: "Time a build up to its approval, not its ship"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-12
 started: "2026-10-12T21:40:24.386Z"
 approved: "2026-10-12T21:43:54.348Z"
+finished: "2026-10-12T21:45:01.076Z"
 
 ---
 # 0139 · Time a build up to its approval, not its ship
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel times a build from when it started to when it shipped. A ticket that waits for the user to ship it, such as a high-risk one, keeps counting the whole time it waits: 0128 shows 89 minutes when the build itself took about 6. That makes the time look wrong and skews the Shipped section's median.
