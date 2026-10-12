@@ -1,7 +1,7 @@
 ---
 id: "0132"
 title: "Read a ticket's review pack in the panel"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-11
 ---
 # 0132 · Read a ticket's review pack in the panel
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The review pack, the summary to read before shipping, is only available by running `speck pack <id>` in a terminal. A user working from the panel can see that a ticket is approved or shipped but can't read what the reviewer found.
