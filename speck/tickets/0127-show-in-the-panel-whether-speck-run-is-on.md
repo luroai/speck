@@ -38,6 +38,7 @@ The panel always shows whether `speck run` is on or off for this repo, and keeps
 - Showing what `speck run` is doing beyond on or off (its output, its builds); the queue rows already show builds.
 
 ## Notes
+- Failing before this build: none
 - `speck run` keeps one lock per repo, `speck/.cache/runs/run.lock`, holding its process id (`takeRunLock` in `scripts/run.mjs`). Reading it must never take, change or delete it.
 - The on/off indicator sits where it's always visible, not inside a ticket row.
 
