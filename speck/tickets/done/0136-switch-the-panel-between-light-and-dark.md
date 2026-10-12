@@ -1,7 +1,7 @@
 ---
 id: "0136"
 title: Give the panel a dark look you can switch to                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-12
+started: "2026-10-12T18:57:29.734Z"
+finished: "2026-10-12T19:03:16.830Z"
 
 ---
 # 0136 · Give the panel a dark look you can switch to
 
-**Status:** 📋 ready
+**Status:** ✅ done
 
 ## Problem
 Since 0134 the panel is light only. The zen mockup it copies has a dark version with a light/dark button in the top-right, and the user wants it: some people prefer a dark screen, especially when they leave the panel open in the evening.
@@ -47,12 +49,82 @@ A button in the top-right of the panel switches between the light zen look and a
 - Hard-coded light-look shades (for example the `rgba(31, 37, 33, …)` backdrop and shadow behind the full ticket pane) need dark counterparts too, so nothing stays light-on-light or dark-on-dark in the dark look.
 - Assumed from the mockup: before you choose, the panel follows the computer's setting (AC5). Change AC5 if it should always start light.
 - Checked 2026-10-12: the dark colours, button and `speck-theme` storage key, read from `mockups/zen/panel.html` in the local speck-site project.
+- Failing before this build: none
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 104,621
+- Elapsed since build started: 5 min
+- Changed lines: 39 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "18c9a2a6e45504c1f6b30aa405dc5b52503bc004",
+    "thread_id": "01a1317d-f634-72b2-8d7f-ba5c0125261f",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 103806,
+      "cached_input_tokens": 59136,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 815,
+      "reasoning_output_tokens": 29
+    },
+    "saved_at": "2026-10-12T19:02:10.372Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html places the named native button after the pills, switches icons through CSS, and toggles the theme on click. Passing tests in test/panel-0136.test.mjs verify placement, accessible name, icons, no text, and browser activation by click, Enter and Space."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html defines the exact dark palette and dark backdrop/shadow overrides. Passing AC2 tests check colour values, uniqueness and contrast; the passing browser test checks both computed body backgrounds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The diff preserves the original light :root blocks. The AC3 paletteProblems test and existing 0126 AC2 colour tests pass in /tmp/speck-0136-tests.txt; their existing checks were unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The button handler stores speck-theme in localStorage; theme-start applies valid saved values before body parsing. Passing AC4 tests exercise saved choices against opposite system settings and actual browser persistence through reload."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "theme-start uses prefers-color-scheme when no valid preference is saved and follows subsequent system changes. Passing AC5 tests exercise both initial settings and changes, including a real browser with emulated system preferences."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now switches between light and dark, remembers your choice, and follows your computer’s setting until you choose. The light colours remain unchanged. All 12 ticket tests passed, including browser checks; the full suite recorded no failures. No blocking concerns or unrelated changes found."
+  }
+}
+```
+
+</details>

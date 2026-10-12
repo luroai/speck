@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
 <title>speck · control panel</title>
+<script id="theme-start">
+// 0136: set the look before the page is first drawn: the one last chosen with the button in this browser, or else the
+// computer's light or dark setting, followed as it changes until a choice is made.
+(() => {
+  const root = document.documentElement;
+  const saved = () => { try { const t = localStorage.getItem('speck-theme'); return t === 'light' || t === 'dark' ? t : null; } catch { return null; } };
+  const system = matchMedia('(prefers-color-scheme: dark)');
+  root.dataset.theme = saved() || (system.matches ? 'dark' : 'light');
+  system.addEventListener('change', e => { if (!saved()) root.dataset.theme = e.matches ? 'dark' : 'light'; });
+})();
+</script>
 <style>
   :root {
     --bg: #ecebdf; --panel: #f4f4ea; --raise: #e1e1d2; --line: #bfbfb5; --line-soft: #d7d7cc;
@@ -31,6 +42,12 @@
   .pill b { color: var(--text); font-weight: 500; }
   .pill.attn { color: var(--warn); border-color: var(--warn); position: relative; z-index: 1; }
   .pill.attn b { color: var(--warn); }
+  .theme { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+  .theme:hover { border-color: var(--text); color: var(--text); }
+  .theme svg { width: 15px; height: 15px; }
+  .theme .sun { display: none; }
+  :root[data-theme="dark"] .theme .sun { display: block; }
+  :root[data-theme="dark"] .theme .moon { display: none; }
   .live { display: inline-block; width: 6px; height: 6px; background: var(--run); margin-right: 6px; vertical-align: 1px; }
 
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 24px; }
@@ -227,6 +244,18 @@
   #full-ticket pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   #full-ticket pre code { font-size: 12px; }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--accent); }
+
+  /* The dark look, "the same garden at night", switched to with the button in the header */
+  :root[data-theme="dark"] {
+    --bg: #151916; --panel: #1a1f1b; --raise: #1c211d; --line: #383b37; --line-soft: #252925;
+    --text: #e2e3d6; --muted: #b3b8a9; --faint: #7c8276;
+    --accent: #8db391; --ok: #7fc287; --warn: #d9a54a; --bad: #d4664e; --run: #6fa8d0; --idea: #b59ad6;
+    --inbox: #5fb8a8; --bug: #d47fae; --fix: #c4b04a;
+    --accent-bg: #262f27; --idea-bg: #29242d; --inbox-bg: #1e2b28; --bad-bg: #33221d;
+    color-scheme: dark;
+  }
+  :root[data-theme="dark"] #full-backdrop { background: rgba(0, 0, 0, .45); }
+  :root[data-theme="dark"] #full-ticket { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
 </style>
 </head>
 <body>
@@ -234,6 +263,10 @@
   <div class="logo">speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
   <div class="pills" id="pills"><div class="pill"><span class="live"></span>connecting…</div></div>
+  <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">
+    <svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/></svg>
+    <svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
+  </button>
 </header>
 <div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
 <div class="restart" id="restart" hidden></div>
@@ -907,6 +940,12 @@ function holdPage(on) {
   if (!on) { scrollTo(...heldAt); heldAt = null; }
 }
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
+// 0136: the light/dark button switches the look and remembers it in this browser (the <head> script applies it on load).
+$('theme').addEventListener('click', () => {
+  const root = document.documentElement;
+  root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('speck-theme', root.dataset.theme); } catch { /* storage refused: the look still switches, until a reload */ }
+});
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
