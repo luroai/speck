@@ -1,7 +1,7 @@
 ---
 id: "0131"
 title: "Print a plain-English review pack"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:09:23.084Z"
 ---
 # 0131 · Print a plain-English review pack
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck pack <id>` is written for someone who reads code: evidence quoting files and tests, finding ids, session and token figures. A non-technical user deciding whether to ship needs to know what changed, whether it does what they asked, and whether anything needs a closer look.
@@ -50,9 +50,15 @@ There's now a short, plain-English version of the review pack for deciding wheth
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The plain pack silently omits acceptance-criterion continuation lines.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 369,331
+- Elapsed since build started: 6 min
+- Changed lines: 36 (limit 5000)
 - Follow-ups:
   - Inbox: `speck/ideas/2026-10-12-say-in-the-plain-pack-when-the-reviewer-couldn-t-see-the-code.md` (the plain pack leaves out the warning that the reviewer couldn't inspect the repo).
   - Known limit: once the ticket's branch is gone, the plain pack can't list changed files, so it only warns about `risk: high`, not sensitive files.
