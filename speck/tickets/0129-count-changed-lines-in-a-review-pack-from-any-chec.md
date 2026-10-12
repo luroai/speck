@@ -53,6 +53,8 @@ The review pack reports the ticket's own changes, wherever it's run from, and ne
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: run from outside the ticket's worktree, the pack counts only the branch's committed work, not uncommitted changes in that worktree (criterion 2 covers committed work).
+- Follow-ups: none sent to the inbox.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -120,6 +122,75 @@ The review pack reports the ticket's own changes, wherever it's run from, and ne
     ],
     "escalation_question": "",
     "summary": "The pack now counts unmerged ticket branches from other checkouts and uses recorded figures after branch deletion. The reported suite passes, but a merged branch that is kept still reports zero from its own worktree. That checkout inconsistency needs fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "60a2f50f96536a9e416e565c925a8ca46010f130",
+    "thread_id": "01a13172-d146-7722-8476-5d94a6602534",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 219377,
+      "cached_input_tokens": 173568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1456,
+      "reasoning_output_tokens": 124
+    },
+    "saved_at": "2026-10-12T18:52:01.209Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "packSource reads the branch's ticket and branchChangedLines counts its committed changes using forkPoint. Passing AC1 tests cover both worktree arrangements, base advances, merged base changes and a retained merged branch."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "packSource now passes the same forkPoint to changedLines inside the ticket worktree. The passing AC2 test compares both checkouts; the extended retained-branch test also compares their counts and sensitive files after merging."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "changeLines reads only the delivery log and labels its figure as recorded at approval. Passing AC3 tests cover a recorded figure, a missing figure and an unrelated figure elsewhere."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "changeLines explicitly reports that sensitive files cannot be listed after branch deletion. The passing AC4 test verifies this and rejects the 'none touched' message."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified updated /tmp/speck-0129-tests.txt: 1142 tests, 1139 passed, zero failed and three skipped. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pack.mjs:43",
+        "issue": "The earlier checkout inconsistency for a merged but retained ticket branch is fixed: both paths now use forkPoint, and the regression test compares both the count and sensitive files.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The pack now reports the ticket's changes consistently from either checkout, including when its merged branch is retained. After branch deletion, it uses the approval record and clearly states what information is unavailable. All criteria pass, and the previous blocking issue is resolved."
   }
 }
 ```
