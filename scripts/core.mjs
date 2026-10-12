@@ -457,6 +457,8 @@ export function writeField(t, key, value) {
   const quoted = typeof value === 'string' && key !== 'after' && (/['"[]/.test(value) || value !== value.trim());
   let text = setField(t.raw, key, quoted ? JSON.stringify(value) : /^\d+$/.test(value) && key !== 'id' ? Number(value) : value);
   if (key === 'status' && value === 'building' && !t.fm.started) text = setField(text, 'started', new Date().toISOString());
+  // A build is timed to its latest approval, so time waiting for the user to ship it isn't counted (0139).
+  if (key === 'status' && value === 'approved') text = setField(text, 'approved', new Date().toISOString());
   if (key === 'status' && value === 'done') text = setField(text, 'finished', new Date().toISOString());
   fs.writeFileSync(t.file, syncHeader(text));
 }
