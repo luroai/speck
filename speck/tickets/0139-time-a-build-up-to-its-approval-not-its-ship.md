@@ -1,7 +1,7 @@
 ---
 id: "0139"
 title: "Time a build up to its approval, not its ship"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-12
 started: "2026-10-12T21:40:24.386Z"
+approved: "2026-10-12T21:43:54.348Z"
 
 ---
 # 0139 · Time a build up to its approval, not its ship
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel times a build from when it started to when it shipped. A ticket that waits for the user to ship it, such as a high-risk one, keeps counting the whole time it waits: 0128 shows 89 minutes when the build itself took about 6. That makes the time look wrong and skews the Shipped section's median.
@@ -51,9 +52,14 @@ A build's time in the panel now stops when the reviewer approves it, so waiting 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 129,571
+- Elapsed since build started: 3 min
+- Changed lines: 16 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: the review pack's "Elapsed since build started" line still counts to now (`speck/ideas/2026-10-12-stop-the-review-packs-elapsed-time-at-approval.md`).
 - Known limit: an approved ticket from before this change has no approval time, so its queue timer keeps counting as before.
