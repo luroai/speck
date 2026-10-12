@@ -1,7 +1,7 @@
 ---
 id: "0129"
 title: "Count changed lines in a review pack from any checkout"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-11
 ---
 # 0129 · Count changed lines in a review pack from any checkout
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck pack <id>` says "Changed lines: 0" whenever it's run from a checkout that isn't the ticket's branch, such as the base branch checkout when builds run in worktrees, or after the ticket has shipped. The user then reads a review pack that says nothing changed when plenty did (seen on speck-site ticket 0002: the pack says 0, its delivery log says 158).
