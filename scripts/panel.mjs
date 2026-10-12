@@ -6,8 +6,8 @@ import net from 'node:net';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, commitTicketOnly } from './speck.mjs';
-import { pauseBuild, playBuild, stopBuild } from './run.mjs';
+import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, runsOf, commitTicketOnly } from './speck.mjs';
+import { pauseBuild, playBuild, stopBuild, runState } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 
 // ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
@@ -290,7 +290,8 @@ export async function panelServer() {
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
     if (where === '/api/state') {
-      try { return send(res, 200, 'application/json', JSON.stringify({ ...statusData(repo), ...(restartError ? { restart_error: restartError } : {}) })); }
+      // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
+      try { const run = runState(runsOf(repo)); return send(res, 200, 'application/json', JSON.stringify({ ...statusData(repo), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) })); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log$/);
