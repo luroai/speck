@@ -41,6 +41,7 @@ A build's time in the panel runs from when it started to when it was approved, s
 ## Notes
 - Today `started` is written when status becomes `building` and `finished` when it becomes `done` (`writeField` in `scripts/core.mjs`). The Shipped minutes are `finished - started` (`panelModel` in `templates/panel.html`).
 - 0128: started 19:49:52, review approved 19:55:37, shipped 21:19:13 (UTC, 2026-10-12).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
