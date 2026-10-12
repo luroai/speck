@@ -43,6 +43,8 @@ From the panel, the user can open the review pack of any approved ticket in the 
 - The pack is built from the ticket each time, as `speck pack` builds it (`reviewPack` in `scripts/pack.mjs`). Nothing new is saved.
 - The panel already formats a ticket's Markdown in its side pane (`markdown()` in `templates/panel.html`). Text goes in as text, never as HTML, as it does there.
 - Failing before this build: none
+- In the queue, the Review pack button shows once an approved ticket's row is opened, beside Full ticket, since 0069 keeps a closed in-flight row to its top row and bar.
+- Self-check: added a test that a pack answering after its pane was closed, or after Full ticket replaced it, isn't shown (it passed as built).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

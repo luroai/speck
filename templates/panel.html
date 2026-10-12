@@ -243,6 +243,13 @@
   #full-ticket code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
   #full-ticket pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   #full-ticket pre code { font-size: 12px; }
+  /* 0132: a review pack's table, and its findings, which fold away */
+  #full-ticket .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 12px; }
+  #full-ticket .md th, #full-ticket .md td { border: .5px solid var(--line-soft); padding: 2px 6px; text-align: left; vertical-align: top; }
+  #full-ticket .md th { font-weight: 600; background: var(--raise); }
+  #full-ticket .md details { margin: 0 0 8px; }
+  #full-ticket .md summary { cursor: pointer; color: var(--muted); }
+  td .full-open + .full-open { margin-left: 6px; }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--accent); }
 
   /* The dark look, "the same garden at night", switched to with the button in the header */
@@ -448,7 +455,8 @@ function logText(log) {
 // and `- `, `* ` or `1. ` lists nested by indentation, at most MAX_NEST deep (deeper items stay at that depth). A blank
 // line between list items keeps the list going. Blockquotes, tables, rules, HTML elements over several lines and a line
 // starting an element that never closes (to the next blank line) are kept as written, unformatted, and so is anything
-// else not listed here.
+// else not listed here. With `tables` (the review pack: 0132), a table is formatted: its header row, the delimiter row
+// under it and each row after it with a pipe, with `\|` as a pipe inside a cell.
 const MAX_NEST = 16;
 const FENCE = /^([ \t]*)(`{3,})[^`]*$/;
 const ITEM = /^([ \t]*)([-*]|\d{1,9}\.)[ \t]+(.*)$/;
@@ -457,7 +465,7 @@ const QUOTE = /^[ \t]*>/, RULE = /^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/, PIPE =
 const DELIM = /^[ \t]*\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/; // a table's second row
 const BLOCK_TAG = /^[ \t]*<([A-Za-z][A-Za-z0-9-]*)(?:\s[^<>]*)?\/?>/; // a line starting with an HTML tag
 const indentOf = s => s.replace(/\t/g, '    ').length;
-function markdown(text) {
+function markdown(text, { tables = false } = {}) {
   const all = String(text ?? '').replace(/\r\n?/g, '\n'), lines = all.split('\n');
   const blocks = [], misses = new Map(), starts = [0]; // starts: where each line begins in `all`
   for (const line of lines) starts.push(starts[starts.length - 1] + line.length + 1);
@@ -491,6 +499,12 @@ function markdown(text) {
     } else if (line.trim() === '') {
       para = null;
       gap = true;
+    } else if (tables && tableStart) {
+      end();
+      const rows = [cells(line)];
+      for (i += 2; i < lines.length && lines[i].trim() !== '' && lines[i].includes('|'); i++) rows.push(cells(lines[i]));
+      i--;
+      blocks.push({ type: 'table', head: rows[0], rows: rows.slice(1) });
     } else if (QUOTE.test(line) || RULE.test(line) || PIPE.test(line) || tableStart || (para && para.table && line.includes('|'))) {
       if (!para || !para.literal || afterGap) { end(); para = { type: 'paragraph', literal: true, text: [] }; blocks.push(para); }
       if (tableStart) para.table = true;
@@ -529,9 +543,12 @@ function markdown(text) {
     }
   }
   const finish = b => (b.type === 'paragraph' ? { type: 'paragraph', inline: b.literal ? [{ type: 'text', text: b.text.join('\n') }, ...inline(b.tail || '')] : inline(b.text.join('\n')) }
-    : b.type === 'list' ? { ...b, items: b.items.map(it => ({ inline: inline(it.text.join('\n')), lists: it.lists.map(finish) })) } : b);
+    : b.type === 'list' ? { ...b, items: b.items.map(it => ({ inline: inline(it.text.join('\n')), lists: it.lists.map(finish) })) }
+    : b.type === 'table' ? { type: 'table', head: b.head.map(c => inline(c)), rows: b.rows.map(r => r.map(c => inline(c))) } : b);
   return blocks.map(finish);
 }
+// A table row's cells: the text between its pipes, trimmed, without the pipes at either end, `\|` read as a pipe.
+const cells = line => line.trim().replace(/^\|/, '').replace(/(^|[^\\])\|$/, '$1').split(/(?<!\\)\|/).map(c => c.trim().replace(/\\\|/g, '|'));
 // Inline Markdown: code spans, **bold**, *italic* and _italic_, and links. Only an http or https link keeps its URL.
 // Bold, italic and links nest at most MAX_NEST deep; deeper, their symbols show as written.
 function inline(s, links = true, depth = 0) {
@@ -719,6 +736,7 @@ const stopRefused = new Map(); // id → why the server refused to stop its buil
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
 const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
+let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
 let copies = 0;
 const flip = (set, key) => { if (set.has(key)) set.delete(key); else set.add(key); render(); };
 const list = v => (Array.isArray(v) ? v : []);
@@ -833,11 +851,68 @@ function fullButton(t) {
   b.addEventListener('click', e => {
     e.stopPropagation();
     fullId = String(t.id);
+    packOf = null;
     render();
     const pane = $('full-ticket');
     if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
   });
   return b;
+}
+// 0132: shows the ticket's review pack in the side pane, as `speck pack <id>` prints it from the panel's checkout now.
+function packButton(t) {
+  const b = el('button', 'full-open', 'Review pack');
+  b.type = 'button';
+  b.addEventListener('click', e => {
+    e.stopPropagation(); // the click is for the button, not the ticket
+    fullId = String(t.id);
+    packOf = { id: fullId, state: 'loading' };
+    render();
+    const pane = $('full-ticket');
+    if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
+    loadPack(fullId);
+  });
+  return b;
+}
+// Fetches the pack once, when it's opened. An answer for a pack that's been closed, or replaced since, is dropped.
+let packSeq = 0;
+async function loadPack(id) {
+  const mine = ++packSeq;
+  let next;
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/pack`, { cache: 'no-store' });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    if (res.ok && body && body.pack === null) next = { state: 'none' };
+    else if (res.ok && body && typeof body.pack === 'string') next = { state: 'ok', text: body.pack };
+    else next = { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `The server couldn't make the review pack (${res.status}).` };
+  } catch {
+    next = { state: 'error', text: "Couldn't reach the panel server, so the review pack can't be shown." };
+  }
+  if (mine !== packSeq || !packOf || packOf.id !== id) return;
+  packOf = { id, ...next };
+  render();
+}
+// The side pane with a review pack: its Markdown formatted, tables included, and the findings in a <details> element
+// that folds away, as the pack's own <details> does where Markdown is shown with HTML.
+function packPane(t) {
+  const close = el('button', 'close', 'Close');
+  close.type = 'button';
+  close.addEventListener('click', closeFull);
+  const body = el('div', 'md');
+  if (packOf.state === 'loading') body.appendChild(el('p', null, 'Loading the review pack…'));
+  else if (packOf.state === 'none') body.appendChild(el('p', null, `There's no review pack for ${t.id}: it has no review rounds recorded.`));
+  else if (packOf.state === 'error') body.appendChild(el('p', 'bad', packOf.text));
+  else for (const n of packBlocks(packOf.text)) body.appendChild(n);
+  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), body];
+}
+function packBlocks(text) {
+  const out = [], md = s => mdBlocks(markdown(s, { tables: true }));
+  let at = 0;
+  for (const m of text.matchAll(/^<details><summary>(.*)<\/summary>[ \t]*$([\s\S]*?)^<\/details>[ \t]*$/gm)) {
+    out.push(...md(text.slice(at, m.index)), el('details', null, null, el('summary', null, m[1]), ...md(m[2])));
+    at = m.index + m[0].length;
+  }
+  return [...out, ...md(text.slice(at))];
 }
 // The side pane: the ticket's id and title, for a draft its readiness list and buttons as in the list, without Full
 // ticket, then each of its sections that has something in it, its Markdown formatted.
@@ -875,6 +950,10 @@ function mdPart(body, heading, text) {
 function mdBlocks(blocks) {
   return blocks.map(b => {
     if (b.type === 'code') return el('pre', null, null, el('code', null, b.text));
+    if (b.type === 'table') {
+      const row = (tag, cs) => el('tr', null, null, ...cs.map(c => el(tag, null, null, ...mdInline(c))));
+      return el('table', null, null, el('thead', null, null, row('th', b.head)), el('tbody', null, null, ...b.rows.map(r => row('td', r))));
+    }
     if (b.type === 'heading') return el(b.level === 1 ? 'h5' : 'h6', `md-h${b.level}`, null, ...mdInline(b.inline));
     if (b.type === 'list') {
       const node = el(b.ordered ? 'ol' : 'ul', null, null, ...b.items.map(it => el('li', null, null, ...mdInline(it.inline), ...mdBlocks(it.lists))));
@@ -910,15 +989,15 @@ let fullBuilt = null, readyBuilt = null; // the signatures of what the pane and 
 function renderFull(m) {
   const pane = $('full-ticket'), find = ts => ts.find(d => String(d.id) === fullId);
   const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
-  if (!t) fullId = null;
-  const sig = t ? signature([fullId, !!draft, fullText(t)]) : null, readySig = draft ? signature([fullId, readyData(draft)]) : null;
+  if (!t) { fullId = null; packOf = null; }
+  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
   holdPage(!!t);
   if (sig !== fullBuilt) {
     fullBuilt = sig;
     readyBuilt = readySig;
-    pane.replaceChildren(...(t ? fullTicket(t, !!draft) : []));
+    pane.replaceChildren(...(t ? (packOf ? packPane(t) : fullTicket(t, !!draft)) : []));
   } else if (readySig !== readyBuilt) {
     readyBuilt = readySig;
     const body = pane.children[1], old = body.children[0];
@@ -928,7 +1007,7 @@ function renderFull(m) {
     if (focused && pane.focus) pane.focus({ preventScroll: true }); // so the keys still scroll the pane
   }
 }
-function closeFull() { fullId = null; render(); }
+function closeFull() { fullId = null; packOf = null; render(); }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
@@ -1051,6 +1130,7 @@ function queueItem(t) {
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
+    if (t.status === 'approved') q.appendChild(packButton(t));
     if (t.pausable) {
       q.appendChild(stopButton(t));
       if (stopRefused.has(id)) q.appendChild(el('div', 'stop-refused', stopRefused.get(id)));
@@ -1363,7 +1443,7 @@ function render() {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} reviewer tokens`,
       t.builderTokens !== null ? `${t.builderTokens.toLocaleString('en-GB')} builder tokens` : null, t.builderCost !== null ? `${dollars(t.builderCost)} builder cost` : null].filter(Boolean);
     const name = el('td', null, null, el('span', 'id', t.id), typeTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
-    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, fullButton(t)));
+    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, fullButton(t), packButton(t)));
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => setText(tr.children[2], t.when) }), 'Nothing shipped yet.');
   const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
     el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));
