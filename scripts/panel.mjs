@@ -8,6 +8,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, commitTicketOnly } from './speck.mjs';
 import { pauseBuild, playBuild, stopBuild } from './run.mjs';
+import { reviewPack, NO_ROUNDS } from './pack.mjs';
 
 // ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
 
@@ -116,6 +117,17 @@ function panelLog(repo, id) {
   return { text: lines.slice(-PANEL_LOG_LINES).join('\n'), truncated: lines.length > PANEL_LOG_LINES };
 }
 
+// A ticket's review pack for the panel's Review pack button: the text `speck pack <id>` prints from this checkout now,
+// or null when the ticket has no review rounds, which isn't an error. Reads only, writing nothing.
+function panelPack(repo, id) {
+  try { findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
+  try { return { status: 200, body: { pack: reviewPack(repo, id) } }; }
+  catch (e) {
+    if (!(e instanceof SpeckError)) throw e;
+    return e.message === NO_ROUNDS ? { status: 200, body: { pack: null } } : { status: 409, body: { error: e.message } };
+  }
+}
+
 // `speck panel`. The process you start only launches the first server process and waits until the last one has gone.
 // Everything else, serving, watching the code and restarting, happens in server processes, each running the code as it
 // was when it started: when the code changes, a server starts its successor on the new code, hands it the port and stops.
@@ -173,7 +185,7 @@ function codeHash() {
   return h.digest('hex');
 }
 
-// One server process: serves the panel page, /api/state and each build's log to this machine only, plus the writes,
+// One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
 // POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n> and POST /api/tickets/<id>/pause, /play or /stop. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
@@ -254,6 +266,11 @@ export async function panelServer() {
     if (log) {
       try { return send(res, 200, 'application/json', JSON.stringify(panelLog(repo, log[1]))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
+    }
+    const pack = where.match(/^\/api\/tickets\/(\d{1,4})\/pack$/);
+    if (pack) {
+      try { const out = panelPack(repo, pack[1]); return send(res, out.status, 'application/json', JSON.stringify(out.body)); }
+      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't make the review pack: ${e.message}` })); }
     }
     return send(res, 404, 'text/plain', 'Not found.\n');
   });

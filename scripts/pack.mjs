@@ -61,12 +61,15 @@ function changeLines(t, cfg, diff) {
       : `- ${label}: not available, because the ticket's branch no longer exists and its delivery log has no figure`];
 }
 
+// What reviewPack and plainPack refuse with for a ticket that has no review rounds, so the panel can tell it apart.
+export const NO_ROUNDS = 'No review rounds recorded.';
+
 export function reviewPack(repo, id) {
   const cfg = loadConfig(repo);
   const { t, diff } = packSource(repo, cfg, id);
   const all = ticketsRounds(repo, t);
   const last = all[all.length - 1];
-  if (!last) throw new SpeckError('No review rounds recorded.');
+  if (!last) throw new SpeckError(NO_ROUNDS);
   const v = last.verdict;
   const ac = lintTicket(t, cfg).acceptanceCriteria;
   const icon = { pass: '✅', fail: '❌', unclear: '⚠️' };
@@ -110,7 +113,7 @@ export function plainPack(repo, id) {
   const cfg = loadConfig(repo);
   const { t, diff } = packSource(repo, cfg, id);
   const last = ticketsRounds(repo, t).at(-1);
-  if (!last) throw new SpeckError('No review rounds recorded.');
+  if (!last) throw new SpeckError(NO_ROUNDS);
   const v = last.verdict;
   const label = { pass: '✅ passed', fail: '❌ failed', unclear: '⚠️ unclear' };
   // Each numbered criterion, with any lines that continue it.
