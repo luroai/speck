@@ -227,6 +227,8 @@
   .full-open:hover { color: var(--text); }
   .q .full-open { margin: 6px 0 2px 34px; padding: 1px 10px; font-size: 10px; }
   td.full-cell { width: 1%; padding-left: 0; }
+  td .title-link { color: var(--accent); text-decoration: none; cursor: pointer; }
+  td .title-link:hover { text-decoration: underline; }
   td .full-open { margin: 0; padding: 0 8px; font-size: 10px; white-space: nowrap; }
   #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(31, 37, 33, .12); }
   #full-ticket[hidden] { display: none; }
@@ -870,13 +872,27 @@ function fullButton(t) {
   b.type = 'button';
   b.addEventListener('click', e => {
     e.stopPropagation();
-    fullId = String(t.id);
-    packOf = null;
-    render();
-    const pane = $('full-ticket');
-    if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
+    openFull(t);
   });
   return b;
+}
+// 0137: a Shipped row's title, as a link that opens the full ticket as Full ticket does. It goes to no other address.
+function fullLink(t) {
+  const a = el('a', 'title-link', (t.title || '').trim() || `Ticket ${t.id}`); // a blank title would leave nothing to click
+  a.href = '#';
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    openFull(t);
+  });
+  return a;
+}
+function openFull(t) {
+  fullId = String(t.id);
+  packOf = null;
+  render();
+  const pane = $('full-ticket');
+  if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
 }
 // 0132: shows the ticket's review pack in the side pane, as `speck pack <id>` prints it from the panel's checkout now.
 function packButton(t) {
@@ -1503,8 +1519,8 @@ function render() {
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), () => null, t => {
     const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} reviewer tokens`,
       t.builderTokens !== null ? `${t.builderTokens.toLocaleString('en-GB')} builder tokens` : null, t.builderCost !== null ? `${dollars(t.builderCost)} builder cost` : null].filter(Boolean);
-    const name = el('td', null, null, el('span', 'id', t.id), typeTag(t), document.createTextNode('\u00a0 ' + (t.title ?? '')));
-    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, fullButton(t), packButton(t)));
+    const name = el('td', null, null, el('span', 'id', t.id), typeTag(t), document.createTextNode('\u00a0 '), fullLink(t));
+    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, packButton(t)));
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => setText(tr.children[2], t.when) }), 'Nothing shipped yet.');
   const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
     el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));

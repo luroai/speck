@@ -13,6 +13,8 @@ const paneId = p => (paneOpen(p) ? pane(p).children[0].children[0].textContent :
 const headings = (p, node) => p.all(node).filter(n => n.tagName === 'h4').map(n => n.textContent);
 const named = (p, node, text) => p.all(node).find(n => n.tagName === 'button' && n.textContent === text);
 const fullOf = (p, node) => named(p, node, 'Full ticket');
+// 0137: a Shipped row opens the full ticket from its title, a link, rather than a Full ticket button.
+const titleOf = (p, row) => p.all(row).find(n => n.tagName === 'a');
 const itemOf = (p, id) => items(p).find(n => n.textContent.startsWith(id));
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const shipOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
@@ -37,7 +39,7 @@ function livePage(s) {
 }
 const refresh = async p => { p.timers.shift()(); await p.settle(); };
 // Clicks a button as the browser would, saying whether the click went any further.
-const press = b => { let stopped = false; b.listeners.click({ stopPropagation() { stopped = true; } }); return stopped; };
+const press = b => { let stopped = false; b.listeners.click({ stopPropagation() { stopped = true; }, preventDefault() {} }); return stopped; };
 
 const board = () => ({
   tickets: [
@@ -85,19 +87,19 @@ test('0063 AC1: clicking a queue ticket\'s Full ticket opens the pane on it and 
   assert.equal(p.fetched.length, calls, 'and nothing is asked of the server');
 });
 
-test('0063 AC1: each Shipped row has a Full ticket button that opens the pane on that ticket and nothing else', async () => {
+test('0063 AC1: each Shipped row\'s title opens the pane on that ticket and nothing else (a link since 0137)', async () => {
   const p = livePage(board());
   await p.settle();
   click(topOf(rowOf(p, '0002')));
   await p.settle();
-  for (const id of ['0005', '0006']) assert.ok(fullOf(p, shipOf(p, id)), `${id}: a button`);
+  for (const id of ['0005', '0006']) assert.ok(titleOf(p, shipOf(p, id)), `${id}: a title link`);
   const before = openStates(p);
-  assert.ok(press(fullOf(p, shipOf(p, '0006'))), 'the click goes no further');
+  assert.ok(press(titleOf(p, shipOf(p, '0006'))), 'the click goes no further');
   assert.equal(paneId(p), '0006');
   assert.ok(pane(p).textContent.includes('Shipped two'));
   assert.deepEqual(openStates(p), before, 'nothing else opens or closes');
   named(p, pane(p), 'Close').listeners.click();
-  press(fullOf(p, shipOf(p, '0005')));
+  press(titleOf(p, shipOf(p, '0005')));
   assert.equal(paneId(p), '0005');
 });
 
@@ -113,7 +115,7 @@ test('0063 AC2: a ticket that isn\'t a draft shows the same id, title and sectio
   const draftSections = sections(pane(p));
   named(p, pane(p), 'Close').listeners.click();
   for (const [id, from] of [['0002', 'queue'], ['0004', 'queue'], ['0005', 'shipped']]) {
-    if (from === 'queue') { click(topOf(rowOf(p, id))); await p.settle(); press(fullOf(p, rowOf(p, id))); } else press(fullOf(p, shipOf(p, id)));
+    if (from === 'queue') { click(topOf(rowOf(p, id))); await p.settle(); press(fullOf(p, rowOf(p, id))); } else press(titleOf(p, shipOf(p, id)));
     assert.equal(paneId(p), id);
     const [head] = pane(p).children;
     assert.equal(head.children[1].textContent, s.tickets.find(t => t.id === id).title, `${id}: its title`);
@@ -129,7 +131,7 @@ test('0063 AC2: a ticket that isn\'t a draft leaves out sections with nothing in
   const s = { tickets: [shipped('0005', 8, { problem: '', notes: null, out_of_scope: '', acceptance_criteria: [] })], ideas: [] };
   const p = livePage(s);
   await p.settle();
-  press(fullOf(p, shipOf(p, '0005')));
+  press(titleOf(p, shipOf(p, '0005')));
   assert.deepEqual(headings(p, pane(p)), ['Outcome']);
 });
 
@@ -223,7 +225,7 @@ test('0063 AC4: opening and closing the pane leaves queue tickets as they were, 
   const before = openStates(p);
   for (const how of ['Close', 'Escape', 'backdrop']) {
     for (const from of ['queue', 'shipped']) {
-      press(from === 'queue' ? fullOf(p, rowOf(p, '0002')) : fullOf(p, shipOf(p, '0005')));
+      press(from === 'queue' ? fullOf(p, rowOf(p, '0002')) : titleOf(p, shipOf(p, '0005')));
       assert.ok(paneOpen(p));
       await refresh(p);
       assert.ok(paneOpen(p), 'open through the refresh');
@@ -251,13 +253,13 @@ test('0063 self-check: built-in names as ids, and an id in more than one list, s
   assert.ok(pane(p).textContent.includes('Proto build'));
   await refresh(p);
   assert.ok(pane(p).textContent.includes('Proto build'), 'kept through the refresh');
-  press(fullOf(p, shipOf(p, 'constructor')));
+  press(titleOf(p, shipOf(p, 'constructor')));
   assert.ok(pane(p).textContent.includes('Ctor shipped'));
-  press(fullOf(p, shipOf(p, '0009')));
+  press(titleOf(p, shipOf(p, '0009')));
   assert.ok(pane(p).textContent.includes('Draft 9'), 'the first ticket with that id');
 });
 
-test('0063 AC1-AC4: in a real browser, Full ticket from the queue and Shipped opens the pane and leaves the log where it was', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
+test('0063 AC1-AC4: in a real browser, Full ticket from the queue and the title in Shipped open the pane and leaves the log where it was', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
   const body = `## Problem\nWatching a build.\n## Outcome\nUsers can export CSV.\n## Acceptance criteria\n1. Export button downloads a CSV.\n## Out of scope\n- PDF export\n`;
   r.write('0002-build.md', fm({ id: '"0002"', title: 'A build to watch', status: 'building', started: at(9) }), body);
@@ -269,7 +271,6 @@ test('0063 AC1-AC4: in a real browser, Full ticket from the queue and Shipped op
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const isHidden = () => b.js(`document.getElementById('full-ticket').hidden`);
-  const fullIn = sel => `[...document.querySelectorAll('${sel} button')].find(x => x.textContent === 'Full ticket')`;
   try {
     await b.until(`[...document.querySelectorAll('#queue .q')].some(q => q.textContent.includes('A build to watch'))`, 'the build in the queue');
     const row = `[...document.querySelectorAll('#queue .q')].find(q => q.textContent.includes('A build to watch'))`;
@@ -288,8 +289,8 @@ test('0063 AC1-AC4: in a real browser, Full ticket from the queue and Shipped op
     assert.ok(await isHidden(), 'Escape closes it');
     assert.equal(await b.js(`(${row}).querySelector('.log').scrollTop`), scrolled, 'the log is where it was');
     assert.ok(await b.js(`(${row}).classList.contains('open')`), 'and the ticket is still open');
-    await b.until(`!!${fullIn('#shipped tr')}`, 'the Shipped row\'s button');
-    await b.js(`${fullIn('#shipped tr')}.click()`);
+    await b.until(`!!document.querySelector('#shipped tr a.title-link')`, 'the Shipped row\'s title link (0137)');
+    await b.js(`document.querySelector('#shipped tr a.title-link').click()`);
     await b.until(`!document.getElementById('full-ticket').hidden`, 'the pane from Shipped');
     assert.ok(await b.js(`document.querySelector('#full-ticket .id').textContent === '0003' && document.getElementById('full-ticket').textContent.includes('Watching a build.')`));
   } finally {

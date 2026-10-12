@@ -43,6 +43,8 @@ In the Shipped table, a ticket's title is a link that opens the full ticket. Rev
 - The ticket id and any bug or fix tag stay beside the title and don't need to be part of the link.
 - The link opens the pane in the page and doesn't go to another address. The builder chooses the element, as long as AC1 and AC2 hold.
 - Failing before this build: none
+- AC5: besides the Full ticket checks in the 0063 and 0132 tests, one 0050 browser test found a Shipped row's title as the last text in its first cell, to select part of it. The title is inside the link now, so that test's selector points at the link's text instead. What it checks (the selection is kept through refreshes) is unchanged.
+- Self-check: a blank or all-spaces title now shows `Ticket <id>` as the link, so there's always something to click.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
