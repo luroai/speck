@@ -1,7 +1,7 @@
 ---
 id: "0138"
 title: "Show a ticket waiting to ship in purple, not red"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T21:31:42.291Z"
 ---
 # 0138 · Show a ticket waiting to ship in purple, not red
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When an approved ticket's build has finished and the ticket is waiting for the user to ship it, the panel's queue shows its row in red, the colour it uses for blocked and broken builds. Nothing is wrong: the ticket is just waiting for the user's shipping decision, so the red sends a false alarm.
@@ -54,9 +54,14 @@ To see it, let a build finish without shipping (for example a high-risk ticket),
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 146,139
+- Elapsed since build started: 5 min
+- Changed lines: 21 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
