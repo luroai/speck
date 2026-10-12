@@ -46,6 +46,8 @@ The panel looks like the zen mockup: light paper background, moss-green accent, 
 - The change is meant to be undone with one `git revert` of its commit if the user doesn't like it, so keep it to the panel page and the colour tests.
 - Checked 2026-10-12: the mockup's colours, fonts and layout, read from `mockups/zen/panel.html` in the local speck-site project.
 - Failing before this build: none
+- Tests outside AC1's named colour checks that this build changed, because they pinned the old look rather than behaviour (AC1 itself requires the new colours): `test/panel-0041.test.mjs` and `test/panel-0055.test.mjs` each checked a computed colour against the old `--accent` and `--run` as a literal `rgb(…)`, now the new values. `test/panel-0081.test.mjs` AC5 compared queue rows with the pre-0081 page as it looked then; it now gives that page today's stylesheet with 0081's own icon rules put back as they were, so it still compares exactly 0081's change (a mutation of 0081's `.q .top` rule still fails it).
+- Self-check: kept tags lowercase (uppercase changed the text a selection copies), wrote each font stack out in full rather than through a variable (two tests look for `monospace` in the rule), set `b, strong` to 600 so bold stays bold over the light body weight, and kept the progress bar's labels at 10px so 0081's icon centring still holds.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

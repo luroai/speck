@@ -137,12 +137,18 @@ test('0081 AC1, AC2, AC3: a refused pause or play leaves the icon centred, colla
   } finally { await w.close(); }
 });
 
-// The panel as it was before this ticket, to check rows without the icon against.
+// The panel as it was before this ticket, to check rows without the icon against. It gets today's stylesheet with this
+// ticket's icon rules put back as they were, so a later restyle (0134) moves both alike and only this ticket's change
+// to the rows is compared.
+const ICON_RULES = /  \/\* A running build's pause icon[\s\S]*?\n  \.q \.toggle-build \{[^\n]*\n/;
 const before = () => {
   const ready = commitBySubject('speck(0081): ready');
   if (!ready) return null;
   const r = spawnSync('git', ['show', `${ready}:templates/panel.html`], { cwd: ROOT, encoding: 'utf8' });
-  return r.status === 0 ? r.stdout : null;
+  if (r.status !== 0) return null;
+  const was = (r.stdout.match(ICON_RULES) || [])[0], style = (page().match(/<style>[\s\S]*?<\/style>/) || [])[0];
+  assert.ok(was && style && ICON_RULES.test(style), 'the icon rules are found in both pages');
+  return r.stdout.replace(/<style>[\s\S]*?<\/style>/, () => style.replace(ICON_RULES, () => was));
 };
 const parts = l => ({ top: l.top, stages: l.stages, id: l.id, title: l.title, tags: l.tags, sub: l.sub });
 
