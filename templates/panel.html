@@ -166,6 +166,8 @@
   /* Live panel additions */
   .pill.off { color: var(--bad); border-color: var(--bad); position: relative; z-index: 1; }
   .live.off { background: var(--bad); }
+  .live.idle { background: var(--faint); }
+  .run-state + .pills { margin-left: 0; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
   .offline[hidden] { display: none; }
   .restart { font-size: 12px; color: var(--warn); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--raise); }
@@ -274,6 +276,7 @@
 <header>
   <div class="logo">speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
+  <div class="pills run-state" id="run"></div>
   <div class="pills" id="pills"><div class="pill"><span class="live"></span>connecting…</div></div>
   <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">
     <svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/></svg>
@@ -1508,6 +1511,9 @@ function render() {
   const status = el('div', connected ? 'pill' : 'pill off', null, el('span', connected ? 'live' : 'live off'),
     document.createTextNode(connected ? `live · ${lastOk ? Math.max(0, Math.round((Date.now() - lastOk) / 1000)) : 0}s ago` : 'disconnected'));
   $('pills').replaceChildren(status);
+  // Whether speck run is on: when it's off, setting a ticket ready starts nothing.
+  const on = !!(state.run && state.run.on);
+  $('run').replaceChildren(el('div', on ? 'pill run-on' : 'pill run-off', null, el('span', on ? 'live' : 'live idle'), document.createTextNode(on ? 'speck run on' : 'speck run off')));
 }
 function setConnected(ok, problem) {
   connected = ok;

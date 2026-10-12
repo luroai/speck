@@ -39,6 +39,8 @@ The panel always shows whether `speck run` is on or off for this repo, and keeps
 
 ## Notes
 - Failing before this build: none
+- `/api/state` must still equal `speck status --json` while speck run is off (0031, 0059), and that output's keys are fixed (0030, 0044). So `/api/state` has `run` (`{ on: true, pid }`) only while speck run is on, as `restart_error` is only there while there is one, and no `run` means off. `speck status --json` is unchanged.
+- Self-check: no changes
 - `speck run` keeps one lock per repo, `speck/.cache/runs/run.lock`, holding its process id (`takeRunLock` in `scripts/run.mjs`). Reading it must never take, change or delete it.
 - The on/off indicator sits where it's always visible, not inside a ticket row.
 

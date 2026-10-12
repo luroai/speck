@@ -432,7 +432,7 @@ function buildRunning(runs, id, leads) {
 const inHand = t => t.fm.status === 'building' || t.fm.status === 'reviewing';
 
 // The main checkout's speck/.cache/runs/, where speck run keeps its records and logs.
-function runsOf(repo) {
+export function runsOf(repo) {
   let main = repo;
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   return path.join(main, 'speck', '.cache', 'runs');

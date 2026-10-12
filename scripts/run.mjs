@@ -24,6 +24,15 @@ function runsDir(repo) {
 
 export const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
 
+// Whether speck run is on, from its lock in the runs folder: on only while the pid the lock holds is alive. Only reads
+// the lock, so it never takes, changes or deletes it. A lock left by a run that was killed outright shows as off.
+export function runState(runs) {
+  let text = '';
+  try { text = fs.readFileSync(path.join(runs, 'run.lock'), 'utf8').trim(); } catch { /* no lock: off */ }
+  const pid = /^[1-9]\d*$/.test(text) ? Number(text) : null;
+  return pid !== null && pidAlive(pid) ? { on: true, pid } : { on: false, pid: null };
+}
+
 // One speck run per repo: a lock file holding its pid. The file is made complete and then linked into place, which
 // is atomic, so no runner ever sees a half-written lock. A lock whose process is gone (killed outright) is taken
 // over, but only while holding a second, short-lived recovery lock, so two runners can't both take over the same one.
