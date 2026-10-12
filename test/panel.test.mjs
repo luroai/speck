@@ -893,19 +893,21 @@ test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and s
 
 // ---------- 0045: flag a build that finished without shipping ----------
 
-test('0045 AC3: an approved ticket with a build_exit is red on its left edge and current step, with the label and message as text', async () => {
+test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its left edge and current step, with the label and message as text', async () => {
   const message = 'Line one\n<b>not bold</b>\nShip refused.';
   const state = { tickets: [T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(message) }), T('0002', 'approved', { rounds: [round(1, 1)], build_exit: null })], ideas: [] };
   const m = panelModel()(state);
-  assert.deepEqual(m.queue.map(t => t.red), [true, false]);
+  assert.deepEqual(m.queue.map(t => t.red), [false, false]);
+  assert.deepEqual(m.queue.map(t => t.to_ship), [true, false]);
   assert.deepEqual(m.queue.map(t => t.exit_label), ['Build finished without shipping', null]);
   const p = fakePage([state]);
   await p.settle();
   const [a, b] = queueRows(p);
-  assert.match(a.className, /\bblocked\b/);
+  assert.match(a.className, /\bto-ship\b/);
   assert.equal(nowStep(a).textContent, 'Ship');
-  assert.match(nowStep(a).className, /\bbad\b/);
-  assert.equal(stagesOf(a).children.filter(isRed).length, 1, 'only the current step');
+  assert.match(nowStep(a).className, /\bto-ship\b/);
+  assert.equal(stagesOf(a).children.filter(n => /\bto-ship\b/.test(n.className || '')).length, 1, 'only the current step');
+  assert.ok(!p.all(a).some(isRed), 'nothing red');
   assert.ok(findText(p, a, 'Build finished without shipping'), 'the label');
   assert.ok(findText(p, a, message), 'the message, as one text node with the HTML left as text');
   const text = a.textContent;
@@ -920,7 +922,7 @@ test('0045 AC3: a build_exit with no message shows just the label', async () => 
   const p = fakePage([state]);
   await p.settle();
   const [a] = queueRows(p);
-  assert.match(a.className, /\bblocked\b/);
+  assert.match(a.className, /\bto-ship\b/); // purple since 0138
   assert.ok(a.textContent.includes('Build finished without shipping'));
   assert.ok(!a.textContent.includes('null'));
 });

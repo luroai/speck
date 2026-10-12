@@ -58,7 +58,7 @@ test('0069 AC1: a build exit message still shows, with no status line after it',
   const p = fakePage([s]);
   await p.settle();
   const [a, b] = queueRows(p);
-  assert.deepEqual(shape(a), ['top', 'stages', 'act bad', 'question exit']);
+  assert.deepEqual(shape(a), ['top', 'stages', 'act to-ship', 'question exit to-ship']); // purple since 0138
   assert.equal(a.children[2].textContent, 'Build finished without shipping');
   assert.equal(a.children[3].textContent, 'Ship refused.');
   assert.ok(!a.textContent.includes('approved'));
