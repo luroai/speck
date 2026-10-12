@@ -42,6 +42,7 @@ The panel has one button that turns `speck run` on when it's off and off when it
 - Risk is high because this starts a process that launches agents with `build_command` (by default with every permission prompt skipped) from an HTTP request. It must use the same token and Origin checks as the existing panel writes.
 - `speck run` already stops cleanly on SIGINT or SIGTERM and leaves its builds running (`scripts/run.mjs`).
 - Checked 2026-10-11: a child started with `spawn(..., { detached: true })` and `child.unref()`, with stdio not piped to the parent, keeps running after the parent exits on Linux (Node.js `child_process` docs, `options.detached`; installed Node v22.23.3).
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
