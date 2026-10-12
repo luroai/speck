@@ -1,7 +1,7 @@
 ---
 id: "0133"
 title: "Ship an approved ticket from its review pack in the panel"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-11
 ---
 # 0133 · Ship an approved ticket from its review pack in the panel
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 With `auto_ship` off, an approved ticket waits until the user runs `/speck-ship <id>` in their agent. A user reading the review pack in the panel has to leave it to ship.
