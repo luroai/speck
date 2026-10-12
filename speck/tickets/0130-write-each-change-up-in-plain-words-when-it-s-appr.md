@@ -1,7 +1,7 @@
 ---
 id: "0130"
 title: "Write each change up in plain words when it's approved"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:03:34.983Z"
 ---
 # 0130 · Write each change up in plain words when it's approved
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Everything a build leaves behind (the review pack, the review rounds, the delivery log) is written for someone who reads code. A user who doesn't can't tell from it what actually changed for them or how to see it for themselves.
@@ -51,9 +51,14 @@ Every new ticket now has a short "In plain words" part, and the builder fills it
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 120,410
+- Elapsed since build started: 4 min
+- Changed lines: 7 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Tidy-up: the "How to read a ticket" list in `speck/README.md` doesn't mention the new `## In plain words` section yet.
