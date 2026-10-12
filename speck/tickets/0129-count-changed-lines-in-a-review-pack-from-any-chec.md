@@ -1,7 +1,7 @@
 ---
 id: "0129"
 title: "Count changed lines in a review pack from any checkout"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T18:43:49.832Z"
 ---
 # 0129 · Count changed lines in a review pack from any checkout
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck pack <id>` says "Changed lines: 0" whenever it's run from a checkout that isn't the ticket's branch, such as the base branch checkout when builds run in worktrees, or after the ticket has shipped. The user then reads a review pack that says nothing changed when plenty did (seen on speck-site ticket 0002: the pack says 0, its delivery log says 158).
@@ -49,9 +49,15 @@ The review pack reports the ticket's own changes, wherever it's run from, and ne
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A merged but retained ticket branch reports different results depending on the checkout.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 353,629
+- Elapsed since build started: 8 min
+- Changed lines: 96 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: run from outside the ticket's worktree, the pack counts only the branch's committed work, not uncommitted changes in that worktree (criterion 2 covers committed work).
 - Follow-ups: none sent to the inbox.
