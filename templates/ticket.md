@@ -31,6 +31,9 @@ after: []                # ticket ids that must be done first
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 
+## In plain words
+<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 

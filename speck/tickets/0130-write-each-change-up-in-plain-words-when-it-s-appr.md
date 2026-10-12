@@ -41,6 +41,8 @@ Every ticket the builder takes to approval has a short account of the change in 
 ## Notes
 - The builder writes it, not the reviewer, because the builder knows what it changed and why. The reviewer's summary stays as it is.
 - Failing before this build: none
+- AC4 was already met before this build: lint only checks the sections it knows, so its tests passed from the start and guard it from now on.
+- Self-check: moved the instruction into section 5 step 1, after the follow-ups, because an existing test needs follow-ups to come before `speck close` there.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
