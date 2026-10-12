@@ -1,7 +1,7 @@
 // speck pack: the review pack, and the review totals the delivery log shares.
 
-import { RISKY, SpeckError, findRepoRoot, loadConfig, findTicket, lintTicket, changedLines } from './core.mjs';
-import { rounds, NO_INSPECT, mergeRun, ordinaryRounds } from './review.mjs';
+import { RISKY, SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, parseTicket, lintTicket, changedLines, branchChangedLines, ticketBranches, contentLines, repoPath } from './core.mjs';
+import { ticketsRounds, NO_INSPECT, mergeRun, ordinaryRounds } from './review.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
 // whenever an earlier round saved a session, so that rule gives theirs.
@@ -30,16 +30,44 @@ export function reviewTotals(t, all) {
   };
 }
 
+// The ticket and its changes, wherever the pack is run from. On the ticket's branch: this checkout, uncommitted work
+// included. Elsewhere, while the branch exists: the branch's committed changes, and its copy of the ticket, which holds
+// the review rounds. Once the branch is gone: this checkout's ticket, and no changes (diff is null).
+function packSource(repo, cfg, id) {
+  const t = findTicket(repo, id);
+  const names = ticketBranches(repo, cfg, id);
+  if (names.length > 1)
+    throw new SpeckError(`Found ${names.length} branches for ticket ${t.fm.id} (${names.join(', ')}). Delete the extra ones, then run this again.`);
+  const branch = names[0];
+  if (!branch) return { t, diff: null };
+  if (git(['branch', '--show-current'], repo).trim() === branch) return { t, diff: changedLines(repo, cfg.base_branch) };
+  const shown = sh('git', ['show', `${branch}:${repoPath(repo, t.file)}`], { cwd: repo });
+  return { t: shown.status === 0 ? { file: t.file, ...parseTicket(shown.stdout) } : t, diff: branchChangedLines(repo, cfg.base_branch, branch) };
+}
+
+// The risk lines about the ticket's changes. Without its branch, the changed lines are the figure \`speck close\`
+// recorded in the delivery log at approval, and the sensitive files can't be listed.
+function changeLines(t, cfg, diff) {
+  const label = 'Changed lines (excluding tests and lockfiles)';
+  if (diff) {
+    const risky = diff.files.map(f => f.file).filter(f => RISKY.test(f));
+    return [risky.length ? `- Sensitive files touched: ${risky.map(f => `\`${f}\``).join(', ')}` : '- No sensitive file patterns touched',
+      `- ${label}: ${diff.total} (limit ${cfg.limits.max_changed_lines})`];
+  }
+  const recorded = contentLines(t.sections['delivery log']).map(l => l.match(/^- Changed lines: (\d+)\b/)).find(Boolean);
+  return ["- Sensitive files touched: can't be listed, because the ticket's branch no longer exists",
+    recorded ? `- ${label}: ${recorded[1]}, as recorded at approval (limit ${cfg.limits.max_changed_lines})`
+      : `- ${label}: not available, because the ticket's branch no longer exists and its delivery log has no figure`];
+}
+
 export function reviewPack(repo, id) {
   const cfg = loadConfig(repo);
-  const t = findTicket(repo, id);
-  const all = rounds(repo, id);
+  const { t, diff } = packSource(repo, cfg, id);
+  const all = ticketsRounds(repo, t);
   const last = all[all.length - 1];
   if (!last) throw new SpeckError('No review rounds recorded.');
   const v = last.verdict;
   const ac = lintTicket(t, cfg).acceptanceCriteria;
-  const diff = changedLines(repo, cfg.base_branch);
-  const risky = diff.files.map(f => f.file).filter(f => RISKY.test(f));
   const icon = { pass: '✅', fail: '❌', unclear: '⚠️' };
   const findings = all.flatMap(r => r.verdict.findings.map(f => ({ ...f, round: r.meta.round })));
   const latest = new Map(findings.map(f => [f.id, f]));
@@ -53,8 +81,7 @@ export function reviewPack(repo, id) {
     '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
     '', '### Risk', `- Ticket risk: **${t.fm.risk}**`,
-    risky.length ? `- Sensitive files touched: ${risky.map(f => `\`${f}\``).join(', ')}` : '- No sensitive file patterns touched',
-    `- Changed lines (excluding tests and lockfiles): ${diff.total} (limit ${cfg.limits.max_changed_lines})`,
+    ...changeLines(t, cfg, diff),
     '', '### Review history',
     ...all.map((r, i) => {
       const f = r.verdict.findings;

@@ -42,6 +42,8 @@ The review pack reports the ticket's own changes, wherever it's run from, and ne
 - Cause: `changedLines` in `scripts/core.mjs` compares the current checkout's HEAD and working tree with the base branch, so from the base branch it measures nothing. Reproduced 2026-10-11 in speck-site: `speck pack 0002` on `main` prints "Changed lines (excluding tests and lockfiles): 0".
 - The ticket's branch is found the same way `speck ship` finds it (`ticketBranch` in `scripts/ship.mjs`: `<branch_prefix><id>-…`).
 - Failing before this build: none
+- Built so the pack also reads the ticket (and its review rounds) from the ticket's branch when run elsewhere: the base branch's copy has no rounds until it ships, so without that the pack stops with "No review rounds recorded." before it reaches criterion 1's figure.
+- Self-check: added a test that the base branch's own changes, merged into the ticket's branch, aren't counted as the ticket's (they weren't).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

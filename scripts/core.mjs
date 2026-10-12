@@ -366,17 +366,38 @@ function privateWordProblems(text) {
 
 // ---------- diff size ----------
 
+const numstat = out => out.trim().split('\n').filter(Boolean).map(r => {
+  const [a, d, f] = r.split('\t');
+  return { file: f, lines: (parseInt(a, 10) || 0) + (parseInt(d, 10) || 0) };
+});
+
+function countRows(rows) {
+  const counted = rows.filter(r => !LOCKFILES.test(r.file) && !TESTFILES.test(r.file) && !r.file.startsWith('speck/'));
+  return { total: counted.reduce((n, r) => n + r.lines, 0), files: rows, counted };
+}
+
 export function changedLines(repo, base) {
   const mb = git(['merge-base', base, 'HEAD'], repo).trim();
-  const rows = git(['diff', '--numstat', mb], repo).trim().split('\n').filter(Boolean).map(r => {
-    const [a, d, f] = r.split('\t');
-    return { file: f, lines: (parseInt(a, 10) || 0) + (parseInt(d, 10) || 0) };
-  });
+  const rows = numstat(git(['diff', '--numstat', mb], repo));
   for (const f of git(['ls-files', '--others', '--exclude-standard'], repo).split('\n').filter(Boolean)) {
     try { rows.push({ file: f, lines: fs.readFileSync(path.join(repo, f), 'utf8').split('\n').length }); } catch { /* binary or unreadable */ }
   }
-  const counted = rows.filter(r => !LOCKFILES.test(r.file) && !TESTFILES.test(r.file) && !r.file.startsWith('speck/'));
-  return { total: counted.reduce((n, r) => n + r.lines, 0), files: rows, counted };
+  return countRows(rows);
+}
+
+// The local branches for a ticket: <branch_prefix><id>-…
+export function ticketBranches(repo, cfg, id) {
+  const pad = padId(id);
+  return git(['for-each-ref', '--format=%(refname:short)', `refs/heads/${cfg.branch_prefix}${pad}-*`], repo).split('\n').filter(Boolean);
+}
+
+// A branch's committed changes since it left the base branch, from any checkout. Once the branch is merged in, it
+// left from the base branch as it was just before that merge: its newest first-parent commit without the branch.
+export function branchChangedLines(repo, base, branch) {
+  const merged = new Set(git(['rev-list', '--ancestry-path', `${branch}..${base}`], repo).split('\n').filter(Boolean));
+  const before = git(['rev-list', '--first-parent', base], repo).split('\n').find(c => c && !merged.has(c)) || base;
+  const mb = git(['merge-base', before, branch], repo).trim();
+  return countRows(numstat(git(['diff', '--numstat', mb, branch], repo)));
 }
 
 // ---------- reviews ----------

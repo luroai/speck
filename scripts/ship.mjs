@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, worktreeList } from './core.mjs';
+import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, worktreeList, ticketBranches } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
 import { testRun } from './results.mjs';
 
@@ -11,7 +11,7 @@ import { testRun } from './results.mjs';
 
 function ticketBranch(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
-  const names = git(['for-each-ref', '--format=%(refname:short)', `refs/heads/${cfg.branch_prefix}${pad}-*`], repo).split('\n').filter(Boolean);
+  const names = ticketBranches(repo, cfg, pad);
   if (names.length !== 1) throw new SpeckError(names.length
     ? `Found ${names.length} branches for ticket ${pad} (${names.join(', ')}). Delete the extra ones, then run this again.`
     : `No branch called ${cfg.branch_prefix}${pad}-… found. Has the ticket been built?`);
