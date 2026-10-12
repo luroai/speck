@@ -42,6 +42,7 @@ From the panel, the user can open the review pack of any approved ticket in the 
 - Comes after 0129, so a shipped ticket's pack doesn't show "Changed lines: 0".
 - The pack is built from the ticket each time, as `speck pack` builds it (`reviewPack` in `scripts/pack.mjs`). Nothing new is saved.
 - The panel already formats a ticket's Markdown in its side pane (`markdown()` in `templates/panel.html`). Text goes in as text, never as HTML, as it does there.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
