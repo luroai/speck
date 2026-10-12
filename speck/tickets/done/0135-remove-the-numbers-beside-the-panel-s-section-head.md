@@ -1,7 +1,7 @@
 ---
 id: "0135"
 title: "Remove the numbers beside the panel's section headings"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-12
 started: "2026-10-12T18:53:30.432Z"
+finished: "2026-10-12T18:57:11.381Z"
 
 ---
 # 0135 · Remove the numbers beside the panel's section headings
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0134 put a decorative number (1, 2 and 3) beside the panel's Plan, Build and Shipped headings, copied from the zen mockup. The user doesn't want them: they add clutter without telling you anything.
