@@ -41,6 +41,7 @@ The review pack reports the ticket's own changes, wherever it's run from, and ne
 ## Notes
 - Cause: `changedLines` in `scripts/core.mjs` compares the current checkout's HEAD and working tree with the base branch, so from the base branch it measures nothing. Reproduced 2026-10-11 in speck-site: `speck pack 0002` on `main` prints "Changed lines (excluding tests and lockfiles): 0".
 - The ticket's branch is found the same way `speck ship` finds it (`ticketBranch` in `scripts/ship.mjs`: `<branch_prefix><id>-…`).
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
