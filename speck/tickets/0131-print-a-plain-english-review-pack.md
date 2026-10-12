@@ -43,6 +43,9 @@ started: "2026-10-12T19:09:23.084Z"
 - Failing before this build: none
 - Self-check: no changes
 
+## In plain words
+There's now a short, plain-English version of the review pack for deciding whether to ship a change without reading code. It says whether the reviewer approved the change, what the change was meant to do, the builder's own plain write-up of it, and each thing the ticket asked for with a tick, a cross or a warning sign. If the change is marked high risk or touches sensitive areas such as sign-in, passwords, payments or deployment, it adds one sentence suggesting a closer look first. To see it, ask for the review pack of a ticket in its plain version. The usual, detailed review pack hasn't changed. Worth knowing: once a shipped ticket's work has been tidied away, the short version can no longer tell whether sensitive areas were touched, so it then warns only about tickets marked high risk.
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
@@ -50,7 +53,9 @@ started: "2026-10-12T19:09:23.084Z"
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: `speck/ideas/2026-10-12-say-in-the-plain-pack-when-the-reviewer-couldn-t-see-the-code.md` (the plain pack leaves out the warning that the reviewer couldn't inspect the repo).
+  - Known limit: once the ticket's branch is gone, the plain pack can't list changed files, so it only warns about `risk: high`, not sensitive files.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -118,6 +123,75 @@ started: "2026-10-12T19:09:23.084Z"
     ],
     "escalation_question": "",
     "summary": "The plain pack provides the requested approval message, change description, results and risk warning, and the existing full pack remains unchanged. The recorded suite passed, but criteria spanning multiple lines lose part of their wording. Fix that omission before putting this in front of the owner for shipping."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8e0c3fa592d3274fdf52ad49d380fafa9acf3b78",
+    "thread_id": "01a13188-4ee0-71b2-9e67-ce5a87c30ab8",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 230197,
+      "cached_input_tokens": 181376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1436,
+      "reasoning_output_tokens": 44
+    },
+    "saved_at": "2026-10-12T19:15:20.786Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/pack.mjs plainPack prints the required content in order, selects the latest round and now includes criterion continuation lines. All AC1 CLI tests passed, including the new multiline wording and result regression."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "plainPack outputs ticket text and fixed explanatory text without review metadata or findings. Both AC2 CLI tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "plainPack checks high ticket risk and changed files against the shared RISKY pattern. All four AC3 tests passed, covering either risk trigger, both together and neither."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "sectionText strips comments and whitespace; plainPack prints the exact required fallback. All AC4 tests passed for missing, empty, comment-only and written sections."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "reviewPack remains unchanged, and cmdPack without --plain retains its original call. The AC5 regression test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pack.mjs",
+        "issue": "The plain pack previously omitted acceptance-criterion continuation lines. The revised parser now includes them, and the new CLI regression verifies complete wording with the latest review results.",
+        "suggested_fix": "Completed: continuation text is preserved specifically in the plain pack, with regression coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The plain-English pack meets all five requirements, including complete wording for criteria spanning several lines. The full review pack remains unchanged. All 15 ticket tests passed; the recorded full suite had no failures. No blocking concerns remain."
   }
 }
 ```
