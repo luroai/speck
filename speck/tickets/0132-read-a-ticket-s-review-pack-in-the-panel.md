@@ -1,7 +1,7 @@
 ---
 id: "0132"
 title: "Read a ticket's review pack in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:17:19.746Z"
 ---
 # 0132 · Read a ticket's review pack in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The review pack, the summary to read before shipping, is only available by running `speck pack <id>` in a terminal. A user working from the panel can see that a ticket is approved or shipped but can't read what the reviewer found.
@@ -53,9 +53,14 @@ The panel can now show the review pack, the reviewer's summary to read before sh
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 111,207
+- Elapsed since build started: 7 min
+- Changed lines: 124 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limits: the pack is fetched once when it's opened, not on each refresh; tables in the full ticket pane are still shown as written, since 0061 keeps them that way.
 
