@@ -1,7 +1,7 @@
 ---
 id: "0133"
 title: "Ship an approved ticket from its review pack in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:26:03.382Z"
 ---
 # 0133 · Ship an approved ticket from its review pack in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With `auto_ship` off, an approved ticket waits until the user runs `/speck-ship <id>` in their agent. A user reading the review pack in the panel has to leave it to ship.
@@ -53,9 +53,15 @@ An approved ticket's review pack in the panel now has a Ship button, so you can 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 shipPart returns immediately for non-approved tickets before rendering pending state or errors.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 581,320
+- Elapsed since build started: 9 min
+- Changed lines: 118 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: `speck/ideas/2026-10-12-show-a-panel-ship-in-progress-after-a-reload.md` (a reloaded page doesn't know a ship is running, or a failed push's message).
