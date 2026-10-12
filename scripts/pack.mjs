@@ -101,6 +101,35 @@ export function reviewPack(repo, id) {
   return lines.join('\n');
 }
 
+// The text of a ticket's section, without its comments, or '' when it's missing or holds only a comment.
+const sectionText = (t, name) => (t.sections[name] || []).join('\n').replace(/<!--[\s\S]*?-->/g, '').trim();
+
+// The review pack for someone who doesn't read code: no file paths, finding ids, models, tokens or sessions,
+// apart from what the ticket's own text quotes.
+export function plainPack(repo, id) {
+  const cfg = loadConfig(repo);
+  const { t, diff } = packSource(repo, cfg, id);
+  const last = ticketsRounds(repo, t).at(-1);
+  if (!last) throw new SpeckError('No review rounds recorded.');
+  const v = last.verdict;
+  const label = { pass: '✅ passed', fail: '❌ failed', unclear: '⚠️ unclear' };
+  // Each numbered criterion, with any lines that continue it.
+  const ac = sectionText(t, 'acceptance criteria').split('\n').map(l => l.trim()).filter(Boolean)
+    .reduce((all, l) => (/^\d+\.\s/.test(l) || !all.length ? all.push(l) : all[all.length - 1] += ` ${l}`, all), []);
+  const why = [t.fm.risk === 'high' && 'is marked high risk',
+    diff?.files.some(f => RISKY.test(f.file)) && 'touches sensitive parts of the project, such as sign-in, secrets, payments or deployment'].filter(Boolean);
+  return [
+    `## ${t.fm.id} · ${t.fm.title}`, '',
+    v.verdict === 'approve' ? 'The reviewer approved this change.' : "The reviewer hasn't approved this change yet.",
+    ...(why.length ? ['', `This change ${why.join(' and ')}, so it's worth a closer look before you ship it.`] : []),
+    '', '### What it should do', sectionText(t, 'outcome') || "The ticket doesn't say.",
+    '', '### In plain words', sectionText(t, 'in plain words') || "The builder didn't write this change up in plain words.",
+    '', '### Did it do what was asked?',
+    ...ac.map((c, i) => `${i + 1}. ${label[v.criteria.find(x => x.id === i + 1)?.status] || label.unclear}: ${c.replace(/^\d+\.\s+/, '')}`),
+  ].join('\n');
+}
+
 export function cmdPack(args) {
-  console.log(reviewPack(findRepoRoot(), args[0]));
+  if (args.includes('--plain')) console.log(plainPack(findRepoRoot(), args.find(a => a !== '--plain')));
+  else console.log(reviewPack(findRepoRoot(), args[0]));
 }

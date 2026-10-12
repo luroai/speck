@@ -563,7 +563,8 @@ const HELP = `speck: Small tickets. Independent review. You ship.
   speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck close <id>                    write the review and delivery logs, set approved and commit, once the reviewer approves
   speck next <id>                     what the builder should do next: review, fix, block or ship
-  speck pack <id>                     print the review pack
+  speck pack <id> [--plain]           print the review pack (--plain: a short one in plain English, for someone who
+                                      doesn't read code)
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
