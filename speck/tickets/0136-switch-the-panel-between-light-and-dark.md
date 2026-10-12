@@ -48,6 +48,7 @@ A button in the top-right of the panel switches between the light zen look and a
 - Hard-coded light-look shades (for example the `rgba(31, 37, 33, …)` backdrop and shadow behind the full ticket pane) need dark counterparts too, so nothing stays light-on-light or dark-on-dark in the dark look.
 - Assumed from the mockup: before you choose, the panel follows the computer's setting (AC5). Change AC5 if it should always start light.
 - Checked 2026-10-12: the dark colours, button and `speck-theme` storage key, read from `mockups/zen/panel.html` in the local speck-site project.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
