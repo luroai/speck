@@ -1,7 +1,7 @@
 ---
 id: "0136"
 title: Give the panel a dark look you can switch to                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-12
 ---
 # 0136 · Give the panel a dark look you can switch to
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0134 the panel is light only. The zen mockup it copies has a dark version with a light/dark button in the top-right, and the user wants it: some people prefer a dark screen, especially when they leave the panel open in the evening.
