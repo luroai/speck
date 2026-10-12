@@ -137,6 +137,10 @@
   .act b { color: var(--text); font-weight: 400; }
   .q.blocked { border-left: 2px solid var(--bad); padding-left: 12px; }
   .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
+  /* An approved ticket whose build has exited is waiting for you to ship it: purple, as nothing is wrong (0138) */
+  .q.to-ship { border-left: 2px solid var(--idea); padding-left: 12px; }
+  .stages .now.to-ship { border-top-color: var(--idea); color: var(--idea); }
+  .act.to-ship { color: var(--idea); }
   /* A step a build is working on now: a dot of light moves side to side along its line, unless the browser asks for reduced motion */
   @media (prefers-reduced-motion: no-preference) {
     .stages .now.moving { position: relative; }
@@ -144,6 +148,7 @@
       background: linear-gradient(90deg, transparent, var(--panel), transparent); animation: sweep 1.6s ease-in-out infinite alternate; }
     @keyframes sweep { to { left: calc(100% - 16px); } }
   }
+  .question.exit.to-ship { border-left-color: var(--idea); }
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
   .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px 34px; }
   .resume .cmd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
@@ -203,6 +208,7 @@
   .item.inbox.open, .item.inbox.open:hover { background: var(--inbox-bg); }
   .q.open { background: var(--accent-bg); border-left: 2px solid var(--accent); padding-left: 12px; }
   .q.blocked.open { background: var(--bad-bg); border-left-color: var(--bad); }
+  .q.to-ship.open { background: var(--idea-bg); border-left-color: var(--idea); }
   .note { margin: 0; font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
   .path { overflow-wrap: anywhere; }
@@ -432,9 +438,11 @@ function panelModel(state) {
       const stopped = !exited && t.build_stopped === true && (t.status === 'building' || t.status === 'reviewing');
       const exit_label = stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
+      // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138).
+      const to_ship = t.status === 'approved' && exit_label !== null;
       // A build speck run launched and is running can be paused and played from its row.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
-      return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t), red: t.status === 'blocked' || exit_label !== null, exit_label, resume: resumeOf(t, state.resume_command, stopped),
+      return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
         exit_message: exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         since: inFlight ? start : null, counter: inFlight && start !== null ? counter(Date.now() - start) : null };
     }),
@@ -1174,10 +1182,11 @@ function shapingToggle(m) {
   $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length), button('inbox', 'Inbox', m.inbox.length));
   $('shaping-section').className = `shaping ${shapingView}`;
 }
-// A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited.
+// A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited,
+// unless it's approved: then it's waiting for you to ship it, and purple.
 // A building or reviewing ticket that isn't red has a dot moving on its current step, unless its build is paused.
 function queueItem(t) {
-  const cls = `q${t.red ? ' blocked' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
+  const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const id = String(t.id), isOpen = openQueue.has(id);
   const top = el('div', 'top', null, el('span', 'rank', null, toggleIcon(t)), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
@@ -1187,7 +1196,7 @@ function queueItem(t) {
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
   const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red && !t.paused; // an agent is at work on it
-  for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : moving ? 'now moving' : 'now') : null, s.label));
+  for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : t.to_ship ? 'now to-ship' : moving ? 'now moving' : 'now') : null, s.label));
   q.appendChild(bar);
   // Under the progress bar, so the bar stays right under the top row and the icon stays centred on the two (0081).
   if (toggleRefused.has(id)) q.appendChild(el('div', 'toggle-refused', toggleRefused.get(id)));
@@ -1199,8 +1208,8 @@ function queueItem(t) {
   if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
   if (t.resume) q.appendChild(resumeLine(t));
   if (t.exit_label) {
-    q.appendChild(el('div', 'act bad', t.exit_label));
-    if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
+    q.appendChild(el('div', t.to_ship ? 'act to-ship' : 'act bad', t.exit_label));
+    if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : 'question exit', t.exit_message));
   }
   if (t.status === 'blocked') q.appendChild(el('div', 'act', `Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
   if (shippingId === id) q.appendChild(el('div', 'act', 'Shipping… (from its review pack)'));

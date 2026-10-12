@@ -42,6 +42,8 @@ In the queue, an approved ticket waiting to ship is highlighted in purple, and r
 - Today the red comes from `red: t.status === 'blocked' || exit_label !== null` in `templates/panel.html`, which includes an approved ticket's "Build finished without shipping".
 - The panel already uses a purple for ideas (`--idea`). Reusing it or picking a new purple is the builder's call, as long as criterion 2 holds.
 - Failing before this build: none
+- Reuses the ideas purple (`--idea`, `--idea-bg` for the open tint), so no new colours.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
