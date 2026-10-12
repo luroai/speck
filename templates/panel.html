@@ -917,17 +917,19 @@ function packPane(t) {
 }
 // 0133: an approved ticket's pack has a Ship button, above the pack. Clicking it is the user shipping (Gate 2), as
 // /speck-ship is: the server runs speck ship for it. Under it, that it's shipping, what speck ship said, or why it refused.
+// That it's shipping, and what speck ship said, show whatever the ticket's status: speck ship sets it done before it
+// pushes, so a poll can show it done while the push is still going, or after a push that failed.
 function shipPart(t) {
-  const id = String(t.id), out = [];
+  const id = String(t.id), pending = shippingId === id, out = [];
   if (shipped.has(id)) return [el('div', 'ship-said', shipped.get(id))];
-  if (t.status !== 'approved' || packOf.state !== 'ok') return [];
-  const pending = shippingId === id;
-  const b = el('button', 'ship', pending ? 'Shipping…' : 'Ship');
-  b.type = 'button';
-  b.disabled = shippingId !== null;
-  b.title = 'Merge this ticket into the base branch and push it, as /speck-ship does';
-  b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) shipTicket(id); });
-  out.push(b);
+  if (pending || (t.status === 'approved' && packOf.state === 'ok')) {
+    const b = el('button', 'ship', pending ? 'Shipping…' : 'Ship');
+    b.type = 'button';
+    b.disabled = shippingId !== null;
+    b.title = 'Merge this ticket into the base branch and push it, as /speck-ship does';
+    b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) shipTicket(id); });
+    out.push(b);
+  }
   if (pending) out.push(el('div', 'ship-said', `Shipping ${id}: running the tests, then merging and pushing. This can take a few minutes.`));
   if (shipRefused.has(id)) out.push(el('div', 'ship-said bad', shipRefused.get(id)));
   return out;

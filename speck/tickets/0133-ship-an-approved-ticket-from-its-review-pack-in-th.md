@@ -1,7 +1,7 @@
 ---
 id: "0133"
 title: "Ship an approved ticket from its review pack in the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:26:03.382Z"
 ---
 # 0133 · Ship an approved ticket from its review pack in the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 With `auto_ship` off, an approved ticket waits until the user runs `/speck-ship <id>` in their agent. A user reading the review pack in the panel has to leave it to ship.
@@ -54,3 +54,75 @@ The review pack of an approved ticket, opened in the panel, has a Ship button th
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "205175110620a6f48a47d32792514f2a1d322998",
+    "thread_id": "01a13199-21f8-79b2-b3a5-31b3cd25ccf2",
+    "seconds": 43,
+    "usage": {
+      "input_tokens": 229077,
+      "cached_input_tokens": 174080,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1054,
+      "reasoning_output_tokens": 120
+    },
+    "saved_at": "2026-10-12T19:32:04.594Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html packPane/shipPart restrict the button to approved review packs. Passing 0133 AC1 tests cover visibility and status changes."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Confirmation, cancellation and command execution have passing tests. However, shipPart hides the shipping indicator when polling changes the ticket to done, before scripts/ship.mjs finishes pushing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing '0133 AC2 AC3' integration test invokes the real ship command and verifies the merge, branch/worktree removal and done ticket in the Shipped model."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0133 AC4 tests verify real refusals for uncommitted changes and failing tests, unchanged repository snapshots, approved status and displayed messages. Conflict rollback is covered by existing ship tests."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs ship route uses the existing Origin and constant-time token checks. Passing 0133 AC5 integration test verifies 403 and unchanged repository state."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "shipPart returns immediately for non-approved tickets before rendering pending state or errors. The real ship command marks the ticket done and merges locally before pushing. A poll during a slow push therefore removes all shipping indicators. If the push fails, the recovery message is also hidden once the ticket is done, leaving the user unaware that remote delivery failed. Existing test/ship.test.mjs explicitly demonstrates that failed pushes leave the ticket done.",
+        "suggested_fix": "Render pending state and command errors independently of ticket status; restrict only the actionable Ship button to approved tickets. Add a page test that polls a done status while the ship response remains pending, then returns a push failure and verifies its recovery message stays visible.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The button, confirmation, real shipping command and access protections are implemented with meaningful tests. One important gap remains: a slow or failed push can make the panel hide progress and the message explaining how to recover. Fix that before merge. The recorded suite reports 1,195 passes and no failures; I inspected it without rerunning tests in the read-only environment."
+  }
+}
+```
+
+</details>

@@ -118,6 +118,31 @@ test('0133 AC2: cancelling the question sends nothing and changes nothing', asyn
   assert.equal(shipOf(p).disabled, false);
 });
 
+test('0133 AC2 AC4 (review F1): a poll showing the ticket done mid-ship keeps it shown as shipping, and a failed push\'s message stays', async () => {
+  let status = 'approved';
+  const s = () => ({ ideas: [], tickets: [T('0005', status, { started: ago(30), ...(status === 'done' ? { finished: ago(0) } : {}) })] });
+  const done = deferred();
+  const p = page({ s, answer: () => done });
+  await openPack(p);
+  p.press(shipOf(p));
+  await p.settle();
+  status = 'done'; // speck ship has merged it and is pushing
+  for (const fn of p.timers.splice(0)) fn();
+  await p.settle();
+  assert.equal(pane(p).hidden, false, 'the pack stays open, now from the Shipped table');
+  assert.ok(shippedRows(p).some(r => r.textContent.includes('0005')));
+  assert.match(pane(p).textContent, /Shipping 0005/);
+  assert.equal(shipOf(p).disabled, true);
+  const why = 'Merged locally, but pushing main to origin failed:\nrejected\nRun `git pull`, then `git push origin main`.';
+  done.resolve({ ok: false, status: 409, json: async () => ({ error: why }) });
+  await p.settle();
+  assert.ok(p.all(pane(p)).some(n => n._text === why && /\bbad\b/.test(n.className)), 'the push failure and how to fix it show');
+  assert.equal(shipOf(p), null, 'no Ship button on a done ticket');
+  for (const fn of p.timers.splice(0)) fn();
+  await p.settle();
+  assert.ok(p.all(pane(p)).some(n => n._text === why), 'still there after the next poll');
+});
+
 test('0133 AC4: a refusal shows speck ship\'s message in the pack, and the button comes back', async () => {
   const why = 'Tests failed on the approved branch, so nothing was shipped.';
   const p = page({ answer: () => ({ ok: false, status: 409, json: async () => ({ error: why }) }) });
