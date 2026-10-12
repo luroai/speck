@@ -1,7 +1,7 @@
 ---
 id: "0127"
 title: "Show in the panel whether speck run is on"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:40:29.568Z"
 ---
 # 0127 · Show in the panel whether speck run is on
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Someone watching the panel can't tell whether `speck run` is going. If it isn't, setting a ticket to ready does nothing, and nothing on the page says why.
@@ -55,9 +55,14 @@ Worth keeping an eye on: the panel looks for speck run in the main copy of the r
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 139,803
+- Elapsed since build started: 9 min
+- Changed lines: 26 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - The panel reads the lock in the main checkout's `speck/.cache/runs`, as it does for builds. A `speck run` started inside a worktree keeps its lock there, so it shows as off.
