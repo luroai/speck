@@ -1,7 +1,7 @@
 ---
 id: "0132"
 title: "Read a ticket's review pack in the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0129"]              # ticket ids that must be done first
 created: 2026-10-11
 started: "2026-10-12T19:17:19.746Z"
+finished: "2026-10-12T19:25:44.066Z"
 
 ---
 # 0132 · Read a ticket's review pack in the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The review pack, the summary to read before shipping, is only available by running `speck pack <id>` in a terminal. A user working from the panel can see that a ticket is approved or shipped but can't read what the reviewer found.
