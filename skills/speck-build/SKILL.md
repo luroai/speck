@@ -72,7 +72,9 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
      - <where it came from (a review finding or your own note) and any open questions>
      ```
 
-   Commit the notes and the ticket on the ticket branch before `speck close`, staging each file by name (`speck(<id>): follow-ups`).
+   Then, before you run `speck close`, fill in the ticket's `## In plain words` section (add it above `## Blocked question` if the ticket has none), replacing its comment. In a few short sentences, cover what's different for someone using the product, how to see the change for yourself, and anything worth keeping an eye on. Write it for someone who doesn't read code: no file paths, code, function names or test names.
+
+   Commit the notes and the ticket, with its `## In plain words`, on the ticket branch before `speck close`, staging each file by name (`speck(<id>): follow-ups`).
 2. Run `speck close <id>`. It refuses unless `speck next <id>` says `ship` and nothing outside the ticket file has uncommitted changes. It then replaces the ticket's `## Review log` with one line per round, adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to the `## Delivery log` (keeping what you wrote there), sets `approved` and commits only the ticket (`speck(<id>): approved`). Change nothing outside `speck/` after the approval, or the user won't be able to ship it.
 3. Run `speck ship <id> --auto`. It ships only if `auto_ship` is `true` in `speck/config.yml`, the ticket's risk is listed in `auto_ship_risk`, and the reviewer could inspect the repo in every round. Then it runs all of `speck ship`'s usual checks and the tests.
    - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, how many follow-ups went to the inbox or that none did, and anything worth a look (risk flags, follow-up ideas).
