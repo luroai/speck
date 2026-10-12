@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, runsOf, commitTicketOnly } from './speck.mjs';
-import { pauseBuild, playBuild, stopBuild, runState } from './run.mjs';
+import { pauseBuild, playBuild, stopBuild, runState, runsDir, pidAlive } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 
 // ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
@@ -146,6 +146,63 @@ async function panelShip(repo, id) {
   });
 }
 
+// 0128: the panel's speck run switch. Turning it on starts `speck run` for this repo in its own process group, with its
+// output going to speck/.cache/runs/run.log, so it keeps running after the page is closed and after `speck panel` stops,
+// Ctrl+C included. Resolves with { status, body }: 200 and the run once it holds the lock, or 409 and speck run's own
+// message when it refused, having changed nothing.
+const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50;
+function panelRunOn(repo) {
+  const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
+  const log = path.join(runsDir(repo), 'run.log');
+  let from = 0, fd, child;
+  try { from = fs.statSync(log).size; } catch { /* no output yet */ }
+  try {
+    fd = fs.openSync(log, 'a');
+    child = spawn(process.execPath, [cli, 'run'], { cwd: repo, detached: true, stdio: ['ignore', fd, fd] });
+  } catch (e) { return Promise.resolve({ status: 500, body: { error: `Couldn't start speck run: ${e.message}` } }); }
+  finally { if (fd !== undefined) fs.closeSync(fd); }
+  child.unref();
+  // What this speck run has written to the log so far.
+  const said = () => { try { return fs.readFileSync(log).subarray(from).toString('utf8').trim(); } catch { return ''; } };
+  return new Promise(resolve => {
+    let check, timer;
+    const finish = out => { clearInterval(check); clearTimeout(timer); resolve(out); };
+    child.on('error', e => finish({ status: 500, body: { error: `Couldn't start speck run: ${e.message}` } }));
+    child.on('exit', code => finish({ status: 409, body: { error: said() || `speck run stopped with exit code ${code} before it was on.` } }));
+    check = setInterval(() => {
+      const run = runState(runsOf(repo));
+      if (run.on && run.pid === child.pid) finish({ status: 200, body: { ok: true, run } });
+    }, RUN_SWITCH_POLL_MS);
+    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock within ${RUN_SWITCH_MS / 1000} seconds. Its output is in ${path.relative(repo, log)}.` } }), RUN_SWITCH_MS);
+  });
+}
+
+// True when the process is `speck run`, from its command line, so a lock left with a pid that has since been reused by
+// another program never gets that program stopped.
+function isSpeckRun(pid) {
+  const r = sh('ps', ['-ww', '-o', 'args=', '-p', String(pid)]);
+  return r.status === 0 && /speck(\.mjs)?\s+run(\s|$)/.test(r.stdout.trim());
+}
+
+// Turning it off stops the running `speck run`, from the panel or a terminal, as Ctrl+C does: SIGINT, which it answers by
+// stopping and leaving its builds running. Resolves once it has stopped.
+function panelRunOff(repo) {
+  const run = runState(runsOf(repo));
+  if (!run.on) return Promise.resolve({ status: 409, body: { error: 'speck run is off already.' } });
+  if (!isSpeckRun(run.pid))
+    return Promise.resolve({ status: 409, body: { error: `speck run's lock names process ${run.pid}, which isn't speck run, so it wasn't stopped. If no speck run is running, delete ${path.relative(repo, path.join(runsOf(repo), 'run.lock'))}.` } });
+  try { process.kill(run.pid, 'SIGINT'); }
+  catch (e) { return Promise.resolve({ status: 500, body: { error: `Couldn't stop speck run (process ${run.pid}): ${e.message}` } }); }
+  const end = Date.now() + RUN_SWITCH_MS;
+  return new Promise(resolve => {
+    const check = setInterval(() => {
+      const now = runState(runsOf(repo));
+      if (!pidAlive(run.pid) || now.pid !== run.pid) { clearInterval(check); resolve({ status: 200, body: { ok: true, run: { on: false, pid: null } } }); }
+      else if (Date.now() > end) { clearInterval(check); resolve({ status: 500, body: { error: `speck run (process ${run.pid}) was asked to stop but is still running after ${RUN_SWITCH_MS / 1000} seconds. Try again, or stop it from its terminal.` } }); }
+    }, RUN_SWITCH_POLL_MS);
+  });
+}
+
 // `speck panel`. The process you start only launches the first server process and waits until the last one has gone.
 // Everything else, serving, watching the code and restarting, happens in server processes, each running the code as it
 // was when it started: when the code changes, a server starts its successor on the new code, hands it the port and stops.
@@ -204,7 +261,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/pause, /play or /stop and POST /api/tickets/<id>/ship. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/pause, /play or /stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -231,6 +288,7 @@ export async function panelServer() {
   let restartError = null; // the last failed restart, shown on the page until a restart works or the code is put back
   let stopping = false;
   let shipping = null; // the id of the ticket a Ship button is shipping, until speck ship has finished
+  let switching = false; // true while the speck run switch is turning it on or off
   const pageFile = path.join(TEMPLATES, 'panel.html');
   const page = () => fs.readFileSync(pageFile, 'utf8')
     .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token);
@@ -282,6 +340,17 @@ export async function panelServer() {
       panelShip(repo, ship[1])
         .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }))
         .then(out => { shipping = null; send(res, out.status, 'application/json', JSON.stringify(out.body)); });
+      return;
+    }
+    const runSwitch = where.match(/^\/api\/run\/(on|off)$/);
+    if (req.method === 'POST' && runSwitch) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      if (switching) return send(res, 409, 'application/json', JSON.stringify({ error: 'speck run is being turned on or off. Wait for that to finish, then try again.' }));
+      switching = true;
+      Promise.resolve().then(() => (runSwitch[1] === 'on' ? panelRunOn(repo) : panelRunOff(repo)))
+        .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }))
+        .then(out => { switching = false; send(res, out.status, 'application/json', JSON.stringify(out.body)); });
       return;
     }
     if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed.\n');
@@ -370,7 +439,7 @@ export async function panelServer() {
     const now = codeStamp();
     if (now !== stamp) { stamp = now; changedAt = Date.now(); return; }
     // Not while a ship runs: shipping can change the code (merging the base branch), and stopping would drop its answer.
-    if (!changedAt || successor || stopping || shipping || Date.now() - changedAt < PANEL_SETTLE_MS) return;
+    if (!changedAt || successor || stopping || shipping || switching || Date.now() - changedAt < PANEL_SETTLE_MS) return;
     changedAt = 0;
     restart();
   }, PANEL_WATCH_MS);

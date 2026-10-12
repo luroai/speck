@@ -13,7 +13,7 @@ export const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
 const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
 
 // The folder for speck run's records and logs, inside speck/.cache/, which git ignores.
-function runsDir(repo) {
+export function runsDir(repo) {
   const root = path.join(repo, 'speck', '.cache');
   const dir = path.join(root, 'runs');
   fs.mkdirSync(dir, { recursive: true });

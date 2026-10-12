@@ -168,6 +168,12 @@
   .live.off { background: var(--bad); }
   .live.idle { background: var(--faint); }
   .run-state + .pills { margin-left: 0; }
+  .run-switch { display: flex; align-items: center; }
+  .run-switch button { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 10px; margin-right: 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .run-switch button:hover { color: var(--text); border-color: var(--text); }
+  .run-switch button:disabled { cursor: default; opacity: .6; }
+  .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
   .offline[hidden] { display: none; }
   .restart { font-size: 12px; color: var(--warn); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--raise); }
@@ -277,6 +283,7 @@
   <div class="logo">speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
   <div class="pills run-state" id="run"></div>
+  <div class="run-switch" id="run-switch"></div>
   <div class="pills" id="pills"><div class="pill"><span class="live"></span>connecting…</div></div>
   <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">
     <svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/></svg>
@@ -285,6 +292,7 @@
 </header>
 <div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
 <div class="restart" id="restart" hidden></div>
+<div class="run-error" id="run-error" hidden></div>
 
 <main>
   <section id="shaping-section" class="shaping tickets">
@@ -689,7 +697,7 @@ function linkTarget(s, from) {
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
 const LOG_MS = 1000; // how often an open queue ticket's log is asked for
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause, play, stop and ship
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause, play, stop, ship and the speck run switch
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -746,6 +754,7 @@ const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
 let shippingId = null; // the id whose Ship request hasn't been answered yet: one ship at a time
+let runSwitching = null; // 'on' or 'off' while the speck run switch's request hasn't been answered yet
 const shipped = new Map(); // id → what speck ship printed when the panel shipped it
 const shipRefused = new Map(); // id → why speck ship refused it, until the next click on its Ship button or the pack is opened again
 let copies = 0;
@@ -1514,6 +1523,37 @@ function render() {
   // Whether speck run is on: when it's off, setting a ticket ready starts nothing.
   const on = !!(state.run && state.run.on);
   $('run').replaceChildren(el('div', on ? 'pill run-on' : 'pill run-off', null, el('span', on ? 'live' : 'live idle'), document.createTextNode(on ? 'speck run on' : 'speck run off')));
+  const sw = el('button', null, runSwitching ? (runSwitching === 'on' ? 'Turning on…' : 'Turning off…') : on ? 'Turn off' : 'Turn on');
+  sw.type = 'button';
+  sw.disabled = !!runSwitching;
+  sw.title = on ? 'Stop speck run as Ctrl+C does: builds already running carry on' : 'Start speck run, which starts a build for each ready ticket';
+  sw.addEventListener('click', e => { e.stopPropagation(); if (!sw.disabled) switchRun(on ? 'off' : 'on'); });
+  $('run-switch').replaceChildren(sw);
+}
+// 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the pill shows
+// that at once. A refusal shows speck run's own message under the header until the next click on the switch.
+async function switchRun(to) {
+  if (runSwitching) return;
+  runSwitching = to;
+  showRunError(null);
+  render();
+  try {
+    const res = await fetch(`/api/run/${to}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    if (res.ok && body && body.run) {
+      if (body.run.on) state.run = body.run;
+      else delete state.run;
+    } else showRunError(body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
+  } catch {
+    showRunError(`Couldn't reach the panel server, so speck run wasn't turned ${to}.`);
+  }
+  runSwitching = null;
+  render();
+}
+function showRunError(text) {
+  $('run-error').hidden = !text;
+  $('run-error').textContent = text || '';
 }
 function setConnected(ok, problem) {
   connected = ok;
