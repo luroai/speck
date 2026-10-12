@@ -1,7 +1,7 @@
 ---
 id: "0134"
 title: "Restyle the control panel in the zen look"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T18:33:24.615Z"
 ---
 # 0134 · Restyle the control panel in the zen look
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 The control panel's dark, dense look doesn't match the calmer "zen" style chosen for speck's landing page, so the two feel like different products. The user wants only the look changed: everything the panel shows and does stays exactly the same.
@@ -53,7 +53,75 @@ The panel looks like the zen mockup: light paper background, moss-green accent, 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 165,492
+- Elapsed since build started: 9 min
+- Changed lines: 174 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "554d90f5aac3b7a70ed62b2c8f427c1ea168205b",
+    "thread_id": "01a1316b-d105-73a1-b12e-8d30e66e9067",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 164640,
+      "cached_input_tokens": 118400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 852,
+      "reasoning_output_tokens": 67
+    },
+    "saved_at": "2026-10-12T18:42:27.028Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html first :root block contains the required colours. The three 0134 AC1 tests verify exact values, distinct status colours, contrast and the 14-name PALETTE; all passed. The 0126 mutation checks also passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html loads no external fonts or stylesheet assets. The 0134 AC2 source checks and real-browser computed font-family checks passed for serif section headings and monospace ticket ids."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html places aria-hidden number spans immediately before the unchanged Plan, Build and Shipped h2 elements. Both static and real-browser 0134 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Independent comparison against main confirms the script block and static ids are identical. The branch changes no scripts/ files. The 0134 AC4 test verifies unchanged static wording apart from section numbers and passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0134-tests.txt: 1129 passed, zero failed and three unrelated historical checks skipped. All eight 0134 tests ran and passed, including the browser test. Existing colour assertions were updated; the adapted 0081 geometry comparison retains the historical icon rules."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now has the requested light colours, serif headings and decorative section numbers. Its scripts, controls and wording are preserved. The recorded full test suite passes, including browser checks, and the ticket’s changes stay within scope."
+  }
+}
+```
+
+</details>
