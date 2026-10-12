@@ -1,7 +1,7 @@
 ---
 id: "0127"
 title: "Show in the panel whether speck run is on"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-11
+started: "2026-10-12T19:40:29.568Z"
 
 ---
 # 0127 · Show in the panel whether speck run is on
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Someone watching the panel can't tell whether `speck run` is going. If it isn't, setting a ticket to ready does nothing, and nothing on the page says why.
