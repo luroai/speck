@@ -1,7 +1,7 @@
 ---
 id: "0138"
 title: "Show a ticket waiting to ship in purple, not red"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-12
 started: "2026-10-12T21:31:42.291Z"
+finished: "2026-10-12T21:37:36.831Z"
 
 ---
 # 0138 · Show a ticket waiting to ship in purple, not red
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When an approved ticket's build has finished and the ticket is waiting for the user to ship it, the panel's queue shows its row in red, the colour it uses for blocked and broken builds. Nothing is wrong: the ticket is just waiting for the user's shipping decision, so the red sends a false alarm.
