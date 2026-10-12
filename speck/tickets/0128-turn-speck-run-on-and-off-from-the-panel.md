@@ -1,7 +1,7 @@
 ---
 id: "0128"
 title: Toggle speck run from the panel                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:49:52.296Z"
 ---
 # 0128 · Toggle speck run from the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 To start or stop `speck run` today, the user has to go to a terminal on the box. From the panel, often opened remotely, they can see the queue but can't set it going or stop it.
@@ -52,9 +52,14 @@ The panel's header now has a button next to the "speck run on/off" label. When s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 156,158
+- Elapsed since build started: 6 min
+- Changed lines: 123 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - `speck/.cache/runs/run.log` is appended to on every start from the panel and never trimmed.
