@@ -40,6 +40,7 @@ Every ticket the builder takes to approval has a short account of the change in 
 
 ## Notes
 - The builder writes it, not the reviewer, because the builder knows what it changed and why. The reviewer's summary stays as it is.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
