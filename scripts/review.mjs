@@ -26,7 +26,11 @@ export function appendRounds(text, recs) {
 }
 
 export function rounds(repo, id) {
-  const t = findTicket(repo, id);
+  return ticketsRounds(repo, findTicket(repo, id));
+}
+
+// The rounds recorded in a ticket already read, such as a copy from its branch.
+export function ticketsRounds(repo, t) {
   const { rounds: all, errors } = ticketRounds(t.raw);
   if (errors.length) throw new SpeckError(`${path.relative(repo, t.file)}: ${errors[0]} Restore that section from git, then run this again.`);
   return all;
