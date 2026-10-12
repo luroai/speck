@@ -41,6 +41,7 @@ The Plan, Build and Shipped headings show their names only, with no number besid
 - Undoes 0134 AC3 only. The rest of 0134 stays.
 - The section number spans and the `.sh .num` rule are both in `templates/panel.html`. The Shipped table's `td.num` cells are a different thing (right-aligned figures) and stay.
 - AC4 is checked by the reviewer against this ticket's diff.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
