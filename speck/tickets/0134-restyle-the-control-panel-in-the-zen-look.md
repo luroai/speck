@@ -45,6 +45,7 @@ The panel looks like the zen mockup: light paper background, moss-green accent, 
 - AC4 is checked by the reviewer against this ticket's diff. Don't add a test that freezes the script, because later tickets must be able to change it.
 - The change is meant to be undone with one `git revert` of its commit if the user doesn't like it, so keep it to the panel page and the colour tests.
 - Checked 2026-10-12: the mockup's colours, fonts and layout, read from `mockups/zen/panel.html` in the local speck-site project.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
