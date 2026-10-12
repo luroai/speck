@@ -1,7 +1,7 @@
 ---
 id: "0137"
 title: "Open a shipped ticket by clicking its title"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T21:21:57.239Z"
 ---
 # 0137 · Open a shipped ticket by clicking its title
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each row in the panel's Shipped table has two buttons, Full ticket and Review pack. Two buttons side by side make every row taller than it needs to be, so the table takes more room and is harder to scan.
@@ -53,9 +53,14 @@ In the panel's Shipped list, each ticket's title is now a link: click it (or Tab
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 101,004
+- Elapsed since build started: 8 min
+- Changed lines: 30 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: the title link's address is `#`, so middle-click or "open in new tab" opens the panel itself rather than the ticket. No inbox note: the ticket asked for the link to stay in the page.
