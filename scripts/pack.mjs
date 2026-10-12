@@ -1,6 +1,6 @@
 // speck pack: the review pack, and the review totals the delivery log shares.
 
-import { RISKY, SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, parseTicket, lintTicket, changedLines, branchChangedLines, ticketBranches, contentLines, repoPath } from './core.mjs';
+import { RISKY, SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, parseTicket, lintTicket, changedLines, branchChangedLines, forkPoint, ticketBranches, contentLines, repoPath } from './core.mjs';
 import { ticketsRounds, NO_INSPECT, mergeRun, ordinaryRounds } from './review.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
@@ -40,7 +40,8 @@ function packSource(repo, cfg, id) {
     throw new SpeckError(`Found ${names.length} branches for ticket ${t.fm.id} (${names.join(', ')}). Delete the extra ones, then run this again.`);
   const branch = names[0];
   if (!branch) return { t, diff: null };
-  if (git(['branch', '--show-current'], repo).trim() === branch) return { t, diff: changedLines(repo, cfg.base_branch) };
+  if (git(['branch', '--show-current'], repo).trim() === branch)
+    return { t, diff: changedLines(repo, cfg.base_branch, forkPoint(repo, cfg.base_branch, branch)) };
   const shown = sh('git', ['show', `${branch}:${repoPath(repo, t.file)}`], { cwd: repo });
   return { t: shown.status === 0 ? { file: t.file, ...parseTicket(shown.stdout) } : t, diff: branchChangedLines(repo, cfg.base_branch, branch) };
 }

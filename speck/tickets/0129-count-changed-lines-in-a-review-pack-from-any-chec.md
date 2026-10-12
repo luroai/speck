@@ -1,7 +1,7 @@
 ---
 id: "0129"
 title: "Count changed lines in a review pack from any checkout"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T18:43:49.832Z"
 ---
 # 0129 · Count changed lines in a review pack from any checkout
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck pack <id>` says "Changed lines: 0" whenever it's run from a checkout that isn't the ticket's branch, such as the base branch checkout when builds run in worktrees, or after the ticket has shipped. The user then reads a review pack that says nothing changed when plenty did (seen on speck-site ticket 0002: the pack says 0, its delivery log says 158).
@@ -53,3 +53,75 @@ The review pack reports the ticket's own changes, wherever it's run from, and ne
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fa7acde115470d55fefa14eed87daea1710f38be",
+    "thread_id": "01a13172-d146-7722-8476-5d94a6602534",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 131855,
+      "cached_input_tokens": 92800,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 941,
+      "reasoning_output_tokens": 124
+    },
+    "saved_at": "2026-10-12T18:50:08.983Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/pack.mjs packSource reads the branch's ticket and branchChangedLines measures its committed changes. AC1 tests cover separate worktrees, an unchecked-out branch, base advances and merges."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "scripts/pack.mjs:43 uses changedLines inside the ticket worktree. After that branch is merged into base but retained, merge-base(base, HEAD) is HEAD, so committed changes disappear. The retained-branch test checks only the base checkout; the AC2 test checks only an unmerged branch."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "changeLines reads the delivery-log figure and labels it recorded at approval. Three AC3 tests exercise a recorded figure, no figure and a figure outside the delivery log."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "changeLines explicitly says sensitive files cannot be listed when the branch is absent. The AC4 test checks this and rejects the 'none touched' message."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0129-tests.txt totals: 1142 tests, 1139 passed, zero failed, three skipped. Existing tests were not modified."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pack.mjs:43",
+        "issue": "A merged but retained ticket branch reports different results depending on the checkout. From its own clean worktree, changedLines compares HEAD with itself and reports zero with no sensitive files; from base, branchChangedLines recovers the ticket's changes. This violates criterion 2 and preserves the original misleading behaviour for this case.",
+        "suggested_fix": "Use the same branch comparison origin in both checkouts, while preserving any intended handling of uncommitted work. Extend the retained-branch merge test to compare the figure and sensitive files from both checkouts.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The pack now counts unmerged ticket branches from other checkouts and uses recorded figures after branch deletion. The reported suite passes, but a merged branch that is kept still reports zero from its own worktree. That checkout inconsistency needs fixing before merge."
+  }
+}
+```
+
+</details>

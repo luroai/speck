@@ -376,8 +376,9 @@ function countRows(rows) {
   return { total: counted.reduce((n, r) => n + r.lines, 0), files: rows, counted };
 }
 
-export function changedLines(repo, base) {
-  const mb = git(['merge-base', base, 'HEAD'], repo).trim();
+// The checkout's changes, uncommitted ones included, since `from`: by default where HEAD and the base branch meet.
+export function changedLines(repo, base, from = null) {
+  const mb = from || git(['merge-base', base, 'HEAD'], repo).trim();
   const rows = numstat(git(['diff', '--numstat', mb], repo));
   for (const f of git(['ls-files', '--others', '--exclude-standard'], repo).split('\n').filter(Boolean)) {
     try { rows.push({ file: f, lines: fs.readFileSync(path.join(repo, f), 'utf8').split('\n').length }); } catch { /* binary or unreadable */ }
@@ -391,13 +392,17 @@ export function ticketBranches(repo, cfg, id) {
   return git(['for-each-ref', '--format=%(refname:short)', `refs/heads/${cfg.branch_prefix}${pad}-*`], repo).split('\n').filter(Boolean);
 }
 
-// A branch's committed changes since it left the base branch, from any checkout. Once the branch is merged in, it
-// left from the base branch as it was just before that merge: its newest first-parent commit without the branch.
-export function branchChangedLines(repo, base, branch) {
+// Where a branch left the base branch. Once the branch is merged in, it left from the base branch as it was just
+// before that merge: its newest first-parent commit without the branch.
+export function forkPoint(repo, base, branch) {
   const merged = new Set(git(['rev-list', '--ancestry-path', `${branch}..${base}`], repo).split('\n').filter(Boolean));
   const before = git(['rev-list', '--first-parent', base], repo).split('\n').find(c => c && !merged.has(c)) || base;
-  const mb = git(['merge-base', before, branch], repo).trim();
-  return countRows(numstat(git(['diff', '--numstat', mb, branch], repo)));
+  return git(['merge-base', before, branch], repo).trim();
+}
+
+// A branch's committed changes since it left the base branch, from any checkout.
+export function branchChangedLines(repo, base, branch) {
+  return countRows(numstat(git(['diff', '--numstat', forkPoint(repo, base, branch), branch], repo)));
 }
 
 // ---------- reviews ----------

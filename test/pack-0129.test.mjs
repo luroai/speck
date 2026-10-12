@@ -77,6 +77,9 @@ test('0129 AC1: a branch merged into the base branch but kept is still counted f
   const pack = reviewPack(r.dir, '1');
   assert.equal(figure(pack), '- Changed lines (excluding tests and lockfiles): 5');
   assert.equal(sensitive(pack), '- Sensitive files touched: `src/auth.js`');
+  const inside = reviewPack(r.wt, '1');
+  assert.equal(figure(inside), figure(pack), 'the same from the ticket\'s own worktree');
+  assert.equal(sensitive(inside), sensitive(pack));
 });
 
 test('0129 AC2: from inside the ticket\'s own worktree the pack gives the same figure and sensitive files', () => {
