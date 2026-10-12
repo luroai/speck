@@ -411,12 +411,14 @@ function panelModel(state) {
   const now = Date.now();
   // What a ticket's builder spent, as speck run recorded it, or null when it isn't recorded.
   const spent = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+  // When a build ended: its approval (0139), or none when that's missing, unreadable or before it started.
+  const approvedAt = t => { const a = time(t.approved), s = time(t.started); return a !== null && s !== null && a >= s ? a : null; };
   const done = tickets.filter(is('done')).map(t => {
-    const start = time(t.started), end = time(t.finished);
+    const start = time(t.started), end = time(t.finished), until = approvedAt(t) ?? end;
     return { ...t, end, when: shippedAt(end, now), roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
       builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
-      exactMinutes: start !== null && end !== null ? (end - start) / 60000 : null,
-      minutes: start !== null && end !== null ? Math.round((end - start) / 60000) : null };
+      exactMinutes: start !== null && until !== null ? (until - start) / 60000 : null,
+      minutes: start !== null && until !== null ? Math.round((until - start) / 60000) : null };
   });
   // Each median covers the done tickets that have its data: both times, at least one review round, reviewer tokens or
   // the builder's tokens or cost recorded.
@@ -432,6 +434,8 @@ function panelModel(state) {
     // One list: in-flight tickets, then ready ones, each group in JSON order.
     queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(chain).map(t => {
       const inFlight = t.status !== 'ready', start = time(t.started);
+      // An approved ticket's timer stops at its approval (0139); every other in-flight one counts on.
+      const approved_at = t.status === 'approved' ? approvedAt(t) : null;
       // A build from speck run that has exited while its ticket is still in hand needs you, as a blocked ticket does.
       const exited = t.build_exit && typeof t.build_exit === 'object' && t.status !== 'blocked';
       // A build that was killed, with no exit recorded, is no longer at work on its ticket either.
@@ -444,7 +448,7 @@ function panelModel(state) {
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
         exit_message: exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
-        since: inFlight ? start : null, counter: inFlight && start !== null ? counter(Date.now() - start) : null };
+        since: inFlight ? start : null, approved_at, counter: inFlight && start !== null ? counter((approved_at ?? Date.now()) - start) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
     shippedTotal: done.length,
@@ -1515,7 +1519,7 @@ function render() {
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), toggleRefused.get(String(t.id)) ?? null, stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
-  startCounters(m.queue.flatMap((t, i) => (t.counter !== null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : [])));
+  startCounters(m.queue.flatMap((t, i) => (t.counter !== null && t.approved_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : [])));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
   queueIds = new Set(m.queue.map(t => String(t.id)));
