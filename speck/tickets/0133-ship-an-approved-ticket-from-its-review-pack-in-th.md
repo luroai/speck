@@ -46,6 +46,9 @@ The review pack of an approved ticket, opened in the panel, has a Ship button th
 - Failing before this build: none
 - Self-check: the server's ship handler is async, so an unexpected error finding the ticket can't leave it stuck as shipping; added a test that a second ship while one runs is refused and the first still ships.
 
+## In plain words
+An approved ticket's review pack in the panel now has a Ship button, so you can read the pack and ship the ticket in one place, without going back to your agent. It does exactly what `/speck-ship` does. To see it, open the panel, open an approved ticket in the queue, click Review pack, then Ship: it asks you to confirm, says it's shipping while the tests run and it merges and pushes, then the ticket moves to the Shipped table. If shipping is refused, for example because the tests fail, the reason shows in the pack and nothing changes. Worth knowing: a ship can take a few minutes, and if you reload the page meanwhile it won't show that it's still shipping (a follow-up is in the inbox).
+
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
 
@@ -54,6 +57,10 @@ The review pack of an approved ticket, opened in the panel, has a Ship button th
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: `speck/ideas/2026-10-12-show-a-panel-ship-in-progress-after-a-reload.md` (a reloaded page doesn't know a ship is running, or a failed push's message).
+- Known limit: while a ship runs, the panel holds off restarting on new code (shipping can change that code by merging), and restarts once it ends. No automated test covers the hold-off.
+- Known limit: the server ships one ticket at a time; a second Ship while one runs is refused with a message.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -121,6 +128,75 @@ The review pack of an approved ticket, opened in the panel, has a Ship button th
     ],
     "escalation_question": "",
     "summary": "The button, confirmation, real shipping command and access protections are implemented with meaningful tests. One important gap remains: a slow or failed push can make the panel hide progress and the message explaining how to recover. Fix that before merge. The recorded suite reports 1,195 passes and no failures; I inspected it without rerunning tests in the read-only environment."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d50a345b0723064872e9c949dc6cc699ac3c105c",
+    "thread_id": "01a13199-21f8-79b2-b3a5-31b3cd25ccf2",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 349531,
+      "cached_input_tokens": 286336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1658,
+      "reasoning_output_tokens": 120
+    },
+    "saved_at": "2026-10-12T19:34:19.305Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html packPane and shipPart restrict the actionable Ship button to an approved ticket's loaded review pack. Both 0133 AC1 tests pass and cover other statuses and locations."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipTicket confirms before sending the request; panelShip invokes the real speck ship command. Passing AC2 tests cover confirmation, cancellation and duplicate requests. The new passing F1 regression test verifies shipping remains visible when polling reports done before the command finishes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing '0133 AC2 AC3' integration test verifies the real merge, branch and worktree removal, and the done ticket appearing in the Shipped model."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests verify command refusal messages, unchanged repository snapshots and approved status for uncommitted changes and failing tests. Existing ship tests cover conflict rollback. The new F1 test also verifies push-failure recovery text remains visible after polling."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs applies the existing Origin and constant-time token checks before shipping. Passing AC5 integration tests verify missing or incorrect tokens and foreign or absent origins receive 403 without repository changes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Shipping progress and push-failure messages were hidden when polling changed the ticket's status to done.",
+        "suggested_fix": "Render pending state and command errors independently of ticket status, with regression coverage for polling during a push and a subsequent push failure.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The previous issue is fixed: shipping progress and recovery messages remain visible even after the local merge marks the ticket done. All five criteria pass, with meaningful tests and no open blocking findings. The inspected test log records 1,196 passes, no failures and three skips; tests were not rerun in this read-only review."
   }
 }
 ```
