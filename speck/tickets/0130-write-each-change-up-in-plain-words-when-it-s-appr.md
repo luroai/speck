@@ -1,7 +1,7 @@
 ---
 id: "0130"
 title: "Write each change up in plain words when it's approved"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-11
 ---
 # 0130 · Write each change up in plain words when it's approved
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Everything a build leaves behind (the review pack, the review rounds, the delivery log) is written for someone who reads code. A user who doesn't can't tell from it what actually changed for them or how to see it for themselves.
