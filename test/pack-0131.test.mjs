@@ -9,8 +9,9 @@ import { shipRepo, gIn, runIn } from './support/ship.mjs';
 
 const TICKET = 'speck/tickets/0001-export-bookings.md';
 const PLAIN = 'Anyone can now download their bookings as a spreadsheet.\n\nOpen the bookings page and press Export.';
-const body = (plain = PLAIN) => `## Problem\nUsers cannot export.\n\n## Outcome\nUsers can export their bookings as a CSV file.\n\n` +
-  `## Acceptance criteria\n1. Export button downloads a CSV.\n2. The CSV has one row per booking.\n3. Empty lists give a CSV with only the header.\n\n` +
+const CRITERIA = '1. Export button downloads a CSV.\n2. The CSV has one row per booking.\n3. Empty lists give a CSV with only the header.';
+const body = (plain = PLAIN, criteria = CRITERIA) => `## Problem\nUsers cannot export.\n\n## Outcome\nUsers can export their bookings as a CSV file.\n\n` +
+  `## Acceptance criteria\n${criteria}\n\n` +
   `## Out of scope\n- PDF export\n\n## Notes\n- Uses \`src/export.js\`.\n\n` +
   (plain === null ? '' : `## In plain words\n${plain}\n\n`) + `## Blocked question\n<!-- Filled in by speck only when status is blocked. -->\n\n`;
 const verdict = (v, criteria, findings = []) => ({ verdict: v, criteria, findings, summary: 'Checked `shared.txt` and test/export.test.js.', escalation_question: '' });
@@ -18,14 +19,14 @@ const crit = (...s) => s.map((status, i) => ({ id: i + 1, status, evidence: `see
 
 // shipRepo's approved ticket, with `body` as its sections, a reviewer model set, an optional sensitive file and risk,
 // and a last round with `last` as its verdict.
-function plainRepo({ plain, risk = 'low', sensitive = false, last = verdict('approve', crit('pass', 'pass', 'pass')) } = {}) {
+function plainRepo({ plain, criteria, risk = 'low', sensitive = false, last = verdict('approve', crit('pass', 'pass', 'pass')) } = {}) {
   const r = shipRepo();
   const file = path.join(r.wt, TICKET);
   const text = fs.readFileSync(file, 'utf8');
   const [head, rest] = text.split('## Problem');
   const roundsAt = rest.indexOf('## Review rounds');
   fs.writeFileSync(file, head.replace(/^risk: \S+/m, `risk: ${risk}`).replace(/^reviewer_model: .*$/m, 'reviewer_model: gpt-secret-model')
-    + body(plain) + rest.slice(roundsAt));
+    + body(plain, criteria) + rest.slice(roundsAt));
   if (sensitive) {
     fs.mkdirSync(path.join(r.wt, 'src'), { recursive: true });
     fs.writeFileSync(path.join(r.wt, 'src', 'auth.js'), 'a\n');
@@ -89,6 +90,14 @@ test('0131 AC2: apart from the ticket\'s own text, the plain pack shows no file 
 test('0131 AC2: a file path quoted in the ticket\'s own text is still shown', () => {
   const out = plainRepo({ plain: 'The export now lives in `src/export.js`.' }).pack('--plain');
   assert.match(out, /`src\/export\.js`/);
+});
+
+test('0131 AC1: a criterion that runs over several lines is shown with all of its wording', () => {
+  const criteria = '1. Export button downloads a CSV.\n   Include every booking and keep accented names.\n2. The CSV has one row per booking.\n3. Empty lists give a CSV\nwith only the header.';
+  const lines = plainRepo({ criteria, last: verdict('changes_requested', crit('fail', 'pass', 'pass')) }).pack('--plain').split('\n');
+  const one = lines.find(l => l.includes('Export button downloads a CSV.'));
+  assert.match(one, /❌ failed: Export button downloads a CSV\. Include every booking and keep accented names\.$/);
+  assert.match(lines.find(l => l.includes('Empty lists')), /✅ passed: Empty lists give a CSV with only the header\.$/);
 });
 
 const riskLines = out => out.split('\n').filter(l => /risk|sensitive|closer look/i.test(l));

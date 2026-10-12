@@ -1,7 +1,7 @@
 ---
 id: "0131"
 title: "Print a plain-English review pack"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T19:09:23.084Z"
 ---
 # 0131 · Print a plain-English review pack
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck pack <id>` is written for someone who reads code: evidence quoting files and tests, finding ids, session and token figures. A non-technical user deciding whether to ship needs to know what changed, whether it does what they asked, and whether anything needs a closer look.
@@ -51,3 +51,75 @@ started: "2026-10-12T19:09:23.084Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "76d1187644f43ec465bcd6a2b95dfdef91acfb01",
+    "thread_id": "01a13188-4ee0-71b2-9e67-ce5a87c30ab8",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 136760,
+      "cached_input_tokens": 94976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 938,
+      "reasoning_output_tokens": 44
+    },
+    "saved_at": "2026-10-12T19:13:35.138Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/pack.mjs plainPack uses lintTicket(...).acceptanceCriteria, which retains only numbered first lines and drops continuation lines. Read-only reproduction confirmed this. The passing AC1 tests in test/pack-0131.test.mjs cover only single-line criteria."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "plainPack prints ticket text and fixed explanatory text without review evidence or metadata. Both AC2 tests passed in the recorded full output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "plainPack checks ticket risk and diff files against the shared RISKY pattern. Four passing AC3 tests cover high risk, sensitive files, both together and neither."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "sectionText removes comments and whitespace; plainPack supplies the required fallback. Three passing AC4 tests cover missing, empty, comment-only and written sections."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "git diff confirms reviewPack is unchanged and the default cmdPack branch still calls it identically. The AC5 regression test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pack.mjs",
+        "issue": "The plain pack silently omits acceptance-criterion continuation lines. For example, a criterion beginning 'Export downloads a CSV.' followed by 'Include every booking and preserve accented names.' displays only the first sentence. This fails the requirement to show each criterion as worded in the ticket and hides requirements from the shipping decision.",
+        "suggested_fix": "Read complete numbered criteria, preserving their continuation text, specifically for the plain pack without changing the full pack. Add a CLI regression test with a multiline criterion that asserts its complete wording and latest review result appear.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The plain pack provides the requested approval message, change description, results and risk warning, and the existing full pack remains unchanged. The recorded suite passed, but criteria spanning multiple lines lose part of their wording. Fix that omission before putting this in front of the owner for shipping."
+  }
+}
+```
+
+</details>

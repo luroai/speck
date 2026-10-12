@@ -113,7 +113,9 @@ export function plainPack(repo, id) {
   if (!last) throw new SpeckError('No review rounds recorded.');
   const v = last.verdict;
   const label = { pass: '✅ passed', fail: '❌ failed', unclear: '⚠️ unclear' };
-  const ac = lintTicket(t, cfg).acceptanceCriteria;
+  // Each numbered criterion, with any lines that continue it.
+  const ac = sectionText(t, 'acceptance criteria').split('\n').map(l => l.trim()).filter(Boolean)
+    .reduce((all, l) => (/^\d+\.\s/.test(l) || !all.length ? all.push(l) : all[all.length - 1] += ` ${l}`, all), []);
   const why = [t.fm.risk === 'high' && 'is marked high risk',
     diff?.files.some(f => RISKY.test(f.file)) && 'touches sensitive parts of the project, such as sign-in, secrets, payments or deployment'].filter(Boolean);
   return [
