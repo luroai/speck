@@ -13,7 +13,7 @@ idea → ticket → [you: ready] → agent builds → second agent reviews, turn
 - **Tickets, not specifications.** Each change is a small numbered ticket in your repo, sized for one agent in one sitting. speck checks the size rules and makes you split anything bigger.
 - **Adversarial review built in.** The building agent (Claude Code by default) starts an independent reviewer (Codex by default) and they take turns: the builder fixes or disputes each finding, and the reviewer re-checks in the same session. It ends when the reviewer approves or a question comes back to you.
 - **One build at a time, out of your way.** `speck run` builds your ready tickets one after another, each in its own git worktree, so you keep writing ideas and tickets while it works. Running builds side by side caused more trouble than it saved, so speck doesn't.
-- **You hold the gates.** You decide what's ready and what ships. Agents never merge or ship unless you run `/speck-ship`, or you turn on `auto_ship` in `speck/config.yml` to ship whatever the reviewer approves.
+- **You hold the gates.** You decide what's ready and what ships. Agents never merge or ship unless you run `/speck-ship` or click the Ship button in the panel, or you turn on `auto_ship` in `speck/config.yml` to ship whatever the reviewer approves.
 - **The code is the record.** The code, the tickets and the tests say what the product does. Each ticket keeps its review rounds and its actuals: time, review rounds and tokens.
 - **No GitHub needed.** Everything happens in your local repo. Shipping merges the approved branch into `main` and pushes it if you have a remote.
 
@@ -39,7 +39,7 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 1. **Capture and shape.** Talk an idea through with your agent, then `/speck-capture` it, or go straight to `/speck-ticket` to turn it into small draft tickets. Your agent checks each one against the size rules, for overlap with what's already there and for criteria that could be read two ways.
 2. **Set tickets ready (Gate 1).** Read a draft, then set it ready in `speck panel` or with `node .speck/scripts/speck.mjs set <id> status ready`. A ticket can wait on others with `after:`, and starts only once they've shipped.
 3. **Leave it running.** `node .speck/scripts/speck.mjs run` builds each ready ticket in turn, highest priority first. A build writes tests from the acceptance criteria, makes them pass, and goes through the review loop.
-4. **Ship (Gate 2).** An approved ticket waits for you to run `/speck-ship <id>`, after reading its review pack. With `auto_ship` on, it ships as soon as the reviewer approves.
+4. **Ship (Gate 2).** An approved ticket waits for you to run `/speck-ship <id>`, or click the Ship button in its review pack in `speck panel`, after reading the pack. With `auto_ship` on, it ships as soon as the reviewer approves.
 5. **Answer questions.** When a build can't decide something for you, it blocks its ticket with one plain question, and `speck run` moves on to the next ticket. Answer it, then run `/speck-build <id>` to carry on.
 
 ## The panel
@@ -47,7 +47,7 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 `node .speck/scripts/speck.mjs panel` opens a control panel in your browser, at `http://127.0.0.1:4777`. It runs on your machine and reads the files in your repo.
 
 - **Plan:** your draft tickets, ideas and inbox, in full. Set a draft ready or change its priority with a click.
-- **Build:** the queue, with each build's log as it runs. Pause, play or stop a build, and see blocked tickets with their questions and how to resume them.
+- **Build:** the queue, with each build's log as it runs. Pause, play or stop a build, and see blocked tickets with their questions and how to resume them. Read an approved ticket's review pack, and ship it from there with its Ship button, which asks first and does what `/speck-ship` does.
 - **Shipped:** what's shipped and when, with the median time, review rounds and tokens per ticket, for the reviewer and the builder.
 
 ## Requirements
@@ -86,7 +86,7 @@ In your agent:
 | `/speck-capture` | Saves an idea or the current conversation to `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into small, numbered draft tickets that pass the size rules, or triages the inbox down to at most three decisions |
 | `/speck-build <id>` | Builds one ready ticket: tests from the acceptance criteria, then code, then the review loop. Ends with the ticket `approved`, or shipped if `auto_ship` allows it |
-| `/speck-ship <id>` | Ships an approved ticket (Gate 2): final checks and tests, then merges into `main`, pushes and deletes the branch. Only you run this |
+| `/speck-ship <id>` | Ships an approved ticket (Gate 2): final checks and tests, then merges into `main`, pushes and deletes the branch. Only you run this, or click the Ship button in the ticket's review pack in the panel |
 | `/speck-status` | Tickets by status: approved (waiting for you) first, then blocked questions |
 | `/speck-review <id>` | Re-runs the review loop on its own |
 
