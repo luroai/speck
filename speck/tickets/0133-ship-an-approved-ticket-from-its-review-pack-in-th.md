@@ -43,6 +43,7 @@ The review pack of an approved ticket, opened in the panel, has a Ship button th
 - Risk is high: a click in the browser merges into the base branch and pushes. It must use the same token and Origin checks as the panel's other writes.
 - `speck ship` already runs the tests, merges, pushes and tidies up, and refuses with a message (exit 13 on a conflict, 14 when the base branch's own tests fail), changing nothing (`scripts/ship.mjs`).
 - From the idea `speck/ideas/2026-10-10-more-human-gate-actions-in-the-panel.md` ("Ship from the review pack").
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
