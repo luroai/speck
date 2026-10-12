@@ -1,7 +1,7 @@
 ---
 id: "0139"
 title: "Time a build up to its approval, not its ship"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-12T21:40:24.386Z"
 ---
 # 0139 · Time a build up to its approval, not its ship
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel times a build from when it started to when it shipped. A ticket that waits for the user to ship it, such as a high-risk one, keeps counting the whole time it waits: 0128 shows 89 minutes when the build itself took about 6. That makes the time look wrong and skews the Shipped section's median.
@@ -45,7 +45,7 @@ A build's time in the panel runs from when it started to when it was approved, s
 - Self-check: an `approved` time that is unreadable or earlier than `started` is ignored, so the time falls back to today's rule rather than going negative (tested). An approved ticket with no `approved` time, approved before this change, keeps counting as today.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A build's time in the panel now stops when the reviewer approves it, so waiting for you to ship it no longer adds to it. An approved ticket's timer in the queue stands still at its build time, and the Shipped list and its median minutes use the time up to approval. To see it, let a high-risk ticket be approved and wait a few minutes before shipping: its timer stays put. Tickets shipped before this change still show their time up to shipping, because they never recorded an approval time.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,68 @@ A build's time in the panel runs from when it started to when it was approved, s
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up: the review pack's "Elapsed since build started" line still counts to now (`speck/ideas/2026-10-12-stop-the-review-packs-elapsed-time-at-approval.md`).
+- Known limit: an approved ticket from before this change has no approval time, so its queue timer keeps counting as before.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f17542a0de65518ade640723bb918ffbf898a09c",
+    "thread_id": "01a13211-c5dd-79c1-b40e-41b74d34f67c",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 128885,
+      "cached_input_tokens": 88704,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 686,
+      "reasoning_output_tokens": 20
+    },
+    "saved_at": "2026-10-12T21:43:35.744Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/core.mjs writeField records a fresh ISO timestamp whenever status is set to approved. Passing test '0139 AC1' exercises the CLI, timestamp format and replacement on re-approval."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel stops approved timers at approved_at; render excludes them from startCounters. Passing '0139 AC2' tests exercise rendered counters with an advancing clock and confirm building/reviewing timers continue."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelModel derives both shipped minutes and median inputs from approved minus started. Passing '0139 AC3' verifies the model, median and rendered Shipped row."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelModel falls back to finished when approved is absent or invalid and returns no duration without started. Passing '0139 AC4' tests cover missing timestamps, unreadable approval and approval before started."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0139-tests.txt: 1240 tests, 1237 passed, 3 skipped and zero failures. Existing tests were not modified; all six new ticket tests passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Build times now stop at approval, excluding the wait for shipping from queue timers and shipped-time medians. Older tickets retain their previous timing behaviour. The tests exercise the actual timestamp writes and panel behaviour, and the full suite reports no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
