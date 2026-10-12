@@ -37,7 +37,6 @@
   section { background: var(--panel); border: .5px solid var(--line); }
   section.full { grid-column: 1 / -1; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
-  .sh .num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--accent); }
   .sh h2 { margin: 0; font-family: "Shippori Mincho", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
   .sh .n { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); font-size: 11px; }
   .sh .hint { margin-left: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
@@ -241,15 +240,15 @@
 
 <main>
   <section id="shaping-section" class="shaping tickets">
-    <div class="sh"><span class="num" aria-hidden="true">1</span><h2>Plan</h2><span class="toggles" id="shaping-toggle"></span><span class="hint">click one to open it</span></div>
+    <div class="sh"><h2>Plan</h2><span class="toggles" id="shaping-toggle"></span><span class="hint">click one to open it</span></div>
     <div id="shaping"></div>
   </section>
   <section>
-    <div class="sh"><span class="num" aria-hidden="true">2</span><h2>Build</h2><span class="n" id="queue-n"></span><span class="hint">builds run in their own worktrees</span></div>
+    <div class="sh"><h2>Build</h2><span class="n" id="queue-n"></span><span class="hint">builds run in their own worktrees</span></div>
     <div id="queue"></div>
   </section>
   <section class="full">
-    <div class="sh"><span class="num" aria-hidden="true">3</span><h2>Shipped</h2><span class="n" id="shipped-n"></span><span class="hint">latest 5</span></div>
+    <div class="sh"><h2>Shipped</h2><span class="n" id="shipped-n"></span><span class="hint">latest 5</span></div>
     <div class="stats" id="shipped-stats" hidden></div>
     <table><tbody id="shipped"></tbody></table>
   </section>
