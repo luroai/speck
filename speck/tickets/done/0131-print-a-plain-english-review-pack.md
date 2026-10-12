@@ -1,7 +1,7 @@
 ---
 id: "0131"
 title: "Print a plain-English review pack"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0129", "0130"]              # ticket ids that must be done first
 created: 2026-10-11
 started: "2026-10-12T19:09:23.084Z"
+finished: "2026-10-12T19:16:47.893Z"
 
 ---
 # 0131 · Print a plain-English review pack
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck pack <id>` is written for someone who reads code: evidence quoting files and tests, finding ids, session and token figures. A non-technical user deciding whether to ship needs to know what changed, whether it does what they asked, and whether anything needs a closer look.
