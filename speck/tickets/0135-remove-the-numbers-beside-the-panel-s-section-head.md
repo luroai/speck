@@ -1,7 +1,7 @@
 ---
 id: "0135"
 title: "Remove the numbers beside the panel's section headings"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-12
 ---
 # 0135 · Remove the numbers beside the panel's section headings
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 0134 put a decorative number (1, 2 and 3) beside the panel's Plan, Build and Shipped headings, copied from the zen mockup. The user doesn't want them: they add clutter without telling you anything.
