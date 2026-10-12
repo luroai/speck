@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # speck ship
 
-Shipping is the user's decision. Running `/speck-ship <id>` is their approval, like clicking Merge. **Run this only because the user asked for this ticket to be shipped. Never ship on your own initiative or as part of `/speck-build`.**
+Shipping is the user's decision. Running `/speck-ship <id>` is their approval, like clicking Merge. Clicking the Ship button in an approved ticket's review pack in `speck panel` is the same approval: it runs the same `speck ship <id>`. Only the user clicks it; an agent never does. **Run this only because the user asked for this ticket to be shipped. Never ship on your own initiative or as part of `/speck-build`.**
 
 CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 

@@ -250,6 +250,11 @@
   #full-ticket .md details { margin: 0 0 8px; }
   #full-ticket .md summary { cursor: pointer; color: var(--muted); }
   td .full-open + .full-open { margin-left: 6px; }
+  /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said */
+  #full-ticket .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--accent); color: var(--panel); border: .5px solid var(--accent); cursor: pointer; }
+  #full-ticket .ship:disabled { cursor: default; opacity: .6; }
+  #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
+  #full-ticket .ship-said.bad { color: var(--bad); }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--accent); }
 
   /* The dark look, "the same garden at night", switched to with the button in the header */
@@ -681,7 +686,7 @@ function linkTarget(s, from) {
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
 const LOG_MS = 1000; // how often an open queue ticket's log is asked for
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause, play and stop
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause, play, stop and ship
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -737,6 +742,9 @@ const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], 
 const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
+let shippingId = null; // the id whose Ship request hasn't been answered yet: one ship at a time
+const shipped = new Map(); // id → what speck ship printed when the panel shipped it
+const shipRefused = new Map(); // id → why speck ship refused it, until the next click on its Ship button or the pack is opened again
 let copies = 0;
 const flip = (set, key) => { if (set.has(key)) set.delete(key); else set.add(key); render(); };
 const list = v => (Array.isArray(v) ? v : []);
@@ -866,6 +874,8 @@ function packButton(t) {
     e.stopPropagation(); // the click is for the button, not the ticket
     fullId = String(t.id);
     packOf = { id: fullId, state: 'loading' };
+    shipRefused.delete(fullId);
+    shipped.delete(fullId);
     render();
     const pane = $('full-ticket');
     if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
@@ -903,7 +913,43 @@ function packPane(t) {
   else if (packOf.state === 'none') body.appendChild(el('p', null, `There's no review pack for ${t.id}: it has no review rounds recorded.`));
   else if (packOf.state === 'error') body.appendChild(el('p', 'bad', packOf.text));
   else for (const n of packBlocks(packOf.text)) body.appendChild(n);
-  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), body];
+  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), ...shipPart(t), body];
+}
+// 0133: an approved ticket's pack has a Ship button, above the pack. Clicking it is the user shipping (Gate 2), as
+// /speck-ship is: the server runs speck ship for it. Under it, that it's shipping, what speck ship said, or why it refused.
+function shipPart(t) {
+  const id = String(t.id), out = [];
+  if (shipped.has(id)) return [el('div', 'ship-said', shipped.get(id))];
+  if (t.status !== 'approved' || packOf.state !== 'ok') return [];
+  const pending = shippingId === id;
+  const b = el('button', 'ship', pending ? 'Shipping…' : 'Ship');
+  b.type = 'button';
+  b.disabled = shippingId !== null;
+  b.title = 'Merge this ticket into the base branch and push it, as /speck-ship does';
+  b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) shipTicket(id); });
+  out.push(b);
+  if (pending) out.push(el('div', 'ship-said', `Shipping ${id}: running the tests, then merging and pushing. This can take a few minutes.`));
+  if (shipRefused.has(id)) out.push(el('div', 'ship-said bad', shipRefused.get(id)));
+  return out;
+}
+// Asks first; cancelling changes nothing. The next poll shows the ticket in the Shipped table once it has shipped.
+async function shipTicket(id) {
+  if (shippingId !== null) return;
+  if (typeof confirm !== 'function' || !confirm(`Ship ${id}? This runs speck ship, as /speck-ship does: it runs the tests, merges the ticket into the base branch, pushes it and deletes its branch.`)) return;
+  shipRefused.delete(id);
+  shippingId = id;
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/ship`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    if (res.ok) shipped.set(id, body && typeof body.message === 'string' && body.message ? body.message : `Shipped ${id}.`);
+    else shipRefused.set(id, body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
+  } catch {
+    shipRefused.set(id, "Couldn't reach the panel server, so the ticket wasn't shipped. It may still be shipping: check the Shipped table before trying again.");
+  }
+  shippingId = null;
+  render();
 }
 function packBlocks(text) {
   const out = [], md = s => mdBlocks(markdown(s, { tables: true }));
@@ -990,7 +1036,7 @@ function renderFull(m) {
   const pane = $('full-ticket'), find = ts => ts.find(d => String(d.id) === fullId);
   const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
   if (!t) { fullId = null; packOf = null; }
-  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
+  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
   holdPage(!!t);
@@ -1127,6 +1173,7 @@ function queueItem(t) {
     if (t.exit_message) q.appendChild(el('div', 'question exit', t.exit_message));
   }
   if (t.status === 'blocked') q.appendChild(el('div', 'act', `Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
+  if (shippingId === id) q.appendChild(el('div', 'act', 'Shipping… (from its review pack)'));
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
@@ -1426,7 +1473,7 @@ function render() {
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
-  const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), toggleRefused.get(String(t.id)) ?? null, stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null], queueItem,
+  const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), toggleRefused.get(String(t.id)) ?? null, stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
   startCounters(m.queue.flatMap((t, i) => (t.counter !== null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : [])));

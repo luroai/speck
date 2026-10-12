@@ -128,6 +128,24 @@ function panelPack(repo, id) {
   }
 }
 
+// 0133: the Ship button in an approved ticket's review pack. It's the user shipping (Gate 2), so it runs `speck ship <id>`
+// as /speck-ship does, in its own process, since a ship runs the tests and can take minutes. Resolves with { status,
+// body }: 200 and what it printed when it shipped, or 409 and its message when it refused, having changed nothing.
+async function panelShip(repo, id) {
+  try { findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
+  const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
+  return new Promise(resolve => {
+    const child = spawn(process.execPath, [cli, 'ship', padId(id)], { cwd: repo, stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '', err = '';
+    child.stdout.setEncoding('utf8').on('data', d => { out += d; });
+    child.stderr.setEncoding('utf8').on('data', d => { err += d; });
+    child.on('error', e => resolve({ status: 500, body: { error: `Couldn't run speck ship: ${e.message}` } }));
+    child.on('close', code => resolve(code === 0
+      ? { status: 200, body: { ok: true, message: out.trim() } }
+      : { status: 409, body: { error: err.trim() || `speck ship stopped with exit code ${code}.` } }));
+  });
+}
+
 // `speck panel`. The process you start only launches the first server process and waits until the last one has gone.
 // Everything else, serving, watching the code and restarting, happens in server processes, each running the code as it
 // was when it started: when the code changes, a server starts its successor on the new code, hands it the port and stops.
@@ -186,7 +204,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n> and POST /api/tickets/<id>/pause, /play or /stop. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/pause, /play or /stop and POST /api/tickets/<id>/ship. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -212,6 +230,7 @@ export async function panelServer() {
   const repoName = htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo)), base = htmlEscape(cfg.base_branch);
   let restartError = null; // the last failed restart, shown on the page until a restart works or the code is put back
   let stopping = false;
+  let shipping = null; // the id of the ticket a Ship button is shipping, until speck ship has finished
   const pageFile = path.join(TEMPLATES, 'panel.html');
   const page = () => fs.readFileSync(pageFile, 'utf8')
     .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token);
@@ -252,6 +271,18 @@ export async function panelServer() {
         const out = toggle[2] === 'stop' ? panelStop(repo, toggle[1]) : panelPausePlay(repo, toggle[1], toggle[2]);
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    const ship = where.match(/^\/api\/tickets\/(\d{1,4})\/ship$/);
+    if (req.method === 'POST' && ship) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      // One ship at a time, and the page shows it as shipping until it has finished.
+      if (shipping) return send(res, 409, 'application/json', JSON.stringify({ error: `Ticket ${shipping} is shipping. Wait for it to finish, then try again.` }));
+      shipping = padId(ship[1]);
+      panelShip(repo, ship[1])
+        .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }))
+        .then(out => { shipping = null; send(res, out.status, 'application/json', JSON.stringify(out.body)); });
+      return;
     }
     if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed.\n');
     if (where === '/') {
@@ -337,7 +368,8 @@ export async function panelServer() {
   const watcher = setInterval(() => {
     const now = codeStamp();
     if (now !== stamp) { stamp = now; changedAt = Date.now(); return; }
-    if (!changedAt || successor || stopping || Date.now() - changedAt < PANEL_SETTLE_MS) return;
+    // Not while a ship runs: shipping can change the code (merging the base branch), and stopping would drop its answer.
+    if (!changedAt || successor || stopping || shipping || Date.now() - changedAt < PANEL_SETTLE_MS) return;
     changedAt = 0;
     restart();
   }, PANEL_WATCH_MS);

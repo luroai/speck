@@ -47,7 +47,7 @@ export function installTooling(repo) {
 }
 
 // The speck section init writes into a project's AGENTS.md (0123).
-const AGENTS_SECTION = '## speck\n\nThis repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship`, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
+const AGENTS_SECTION = '## speck\n\nThis repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship` or clicks the Ship button in an approved ticket\'s review pack in the panel, except for the `speck ship <id> --auto` step in `/speck-build`, which ships only when `auto_ship` in `speck/config.yml` allows it.\n';
 
 // Adds the speck section to AGENTS.md text, or brings an existing `## speck` section up to date.
 // The section runs from its heading up to the next level-one or level-two heading (`#`, `##`, or a line underlined with `=` or `-`), or the end of the file; nothing outside it changes.

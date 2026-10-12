@@ -44,6 +44,7 @@ The review pack of an approved ticket, opened in the panel, has a Ship button th
 - `speck ship` already runs the tests, merges, pushes and tidies up, and refuses with a message (exit 13 on a conflict, 14 when the base branch's own tests fail), changing nothing (`scripts/ship.mjs`).
 - From the idea `speck/ideas/2026-10-10-more-human-gate-actions-in-the-panel.md` ("Ship from the review pack").
 - Failing before this build: none
+- Self-check: the server's ship handler is async, so an unexpected error finding the ticket can't leave it stuck as shipping; added a test that a second ship while one runs is refused and the first still ships.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
