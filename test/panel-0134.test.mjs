@@ -69,13 +69,12 @@ test('0134 AC2: the stylesheet names the zen fonts first, with standard fall-bac
   assert.match(s, /"IBM Plex Mono",\s*ui-monospace,\s*monospace/);
 });
 
-test('0134 AC3: each section heading has its number beside it, hidden from screen readers', () => {
+test('0134 AC3 (undone by 0135): no section heading has a number beside it', () => {
   const html = staticHtml();
-  for (const [n, name] of [['1', 'Plan'], ['2', 'Build'], ['3', 'Shipped']]) {
-    const sh = (html.match(new RegExp(`<div class="sh">([\\s\\S]*?<h2>${name}</h2>)`)) || [])[1];
-    assert.ok(sh, `the ${name} heading is still exactly <h2>${name}</h2>`);
-    assert.match(sh, new RegExp(`<span class="num" aria-hidden="true">${n}</span>\\s*<h2>${name}</h2>$`), `${name} has ${n} beside it`);
+  for (const name of ['Plan', 'Build', 'Shipped']) {
+    assert.match(html, new RegExp(`<div class="sh"><h2>${name}</h2>`), `the ${name} heading is still exactly <h2>${name}</h2>, with nothing before it`);
   }
+  assert.doesNotMatch(html, /<span class="num"/, 'no section number');
 });
 
 // AC4: the ids and visible text in the page's static HTML before this ticket.
@@ -84,22 +83,22 @@ const TEXT = ['speck', 'control panel', '{{repo}}', '· base', '{{base}}', 'conn
   'Disconnected: can\'t reach speck panel. Showing the last state received. Retrying every 2 seconds…',
   'Plan', 'click one to open it', 'Build', 'builds run in their own worktrees', 'Shipped', 'latest 5'];
 
-test('0134 AC4: every static id is still there, and the only visible text added is the section numbers', () => {
+test('0134 AC4: every static id is still there, and no visible text was added (0135 removed the section numbers)', () => {
   const html = staticHtml();
   for (const id of IDS) assert.match(html, new RegExp(`\\bid="${id}"`), id);
-  const text = html.replace(/<span class="num" aria-hidden="true">\d<\/span>/g, '').replace(/<head>[\s\S]*?<\/head>/, '')
+  const text = html.replace(/<head>[\s\S]*?<\/head>/, '')
     .split(/<[^>]*>/).map(t => t.trim()).filter(Boolean);
   assert.deepEqual(text, TEXT);
 });
 
-test('0134 AC2-AC3: in a real browser, headings are serif, ticket ids monospace, and the numbers are hidden from screen readers', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
+test('0134 AC2-AC3: in a real browser, headings are serif and ticket ids monospace, with no number before a heading (0135)', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage(`http://127.0.0.1:${panel.port}/`);
   try {
     await b.until(`!!document.querySelector('main .id')`, 'a ticket id');
-    const heads = await b.js(`[...document.querySelectorAll('.sh h2')].map(h => [h.textContent, getComputedStyle(h).fontFamily, h.previousElementSibling && h.previousElementSibling.textContent, h.previousElementSibling && h.previousElementSibling.getAttribute('aria-hidden')])`);
-    assert.deepEqual(heads.map(h => [h[0], h[2], h[3]]), [['Plan', '1', 'true'], ['Build', '2', 'true'], ['Shipped', '3', 'true']]);
+    const heads = await b.js(`[...document.querySelectorAll('.sh h2')].map(h => [h.textContent, getComputedStyle(h).fontFamily, h.previousElementSibling === null])`);
+    assert.deepEqual(heads.map(h => [h[0], h[2]]), [['Plan', true], ['Build', true], ['Shipped', true]]);
     for (const [name, family] of heads.map(h => [h[0], h[1]])) {
       assert.match(family, /\bserif\b/, `${name} is serif: ${family}`);
       assert.doesNotMatch(family, /monospace|sans-serif/, `${name} is not monospace: ${family}`);

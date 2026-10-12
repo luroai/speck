@@ -42,6 +42,8 @@ The Plan, Build and Shipped headings show their names only, with no number besid
 - The section number spans and the `.sh .num` rule are both in `templates/panel.html`. The Shipped table's `td.num` cells are a different thing (right-aligned figures) and stay.
 - AC4 is checked by the reviewer against this ticket's diff.
 - Failing before this build: none
+- AC4 has no automated test: the reviewer checks it against this ticket's diff (`git diff main -- templates/panel.html scripts/`), which should touch only the `.sh .num` CSS rule and the three header lines.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
