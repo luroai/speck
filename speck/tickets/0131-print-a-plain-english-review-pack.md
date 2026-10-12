@@ -40,6 +40,7 @@ started: "2026-10-12T19:09:23.084Z"
 
 ## Notes
 - Builds on 0130 (the section) and 0129 (the correct sensitive-files list).
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
