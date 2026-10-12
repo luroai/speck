@@ -1,7 +1,7 @@
 ---
 id: "0128"
 title: Toggle speck run from the panel                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0127"]              # ticket ids that must be done first
 created: 2026-10-11
 started: "2026-10-12T19:49:52.296Z"
+finished: "2026-10-12T21:19:13.359Z"
 
 ---
 # 0128 · Toggle speck run from the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 To start or stop `speck run` today, the user has to go to a terminal on the box. From the panel, often opened remotely, they can see the queue but can't set it going or stop it.
