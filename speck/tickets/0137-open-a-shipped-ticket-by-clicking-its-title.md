@@ -42,6 +42,7 @@ In the Shipped table, a ticket's title is a link that opens the full ticket. Rev
 - The row is made in `templates/panel.html`, where the Shipped table is filled (`fill('shipped', …)`), using `fullButton` and `packButton`.
 - The ticket id and any bug or fix tag stay beside the title and don't need to be part of the link.
 - The link opens the pane in the page and doesn't go to another address. The builder chooses the element, as long as AC1 and AC2 hold.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
