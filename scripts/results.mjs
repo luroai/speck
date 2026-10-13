@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { sh } from './core.mjs';
-import { runTestsInTurn, sharedCacheDir } from './turns.mjs';
+import { runTestsInTurn, sharedCacheDir, testStallMs } from './turns.mjs';
 
 const MAX_OUTPUT = 1024 * 1024; // the most of a failing run's output kept, from its end
 const KEEP_MS = 30 * 24 * 60 * 60 * 1000; // results older than this are cleared when a new one is recorded
@@ -64,6 +64,7 @@ const result = (r, fail = false) => ({ status: fail && r.status === 0 ? 1 : r.st
 // the suite starts. Returns { status, signal, stalled }, stalled saying whether the run was ended for writing nothing
 // for test_stall_minutes (0152).
 export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hint = '' } = {}) {
+  testStallMs(cfg); // a bad test_stall_minutes is refused even when a recorded result would do
   const code = testedCode(repo, cmd);
   const kept = code && reuse !== 'none' ? recorded(repo, code, cmd) : null;
   if (kept && (reuse === 'any' || kept.status === 0)) {

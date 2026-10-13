@@ -159,3 +159,42 @@ test('0152 AC1: a test command that exits on its own keeps its exit code and out
   assert.match(res.stdout + res.stderr, /oops/);
   assert.doesNotMatch(res.stdout + res.stderr, /stalled/);
 });
+
+test('0152 AC1: speck test --files ends a run of only some test files that stalls, and every process it started', () => {
+  const pidFile = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'hang-'))), 'pid');
+  const r = testRepo('true');
+  assert.equal(speck(r.dir, 'config', 'set', 'commands.test_files', `sleep 300 & echo $! > ${pidFile}; echo 'ok 3 - {files}'; wait`).status, 0);
+  const res = speck(r.dir, 'test', '--files', 'app.txt');
+  assert.notEqual(res.status, 0);
+  noTrace(res);
+  const line = (res.stdout + res.stderr).split('\n').find(l => STALLED.test(l));
+  assert.ok(line, res.stdout + res.stderr);
+  assert.match(line, /ok 3 - app\.txt/);
+  assert.equal(alive(Number(fs.readFileSync(pidFile, 'utf8'))), false);
+  const passing = speck(r.dir, 'config', 'set', 'commands.test_files', 'echo ok 1 - {files}; exit 0');
+  assert.equal(passing.status, 0);
+  const ok = speck(r.dir, 'test', '--files', 'app.txt');
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /ok 1 - app\.txt/);
+});
+
+test('0152 AC4: a bad test_stall_minutes is refused even when a recorded result would be reused, by speck test and speck ship', () => {
+  const r = testRepo('echo ran');
+  assert.equal(speck(r.dir, 'test').status, 0, 'records a pass');
+  setStall(r.dir, 'test_stall_minutes: 0');
+  const res = speck(r.dir, 'test');
+  assert.notEqual(res.status, 0);
+  noTrace(res);
+  assert.doesNotMatch(res.stdout, /^Reusing the test result/m);
+  assert.match(res.stderr, /test_stall_minutes in speck\/config\.yml must be a whole number of 1 or more/);
+  const s = shipRepo({ test: 'echo ran' });
+  assert.equal(speck(s.wt, 'test').status, 0, 'records a pass for the ticket branch');
+  // ship reads the setting from the checkout it runs in.
+  setStall(s.dir, 'test_stall_minutes: soon');
+  gIn(s.dir, 'commit', '-qam', 'bad setting');
+  const ship = speck(s.dir, 'ship', '1');
+  assert.notEqual(ship.status, 0);
+  noTrace(ship);
+  assert.match(ship.stderr, /test_stall_minutes/);
+  assert.equal(s.statusIn(s.wt), 'approved');
+});

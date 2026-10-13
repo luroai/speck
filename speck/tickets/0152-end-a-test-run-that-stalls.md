@@ -1,7 +1,7 @@
 ---
 id: "0152"
 title: "End a test run that stalls"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T21:54:47.263Z"
 ---
 # 0152 · End a test run that stalls
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a test hangs, speck waits for it forever. On 2026-10-13 the test run in 0149's auto-ship stopped making progress after 714 of about 1,310 tests and sat silent for nine minutes, until the build tool's 10-minute limit killed the ship. Nothing told the user; the ticket just looked approved. The next run of the same suite passed in about a minute.
@@ -56,3 +56,83 @@ A test run that stops making progress is ended after a set time, and speck repor
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "85188113f060321a7c29657742b3b3079cce01a7",
+    "thread_id": "01a1376e-a58c-7060-8ac3-9c8cd5c50c98",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 112713,
+      "cached_input_tokens": 67584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1211,
+      "reasoning_output_tokens": 235
+    },
+    "saved_at": "2026-10-13T22:43:18.575Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/turns.mjs runTestsInTurn watches full runs, and the passing AC1 tests exercise those runs. However, cmdTest runs commands.test_files directly through sh, without the watcher. These speck test --files runs, also used during builds, can still hang indefinitely."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/stall.mjs reports the silence duration and last output line; scripts/results.mjs testRun records stalled runs with status 1. Both AC2 tests passed in /tmp/speck-0152-tests.txt and exercise reporting and cached failure reuse."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs runTests throws on r.stalled before shipping or checking base tests. The passing AC3 integration test checks unchanged repository state, approved ticket status and instructions to ship again."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "testStallMs validates configuration and the passing AC4 tests cover fresh runs and continuing output. However, scripts/results.mjs testRun returns cached results before calling this validation, so an invalid setting can be accepted by speck test or speck ship."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full /tmp/speck-0152-tests.txt log reports 1341 tests, 1338 passed, 3 skipped and zero failures or cancellations. No pre-existing failures were listed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs",
+        "issue": "cmdTest's --files path bypasses stall.mjs entirely. A hanging commands.test_files command still blocks speck test and the build's targeted testing indefinitely. The ticket excludes total time limits, but does not exclude targeted runs from stall protection.",
+        "suggested_fix": "Apply the stall watcher to targeted test commands while preserving their existing lack of a turn and cached result. Add an integration test that hangs through speck test --files and checks failure reporting and descendant cleanup.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/results.mjs",
+        "issue": "testRun validates test_stall_minutes only when runTestsInTurn is reached. After recording a pass, changing speck/config.yml to test_stall_minutes: 0 leaves the cache key unchanged and permits speck test, or ship's passing-result reuse, to succeed without refusing the invalid configuration. The current validation test always uses --fresh, masking this path.",
+        "suggested_fix": "Validate test_stall_minutes before any cached-result return. Add a regression test that records a pass, sets an invalid value in config, then invokes testing without --fresh and checks the corrective error.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Full test runs now stop when silent, explain the stall and prevent shipping. The recorded suite passes. Two gaps need fixing: targeted tests can still hang, and cached results bypass validation of the stall setting."
+  }
+}
+```
+
+</details>

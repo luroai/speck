@@ -166,6 +166,17 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '') 
   }
 }
 
+// Runs the test command `cmd` in `repo` through stall.mjs, without a turn: { status, signal }, signal being the one
+// that stopped the tests, if any.
+function watched(repo, cmd, stallMs) {
+  const ended = path.join(turnsDir(repo), `run.${crypto.randomUUID()}.ended`);
+  try {
+    const r = sh(process.execPath, [STALL_SCRIPT, cmd, String(stallMs), ended], { cwd: repo, stdio: 'inherit' });
+    const how = (read(ended) || '').split('\n')[0].trim();
+    return { status: how === 'stalled' && r.status === 0 ? 1 : r.status, signal: r.signal || how.match(/^signal (\w+)$/)?.[1] || null };
+  } finally { fs.rmSync(ended, { force: true }); }
+}
+
 // A word the shell reads back as exactly `s`.
 const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 
@@ -184,7 +195,7 @@ export function cmdTest(args) {
     if (!only.includes('{files}')) throw new SpeckError(`commands.test_files in speck/config.yml has no {files} to stand for the test files (got ${JSON.stringify(only)}). Fix it with \`speck config set commands.test_files "node --test {files}"\`, then run this again.`);
     // Relative to the repo root, where the command runs. One starting with - gets ./ so it isn't read as an option.
     const words = files.map(f => { const rel = path.relative(repo, path.resolve(f)) || '.'; return shellWord(rel.startsWith('-') ? `./${rel}` : rel); });
-    const r = sh('sh', ['-c', only.replaceAll('{files}', () => words.join(' '))], { cwd: repo, stdio: 'inherit' });
+    const r = watched(repo, only.replaceAll('{files}', () => words.join(' ')), testStallMs(cfg));
     if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
     return;
   }
