@@ -7,10 +7,14 @@ import { page, paletteProblems, panelRepo, freePort, startPanel, stop, findChrom
 // ---------- 0136: a dark look you can switch to ----------
 
 const DARK = { '--bg': '#181818', '--panel': '#1f1f1f', '--raise': '#222222', '--line': '#3d3d3d', '--line-soft': '#262626',
-  '--text': '#e4e4e4', '--muted': '#b4b4b4', '--faint': '#8a8a8a', '--accent': '#d4664e', '--bad': '#ec5a6b' };
+  '--text': '#e4e4e4', '--muted': '#b4b4b4', '--faint': '#8a8a8a', '--accent': '#d4664e', '--bad': '#ec5a6b',
+  '--ok': '#9db584', '--warn': '#d6a24a', '--run': '#7ea6cf', '--idea': '#b597c6', '--inbox': '#6fb5aa', '--bug': '#d685ab', '--fix': '#c9b65c',
+  '--accent-bg': '#2e2320', '--idea-bg': '#2a2430', '--inbox-bg': '#1d2a28', '--bad-bg': '#341d21' };
 const ZEN = { '--bg': '#faf9f5', '--panel': '#ffffff', '--raise': '#f0eee6', '--line': '#cccbc8', '--line-soft': '#e8e7e3',
   '--text': '#141413', '--muted': '#3d3d3a', '--faint': '#73726c', '--accent': '#b0412e', '--bad': '#c42a3c',
   '--ok': '#56713f', '--warn': '#9c6a10', '--run': '#3b6286', '--idea': '#7a4f86', '--inbox': '#2f7469', '--bug': '#a3466f', '--fix': '#7a6a14' };
+// The light tints, set in the later plain :root block.
+const ZEN_TINTS = { '--accent-bg': '#f7ebe6', '--idea-bg': '#f2ecf3', '--inbox-bg': '#e9f2f0', '--bad-bg': '#fae6e8' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
 const TINTS = ['--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
 const LABEL = 'Switch between light and dark';
@@ -87,12 +91,16 @@ test('0136 AC2: the dark tints are dark enough for the dark --text to read on th
 test('0136 AC2: the full ticket pane\'s backdrop and shadow have dark counterparts', () => {
   const s = css();
   assert.match(s, /:root\[data-theme="dark"\] #full-backdrop \{ background: rgba\(/);
+  assert.match(s, /:root\[data-theme="dark"\] #full-backdrop \{ background: rgba\(0, 0, 0, \.45\); \}/);
+  assert.match(s, /\n {2}#full-backdrop \{[^}]*background: rgba\(20, 20, 19, \.2\);/);
   assert.match(s, /:root\[data-theme="dark"\] #full-ticket \{ box-shadow: /);
 });
 
 test('0136 AC3: the first :root block still sets the light colours, and the colour check passes', () => {
   const first = vars((page().match(/:root \{([\s\S]*?)\}/) || [])[1] || '');
   for (const [k, v] of Object.entries(ZEN)) assert.equal(first.get(k), v, k);
+  const light = vars([...css().matchAll(/:root \{([^}]*)\}/g)].map(m => m[1]).join(' '));
+  for (const [k, v] of Object.entries(ZEN_TINTS)) assert.equal(light.get(k), v, k);
   assert.deepEqual(paletteProblems(page()), []);
   assert.ok(page().indexOf(':root[data-theme="dark"]') > page().indexOf(':root {'), 'the dark values come after the first :root block');
 });

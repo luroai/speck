@@ -50,10 +50,11 @@ test('0147 AC3: the colour tests check the new values and fail when one changes'
       assert.ok(s.includes(`'${k}': '${v}'`), `${f} checks the light ${k} as ${v}`);
     }
   }
+  // Between them, the named files check every value in AC1 and AC2 exactly.
   const s136 = src('panel-0136.test.mjs');
-  for (const k of ['--bg', '--panel', '--raise', '--line', '--line-soft', '--text', '--muted', '--faint', '--accent', '--bad']) {
-    assert.ok(s136.includes(`'${k}': '${DARK[k]}'`), `panel-0136 checks the dark ${k} as ${DARK[k]}`);
-  }
+  for (const [k, v] of Object.entries(DARK)) assert.ok(s136.includes(`'${k}': '${v}'`), `panel-0136 checks the dark ${k} as ${v}`);
+  for (const [k, v] of Object.entries(LIGHT)) assert.ok(s136.includes(`'${k}': '${v}'`), `panel-0136 checks the light ${k} as ${v}`);
+  assert.ok(s136.includes('rgba\\(20, 20, 19, \\.2\\)') && s136.includes('rgba\\(0, 0, 0, \\.45\\)'), 'panel-0136 checks both backdrops');
 });
 
 test('0147 AC3: the full-ticket pane\'s backdrop is rgba(20, 20, 19, .2) in light and unchanged in dark', () => {
