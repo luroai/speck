@@ -44,6 +44,9 @@ On a phone-width screen the panel shows one readable column, with every control 
 - 44 px follows Apple's minimum recommended tap target (44 × 44 pt, Human Interface Guidelines).
 - Reported 2026-10-13 from a screenshot on an iPhone, viewing the panel in the Claude app's browser.
 - Failing before this build: none
+- AC4 leaves out links inside a ticket's own Markdown text (in the full ticket and review pack panes): they're part of that text, not panel controls, and a 44 px box round each would break up the paragraph.
+- A repo name too long for the screen is cut short with an ellipsis rather than wrapping or running off the edge. The test repo's name, like speck's own, shows in full.
+- Self-check: step labels under a build were cut short ("Self-che…") at 375 px; they now show in normal case in columns at least as wide as their label, with a test.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
