@@ -1,6 +1,6 @@
 ---
 id: "0145"
-title: "Remove the pause and play icon from build rows"                # one outcome, no "and"
+title: Remove the build pause icon from the panel                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
@@ -15,7 +15,7 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 
 ---
-# 0145 · Remove the pause and play icon from build rows
+# 0145 · Remove the build pause icon from the panel
 
 **Status:** 📝 draft
 
