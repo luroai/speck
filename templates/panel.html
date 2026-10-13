@@ -171,7 +171,9 @@
   /* Live panel additions */
   .pill.off { color: var(--bad); border-color: var(--bad); position: relative; z-index: 1; }
   .live.off { background: var(--bad); }
-  .live.idle { background: var(--faint); }
+  .live.go { background: var(--ok); }
+  .live.stop { background: var(--bad); }
+  .run-wait { font-size: 10px; color: var(--faint); margin-left: 6px; }
   .run-state + .pills { margin-left: 0; }
   .run-switch { display: flex; align-items: center; }
   .run-switch button { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 10px; margin-right: 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
@@ -1660,10 +1662,13 @@ function render() {
   const status = el('div', connected ? 'pill' : 'pill off', null, el('span', connected ? 'live' : 'live off'),
     document.createTextNode(connected ? `live · ${lastOk ? Math.max(0, Math.round((Date.now() - lastOk) / 1000)) : 0}s ago` : 'disconnected'));
   $('pills').replaceChildren(status);
-  // Whether speck run is on: when it's off, setting a ticket ready starts nothing.
+  // Whether speck run is on, shown as Auto-build (0144): when it's off, setting a ticket ready starts nothing.
   const on = !!(state.run && state.run.on);
-  $('run').replaceChildren(el('div', on ? 'pill run-on' : 'pill run-off', null, el('span', on ? 'live' : 'live idle'), document.createTextNode(on ? 'speck run on' : 'speck run off')));
-  const sw = el('button', null, runSwitching ? (runSwitching === 'on' ? 'Turning on…' : 'Turning off…') : on ? 'Turn off' : 'Turn on');
+  const pill = el('div', on ? 'pill run-on' : 'pill run-off', null, el('span', on ? 'live go' : 'live stop'), document.createTextNode(on ? 'Auto-build on' : 'Auto-build off'),
+    ...(on ? [] : [el('span', 'run-wait', 'ready tickets wait')]));
+  pill.title = 'speck run';
+  $('run').replaceChildren(pill);
+  const sw = el('button', null, runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Pause' : 'Start');
   sw.type = 'button';
   sw.disabled = !!runSwitching;
   sw.title = on ? 'Stop speck run as Ctrl+C does: builds already running carry on' : 'Start speck run, which starts a build for each ready ticket';
