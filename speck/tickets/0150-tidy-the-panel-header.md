@@ -42,6 +42,7 @@ The header is tidy on phone and desktop: the Auto-build indicator is itself the 
 - Header markup is in `templates/panel.html`: `.logo`, `.repo`, `#run`, `#run-switch`, `#pills`; the phone rules are in the `max-width: 699.98px` media query (0140). The disconnected banner is `#offline`, set by `setConnected()`.
 - The Auto-build switch requests are the same as today (`POST /api/run/on` and `/off`), with the token and Origin checks unchanged.
 - Reported 2026-10-13 from a phone screenshot: the light/dark button sat alone on a second line, taller than Auto-build and lower than it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
