@@ -1,7 +1,7 @@
 ---
 id: "0143"
 title: "Show a ticket's tags in the full ticket pane"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T08:09:40.180Z"
+approved: "2026-10-13T08:16:46.493Z"
 
 ---
 # 0143 · Show a ticket's tags in the full ticket pane
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a shipped ticket, or one in the Build queue, is opened in the full ticket pane, the pane shows only its id and title above the text. Its priority, size and risk, which the lists show as tags, aren't there, so the user can't see how big or risky the change was.
@@ -50,9 +51,14 @@ When you open a ticket in full, from Plan, Build or Shipped, you now see its pri
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 143,694
+- Elapsed since build started: 7 min
+- Changed lines: 50 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
