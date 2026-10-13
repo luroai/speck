@@ -106,8 +106,8 @@ export function cliCopy() {
 // The page's pure model function, run outside the browser.
 export const page = () => fs.readFileSync(PAGE, 'utf8');
 
-// 0126: the panel's agreed colours. 0134 changed them to the zen look's.
-export const PALETTE = '--bg: #ecebdf; --panel: #f4f4ea; --raise: #e1e1d2; --line: #bfbfb5; --line-soft: #d7d7cc; --text: #1f2521; --muted: #474e47; --faint: #858b7f; --accent: #4c6b52; --ok: #3d7a45; --warn: #9a6512; --bad: #b0412e; --run: #2f6688; --idea: #76589a';
+// 0126: the panel's agreed colours. 0134 changed them to the zen look's, 0147 to the landing page's.
+export const PALETTE = '--bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #cccbc8; --line-soft: #e8e7e3; --text: #141413; --muted: #3d3d3a; --faint: #73726c; --accent: #b0412e; --ok: #56713f; --warn: #9c6a10; --bad: #c42a3c; --run: #3b6286; --idea: #7a4f86';
 
 // Each agreed colour the page's first :root block is missing or has changed, as '--name should be #value'.
 export function paletteProblems(html) {

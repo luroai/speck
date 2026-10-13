@@ -11,8 +11,8 @@ const rootVars = html => {
   const root = (html.match(/:root \{([\s\S]*?)\}/) || [])[1] || '';
   return new Map([...root.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 };
-const ZEN = { '--bg': '#ecebdf', '--panel': '#f4f4ea', '--raise': '#e1e1d2', '--line': '#bfbfb5', '--line-soft': '#d7d7cc',
-  '--text': '#1f2521', '--muted': '#474e47', '--faint': '#858b7f', '--accent': '#4c6b52', '--bad': '#b0412e' };
+const ZEN = { '--bg': '#faf9f5', '--panel': '#ffffff', '--raise': '#f0eee6', '--line': '#cccbc8', '--line-soft': '#e8e7e3',
+  '--text': '#141413', '--muted': '#3d3d3a', '--faint': '#73726c', '--accent': '#b0412e', '--bad': '#c42a3c' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
 const luminance = hex => {
   const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
@@ -47,9 +47,9 @@ test('0134 AC1: PALETTE lists the new values for the same 14 names, and the colo
   const vars = rootVars(page());
   for (const d of PALETTE.split('; ')) { const [k, v] = d.split(': '); if (ZEN[k]) assert.equal(v, ZEN[k], k); else assert.equal(v, vars.get(k), k); }
   assert.deepEqual(paletteProblems(page()), []);
-  const changed = page().replace('--accent: #4c6b52;', '--accent: #4c6b53;');
+  const changed = page().replace('--accent: #b0412e;', '--accent: #b0412f;');
   assert.notEqual(changed, page());
-  assert.deepEqual(paletteProblems(changed), ['--accent should be #4c6b52']);
+  assert.deepEqual(paletteProblems(changed), ['--accent should be #b0412e']);
   const src = fs.readFileSync(path.join(ROOT, 'test', 'mockup-0126.test.mjs'), 'utf8');
   assert.ok(src.includes(`assert.equal(PALETTE, '${PALETTE}')`), 'the 0126 AC2 literal lists the new values');
 });
@@ -64,8 +64,8 @@ test('0134 AC2: the page loads nothing from another host', () => {
 
 test('0134 AC2: the stylesheet names the zen fonts first, with standard fall-backs', () => {
   const s = css();
-  assert.match(s, /"Shippori Mincho",\s*Georgia,\s*serif/);
-  assert.match(s, /"Zen Kaku Gothic New",\s*system-ui,\s*sans-serif/);
+  assert.match(s, /"Shippori Mincho",\s*"Noto Serif JP",\s*Georgia,\s*serif/);
+  assert.match(s, /"Zen Kaku Gothic New",\s*"Noto Sans JP",\s*system-ui,\s*sans-serif/);
   assert.match(s, /"IBM Plex Mono",\s*ui-monospace,\s*monospace/);
 });
 
