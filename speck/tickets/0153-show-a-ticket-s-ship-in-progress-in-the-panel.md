@@ -41,6 +41,7 @@ The panel shows when a ticket is being shipped, by anyone, for how long, and say
 - The panel only knows about a ship it started itself today (`shipping` in `scripts/panel.mjs`); a ship started elsewhere leaves no record it can read.
 - Related idea: `speck/ideas/2026-10-12-show-a-panel-ship-in-progress-after-a-reload.md`.
 - 0138 colours an approved ticket waiting to ship in purple; these messages sit with that, not in red unless the ship failed.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
