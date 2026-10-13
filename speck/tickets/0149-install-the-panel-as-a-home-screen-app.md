@@ -40,10 +40,10 @@ The panel can be added to a phone's home screen as an app: it opens full screen,
 ## Notes
 - Cloudflare Access only lets requests through with its login cookie, and browsers fetch a manifest without cookies unless it's linked with `crossorigin="use-credentials"`; without it the manifest request gets Access's login page and the install quietly falls back.
 - On iPhone, a home-screen app keeps its own cookies, so it signs in to Access once by itself.
-- The logo is the speck mark from the landing site's header: the `<symbol id="mark">` in `speck-site/site/index.html` (luroai/speck-site), three ink strokes (the open circle and two small arcs above it) and a red dot. Its paths, at viewBox 0 0 64 64:
-  - `M14.5 22.5 A21.5 21.5 0 1 0 22 16.2`, `M12.6 19.8 a5.2 5.2 0 0 1 8.2 -5.6` and `M43.2 14.2 a5.2 5.2 0 0 1 8.2 5.6`: stroke `#141413`, width 1.4, round caps, no fill
-  - `circle cx=32 cy=38 r=2.3`: fill `#b0412e`
-- The icons draw that mark centred on a solid `#faf9f5` background (no transparency, which iOS shows as black), with the strokes thick enough to read at 180 px. Commit the source SVG to the repo alongside the PNGs.
+- The logo is the open ensō circle with a red dot at its centre, as in the landing site's hero art and favicon (`site/index.html` in luroai/speck-site). At viewBox 0 0 64 64:
+  - the ensō: `M18.5 14.1 A22 22 0 1 0 28.5 10`, stroke `#141413`, round caps, no fill (a circle of radius 22 round 32,32, open at the top left, scaled from the hero's `M128 196 A150 150 0 1 0 196 168`)
+  - the dot: `circle cx=32 cy=32 r=2.5`, fill `#b0412e`
+- The icons draw that logo centred on a solid `#faf9f5` background (no transparency, which iOS shows as black), with the strokes thick enough to read at 180 px. Commit the source SVG to the repo alongside the PNGs.
 - Every project's panel is called "speck", so several projects on one home screen share a name; that's accepted.
 - Unverified: whether current iOS uses the manifest's icons or only `apple-touch-icon` (both are given, so either works).
 
