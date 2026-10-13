@@ -55,9 +55,14 @@ function record(repo, code, cmd, status, output) {
 const pad = n => String(n).padStart(2, '0');
 const when = iso => { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
+// A run's result as testRun gives it, from runTestsInTurn's. With `fail`, a run that ended without an exit code fails.
+const result = (r, fail = false) => ({ status: fail && r.status === 0 ? 1 : r.status,
+  signal: r.signal || r.ended.match(/^signal (\w+)$/)?.[1] || null, stalled: r.ended === 'stalled' });
+
 // Runs the test command `cmd` in `repo` in a turn, recording the result when the code can be, or reuses the result
 // recorded for the same code. reuse is 'any' (a pass or a failure), 'pass' (only a pass) or 'none'. onStart runs when
-// the suite starts. Returns { status, signal }.
+// the suite starts. Returns { status, signal, stalled }, stalled saying whether the run was ended for writing nothing
+// for test_stall_minutes (0152).
 export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hint = '' } = {}) {
   const code = testedCode(repo, cmd);
   const kept = code && reuse !== 'none' ? recorded(repo, code, cmd) : null;
@@ -65,27 +70,25 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
     const result = kept.status === 0 ? 'passed' : `failed (exit code ${kept.status})`;
     console.log(`Reusing the test result from commit ${kept.commit.slice(0, 7)} at ${when(kept.at)}: ${result}. No file outside speck/ has changed since, nor has the test command.${hint}`);
     if (kept.output) process.stdout.write(kept.output.endsWith('\n') ? kept.output : `${kept.output}\n`);
-    return { status: kept.status, signal: null };
+    return { status: kept.status, signal: null, stalled: false };
   }
-  if (!code) return runTestsInTurn(repo, cfg, cmd, onStart);
-  const dir = resultsDir(repo);
-  const run = crypto.randomUUID();
-  const keep = { output: path.join(dir, `run.${run}.out`), exit: path.join(dir, `run.${run}.exit`) };
+  if (!code) return result(runTestsInTurn(repo, cfg, cmd, onStart));
+  const output = path.join(resultsDir(repo), `run.${crypto.randomUUID()}.out`);
   try {
-    const r = runTestsInTurn(repo, cfg, cmd, onStart, keep);
-    const exit = (() => { try { return fs.readFileSync(keep.exit, 'utf8').trim(); } catch { return ''; } })();
+    const r = runTestsInTurn(repo, cfg, cmd, onStart, output);
+    const exit = r.ended === 'stalled' ? '1' : r.ended;
     // No exit code means the run was stopped before the tests ended, or a signal stopped them: nothing is recorded.
-    if (!/^\d+$/.test(exit)) return { status: r.status === 0 ? 1 : r.status, signal: r.signal || exit.match(/^signal (\w+)$/)?.[1] || null };
+    // A run ended as stalled is recorded as a failure (0152).
+    if (!/^\d+$/.test(exit)) return result(r, true);
     const status = Number(exit);
     const after = testedCode(repo, cmd);
     if (after && after.key === code.key) {
-      let output = '';
-      try { output = fs.readFileSync(keep.output, 'utf8'); } catch { /* no output */ }
-      record(repo, code, cmd, status, output);
+      let kept = '';
+      try { kept = fs.readFileSync(output, 'utf8'); } catch { /* no output */ }
+      record(repo, code, cmd, status, kept);
     }
-    return { status, signal: null };
+    return { status, signal: null, stalled: r.ended === 'stalled' };
   } finally {
-    fs.rmSync(keep.output, { force: true });
-    fs.rmSync(keep.exit, { force: true });
+    fs.rmSync(output, { force: true });
   }
 }
