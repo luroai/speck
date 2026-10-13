@@ -47,7 +47,7 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 `node .speck/scripts/speck.mjs panel` opens a control panel in your browser, at `http://127.0.0.1:4777`. It runs on your machine and reads the files in your repo.
 
 - **Plan:** your draft tickets, ideas and inbox, in full. Set a draft ready or change its priority with a click.
-- **Build:** the queue, with each build's log as it runs. Turn `speck run` on or off from the header. Pause, play or stop a build, and see blocked tickets with their questions and how to resume them. Read an approved ticket's review pack, and ship it from there with its Ship button, which asks first and does what `/speck-ship` does.
+- **Build:** the queue, with each build's log as it runs. Turn `speck run` on or off from the header. Stop a build, see which builds are paused (`speck pause <id>` and `speck play <id>` hold and carry them on), and see blocked tickets with their questions and how to resume them. Read an approved ticket's review pack, and ship it from there with its Ship button, which asks first and does what `/speck-ship` does.
 - **Shipped:** what's shipped and when, with the median time, review rounds and tokens per ticket, for the reviewer and the builder.
 
 ## Requirements

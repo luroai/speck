@@ -42,6 +42,9 @@ Build queue rows no longer have a pause or play icon; the Stop build button and 
 - The icon is `toggleIcon()` in `templates/panel.html`, and its requests are handled by `panelPausePlay()` in `scripts/panel.mjs`.
 - The README's panel section and `docs/brief.md`'s `speck panel` row mention pausing and playing from the panel; they need updating to match, in British English.
 - Failing before this build: none
+- Tests changed under AC5: `test/panel-0081.test.mjs` is removed (it only placed the icon, and its AC5 needs the icon's style rules); `history-0085`'s check that 0081's AC5 runs goes with it; `panel-0071` keeps only its "Paused" and `status --json` tests, and its stand-in build moved to `test/support/build-panel.mjs`; `panel-0140` no longer lists the icon among the controls it measures; `split-0018` no longer expects `panelPausePlay`.
+- A paused row shows "Paused · carry it on with speck play <id>" under its progress bar, beside the "Paused" by its counter.
+- Self-check: POST to /pause or /play now falls through to the server's existing 404 rather than its own, as a second 'Not found.' broke 0067's restart tests, which mark that reply.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

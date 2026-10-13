@@ -112,16 +112,6 @@
   .q .rank { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--accent); font-size: 12px; }
   .q.wait { opacity: .5; }
   .q.wait .rank { color: var(--muted); }
-  /* A running build's pause icon (two bars), or a paused one's play icon (a triangle), in the rank space. It is centred
-     between the top row and the bottom of the progress bar under it: half the top row, plus half the bar (8px margin, 3px
-     border, 5px padding and a 15px label) less half the icon. Opening the row leaves it there, as the top row doesn't move. */
-  .q .top { position: relative; }
-  .q .toggle-build { position: absolute; left: 0; top: calc(50% + 15.5px - 7px); width: 16px; height: 14px; padding: 0; background: none; border: 0; color: var(--muted); cursor: pointer; }
-  .q .toggle-build:hover { color: var(--text); }
-  .q .toggle-build.pause::before, .q .toggle-build.pause::after { content: ''; position: absolute; top: 2px; width: 3px; height: 10px; background: currentColor; }
-  .q .toggle-build.pause::before { left: 4px; } .q .toggle-build.pause::after { left: 9px; }
-  .q .toggle-build.play::before { content: ''; position: absolute; top: 2px; left: 5px; border: 5px solid transparent; border-left: 8px solid currentColor; border-right: 0; }
-  .q .toggle-refused { margin: 4px 0 0 34px; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
@@ -330,13 +320,9 @@
     .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
     .set-ready, .full-open { min-width: 44px; min-height: 44px; }
 
-    /* Queue: the pause and play icon gets a 44 px square, centred where it was, and the rows below it move over to match */
+    /* Queue: the top row is 44 px high, with a 34 px space on its left, and the rows below it move over to match */
     .q .top { grid-template-columns: 34px minmax(0, 1fr) auto; min-height: 44px; align-items: center; }
-    .q .toggle-build { left: -5px; top: calc(50% + 15.5px - 22px); width: 44px; height: 44px; }
-    .q .toggle-build.pause::before, .q .toggle-build.pause::after { top: 17px; }
-    .q .toggle-build.pause::before { left: 18px; } .q .toggle-build.pause::after { left: 23px; }
-    .q .toggle-build.play::before { top: 17px; left: 19px; }
-    .q .log, .q .toggle-refused, .q .stop-refused, .q .indent, .question, .stages, .act, .resume { margin-left: 42px; }
+    .q .log, .q .stop-refused, .q .indent, .question, .stages, .act, .resume { margin-left: 42px; }
     .q .full-open { margin-left: 42px; min-height: 44px; }
     .q .stop-build { min-width: 44px; min-height: 44px; }
     .stages { grid-template-columns: repeat(5, minmax(min-content, 1fr)); }
@@ -521,7 +507,7 @@ function panelModel(state) {
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138).
       const to_ship = t.status === 'approved' && exit_label !== null;
-      // A build speck run launched and is running can be paused and played from its row.
+      // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
         exit_message: exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
@@ -788,7 +774,7 @@ function linkTarget(s, from) {
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const POLL_MS = 2000;
 const LOG_MS = 1000; // how often an open queue ticket's log is asked for
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, pause, play, stop, ship and the speck run switch
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, each priority change, stop, ship and the speck run switch
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -840,8 +826,6 @@ const settingReady = new Set(); // ids whose Set ready request hasn't been answe
 const refused = new Map(); // id → why the server refused to set it ready
 let priorityMenu = null; // the id of the draft whose priority menu is open, or null
 const priorityRefused = new Map(); // id → why the server refused to set its priority, until the next click on its tag
-const toggling = new Set(); // ids whose pause or play request hasn't been answered yet
-const toggleRefused = new Map(); // id → why the server refused to pause or play its build, until the next click on its icon
 const stopping = new Set(); // ids whose stop request hasn't been answered yet
 const stopRefused = new Map(); // id → why the server refused to stop its build, until the next click on its Stop build button
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
@@ -1305,7 +1289,7 @@ function shapingToggle(m) {
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const id = String(t.id), isOpen = openQueue.has(id);
-  const top = el('div', 'top', null, el('span', 'rank', null, toggleIcon(t)), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
+  const top = el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
@@ -1315,8 +1299,6 @@ function queueItem(t) {
   const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red && !t.paused; // an agent is at work on it
   for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : t.to_ship ? 'now to-ship' : moving ? 'now moving' : 'now') : null, s.label));
   q.appendChild(bar);
-  // Under the progress bar, so the bar stays right under the top row and the icon stays centred on the two (0081).
-  if (toggleRefused.has(id)) q.appendChild(el('div', 'toggle-refused', toggleRefused.get(id)));
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));
     if (isOpen) { q.appendChild(fullButton(t)); q.appendChild(logBox(id)); }
@@ -1324,6 +1306,7 @@ function queueItem(t) {
   }
   if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
   if (t.resume) q.appendChild(resumeLine(t));
+  if (t.paused) q.appendChild(el('div', 'act', `Paused · carry it on with speck play ${t.id}`));
   if (t.exit_label) {
     q.appendChild(el('div', t.to_ship ? 'act to-ship' : 'act bad', t.exit_label));
     if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : 'question exit', t.exit_message));
@@ -1372,40 +1355,6 @@ async function stopBuild(id) {
     stopRefused.set(id, "Couldn't reach the panel server, so the build wasn't stopped.");
   }
   stopping.delete(id);
-  render();
-}
-// A pause icon on a building or reviewing ticket whose build speck run launched and is running, or a play icon while
-// it's paused. Clicking it pauses or plays the build, and opens or closes nothing.
-function toggleIcon(t) {
-  if (!t.pausable) return null;
-  const what = t.paused ? 'play' : 'pause';
-  const b = el('button', `toggle-build ${what}`);
-  b.type = 'button';
-  b.title = t.paused ? 'Play build' : 'Pause build';
-  b.addEventListener('click', e => { e.stopPropagation(); toggleBuild(String(t.id), what); });
-  return b;
-}
-// The server pauses or plays the build as speck pause or speck play does. Until the next poll the icon shows what it
-// did; a refusal shows under the progress bar until the next click on the icon.
-async function toggleBuild(id, what) {
-  if (toggling.has(id)) return;
-  toggleRefused.delete(id);
-  toggling.add(id);
-  render();
-  try {
-    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/${what}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
-    if (res.ok) {
-      const t = state && state.tickets.find(x => x && String(x.id) === id);
-      if (t) t.paused = what === 'pause';
-    } else {
-      let why = null;
-      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
-      toggleRefused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
-    }
-  } catch {
-    toggleRefused.set(id, `Couldn't reach the panel server, so the build wasn't ${what === 'pause' ? 'paused' : 'played'}.`);
-  }
-  toggling.delete(id);
   render();
 }
 // An open queue ticket's log, as text in a box with its own scrollbar.
@@ -1629,7 +1578,7 @@ function render() {
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
-  const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), toggleRefused.get(String(t.id)) ?? null, stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null], queueItem,
+  const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
   startCounters(m.queue.flatMap((t, i) => (t.counter !== null && t.approved_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : [])));
