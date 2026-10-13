@@ -1,7 +1,7 @@
 ---
 id: "0148"
 title: "Serve the panel at a private https address"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T20:25:43.697Z"
+approved: "2026-10-13T20:32:26.104Z"
 
 ---
 # 0148 · Serve the panel at a private https address
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel only serves pages to, and accepts button presses from, `127.0.0.1` and `localhost`. A user who reaches it from their phone through a private tunnel (for example Cloudflare Tunnel behind Cloudflare Access, or `tailscale serve`) can't use it: the address is refused, and once the page loads, every button press is refused with 403.
@@ -54,9 +55,15 @@ You can now use the panel from your phone. Start it with the private web address
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC2 explicitly requires every listed action to work from the extra address, but positive coverage exercises only Set ready.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 400,397
+- Elapsed since build started: 7 min
+- Changed lines: 32 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, no inbox notes):
 - Tidy-up: a request at the wrong address still gets "open the panel at 127.0.0.1 or localhost", which doesn't mention the `--url` address.
