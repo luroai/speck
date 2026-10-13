@@ -39,6 +39,7 @@ An opened draft ticket, idea or inbox note in Plan shows its Markdown formatted,
 
 ## Notes
 - Draft Problem and Outcome use `part()`, which puts the text in a plain `<p>`; ideas and inbox notes use a `<pre class="note">` (`ideaItem`, `inboxItem` in `templates/panel.html`). The pane uses `mdPart()` with `markdown()` and `mdBlocks()`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
