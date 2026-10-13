@@ -1,6 +1,6 @@
 ---
 id: "0144"
-title: "Colour speck run's state like a traffic light"                # one outcome, no "and"
+title: Call the speck run switch Auto-build                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
@@ -15,29 +15,31 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 
 ---
-# 0144 · Colour speck run's state like a traffic light
+# 0144 · Call the speck run switch Auto-build
 
 **Status:** 📝 draft
 
 ## Problem
-The panel header's speck run indicator shows a blue square when speck run is on and a grey one when it's off. Grey reads as faded rather than off, so the user can't tell the state at a glance.
+The panel header shows "speck run on" or "speck run off", with a blue or grey square and a "Turn on" or "Turn off" button. "speck run" is a command name, so it means nothing to someone who doesn't know it, the grey square reads as faded rather than off, and the button makes the user work out the state before they know what it will do.
 
 ## Outcome
-The speck run indicator's square is green when speck run is on and red when it's off.
+The header's switch is called Auto-build: its state is plain at a glance, in green or red, and its button says what it will do.
 
 ## Acceptance criteria
-1. While speck run is on, the square in the header's "speck run on" indicator is the panel's green (the colour used for "lint passes"), in light and dark mode.
-2. While speck run is off, the square in the "speck run off" indicator is the panel's red (the colour used for a blocked ticket), in light and dark mode.
-3. The connection indicator next to it ("live · Ns ago" and "disconnected") keeps its colours as today.
-4. The indicator's text, the on/off button beside it and what they do are unchanged.
-5. No test that passed before this change fails, except checks of the speck run square's blue or grey colour, which are changed to check green and red.
+1. While speck run is on, the header indicator reads "Auto-build on" with a square in the panel's green (the colour used for "lint passes"), and the button beside it reads "Pause".
+2. While speck run is off, the indicator reads "Auto-build off" with a square in the panel's red (the colour used for a blocked ticket), followed by "ready tickets wait" in smaller, muted text, and the button reads "Start".
+3. Hovering over the indicator shows a tooltip naming the command: "speck run". While the button's request is being answered, it reads "Starting…" or "Pausing…" and can't be clicked again.
+4. The button does exactly what it does today: Start starts `speck run`, and Pause stops it the way Ctrl-C does, leaving builds already running to carry on. The connection indicator ("live · Ns ago", "disconnected") keeps its text and colours.
+5. No test that passed before this change fails, except checks of the old labels ("speck run on/off", "Turn on/off", "Turning on/off…") or the old blue and grey square, which are changed to the new ones.
 
 ## Out of scope
-- The connection indicator's colours.
-- Any other colour in the panel.
+- Renaming the `speck run` command, or its name in the docs and CLI.
+- Moving the switch out of the header.
+- Changing what starting or pausing does.
 
 ## Notes
-- The speck run square and the connection square share the `.live` class (`templates/panel.html`): `.live` is `--run` (blue) and `.live.idle` is `--faint` (grey). The panel's green is `--ok` and its red is `--bad`.
+- Labels are set in `templates/panel.html` (the `run` and `run-switch` elements). The speck run square and the connection square share the `.live` class: `.live` is `--run` (blue) and `.live.idle` is `--faint` (grey). The panel's green is `--ok` and its red is `--bad`.
+- The phone layout (0140) keeps header labels on one line at 375 px; the new labels must too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
