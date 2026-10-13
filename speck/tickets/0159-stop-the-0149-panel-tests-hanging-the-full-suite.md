@@ -41,6 +41,7 @@ The full suite on `main` finishes every time in its usual time, and the 0149 bro
 - Evidence: the hang stops output right after test 714 in `speck/.cache/results/run.85b8dba7-….out` (0149's ship, 20:42) and in 0150's and 0152's builds. 0152's builder found 3 hangs in 6 runs through speck, and one hang in a direct piped `node --test` run, so it isn't caused by speck's watchdog.
 - The browser test (line 173) opens Chrome through `browserPage()` and polls `Page.getAppManifest` up to 50 times; Chrome DevTools calls through `b.send` may have no time limit.
 - Run on its own, the file passed 3 times out of 3 in 5 to 8 seconds (2026-10-13 22:30).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
