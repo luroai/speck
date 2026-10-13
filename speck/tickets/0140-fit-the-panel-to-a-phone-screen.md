@@ -1,7 +1,7 @@
 ---
 id: "0140"
 title: "Fit the panel to a phone screen"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
+started: "2026-10-13T06:30:00.309Z"
 
 ---
 # 0140 · Fit the panel to a phone screen
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel is laid out for a desktop screen only. On a phone, Plan and Build are squeezed into two narrow columns side by side, the header's labels wrap one word per line and some text runs off the edge. The user checks progress and starts builds from their phone on the move, so this is a real, regular use.
