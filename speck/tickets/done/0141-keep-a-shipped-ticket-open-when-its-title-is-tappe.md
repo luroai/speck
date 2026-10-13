@@ -1,7 +1,7 @@
 ---
 id: "0141"
 title: "Keep a shipped ticket open when its title is tapped on a phone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T07:52:43.284Z"
 approved: "2026-10-13T07:59:12.233Z"
+finished: "2026-10-13T08:00:18.606Z"
 
 ---
 # 0141 · Keep a shipped ticket open when its title is tapped on a phone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In cptr's built-in browser on an iPhone, tapping a shipped ticket's title opens the full ticket for a moment, then the page reloads to the top and the ticket closes. The title is an `<a href="#">` link (0137), and that browser follows the link itself even though the page cancels it. The Review pack button in the same row works, because it's a button.
