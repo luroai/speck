@@ -41,20 +41,20 @@ function startLook({ stored = null, dark = false, storage } = {}) {
   return { theme: root.dataset.theme, change: matches => { onChange && onChange({ matches }); return root.dataset.theme; } };
 }
 
-test('0136 AC1: the header ends with a button named "Switch between light and dark", after the pills, with a moon and a sun icon and no text', () => {
+test('0136 AC1: the header ends with a button named "Switch between light and dark", after Auto-build (0150), with a moon and a sun icon and no text', () => {
   const h = header();
-  const pills = h.indexOf('id="pills"');
-  const m = h.match(/<button\b([^>]*)>([\s\S]*?)<\/button>\s*$/);
+  const run = h.indexOf('id="run"');
+  const m = h.match(/[\s\S]*<button\b([^>]*)>([\s\S]*?)<\/button>\s*$/); // the last button: Auto-build is one too (0150)
   assert.ok(m, 'a button is the last thing in the header');
-  assert.ok(pills >= 0 && pills < h.indexOf('<button'), 'the button comes after the pills');
+  assert.ok(run >= 0 && run < h.indexOf('id="theme"'), 'the button comes after Auto-build');
   assert.match(m[1], /\btype="button"/);
   assert.match(m[1], /\bid="theme"/);
   assert.match(m[1], new RegExp(`\\baria-label="${LABEL}"`));
   assert.equal(m[2].replace(/<[^>]*>/g, '').trim(), '', 'no visible text');
   assert.match(m[2], /<svg class="moon"/);
   assert.match(m[2], /<svg class="sun"/);
-  // Not inside the pills, which the page replaces on every refresh.
-  assert.doesNotMatch(h.match(/<div class="pills" id="pills">[\s\S]*?<\/div><\/div>/)[0], /<button/);
+  // Not inside Auto-build, whose contents the page replaces on every refresh.
+  assert.doesNotMatch(h.match(/<button class="run-state" id="run"[\s\S]*?<\/button>/)[0], /id="theme"/);
 });
 
 test('0136 AC1: the stylesheet shows the moon in the light look and the sun in the dark one', () => {

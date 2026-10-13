@@ -287,7 +287,7 @@ test('0051: the build-exit message box is unchanged by opening a red ticket', as
 // ---------- in a real browser ----------
 
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const refreshed = async (b, what) => { await b.js(`window.seen = document.getElementById('pills').firstChild`); await b.until(`document.getElementById('pills').firstChild !== window.seen`, what); };
+const refreshed = async (b, what) => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
 const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}')`;
 
 test('0051 AC2-AC5: in a real browser, a click opens the log, its scroll position survives refreshes, and selecting the title opens nothing', chrome, async () => {

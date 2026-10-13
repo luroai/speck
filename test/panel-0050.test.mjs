@@ -216,8 +216,8 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
-  // Each refresh puts in a new status pill, so a pill that isn't the one marked is a refresh since.
-  const refreshed = async what => { await b.js(`window.seen = document.getElementById('pills').firstChild`); await b.until(`document.getElementById('pills').firstChild !== window.seen`, what); };
+  // Each refresh puts a new square in the Auto-build button (0150), so a square that isn't the one marked is a refresh since.
+  const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
   const exit = '#queue .question.exit';
   try {
     await b.until(`!!document.querySelector('${exit}') && document.querySelectorAll('#shipped tr').length === 1`, 'the queue and Shipped');

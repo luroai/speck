@@ -150,12 +150,12 @@ test('0040 AC5: the queue\'s time since started (MM:SS since 0058), the connecti
   now += 4000;
   await refresh(p);
   assert.ok(kept(), 'a failed refresh keeps the selection too');
-  assert.equal(p.byId('pills').textContent, 'disconnected');
+  assert.equal(p.byId('pills').children.length, 0, 'the header has no connection indicator (0150): the message below says it');
   assert.equal(p.byId('offline').hidden, false, 'the disconnected message shows');
   now += 2000;
   await refresh(p);
   assert.ok(kept());
-  assert.match(p.byId('pills').textContent, /^live · 0s ago$/);
+  assert.equal(p.byId('pills').children.length, 0);
   assert.equal(p.byId('offline').hidden, true);
 });
 
@@ -171,7 +171,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   const sel = () => b.js('getSelection().toString()');
-  const pill = () => b.js(`document.getElementById('pills').textContent`);
+  const autoBuild = () => b.js(`document.getElementById('run').textContent`);
   try {
     const item = '#shaping .item';
     await b.until(`!!document.querySelector('${item} .title')`, 'the draft');
@@ -179,11 +179,11 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     await b.until(`!!document.querySelector('${item}.open .detail')`, 'the draft to open');
     await b.drag(await b.js(charAt(`${item} .detail p.text`, 0)), await b.js(charAt(`${item} .detail p.text`, 13)));
     assert.equal(await sel(), 'Export button', 'the drag selected text');
-    // AC1 and AC5: unchanged refreshes keep it, and the status pill keeps counting.
-    // Each refresh puts in a new status pill, so a pill that isn't the one marked is a refresh since.
-    const refreshed = async what => { await b.js(`window.seen = document.getElementById('pills').firstChild`); await b.until(`document.getElementById('pills').firstChild !== window.seen`, what); };
+    // AC1 and AC5: unchanged refreshes keep it, and the header keeps updating.
+    // Each refresh puts a new square in the Auto-build button (0150), so a square that isn't the one marked is a refresh since.
+    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
     await refreshed('a refresh'); await refreshed('a second refresh');
-    assert.match(await pill(), /^live/, 'the status pill is still updated');
+    assert.match(await autoBuild(), /^Auto-build/, 'the Auto-build button is still updated');
     assert.equal(await sel(), 'Export button', 'kept through refreshes');
     // AC2: other tickets change, and the changes show.
     draft('0001', 'A new draft before it', 'Something else.');
