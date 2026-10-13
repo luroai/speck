@@ -40,6 +40,7 @@ A ticket waiting in the Build queue has a Back to Plan button that returns it to
 ## Notes
 - Set ready is handled in `scripts/panel.mjs` (`POST /api/tickets/<id>/ready`), which commits the ticket file alone with `commitTicketOnly`. This is the same in reverse.
 - A ticket that waits on others (`after:`) is still `ready`, so it gets the button too.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
