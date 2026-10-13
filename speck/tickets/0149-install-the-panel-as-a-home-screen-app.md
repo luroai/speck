@@ -48,6 +48,8 @@ The panel can be added to a phone's home screen as an app: it opens full screen,
 - Every project's panel is called "speck", so several projects on one home screen share a name; that's accepted.
 - Checked 2026-10-13: current guidance still has iOS taking its home-screen icon from `apple-touch-icon`, with manifest icons used by Android and desktop; Apple's own docs didn't confirm either way. Both are given, so either works.
 - Failing before this build: none
+- The PNG icons are drawn from `templates/icons/icon.svg` by `test/support/icons.mjs` (no image tools are installed here); a test checks each committed PNG is exactly what it draws, and that headless Chrome's own drawing of the SVG matches the 180 px icon. Stroke width 5 (of 64), so the ensō reads at 180 px.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
