@@ -1,7 +1,7 @@
 ---
 id: "0143"
 title: "Show a ticket's tags in the full ticket pane"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T08:09:40.180Z"
 approved: "2026-10-13T08:16:46.493Z"
+finished: "2026-10-13T08:17:53.449Z"
 
 ---
 # 0143 · Show a ticket's tags in the full ticket pane
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a shipped ticket, or one in the Build queue, is opened in the full ticket pane, the pane shows only its id and title above the text. Its priority, size and risk, which the lists show as tags, aren't there, so the user can't see how big or risky the change was.
