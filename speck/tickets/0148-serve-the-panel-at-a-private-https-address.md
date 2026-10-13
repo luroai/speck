@@ -43,6 +43,7 @@ The panel only serves pages to, and accepts button presses from, `127.0.0.1` and
 - The address is given on the command line, so it is never written into the repo.
 - The checks are the `origins` and `hosts` sets in `panelServer()` (`scripts/panel.mjs`). Arguments already reach a restarted server through `SPECK_PANEL_ARGS`.
 - Behind a tunnel the Host header is usually the public hostname with no port; browsers send `Origin: https://<hostname>`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
