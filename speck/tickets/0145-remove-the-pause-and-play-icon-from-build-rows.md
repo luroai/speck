@@ -1,7 +1,7 @@
 ---
 id: "0145"
 title: Remove the build pause icon from the panel                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T08:23:28.509Z"
+approved: "2026-10-13T08:32:36.793Z"
 
 ---
 # 0145 · Remove the build pause icon from the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each running build in the panel's Build queue has its own pause and play icon. With the Auto-build switch in the header, the user doesn't need to hold individual builds from the panel, and the icon adds clutter to every row and can be confused with the header switch.
@@ -57,9 +58,14 @@ Worth knowing: pausing and playing a single build is now only possible from the 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 184,621
+- Elapsed since build started: 9 min
+- Changed lines: 91 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Tidy-up: the comment at the top of the panel's server code still says it has "two writes"; it has had more for a while.
 
