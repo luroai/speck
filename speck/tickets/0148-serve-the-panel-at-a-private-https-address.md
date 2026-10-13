@@ -1,7 +1,7 @@
 ---
 id: "0148"
 title: "Serve the panel at a private https address"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-13
 ---
 # 0148 · Serve the panel at a private https address
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel only serves pages to, and accepts button presses from, `127.0.0.1` and `localhost`. A user who reaches it from their phone through a private tunnel (for example Cloudflare Tunnel behind Cloudflare Access, or `tailscale serve`) can't use it: the address is refused, and once the page loads, every button press is refused with 403.
