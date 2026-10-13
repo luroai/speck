@@ -1,7 +1,7 @@
 ---
 id: "0157"
 title: "Tidy the Shipped section"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-13
 ---
 # 0157 · Tidy the Shipped section
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The Shipped section is hard to read, worst on a phone. Its six stats stack as large numbers with long labels that wrap, and they're hard to tell apart. The section has no accent colour, unlike Plan. Shipped tickets run into each other. Each ticket's figures are one long run of values separated by dots, and the time in its bottom left corner has no label, so it isn't clear what it is.
