@@ -171,7 +171,7 @@ test('0054 AC2-AC5: in a real browser, the pane opens, keeps a selection through
     await b.drag(await b.js(charAt('#full-ticket ol li', 0)), await b.js(charAt('#full-ticket ol li', 13)));
     assert.equal(await sel(), 'Export button', 'the drag selected text');
     assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`), 'the ticket stays open');
-    const refreshed = async what => { await b.js(`window.seen = document.getElementById('pills').firstChild`); await b.until(`document.getElementById('pills').firstChild !== window.seen`, what); };
+    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
     await refreshed('a refresh'); await refreshed('a second refresh');
     assert.equal(await sel(), 'Export button', 'kept through refreshes');
     await b.js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);

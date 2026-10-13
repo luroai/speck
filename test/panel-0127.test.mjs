@@ -65,29 +65,29 @@ test('0127 AC2: the page shows speck run is off when the state has no run, or a 
     const pill = runPill(p);
     assert.ok(pill, 'a speck run pill is in the header');
     assert.match(pill.className, /\brun-off\b/);
-    assert.equal(pill.textContent, 'Auto-build offready tickets wait');
+    assert.equal(pill.textContent, 'Auto-build off');
   }
 });
 
 test('0127 AC3: the page shows the new state at its next refresh, without reloading', async () => {
   const p = fakePage([state(false), state(true), state(false)]);
   await p.settle();
-  assert.equal(runPill(p).textContent, 'Auto-build offready tickets wait');
+  assert.equal(runPill(p).textContent, 'Auto-build off');
   p.timers.shift()(); await p.settle();
   assert.equal(runPill(p).textContent, 'Auto-build on');
   p.timers.shift()(); await p.settle();
-  assert.equal(runPill(p).textContent, 'Auto-build offready tickets wait');
+  assert.equal(runPill(p).textContent, 'Auto-build off');
   assert.equal(p.calls.filter(c => c.url === '/api/state').length, 3);
 });
 
-test('0127 AC3: the pill sits in the header beside the connection status, not in a ticket row, and the connection pill is unchanged', async () => {
+test('0127 AC3: the pill sits in the header, not in a ticket row (0150: it is the Auto-build button, and the connection pill has gone)', async () => {
   const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
-  assert.ok(header.indexOf('id="run"') >= 0 && header.indexOf('id="run"') < header.indexOf('id="pills"'), 'in the header, just before the connection status');
+  assert.ok(header.indexOf('id="run"') >= 0, 'in the header');
+  assert.doesNotMatch(header, /id="pills"/);
   const p = fakePage([state(true)]);
   await p.settle();
-  assert.equal(p.byId('run').children.length, 1);
-  assert.equal(p.byId('pills').children.length, 1);
-  assert.match(p.byId('pills').textContent, /^live/);
+  assert.equal(p.byId('run').children.length, 2, 'its square and its label');
+  assert.equal(p.byId('pills').children.length, 0);
 });
 
 test('0127 AC4: a lock left by a speck run whose process has gone shows as off, and is left as it was', async () => {

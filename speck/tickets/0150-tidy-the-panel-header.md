@@ -43,6 +43,8 @@ The header is tidy on phone and desktop: the Auto-build indicator is itself the 
 - The Auto-build switch requests are the same as today (`POST /api/run/on` and `/off`), with the token and Origin checks unchanged.
 - Reported 2026-10-13 from a phone screenshot: the light/dark button sat alone on a second line, taller than Auto-build and lower than it.
 - Failing before this build: none
+- Existing tests changed (AC5): the checks of the live pill and the separate Pause/Start button in 0033, 0040, 0127, 0128, 0134, 0136, 0140 and 0144 now check AC1 and AC2. The browser tests in 0040, 0050, 0051, 0054, 0055, 0060 and 0061 watched the live pill being replaced to know a refresh had happened; they now watch the Auto-build button's square, which is replaced on every refresh in the same way.
+- Self-check: a long project name at 700 px and over wrapped and pushed the buttons; it's now cut short with an ellipsis on one line, as on a phone (test added).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

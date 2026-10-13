@@ -7,35 +7,33 @@ import { fakePage, deferred, panelRepo, freePort, startPanel, stop, findChrome, 
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
-const pillOf = p => p.all(p.byId('run')).find(n => /\bpill\b/.test(n.className || ''));
+// 0150: the indicator is itself the button, so there's no separate Pause or Start, and "ready tickets wait" moved into its tooltip.
+const pillOf = p => p.byId('run');
 const dotOf = p => p.all(pillOf(p)).find(n => /\blive\b/.test(n.className || ''));
-const switchOf = p => p.all(p.byId('run-switch')).find(n => n.tagName === 'button') || null;
+const switchOf = pillOf;
 
-test('0144 AC1: while speck run is on, the indicator reads "Auto-build on" with a green square, and the button reads "Pause"', async () => {
+test('0144 AC1: while speck run is on, the indicator reads "Auto-build on" with a green square (0150: and is the button)', async () => {
   const p = fakePage([state({ on: true, pid: 7 })]);
   await p.settle();
   assert.equal(pillOf(p).textContent, 'Auto-build on');
   assert.match(dotOf(p).className, /\bgo\b/);
-  assert.equal(switchOf(p).textContent, 'Pause');
+  assert.equal(switchOf(p).title, 'Pause Auto-build: ready tickets wait');
 });
 
-test('0144 AC2: while speck run is off, the indicator reads "Auto-build off" with a red square and "ready tickets wait", and the button reads "Start"', async () => {
+test('0144 AC2: while speck run is off, the indicator reads "Auto-build off" with a red square (0150: "ready tickets wait" is in the tooltip)', async () => {
   const p = fakePage([state(null)]);
   await p.settle();
   const pill = pillOf(p);
-  assert.equal(pill.textContent, 'Auto-build offready tickets wait');
+  assert.equal(pill.textContent, 'Auto-build off');
   assert.match(dotOf(p).className, /\bstop\b/);
-  const wait = p.all(pill).find(n => /\brun-wait\b/.test(n.className || ''));
-  assert.ok(wait, 'the hint has its own element');
-  assert.equal(wait.textContent, 'ready tickets wait');
-  assert.equal(switchOf(p).textContent, 'Start');
+  assert.ok(!p.all(pill).some(n => /\brun-wait\b/.test(n.className || '')), 'no small print beside it');
 });
 
-test('0144 AC3: the indicator\'s tooltip names the command, on or off', async () => {
-  for (const run of [null, { on: true, pid: 7 }]) {
+test('0144 AC3: the indicator\'s tooltip says what a click does, on or off (0150)', async () => {
+  for (const [run, title] of [[null, 'Start Auto-build: build ready tickets one at a time'], [{ on: true, pid: 7 }, 'Pause Auto-build: ready tickets wait']]) {
     const p = fakePage([state(run)]);
     await p.settle();
-    assert.equal(pillOf(p).title, 'speck run');
+    assert.equal(pillOf(p).title, title);
   }
 });
 
@@ -54,7 +52,7 @@ test('0144 AC3: while the request is being answered, the button reads "Startingâ
   }
 });
 
-test('0144 AC4: Start posts to turn speck run on and Pause posts to turn it off, as before, and the connection indicator is unchanged', async () => {
+test('0144 AC4: clicking it posts to turn speck run on, then off, as Start and Pause did (0150: the connection indicator has gone)', async () => {
   const p = fakePage([state(null), { ok: true, run: { on: true, pid: 9 } }, { ok: true, run: { on: false, pid: null } }]);
   await p.settle();
   p.press(switchOf(p));
@@ -65,10 +63,8 @@ test('0144 AC4: Start posts to turn speck run on and Pause posts to turn it off,
   p.press(switchOf(p));
   await p.settle();
   assert.equal(p.calls.at(-1).url, '/api/run/off');
-  assert.equal(pillOf(p).textContent, 'Auto-build offready tickets wait');
-  const conn = p.all(p.byId('pills')).find(n => /\bpill\b/.test(n.className || ''));
-  assert.match(conn.textContent, /^live Â· \d+s ago$/);
-  assert.equal(p.all(conn).find(n => /\blive\b/.test(n.className || '')).className, 'live');
+  assert.equal(pillOf(p).textContent, 'Auto-build off');
+  assert.equal(p.byId('pills').children.length, 0);
 });
 
 // ---------- in a browser: the colours, and the phone layout ----------
@@ -89,7 +85,7 @@ async function withPage(run, fn, width = 1280) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run .pill') && /live/.test(document.getElementById('pills').textContent)`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .live')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -104,27 +100,22 @@ const LINES = sel => `(() => {
   return lines;
 })()`;
 
-test('0144 AC1: on, the square is the panel\'s green, and the connection square keeps its blue', skip, async () => {
+test('0144 AC1: on, the square is the panel\'s green', skip, async () => {
   await withPage({ on: true, pid: 7 }, async b => {
     assert.equal(await b.js(bg('#run .live')), await b.js(colourOf('--ok')));
-    assert.equal(await b.js(bg('#pills .live')), await b.js(colourOf('--run')));
   });
 });
 
-test('0144 AC2: off, the square is the panel\'s red and the hint is smaller and muted', skip, async () => {
+test('0144 AC2: off, the square is the panel\'s red', skip, async () => {
   await withPage(null, async b => {
     assert.equal(await b.js(bg('#run .live')), await b.js(colourOf('--bad')));
-    assert.equal(await b.js(bg('#pills .live')), await b.js(colourOf('--run')));
-    assert.equal(await b.js(`getComputedStyle(document.querySelector('#run .run-wait')).color`), await b.js(colourOf('--faint')));
-    const size = sel => b.js(`parseFloat(getComputedStyle(document.querySelector(${JSON.stringify(sel)})).fontSize)`);
-    assert.ok(await size('#run .run-wait') < await size('#run .pill'), 'the hint is smaller than the label');
   });
 });
 
 for (const run of [null, { on: true, pid: 7 }]) {
-  test(`0144 AC2: at 375 px, the ${run ? 'on' : 'off'} indicator and its button are each on one line`, skip, async () => {
+  test(`0144 AC2: at 375 px, the ${run ? 'on' : 'off'} indicator, which is its button (0150), is on one line`, skip, async () => {
     await withPage(run, async b => {
-      for (const sel of ['#run .pill', '#run-switch button']) {
+      for (const sel of ['#run']) {
         assert.equal(await b.js(LINES(sel)), 1, `${sel} is on one line`);
         const r = await b.js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return r.right <= document.documentElement.clientWidth + 0.5; })()`);
         assert.ok(r, `${sel} is on screen`);

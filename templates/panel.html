@@ -44,12 +44,8 @@
   header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .logo { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
-  .repo { color: var(--muted); font-size: 12px; }
-  .pills { margin-left: auto; display: flex; gap: 0; }
-  .pill { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; padding: 4px 12px; border: .5px solid var(--line); margin-left: -.5px; color: var(--muted); background: var(--panel); }
-  .pill b { color: var(--text); font-weight: 500; }
-  .pill.attn { color: var(--warn); border-color: var(--warn); position: relative; z-index: 1; }
-  .pill.attn b { color: var(--warn); }
+  .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .logo, .run-state, .theme { flex-shrink: 0; }
   .theme { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
   .theme:hover { border-color: var(--text); color: var(--text); }
   .theme svg { width: 15px; height: 15px; }
@@ -171,16 +167,13 @@
   td.num { color: var(--muted); text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; white-space: nowrap; }
 
   /* Live panel additions */
-  .pill.off { color: var(--bad); border-color: var(--bad); position: relative; z-index: 1; }
-  .live.off { background: var(--bad); }
   .live.go { background: var(--ok); }
   .live.stop { background: var(--bad); }
-  .run-wait { font-size: 10px; color: var(--faint); margin-left: 6px; }
-  .run-state + .pills { margin-left: 0; }
-  .run-switch { display: flex; align-items: center; }
-  .run-switch button { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 10px; margin-right: 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
-  .run-switch button:hover { color: var(--text); border-color: var(--text); }
-  .run-switch button:disabled { cursor: default; opacity: .6; }
+  /* 0150: Auto-build is one button, the same height as the light/dark one beside it */
+  .run-state { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; white-space: nowrap; color: var(--muted); background: var(--panel); border: .5px solid var(--line); cursor: pointer; }
+  .run-state:hover { color: var(--text); border-color: var(--text); }
+  .run-state:disabled { cursor: default; opacity: .6; }
+  .run-state[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
@@ -311,12 +304,12 @@
   /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
      clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
   @media (max-width: 699.98px) {
-    header { flex-wrap: wrap; gap: 8px 12px; padding: 10px 16px; }
+    /* 0150: two rows, speck and the project, then Auto-build and light/dark, each pair at the two edges */
+    header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; padding: 10px 16px; }
     header > * { white-space: nowrap; }
-    .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-    .pills { margin-left: 0; }
-    .theme { width: 44px; height: 44px; margin-left: auto; }
-    .run-switch button { min-width: 44px; min-height: 44px; margin-right: 0; }
+    .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
+    .run-state { justify-self: start; height: 44px; min-width: 44px; }
+    .theme { justify-self: end; width: 44px; height: 44px; }
     .run-error, .offline, .restart { padding: 6px 16px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
@@ -365,9 +358,7 @@
 <header>
   <div class="logo">speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
-  <div class="pills run-state" id="run"></div>
-  <div class="run-switch" id="run-switch"></div>
-  <div class="pills" id="pills"><div class="pill"><span class="live"></span>connecting…</div></div>
+  <button class="run-state" id="run" type="button" aria-pressed="false" hidden></button>
   <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">
     <svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/></svg>
     <svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
@@ -1608,7 +1599,7 @@ function keptItems(box, list, keyOf, viewOf, make, { own = x => x, derived = () 
   return nodes;
 }
 
-let state = null, lastOk = null, connected = null;
+let state = null;
 function render() {
   if (!state) return;
   const m = panelModel(state);
@@ -1659,23 +1650,23 @@ function render() {
     stat(med(m.stats.builderCost, dollars), 'median builder cost', m.stats.builderCost)] : []));
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
-  const status = el('div', connected ? 'pill' : 'pill off', null, el('span', connected ? 'live' : 'live off'),
-    document.createTextNode(connected ? `live · ${lastOk ? Math.max(0, Math.round((Date.now() - lastOk) / 1000)) : 0}s ago` : 'disconnected'));
-  $('pills').replaceChildren(status);
-  // Whether speck run is on, shown as Auto-build (0144): when it's off, setting a ticket ready starts nothing.
+  // Whether speck run is on, shown as Auto-build (0144): when it's off, setting a ticket ready starts nothing. The
+  // indicator is itself the switch (0150). The button stays put and only its contents change, so it keeps focus.
   const on = !!(state.run && state.run.on);
-  const pill = el('div', on ? 'pill run-on' : 'pill run-off', null, el('span', on ? 'live go' : 'live stop'), document.createTextNode(on ? 'Auto-build on' : 'Auto-build off'),
-    ...(on ? [] : [el('span', 'run-wait', 'ready tickets wait')]));
-  pill.title = 'speck run';
-  $('run').replaceChildren(pill);
-  const sw = el('button', null, runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Pause' : 'Start');
-  sw.type = 'button';
-  sw.disabled = !!runSwitching;
-  sw.title = on ? 'Stop speck run as Ctrl+C does: builds already running carry on' : 'Start speck run, which starts a build for each ready ticket';
-  sw.addEventListener('click', e => { e.stopPropagation(); if (!sw.disabled) switchRun(on ? 'off' : 'on'); });
-  $('run-switch').replaceChildren(sw);
+  const run = $('run');
+  run.hidden = false;
+  run.className = on ? 'run-state run-on' : 'run-state run-off';
+  run.replaceChildren(el('span', on ? 'live go' : 'live stop'),
+    document.createTextNode(runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Auto-build on' : 'Auto-build off'));
+  run.setAttribute('aria-pressed', String(on));
+  run.disabled = !!runSwitching;
+  run.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets one at a time';
 }
-// 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the pill shows
+$('run').addEventListener('click', e => {
+  e.stopPropagation();
+  if (state && !$('run').disabled) switchRun(state.run && state.run.on ? 'off' : 'on');
+});
+// 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.
 async function switchRun(to) {
   if (runSwitching) return;
@@ -1701,13 +1692,11 @@ function showRunError(text) {
   $('run-error').textContent = text || '';
 }
 function setConnected(ok, problem) {
-  connected = ok;
   $('offline').hidden = ok;
   if (!ok) $('offline').textContent = problem
     ? `speck panel couldn't read the tickets: ${problem} Showing the last state received. Retrying every 2 seconds…`
     : "Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…";
   if (state) render();
-  else $('pills').replaceChildren(el('div', ok ? 'pill' : 'pill off', null, el('span', ok ? 'live' : 'live off'), document.createTextNode(ok ? 'live' : 'disconnected')));
 }
 
 // speck panel restarts by itself when its code changes. When the new code fails to start, the old server keeps serving
@@ -1733,7 +1722,7 @@ async function poll() {
     try { body = await res.json(); } catch (e) { body = null; }
     if (mine !== seq) return; // a newer request has taken over
     if (!res.ok || !body || !Array.isArray(body.tickets)) setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
-    else { state = body; lastOk = Date.now(); showRestartError(body.restart_error); setConnected(true); }
+    else { state = body; showRestartError(body.restart_error); setConnected(true); }
   } catch (e) {
     if (mine === seq) setConnected(false);
   } finally {

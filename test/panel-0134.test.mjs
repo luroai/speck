@@ -77,9 +77,10 @@ test('0134 AC3 (undone by 0135): no section heading has a number beside it', () 
   assert.doesNotMatch(html, /<span class="num"/, 'no section number');
 });
 
-// AC4: the ids and visible text in the page's static HTML before this ticket.
-const IDS = ['pills', 'offline', 'restart', 'shaping-section', 'shaping-toggle', 'shaping', 'queue-n', 'queue', 'shipped-n', 'shipped-stats', 'shipped', 'full-backdrop', 'full-ticket'];
-const TEXT = ['speck', 'control panel', '{{repo}}', '· base', '{{base}}', 'connecting…',
+// AC4: the ids and visible text in the page's static HTML before this ticket. 0150 removed the connection pill, its id
+// and its "connecting…".
+const IDS = ['offline', 'restart', 'shaping-section', 'shaping-toggle', 'shaping', 'queue-n', 'queue', 'shipped-n', 'shipped-stats', 'shipped', 'full-backdrop', 'full-ticket'];
+const TEXT = ['speck', 'control panel', '{{repo}}', '· base', '{{base}}',
   'Disconnected: can\'t reach speck panel. Showing the last state received. Retrying every 2 seconds…',
   'Plan', 'click one to open it', 'Build', 'builds run in their own worktrees', 'Shipped', 'latest 5'];
 

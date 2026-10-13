@@ -89,8 +89,8 @@ function repoWithBoard() {
   fs.writeFileSync(path.join(runs, '0003.json'), JSON.stringify({ id: '0003', session: 's', started: ago(6), exited: ago(1), exit_code: 1 }));
   return r;
 }
-// Each refresh puts in a new status pill, so a pill that isn't the one marked is a refresh since.
-const refreshed = async (b, what) => { await b.js(`window.seen = document.getElementById('pills').firstChild`); await b.until(`document.getElementById('pills').firstChild !== window.seen`, what); };
+// Each refresh puts a new square in the Auto-build button (0150), so a square that isn't the one marked is a refresh since.
+const refreshed = async (b, what) => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
 const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}')`;
 // The page point at a character offset in the text of the element an expression finds.
 const charIn = (expr, offset) => `(() => { const n = ${expr}.firstChild, r = document.createRange(); r.setStart(n, ${offset}); r.setEnd(n, ${offset} + 1);

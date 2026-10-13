@@ -277,7 +277,7 @@ test('0031 AC4: the page shows when it is disconnected, keeps polling and recove
   assert.match(p.byId('queue').textContent, /0001.*Queued/);
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, false, 'says it is disconnected');
-  assert.match(p.byId('pills').textContent, /disconnected/);
+  assert.equal(p.byId('pills').children.length, 0, 'only the message says so: the header has no connection pill (0150)');
   assert.match(p.byId('queue').textContent, /0001.*Queued/, 'keeps the last state');
   p.timers.shift()(); await p.settle();
   assert.equal(p.timers.length, 1, 'still polling while disconnected');
@@ -350,21 +350,19 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
 
 // ---------- 0033: everything needed for Gate 1 in Shaping ----------
 
-test('0033 AC2: the page header shows the repo, base branch and connection status only, with no counts', async () => {
+test('0033 AC2: the page header shows the repo and base branch, with no counts (0150: and no connection status)', async () => {
   const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
   assert.match(header, /\{\{repo\}\}/);
   assert.match(header, /\{\{base\}\}/);
-  assert.match(header, /id="pills"/);
+  assert.doesNotMatch(header, /id="pills"/);
   const state = { tickets: [T('0001', 'draft'), T('0002', 'blocked'), T('0003', 'ready'), T('0004', 'done')], ideas: [idea('A', 'idea')] };
   const p = fakePage([state, new Error('down')]);
   await p.settle();
-  const pills = p.byId('pills');
-  assert.equal(pills.children.length, 1, 'only the connection status');
-  assert.match(pills.textContent, /^live/);
-  assert.doesNotMatch(pills.textContent, /needs you|running|up next|draft|idea|shipped/i);
+  const run = p.byId('run');
+  assert.doesNotMatch(run.textContent, /needs you|running|up next|draft|idea|shipped|\d/i);
   p.timers.shift()(); await p.settle();
-  assert.equal(pills.children.length, 1);
-  assert.match(pills.textContent, /disconnected/);
+  assert.equal(p.byId('pills').children.length, 0);
+  assert.equal(p.byId('offline').hidden, false, 'the message under the header says it is disconnected');
 });
 
 test('0033 AC3: Shaping has a Tickets / Ideas toggle, Tickets first, one list at a time, kept through refreshes', async () => {

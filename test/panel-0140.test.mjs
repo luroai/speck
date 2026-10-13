@@ -208,8 +208,9 @@ const LINES = sel => `(() => {
   for (const r of rects) if (r.top >= bottom - 1) { lines++; bottom = r.bottom; } else bottom = Math.max(bottom, r.bottom);
   return lines;
 })()`;
-const HEADER = { 'the speck name': 'header .logo', 'the repo and base branch': 'header .repo', "speck run's state": '#run .pill',
-  "speck run's on/off button": '#run-switch button', 'the live indicator': '#pills .pill', 'the light/dark switch': '#theme' };
+// 0150: speck run's state is itself its on/off button, Auto-build, and the live indicator has gone.
+const HEADER = { 'the speck name': 'header .logo', 'the repo and base branch': 'header .repo', 'Auto-build': '#run',
+  'the light/dark switch': '#theme' };
 
 test('0140 AC3: at 375 px, the header shows each of its parts in full, each label on one line', skip, async () => {
   await withPhone(async b => {
@@ -224,7 +225,7 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       if (sel !== '#theme') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
     assert.match(await b.js(`document.querySelector('header .repo').textContent`), /speck-\w+ · base main/);
-    assert.ok(await b.js(`document.querySelector('#pills .pill .live').getBoundingClientRect().width > 0`), 'the live dot is shown');
+    assert.ok(await b.js(`document.querySelector('#run .live').getBoundingClientRect().width > 0`), "Auto-build's square is shown");
   });
 });
 
