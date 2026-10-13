@@ -79,9 +79,9 @@ test('0040 AC3: a selection in an open idea\'s note survives a refresh in which 
   await p.settle();
   click(toggles(p)[1]);
   click(top(items(p)[0]));
-  const pre = p.all(items(p)[0]).find(n => n.tagName === 'pre');
-  assert.ok(pre.textContent.includes('Alpha note text'));
-  const kept = held(p, pre);
+  const text = p.all(items(p)[0]).find(n => n.tagName === 'p' && n.textContent.includes('Alpha note text')); // formatted since 0142
+  assert.ok(text);
+  const kept = held(p, text);
   await refresh(p);
   assert.ok(kept(), 'the note holding the selection stayed on the page');
   assert.deepEqual(items(p).map(n => textOf(p, n, 'span').find(t => t === 'Zero' || t === 'Alpha' || t === 'Beta')), ['Zero', 'Alpha', 'Beta'], 'the new idea shows');
@@ -200,7 +200,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     await b.until(`[...document.querySelectorAll('${item}.idea .title')].some(t => t.textContent === 'A parked idea')`, 'the idea');
     await b.js(`[...document.querySelectorAll('${item}.idea .title')].find(t => t.textContent === 'A parked idea').click()`);
     await b.until(`!!document.querySelector('${item}.open .note')`, 'the idea to open');
-    const note = `${item}.open .note`;
+    const note = `${item}.open .note p:last-child`; // its last paragraph: the note is formatted since 0142
     const start = await b.js(`document.querySelector('${note}').textContent.indexOf('The note')`);
     await b.drag(await b.js(charAt(note, start)), await b.js(charAt(note, start + 8)));
     assert.equal(await sel(), 'The note');
@@ -244,7 +244,7 @@ test('0040 AC1 and AC3: the same field values in another order count as unchange
   await refresh(p);
   assert.ok(kept(), 'the ticket with its fields reordered keeps its node');
   click(toggles(p)[1]); click(top(items(p)[0]));
-  const keptIdea = held(p, p.all(items(p)[0]).find(n => n.tagName === 'pre'));
+  const keptIdea = held(p, p.all(items(p)[0]).find(n => n.tagName === 'p')); // the note's text, formatted since 0142
   await refresh(p);
   await refresh(p);
   assert.ok(keptIdea(), 'the idea with its fields reordered keeps its node');

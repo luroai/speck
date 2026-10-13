@@ -185,13 +185,14 @@ test('0061 AC4: the pane keeps its formatted nodes through a refresh while that 
   assert.deepEqual(tags(p, section(p, 'Notes'), 'strong').map(n => n.textContent), ['new'], 'a change shows');
 });
 
-test('0061 out of scope: the short view in the Tickets list stays plain text', async () => {
+// 0061 kept the short view in the Tickets list as plain text; 0142 formats it as the pane does (see panel-0142).
+test('0061 out of scope, changed by 0142: the short view in the Tickets list formats its Markdown too', async () => {
   const s = { tickets: [full('0001', { problem: 'A **bold** problem.' })], ideas: [] };
   const p = fakePage([s]);
   await p.settle();
   click(top(itemOf(p, '0001')));
-  assert.ok(itemOf(p, '0001').textContent.includes('A **bold** problem.'));
-  assert.ok(!tags(p, itemOf(p, '0001'), 'strong').length);
+  assert.ok(itemOf(p, '0001').textContent.includes('A bold problem.'));
+  assert.deepEqual(tags(p, itemOf(p, '0001'), 'strong').map(n => n.textContent), ['bold']);
 });
 
 test('0061 AC2-AC4: in a real browser, the pane formats Markdown, runs no HTML and keeps a selection through refreshes', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {

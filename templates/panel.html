@@ -183,7 +183,7 @@
   .offline[hidden] { display: none; }
   .restart { font-size: 12px; color: var(--warn); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--raise); }
   .restart[hidden] { display: none; }
-  .detail ol li, .detail p.text, .question, .title { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .question, .title { white-space: pre-wrap; overflow-wrap: anywhere; }
   .ready div { overflow-wrap: anywhere; }
 
   /* Shaping: tickets, ideas and the inbox, one list at a time, each with its own accent colour */
@@ -209,7 +209,7 @@
   .q.open { background: var(--accent-bg); border-left: 2px solid var(--accent); padding-left: 12px; }
   .q.blocked.open { background: var(--bad-bg); border-left-color: var(--bad); }
   .q.to-ship.open { background: var(--idea-bg); border-left-color: var(--idea); }
-  .note { margin: 0; font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
   .path { overflow-wrap: anywhere; }
 
@@ -272,6 +272,24 @@
   #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad { color: var(--bad); }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--accent); }
+  /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
+  .shaping .md { overflow-wrap: anywhere; }
+  .shaping .md p { margin: 0 0 8px; color: var(--text); }
+  .shaping .md > :last-child, .shaping .md li > :last-child { margin-bottom: 0; }
+  .shaping .md ul, .shaping .md ol { margin: 0 0 8px; padding-left: 20px; color: var(--text); }
+  .shaping .md li { margin-bottom: 0; }
+  .shaping .md li ul, .shaping .md li ol { margin: 2px 0 0; }
+  .shaping .md h5, .shaping .md h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", Georgia, serif; color: var(--text); font-weight: 600; }
+  .shaping .md-h1 { font-size: 13px; }
+  .shaping .md-h2 { font-size: 12px; }
+  .shaping .md-h3 { font-size: 12px; color: var(--muted); }
+  .shaping code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
+  .shaping .md pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+  .shaping .md pre code { font-size: 12px; }
+  .shaping .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 12px; }
+  .shaping .md th, .shaping .md td { border: .5px solid var(--line-soft); padding: 2px 6px; text-align: left; vertical-align: top; }
+  .shaping .md th { font-weight: 600; background: var(--raise); }
+  .shaping .md a { color: var(--accent); }
 
   /* The dark look, "the same garden at night", switched to with the button in the header */
   :root[data-theme="dark"] {
@@ -337,7 +355,7 @@
 
     /* The full ticket and review pack */
     #full-ticket .close, #full-ticket .ship { min-width: 44px; min-height: 44px; }
-    #full-ticket .md table { display: block; max-width: 100%; overflow-x: auto; }
+    #full-ticket .md table, .shaping .md table { display: block; max-width: 100%; overflow-x: auto; }
     #full-ticket .md summary { min-height: 44px; padding-top: 12px; }
   }
 </style>
@@ -860,11 +878,15 @@ function newHead(node, t) {
   node.insertBefore(ticketHead(t), old);
   node.removeChild(old);
 }
-// A heading and its text, or nothing when the text is empty.
+// A heading and its Markdown, formatted as in the full ticket pane, or nothing when the text is empty. The blocks go
+// straight under the heading, each paragraph a `p.text`, so a selection can run from one section's text into the next.
 function part(body, heading, text) {
   if (text === null || text === undefined || text === '') return;
   body.appendChild(el('h4', null, heading));
-  body.appendChild(el('p', 'text', text));
+  for (const n of mdBlocks(markdown(text))) {
+    if (n.tagName.toLowerCase() === 'p') n.className = 'text';
+    body.appendChild(n);
+  }
 }
 // A draft's priority tag, which opens a menu of P1 to P5 with its own marked, and the menu while it's open. A click
 // while it's open closes it and does nothing else (see the document's click listener below).
@@ -891,7 +913,7 @@ function priorityPicker(t, tag) {
 }
 // An open ticket, short: its problem and outcome, then its readiness list. The rest is in the side pane.
 function ticketDetail(t, criteria) {
-  const body = el('div');
+  const body = el('div', 'md');
   part(body, 'Problem', t.problem);
   part(body, 'Outcome', t.outcome);
   return el('div', 'detail', null, body, readiness(t, criteria, true));
@@ -1230,15 +1252,17 @@ function ideaItem(i) {
   const head = el('div', 'head', null, el('div', 'row', null, el('span', 'id', 'idea'), el('span', 'title', i.title)), el('span'),
     el('div', 'checks', null, el('span', null, i.status ? i.status : 'no status'), el('span', 'mono', i.path)));
   head.addEventListener('click', () => flip(openIdeas, i.path));
-  return el('div', `item idea${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, el('pre', 'note', typeof i.body === 'string' ? i.body : '')) : null);
+  return el('div', `item idea${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, noteOf(i)) : null);
 }
 function inboxItem(i) {
   const isOpen = openInbox.has(i.path);
   const head = el('div', 'head', null, el('div', 'row', null, el('span', 'id', 'inbox'), el('span', 'title', i.title)), el('span'),
     el('div', 'checks', null, i.from ? el('span', null, `from ${i.from}`) : null, el('span', 'mono', i.path)));
   head.addEventListener('click', () => flip(openInbox, i.path));
-  return el('div', `item inbox${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, el('pre', 'note', typeof i.body === 'string' ? i.body : '')) : null);
+  return el('div', `item inbox${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, noteOf(i)) : null);
 }
+// An opened idea's or inbox note's whole text, its Markdown formatted as in the review pack, tables included.
+const noteOf = i => el('div', 'note md', null, ...mdBlocks(markdown(typeof i.body === 'string' ? i.body : '', { tables: true })));
 function shapingToggle(m) {
   const button = (view, label, n) => {
     const b = el('button', `toggle ${view}${shapingView === view ? ' on' : ''}`, `${label} · ${n}`);

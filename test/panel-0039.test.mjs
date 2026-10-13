@@ -95,7 +95,7 @@ test('0039 AC4: the click a selecting drag ends with, on a ticket\'s details or 
   assert.ok(isOpen(items(p)[0]), 'selecting across sections');
   click(toggles(p)[1]);
   press(top(items(p)[0]));
-  press(p.all(items(p)[0]).find(n => n.tagName === 'pre'));
+  press(p.all(items(p)[0]).find(n => n.tagName === 'p')); // the note's text, formatted since 0142
   assert.ok(isOpen(items(p)[0]), 'selecting within the note');
   press(detailOf(items(p)[0]));
   assert.ok(isOpen(items(p)[0]), 'selecting to the edge of the note');
@@ -146,7 +146,7 @@ test('0039 AC4: in a real browser, dragging to select text in a ticket\'s detail
     await b.until(`!!document.querySelector('${item}.idea .title')`, 'the idea');
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .note')`, 'the idea to open');
-    const note = `${item} .note`;
+    const note = `${item} .note p:last-child`; // its last paragraph: the note is formatted since 0142
     const start = await b.js(`document.querySelector('${note}').textContent.indexOf('The note')`);
     await b.drag(await b.js(charAt(note, start)), await b.js(charAt(note, start + 30)));
     assert.equal(await b.js('getSelection().toString()'), 'The note text, long enough to ');
