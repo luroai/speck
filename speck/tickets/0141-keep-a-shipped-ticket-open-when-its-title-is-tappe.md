@@ -20,7 +20,7 @@ created: 2026-10-13
 **Status:** 📝 draft
 
 ## Problem
-In the Claude app's built-in browser on an iPhone, tapping a shipped ticket's title opens the full ticket for a moment, then the page reloads to the top and the ticket closes. The title is an `<a href="#">` link (0137), and that browser follows the link itself even though the page cancels it. The Review pack button in the same row works, because it's a button.
+In cptr's built-in browser on an iPhone, tapping a shipped ticket's title opens the full ticket for a moment, then the page reloads to the top and the ticket closes. The title is an `<a href="#">` link (0137), and that browser follows the link itself even though the page cancels it. The Review pack button in the same row works, because it's a button.
 
 ## Outcome
 Tapping a shipped ticket's title opens the full ticket and it stays open, in any browser, because the title no longer points to an address.
@@ -38,7 +38,7 @@ Tapping a shipped ticket's title opens the full ticket and it stays open, in any
 
 ## Notes
 - The title is made by `fullLink` in `templates/panel.html`, which sets `href = '#'` and calls `preventDefault()` on click.
-- Reported 2026-10-13 on an iPhone in the Claude app's browser: the page reloaded to the top and the Review pack button in the same row stayed open. Not reproducible in Chromium with touch emulation, where `preventDefault()` is honoured.
+- Reported 2026-10-13 on an iPhone in cptr's browser: the page reloaded to the top and the Review pack button in the same row stayed open. Not reproducible in Chromium with touch emulation, where `preventDefault()` is honoured.
 - Unverified: why that browser follows a cancelled `href="#"` (WebKit isn't runnable on the build machine, missing system libraries).
 
 ## In plain words
