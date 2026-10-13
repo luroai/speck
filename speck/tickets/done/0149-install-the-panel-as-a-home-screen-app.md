@@ -1,7 +1,7 @@
 ---
 id: "0149"
 title: "Install the panel as a home-screen app"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0148"]                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T20:35:06.447Z"
 approved: "2026-10-13T20:41:21.293Z"
+finished: "2026-10-13T20:52:32.416Z"
 
 ---
 # 0149 · Install the panel as a home-screen app
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The user opens the panel on their phone many times a day, through a private tunnel. Added to the home screen today, it has no proper name or icon and opens with the browser's address bar, and it doesn't carry speck's logo.
