@@ -42,6 +42,8 @@ Tapping a shipped ticket's title opens the full ticket and it stays open, in any
 - Reported 2026-10-13 on an iPhone in cptr's browser: the page reloaded to the top and the Review pack button in the same row stayed open. Not reproducible in Chromium with touch emulation, where `preventDefault()` is honoured.
 - Checked 2026-10-13: why that browser follows a cancelled `href="#"` can't be confirmed here (no WebKit build installed on the build machine). The fix removes the `href`, so it doesn't depend on the cause.
 - Failing before this build: none
+- Self-check: Enter and Space on the title now make a click rather than opening the ticket directly, so with a priority menu open they only close the menu, as a click does (test added).
+- Old tests that found the title as an `<a>` (0050, 0063, 0132, 0137, 0140) now find it by its `title-link` class; 0137's checks of `href="#"`, `preventDefault()` and the `link` role now check no address, `tabIndex` 0 and the `button` role.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

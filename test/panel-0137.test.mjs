@@ -14,7 +14,7 @@ const STATE = () => ({ ideas: [], tickets: [
 const pane = p => p.byId('full-ticket');
 const paneId = p => (pane(p).hidden || !pane(p).children.length ? null : pane(p).children[0].children[0].textContent);
 const rowOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
-const linkOf = (p, row) => p.all(row).find(n => n.tagName === 'a');
+const linkOf = (p, row) => p.all(row).find(n => n.className === 'title-link'); // a link until 0141
 const buttonsOf = (p, row) => p.all(row).filter(n => n.tagName === 'button');
 const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
@@ -30,11 +30,11 @@ test('0137 AC1: each Shipped row\'s title is a link that opens that ticket in th
   }
   const opens = () => queueRows(p).map(r => r.className);
   const before = opens();
-  let prevented = false, stopped = false;
-  linkOf(p, rowOf(p, '0010')).listeners.click({ preventDefault() { prevented = true; }, stopPropagation() { stopped = true; } });
+  let stopped = false;
+  linkOf(p, rowOf(p, '0010')).listeners.click({ preventDefault() {}, stopPropagation() { stopped = true; } });
   assert.equal(paneId(p), '0010');
   assert.ok(pane(p).textContent.includes('Shipped ten'));
-  assert.ok(prevented, 'the link goes to no other address');
+  assert.equal(linkOf(p, rowOf(p, '0010')).href, undefined, 'the title goes to no other address (no address at all since 0141)');
   assert.ok(stopped, 'the click goes no further');
   assert.deepEqual(opens(), before, 'nothing else opens or closes');
   p.press(linkOf(p, rowOf(p, '0009')));
@@ -66,7 +66,7 @@ test('0137 AC2: the link has an address, so Tab reaches it and Enter opens it, a
   const p = fakePage([STATE(), STATE()]);
   await p.settle();
   const a = linkOf(p, rowOf(p, '0009'));
-  assert.equal(a.href, '#');
+  assert.equal(a.tabIndex, 0); // an address made Tab reach it until 0141
   assert.equal(a.textContent, 'Shipped nine');
 });
 
@@ -98,7 +98,7 @@ test('0137 AC1-AC4: in a real browser, the title link opens the full ticket by m
   r.write('0003-done.md', fm({ id: '"0003"', title: 'A shipped one', status: 'done', started: ago(70), finished: ago(60) }), good.replace('Users cannot export.', 'Watching a build.'), 'speck/tickets/done');
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage(`http://127.0.0.1:${panel.port}/`);
-  const link = `document.querySelector('#shipped tr a.title-link')`;
+  const link = `document.querySelector('#shipped tr .title-link')`; // a link until 0141
   const opened = `!document.getElementById('full-ticket').hidden && document.querySelector('#full-ticket .id').textContent === '0003' && document.getElementById('full-ticket').textContent.includes('Watching a build.')`;
   const close = () => b.js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
   const key = async (k, code, vk) => { for (const type of ['keyDown', 'keyUp']) await b.send('Input.dispatchKeyEvent', { type, key: k, code, windowsVirtualKeyCode: vk, ...(k === 'Enter' && type === 'keyDown' ? { text: '\r' } : {}) }); };
@@ -133,7 +133,7 @@ test('0137 AC1-AC4: in a real browser, the title link opens the full ticket by m
     // AC2: screen readers get a link named by the title.
     await b.send('Accessibility.enable');
     const { nodes } = await b.send('Accessibility.getFullAXTree');
-    assert.ok(nodes.some(n => n.role && n.role.value === 'link' && n.name && n.name.value === 'A shipped one'), 'AC2: a link named "A shipped one"');
+    assert.ok(nodes.some(n => n.role && n.role.value === 'button' && n.name && n.name.value === 'A shipped one'), 'AC2: a button named "A shipped one" (a link until 0141)');
     // AC4: the row is no taller with its Review pack cell than without it.
     const [withPack, without] = await b.js(`(() => { const tr = document.querySelector('#shipped tr'), h = tr.getBoundingClientRect().height;
       const cell = tr.querySelector('td.full-cell'), next = cell.nextSibling; cell.remove(); const h2 = tr.getBoundingClientRect().height; tr.insertBefore(cell, next); return [h, h2]; })()`);

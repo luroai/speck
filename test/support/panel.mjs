@@ -146,6 +146,8 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     n.removeChild = c => { n.children = n.children.filter(x => x !== c); c.detached = (c.detached || 0) + 1; c.parentNode = null; return c; };
     n.replaceChildren = (...cs) => { n._text = ''; for (const c of n.children) { c.detached = (c.detached || 0) + 1; c.parentNode = null; } for (const c of cs) take(c); n.children = cs; };
     n.addEventListener = (type, fn) => { n.listeners[type] = fn; };
+    n.setAttribute = (k, v) => { (n.attrs ||= {})[k] = String(v); }; // read back from `attrs` (0141)
+    n.click = () => press(n); // a click made by the page itself, as a browser sends it (0141)
     return n;
   };
   const document = {
