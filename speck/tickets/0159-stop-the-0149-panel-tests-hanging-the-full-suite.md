@@ -1,7 +1,7 @@
 ---
 id: "0159"
 title: "Stop the 0149 panel tests hanging the full suite"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T22:50:12.210Z"
 ---
 # 0159 · Stop the 0149 panel tests hanging the full suite
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0149 shipped, the full test suite on `main` hangs in about a third to a half of runs, always just after test 714, in `test/panel-0149.test.mjs`. On its own the file passes in a few seconds every time; it hangs only when the whole suite runs side by side. Every hang costs a build or a ship 5 to 10 minutes (0150 took 26 minutes, 0152 over 45), and before 0152 it stalled 0149's own ship.
@@ -58,3 +58,83 @@ The full suite on `main` finishes every time in its usual time, and the 0149 bro
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "36a039b6bdcb188fef6b4f89a595953a6d9ed8c2",
+    "thread_id": "01a137a0-6582-78b3-8208-e972005f5545",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 136228,
+      "cached_input_tokens": 97280,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 952,
+      "reasoning_output_tokens": 52
+    },
+    "saved_at": "2026-10-13T23:37:28.104Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The ten /tmp/0159-ac1-{1..10}.out logs each report 1354 tests, zero failures and durations of 76.7–77.5 seconds."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/panel-0149.test.mjs AC4 retains the browser assertions for manifest errors, icon loading and dimensions, and pixel comparison with icon.svg. The full-suite output reports it passing."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "test/support/panel.mjs browserPage.close still awaits an exit event without a rejection deadline. request uses a socket inactivity timeout, allowing a response that keeps sending data to wait indefinitely."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The ticket's 'Why it hung:' note explains the blank-page navigation race and unanswered manifest call in plain words, supported by the delayed-page browser regression test."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0159-tests.txt reports 1351 passing tests, three skipped and zero failures. Existing 0149 browser assertions remain intact."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/panel.mjs:285",
+        "issue": "browserPage.close sends SIGKILL after five seconds but then continues awaiting gone indefinitely if Chrome never reports exiting. Sending a signal is not a time limit on the wait. The new close test covers an already-exited process only.",
+        "suggested_fix": "Add a final rejection deadline naming Chrome and the exit wait, clear cleanup timers on settlement, and test the path where no exit event arrives.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/support/panel.mjs:100",
+        "issue": "request's req.setTimeout limits socket inactivity rather than total request duration. A panel that sends response chunks periodically without ending the response keeps request() and raw() pending indefinitely. The silent-server test does not exercise this case.",
+        "suggested_fix": "Use an overall request deadline that destroys the request and rejects with the named request message; clear it when the request settles. Add a test whose response keeps sending chunks but never ends.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The navigation fix preserves the browser checks, and ten recorded full-suite runs finish in about 77 seconds. Two helper waits still lack firm deadlines, so the requirement that every wait must eventually fail is not yet met."
+  }
+}
+```
+
+</details>

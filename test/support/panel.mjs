@@ -80,17 +80,16 @@ function startPanelOnce(cwd, args, cli, extraEnv) {
     });
   });
 }
-// Stops the panel and resolves once it has exited, at once if it already has. One that hasn't exited `ms` after SIGTERM
-// gets SIGKILL, and one still running `ms` after that fails the test, naming it, rather than leaving it waiting (0159).
-export const stop = (p, ms = 5000) => new Promise((resolve, reject) => {
-  const { child } = p;
-  child.removeAllListeners('exit');
+// Ends a child process and resolves once it has exited, at once if it already has. One that hasn't exited `ms` after
+// SIGTERM gets SIGKILL, and one still not reported exited `ms` after that fails, naming it, rather than waiting for ever (0159).
+export const ended = (child, name, ms = 5000) => new Promise((resolve, reject) => {
   if (child.exitCode !== null || child.signalCode !== null) return resolve();
   const hard = setTimeout(() => child.kill('SIGKILL'), ms);
-  const fail = setTimeout(() => reject(new Error(`the panel (pid ${child.pid}) didn't exit within ${(2 * ms) / 1000} s of being stopped`)), 2 * ms);
-  child.on('exit', () => { clearTimeout(hard); clearTimeout(fail); resolve(); });
+  const fail = setTimeout(() => reject(new Error(`${name} (pid ${child.pid}) didn't exit within ${(2 * ms) / 1000} s of being stopped`)), 2 * ms);
+  child.once('exit', () => { clearTimeout(hard); clearTimeout(fail); resolve(); });
   child.kill();
 });
+export const stop = (p, ms) => { p.child.removeAllListeners('exit'); return ended(p.child, 'the panel', ms); };
 
 // A request to the panel, with the body as text, or as bytes with `bytes`. One with no answer in `timeout` ms fails,
 // naming it, rather than waiting for ever (0159).
@@ -102,7 +101,8 @@ export function request(port, { method = 'GET', pathName = '/', host = `127.0.0.
       res.on('end', () => { const body = Buffer.concat(parts); resolve({ status: res.statusCode, headers: res.headers, body: bytes ? body : body.toString('utf8') }); });
       res.on('error', reject);
     });
-    req.setTimeout(timeout, () => req.destroy(new Error(`no answer to ${method} ${pathName} within ${timeout / 1000} s`)));
+    const t = setTimeout(() => req.destroy(new Error(`no answer to ${method} ${pathName} within ${timeout / 1000} s`)), timeout);
+    req.on('close', () => clearTimeout(t));
     req.on('error', reject);
     req.end();
   });
@@ -284,14 +284,7 @@ export async function browserPage(url) {
   });
   const close = async () => {
     ws?.close();
-    if (chrome.exitCode === null && chrome.signalCode === null) {
-      const gone = new Promise(r => chrome.once('exit', r));
-      chrome.kill();
-      const hard = setTimeout(() => chrome.kill('SIGKILL'), 5000);
-      await gone;
-      clearTimeout(hard);
-    }
-    fs.rmSync(profile, { recursive: true, force: true });
+    try { await ended(chrome, 'Chrome'); } finally { fs.rmSync(profile, { recursive: true, force: true }); }
   };
   let ws;
   try {

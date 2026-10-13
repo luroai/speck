@@ -6,7 +6,7 @@ import path from 'node:path';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
-import { ROOT, panelRepo, freePort, startPanel, stop, request, raw, findChrome, browserPage } from './support/panel.mjs';
+import { ROOT, panelRepo, freePort, startPanel, stop, ended, request, raw, findChrome, browserPage } from './support/panel.mjs';
 
 // ---------- 0159: the 0149 browser test can't hang the full suite ----------
 
@@ -105,6 +105,35 @@ test('0159 AC3: b.close() returns at once when Chrome has already exited', skip,
   process.kill(b.pid, 'SIGKILL');
   await new Promise(r => setTimeout(r, 300));
   await within(3000, b.close());
+});
+
+// A server that answers with a body it keeps sending, a little at a time, and never ends.
+async function trickle() {
+  const held = [];
+  const srv = http.createServer((req, res) => { res.write('x'); held.push(res, setInterval(() => res.write('x'), 100)); }).listen(0, '127.0.0.1');
+  await new Promise(r => srv.on('listening', r));
+  return { port: srv.address().port, close: () => { held.forEach(h => (h.destroy ? h.destroy() : clearInterval(h))); srv.close(); } };
+}
+
+test('0159 AC3: request() and raw() fail in their time limits when the answer keeps coming but never ends', async () => {
+  const s = await trickle();
+  try {
+    const a = await within(2500, request(s.port, { pathName: '/api/state', timeout: 1000 }).then(() => null, e => e));
+    assert.equal(a?.message, 'no answer to GET /api/state within 1 s');
+    const b = await within(2500, raw(s.port, '/icon-512.png', undefined, 1000).then(() => null, e => e));
+    assert.equal(b?.message, 'no answer to GET /icon-512.png within 1 s');
+  } finally { s.close(); }
+});
+
+test('0159 AC3: b.close() ends Chrome through ended(), which fails naming Chrome if it never reports exiting', async () => {
+  const src = fs.readFileSync(path.join(ROOT, 'test', 'support', 'panel.mjs'), 'utf8');
+  const close = src.slice(src.indexOf('  const close = async () => {'), src.indexOf('  let ws;'));
+  assert.match(close, /await ended\(chrome, 'Chrome'\)/);
+  assert.ok(!/once\('exit'|on\('exit'/.test(close), 'no wait of its own for Chrome to exit');
+  const fake = Object.assign(new EventEmitter(), { pid: 99999998, exitCode: null, signalCode: null, signals: [], kill(sig = 'SIGTERM') { this.signals.push(sig); } });
+  const err = await within(5000, ended(fake, 'Chrome', 500).then(() => null, e => e));
+  assert.equal(err?.message, 'Chrome (pid 99999998) didn\'t exit within 1 s of being stopped');
+  assert.deepEqual(fake.signals, ['SIGTERM', 'SIGKILL']);
 });
 
 test('0159 AC3: request() and raw() fail in their time limits when the panel never answers, naming the request', async () => {
