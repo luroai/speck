@@ -1,7 +1,7 @@
 ---
 id: "0144"
 title: Call the speck run switch Auto-build                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
+started: "2026-10-13T08:18:10.904Z"
 
 ---
 # 0144 · Call the speck run switch Auto-build
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel header shows "speck run on" or "speck run off", with a blue or grey square and a "Turn on" or "Turn off" button. "speck run" is a command name, so it means nothing to someone who doesn't know it, the grey square reads as faded rather than off, and the button makes the user work out the state before they know what it will do.
