@@ -1,7 +1,7 @@
 ---
 id: "0159"
 title: "Stop the 0149 panel tests hanging the full suite"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
+started: "2026-10-13T22:50:12.210Z"
 
 ---
 # 0159 · Stop the 0149 panel tests hanging the full suite
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0149 shipped, the full test suite on `main` hangs in about a third to a half of runs, always just after test 714, in `test/panel-0149.test.mjs`. On its own the file passes in a few seconds every time; it hangs only when the whole suite runs side by side. Every hang costs a build or a ship 5 to 10 minutes (0150 took 26 minutes, 0152 over 45), and before 0152 it stalled 0149's own ship.
