@@ -1,7 +1,7 @@
 ---
 id: "0150"
 title: "Tidy the panel header"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T21:28:21.538Z"
 approved: "2026-10-13T21:53:12.273Z"
+finished: "2026-10-13T21:54:28.454Z"
 
 ---
 # 0150 · Tidy the panel header
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel header looks untidy, worst on a phone: the Auto-build indicator and its Pause or Start button are two separate boxes, the "live · Ns ago" indicator takes room without telling the user anything useful, and the light/dark button sits on a line of its own, at a different height from the rest. The project name sits in the middle.
