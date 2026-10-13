@@ -46,7 +46,7 @@ A test run that stops making progress is ended after a set time, and speck repor
 - Seen while building: the full suite sometimes hangs in `test/panel-0149.test.mjs` (a headless Chrome call with no time limit), through `speck test` and when run directly with its output piped alike. With this change, `speck test` ended those runs after 5 minutes, with every process they started, and said they stalled.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If the tests stop making progress, speck no longer waits for them forever. When a test run prints nothing for 5 minutes, speck stops it, along with everything it started, and says the tests stalled, for how long and the last thing they printed. A ship that stalls this way ships nothing and leaves the ticket approved, so you can simply ship it again. You can change the 5 minutes with the `test_stall_minutes` setting. To see it, set the test command to something that hangs, run the tests, and wait. Worth watching: one of the panel's own tests sometimes hangs, so the full suite will sometimes stop as stalled until that test is fixed (it's in the inbox).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,10 @@ A test run that stops making progress is ended after a set time, and speck repor
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The home-screen app test (0149) sometimes hangs the suite: a headless Chrome call with no time limit. Inbox: `speck/ideas/2026-10-13-stop-the-home-screen-app-test-hanging-the-suite.md`.
+- The pause and stop tests (0070, 0072) leave `ticker.cjs` processes running after every full run. Inbox: `speck/ideas/2026-10-13-stop-the-pause-and-stop-tests-leaving-processes-running.md`.
+- Known limit: a process the tests start in its own session escapes the process group, so a stall doesn't end it.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +135,83 @@ A test run that stops making progress is ended after a set time, and speck repor
     ],
     "escalation_question": "",
     "summary": "Full test runs now stop when silent, explain the stall and prevent shipping. The recorded suite passes. Two gaps need fixing: targeted tests can still hang, and cached results bypass validation of the stall setting."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7e57f74ee1077b8ce543fdeaea3d1cbbf6973aef",
+    "thread_id": "01a1376e-a58c-7060-8ac3-9c8cd5c50c98",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 218342,
+      "cached_input_tokens": 162048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1978,
+      "reasoning_output_tokens": 235
+    },
+    "saved_at": "2026-10-13T22:48:10.222Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs runTestsInTurn and watched now route full and targeted runs through stall.mjs. Passing AC1 integration tests cover stalled runs, uncommitted changes, --files runs and background process cleanup; testStallMs defaults to five minutes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/stall.mjs reports the silence duration and last output line. scripts/results.mjs testRun records stalls as status 1. Both AC2 reporting and cached-failure tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs runTests refuses immediately when tests stall. The passing AC3 integration test verifies nothing changed or merged, the ticket remains approved and the message says to ship again."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/results.mjs testRun now calls testStallMs before cache lookup; targeted runs also validate the setting. Passing AC4 tests cover invalid configuration, cached results during test and ship, corrective messages and output continuing beyond the stall interval."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0152-tests.txt: 1343 tests, 1340 passed, three skipped, zero failures and zero cancellations. All twelve ticket tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/turns.mjs",
+        "issue": "Targeted test runs previously bypassed stall protection. cmdTest now invokes watched for commands.test_files, and the new integration test exercises the stall and background process cleanup.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/results.mjs",
+        "issue": "Cached results previously bypassed test_stall_minutes validation. testRun now validates before cache lookup, with passing regression coverage for both test and ship.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both review findings are fixed. Full and targeted test runs now stop when they stall, explain the failure and prevent shipping. Invalid settings are refused even when a previous result is available. All criteria pass, and the full test log shows no failures."
   }
 }
 ```
