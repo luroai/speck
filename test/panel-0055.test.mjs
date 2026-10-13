@@ -130,7 +130,7 @@ test('0055 AC1-AC4: in a real browser, only the in-flight step moves, side to si
     const look = id => b.js(`(() => { const s = getComputedStyle(${row(id)}.querySelector('.stages .now')); return [s.borderTopColor, s.color, s.position, s.overflow]; })()`);
     const blocked = await look('0004'); // a step 0055 doesn't touch, for its geometry
     assert.deepEqual((await look('0002')).slice(2), blocked.slice(2), 'laid out as an untouched step');
-    assert.equal((await look('0002'))[0], 'rgb(47, 102, 136)', 'in the in-flight blue');
+    assert.equal((await look('0002'))[0], 'rgb(59, 98, 134)', 'in the in-flight blue');
   } finally {
     await b.close();
     await stop(panel);

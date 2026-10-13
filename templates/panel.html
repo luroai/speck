@@ -18,23 +18,23 @@
 </script>
 <style>
   :root {
-    --bg: #ecebdf; --panel: #f4f4ea; --raise: #e1e1d2; --line: #bfbfb5; --line-soft: #d7d7cc;
-    --text: #1f2521; --muted: #474e47; --faint: #858b7f;
-    --accent: #4c6b52; --ok: #3d7a45; --warn: #9a6512; --bad: #b0412e; --run: #2f6688; --idea: #76589a;
-    --inbox: #2b7a70; /* the inbox's own colour */
-    --bug: #a2457a; /* the bug tag's own colour */
-    --fix: #7f6a12; /* the fix tag's own colour */
+    --bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #cccbc8; --line-soft: #e8e7e3;
+    --text: #141413; --muted: #3d3d3a; --faint: #73726c;
+    --accent: #b0412e; --ok: #56713f; --warn: #9c6a10; --bad: #c42a3c; --run: #3b6286; --idea: #7a4f86;
+    --inbox: #2f7469; /* the inbox's own colour */
+    --bug: #a3466f; /* the bug tag's own colour */
+    --fix: #7a6a14; /* the fix tag's own colour */
   }
   /* The zen look: a serif for headings and ticket titles, a light sans for body text and a monospace for labels. Each
      names the zen fonts first, used when they're installed, and none is loaded from another host. */
   * { box-sizing: border-box; border-radius: 0 !important; }
-  body { margin: 0; font: 300 13px/1.5 "Zen Kaku Gothic New", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  body { margin: 0; font: 300 13px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); }
   b, strong { font-weight: 600; }
   code, .mono, .id { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   code { font-size: 12px; color: var(--muted); }
 
   header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .logo { font-family: "Shippori Mincho", Georgia, serif; font-weight: 600; font-size: 18px; }
+  .logo { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
   .repo { color: var(--muted); font-size: 12px; }
   .pills { margin-left: auto; display: flex; gap: 0; }
@@ -54,7 +54,7 @@
   section { background: var(--panel); border: .5px solid var(--line); }
   section.full { grid-column: 1 / -1; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
-  .sh h2 { margin: 0; font-family: "Shippori Mincho", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
+  .sh h2 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
   .sh .n { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); font-size: 11px; }
   .sh .hint { margin-left: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
   .group { padding: 7px 14px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
@@ -77,7 +77,7 @@
   .prio-menu button.on { color: var(--accent); }
   .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .title { font-family: "Shippori Mincho", Georgia, serif; font-size: 14px; color: var(--text); }
+  .title { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 14px; color: var(--text); }
   .sub { font-size: 12px; color: var(--muted); }
   .tick { display: inline-block; width: 4px; height: 8px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); margin: 0 6px 2px 2px; }
   .sq { display: inline-block; width: 6px; height: 6px; background: currentColor; margin: 0 6px 1px 1px; }
@@ -154,7 +154,7 @@
   /* Shipped */
   .stats { display: flex; border-bottom: .5px solid var(--line-soft); }
   .stat { padding: 8px 14px; border-right: .5px solid var(--line-soft); }
-  .stat b { font-family: "Shippori Mincho", Georgia, serif; font-size: 18px; font-weight: 600; margin-right: 6px; }
+  .stat b { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; margin-right: 6px; }
   .stat span { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
   .stats[hidden] { display: none; }
   table { width: 100%; border-collapse: collapse; }
@@ -198,7 +198,7 @@
   .item.idea.open { border-left-color: var(--idea); }
   .item.inbox.open { border-left-color: var(--inbox); }
   /* The open item in Shaping or the queue is tinted with its list's colour */
-  :root { --accent-bg: #e3e7da; --idea-bg: #e8e3e8; --inbox-bg: #dfe8e1; --bad-bg: #f0e0d6; }
+  :root { --accent-bg: #f7ebe6; --idea-bg: #f2ecf3; --inbox-bg: #e9f2f0; --bad-bg: #fae6e8; }
   .item.ticket.open, .item.ticket.open:hover { background: var(--accent-bg); }
   .item.idea.open, .item.idea.open:hover { background: var(--idea-bg); }
   .item.inbox.open, .item.inbox.open:hover { background: var(--inbox-bg); }
@@ -223,7 +223,7 @@
   /* The full ticket, in a side pane over the right of the page. While it's open, the page behind it holds still and a
      backdrop over the rest of the page takes every click outside it. */
   html.held { overflow: hidden; }
-  #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(31, 37, 33, .2); touch-action: none; }
+  #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: none; }
   #full-backdrop[hidden] { display: none; }
   .full-open { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
@@ -232,7 +232,7 @@
   td .title-link { color: var(--accent); text-decoration: none; cursor: pointer; }
   td .title-link:hover { text-decoration: underline; }
   td .full-open { margin: 0; padding: 0 8px; font-size: 10px; white-space: nowrap; }
-  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(31, 37, 33, .12); }
+  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
@@ -249,7 +249,7 @@
   #full-ticket .md > :last-child, #full-ticket li > :last-child { margin-bottom: 0; }
   #full-ticket .md ul, #full-ticket .md ol, #full-ticket .criteria ul, #full-ticket .criteria ol { margin: 0 0 8px; padding-left: 20px; }
   #full-ticket li ul, #full-ticket li ol { margin: 2px 0 0; }
-  #full-ticket h5, #full-ticket h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", Georgia, serif; color: var(--text); font-weight: 600; }
+  #full-ticket h5, #full-ticket h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; color: var(--text); font-weight: 600; }
   #full-ticket .md-h1 { font-size: 13px; }
   #full-ticket .md-h2 { font-size: 12px; }
   #full-ticket .md-h3 { font-size: 12px; color: var(--muted); }
@@ -276,7 +276,7 @@
   .shaping .md ul, .shaping .md ol { margin: 0 0 8px; padding-left: 20px; color: var(--text); }
   .shaping .md li { margin-bottom: 0; }
   .shaping .md li ul, .shaping .md li ol { margin: 2px 0 0; }
-  .shaping .md h5, .shaping .md h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", Georgia, serif; color: var(--text); font-weight: 600; }
+  .shaping .md h5, .shaping .md h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; color: var(--text); font-weight: 600; }
   .shaping .md-h1 { font-size: 13px; }
   .shaping .md-h2 { font-size: 12px; }
   .shaping .md-h3 { font-size: 12px; color: var(--muted); }
@@ -290,11 +290,11 @@
 
   /* The dark look, "the same garden at night", switched to with the button in the header */
   :root[data-theme="dark"] {
-    --bg: #151916; --panel: #1a1f1b; --raise: #1c211d; --line: #383b37; --line-soft: #252925;
-    --text: #e2e3d6; --muted: #b3b8a9; --faint: #7c8276;
-    --accent: #8db391; --ok: #7fc287; --warn: #d9a54a; --bad: #d4664e; --run: #6fa8d0; --idea: #b59ad6;
-    --inbox: #5fb8a8; --bug: #d47fae; --fix: #c4b04a;
-    --accent-bg: #262f27; --idea-bg: #29242d; --inbox-bg: #1e2b28; --bad-bg: #33221d;
+    --bg: #181818; --panel: #1f1f1f; --raise: #222222; --line: #3d3d3d; --line-soft: #262626;
+    --text: #e4e4e4; --muted: #b4b4b4; --faint: #8a8a8a;
+    --accent: #d4664e; --ok: #9db584; --warn: #d6a24a; --bad: #ec5a6b; --run: #7ea6cf; --idea: #b597c6;
+    --inbox: #6fb5aa; --bug: #d685ab; --fix: #c9b65c;
+    --accent-bg: #2e2320; --idea-bg: #2a2430; --inbox-bg: #1d2a28; --bad-bg: #341d21;
     color-scheme: dark;
   }
   :root[data-theme="dark"] #full-backdrop { background: rgba(0, 0, 0, .45); }

@@ -46,6 +46,9 @@ The real panel uses the landing page's colours and font names, in both light and
 - To undo it, revert the ship commit.
 - Checked 2026-10-13: the colours and fonts, read from `site/index.html` in the local speck-site project.
 - Failing before this build: none
+- Build: the light pane shadow (`#full-ticket`'s `box-shadow`) was tinted with the old ink, like the backdrop, so it now uses the new ink too: `rgba(20, 20, 19, .12)`. It's a colour value, which AC5 allows.
+- Build: two browser tests outside AC3's list hard-coded an old colour as `rgb(…)` (`test/panel-0041.test.mjs`, the accent on the chain; `test/panel-0055.test.mjs`, the in-flight blue). They're colour checks, so AC5's "updated to the new values" applies: only those two literals changed.
+- Self-check: no changes
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->

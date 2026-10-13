@@ -6,11 +6,11 @@ import { page, paletteProblems, panelRepo, freePort, startPanel, stop, findChrom
 
 // ---------- 0136: a dark look you can switch to ----------
 
-const DARK = { '--bg': '#151916', '--panel': '#1a1f1b', '--raise': '#1c211d', '--line': '#383b37', '--line-soft': '#252925',
-  '--text': '#e2e3d6', '--muted': '#b3b8a9', '--faint': '#7c8276', '--accent': '#8db391', '--bad': '#d4664e' };
-const ZEN = { '--bg': '#ecebdf', '--panel': '#f4f4ea', '--raise': '#e1e1d2', '--line': '#bfbfb5', '--line-soft': '#d7d7cc',
-  '--text': '#1f2521', '--muted': '#474e47', '--faint': '#858b7f', '--accent': '#4c6b52', '--bad': '#b0412e',
-  '--ok': '#3d7a45', '--warn': '#9a6512', '--run': '#2f6688', '--idea': '#76589a', '--inbox': '#2b7a70', '--bug': '#a2457a', '--fix': '#7f6a12' };
+const DARK = { '--bg': '#181818', '--panel': '#1f1f1f', '--raise': '#222222', '--line': '#3d3d3d', '--line-soft': '#262626',
+  '--text': '#e4e4e4', '--muted': '#b4b4b4', '--faint': '#8a8a8a', '--accent': '#d4664e', '--bad': '#ec5a6b' };
+const ZEN = { '--bg': '#faf9f5', '--panel': '#ffffff', '--raise': '#f0eee6', '--line': '#cccbc8', '--line-soft': '#e8e7e3',
+  '--text': '#141413', '--muted': '#3d3d3a', '--faint': '#73726c', '--accent': '#b0412e', '--bad': '#c42a3c',
+  '--ok': '#56713f', '--warn': '#9c6a10', '--run': '#3b6286', '--idea': '#7a4f86', '--inbox': '#2f7469', '--bug': '#a3466f', '--fix': '#7a6a14' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
 const TINTS = ['--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
 const LABEL = 'Switch between light and dark';
@@ -120,8 +120,8 @@ test('0136 AC5: with no choice saved, the <head> script follows the computer\'s 
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const bodyBg = `getComputedStyle(document.body).backgroundColor`;
-const LIGHT_BG = 'rgb(236, 235, 223)';
-const DARK_BG = 'rgb(21, 25, 22)';
+const LIGHT_BG = 'rgb(250, 249, 245)';
+const DARK_BG = 'rgb(24, 24, 24)';
 const shown = `[...document.querySelectorAll('#theme svg')].filter(s => getComputedStyle(s).display !== 'none').map(s => s.getAttribute('class'))`;
 
 async function withPanel(fn, { scheme } = {}) {
