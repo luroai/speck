@@ -42,6 +42,10 @@ The full suite on `main` finishes every time in its usual time, and the 0149 bro
 - The browser test (line 173) opens Chrome through `browserPage()` and polls `Page.getAppManifest` up to 50 times; Chrome DevTools calls through `b.send` may have no time limit.
 - Run on its own, the file passed 3 times out of 3 in 5 to 8 seconds (2026-10-13 22:30).
 - Failing before this build: none
+- AC4 has no automated test, since tests mustn't read this repo's speck/ folder (0122): a reviewer checks it by reading the `Why it hung:` note below.
+- Why it hung: Chrome opens a blank page first and then goes to the panel's page. The test checked that "the page has loaded", but the blank page already counts as loaded, so on a busy machine the test went ahead before the panel's page had arrived. It then asked Chrome for the page's app manifest, and Chrome never answers that question when it's asked on the blank page, so the test waited for ever. On a quiet machine the panel's page wins the race, which is why the file always passed on its own. Reproduced 2026-10-13: one of three runs of two full suites side by side hung there, and a page that arrives 300 ms late leaves every manifest question asked before it unanswered.
+- AC1 checked 2026-10-13: ten `npm test` runs in a row all passed, each in 77 to 78 seconds. Under the load that reproduced the hang (two full suites side by side), eight suites finished with no hang, against one hang in six before the fix.
+- Self-check: `stop()` and `b.close()` waited for ever for a process that had already exited, so they now return at once; `stop()` also kills a panel that ignores SIGTERM. Tests added for both.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

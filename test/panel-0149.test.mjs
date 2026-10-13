@@ -3,8 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import http from 'node:http';
-import { panelRepo, freePort, startPanel, stop, request, tokenOf, page, PALETTE, findChrome, browserPage, cliCopy } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, request, tokenOf, page, PALETTE, findChrome, browserPage, cliCopy, raw } from './support/panel.mjs';
 import { ICONS, PNGS, png, readPng } from './support/icons.mjs';
 
 // ---------- 0149: the panel can be added to a phone's home screen as an app ----------
@@ -16,16 +15,6 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 const colour = name => PALETTE.match(new RegExp(`${name}: (#[0-9a-f]{6})`))[1];
 const hex = c => `#${c.map(n => n.toString(16).padStart(2, '0')).join('')}`;
 
-// A GET with the body as bytes.
-function raw(port, pathName, host = `127.0.0.1:${port}`) {
-  return new Promise((resolve, reject) => {
-    http.get({ host: '127.0.0.1', port, path: pathName, headers: { Host: host } }, res => {
-      const parts = [];
-      res.on('data', d => parts.push(d));
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(parts) }));
-    }).on('error', reject);
-  });
-}
 async function served(extra = []) {
   const r = panelRepo();
   const p = await startPanel(r.dir, ['--port', String(await freePort()), ...extra]);
@@ -174,7 +163,7 @@ test('0149 AC4: in a browser, the page reports no manifest errors, and its icons
   const { p, port } = await served();
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
-    await b.until('document.readyState === "complete"', 'the page to load');
+    await b.loaded(); // the panel's page itself, not the blank one Chrome opens first: asked about that, Chrome never answers (0159)
     // Chrome reads the manifest a little after the page has loaded: until then it reports none.
     let app;
     for (let i = 0; i < 50 && !app?.url; i++) { if (i) await new Promise(r => setTimeout(r, 100)); app = await b.send('Page.getAppManifest'); }
