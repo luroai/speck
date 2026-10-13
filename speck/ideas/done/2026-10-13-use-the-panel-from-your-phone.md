@@ -1,6 +1,6 @@
 # Use the panel from your phone
 
-Captured: 2026-10-13 · Status: idea
+Captured: 2026-10-13 · Status: ticketed (0149)
 
 ## What
 Open the panel on your phone, from anywhere, with minimal faff, while speck runs on your own machine. It behaves like an app on the home screen and tells you when your judgement is needed.
