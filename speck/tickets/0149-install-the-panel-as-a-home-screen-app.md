@@ -1,7 +1,7 @@
 ---
 id: "0149"
 title: "Install the panel as a home-screen app"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-13-use-the-panel-from-your-phone.md"          
 after: ["0148"]                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T20:35:06.447Z"
+approved: "2026-10-13T20:41:21.293Z"
 
 ---
 # 0149 · Install the panel as a home-screen app
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The user opens the panel on their phone many times a day, through a private tunnel. Added to the home screen today, it has no proper name or icon and opens with the browser's address bar, and it doesn't carry speck's logo.
@@ -62,9 +63,14 @@ Worth keeping an eye on: the colour of the phone's top bar follows the phone's o
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 108,471
+- Elapsed since build started: 6 min
+- Changed lines: 47 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - The phone's top-bar colour follows the system setting, not the panel's light/dark button: speck/ideas/2026-10-13-match-the-phone-s-top-bar-to-the-panel-s-chosen-look.md.
