@@ -548,6 +548,7 @@ const HELP = `speck: Your judgement, at agent speed.
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
   speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777
+                                      --url https://<hostname>: also serves it at that address, behind a private tunnel
   speck run                           start a build for each ready ticket as it becomes ready, until stopped
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused

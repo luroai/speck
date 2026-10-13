@@ -44,6 +44,8 @@ The panel only serves pages to, and accepts button presses from, `127.0.0.1` and
 - The checks are the `origins` and `hosts` sets in `panelServer()` (`scripts/panel.mjs`). Arguments already reach a restarted server through `SPECK_PANEL_ARGS`.
 - Behind a tunnel the Host header is usually the public hostname with no port; browsers send `Origin: https://<hostname>`.
 - Failing before this build: none
+- Self-check: no changes. Repeated `--url`, a port, a trailing dot or `..` in the hostname, an empty `--url=` and a following flag as the value are all refused before start; the extra Host is matched exactly (no port), case-insensitively.
+- Decision: a port in `--url` is refused, reading AC3's "a hostname and nothing after it" literally; tunnels serve on 443.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
