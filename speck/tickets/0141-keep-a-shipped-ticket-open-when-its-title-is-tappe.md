@@ -1,7 +1,7 @@
 ---
 id: "0141"
 title: "Keep a shipped ticket open when its title is tapped on a phone"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T07:52:43.284Z"
+approved: "2026-10-13T07:59:12.233Z"
 
 ---
 # 0141 · Keep a shipped ticket open when its title is tapped on a phone
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In cptr's built-in browser on an iPhone, tapping a shipped ticket's title opens the full ticket for a moment, then the page reloads to the top and the ticket closes. The title is an `<a href="#">` link (0137), and that browser follows the link itself even though the page cancels it. The Review pack button in the same row works, because it's a button.
@@ -52,9 +53,14 @@ Tapping a shipped ticket's title on a phone now opens the full ticket and keeps 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 184,618
+- Elapsed since build started: 6 min
+- Changed lines: 15 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: checked only in Chromium with phone and touch emulation, as WebKit can't run on the build machine; confirm once on the iPhone browser from the report.
 
