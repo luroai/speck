@@ -1,7 +1,7 @@
 ---
 id: "0142"
 title: "Format Markdown in opened Plan items"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-13
 ---
 # 0142 · Format Markdown in opened Plan items
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a draft ticket, an idea or an inbox note is opened in the panel's Plan section, its text is shown as raw Markdown: `**bold**`, backticks, list dashes and `#` headings appear as typed. The full ticket pane already formats the same Markdown, so the short view is harder to read than it needs to be.
