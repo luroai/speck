@@ -1,7 +1,7 @@
 ---
 id: "0145"
 title: Remove the build pause icon from the panel                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T08:23:28.509Z"
 ---
 # 0145 · Remove the build pause icon from the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Each running build in the panel's Build queue has its own pause and play icon. With the Auto-build switch in the header, the user doesn't need to hold individual builds from the panel, and the icon adds clutter to every row and can be confused with the header switch.
@@ -47,7 +47,11 @@ Build queue rows no longer have a pause or play icon; the Stop build button and 
 - Self-check: POST to /pause or /play now falls through to the server's existing 404 rather than its own, as a second 'Not found.' broke 0067's restart tests, which mark that reply.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Builds in the panel's Build queue no longer have their own pause and play icon, so each row is a little tidier and there's nothing to mix up with the Auto-build switch in the header. A build you've paused from the command line still says "Paused" on its row, and now also shows the command that carries it on. Opening a running build still gives you its Stop build button.
+
+To see it, open the panel while a build is running: its row has no icon on the left. Pause it with the pause command and the row says it's paused and how to carry on.
+
+Worth knowing: pausing and playing a single build is now only possible from the command line.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +61,67 @@ Build queue rows no longer have a pause or play icon; the Stop build button and 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Tidy-up: the comment at the top of the panel's server code still says it has "two writes"; it has had more for a while.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "259ac9881f1a0972d9c42118d4d4ee6ccc3036ec",
+    "thread_id": "01a13463-26b3-7031-94f0-b4d542a5a846",
+    "seconds": 73,
+    "usage": {
+      "input_tokens": 183833,
+      "cached_input_tokens": 141568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 788,
+      "reasoning_output_tokens": 31
+    },
+    "saved_at": "2026-10-13T08:32:28.193Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html queueItem() no longer creates an icon; icon code and styles are removed. Passing test '0145 AC1' exercises running, paused and other rows, both closed and open."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "queueItem() adds 'Paused · carry it on with speck play <id>'. Passing '0145 AC2' checks the paused counter, resume command and their removal after play."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "stopButton(), stopBuild() and panelStop() retain their behaviour. '0145 AC3' passes for building and reviewing rows; unchanged panel-0073 integration tests pass for stopping running and paused builds, confirmation and request authentication."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs panelServer() removes pause/play handlers and sends their POST requests to the existing 404 response. Passing '0145 AC4' uses the real server and CLI, verifies unchanged process state and pause marker after rejected requests, and verifies CLI pause/play still work. scripts/run.mjs is unchanged."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Inspected /tmp/speck-0145-tests.txt: 1,268 passed, zero failed, three historical split tests skipped. Test removals and adjustments concern the removed icon and endpoints; retained Stop build and panel restart tests pass."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The pause and play icons are removed from build rows. Paused builds still show their state and the command to resume them. Stop build and command-line pause/play continue to work, while the removed panel requests return 404 without changing builds. The full test report shows no failures, and I found no blocking concerns."
+  }
+}
+```
+
+</details>
