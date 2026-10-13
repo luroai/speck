@@ -1,7 +1,7 @@
 ---
 id: "0152"
 title: "End a test run that stalls"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-13
 ---
 # 0152 · End a test run that stalls
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a test hangs, speck waits for it forever. On 2026-10-13 the test run in 0149's auto-ship stopped making progress after 714 of about 1,310 tests and sat silent for nine minutes, until the build tool's 10-minute limit killed the ship. Nothing told the user; the ticket just looked approved. The next run of the same suite passed in about a minute.
