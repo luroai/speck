@@ -80,20 +80,35 @@ function startPanelOnce(cwd, args, cli, extraEnv) {
     });
   });
 }
-export const stop = p => new Promise(resolve => { p.child.removeAllListeners('exit'); p.child.on('exit', resolve); p.child.kill(); });
+// Ends a child process and resolves once it has exited, at once if it already has. One that hasn't exited `ms` after
+// SIGTERM gets SIGKILL, and one still not reported exited `ms` after that fails, naming it, rather than waiting for ever (0159).
+export const ended = (child, name, ms = 5000) => new Promise((resolve, reject) => {
+  if (child.exitCode !== null || child.signalCode !== null) return resolve();
+  const hard = setTimeout(() => child.kill('SIGKILL'), ms);
+  const fail = setTimeout(() => reject(new Error(`${name} (pid ${child.pid}) didn't exit within ${(2 * ms) / 1000} s of being stopped`)), 2 * ms);
+  child.once('exit', () => { clearTimeout(hard); clearTimeout(fail); resolve(); });
+  child.kill();
+});
+export const stop = (p, ms) => { p.child.removeAllListeners('exit'); return ended(p.child, 'the panel', ms); };
 
-export function request(port, { method = 'GET', pathName = '/', host = `127.0.0.1:${port}` } = {}) {
+// A request to the panel, with the body as text, or as bytes with `bytes`. One with no answer in `timeout` ms fails,
+// naming it, rather than waiting for ever (0159).
+export function request(port, { method = 'GET', pathName = '/', host = `127.0.0.1:${port}`, bytes = false, timeout = 15000 } = {}) {
   return new Promise((resolve, reject) => {
     const req = http.request({ host: '127.0.0.1', port, method, path: pathName, headers: { Host: host } }, res => {
-      let body = '';
-      res.setEncoding('utf8');
-      res.on('data', d => { body += d; });
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
+      const parts = [];
+      res.on('data', d => parts.push(d));
+      res.on('end', () => { const body = Buffer.concat(parts); resolve({ status: res.statusCode, headers: res.headers, body: bytes ? body : body.toString('utf8') }); });
+      res.on('error', reject);
     });
+    const t = setTimeout(() => req.destroy(new Error(`no answer to ${method} ${pathName} within ${timeout / 1000} s`)), timeout);
+    req.on('close', () => clearTimeout(t));
     req.on('error', reject);
     req.end();
   });
 }
+// A GET with the body as bytes (0149).
+export const raw = (port, pathName, host = `127.0.0.1:${port}`, timeout) => request(port, { pathName, host, bytes: true, timeout });
 
 // A copy of the CLI (the whole scripts/ folder, since it's split into modules: 0018) and its templates, so a test can edit its code or panel.html without touching the repo's own (0059, 0067).
 export function cliCopy() {
@@ -258,27 +273,41 @@ export function findChrome() {
     path.join(cache, d, 'chrome-headless-shell-linux64', 'chrome-headless-shell'), path.join(cache, d, 'chrome-linux64', 'chrome')]) : [];
   return [...found, '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'].find(f => fs.existsSync(f)) || null;
 }
+// Every wait on Chrome has a time limit, and fails naming what it waited for rather than hanging the suite (0159).
 export async function browserPage(url) {
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-chrome-'));
   const chrome = spawn(findChrome(), ['--headless', '--no-sandbox', '--disable-gpu', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--window-size=1280,900', 'about:blank']);
   const port = await new Promise((resolve, reject) => {
     let err = '';
-    const t = setTimeout(() => reject(new Error(`chrome didn't start: ${err}`)), 15000);
+    const t = setTimeout(() => { chrome.kill('SIGKILL'); reject(new Error(`chrome didn't start: ${err}`)); }, 15000);
     chrome.stderr.on('data', d => { err += d; const m = err.match(/ws:\/\/127\.0\.0\.1:(\d+)\//); if (m) { clearTimeout(t); resolve(m[1]); } });
   });
-  const target = await (await fetch(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(url)}`, { method: 'PUT' })).json();
-  const ws = new WebSocket(target.webSocketDebuggerUrl);
-  await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject; });
+  const close = async () => {
+    ws?.close();
+    try { await ended(chrome, 'Chrome'); } finally { fs.rmSync(profile, { recursive: true, force: true }); }
+  };
+  let ws;
+  try {
+    const target = await (await fetch(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(url)}`, { method: 'PUT', signal: AbortSignal.timeout(15000) })).json();
+    ws = new WebSocket(target.webSocketDebuggerUrl);
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timed out waiting for Chrome\'s DevTools connection to open')), 15000);
+      ws.onopen = () => { clearTimeout(t); resolve(); };
+      ws.onerror = () => { clearTimeout(t); reject(new Error('Chrome\'s DevTools connection failed to open')); };
+    });
+  } catch (e) { await close(); throw e; }
   let seq = 0;
   const waiting = new Map();
   ws.onmessage = m => { const r = JSON.parse(m.data); if (waiting.has(r.id)) { waiting.get(r.id)(r); waiting.delete(r.id); } };
-  const send = (method, params = {}) => new Promise((resolve, reject) => {
+  // A DevTools call, failing if Chrome hasn't answered it in `ms` milliseconds.
+  const send = (method, params = {}, ms = 15000, what = '') => new Promise((resolve, reject) => {
     const id = ++seq;
-    waiting.set(id, r => (r.error ? reject(new Error(`${method}: ${r.error.message}`)) : resolve(r.result)));
+    const t = setTimeout(() => { waiting.delete(id); reject(new Error(`Chrome didn't answer ${method} within ${ms / 1000} s${what && `: ${what}`}`)); }, ms);
+    waiting.set(id, r => { clearTimeout(t); r.error ? reject(new Error(`${method}: ${r.error.message}`)) : resolve(r.result); });
     ws.send(JSON.stringify({ id, method, params }));
   });
-  const js = async expr => {
-    const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true });
+  const js = async (expr, ms) => {
+    const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }, ms, expr);
     if (r.exceptionDetails) throw new Error(`${expr}: ${r.exceptionDetails.text}`);
     return r.result.value;
   };
@@ -286,6 +315,9 @@ export async function browserPage(url) {
     for (let i = 0; i < 100; i++) { if (await js(expr)) return; await new Promise(r => setTimeout(r, 100)); }
     throw new Error(`timed out waiting for ${what}`);
   };
+  // The page itself loaded. Chrome opens about:blank first, whose readyState is already "complete", so waiting on
+  // readyState alone can pass before the page has arrived, and a DevTools call about the page sent then is never answered (0159).
+  const loaded = () => until(`location.href === ${JSON.stringify(new URL(url).href)} && document.readyState === "complete"`, `${url} to load`);
   const mouse = (type, [x, y]) => send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1 });
   // A real drag with the mouse, from one point to another, through a point between them.
   const drag = async (from, to) => {
@@ -296,8 +328,7 @@ export async function browserPage(url) {
     await mouse('mouseReleased', to);
   };
   const move = ([x, y]) => send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y }); // the pointer, with no button down (0041)
-  const close = async () => { ws.close(); chrome.kill(); await new Promise(r => chrome.once('exit', r)); fs.rmSync(profile, { recursive: true, force: true }); };
-  return { js, until, drag, move, close, send }; // send: a raw DevTools call, for example to emulate reduced motion (0055)
+  return { js, until, loaded, drag, move, close, send, pid: chrome.pid }; // send: a raw DevTools call, for example to emulate reduced motion (0055)
 }
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();
