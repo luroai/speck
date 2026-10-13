@@ -1,7 +1,7 @@
 ---
 id: "0159"
 title: "Stop the 0149 panel tests hanging the full suite"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T22:50:12.210Z"
+approved: "2026-10-13T23:40:35.606Z"
 
 ---
 # 0159 · Stop the 0149 panel tests hanging the full suite
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0149 shipped, the full test suite on `main` hangs in about a third to a half of runs, always just after test 714, in `test/panel-0149.test.mjs`. On its own the file passes in a few seconds every time; it hangs only when the whole suite runs side by side. Every hang costs a build or a ship 5 to 10 minutes (0150 took 26 minutes, 0152 over 45), and before 0152 it stalled 0149's own ship.
@@ -56,9 +57,15 @@ To see it, run the whole test suite a few times in a row: each run should finish
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 browserPage.close sends SIGKILL after five seconds but then continues awaiting gone indefinitely if Chrome never reports exiting.; F2 request's req.setTimeout limits socket inactivity rather than total request duration.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 364,003
+- Elapsed since build started: 50 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Tests that check speck run has stopped straight after turning it off fail now and then on a busy machine (0148 AC2 and 0128 AC3, once each with two full suites side by side): speck/ideas/2026-10-13-stop-tests-checking-speck-run-stopped-too-soon.md.
