@@ -1,7 +1,7 @@
 ---
 id: "0147"
 title: Style the panel like the landing page                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T19:36:41.412Z"
+approved: "2026-10-13T19:45:45.196Z"
 
 ---
 # 0147 · Style the panel like the landing page
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The landing page now has a picture of the control panel, styled to match the rest of the page: warm white paper, near-black ink and a vermilion accent. The real panel still uses the greener zen colours from 0134 and 0136, so it looks different from how the landing page shows it.
@@ -57,9 +58,15 @@ The control panel now looks like the picture of it on the landing page: warm whi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 AC3 requires the named colour tests to reject changes to every specified value.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 342,924
+- Elapsed since build started: 9 min
+- Changed lines: 42 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (tidy-up, no ticket): two older browser tests (0041 and 0055) still hard-code single colours as `rgb(…)`, so any future palette change has to update them by hand. They could read the colour from the panel's stylesheet instead.
 
