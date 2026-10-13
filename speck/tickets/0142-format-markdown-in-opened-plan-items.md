@@ -1,7 +1,7 @@
 ---
 id: "0142"
 title: "Format Markdown in opened Plan items"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
+started: "2026-10-13T08:00:45.866Z"
 
 ---
 # 0142 · Format Markdown in opened Plan items
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a draft ticket, an idea or an inbox note is opened in the panel's Plan section, its text is shown as raw Markdown: `**bold**`, backticks, list dashes and `#` headings appear as typed. The full ticket pane already formats the same Markdown, so the short view is harder to read than it needs to be.
