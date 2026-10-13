@@ -1,7 +1,7 @@
 ---
 id: "0144"
 title: Call the speck run switch Auto-build                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T08:18:10.904Z"
+approved: "2026-10-13T08:22:05.918Z"
 
 ---
 # 0144 · Call the speck run switch Auto-build
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel header shows "speck run on" or "speck run off", with a blue or grey square and a "Turn on" or "Turn off" button. "speck run" is a command name, so it means nothing to someone who doesn't know it, the grey square reads as faded rather than off, and the button makes the user work out the state before they know what it will do.
@@ -51,9 +52,14 @@ The switch at the top of the panel that builds ready tickets on its own is now c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 139,775
+- Elapsed since build started: 4 min
+- Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
