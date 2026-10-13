@@ -48,7 +48,7 @@ The panel only serves pages to, and accepts button presses from, `127.0.0.1` and
 - Decision: a port in `--url` is refused, reading AC3's "a hostname and nothing after it" literally; tunnels serve on 443.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now use the panel from your phone. Start it with the private web address your tunnel gives you (for example one from Tailscale or Cloudflare Access), and the panel opens and its buttons work at that address as well as on your own machine. To see it, start the panel with that address added and open it on your phone: the panel prints both addresses when it starts. Keep an eye on one thing: anyone who can open that address can start builds and ship, so it must only ever sit behind a tunnel that makes you log in. Addresses with a port number are refused for now.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +58,9 @@ The panel only serves pages to, and accepts button presses from, `127.0.0.1` and
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, no inbox notes):
+- Tidy-up: a request at the wrong address still gets "open the panel at 127.0.0.1 or localhost", which doesn't mention the `--url` address.
+- Known limit: `--url` refuses a port (for example `tailscale serve --https=8443`), reading AC3 literally.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +128,75 @@ The panel only serves pages to, and accepts button presses from, `127.0.0.1` and
     ],
     "escalation_question": "",
     "summary": "The change allows one private HTTPS address while retaining the Host, Origin and token protections. Validation, restart handling and the full suite pass. Before approval, tests need to show that all the promised buttons work from that address; currently only Set ready is demonstrated."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b56c22557b3d5e4d83a87882b983aede5f0b02df",
+    "thread_id": "01a136f4-7ba0-7110-be22-2de2f77abf5e",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 251911,
+      "cached_input_tokens": 193408,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1707,
+      "reasoning_output_tokens": 43
+    },
+    "saved_at": "2026-10-13T20:32:17.392Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs panelServer() adds only the configured hostname to the Host allowlist. Passing 0148 AC1 tests cover both argument forms, page and state access, local hosts, case-insensitive matching and rejection of other hosts."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Every write handler retains Origin and token checks. Passing tests in test/panel-0148.test.mjs now exercise all listed actions with the configured Host, HTTPS Origin and page token, asserting ticket changes, commits, stopped processes and completed shipping. Negative tests cover every write route with invalid Origins and missing or wrong tokens."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelUrl() validates arguments before cmdPanel() starts the server. The passing 0148 AC3 test covers invalid schemes, paths, queries, credentials, ports, missing values and duplicate arguments, checking an explanatory message and valid example."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelServer() prints both addresses and startPanelServer() preserves arguments through SPECK_PANEL_ARGS. Passing 0148 AC4 tests verify the startup line and an actual code-triggered restart followed by access and a successful write at the extra address."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full test log reports 1297 passed, zero failed and three skipped. Existing tests were not weakened. The passing 0148 AC5 test confirms rejection of the extra hostname and Origin without --url and the unchanged local startup message."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0148.test.mjs",
+        "issue": "Positive coverage previously demonstrated only Set ready at the extra address. The added integration tests now demonstrate every remaining action and verify its effects.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel works at one configured private HTTPS address, including every listed button, while retaining its Host, Origin and token protections. Invalid addresses are refused, the address survives restarts, and the full suite passes. The earlier test coverage gap is resolved. Ready for owner review; access must remain behind a private, logged-in tunnel."
   }
 }
 ```
