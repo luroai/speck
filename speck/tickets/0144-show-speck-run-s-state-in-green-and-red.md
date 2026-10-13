@@ -1,6 +1,6 @@
 ---
 id: "0144"
-title: "Show speck run's state in green and red"                # one outcome, no "and"
+title: "Colour speck run's state like a traffic light"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
@@ -15,7 +15,7 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 
 ---
-# 0144 · Show speck run's state in green and red
+# 0144 · Colour speck run's state like a traffic light
 
 **Status:** 📝 draft
 
