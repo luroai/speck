@@ -1,7 +1,7 @@
 ---
 id: "0150"
 title: "Tidy the panel header"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T21:28:21.538Z"
 ---
 # 0150 · Tidy the panel header
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel header looks untidy, worst on a phone: the Auto-build indicator and its Pause or Start button are two separate boxes, the "live · Ns ago" indicator takes room without telling the user anything useful, and the light/dark button sits on a line of its own, at a different height from the rest. The project name sits in the middle.
@@ -47,7 +47,9 @@ The header is tidy on phone and desktop: the Auto-build indicator is itself the 
 - Self-check: a long project name at 700 px and over wrapped and pushed the buttons; it's now cut short with an ellipsis on one line, as on a phone (test added).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's header is tidier. The Auto-build indicator is now the button itself: click it (or press Enter or Space on it) to pause or start Auto-build, and hover over it to see what a click will do. The "live · Ns ago" indicator has gone; if the panel loses its server, the red message under the header still says so. The project name now sits on the right, next to the two buttons, which are the same height and line up.
+
+To see it, open the panel on a computer and on a phone. On a computer everything is on one row. On a phone it's two rows: the speck name and the project on top, Auto-build and the light/dark button below. A very long project name is cut short with "…" rather than squashing the buttons.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +59,67 @@ The header is tidy on phone and desktop: the Auto-build indicator is itself the 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "da0960df5e2def76e42754c14abe430294b8fdba",
+    "thread_id": "01a13740-e30d-7f50-a0f2-ef4e2eb4daaf",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 186231,
+      "cached_input_tokens": 132608,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 747,
+      "reasoning_output_tokens": 56
+    },
+    "saved_at": "2026-10-13T21:53:04.379Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html removes #pills and preserves setConnected() and #offline. Passing 0150 AC1 tests exercise disconnection and recovery."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "render() updates the single native #run button; switchRun() retains the existing requests and error handling. Passing 0150 AC2 tests cover labels, colours, tooltips, aria-pressed, pending requests, errors, clicks and browser Enter/Space activation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Header flex styles position the project and buttons on the right. Passing browser tests verify order and vertical alignment at 700 and 1280 px, including a long project name."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The phone media query uses a two-column grid and 44 px buttons. Passing browser tests at 375 px verify both Auto-build states, two-row placement, single-line labels and no overflow."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing browser tests verify equal button heights and aligned tops at 375, 699, 700, 1000 and 1280 px. The full test log confirms 1328 passed, zero failed and three skipped. Existing test changes preserve their behavioural checks while replacing the removed controls."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The header meets the requested phone and desktop layouts. Auto-build is one accessible button, connection and action errors remain visible below the header, and long project names stay contained. The tests cover the requested behaviour and report no regressions. Ready for merge."
+  }
+}
+```
+
+</details>
