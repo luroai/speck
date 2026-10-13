@@ -1,7 +1,7 @@
 ---
 id: "0159"
 title: "Stop the 0149 panel tests hanging the full suite"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T22:50:12.210Z"
 approved: "2026-10-13T23:40:35.606Z"
+finished: "2026-10-13T23:41:59.183Z"
 
 ---
 # 0159 · Stop the 0149 panel tests hanging the full suite
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0149 shipped, the full test suite on `main` hangs in about a third to a half of runs, always just after test 714, in `test/panel-0149.test.mjs`. On its own the file passes in a few seconds every time; it hangs only when the whole suite runs side by side. Every hang costs a build or a ship 5 to 10 minutes (0150 took 26 minutes, 0152 over 45), and before 0152 it stalled 0149's own ship.
