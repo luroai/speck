@@ -46,7 +46,7 @@ The panel can be added to a phone's home screen as an app: it opens full screen,
   - the dot: `circle cx=32 cy=32 r=2.5`, fill `#b0412e`
 - The icons draw that logo centred on a solid `#faf9f5` background (no transparency, which iOS shows as black), with the strokes thick enough to read at 180 px. Commit the source SVG to the repo alongside the PNGs.
 - Every project's panel is called "speck", so several projects on one home screen share a name; that's accepted.
-- Unverified: whether current iOS uses the manifest's icons or only `apple-touch-icon` (both are given, so either works).
+- Checked 2026-10-13: current guidance still has iOS taking its home-screen icon from `apple-touch-icon`, with manifest icons used by Android and desktop; Apple's own docs didn't confirm either way. Both are given, so either works.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
