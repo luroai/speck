@@ -341,6 +341,10 @@ export async function panelServer() {
       ...(status === 405 ? { Allow: 'GET' } : {}), ...(stopping ? { Connection: 'close' } : {}) });
     res.end(body);
   };
+  // 0149: what lets a phone add the panel to its home screen as an app, from templates/icons/: its manifest and icons.
+  const iconsDir = path.join(TEMPLATES, 'icons');
+  const icons = { '/manifest.webmanifest': 'application/manifest+json', '/icon.svg': 'image/svg+xml',
+    '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
   const server = http.createServer((req, res) => {
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return send(res, 403, 'text/plain', 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
     const where = req.url.split('?')[0];
@@ -409,6 +413,16 @@ export async function panelServer() {
     if (where === '/') {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
+    }
+    if (Object.hasOwn(icons, where)) {
+      let body;
+      try { body = fs.readFileSync(path.join(iconsDir, where.slice(1))); }
+      catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(iconsDir, where.slice(1))}: ${e.message}\nPut the file back, then reload.\n`); }
+      if (icons[where] === 'image/png') {
+        res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
+        return res.end(body);
+      }
+      return send(res, 200, icons[where], body);
     }
     if (where === '/api/state') {
       // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
