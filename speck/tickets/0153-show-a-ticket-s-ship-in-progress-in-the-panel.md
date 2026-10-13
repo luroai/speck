@@ -42,6 +42,9 @@ The panel shows when a ticket is being shipped, by anyone, for how long, and say
 - Related idea: `speck/ideas/2026-10-12-show-a-panel-ship-in-progress-after-a-reload.md`.
 - 0138 colours an approved ticket waiting to ship in purple; these messages sit with that, not in red unless the ship failed.
 - Failing before this build: none
+- Design: `speck ship` keeps a record, `speck/.cache/runs/<id>.ship.json` in the main checkout, while it runs, so the panel sees a ship started by a build, the Ship button or `/speck-ship` alike, and `speck status --json` gives it as each ticket's `ship`. An auto-ship that ends without shipping leaves the record with its message; a killed one leaves it with a pid that has gone.
+- "Not in red unless the ship failed": "Auto-ship didn't finish" is red, as the ship failed; "Shipping…" is neither red nor purple. An auto-ship failure from before the ticket's latest approval isn't shown.
+- Self-check: a record whose pid now belongs to another program (or another ticket's ship) no longer holds the ticket; a record folder that can't be written gives a plain error instead of a stack trace.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

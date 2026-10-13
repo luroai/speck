@@ -506,14 +506,25 @@ function panelModel(state) {
       const exited = t.build_exit && typeof t.build_exit === 'object' && t.status !== 'blocked';
       // A build that was killed, with no exit recorded, is no longer at work on its ticket either.
       const stopped = !exited && t.build_stopped === true && (t.status === 'building' || t.status === 'reviewing');
-      const exit_label = stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+      // 0153: a ship running now, whoever started it, from speck ship's own record. An auto-ship that ended without
+      // shipping counts only on an approved ticket, and only if it ended after the ticket's last approval.
+      const ship = t.ship && typeof t.ship === 'object' ? t.ship : null;
+      const shipping = !!ship && ship.running === true;
+      const ship_since = shipping ? time(ship.started) : null;
+      const shipEnd = ship ? time(ship.ended) ?? time(ship.started) : null, approvedTime = time(t.approved);
+      const auto_failed = !!ship && ship.running === false && ship.auto === true && t.status === 'approved' && (approvedTime === null || (shipEnd !== null && shipEnd >= approvedTime));
+      const exit_label = shipping ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
-      // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138).
-      const to_ship = t.status === 'approved' && exit_label !== null;
+      // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
+      // unless its auto-ship failed.
+      const to_ship = t.status === 'approved' && exit_label !== null && !auto_failed;
       // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
-        exit_message: exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
+        exit_message: auto_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
+          : exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
+        ship_hint: auto_failed ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,
+        shipping, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight ? start : null, approved_at, counter: inFlight && start !== null ? counter((approved_at ?? Date.now()) - start) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
@@ -1041,12 +1052,12 @@ function packPane(t) {
 // That it's shipping, and what speck ship said, show whatever the ticket's status: speck ship sets it done before it
 // pushes, so a poll can show it done while the push is still going, or after a push that failed.
 function shipPart(t) {
-  const id = String(t.id), pending = shippingId === id, out = [];
+  const id = String(t.id), pending = shippingId === id || t.shipping === true, out = [];
   if (shipped.has(id)) return [el('div', 'ship-said', shipped.get(id))];
   if (pending || (t.status === 'approved' && packOf.state === 'ok')) {
     const b = el('button', 'ship', pending ? 'Shipping…' : 'Ship');
     b.type = 'button';
-    b.disabled = shippingId !== null;
+    b.disabled = shippingId !== null || t.shipping === true; // one ship at a time, and none while one runs from elsewhere (0153)
     b.title = 'Merge this ticket into the base branch and push it, as /speck-ship does';
     b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) shipTicket(id); });
     out.push(b);
@@ -1168,7 +1179,7 @@ function renderFull(m) {
   const pane = $('full-ticket'), find = ts => ts.find(d => String(d.id) === fullId);
   const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
   if (!t) { fullId = null; packOf = null; }
-  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
+  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
@@ -1321,8 +1332,11 @@ function queueItem(t) {
     q.appendChild(el('div', t.to_ship ? 'act to-ship' : 'act bad', t.exit_label));
     if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : 'question exit', t.exit_message));
   }
+  if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
   if (t.status === 'blocked') q.appendChild(el('div', 'act', `Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
-  if (shippingId === id) q.appendChild(el('div', 'act', 'Shipping… (from its review pack)'));
+  // 0153: a ship running from anywhere, with how long it has been running, which survives a reload.
+  if (t.shipping) q.appendChild(el('div', 'act shipping', null, el('b', null, 'Shipping…'), ...(t.ship_counter !== null ? [document.createTextNode(' · '), el('span', 'ship-time', t.ship_counter)] : [])));
+  else if (shippingId === id) q.appendChild(el('div', 'act', 'Shipping… (from its review pack)'));
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
@@ -1502,9 +1516,11 @@ function setText(node, text) {
 const child = (node, cls) => [...node.children].find(n => n.className === cls); // children is an HTMLCollection, with no find
 // What a kept queue row shows from the clock or from other tickets, put right on its node: the counter, and for a
 // ready ticket its chain icon and Queued line. Only the parts that change are replaced.
+const shipTime = q => child(child(q, 'act shipping'), 'ship-time'); // a shipping row's time since its ship started (0153)
 function queueUpdate(q, t) {
   const sub = child(child(q, 'top'), 'sub');
   setText(sub, queueCounter(t));
+  if (t.ship_counter !== null) setText(shipTime(q), t.ship_counter);
   if (t.inFlight) return;
   const row = child(child(q, 'top'), 'row'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
@@ -1621,9 +1637,10 @@ function render() {
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null,
     unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null], queueItem,
-    { own: t => { const { counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.chain, t.unlocks], update: queueUpdate });
+    { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
-  startCounters(m.queue.flatMap((t, i) => (t.counter !== null && t.approved_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : [])));
+  startCounters(m.queue.flatMap((t, i) => [...(t.counter !== null && t.approved_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : []),
+    ...(t.ship_counter !== null ? [[shipTime(rows[i]), t.ship_since, false]] : [])]));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();
   queueIds = new Set(m.queue.map(t => String(t.id)));

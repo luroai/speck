@@ -6,6 +6,7 @@ import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, worktreeList, ticketBranches } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
 import { testRun } from './results.mjs';
+import { sharedCacheDir } from './turns.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -333,12 +334,100 @@ function autoShipBlocker(repo, cfg, id) {
   return '';
 }
 
+// ---------- the ship record (0153) ----------
+// While `speck ship <id>` runs, <id>.ship.json in the main checkout's speck/.cache/runs/ holds its pid, when it started
+// and whether it's an auto-ship, so the panel shows it wherever it was started from, and a second ship of the ticket
+// refuses. A ship that shipped, or one the user started, removes it as it ends. An auto-ship that didn't ship leaves it
+// for the panel, with when it ended and speck ship's message, and one that was killed leaves it with a pid that has gone.
+
+const shipFile = (runs, pad) => path.join(runs, `${pad}.ship.json`);
+const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+function readShip(file) {
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+  return rec && typeof rec === 'object' && !Array.isArray(rec) && Number.isInteger(rec.pid) && rec.pid > 0 && typeof rec.started === 'string' ? rec : null;
+}
+// True while the record's ship is running: it hasn't ended and its pid is alive and is still speck ship of this ticket,
+// from its command line, so a pid reused by another program doesn't hold the ticket. Without ps, a live pid is enough.
+function shipRunning(rec, pad) {
+  if (!rec || Object.hasOwn(rec, 'ended') || !pidAlive(rec.pid)) return false;
+  let r;
+  try { r = sh('ps', ['-ww', '-o', 'args=', '-p', String(rec.pid)]); } catch { return true; }
+  return r.status === 0 && new RegExp(`speck(\\.mjs)?\\s+ship\\s+(.*\\s)?0*${Number(pad)}(\\s|$)`).test(r.stdout.trim());
+}
+
+// What the panel shows of a ticket's ship, from `runs` (the main checkout's speck/.cache/runs/): { running: true, auto,
+// started } while one runs, { running: false, auto: true, started, ended, message } for an auto-ship that ended without
+// shipping (ended and message are null when it was killed), or null.
+export function shipState(runs, id) {
+  id = String(id ?? '');
+  if (!/^\d+$/.test(id)) return null;
+  const pad = id.padStart(4, '0'), rec = readShip(shipFile(runs, pad));
+  if (!rec) return null;
+  const auto = rec.auto === true;
+  if (shipRunning(rec, pad)) return { running: true, auto, started: rec.started };
+  if (!auto) return null;
+  const text = v => (typeof v === 'string' && v !== '' ? v : null);
+  return { running: false, auto, started: rec.started, ended: text(rec.ended), message: text(rec.message) };
+}
+
+// Takes the ticket's ship record for this process, or refuses, changing nothing, while another ship of it runs. The
+// record is written whole and then linked into place, which is atomic, so two ships starting at once can't both take
+// it. A record left by a ship that has ended or gone is replaced, only while holding a short-lived recovery lock.
+function takeShip(repo, pad, auto) {
+  let runs = path.join('speck', '.cache', 'runs');
+  const fail = e => new SpeckError(`speck ship couldn't write ticket ${pad}'s ship record in ${runs} (${e.message}), so nothing was shipped. Check you can write to that folder, then try again.`);
+  try { runs = sharedCacheDir(repo, 'runs'); } catch (e) { throw fail(e); }
+  const file = shipFile(runs, pad), recover = `${file}.recover`, mine = path.join(runs, `${pad}.ship.${process.pid}.tmp`);
+  const text = JSON.stringify({ pid: process.pid, started: new Date().toISOString(), auto });
+  try { fs.writeFileSync(mine, text); } catch (e) { throw fail(e); }
+  const link = to => { try { fs.linkSync(mine, to); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
+  const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
+  const busy = rec => new SpeckError(`A ship is already running for ticket ${pad} (process ${rec.pid}, started ${rec.started}). Nothing was changed. Wait for it to finish: the panel shows it as shipping until then.`);
+  try {
+    for (let tries = 0; tries < 5; tries++) {
+      if (link(file)) return { file, text };
+      const held = read(file);
+      if (held === null) continue; // removed just now: try again
+      let rec = null;
+      try { rec = JSON.parse(held); } catch { /* unreadable: replace it */ }
+      if (rec && shipRunning(readShip(file), pad)) throw busy(rec);
+      if (!link(recover)) {
+        const other = readShip(recover);
+        if (other && pidAlive(other.pid)) throw busy(other);
+        fs.rmSync(recover, { force: true }); // left by a ship that was killed while replacing a record
+        continue;
+      }
+      try {
+        if (read(file) === held) fs.rmSync(file, { force: true });
+        if (link(file)) return { file, text };
+      } finally { fs.rmSync(recover, { force: true }); }
+    }
+    throw new SpeckError(`speck ship couldn't take ticket ${pad}'s ship record, ${path.relative(repo, file)}. Try again.`);
+  } catch (e) { throw e instanceof SpeckError ? e : fail(e); }
+  finally { fs.rmSync(mine, { force: true }); }
+}
+
+// Ends the record this process took: removes it, or for an auto-ship that didn't ship, keeps it with when it ended and
+// speck ship's message. A record another ship has since replaced is left alone.
+function endShip(took, auto, error) {
+  let now;
+  try { now = fs.readFileSync(took.file, 'utf8'); } catch { return; }
+  if (now !== took.text) return;
+  try {
+    if (!error || !auto) return fs.rmSync(took.file, { force: true });
+    const message = String(error?.message ?? error ?? '').trim() || null;
+    fs.writeFileSync(took.file, JSON.stringify({ ...JSON.parse(took.text), ended: new Date().toISOString(), message }));
+  } catch (e) { console.error(`Couldn't update the ship record ${took.file} (${e.message}), so the panel may show this ship out of date. Delete it if so.`); }
+}
+
 export function cmdShip(args) {
   const id = args.find(a => !a.startsWith('--'));
   if (!id) throw new SpeckError('Usage: speck ship <id> [--auto]');
   const repo = findRepoRoot();
+  const auto = args.includes('--auto');
   // --auto is how the builder ships straight after approval. It only goes ahead when config allows it for this ticket.
-  if (args.includes('--auto')) {
+  if (auto) {
     // Read the ticket where its branch is checked out, so the checks see the approved copy, not the base branch's.
     const cfg = loadConfig(repo);
     let folder = repo;
@@ -346,5 +435,9 @@ export function cmdShip(args) {
     const why = autoShipBlocker(folder, cfg, id);
     if (why) throw new SpeckError(`Not shipping automatically: ${why}. The ticket stays approved, waiting for you to run /speck-ship ${String(id).padStart(4, '0')}.`, 12);
   }
-  shipTicket(repo, id);
+  // Only a ticket id gets a record: anything else is refused by shipTicket, naming it.
+  const took = /^\d{1,4}$/.test(id) ? takeShip(repo, id.padStart(4, '0'), auto) : null;
+  try { shipTicket(repo, id); }
+  catch (e) { if (took) endShip(took, auto, e); throw e; }
+  if (took) endShip(took, auto, null);
 }
