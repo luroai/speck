@@ -1,7 +1,7 @@
 ---
 id: "0148"
 title: "Serve the panel at a private https address"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T20:25:43.697Z"
 ---
 # 0148 · Serve the panel at a private https address
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel only serves pages to, and accepts button presses from, `127.0.0.1` and `localhost`. A user who reaches it from their phone through a private tunnel (for example Cloudflare Tunnel behind Cloudflare Access, or `tailscale serve`) can't use it: the address is refused, and once the page loads, every button press is refused with 403.
@@ -58,3 +58,75 @@ The panel only serves pages to, and accepts button presses from, `127.0.0.1` and
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0ae17f93f5a23e04720e8e22110403fef6d4430e",
+    "thread_id": "01a136f4-7ba0-7110-be22-2de2f77abf5e",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 145785,
+      "cached_input_tokens": 99840,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 994,
+      "reasoning_output_tokens": 43
+    },
+    "saved_at": "2026-10-13T20:29:50.261Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelServer() in scripts/panel.mjs adds the extra hostname to the Host allowlist. Passing 0148 AC1 tests exercise both argument forms, page/state access, local hosts and rejected hosts."
+      },
+      {
+        "id": 2,
+        "status": "unclear",
+        "evidence": "Every write handler in panelServer() checks the shared Origin allowlist and token. Passing 0148 AC2 tests demonstrate Set ready succeeding from the extra address and all write routes rejecting invalid credentials, but do not demonstrate the other actions succeeding from that address."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelUrl() validates the address before cmdPanel() starts a server. The passing 0148 AC3 test exercises invalid schemes, paths, queries, credentials, ports, missing values and repeated arguments, checking explanatory errors and a valid example."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelServer() prints both addresses; startPanelServer() preserves args through SPECK_PANEL_ARGS. Both passing 0148 AC4 tests exercise printing and an actual code-triggered restart followed by remote-host access and a successful write."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full test log reports 1293 passed, zero failed and three skipped. The passing 0148 AC5 test verifies rejection of the extra host and Origin without --url, and the unchanged startup message. Existing tests were not modified."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0148.test.mjs",
+        "issue": "AC2 explicitly requires every listed action to work from the extra address, but positive coverage exercises only Set ready. Back to Plan, priority, Stop build, Ship and both Auto-build switch directions are tested only with rejected credentials at that address.",
+        "suggested_fix": "Add integration coverage using the configured Host, exact HTTPS Origin and page token for the remaining write actions, with suitable fixtures and assertions on their actual effects. Reuse existing action fixtures where practical.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change allows one private HTTPS address while retaining the Host, Origin and token protections. Validation, restart handling and the full suite pass. Before approval, tests need to show that all the promised buttons work from that address; currently only Set ready is demonstrated."
+  }
+}
+```
+
+</details>

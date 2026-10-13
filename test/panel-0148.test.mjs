@@ -2,8 +2,11 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { spawn, spawnSync } from 'node:child_process';
 import { CLI, env, panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm, readT } from './support/panel.mjs';
+import { shipRepo } from './support/ship.mjs';
+import { runRepo, alive, killAll } from './support/run.mjs';
 
 // ---------- 0148: speck panel --url serves the panel at one private https address too ----------
 
@@ -18,6 +21,13 @@ async function served(extra, cli = CLI) {
   const p = await startPanel(r.dir, ['--port', String(await freePort()), ...extra], cli);
   return { r, p, port: p.port };
 }
+// The panel for `dir`, at the --url address, with the token of the page served there.
+async function remote(dir, extraEnv = {}) {
+  const p = await startPanel(dir, ['--port', String(await freePort()), '--url', URL_], CLI, extraEnv);
+  return { p, port: p.port, token: tokenOf((await request(p.port, { host: NAME })).body) };
+}
+// A write as the page at the --url address sends it.
+const remotePost = (port, pathName, token) => post(port, pathName, { host: NAME, origin: URL_, token });
 // `speck panel` with these arguments, when it refuses before starting: its exit code and output.
 function refused(args) {
   const r = panelRepo();
@@ -58,6 +68,67 @@ test('0148 AC2: a write from the --url page, with its Origin and token, is accep
     assert.equal(res.status, 200, res.body);
     assert.match(readT(r, '0002-two.md'), /status: ready/);
   } finally { await stop(p); }
+});
+
+test('0148 AC2: priority and Back to Plan work from the --url page', async () => {
+  const { r, p, port } = await served(['--url', URL_]);
+  try {
+    const token = tokenOf((await request(port, { host: NAME })).body);
+    const prio = await remotePost(port, '/api/tickets/0002/priority/1', token);
+    assert.equal(prio.status, 200, prio.body);
+    assert.match(readT(r, '0002-two.md'), /^priority: 1$/m);
+    assert.equal((await remotePost(port, readyPath('0002'), token)).status, 200);
+    const back = await remotePost(port, '/api/tickets/0002/draft', token);
+    assert.equal(back.status, 200, back.body);
+    assert.match(readT(r, '0002-two.md'), /^status: draft$/m);
+    assert.equal(r.g('log', '-1', '--format=%s'), 'speck(0002): draft');
+  } finally { await stop(p); }
+});
+
+test('0148 AC2: Stop build works from the --url page', async () => {
+  const r = panelRepo();
+  fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^status: .*$/m, 'status: building'));
+  r.g('add', '-A'); r.g('commit', '-qm', 'building');
+  const build = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
+  build.unref();
+  const runs = path.join(r.dir, 'speck', '.cache', 'runs');
+  fs.mkdirSync(runs, { recursive: true });
+  fs.writeFileSync(path.join(runs, '0001.json'), JSON.stringify({ session: 's-0148', pid: build.pid, cwd: r.dir }));
+  const { p, port, token } = await remote(r.dir);
+  try {
+    const res = await remotePost(port, '/api/tickets/0001/stop', token);
+    assert.equal(res.status, 200, res.body);
+    assert.match(fs.readFileSync(r.file, 'utf8'), /^status: blocked/m);
+    assert.equal(r.g('log', '-1', '--format=%s'), 'speck(0001): stopped');
+    await wait(200);
+    assert.equal(alive(build.pid), false, 'the build has stopped');
+  } finally { killAll([build.pid]); await stop(p); }
+});
+
+test('0148 AC2: Ship works from the --url page', async () => {
+  const r = shipRepo();
+  const { p, port, token } = await remote(r.dir);
+  try {
+    const res = await remotePost(port, '/api/tickets/1/ship', token);
+    assert.equal(res.status, 200, res.body);
+    assert.match(JSON.parse(res.body).message, /Shipped 0001/);
+    assert.equal(r.statusIn(r.dir), 'done');
+  } finally { await stop(p); }
+});
+
+test('0148 AC2: the Auto-build switch turns speck run on and off from the --url page', async () => {
+  const r = runRepo({ tickets: [] });
+  const { p, port, token } = await remote(r.dir, { SPECK_RUN_POLL_MS: '100' });
+  let pid = null;
+  try {
+    const on = await remotePost(port, '/api/run/on', token);
+    assert.equal(on.status, 200, on.body);
+    pid = JSON.parse(on.body).run.pid;
+    assert.equal(alive(pid), true, 'speck run is running');
+    const off = await remotePost(port, '/api/run/off', token);
+    assert.equal(off.status, 200, off.body);
+    assert.equal(alive(pid), false, 'speck run has stopped');
+  } finally { await stop(p); if (pid) killAll([pid]); }
 });
 
 test('0148 AC2: every write is refused with 403 for any other Origin, or a missing or wrong token, and changes nothing', async () => {
