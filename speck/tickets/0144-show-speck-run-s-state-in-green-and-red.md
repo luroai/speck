@@ -42,6 +42,7 @@ The header's switch is called Auto-build: its state is plain at a glance, in gre
 - Labels are set in `templates/panel.html` (the `run` and `run-switch` elements). The speck run square and the connection square share the `.live` class: `.live` is `--run` (blue) and `.live.idle` is `--faint` (grey). The panel's green is `--ok` and its red is `--bad`.
 - The phone layout (0140) keeps header labels on one line at 375 px; the new labels must too.
 - Failing before this build: none
+- Self-check: no changes. The README and brief still describe the switch as turning `speck run` on or off, which stays true; renaming it there is out of scope.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

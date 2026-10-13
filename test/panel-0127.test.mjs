@@ -34,7 +34,7 @@ test('0127 AC1: the page shows speck run is on when the state says so', async ()
   const pill = runPill(p);
   assert.ok(pill, 'a speck run pill is in the header');
   assert.match(pill.className, /\brun-on\b/);
-  assert.equal(pill.textContent, 'speck run on');
+  assert.equal(pill.textContent, 'Auto-build on');
 });
 
 test('0127 AC2: with no speck run, /api/state reports it off', async () => {
@@ -65,18 +65,18 @@ test('0127 AC2: the page shows speck run is off when the state has no run, or a 
     const pill = runPill(p);
     assert.ok(pill, 'a speck run pill is in the header');
     assert.match(pill.className, /\brun-off\b/);
-    assert.equal(pill.textContent, 'speck run off');
+    assert.equal(pill.textContent, 'Auto-build offready tickets wait');
   }
 });
 
 test('0127 AC3: the page shows the new state at its next refresh, without reloading', async () => {
   const p = fakePage([state(false), state(true), state(false)]);
   await p.settle();
-  assert.equal(runPill(p).textContent, 'speck run off');
+  assert.equal(runPill(p).textContent, 'Auto-build offready tickets wait');
   p.timers.shift()(); await p.settle();
-  assert.equal(runPill(p).textContent, 'speck run on');
+  assert.equal(runPill(p).textContent, 'Auto-build on');
   p.timers.shift()(); await p.settle();
-  assert.equal(runPill(p).textContent, 'speck run off');
+  assert.equal(runPill(p).textContent, 'Auto-build offready tickets wait');
   assert.equal(p.calls.filter(c => c.url === '/api/state').length, 3);
 });
 
