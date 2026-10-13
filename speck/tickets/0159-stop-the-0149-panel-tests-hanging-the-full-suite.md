@@ -48,7 +48,9 @@ The full suite on `main` finishes every time in its usual time, and the 0149 bro
 - Self-check: `stop()` and `b.close()` waited for ever for a process that had already exited, so they now return at once; `stop()` also kills a panel that ignores SIGTERM. Tests added for both.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The full test suite no longer gets stuck partway through. One of the panel's browser tests sometimes asked the browser a question before the panel's page had opened, and on a busy machine the browser never answered, so the whole run sat waiting until it was stopped. The test now waits for the panel's page itself before asking. Every wait in that test, and in the shared helpers it uses, now has a time limit and fails with a message saying what it was waiting for.
+
+To see it, run the whole test suite a few times in a row: each run should finish in a little over a minute. Keep an eye on the occasional failure of other panel tests when the machine is very busy: those are a separate, known issue, saved as a follow-up idea.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +60,9 @@ The full suite on `main` finishes every time in its usual time, and the 0149 bro
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Tests that check speck run has stopped straight after turning it off fail now and then on a busy machine (0148 AC2 and 0128 AC3, once each with two full suites side by side): speck/ideas/2026-10-13-stop-tests-checking-speck-run-stopped-too-soon.md.
+- Tidy-up: `browserPage()` could wait for its page itself, so no browser test can act on Chrome's blank start page; only 0149's test waited on `readyState` alone, so nothing else is known to be affected.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -133,6 +138,83 @@ The full suite on `main` finishes every time in its usual time, and the 0149 bro
     ],
     "escalation_question": "",
     "summary": "The navigation fix preserves the browser checks, and ten recorded full-suite runs finish in about 77 seconds. Two helper waits still lack firm deadlines, so the requirement that every wait must eventually fail is not yet met."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3cc47f44e9a96814591faec8dbf32402ef5f3845",
+    "thread_id": "01a137a0-6582-78b3-8208-e972005f5545",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 225148,
+      "cached_input_tokens": 178560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1675,
+      "reasoning_output_tokens": 52
+    },
+    "saved_at": "2026-10-13T23:40:14.387Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Previously inspected /tmp/0159-ac1-{1..10}.out record ten successful consecutive suites in 76.7–77.5 seconds. The latest full suite also passes in 76.8 seconds."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/panel-0149.test.mjs AC4 retains its browser checks for manifest errors, icon loading and dimensions, and pixel comparison with icon.svg. The full suite passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "test/support/panel.mjs now bounds Chrome shutdown through ended() and HTTP requests through an overall deadline, alongside the existing browser startup, connection and DevTools deadlines. panel-0159 tests cover unanswered calls, missing pages, silent and trickling responses, and processes that never report exiting."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The ticket's 'Why it hung:' note explains the blank-page navigation race and unanswered manifest call in plain words. The delayed-page browser test exercises the corrected behaviour."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current /tmp/speck-0159-tests.txt reports 1353 passes, three skips and zero failures across 1356 tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/panel.mjs",
+        "issue": "Chrome shutdown previously awaited an exit event without a final deadline.",
+        "suggested_fix": "Implemented: close() uses ended(), which escalates to SIGKILL and then rejects with a named deadline error. A fake-process test exercises the missing-exit path.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/support/panel.mjs",
+        "issue": "HTTP requests previously limited inactivity rather than total duration.",
+        "suggested_fix": "Implemented: request() uses an overall deadline shared by raw(). A real trickling-response server verifies both helpers reject within their limits.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The fix waits for the actual panel page before requesting its manifest and adds deadlines to prevent indefinite waits. Both review findings are resolved, the original browser checks remain intact, and the full suite passes. Ready for the owner's merge decision."
   }
 }
 ```
