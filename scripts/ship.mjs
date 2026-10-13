@@ -42,7 +42,10 @@ function runTests(repo, cfg) {
   if (!cmd) throw new SpeckError('No test command is set, so speck can\'t check the tests pass before shipping. Set commands.test in speck/config.yml (for example `npm test`), commit it, then run this again.');
   // The run takes a turn, as `speck test` does, so ships and builds don't all run the suite at once. A passing result
   // recorded for the same code is reused, but never a failure (0112).
-  return testRun(repo, cfg, cmd, { reuse: 'pass', onStart: () => console.log(`Running tests: ${cmd}`) }).status === 0;
+  const r = testRun(repo, cfg, cmd, { reuse: 'pass', onStart: () => console.log(`Running tests: ${cmd}`) });
+  // A stall is no sign the change is broken, so it isn't checked against the base branch's tests (0152).
+  if (r.stalled) throw new SpeckError('The tests stalled, so speck ended them and nothing was shipped. The ticket is still approved: ship it again to run the tests again.');
+  return r.status === 0;
 }
 
 // The refusal for tests that failed on the ticket branch. It runs the tests on the base branch as it is, in a

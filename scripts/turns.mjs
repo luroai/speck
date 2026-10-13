@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.mjs';
 import { testRun } from './results.mjs';
 
@@ -36,21 +37,27 @@ const turnsDir = repo => sharedCacheDir(repo, 'tests');
 const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
 const parse = text => { try { const v = JSON.parse(text); return v && typeof v === 'object' ? v : {}; } catch { return {}; } };
 const alive = pid => Number.isInteger(pid) && pid > 0 && pidAlive(pid);
-// A run's files beside its claim: the pid of the shell running its tests, and the folder that shell makes just before
-// starting them.
+// A run's files beside its claim: the pid of the shell running its tests, the folder that shell makes just before
+// starting them, and the file saying how they ended.
 const runFiles = (dir, run) => (typeof run === 'string' && /^[0-9a-f-]+$/.test(run)
-  ? { pid: path.join(dir, `run.${run}.pid`), started: path.join(dir, `run.${run}.started`) } : null);
+  ? { pid: path.join(dir, `run.${run}.pid`), started: path.join(dir, `run.${run}.started`), ended: path.join(dir, `run.${run}.ended`) } : null);
 
-// The shell that runs the tests: it records its pid, makes the started folder, then becomes the test command's shell,
-// as `sh -c <cmd>` would run it. If the started folder is already there, a waiter has taken the turn over from this run,
-// so it stops without running anything.
-export const TEST_SHELL = 'printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && exec sh -c "$3"';
-// The same, keeping a copy of the output in file $4 (0112). Node ($6) runs the test command and writes how it ended to
-// file $5: its exit code, or `signal <name>` if a signal stopped it, which a shell's $? can't tell from an exit code.
-// The shell whose pid it records waits for the tests, so it's alive while they run.
-const ENDED = 'const r = require("child_process").spawnSync("sh", ["-c", process.argv[1]], { stdio: "inherit" });'
-  + ' require("fs").writeFileSync(process.argv[2], r.signal ? `signal ${r.signal}` : String(r.status)); process.exit(r.status ?? 1);';
-export const TEST_SHELL_KEPT = `printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && "$6" -e '${ENDED}' "$3" "$5" 2>&1 | tee "$4"`;
+// The shell that runs the tests: it records its pid, makes the started folder, then becomes node ($4) running stall.mjs
+// ($5), which runs the test command ($3), ends it if it stalls for $6 ms, and writes how it ended to file $7, copying its
+// output to file $8 if that isn't blank (0152). If the started folder is already there, a waiter has taken the turn
+// over from this run, so it stops without running anything.
+export const TEST_SHELL = 'printf %s "$$" > "$1" && mkdir "$2" 2>/dev/null && exec "$4" "$5" "$3" "$6" "$7" "$8"';
+const STALL_SCRIPT = fileURLToPath(new URL('./stall.mjs', import.meta.url));
+
+// How long a test run may write nothing before it's ended as stalled (0152), in ms. SPECK_STALL_MS sets it directly,
+// for speck's own tests, which can't wait minutes.
+export function testStallMs(cfg) {
+  const minutes = cfg.test_stall_minutes ?? 5;
+  if (!Number.isSafeInteger(minutes) || minutes < 1)
+    throw new SpeckError(`test_stall_minutes in speck/config.yml must be a whole number of 1 or more (got ${JSON.stringify(minutes)}). Fix it with \`speck config set test_stall_minutes 5\`, then run this again.`);
+  const ms = Number(process.env.SPECK_STALL_MS);
+  return Number.isSafeInteger(ms) && ms > 0 ? ms : minutes * 60 * 1000;
+}
 
 // Whether a claim on a turn is held: while the speck process that made it is alive, or the shell running its tests
 // is, so tests left running by a speck process that was killed still hold it. A claim that can't be read as one is
@@ -70,7 +77,7 @@ function held(dir, text) {
 const forget = (file, text, own = false) => {
   fs.rmSync(file, { force: true });
   const files = own && runFiles(path.dirname(file), parse(text).run);
-  if (files) { fs.rmSync(files.pid, { force: true }); fs.rmSync(files.started, { recursive: true, force: true }); }
+  if (files) { fs.rmSync(files.pid, { force: true }); fs.rmSync(files.started, { recursive: true, force: true }); fs.rmSync(files.ended, { force: true }); }
 };
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -116,17 +123,19 @@ function holders(dir, max) {
 
 // Runs the test command `cmd` in `repo` once this process has a turn, waiting for one if max_parallel_tests runs are
 // already going, and frees the turn afterwards. A turn left by a run that was killed is freed when someone next needs
-// it. onStart runs once the turn is ours. With `keep` ({ output, exit }: two file paths), the output, stdout and
-// stderr together, is copied to keep.output and the exit code written to keep.exit. Returns spawnSync's result.
-export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, keep = null) {
+// it. onStart runs once the turn is ours. A run that writes nothing for test_stall_minutes is ended (0152). With
+// `output` (a file path), the output, stdout and stderr together, is copied to it. Returns { status, signal, ended },
+// where ended is how the run ended: the exit code as text, `signal <name>`, `stalled`, or '' if it never said.
+export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '') {
   const max = maxParallelTests(cfg);
+  const stallMs = testStallMs(cfg);
   const dir = turnsDir(repo);
   const run = crypto.randomUUID();
   const text = JSON.stringify({ pid: process.pid, cwd: repo, run });
   // Files left by speck processes that were killed: claim files made while waiting, and old files of killed runs.
   const named = new Set(fs.readdirSync(dir).filter(f => f.endsWith('.lock')).map(f => parse(read(path.join(dir, f))).run));
   for (const f of fs.readdirSync(dir)) {
-    const m = f.match(/^turn\.(\d+)\..*\.tmp$/), r = f.match(/^run\.([0-9a-f-]+)\.(pid|started)$/);
+    const m = f.match(/^turn\.(\d+)\..*\.tmp$/), r = f.match(/^run\.([0-9a-f-]+)\.(pid|started|ended)$/);
     const old = () => { try { return Date.now() - fs.statSync(path.join(dir, f)).mtimeMs > DAY_MS; } catch { return false; } };
     if ((m && !alive(Number(m[1]))) || (r && !named.has(r[1]) && old())) fs.rmSync(path.join(dir, f), { recursive: true, force: true });
   }
@@ -148,11 +157,24 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, keep = null) 
   const files = runFiles(dir, run);
   try {
     onStart();
-    const shell = keep ? [TEST_SHELL_KEPT, 'sh', files.pid, files.started, cmd, keep.output, keep.exit, process.execPath] : [TEST_SHELL, 'sh', files.pid, files.started, cmd];
-    return sh('sh', ['-c', ...shell], { cwd: repo, stdio: 'inherit' });
+    const r = sh('sh', ['-c', TEST_SHELL, 'sh', files.pid, files.started, cmd, process.execPath, STALL_SCRIPT, String(stallMs), files.ended, output], { cwd: repo, stdio: 'inherit' });
+    const ended = (read(files.ended) || '').split('\n')[0].trim();
+    fs.rmSync(files.ended, { force: true });
+    return { status: ended === 'stalled' && r.status === 0 ? 1 : r.status, signal: r.signal, ended };
   } finally {
     if (read(lock) === text) forget(lock, text, true);
   }
+}
+
+// Runs the test command `cmd` in `repo` through stall.mjs, without a turn: { status, signal }, signal being the one
+// that stopped the tests, if any.
+function watched(repo, cmd, stallMs) {
+  const ended = path.join(turnsDir(repo), `run.${crypto.randomUUID()}.ended`);
+  try {
+    const r = sh(process.execPath, [STALL_SCRIPT, cmd, String(stallMs), ended], { cwd: repo, stdio: 'inherit' });
+    const how = (read(ended) || '').split('\n')[0].trim();
+    return { status: how === 'stalled' && r.status === 0 ? 1 : r.status, signal: r.signal || how.match(/^signal (\w+)$/)?.[1] || null };
+  } finally { fs.rmSync(ended, { force: true }); }
 }
 
 // A word the shell reads back as exactly `s`.
@@ -173,7 +195,7 @@ export function cmdTest(args) {
     if (!only.includes('{files}')) throw new SpeckError(`commands.test_files in speck/config.yml has no {files} to stand for the test files (got ${JSON.stringify(only)}). Fix it with \`speck config set commands.test_files "node --test {files}"\`, then run this again.`);
     // Relative to the repo root, where the command runs. One starting with - gets ./ so it isn't read as an option.
     const words = files.map(f => { const rel = path.relative(repo, path.resolve(f)) || '.'; return shellWord(rel.startsWith('-') ? `./${rel}` : rel); });
-    const r = sh('sh', ['-c', only.replaceAll('{files}', () => words.join(' '))], { cwd: repo, stdio: 'inherit' });
+    const r = watched(repo, only.replaceAll('{files}', () => words.join(' ')), testStallMs(cfg));
     if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
     return;
   }
