@@ -1,7 +1,7 @@
 ---
 id: "0147"
 title: Style the panel like the landing page                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T19:36:41.412Z"
 approved: "2026-10-13T19:45:45.196Z"
+finished: "2026-10-13T19:46:57.480Z"
 
 ---
 # 0147 · Style the panel like the landing page
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The landing page now has a picture of the control panel, styled to match the rest of the page: warm white paper, near-black ink and a vermilion accent. The real panel still uses the greener zen colours from 0134 and 0136, so it looks different from how the landing page shows it.
