@@ -1,7 +1,7 @@
 ---
 id: "0146"
 title: "Move a queued ticket back to Plan"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T08:35:19.411Z"
+approved: "2026-10-13T08:42:11.870Z"
 
 ---
 # 0146 · Move a queued ticket back to Plan
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once a ticket is set ready it waits in the Build queue, and the panel has no way to take it back. To change their mind, the user has to run `speck set <id> status draft` and commit it by hand, or Auto-build may build a ticket they no longer want next.
@@ -52,9 +53,14 @@ To see it, open the panel, open a waiting ticket in the Build queue and click Ba
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 197,816
+- Elapsed since build started: 7 min
+- Changed lines: 98 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. The reviewer raised no findings.
 
