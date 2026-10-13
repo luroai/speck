@@ -41,6 +41,7 @@ An opened draft ticket, idea or inbox note in Plan shows its Markdown formatted,
 - Draft Problem and Outcome use `part()`, which puts the text in a plain `<p>`; ideas and inbox notes use a `<pre class="note">` (`ideaItem`, `inboxItem` in `templates/panel.html`). The pane uses `mdPart()` with `markdown()` and `mdBlocks()`.
 - Failing before this build: none
 - Self-check: no changes
+- Older tests changed: 0039 and 0040 found an idea's note by its `pre` tag or its first text node, so they now find its paragraph (AC5). 0061's out-of-scope check that the short view in the Tickets list stays plain text asserts the opposite of AC1, so it now checks the Markdown is formatted; AC5's exception doesn't name it, but no build can meet AC1 and keep it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
