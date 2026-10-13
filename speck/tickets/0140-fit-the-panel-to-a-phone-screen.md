@@ -1,7 +1,7 @@
 ---
 id: "0140"
 title: "Fit the panel to a phone screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T06:30:00.309Z"
 ---
 # 0140 · Fit the panel to a phone screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel is laid out for a desktop screen only. On a phone, Plan and Build are squeezed into two narrow columns side by side, the header's labels wrap one word per line and some text runs off the edge. The user checks progress and starts builds from their phone on the move, so this is a real, regular use.
@@ -59,3 +59,75 @@ On a phone-width screen the panel shows one readable column, with every control 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5926ec37c3d26b3564f9277df5e9098c4c6db20b",
+    "thread_id": "01a133fa-b96e-7702-a734-e648a9a90364",
+    "seconds": 51,
+    "usage": {
+      "input_tokens": 149499,
+      "cached_input_tokens": 104320,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 918,
+      "reasoning_output_tokens": 95
+    },
+    "saved_at": "2026-10-13T06:38:02.346Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html mobile rules prevent overflow; both light and dark AC1 browser tests in test/panel-0140.test.mjs passed, covering open lists, menus, full tickets and review packs."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Mobile main uses one grid column. Passing AC2 browser tests verify section order and full width at 375/699 px, and unchanged computed styles and geometry at 700/1280 px."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 browser test verifies all required header parts are visible, unclipped and on one line at 375 px."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "templates/panel.html:335 gives shipped title links min-height:44px but no minimum width. fullLink() accepts short titles such as 'A', leaving their clickable width below 44 px. The passing AC4 tests only use longer shipped titles."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0140-tests.txt: 1251 tests, 1248 passed, zero failed and three skipped; all 11 ticket-specific tests passed. Existing tests were not changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:335",
+        "issue": "A shipped ticket with a short title, such as 'A', has a title link narrower than the required 44 px tap area. Its containing table cell does not handle clicks, so the surrounding space does not enlarge the control.",
+        "suggested_fix": "Add min-width:44px to the mobile title-link rule and include a one-character shipped title in the AC4 browser fixture to verify its actual clickable dimensions.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel fits the tested phone screen in both themes, stacks sections correctly and preserves the desktop layout. The full suite has no failures. One tap-target gap needs fixing: short shipped ticket titles remain too narrow to tap reliably."
+  }
+}
+```
+
+</details>

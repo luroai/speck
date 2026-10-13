@@ -24,7 +24,7 @@ const STATE = {
     T('0205', 'blocked', { started: ago(30), blocked_question: `Which one? ${LONG}`, session: { id: '0e5c1d5a-7f3e-4c4b-9b8e-2f9d1c3a4b5c', cwd: '/home/someone/projects/speck.worktrees/speck/0205-blocked' } }),
     T('0206', 'approved', { title: LONG, started: ago(40), approved: ago(30), rounds: [round(1, 1000), round(2, 2000)], ...exitOf(`speck ship refused: ${LONG}`) }),
     T('0207', 'ready', { after: ['0201'], waiting_on: ['0201'] }),
-    ...[1, 2, 3, 4, 5, 6].map(n => T(`010${n}`, 'done', { title: n === 1 ? LONG : `Shipped ${n}`, type: n === 2 ? 'fix' : '', started: ago(200 + n * 10), approved: ago(190 + n * 10),
+    ...[1, 2, 3, 4, 5, 6].map(n => T(`010${n}`, 'done', { title: n === 1 ? LONG : n === 3 ? 'A' : `Shipped ${n}`, type: n === 2 ? 'fix' : '', started: ago(200 + n * 10), approved: ago(190 + n * 10),
       finished: ago(180 + n * 10), rounds: [round(1, 123456)], builder_tokens: 1234567, builder_cost_usd: 12.34 })),
   ],
   ideas: [idea('2026-10-13-an-idea', 'new'), idea('2026-10-13-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0139\n\nSome text.\n')],
