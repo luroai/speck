@@ -1,8 +1,10 @@
 # speck
 
-**Small tickets. Independent review. You ship.**
+**Your judgement, at agent speed.**
 
-speck is a lightweight, repo-native workflow for building software with AI coding agents. You decide what gets built and what ships. An agent builds each ticket, a second, independent agent reviews it until it's right, and speck keeps the whole record in your repo.
+speck is an agentic coding workflow that puts your judgement first. You decide what gets built and what ships. An agent builds each ticket, a second, independent agent reviews it until it's right, and speck keeps the whole record in your repo.
+
+Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship. The agents do the typing; you do the steering.
 
 It's for product-minded builders who can write a good ticket but don't want to review code line by line: you set speck up by talking to your agent, write tickets, set them ready and walk away.
 
@@ -10,14 +12,16 @@ It's for product-minded builders who can write a good ticket but don't want to r
 idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, or auto-ship]
 ```
 
+- **You hold the gates.** You decide what's ready and what ships. Agents never merge or ship unless you run `/speck-ship` or click the Ship button in the panel, or you turn on `auto_ship` in `speck/config.yml` to ship whatever the reviewer approves.
+- **When it's stuck, it asks.** A build that can't decide something for you stops with one plain question and waits for your answer, rather than guessing.
 - **Tickets, not specifications.** Each change is a small numbered ticket in your repo, sized for one agent in one sitting. speck checks the size rules and makes you split anything bigger.
 - **Adversarial review built in.** The building agent (Claude Code by default) starts an independent reviewer (Codex by default) and they take turns: the builder fixes or disputes each finding, and the reviewer re-checks in the same session. It ends when the reviewer approves or a question comes back to you.
 - **One build at a time, out of your way.** `speck run` builds your ready tickets one after another, each in its own git worktree, so you keep writing ideas and tickets while it works. Running builds side by side caused more trouble than it saved, so speck doesn't.
-- **You hold the gates.** You decide what's ready and what ships. Agents never merge or ship unless you run `/speck-ship` or click the Ship button in the panel, or you turn on `auto_ship` in `speck/config.yml` to ship whatever the reviewer approves.
 - **The code is the record.** The code, the tickets and the tests say what the product does. Each ticket keeps its review rounds and its actuals: time, review rounds and tokens.
 - **No GitHub needed.** Everything happens in your local repo. Shipping merges the approved branch into `main` and pushes it if you have a remote.
 
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
+
 
 > Status: 0.3.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
@@ -143,9 +147,11 @@ speck/
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **104 tickets shipped** and 13 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
-- **12 minutes** median from a build starting to its ticket shipping.
-- **2 review rounds** median. 46 tickets were approved in the first round.
+- **131 tickets shipped** and 13 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **10 minutes** median from a build starting to its ticket shipping.
+- **1 review round** median. 67 tickets were approved in the first round.
+
+That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
 ## Design
 
