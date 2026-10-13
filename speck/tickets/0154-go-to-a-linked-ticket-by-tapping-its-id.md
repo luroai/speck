@@ -1,7 +1,7 @@
 ---
 id: "0154"
 title: "Go to a linked ticket by tapping its id"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-13
 ---
 # 0154 · Go to a linked ticket by tapping its id
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Hovering over a ticket in Plan or the Build queue highlights the tickets linked to it through `after:` and dims the rest. On a phone there's no hover: a tap sets the highlight off and it stays stuck until the next tap elsewhere, which is confusing and gets in the way of opening tickets.
