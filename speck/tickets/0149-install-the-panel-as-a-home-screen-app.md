@@ -20,14 +20,14 @@ created: 2026-10-13
 **Status:** 📝 draft
 
 ## Problem
-The user opens the panel on their phone many times a day, through a private tunnel. Added to the home screen today, it has no proper name or icon and opens with the browser's address bar, and with a panel per project the icons can't be told apart.
+The user opens the panel on their phone many times a day, through a private tunnel. Added to the home screen today, it has no proper name or icon and opens with the browser's address bar, and it doesn't carry speck's logo.
 
 ## Outcome
-The panel can be added to a phone's home screen as an app: it opens full screen, with speck's icon and a name that says which project it is.
+The panel can be added to a phone's home screen as an app: it opens full screen, named "speck", with the speck logo as its icon.
 
 ## Acceptance criteria
-1. The panel serves a web app manifest at `/manifest.webmanifest` (content type `application/manifest+json`) with `name` and `short_name` that include the project's folder name (for example "speck · speck-site" and "speck-site"), `start_url` and `scope` of `/`, `display` of `standalone`, `background_color` and `theme_color` from the panel's colours, and PNG icons at 192 × 192 and 512 × 512.
-2. The page links the manifest with `crossorigin="use-credentials"`, so a browser fetches it with the same login cookies as the page, and also has an `apple-touch-icon` (180 × 180 PNG), `apple-mobile-web-app-capable`, `apple-mobile-web-app-title` (the project's folder name) and a `theme-color` meta tag. The browser tab gets speck's icon instead of a blank one.
+1. The panel serves a web app manifest at `/manifest.webmanifest` (content type `application/manifest+json`) with `name` and `short_name` both "speck", `start_url` and `scope` of `/`, `display` of `standalone`, `background_color` and `theme_color` from the panel's colours, and PNG icons at 192 × 192 and 512 × 512.
+2. The page links the manifest with `crossorigin="use-credentials"`, so a browser fetches it with the same login cookies as the page, and also has an `apple-touch-icon` (180 × 180 PNG), `apple-mobile-web-app-capable`, `apple-mobile-web-app-title` ("speck") and a `theme-color` meta tag. The browser tab gets speck's icon instead of a blank one.
 3. The manifest and icons are served under the same address checks as the page: from `127.0.0.1`, `localhost` and the `--url` address (0148), and refused with 403 from any other Host. Neither contains the panel's token.
 4. In a browser, the page reports no manifest errors, and the manifest's icons load.
 5. No test that passed before this change fails.
@@ -40,7 +40,11 @@ The panel can be added to a phone's home screen as an app: it opens full screen,
 ## Notes
 - Cloudflare Access only lets requests through with its login cookie, and browsers fetch a manifest without cookies unless it's linked with `crossorigin="use-credentials"`; without it the manifest request gets Access's login page and the install quietly falls back.
 - On iPhone, a home-screen app keeps its own cookies, so it signs in to Access once by itself.
-- The icon follows speck's mark: the ensō circle with the red dot, as in the landing site's favicon.
+- The logo is the speck mark from the landing site's header: the `<symbol id="mark">` in `speck-site/site/index.html` (luroai/speck-site), three ink strokes (the open circle and two small arcs above it) and a red dot. Its paths, at viewBox 0 0 64 64:
+  - `M14.5 22.5 A21.5 21.5 0 1 0 22 16.2`, `M12.6 19.8 a5.2 5.2 0 0 1 8.2 -5.6` and `M43.2 14.2 a5.2 5.2 0 0 1 8.2 5.6`: stroke `#141413`, width 1.4, round caps, no fill
+  - `circle cx=32 cy=38 r=2.3`: fill `#b0412e`
+- The icons draw that mark centred on a solid `#faf9f5` background (no transparency, which iOS shows as black), with the strokes thick enough to read at 180 px. Commit the source SVG to the repo alongside the PNGs.
+- Every project's panel is called "speck", so several projects on one home screen share a name; that's accepted.
 - Unverified: whether current iOS uses the manifest's icons or only `apple-touch-icon` (both are given, so either works).
 
 ## In plain words
