@@ -14,7 +14,7 @@ const headings = (p, node) => p.all(node).filter(n => n.tagName === 'h4').map(n 
 const named = (p, node, text) => p.all(node).find(n => n.tagName === 'button' && n.textContent === text);
 const fullOf = (p, node) => named(p, node, 'Full ticket');
 // 0137: a Shipped row opens the full ticket from its title, a link, rather than a Full ticket button.
-const titleOf = (p, row) => p.all(row).find(n => n.tagName === 'a');
+const titleOf = (p, row) => p.all(row).find(n => n.className === 'title-link'); // a link until 0141
 const itemOf = (p, id) => items(p).find(n => n.textContent.startsWith(id));
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const shipOf = (p, id) => shippedRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
@@ -289,8 +289,8 @@ test('0063 AC1-AC4: in a real browser, Full ticket from the queue and the title 
     assert.ok(await isHidden(), 'Escape closes it');
     assert.equal(await b.js(`(${row}).querySelector('.log').scrollTop`), scrolled, 'the log is where it was');
     assert.ok(await b.js(`(${row}).classList.contains('open')`), 'and the ticket is still open');
-    await b.until(`!!document.querySelector('#shipped tr a.title-link')`, 'the Shipped row\'s title link (0137)');
-    await b.js(`document.querySelector('#shipped tr a.title-link').click()`);
+    await b.until(`!!document.querySelector('#shipped tr .title-link')`, 'the Shipped row\'s title (0137, a link until 0141)');
+    await b.js(`document.querySelector('#shipped tr .title-link').click()`);
     await b.until(`!document.getElementById('full-ticket').hidden`, 'the pane from Shipped');
     assert.ok(await b.js(`document.querySelector('#full-ticket .id').textContent === '0003' && document.getElementById('full-ticket').textContent.includes('Watching a build.')`));
   } finally {

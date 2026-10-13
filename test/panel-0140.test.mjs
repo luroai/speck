@@ -265,7 +265,7 @@ for (const width of [375, 699]) {
       await check('the review pack pane');
       // The controls the ticket names were all among those checked.
       for (const c of ['button.set-ready', 'button.on', 'button.toggle-build.pause', 'button.toggle-build.play', 'button.stop-build', 'button.full-open',
-        'button.ship', 'button.toggle.tickets.on', 'button.theme', 'span.tag.p1.pick', 'button.copy', 'button.close', 'a.title-link', 'summary.']) {
+        'button.ship', 'button.toggle.tickets.on', 'button.theme', 'span.tag.p1.pick', 'button.copy', 'button.close', 'span.title-link', 'summary.']) {
         assert.ok(seen.has(c), `${c} was checked (saw ${[...seen].join(', ')})`);
       }
       assert.ok([...seen].some(c => c === 'button.'), "speck run's on/off button was checked");

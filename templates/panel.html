@@ -944,14 +944,21 @@ function fullButton(t) {
   });
   return b;
 }
-// 0137: a Shipped row's title, as a link that opens the full ticket as Full ticket does. It goes to no other address.
+// 0137: a Shipped row's title, which opens the full ticket as Full ticket does.
+// 0141: not a link, so no browser can follow it to another address or reload the page. Tab, Enter and Space work as on a button.
 function fullLink(t) {
-  const a = el('a', 'title-link', (t.title || '').trim() || `Ticket ${t.id}`); // a blank title would leave nothing to click
-  a.href = '#';
+  const a = el('span', 'title-link', (t.title || '').trim() || `Ticket ${t.id}`); // a blank title would leave nothing to click
+  a.tabIndex = 0;
+  a.setAttribute('role', 'button');
   a.addEventListener('click', e => {
-    e.preventDefault();
     e.stopPropagation();
     openFull(t);
+  });
+  a.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault(); // Space would scroll the page
+    e.stopPropagation();
+    a.click(); // a click, as a button's keys make one, so an open priority menu only closes
   });
   return a;
 }
