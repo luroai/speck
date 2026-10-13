@@ -1,7 +1,7 @@
 ---
 id: "0141"
 title: "Keep a shipped ticket open when its title is tapped on a phone"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T07:52:43.284Z"
 ---
 # 0141 · Keep a shipped ticket open when its title is tapped on a phone
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In cptr's built-in browser on an iPhone, tapping a shipped ticket's title opens the full ticket for a moment, then the page reloads to the top and the ticket closes. The title is an `<a href="#">` link (0137), and that browser follows the link itself even though the page cancels it. The Review pack button in the same row works, because it's a button.
@@ -46,7 +46,7 @@ Tapping a shipped ticket's title opens the full ticket and it stays open, in any
 - Old tests that found the title as an `<a>` (0050, 0063, 0132, 0137, 0140) now find it by its `title-link` class; 0137's checks of `href="#"`, `preventDefault()` and the `link` role now check no address, `tabIndex` 0 and the `button` role.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Tapping a shipped ticket's title on a phone now opens the full ticket and keeps it open, instead of the page jumping back to the top and closing it. The title looks and behaves as before on a computer: same colour, underline on hover, and it can still be reached with Tab and opened with Enter or Space. To see it, open the panel on a phone, tap a title in the Shipped list, and check the ticket stays open. Worth watching: the fix couldn't be tried on the iPhone browser where the problem was reported, only in Chrome set to a phone screen, so it's worth one tap on the real phone to confirm.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,67 @@ Tapping a shipped ticket's title opens the full ticket and it stays open, in any
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Known limit: checked only in Chromium with phone and touch emulation, as WebKit can't run on the build machine; confirm once on the iPhone browser from the report.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d57bda62b7f7bdd2b2e61b6f33f966e91e76a8ab",
+    "thread_id": "01a13444-b9cd-7f13-b598-b63b325a398e",
+    "seconds": 62,
+    "usage": {
+      "input_tokens": 183767,
+      "cached_input_tokens": 141056,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 851,
+      "reasoning_output_tokens": 25
+    },
+    "saved_at": "2026-10-13T07:59:03.807Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html fullLink creates a span without href. panel-0141 AC1 and the passing real-browser test verify the element and absence of an address."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "fullLink calls openFull on click. The passing panel-0141 phone-sized browser test dispatches touch events and verifies the correct pane stays open, unchanged scroll position and URL, and no reload."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Existing title-link CSS remains unchanged. Passing panel-0141 AC3 checks accent colour, hover underline and pointer cursor; its real-browser test measures the 44 px phone tap area."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "fullLink supplies tabIndex 0, button role and Enter/Space handlers that prevent scrolling. The passing real-browser test exercises Tab and both activation keys and checks the accessibility tree for the ticket title."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0141-tests.txt: 1257 tests, 1254 passed, zero failed, three skipped. Existing test changes adapt link selectors and semantics without removing behaviour checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Shipped ticket titles now open the full ticket without pointing to an address, removing the reported navigation trigger. Appearance, phone tap size and keyboard accessibility are preserved. Browser tests passed and the full suite has no failures. The original iPhone browser was unavailable, but the fix removes the link behaviour it could follow."
+  }
+}
+```
+
+</details>
