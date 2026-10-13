@@ -54,6 +54,8 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 - **Build:** the queue, with each build's log as it runs. Turn `speck run` on or off from the header. Stop a build, see which builds are paused (`speck pause <id>` and `speck play <id>` hold and carry them on), and see blocked tickets with their questions and how to resume them. Read an approved ticket's review pack, and ship it from there with its Ship button, which asks first and does what `/speck-ship` does.
 - **Shipped:** what's shipped and when, with the median time, review rounds and tokens per ticket, for the reviewer and the builder.
 
+To use the panel from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with that address: `node .speck/scripts/speck.mjs panel --url https://<hostname>`. The panel then also serves that one address and accepts its button presses. Never expose it openly: anyone who can load the page can start builds and ship.
+
 ## Requirements
 
 - macOS or Linux

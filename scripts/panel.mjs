@@ -23,6 +23,23 @@ function panelPort(args) {
   return +v;
 }
 
+// The one extra address `--url` gives, for reaching the panel through a private tunnel: { origin, host } with its
+// https origin and its Host header, or null without --url. Only https://<hostname>, with an optional trailing /.
+function panelUrl(args) {
+  const at = args.flatMap((a, i) => (a === '--url' || a.startsWith('--url=') ? [i] : []));
+  if (!at.length) return null;
+  const example = 'for example --url https://speck.example.ts.net';
+  if (at.length > 1) throw new SpeckError(`Give --url once: the panel serves one extra address (${example}).`);
+  const i = at[0];
+  const v = args[i].startsWith('--url=') ? args[i].slice(6) : args[i + 1];
+  const m = /^https:\/\/([a-z0-9.-]+)\/?$/i.exec(v ?? '');
+  let host = null;
+  try { if (m) host = new URL(v).hostname; } catch { /* not an address */ }
+  if (!host || host !== m[1].toLowerCase() || /^\.|\.\.|\.$/.test(host))
+    throw new SpeckError(`--url must be an https:// address with only a hostname, and at most a / after it: no http://, port, path, query or username (got "${v ?? ''}"). Give it as the address your private tunnel serves, ${example}`);
+  return { origin: `https://${host}`, host };
+}
+
 // `speck set`'s own checks, as the panel's 422 response, or null when they pass.
 function setRefusal(t, cfg, key, value) {
   try { checkSetValue(key, value); checkSetTicket(t, cfg, key, value); return null; }
@@ -231,6 +248,7 @@ function panelRunOff(repo) {
 export function cmdPanel(args) {
   findRepoRoot(); // plain errors before anything starts
   panelPort(args);
+  panelUrl(args);
   // Made once, when `speck panel` starts, and passed down through every restart, so an open page's token keeps working.
   const { child } = startPanelServer(args, crypto.randomBytes(32).toString('hex'), null, 'pipe');
   // Each server process writes its exit code to this pipe as it exits, and the pipe closes once they all have.
@@ -304,7 +322,7 @@ export async function panelServer() {
   life.resume();
 
   const repo = findRepoRoot();
-  const port = panelPort(args);
+  const port = panelPort(args), url = panelUrl(args);
   const cfg = loadConfig(repo);
   const repoName = htmlEscape(path.basename(worktreeList(repo)[0]?.path || repo)), base = htmlEscape(cfg.base_branch);
   let restartError = null; // the last failed restart, shown on the page until a restart works or the code is put back
@@ -314,9 +332,10 @@ export async function panelServer() {
   const pageFile = path.join(TEMPLATES, 'panel.html');
   const page = () => fs.readFileSync(pageFile, 'utf8')
     .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token);
-  const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`]);
+  // With --url, its one address too: the tunnel in front of the panel sends its hostname as the Host, with no port.
+  const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`, ...(url ? [url.origin] : [])]);
   // Only these Host headers are served, so a web page on another name that resolves here (DNS rebinding) gets nothing.
-  const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
+  const hosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`, ...(url ? [url.host] : [])]);
   const send = (res, status, type, body) => {
     res.writeHead(status, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
       ...(status === 405 ? { Allow: 'GET' } : {}), ...(stopping ? { Connection: 'close' } : {}) });
@@ -421,7 +440,7 @@ export async function panelServer() {
     server.listen(where, resolve);
   });
   server.on('error', e => console.error(`speck panel: ${e.message}`));
-  if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/ (press Ctrl+C to stop)`);
+  if (!handover) console.log(`speck panel: http://127.0.0.1:${port}/${url ? ` and ${url.origin}/` : ''} (press Ctrl+C to stop)`);
   process.send('ready');
 
   // Stops taking connections, closes the idle ones at once and the rest once answered (each answer then says
