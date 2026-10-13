@@ -1,7 +1,7 @@
 ---
 id: "0149"
 title: "Install the panel as a home-screen app"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T20:35:06.447Z"
 ---
 # 0149 · Install the panel as a home-screen app
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The user opens the panel on their phone many times a day, through a private tunnel. Added to the home screen today, it has no proper name or icon and opens with the browser's address bar, and it doesn't carry speck's logo.
@@ -52,7 +52,11 @@ The panel can be added to a phone's home screen as an app: it opens full screen,
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel can now be added to a phone's home screen as an app. It opens full screen without the browser's address bar, is called "speck", and has speck's logo (the open ink circle with a red dot) as its icon. The browser tab shows the logo too, instead of a blank icon.
+
+To see it, open the panel on your phone through your private address, then use "Add to Home Screen" (Safari's share menu, or Chrome's menu), and open it from the new icon. On iPhone, the home-screen app keeps its own login, so it asks you to sign in to your tunnel once by itself.
+
+Worth keeping an eye on: the colour of the phone's top bar follows the phone's own light or dark setting, not the look chosen with the panel's button. Every project's panel is called "speck", so several on one home screen share a name.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,3 +66,69 @@ The panel can be added to a phone's home screen as an app: it opens full screen,
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The phone's top-bar colour follows the system setting, not the panel's light/dark button: speck/ideas/2026-10-13-match-the-phone-s-top-bar-to-the-panel-s-chosen-look.md.
+- Known limit: the icons are served with `Cache-Control: no-store`, like every panel response; phones keep their own copy once added, so this costs nothing in practice.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a7d8b931c4bf814ac817417a148c04f1b7422592",
+    "thread_id": "01a136fe-de8f-7a81-a5d6-11243f21457d",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 107661,
+      "cached_input_tokens": 66432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 810,
+      "reasoning_output_tokens": 21
+    },
+    "saved_at": "2026-10-13T20:41:04.910Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/icons/manifest.webmanifest supplies all required fields and panel colours. scripts/panel.mjs panelServer serves the correct content type. Three passing AC1 tests verify the served manifest, PNG dimensions and opaque logo artwork."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html includes the credentialed manifest link, Apple metadata, theme colours and favicon links. Both AC2 tests passed, checking the tags and served icons, including the 180 × 180 PNG."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelServer checks Host before routing any assets and serves only explicitly listed filenames. Passing AC3 tests exercise permitted and forbidden Hosts, absence of the panel token, GET restrictions and missing-file handling."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The AC4 browser test passed without being skipped. It uses Chrome's Page.getAppManifest to check for errors, loads the manifest and page icons as images, and compares the PNG artwork with Chrome's SVG rendering."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0149-tests.txt: 1,310 tests, 1,307 passed, zero failed and three unrelated skips. Existing tests and shared panel helpers were not changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now has the name, logo and browser metadata needed for home-screen installation as speck. Server and browser tests pass, and the new assets retain the existing address restrictions without exposing the panel token. No blocking issues found."
+  }
+}
+```
+
+</details>
