@@ -2,7 +2,7 @@
 id: "0152"
 title: "End a test run that stalls"                # one outcome, no "and"
 status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
+priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 type: bug                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
