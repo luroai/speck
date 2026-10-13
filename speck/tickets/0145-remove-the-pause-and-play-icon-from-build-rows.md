@@ -41,6 +41,7 @@ Build queue rows no longer have a pause or play icon; the Stop build button and 
 ## Notes
 - The icon is `toggleIcon()` in `templates/panel.html`, and its requests are handled by `panelPausePlay()` in `scripts/panel.mjs`.
 - The README's panel section and `docs/brief.md`'s `speck panel` row mention pausing and playing from the panel; they need updating to match, in British English.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
