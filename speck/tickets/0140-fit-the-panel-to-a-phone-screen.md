@@ -1,7 +1,7 @@
 ---
 id: "0140"
 title: "Fit the panel to a phone screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T06:30:00.309Z"
+approved: "2026-10-13T06:40:18.752Z"
 
 ---
 # 0140 · Fit the panel to a phone screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel is laid out for a desktop screen only. On a phone, Plan and Build are squeezed into two narrow columns side by side, the header's labels wrap one word per line and some text runs off the edge. The user checks progress and starts builds from their phone on the move, so this is a real, regular use.
@@ -57,9 +58,15 @@ To see it, open the panel on your phone, or make your browser window narrow. Wor
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A shipped ticket with a short title, such as 'A', has a title link narrower than the required 44 px tap area.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 399,736
+- Elapsed since build started: 10 min
+- Changed lines: 56 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox note):
 - A repo name too long for a phone screen is cut short with an ellipsis in the header.
