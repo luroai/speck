@@ -43,6 +43,7 @@ On a phone-width screen the panel shows one readable column, with every control 
 - The panel's browser tests already run in Chromium through `test/support/panel.mjs`, so these criteria can be checked at a 375 px viewport.
 - 44 px follows Apple's minimum recommended tap target (44 × 44 pt, Human Interface Guidelines).
 - Reported 2026-10-13 from a screenshot on an iPhone, viewing the panel in the Claude app's browser.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
