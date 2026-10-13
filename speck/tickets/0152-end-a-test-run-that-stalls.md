@@ -41,6 +41,7 @@ A test run that stops making progress is ended after a set time, and speck repor
 - Tests run through `runTestsInTurn` in `scripts/turns.mjs`, used by `speck test`, builds and `runTests` in `scripts/ship.mjs`.
 - Evidence: `speck/.cache/results/run.85b8dba7-….out` stops at test 714 at 20:42:05; the build log shows `speck ship 0149 --auto` killed at 20:51:20 with exit 143.
 - No output for minutes is a better sign of a hang than total time: a slow suite still writes a line per test.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
