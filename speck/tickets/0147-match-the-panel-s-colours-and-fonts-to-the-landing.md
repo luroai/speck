@@ -45,6 +45,7 @@ The real panel uses the landing page's colours and font names, in both light and
 - The palette was shown to the user as a mockup of the live panel (local, in `mockups/landing-palette/`, not in git).
 - To undo it, revert the ship commit.
 - Checked 2026-10-13: the colours and fonts, read from `site/index.html` in the local speck-site project.
+- Failing before this build: none
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
