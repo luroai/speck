@@ -41,6 +41,7 @@ A ticket waiting in the Build queue has a Back to Plan button that returns it to
 - Set ready is handled in `scripts/panel.mjs` (`POST /api/tickets/<id>/ready`), which commits the ticket file alone with `commitTicketOnly`. This is the same in reverse.
 - A ticket that waits on others (`after:`) is still `ready`, so it gets the button too.
 - Failing before this build: none
+- Self-check: the server read only this checkout's copy, which stays `ready` while the ticket is built in its own worktree or just launched by `speck run`, so it now refuses those too; the new button gets the 44 px touch size on small screens.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

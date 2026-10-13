@@ -10,7 +10,7 @@ import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkS
 import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 
-// ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
+// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship and the speck run switch) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -51,6 +51,36 @@ function panelSetReady(repo, id) {
   const commit = commitTicketOnly(repo, t.file, t.raw, `speck(${pad}): ready`);
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
+  return { status: 200, body: { ok: true, id: pad } };
+}
+
+// The panel's Back to Plan button: the reverse of Set ready. Sets a ready ticket back to draft, as
+// `speck set <id> status draft` does, and commits only that ticket, so `speck run` no longer starts it. Every refusal
+// comes before the first write.
+function panelBackToPlan(repo, id) {
+  const cfg = loadConfig(repo);
+  let t;
+  try { t = findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
+  const pad = t.fm.id;
+  // As the panel shows it: a ticket being built is read from its own worktree, where its status has moved on, and a
+  // build speck run has launched may not have set it building yet.
+  const shown = statusData(repo).tickets.find(x => padId(x.id) === padId(pad)) || { status: t.fm.status };
+  if (shown.status !== 'ready' || t.fm.status !== 'ready')
+    return { status: 409, body: { error: `Ticket ${pad} is "${shown.status !== 'ready' ? shown.status : t.fm.status}", not waiting in the queue, so it can't go back to Plan from here.` } };
+  if (shown.build_running)
+    return { status: 409, body: { error: `speck run has just started building ticket ${pad}, so it can't go back to Plan. Once it shows as building, Stop build ends it.` } };
+  if (shown.worktree)
+    return { status: 409, body: { error: `Ticket ${pad} is being started in its own worktree, ${shown.worktree}, so it can't go back to Plan from here.` } };
+  const refused = setRefusal(t, cfg, 'status', 'draft');
+  if (refused) return refused;
+  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
+  if (branch !== cfg.base_branch)
+    return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the ticket would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
+  const rel = path.relative(repo, t.file), raw = t.raw;
+  const from = setTicketField(repo, t, 'status', 'draft');
+  const commit = commitTicketOnly(repo, t.file, raw, `speck(${pad}): draft`, from);
+  if (commit.status !== 0)
+    return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still ready:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   return { status: 200, body: { ok: true, id: pad } };
 }
 
@@ -253,7 +283,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -301,6 +331,15 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelSetReady(repo, ready[1]);
+        return send(res, out.status, 'application/json', JSON.stringify(out.body));
+      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    }
+    const draft = where.match(/^\/api\/tickets\/(\d{1,4})\/draft$/);
+    if (req.method === 'POST' && draft) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      try {
+        const out = panelBackToPlan(repo, draft[1]);
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
