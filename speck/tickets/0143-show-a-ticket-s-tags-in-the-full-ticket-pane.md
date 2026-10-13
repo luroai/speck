@@ -41,6 +41,7 @@ The full ticket pane shows a ticket's priority, size, risk and any bug or fix ta
 - The pane's top row is built in `fullTicket()` in `templates/panel.html`; the lists' tags come from `tags()` and `typeTag()`.
 - Checked 2026-10-13: `/api/state` already has `priority`, `size`, `risk` and `type` for done tickets (live panel, ticket 0079).
 - Failing before this build: none
+- Self-check: a change to only the tags now replaces just the tags, keeping the rest of the pane (and any selected text) in place, as the readiness list does; added a test for tags appearing and disappearing on a refresh.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
