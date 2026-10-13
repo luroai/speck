@@ -20,7 +20,7 @@ async function within(ms, check, what) {
   throw new Error(`not within ${ms} ms: ${what}`);
 }
 
-const PANEL = ['cmdPanel', 'startPanelServer', 'panelServer', 'panelSetReady', 'panelSetPriority', 'panelPausePlay', 'panelStop', 'panelLog', 'panelCode'];
+const PANEL = ['cmdPanel', 'startPanelServer', 'panelServer', 'panelSetReady', 'panelSetPriority', 'panelStop', 'panelLog', 'panelCode'];
 const RUN = ['cmdRun', 'cmdPause', 'cmdPlay', 'cmdStop', 'takeRunLock', 'pauseBuild', 'playBuild', 'stopBuild'];
 
 test('0018 AC1: the panel is in scripts/panel.mjs, run, pause, play and stop in scripts/run.mjs, and speck.mjs is 600 lines shorter', () => {

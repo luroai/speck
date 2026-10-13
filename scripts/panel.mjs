@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, runsOf, commitTicketOnly } from './speck.mjs';
-import { pauseBuild, playBuild, stopBuild, runState, runsDir, pidAlive } from './run.mjs';
+import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 
 // ---------- panel (a view in the browser, with two writes: Set ready and a draft's priority) ----------
@@ -52,14 +52,6 @@ function panelSetReady(repo, id) {
   if (commit.status !== 0)
     return { status: 500, body: { error: `Couldn't commit ${rel}, so it's still a draft:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   return { status: 200, body: { ok: true, id: pad } };
-}
-
-// The panel's pause and play icon: pauses or plays a build exactly as `speck pause <id>` or `speck play <id>` does,
-// refusing for the same reasons with the same words.
-function panelPausePlay(repo, id, what) {
-  try { findTicket(repo, id); } catch (e) { return { status: 404, body: { error: e.message } }; }
-  try { return { status: 200, body: { ok: true, message: (what === 'pause' ? pauseBuild : playBuild)(repo, [id]) } }; }
-  catch (e) { if (e instanceof SpeckError) return { status: 409, body: { error: e.message } }; throw e; }
 }
 
 // The panel's Stop build button: stops a build exactly as `speck stop <id>` does, refusing for the same reasons with the
@@ -261,7 +253,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/pause, /play or /stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -321,12 +313,12 @@ export async function panelServer() {
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
-    const toggle = where.match(/^\/api\/tickets\/(\d{1,4})\/(pause|play|stop)$/);
-    if (req.method === 'POST' && toggle) {
+    const stopPath = where.match(/^\/api\/tickets\/(\d{1,4})\/stop$/);
+    if (req.method === 'POST' && stopPath) {
       if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
-        const out = toggle[2] === 'stop' ? panelStop(repo, toggle[1]) : panelPausePlay(repo, toggle[1], toggle[2]);
+        const out = panelStop(repo, stopPath[1]);
         return send(res, out.status, 'application/json', JSON.stringify(out.body));
       } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
     }
@@ -353,7 +345,9 @@ export async function panelServer() {
         .then(out => { switching = false; send(res, out.status, 'application/json', JSON.stringify(out.body)); });
       return;
     }
-    if (req.method !== 'GET') return send(res, 405, 'text/plain', 'Method not allowed.\n');
+    // The panel no longer pauses or plays builds (0145): speck pause and speck play do. Their POSTs get the 404 below.
+    const gone = req.method === 'POST' && /^\/api\/tickets\/\d{1,4}\/(pause|play)$/.test(where);
+    if (req.method !== 'GET' && !gone) return send(res, 405, 'text/plain', 'Method not allowed.\n');
     if (where === '/') {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }

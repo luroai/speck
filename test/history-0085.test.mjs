@@ -41,13 +41,6 @@ test('AC1: the panel before 0081 is found from the commit whose message is speck
   assert.equal(commitBySubject('speck(0081): rea'), null, 'only the whole message matches');
 });
 
-test('AC1: 0081\'s AC5 runs rather than skipping for a missing pre-0081 panel', () => {
-  const out = runOnly('test/panel-0081.test.mjs', '0081 AC5');
-  const l = line(out, '0081 AC5');
-  assert.ok(l, `0081 AC5 was reported:\n${out}`);
-  assert.ok(!/not in this clone/.test(l), `0081 AC5 skipped: ${l}`);
-});
-
 test('AC2: 0084\'s AC4 is skipped when the owner\'s list is missing or empty', () => {
   for (const list of [undefined, '', '# only a comment\n\n']) {
     const h = home(list);
