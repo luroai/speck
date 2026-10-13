@@ -40,7 +40,7 @@ Tapping a shipped ticket's title opens the full ticket and it stays open, in any
 ## Notes
 - The title is made by `fullLink` in `templates/panel.html`, which sets `href = '#'` and calls `preventDefault()` on click.
 - Reported 2026-10-13 on an iPhone in cptr's browser: the page reloaded to the top and the Review pack button in the same row stayed open. Not reproducible in Chromium with touch emulation, where `preventDefault()` is honoured.
-- Unverified: why that browser follows a cancelled `href="#"` (WebKit isn't runnable on the build machine, missing system libraries).
+- Checked 2026-10-13: why that browser follows a cancelled `href="#"` can't be confirmed here (no WebKit build installed on the build machine). The fix removes the `href`, so it doesn't depend on the cause.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
