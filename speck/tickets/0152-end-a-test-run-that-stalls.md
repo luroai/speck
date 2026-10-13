@@ -1,7 +1,7 @@
 ---
 id: "0152"
 title: "End a test run that stalls"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T21:54:47.263Z"
+approved: "2026-10-13T22:48:33.931Z"
 
 ---
 # 0152 · End a test run that stalls
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a test hangs, speck waits for it forever. On 2026-10-13 the test run in 0149's auto-ship stopped making progress after 714 of about 1,310 tests and sat silent for nine minutes, until the build tool's 10-minute limit killed the ship. Nothing told the user; the ticket just looked approved. The next run of the same suite passed in about a minute.
@@ -52,9 +53,15 @@ If the tests stop making progress, speck no longer waits for them forever. When 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 cmdTest's --files path bypasses stall.mjs entirely.; F2 testRun validates test_stall_minutes only when runTestsInTurn is reached.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 334,244
+- Elapsed since build started: 54 min
+- Changed lines: 187 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - The home-screen app test (0149) sometimes hangs the suite: a headless Chrome call with no time limit. Inbox: `speck/ideas/2026-10-13-stop-the-home-screen-app-test-hanging-the-suite.md`.
