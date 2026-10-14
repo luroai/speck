@@ -45,7 +45,9 @@ A ticket's build time counts only the time an agent was working on it: from the 
 - Self-check: an unreadable `blocked_at` is now cleared when the ticket leaves blocked, and a paused time that can't be written to the ticket no longer stops `speck play` (it plays and says the time wasn't recorded).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket's build time now counts only the time an agent was working on it. While a ticket is blocked waiting for your answer, or its build is paused, the timer in the Build queue stops, and it carries on from the same figure once the build resumes. The minutes shown for each shipped ticket, and the median, leave that waiting out too.
+
+To see it, block a ticket that's building (or pause its build) and watch its timer hold still, then resume it and watch it carry on. Tickets shipped before this change show the same minutes as before, since speck has no record of how long they waited. A build that stopped unexpectedly still counts its idle time until it's resumed; that's saved as a follow-up idea.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +57,10 @@ A ticket's build time counts only the time an agent was working on it: from the 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: `speck/ideas/2026-10-14-stop-the-build-timer-while-a-stopped-build-waits.md` (a build that stopped or exited mid-build still counts its idle time).
+  - Known limit: a status changed by editing the ticket file by hand, rather than through speck, records no blocked time.
+  - Tidy-up: `scripts/run.mjs` is now exactly at the 600-line limit 0078 sets, so the next change to it will need to move something out first.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -122,6 +128,75 @@ A ticket's build time counts only the time an agent was working on it: from the 
     ],
     "escalation_question": "",
     "summary": "The timers now exclude recorded blocked and paused time, and the full test suite passes. One status transition was missed: cancelling a blocked ticket does not finish recording its waiting time. Fix that path before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d1626cc4aebbbee82632ca46faf1cc6bfff4b924",
+    "thread_id": "01a13aba-eb05-7c30-b9cc-42b301043522",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 255790,
+      "cached_input_tokens": 201984,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1716,
+      "reasoning_output_tokens": 145
+    },
+    "saved_at": "2026-10-14T14:09:02.901Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/core.mjs writeField/waitFields record and accumulate blocked stretches. scripts/speck.mjs cmdCancel now also calls waitFields. Passing AC1 tests cover repeated blocks, resumption, cancellation and missing or invalid timestamps."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/run.mjs countPause/playBuild accumulate paused time using addPaused. Passing AC2 tests exercise pause/play commands, repeated pauses, stopping while paused and recording failure."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel subtracts accumulated waiting and freezes timers at held_at; render excludes held timers from startCounters. Passing AC3 tests verify counting, blocked and paused timers, and the resumed figure."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel subtracts waited_seconds before calculating shipped minutes and their median. Passing AC4 tests cover accumulated waiting, legacy tickets and invalid totals."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0166-tests.txt: 1510 tests, 1507 passed, zero failed and three skipped. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Cancelling a blocked ticket previously bypassed waiting bookkeeping. cmdCancel now records the blocked stretch and clears blocked_at.",
+        "suggested_fix": "Completed; the passing command-level cancellation test verifies the fix and preservation of the cancellation reason.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Build timers and shipped-time statistics now exclude recorded blocked and paused time. The missed cancellation path is fixed, all acceptance criteria pass, and the full suite has no failures. Ready for the owner's merge decision."
   }
 }
 ```
