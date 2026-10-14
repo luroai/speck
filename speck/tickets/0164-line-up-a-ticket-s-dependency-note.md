@@ -43,6 +43,7 @@ A ticket's dependency note lines up with the rest of its details row and reads a
 - Builds after 0161, which changes the same styles.
 - Reported 2026-10-14 from a phone screenshot.
 - Failing before this build: none
+- Self-check: the full suite showed 0140's 44 by 44 px rule for buttons, so each id's tap area now reaches 8 px past its text on each side too, given back by negative margins; 0164 AC2 checks both directions. Headless Chrome always reports `(hover: none)`, so the mouse case of AC3 is checked by reading the stylesheet (the card shading sits in `@media (hover: hover)`).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
