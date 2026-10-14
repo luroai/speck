@@ -41,6 +41,7 @@ On a phone, each row of a table in the review pack or a ticket shows as its own 
 - Tables come from `markdown(…, { tables: true })` and `mdBlocks()` in `templates/panel.html`; the review pack is `packPane()`. Today at under 700 px a table only scrolls sideways (`display: block; overflow-x: auto`), which the pack's long cells defeat.
 - The criteria table's columns are `#`, `Criterion`, `Result` and `Evidence`.
 - Reported 2026-10-13 from a phone screenshot of 0149's review pack.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
