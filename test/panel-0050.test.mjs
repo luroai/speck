@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, stepText, shippedRows, startOfToday, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, stageOf, shippedRows, startOfToday, findChrome, browserPage, charAt } from './support/panel.mjs';
 
 // ---------- 0050: selected text and scroll in queue and Shipped rows survive the refresh ----------
 
@@ -55,7 +55,7 @@ test('0050 AC1: a selection in a queue row\'s title, blocked question or build m
   assert.ok(keptTitle(), 'the ready row\'s title stayed on the page');
   assert.ok(keptQuestion(), 'the blocked question stayed on the page');
   assert.ok(keptMessage(), 'the build message stayed on the page');
-  assert.ok(stepText(rowOf(p, '0004')).includes('Review 2'), 'the other ticket\'s new round shows');
+  assert.equal(stageOf(rowOf(p, '0004')).textContent, 'Review 2', 'the other ticket\'s new round shows');
   assert.ok(rowOf(p, '0007'), 'the new ready ticket shows');
   assert.ok(shipOf(p, 'Newly shipped'), 'the new shipped ticket shows');
   await refresh(p);

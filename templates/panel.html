@@ -156,39 +156,22 @@
   .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .act.to-ship { color: var(--idea); }
-  /* 0156: an in-flight ticket's progress. The ensō sits at the right of its top row, with the timer over it, beside the
-     id, title, tags, a sentence saying what's happening and a dot for each stage. Its circle is a thin neutral line, open
-     at the top left; the red speck rests at the top. They and the stage dots are the panel's only round things. */
-  .q .top:has(> .enso) { grid-template-columns: minmax(0, 1fr) 112px; grid-template-rows: auto auto auto auto 1fr; column-gap: 14px; align-items: start; }
-  .q .top:has(> .enso) .line { grid-area: 1 / 1; }
-  .q .top:has(> .enso) .tag-row { grid-area: 2 / 1; }
-  .q .top .enso { grid-area: 1 / 2 / 6 / 3; position: relative; width: 112px; height: 112px; }
-  .q .top .enso .ring { position: absolute; inset: 0; border: 1px solid var(--faint); border-radius: 50% !important;
-    -webkit-mask: conic-gradient(from 285deg, transparent 0 50deg, #000 0); mask: conic-gradient(from 285deg, transparent 0 50deg, #000 0); }
-  .q .top .enso .orbit { position: absolute; inset: 0; }
-  .q .top .enso .speck { position: absolute; top: -4px; left: calc(50% - 4.5px); width: 9px; height: 9px; border-radius: 50% !important; background: var(--accent); }
-  .q .top:has(> .enso) .sub { grid-area: 1 / 2 / 6 / 3; align-self: start; justify-self: center; display: flex; align-items: center; height: 112px; margin: 0;
-    max-width: 84px; text-align: center; font-size: 13px; color: var(--text); }
-  .q .top .say { grid-area: 3 / 1; margin-top: 8px; font-size: 13px; color: var(--text); }
+  /* 0168: an in-flight ticket's progress, under its title and tags, which keep the card's full width: the builder badge,
+     then a sentence saying what's happening and the current stage's name, with the timer at the right of that row. The
+     badge is drawn on a canvas from the colour tokens (badgeColours). */
+  .q .top:has(> .badgerow) .line { grid-area: 1 / 1 / 2 / 3; }
+  .q .top .badgerow { grid-area: 3 / 1; display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 12px; align-items: center; margin-top: 8px; }
+  .q .top:has(> .badgerow) .sub { grid-area: 3 / 2; align-self: center; }
+  .q .top .badge { display: block; width: 56px; height: 56px; }
+  .q .top .badgetext { display: grid; gap: 2px; min-width: 0; }
+  .q .top .say { font-size: 13px; color: var(--text); }
   .q .top + .act { margin-top: 6px; } /* a ready ticket's Queued line, with no bar above it now */
   .q .top .say.bad { color: var(--bad); }
   .q .top .say.to-ship { color: var(--idea); }
-  .q .top .dots { grid-area: 4 / 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; margin-top: 8px; }
-  .q .top .dot { flex: none; width: 8px; height: 8px; border-radius: 50% !important; background: var(--line); }
-  .q .top .dot.d { background: var(--ok); }
-  .q .top .dot.now { color: var(--run); background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
-  .q .top .dot.now.bad { color: var(--bad); }
-  .q .top .dot.now.to-ship { color: var(--idea); }
-  .q .top .stage { margin-left: 3px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--run); }
+  .q .top .stage { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--run); }
   .q .top .stage.bad { color: var(--bad); }
   .q .top .stage.to-ship { color: var(--idea); }
-  /* While an agent is at work: the speck goes round the ensō, a lap about every 7 seconds, and the current stage's dot
-     pulses gently, unless the browser asks for reduced motion */
   @media (prefers-reduced-motion: no-preference) {
-    .q .top .enso.moving .orbit { animation: orbit 7s linear infinite; }
-    @keyframes orbit { to { transform: rotate(1turn); } }
-    .q .top .dot.now.moving { animation: pulse 1.4s ease-in-out infinite alternate; }
-    @keyframes pulse { to { box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 8%, transparent); } }
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
     @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
@@ -483,7 +466,8 @@ function progress(t) {
   return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
 }
 // 0156: what an in-flight queue ticket is doing, as its card says it: a plain sentence, the card's state colour for it
-// ('bad', 'to-ship' or '' for the normal text colour), and whether an agent is at work on it, which moves its speck.
+// ('bad', 'to-ship' or '' for the normal text colour), and whether an agent is at work on it, which puts its builder
+// badge to work (0168).
 // `shipping` is true while a ship of it is running, whoever started it.
 // An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet. One that is
 // shipping is at work, in the normal text colour.
@@ -504,6 +488,19 @@ function doing(t, shipping) {
     sentence = `${who[0].toUpperCase()}${who.slice(1)} is reviewing · round ${n[1]}`;
   }
   return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };
+}
+// 0168: what an in-flight ticket's builder badge shows, from what it's doing (`d`, from doing): its pose and the badge's
+// accessible name. At the laptop while an agent is at work; with a "?" when it's blocked or stopped (the card's crimson);
+// with a flag while it waits for your decision (the card's purple); otherwise still, facing front.
+function badgeOf(t, d) {
+  if (d.moving) {
+    const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
+    return { pose: 'type', label: d.sentence === 'Shipping' ? 'The builder is shipping'
+      : t.status === 'reviewing' ? 'The builder is with the reviewer' : now === 1 ? 'The builder is checking its own work' : 'The builder is writing code' };
+  }
+  if (d.tone === 'bad') return { pose: 'bad', label: 'The builder needs you' };
+  if (t.to_ship) return { pose: 'wait', label: 'The builder is waiting for you' };
+  return { pose: 'still', label: t.paused ? 'The builder is paused' : 'The builder is waiting' };
 }
 // An amount in US dollars, to the cent.
 const dollars = n => `$${n.toFixed(2)}`;
@@ -1503,22 +1500,160 @@ function queueItem(t) {
   }
   return q;
 }
-// 0156: an in-flight ticket's progress, in its top row: the ensō, with the timer laid over it, then under the title what
-// it's doing in a sentence and a dot for each of the five stages, with the current one's name. The red speck goes round
-// the ensō, and the current stage's dot pulses, only while an agent is at work on it.
+// 0168: an in-flight ticket's progress, under its title: the builder badge, then what it's doing in a sentence and the
+// current stage's name. The timer stays last in the top row (0058); the grid puts it at the right of the badge's row.
 function progressOf(top, t, d) {
-  const tone = d.tone ? ` ${d.tone}` : '';
-  top.insertBefore(el('div', `enso${d.moving ? ' moving' : ''}`, null, el('div', 'ring'), el('div', 'orbit', null, el('span', 'speck'))), child(top, 'sub'));
-  const sub = child(top, 'sub'); // the timer stays last in the top row (0058); the grid lays it over the ensō
-  top.insertBefore(el('div', `say${tone}`, d.sentence), sub);
-  const dots = el('div', 'dots'), now = t.steps.find(s => s.state === 'now');
-  for (const s of t.steps) {
-    const dot = el('span', s.state === 'done' ? 'dot d' : s.state === 'now' ? `dot now${tone}${d.moving ? ' moving' : ''}` : 'dot');
-    dot.title = s.label;
-    dots.appendChild(dot);
+  const tone = d.tone ? ` ${d.tone}` : '', b = badgeOf(t, d), now = t.steps.find(s => s.state === 'now');
+  const badge = el('canvas', `badge ${b.pose}`);
+  badge.setAttribute('role', 'img');
+  badge.setAttribute('aria-label', b.label);
+  top.insertBefore(el('div', 'badgerow', null, badge, el('div', 'badgetext', null, el('span', `say${tone}`, d.sentence),
+    now ? el('span', `stage${tone}`, now.label) : null)), child(top, 'sub'));
+  drawBadges(badge);
+}
+// 0168: the builder badge, speck's character, drawn on a 56 px canvas from the panel's colour tokens, so it follows the
+// light and dark looks. The drawing and timings come from the design reference. (0, 0) is between the builder's feet;
+// the tile is 56 units square and the builder is drawn at 0.64 of its size, its feet near the tile's bottom.
+const BADGE = (() => {
+  const C = {};
+  const clamp01 = v => Math.max(0, Math.min(1, v));
+  const seg = (p, a, b) => clamp01((p - a) / (b - a));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const io = k => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+  const sine = k => -(Math.cos(Math.PI * k) - 1) / 2;
+  const out = k => 1 - Math.pow(1 - k, 3);
+  const back = k => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+  const hop = (k, n, h) => { const q = (k * n) % 1, s = Math.sin(q * Math.PI); return { y: -s * h, tuck: s }; };
+  const rnd = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const blinkAt = t => (t % 3700) < 120;
+  const ln = (g, x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
+  const rr = (g, x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+  const GL = '{}<>;/=()[]*';
+  // A finished block of work.
+  function box(g, cx, by, o) {
+    const s = o.s * 16; if (s <= .5) return;
+    g.save(); g.globalAlpha *= o.a; g.translate(cx, by - s / 2); g.rotate(o.rot);
+    g.fillStyle = C.paper; g.strokeStyle = C.ink; g.lineWidth = 1.7; g.beginPath(); g.rect(-s / 2, -s / 2, s, s); g.fill(); g.stroke(); g.restore();
   }
-  if (now) dots.appendChild(el('span', `stage${tone}`, now.label));
-  top.insertBefore(dots, sub);
+  // The builder: an ensō-shaped round body open at the top left, two round ears, two short legs and the speck as its eye.
+  function builder(g, P) {
+    g.save(); g.translate(P.x || 0, P.y || 0); g.rotate(P.rot || 0); g.scale(1, P.sy || 1);
+    g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.ink; g.lineWidth = 2.2;
+    const tk = P.tuck || 0;
+    ln(g, -7, -5, -9 + tk * 2, -tk * 3); ln(g, 7, -5, 9 - tk * 2, -tk * 3);
+    g.fillStyle = C.paper;
+    for (const sx of [-1, 1]) { g.beginPath(); g.arc(sx * 12, -40, 5.5, 0, 7); g.fill(); g.stroke(); }
+    g.beginPath(); g.arc(0, -24, 20, 0, Math.PI * 2); g.fill();
+    g.beginPath(); g.arc(0, -24, 20, -2.0, -2.35 + Math.PI * 2); g.stroke();
+    if (P.flag != null) {
+      g.save(); g.translate(17, -34); g.rotate(P.flag); ln(g, 0, 0, 0, -26);
+      g.beginPath(); g.moveTo(0, -26); g.quadraticCurveTo(8, -24 + (P.flagWave || 0), 16, -21); g.lineTo(0, -16); g.closePath(); g.fillStyle = C.wait; g.fill(); g.restore();
+    }
+    const ex = (P.lookX || 0) * 8, ey = -26 + (P.lookY || 0) * 6;
+    g.save(); g.translate(ex, ey); g.scale(1, blinkAt(P.t) ? .15 : 1); g.beginPath(); g.arc(0, 0, 4.5, 0, 7); g.fillStyle = C.speck; g.fill(); g.restore();
+    if (P.q) { g.save(); g.translate(P.q.x, P.q.y); g.scale(P.q.s, P.q.s); g.fillStyle = C.bad; g.font = '600 24px "Shippori Mincho", "Noto Serif JP", Georgia, serif'; g.textAlign = 'center'; g.fillText('?', 0, 0); g.restore(); }
+    g.restore();
+  }
+  const POSES = {
+    // At the laptop, from behind its lid, a loop of 2.8 seconds: paws slapping the lid's top edge in turn with bits of code
+    // flying off both sides, a pause with its eye up and away, both paws up, one slam, and a finished block pops out.
+    type(g, t) {
+      const CY = 2800, p = (t % CY) / CY;
+      const P = { t, lookX: 0, lookY: .3 };
+      let lh = -17, rh = -17;
+      if (p < .62) {
+        const k = t / 105, a = Math.max(0, Math.sin(k * Math.PI)), b = Math.max(0, Math.sin(k * Math.PI + Math.PI));
+        lh = -16 - a * 9; rh = -16 - b * 9; P.sy = 1 + .02 * Math.abs(Math.sin(k * Math.PI)); P.lookX = .25 * Math.sin(t / 420);
+      } else if (p < .76) {
+        const k = sine(seg(p, .62, .70)); P.lookX = lerp(0, -.6, k); P.lookY = lerp(.3, -.7, k); P.rot = -.04 * sine(seg(p, .62, .76));
+      } else if (p < .84) {
+        const k = io(seg(p, .76, .84)); lh = rh = -17 - 21 * k; P.lookY = lerp(-.7, .3, k); P.lookX = lerp(-.6, 0, k); P.sy = 1 + .05 * k;
+      } else if (p < .87) {
+        const k = out(seg(p, .84, .87)); lh = rh = lerp(-38, -13, k); P.sy = lerp(1.05, .9, k); P.lookY = .6;
+      } else { const k = sine(seg(p, .87, 1)); lh = rh = lerp(-13, -17, k); P.sy = lerp(.9, 1, k); P.lookY = .4; }
+      builder(g, P);
+      g.lineWidth = 2; g.strokeStyle = C.ink; g.fillStyle = C.paper;
+      for (const [x, y] of [[-10, lh], [10, rh]]) { g.beginPath(); g.ellipse(x, y - 1, 5, 4.2, 0, 0, 7); g.fill(); g.stroke(); }
+      // The lid, in front, with an ensō sticker.
+      g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = 2.2;
+      rr(g, -24, -16, 48, 16, 3); g.fillStyle = C.paper; g.fill(); g.stroke();
+      g.lineWidth = 1.4; g.beginPath(); g.arc(0, -8, 3.4, -2.0, -2.35 + Math.PI * 2); g.stroke();
+      const step = 120, life = 650;
+      g.font = '600 9px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.fillStyle = C.ink;
+      for (let i = Math.floor((t - life) / step) + 1; i <= Math.floor(t / step); i++) {
+        const te = i * step, pe = (te % CY) / CY, k = (t - te) / life;
+        if (i < 0 || pe >= .6 || k < 0 || k > 1) continue;
+        const side = i % 2 ? 1 : -1, x = side * (25 + rnd(i + 3) * 9) + side * k * 4;
+        g.globalAlpha = (1 - k) * .85; g.fillText(GL[Math.floor(rnd(i) * GL.length)], x, -18 - k * 26);
+      }
+      g.globalAlpha = 1;
+      if (p >= .86) { const k = seg(p, .86, 1), e = out(k); box(g, lerp(4, 24, e), lerp(-16, -52, e), { s: Math.min(1, back(seg(k, 0, .4))) * .8, rot: .4 * e, a: 1 - seg(k, .7, 1) }); }
+    },
+    // Facing front, waving a small purple flag that ripples a moment behind the wave, with a hop every few seconds.
+    wait(g, t) {
+      const hp = (t % 3800) / 3800, P = { t, x: -6, lookX: 0, lookY: .1, flag: -.18 + .32 * Math.sin(t / 280), flagWave: 3 * Math.sin(t / 280 - 1), rot: .025 * Math.sin(t / 560), sy: 1 + .015 * Math.sin(t / 520) };
+      if (hp < .14) { const h = hop(seg(hp, 0, .14), 2, 6); P.y = h.y; P.tuck = h.tuck; }
+      builder(g, P);
+    },
+    // Facing front with a crimson "?" over its head, tilting; now and then it glances side to side.
+    bad(g, t) {
+      const p = (t % 4200) / 4200, look = p > .55 && p < .8 ? Math.sin(seg(p, .55, .8) * Math.PI * 2) * .8 : 0;
+      builder(g, { t, x: -4, lookX: look, lookY: .1, rot: .06 * Math.sin(t / 320), q: { x: 21, y: -52 - 2.5 * Math.sin(t / 230), s: 1 + .08 * Math.sin(t / 460) } });
+    },
+    // Paused: still, facing front.
+    still(g, t) { builder(g, { t, lookX: 0, lookY: .1 }); },
+  };
+  // The time each pose is drawn at when nothing moves: with reduced motion, and always for a paused build. None blinks.
+  const STILL_AT = { type: 300, wait: 1000, bad: 1000, still: 1000 };
+  // Draws the tile and the pose at time t into a 56-unit square. Unclipped, for the test that nothing reaches its edge.
+  function draw(g, pose, t, clip = true) {
+    const edge = pose === 'wait' ? C.wait : pose === 'bad' ? C.bad : C.line;
+    g.save(); rr(g, 1, 1, 54, 54, 12); g.fillStyle = C.tile; g.fill(); g.lineWidth = 1.4; g.strokeStyle = edge; g.stroke();
+    if (clip) g.clip();
+    g.translate(28, 52); g.scale(.64, .64); POSES[pose](g, t); g.restore();
+  }
+  return { C, POSES, STILL_AT, draw };
+})();
+// The badge's colours, read from the panel's tokens each frame, so a change of look shows at once.
+function badgeColours() {
+  const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(`--${k}`).trim();
+  Object.assign(BADGE.C, { ink: v('text'), paper: v('panel'), speck: v('accent'), line: v('line'), wait: v('idea'), bad: v('bad'), tile: v('raise') });
+  return Object.values(BADGE.C).join();
+}
+// Draws one badge at time `now`. One that doesn't move (a paused build, or every badge with reduced motion) is drawn
+// again only when its pose, size or colours change. Returns whether it moves.
+function paintBadge(c, now, colours) {
+  const name = c.className.split(' ')[1], pose = Object.hasOwn(BADGE.POSES, name) ? name : 'still';
+  const fixed = matchMedia('(prefers-reduced-motion: reduce)').matches || pose === 'still';
+  const size = Math.round(56 * (devicePixelRatio || 1)), key = `${pose} ${size} ${colours}`;
+  if (fixed && c.dataset.drawn === key) return false;
+  if (c.width !== size) { c.width = size; c.height = size; }
+  const g = c.getContext('2d');
+  if (!g) return false; // the browser won't draw on it: the badge stays blank, and its name still says what it shows
+  g.setTransform(size / 56, 0, 0, size / 56, 0, 0); g.clearRect(0, 0, 56, 56);
+  BADGE.draw(g, pose, fixed ? BADGE.STILL_AT[pose] : now);
+  c.dataset.drawn = fixed ? key : '';
+  return !fixed;
+}
+// Draws a new badge at once, so it's never blank, then every badge on the page each frame while one of them moves.
+let badgeFrame = null;
+function drawBadges(fresh) {
+  if (typeof requestAnimationFrame !== 'function' || typeof HTMLCanvasElement !== 'function') return; // no browser to draw in
+  if (fresh) paintBadge(fresh, performance.now(), badgeColours());
+  if (badgeFrame !== null) return;
+  badgeFrame = requestAnimationFrame(function frame(now) {
+    const colours = badgeColours();
+    let moving = false;
+    for (const c of document.querySelectorAll('canvas.badge')) moving = paintBadge(c, now, colours) || moving;
+    badgeFrame = moving ? requestAnimationFrame(frame) : null;
+  });
+}
+// A change of look, of the reduced-motion setting or of the screen's pixels per CSS pixel (a zoom, or another screen)
+// draws the badges again.
+if (typeof MutationObserver === 'function') new MutationObserver(() => drawBadges()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+if (typeof matchMedia === 'function') {
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => drawBadges());
+  (function zoomed() { matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => { drawBadges(); zoomed(); }, { once: true }); })();
 }
 // An open building or reviewing ticket whose build speck run launched and is running or paused has a Stop build button.
 // It asks first, and opens or closes nothing.

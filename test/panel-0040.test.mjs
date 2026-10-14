@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, toggles, items, top, queueRows, stepText, shippedRows, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, toggles, items, top, queueRows, stageOf, shippedRows, findChrome, browserPage, charAt } from './support/panel.mjs';
 
 // ---------- 0040: selected text in an open ticket or idea survives the refresh ----------
 
@@ -60,7 +60,7 @@ test('0040 AC2: the selection survives while other tickets change, and those cha
   assert.ok(kept(), 'the selection survives the changes elsewhere');
   assert.deepEqual(items(p).map(n => n.textContent.slice(0, 4)), ['0000', '0001'], 'the new draft shows and 0002 has left Shaping');
   assert.ok(queueText(p).some(t => t.includes('0002') && t.includes('Queued')), '0002 is in the queue');
-  assert.ok(stepText(queueRows(p).find(r => r.textContent.includes('0003'))).includes('Review 2'), 'the new review round shows');
+  assert.equal(stageOf(queueRows(p).find(r => r.textContent.includes('0003'))).textContent, 'Review 2', 'the new review round shows');
   assert.ok(shippedRows(p).some(r => r.textContent.includes('Newly shipped')), 'the new shipped ticket shows');
   await refresh(p);
   assert.ok(kept(), 'and through another refresh with other changes');

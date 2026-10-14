@@ -3,10 +3,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, good, page, panelRepo, freePort, startPanel, stop, fakePage, round, exitOf, queueRows, dotsOf, nowStep, findChrome, browserPage } from './support/panel.mjs';
+import { T, fm, good, page, panelRepo, freePort, startPanel, stop, fakePage, round, exitOf, queueRows, badgeOf, findChrome, browserPage } from './support/panel.mjs';
 
 // ---------- 0055: a moving dot of light on the current step of a ticket being built or reviewed ----------
-// Since 0156 the current step is a dot that pulses, and the speck goes round the ensō beside it (test/panel-0156.test.mjs).
+// Since 0168 the builder badge plays its laptop loop while an agent is at work (test/panel-0168.test.mjs); from 0156 until
+// then, the current step was a dot that pulsed, with the speck going round an ensō beside it.
 
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const refresh = async p => { p.timers.shift()(); await p.settle(); };
@@ -14,8 +15,8 @@ const clone = s => JSON.parse(JSON.stringify(s));
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const idOf = row => (function find(n) { if (n.className === 'id') return n._text; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 const rowOf = (p, id) => queueRows(p).find(r => idOf(r) === id);
-const moving = n => /(^| )moving( |$)/.test(n.className || '');
-const movingSteps = row => dotsOf(row).filter(moving);
+// A row's badge, when it's at work: at most one.
+const movingSteps = row => [badgeOf(row)].filter(b => b && b.className === 'badge type');
 
 const board = () => ({
   tickets: [
@@ -37,7 +38,7 @@ test('0055 AC1: a building or reviewing ticket that isn\'t red moves on its curr
   for (const id of ['0001', '0002', '0008']) {
     const row = rowOf(p, id), steps = movingSteps(row);
     assert.equal(steps.length, 1, `${id} has one moving step`);
-    assert.equal(steps[0], nowStep(row), `${id}'s moving step is its current one`);
+    assert.equal(steps[0].tagName, 'canvas', `${id}'s builder badge is drawn`);
     assert.ok(!/\bbad\b/.test(steps[0].className), `${id}'s step isn't red`);
   }
 });
@@ -56,7 +57,8 @@ test('0055 AC3: the motion is drawn only when the browser doesn\'t ask for reduc
   let depth = 0, end = css.indexOf('{', at);
   for (let i = end; i < css.length; i++) { if (css[i] === '{') depth++; else if (css[i] === '}' && --depth === 0) { end = i; break; } }
   const inside = css.slice(at, end + 1), outside = css.slice(0, at) + css.slice(end + 1);
-  assert.match(inside, /\.dot\.now\.moving\s*\{[^}]*animation:/, 'the pulsing dot is inside it');
+  // Since 0168 the badge moves in the page script, which draws a still pose when the browser asks for reduced motion.
+  assert.match(page(), /const fixed = matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches \|\| pose === 'still';/, 'a still badge with reduced motion');
   assert.doesNotMatch(outside, /\.moving/, 'no rule outside it changes a moving step');
   assert.doesNotMatch(outside, /animation:/, 'and nothing else animates');
 });
@@ -104,23 +106,29 @@ test('0055 AC1-AC4: in a real browser, only the in-flight step moves, through re
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the queue');
-    // AC1 and AC2: since 0156, two animations, both on 0002: its speck going round and its current step's dot pulsing,
-    // each running forever (Infinity comes back as null).
-    const anims = `document.getAnimations().map(a => ({ target: a.effect.target === ${row('0002')}.querySelector('.enso .orbit') ? 'orbit' : a.effect.target === ${row('0002')}.querySelector('.dot.now') ? 'dot' : 'other',
-      iterations: a.effect.getTiming().iterations, state: a.playState }))`;
-    assert.deepEqual(await b.js(anims), [{ target: 'orbit', iterations: null, state: 'running' }, { target: 'dot', iterations: null, state: 'running' }]);
+    // AC1 and AC2: since 0168, 0002's builder badge is the one at work, drawn afresh each frame, and nothing animates in CSS.
+    const frame = `${row('0002')}.querySelector('canvas.badge').toDataURL()`;
+    assert.deepEqual(await b.js(`[...document.querySelectorAll('canvas.badge')].map(c => c.className)`), ['badge type', 'badge bad', 'badge bad']);
+    assert.deepEqual(await b.js(`document.getAnimations().length`), 0);
+    await b.js(`window.drawn = ${frame}`);
+    await b.until(`${frame} !== window.drawn`, 'the badge moves');
     // AC4: the motion carries on through a refresh, and a selection in the row stays.
     const t = `${row('0002')}.querySelector('.title')`;
     await b.drag(await b.js(charIn(t, 0)), await b.js(charIn(t, 6)));
     assert.equal(await b.js('getSelection().toString()'), 'A buil');
-    await b.js(`window.anim = document.getAnimations()[0]; window.at = window.anim.currentTime`);
+    await b.js(`window.badge = ${row('0002')}.querySelector('canvas.badge')`);
     await refreshed(b, 'a refresh'); await refreshed(b, 'a second refresh');
-    assert.equal(await b.js(`document.getAnimations()[0] === window.anim && window.anim.currentTime > window.at`), true, 'the same animation runs on');
+    assert.equal(await b.js(`${row('0002')}.querySelector('canvas.badge') === window.badge`), true, 'the same badge runs on');
+    await b.js(`window.drawn = ${frame}`);
+    await b.until(`${frame} !== window.drawn`, 'the badge still moves');
     assert.equal(await b.js('getSelection().toString()'), 'A buil', 'the selection stays');
-    // AC3: with reduced motion, nothing moves, and the step keeps its in-flight blue.
+    // AC3: with reduced motion, nothing moves, and the stage's name keeps its in-flight blue.
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
-    await b.until(`document.getAnimations().length === 0`, 'no animations');
-    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.dot.now')).backgroundColor`), 'rgb(48, 79, 109)', 'in the in-flight blue');
+    await new Promise(r => setTimeout(r, 200));
+    await b.js(`window.drawn = ${frame}`);
+    await new Promise(r => setTimeout(r, 400));
+    assert.equal(await b.js(`${frame} === window.drawn`), true, 'the badge holds still');
+    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.stage')).color`), 'rgb(48, 79, 109)', 'in the in-flight blue');
   } finally {
     await b.close();
     await stop(panel);

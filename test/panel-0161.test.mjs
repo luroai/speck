@@ -39,9 +39,9 @@ const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p
 
 // The backgrounds text and controls sit on: the page, the sections, raised rows and the open items' tints.
 const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
-// Rules with a fill that holds no text: the live light, the stage dots, the ensō's speck, the squares, the padlock, the
-// lines between the stat tiles.
-const NO_TEXT = ['.live', '.live.go', '.live.stop', '.q .top .dot', '.q .top .dot.d', '.q .top .enso .speck', '.sq', '.lock::after', '.stats'];
+// Rules with a fill that holds no text: the live light, the squares, the padlock, the lines between the stat tiles. (The
+// stage dots and the ensō's speck went in 0168.)
+const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats'];
 // Every control and card with an edge of its own, by its main rule.
 const EDGED = ['.tag', '.toggle', '.theme', '.run-state', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
   '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];

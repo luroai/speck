@@ -182,7 +182,7 @@ for (const width of [700, 1280]) {
       assert.ok(shipped.top > plan.bottom && Math.abs(shipped.left - plan.left) < 1 && Math.abs(shipped.right - build.right) < 1, 'Shipped below, across both');
       await openAll(b);
       await openPrio(b);
-      // The speck and its stage's dot hold still to be compared (0156): dropping rules restarts an animation.
+      // Everything holds still to be compared, the builder badges too (0168): dropping rules restarts an animation.
       await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
       await b.until(`document.getAnimations().length === 0`, 'nothing moving');
       const withRules = await b.js(SNAPSHOT);

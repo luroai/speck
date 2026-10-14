@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, T, round, queueRows, panelModel, exitOf, isRed, nowStep, findText } from './support/panel.mjs';
+import { fakePage, T, round, queueRows, panelModel, exitOf, isRed, stageOf, badgeOf, findText } from './support/panel.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 const PACK = '## 0001 · Ticket 0001\n**Verdict:** ✅ Approved by reviewer\n';
@@ -108,7 +108,8 @@ test('0153 AC3: an auto-ship that ended without shipping says so, with speck shi
   assert.ok(at(SHIP_IT) > at(MESSAGE), 'then how to ship it');
   assert.ok(!all.includes('Build finished without shipping'), 'the auto-ship label stands in for the build\'s');
   assert.ok(p.all(r).some(isRed), 'the ship failed, so it is red');
-  assert.match(nowStep(r).className, /\bbad\b/);
+  assert.match(stageOf(r).className, /\bbad\b/);
+  assert.equal(badgeOf(r).className, 'badge bad', 'its builder needs you (0168)');
 });
 
 test('0153 AC3: with no message (a killed auto-ship), it says so without one', async () => {

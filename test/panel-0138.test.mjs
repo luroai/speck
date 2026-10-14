@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelModel, T, round, fakePage, queueRows, dotsOf, exitOf, isRed, nowStep, findText } from './support/panel.mjs';
+import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, badgeOf, findText } from './support/panel.mjs';
 
 const MESSAGE = 'speck ship refused: tests failed.';
 const purple = n => /\bto-ship\b/.test(n.className || '');
@@ -42,15 +42,15 @@ const openRow = async (state, id) => {
   return { p, row: queueRows(p).find(r => r.textContent.includes(id)) };
 };
 
-test('0138 AC1: an approved ticket whose build has exited is purple on its left edge, current step and label, and nothing in it is red', async () => {
+test('0138 AC1: an approved ticket whose build has exited is purple on its border (its left edge until 0167), current step and label, and nothing in it is red', async () => {
   const m = panelModel()({ tickets: [waiting()], ideas: [] });
   assert.equal(m.queue[0].red, false);
   assert.equal(m.queue[0].to_ship, true);
   const { p, rows: [a] } = await rows({ tickets: [waiting()], ideas: [] });
   assert.match(a.className, /\bto-ship\b/);
-  assert.equal(nowStep(a).title, 'Ship');
-  assert.match(nowStep(a).className, /\bto-ship\b/);
-  assert.equal(dotsOf(a).filter(purple).length, 1, 'only the current step');
+  assert.equal(stageOf(a).textContent, 'Ship');
+  assert.match(stageOf(a).className, /\bto-ship\b/);
+  assert.equal(badgeOf(a).className, 'badge wait', 'its builder waits for you with a purple flag (0168)');
   const label = findText(p, a, 'Build finished without shipping');
   assert.ok(label, 'the label');
   const line = p.all(a).find(n => n.children && n.children.includes(label)) || p.all(a).find(n => n.textContent === 'Build finished without shipping' && n.className);
@@ -70,7 +70,6 @@ test('0138 AC1: the CSS draws each of those in purple', () => {
   // 0167: its border all round and its tint, open or closed, in place of a left edge
   assert.equal(ruleVar('.q.to-ship', 'border-color'), '--idea', 'the border');
   assert.equal(ruleVar('.q.to-ship', 'background'), '--idea-bg', 'the tint');
-  assert.equal(ruleVar('.q .top .dot.now.to-ship', 'color'), '--idea', 'the current step\'s dot (0156)');
   assert.equal(ruleVar('.q .top .stage.to-ship', 'color'), '--idea', 'the current step\'s name (0156)');
   assert.equal(ruleVar('.act.to-ship', 'color'), '--idea', 'the label line');
   assert.equal(ruleVar('.question.exit.to-ship', 'border-left-color'), '--idea', 'the message\'s edge');
@@ -104,14 +103,15 @@ test('0138 AC3: blocked, stopped-before-finishing and stopped-unexpectedly ticke
   const { p, rows: all } = await rows(state);
   for (const row of all) {
     assert.match(row.className, /\bblocked\b/);
-    assert.match(nowStep(row).className, /\bnow bad\b/);
+    assert.match(stageOf(row).className, /\bbad\b/);
+    assert.equal(badgeOf(row).className, 'badge bad', 'its builder needs you (0168)');
     assert.ok(!p.all(row).some(purple), 'nothing purple');
   }
   for (const [row, label] of [[all[1], 'Build stopped before finishing'], [all[2], 'Build stopped before finishing'], [all[3], 'Build stopped unexpectedly']])
     assert.ok(p.all(row).some(n => n.className === 'act bad' && n.textContent === label), label);
   assert.equal(ruleVar('.q.blocked', 'border-color'), '--bad'); // its border all round since 0167
   assert.equal(ruleVar('.q.blocked', 'background'), '--bad-bg');
-  assert.equal(ruleVar('.q .top .dot.now.bad', 'color'), '--bad'); // the current step's dot since 0156
+  assert.equal(ruleVar('.q .top .stage.bad', 'color'), '--bad'); // the current step's name since 0156
   assert.match(css(), /\.question\.exit \{ border-left-color: var\(--bad\);/);
   const { p: q, row } = await openRow(state, '0001');
   assert.match(row.className, /\bblocked\b.*\bopen\b|\bopen\b.*\bblocked\b/);
