@@ -364,7 +364,7 @@
     #full-ticket .md thead, .shaping .md thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     #full-ticket .md tr, .shaping .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
     #full-ticket .md tr:last-child, .shaping .md tr:last-child { border-bottom: 0; }
-    #full-ticket .md td, .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: break-word; }
+    #full-ticket .md td, .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
     #full-ticket .md td::before, .shaping .md td::before { content: attr(data-label); display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
     /* A review pack's criteria: the number and result on one line, then the criterion, then the labelled evidence */
     #full-ticket .md .ac-table tr, .shaping .md .ac-table tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }

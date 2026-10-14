@@ -1,7 +1,7 @@
 ---
 id: "0158"
 title: "Stack review pack tables on a phone"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T00:24:47.550Z"
 ---
 # 0158 · Stack review pack tables on a phone
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On a phone, the review pack's acceptance criteria table is squeezed into four narrow columns: the "Result" heading breaks into "Re / su / lt", and the criterion and evidence run down the screen a few words at a time, so a pack is hard to read where the user often reads it before shipping.
@@ -57,3 +57,75 @@ On a phone, each row of a table in the review pack or a ticket shows as its own 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "37e7525776d9e60a14107261f8b59c66ba5462ab",
+    "thread_id": "01a137d2-f383-79d1-859f-167539d42423",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 99140,
+      "cached_input_tokens": 57472,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 831,
+      "reasoning_output_tokens": 140
+    },
+    "saved_at": "2026-10-14T00:32:45.487Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: mdBlocks() assigns column headings to cells; mobile CSS stacks rows and labels cells. Passing 0158 AC1 browser test exercises review pack tables and an opened Plan note at 375 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "mdBlocks() marks the criteria table; mobile .ac-table rules place number and result together before criterion and evidence. Passing 0158 AC2 browser test measures their positions."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Mobile rows have spacing and borders, but templates/panel.html:367 explicitly sets overflow-wrap: break-word on cells. Long evidence paths or other words exceeding the available width will split internally. The passing AC3 test uses only words short enough to fit."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Layout changes are confined to the existing media query below 700 px. Passing AC4 browser tests check desktop table layout and drag selection containing every cell at both 375 and 1280 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0158-tests.txt: 1403 tests, 1400 passed, zero failures, three skipped; all eight 0158 tests passed. Existing tests were not changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:367",
+        "issue": "Cells still break long words internally because overflow-wrap is set to break-word. File paths in review evidence can readily exceed a phone's available width, violating AC3. The test checks only short words and misses this case.",
+        "suggested_fix": "Preserve words in mobile table cells and provide overflow handling for tokens wider than the block. Extend the browser test with a long evidence path or unbroken word and verify it stays on one line while remaining readable and copyable.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Phone tables now form clearly separated blocks, with the requested criteria layout, and desktop layout and copying are covered by passing tests. One requirement remains unmet: long words, including evidence file paths, can still break across lines."
+  }
+}
+```
+
+</details>

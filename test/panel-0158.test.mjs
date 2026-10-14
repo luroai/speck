@@ -15,7 +15,7 @@ const PACK = [
   '### Acceptance criteria',
   '| # | Criterion | Result | Evidence |',
   '|---|---|---|---|',
-  '| 1 | On a phone, each row of a table shows as its own block with every cell labelled by its column heading. | ✅ | templates/panel.html gives each cell its heading, and the browser test measures the blocks at 375 px. |',
+  '| 1 | On a phone, each row of a table shows as its own block with every cell labelled by its column heading. | ✅ | templates/panel.html gives each cell its heading, and the browser test measures the blocks at 375 px, as /home/someone/projects/speck.worktrees/speck/0158-stack-review-pack-tables-on-a-phone/test/panel-0158.test.mjs and test/supportfilewithaverylongnamethatgoesonandonwithoutanybreaksatall.mjs show. |',
   '| 2 | Copying still copies every cell. | ❌ | Evidence with `code` and \\| a pipe. |',
   '',
   '### Rounds',
@@ -119,10 +119,11 @@ const TABLES = `[...document.querySelectorAll('#full-ticket .md table, .shaping 
       return { box: box(tr), border: parseFloat(s.borderBottomWidth), padding: parseFloat(s.paddingTop) + parseFloat(s.paddingBottom),
         cells: [...tr.querySelectorAll('td')].map(td => {
           const before = getComputedStyle(td, '::before');
-          // Each word in the cell's own text, and whether it sits on one line.
+          // Each word in the cell's own text, and whether it sits on one line. A hyphen ends a word, as a space does: a line
+          // may break after one, as it would in a sentence.
           const split = [];
           const walk = document.createTreeWalker(td, NodeFilter.SHOW_TEXT);
-          for (let n; (n = walk.nextNode());) for (const m of n.textContent.matchAll(/\\S+/g)) {
+          for (let n; (n = walk.nextNode());) for (const m of n.textContent.matchAll(/[^\\s-]+/g)) {
             const r = document.createRange(); r.setStart(n, m.index); r.setEnd(n, m.index + m[0].length);
             const lines = new Set([...r.getClientRects()].filter(x => x.width).map(x => Math.round(x.top)));
             if (lines.size > 1) split.push(m[0]);
@@ -173,6 +174,8 @@ test('0158 AC2: at 375 px, a criteria block starts with its number and result on
 }));
 
 test('0158 AC3: at 375 px, blocks are set apart, and no label or word breaks inside itself', skip, () => withPack(375, async b => {
+  assert.ok(await b.js(`document.documentElement.scrollWidth <= innerWidth`), 'the page doesn\'t scroll sideways');
+  assert.ok(await b.js(`(p => p.scrollWidth <= p.clientWidth)(document.getElementById('full-ticket'))`), 'nor does the pane: a word too long for a line scrolls inside its cell');
   for (const t of await b.js(TABLES)) {
     t.rows.forEach((row, i) => {
       if (i < t.rows.length - 1) {
@@ -181,7 +184,7 @@ test('0158 AC3: at 375 px, blocks are set apart, and no label or word breaks ins
       }
       assert.ok(row.padding > 0, 'with space inside it');
       for (const c of row.cells) {
-        assert.deepEqual(c.split, [], `${c.text}: no word is broken across lines`);
+        assert.deepEqual(c.split, [], `${c.text}: no word is broken across lines, even one wider than the screen`);
         if (c.labelDisplay !== 'none') assert.equal(c.labelWrap, 'nowrap', `${c.label}: the label stays on one line`);
       }
     });
