@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-13-stop-tests-checking-speck-run-stopped-too-s
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T20:36:47.075Z"
-approved: "2026-10-14T20:59:18.023Z"
+approved: "2026-10-14T21:18:28.618Z"
 
 ---
 # 0173 · Stop tests checking speck run has stopped too soon
@@ -58,12 +58,13 @@ Nothing changes in speck itself: this only makes speck's own tests steadier. Som
 ## Review log
 Round 1 (codex): changes requested: F1 The deadline does not bound asynchronous checks.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 510,384
-- Elapsed since build started: 23 min
+- Reviewer tokens: 948,591
+- Elapsed since build started: 42 min
 - Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox note):
@@ -205,6 +206,76 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The tests now give stopped processes time to exit while still failing when shutdown does not complete. The timeout flaw is fixed and covered by regression tests. Stress runs passed; the full suite has only the documented pre-existing failure."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5b05ae8e2dc875b5dd445113cd78ffa65da388bb",
+    "merge": true,
+    "thread_id": "01a13c32-fa7b-7042-bf8c-d0360492796f",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 435876,
+      "cached_input_tokens": 369792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2331,
+      "reasoning_output_tokens": 62
+    },
+    "saved_at": "2026-10-14T21:18:25.860Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both named panel tests retain hasStopped(() => !alive(pid)) with a 10000 ms default. The passing 0173 tests cover these call sites and delayed process exit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The reviewed shutdown checks and ticket Notes are preserved by the merge. The AC2 scan and Notes coverage test both pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The bounded asynchronous polling and ECONNREFUSED-only port check remain unchanged. All timeout, unresponsive-server and descriptive-message regression tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Previously verified logs show 20 consecutive successful runs of both panel files alongside the full suite. The merge changes none of this ticket's test files or helper."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified fresh full-suite output: 1652 passed, zero failed and three skipped. The previous 0165 failure was fixed separately on main by ticket 0190."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/stopped.mjs",
+        "issue": "The asynchronous deadline and false-positive port-closure problems remain fixed after the merge.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved shutdown checks and incorporates main's separate phone-layout fix. All acceptance criteria pass, and the merged full suite has no failures. No blocking concerns remain."
   }
 }
 ```
