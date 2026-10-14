@@ -261,6 +261,13 @@ export const readT = (r, name) => fs.readFileSync(path.join(r.dir, 'speck', 'tic
 export const button = row => (function find(n) { if (n.tagName === 'button') return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 
 export const shippedRows = p => p.byId('shipped').children.filter(n => n.tagName === 'tr');
+// 0162: opens every Shipped card's Details, which hold its labelled figures and its Review pack button.
+export async function openDetails(p) {
+  for (let i = 0; i < shippedRows(p).length; i++) {
+    const d = p.all(shippedRows(p)[i]).find(n => n.tagName === 'button' && /\bdetails\b/.test(n.className || ''));
+    if (d && d.attrs['aria-expanded'] === 'false') { p.press(d); await p.settle(); }
+  }
+}
 export const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
 
 export const exitOf = (message = 'speck ship refused: speck/config.yml has an uncommitted change.') => ({ build_exit: { at: '2026-10-09T14:55:00.000Z', code: 0, message } });

@@ -819,15 +819,15 @@ test('0035 AC1: the stats row is drawn above the list, and a median with nothing
   await p.settle();
   const stats = p.byId('shipped-stats');
   assert.equal(stats.hidden, false);
-  // 0157: each tile has its number, then its label, then the tickets its median covers.
-  assert.deepEqual(stats.children.map(c => c.textContent),
-    ['2shipped today', '4median minutes1 ticket', '2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets', '–median builder cost0 tickets']);
+  // 0157: each tile has its number, then its label, then the tickets its median covers. 0162: three, then three more.
+  assert.deepEqual([...stats.children, ...p.byId('shipped-more').children].map(c => c.textContent),
+    ['2shipped today', '4median minutes1 ticket', '–median builder cost0 tickets', '2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets']);
   const html = page();
   assert.ok(html.indexOf('id="shipped-stats"') < html.indexOf('id="shipped"'), 'stats come before the list');
   const none = fakePage([{ tickets: [T('0012', 'done', { finished: iso(now), rounds: [] })], ideas: [] }]);
   await none.settle();
-  assert.deepEqual(none.byId('shipped-stats').children.map(c => c.textContent),
-    ['1shipped today', '–median minutes0 tickets', '–median review rounds0 tickets', '–median reviewer tokens0 tickets', '–median builder tokens0 tickets', '–median builder cost0 tickets']);
+  assert.deepEqual([...none.byId('shipped-stats').children, ...none.byId('shipped-more').children].map(c => c.textContent),
+    ['1shipped today', '–median minutes0 tickets', '–median builder cost0 tickets', '–median review rounds0 tickets', '–median reviewer tokens0 tickets', '–median builder tokens0 tickets']);
 });
 
 test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon, HH:MM before (0157), labelled, and nothing with no finished time', async () => {

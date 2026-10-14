@@ -165,7 +165,7 @@ test('0050 AC5: when a row\'s own ticket data changes, the new content shows in 
   assert.ok(!rowOf(p, '0002').textContent.includes('Which way'));
   assert.equal(byClass(p, rowOf(p, '0003'), 'exit').textContent, 'A new last message.');
   assert.ok(rowOf(p, '0005').textContent.includes('Renamed ready'));
-  assert.match(shipOf(p, '0011').textContent, /Review rounds2Reviewer tokens15/); // label and value pairs since 0157
+  assert.match(shipOf(p, '0011').textContent, /15 min · 2 rounds/); // one line of figures since 0162
   await refresh(p);
   assert.ok(rowOf(p, '0003').textContent.includes('Stopped and blocked.'));
   assert.ok(!byClass(p, rowOf(p, '0003'), 'exit'), 'a blocked ticket shows its question, not the build message');
