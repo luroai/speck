@@ -1,7 +1,7 @@
 ---
 id: "0153"
 title: "Show a ticket's ship in progress in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T23:42:21.427Z"
+approved: "2026-10-14T00:02:21.102Z"
 
 ---
 # 0153 · Show a ticket's ship in progress in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build's own ship (`speck ship <id> --auto`) is running, or has stopped without shipping, the panel shows the ticket as plainly approved, the same as a ticket waiting for the user. On 2026-10-13, 0149's auto-ship hung for nine minutes and the user only found out by clicking Ship.
@@ -53,9 +54,15 @@ While a ticket is being shipped, its row in the panel's Build list now says "Shi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Shipping visibility disappears before the ship finishes.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 709,869
+- Elapsed since build started: 20 min
+- Changed lines: 153 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Show when a ship merged but couldn't push: the ticket is done before the push, so a failed push shows as shipped. Saved to the inbox as `speck/ideas/2026-10-14-show-when-a-ship-merged-but-couldn-t-push.md`.
