@@ -1,7 +1,7 @@
 ---
 id: "0166"
 title: "Leave waiting time out of a ticket's build time"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0166 · Leave waiting time out of a ticket's build time
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A ticket's build time still counts time spent waiting for the user. 0139 stopped the clock at approval, but a ticket that blocks with a question keeps counting until the user answers: 0151 blocked overnight, so its time includes hours nobody was building, and the Shipped section's median minutes are skewed by it. The same goes for a build the user pauses.
