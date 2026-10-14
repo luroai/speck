@@ -1,7 +1,7 @@
 ---
 id: "0190"
 title: "Fix the 0165 phone tag-size test failing on main"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T20:59:04.574Z"
 ---
 # 0190 · Fix the 0165 phone tag-size test failing on main
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 One test fails on main every time: "0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each". It reports "queue P0: these points of its 44 px tap area miss it", at two points (x 76.9 and 55.4, y 630.5). Because main's tests fail, no ticket can ship automatically: 0175 is approved and waiting on this.
@@ -42,7 +42,9 @@ The full test suite passes on main again.
 - Self-check: the comment on the new rule said it was only for the Queued line, but it covers any line straight under a queue row's top (a paused or blocked ticket's line too, which sits under its badge row and so just gets 2 px more space on a phone), so the comment now says so.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone, the line under a waiting ticket in the Build queue (the one that says "Queued") now sits a touch lower, 2 px, under the ticket's tags. Before, it covered the bottom edge of each tag's tap area, so a tap there did nothing. That broke one of speck's own checks and stopped any ticket from shipping by itself. With that check passing again, approved tickets can ship on their own once more.
+
+To see it, open the panel on a phone and tap just under a tag on a queued ticket: its meaning still shows. Worth keeping an eye on: when that line also names another ticket ("unlocks …" or "waiting on …"), the ticket number can still catch taps on the bottom edge of the tags above it. That's saved to the inbox as a follow-up.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,3 +54,53 @@ The full test suite passes on main again.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - On a phone, a linked id in a queued ticket's Queued line ("unlocks …", "waiting on …") still takes taps from the bottom edge of the tags above it: its tap area reaches about 14 px up. Saved to the inbox as speck/ideas/2026-10-14-keep-a-queued-ticket-s-tags-tappable-above-a-linked-id.md.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a11b06ea26fd23e123b24cbe2dbfdaa586cf73fd",
+    "thread_id": "01a13c3d-9f64-7881-9c6e-b92a8cdb8ec2",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 89126,
+      "cached_input_tokens": 50688,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 532,
+      "reasoning_output_tokens": 0
+    },
+    "saved_at": "2026-10-14T21:07:37.898Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The full output in /tmp/speck-0190-tests.txt records the unchanged 0165 AC1 test at 375 px passing. templates/panel.html adds a phone-only margin of 8 px below the queue top row; test/panel-0190.test.mjs additionally checks actual browser hit targets around all tags on two queued tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The full suite records 1,641 passes, zero failures and three unrelated legacy skips. The original tests are unchanged. The new 0190 test also verifies that the dependency id in the Queued line remains reachable."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The fix adds 2 px of space below queue tags on phones so the line beneath them no longer blocks their tap areas. The original failing test and the full suite pass, with no tests weakened. I found no blocking concerns."
+  }
+}
+```
+
+</details>
