@@ -8,6 +8,7 @@ import net from 'node:net';
 import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
+import { after } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 // ---------- 0031: a read-only control panel in the browser ----------
@@ -285,38 +286,107 @@ export function findChrome() {
   return [...found, '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome'].find(f => fs.existsSync(f)) || null;
 }
 // Every wait on Chrome has a time limit, and fails naming what it waited for rather than hanging the suite (0159).
-export async function browserPage(url) {
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-chrome-'));
-  const chrome = spawn(findChrome(), ['--headless', '--no-sandbox', '--disable-gpu', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--window-size=1280,900', 'about:blank']);
-  const port = await new Promise((resolve, reject) => {
+
+// A DevTools connection to `url`, Chrome's own or one page's. A call fails if Chrome hasn't answered it in `ms`
+// milliseconds, and at once when the connection has closed, as it does when Chrome exits.
+async function devtools(url) {
+  const ws = new WebSocket(url);
+  try {
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timed out waiting for Chrome\'s DevTools connection to open')), 15000);
+      ws.onopen = () => { clearTimeout(t); resolve(); };
+      ws.onerror = () => { clearTimeout(t); reject(new Error('Chrome\'s DevTools connection failed to open')); };
+    });
+  } catch (e) { ws.close(); throw e; }
+  let seq = 0;
+  const waiting = new Map();
+  ws.onmessage = m => { const r = JSON.parse(m.data); if (waiting.has(r.id)) { waiting.get(r.id)(r); waiting.delete(r.id); } };
+  ws.onclose = () => { for (const done of waiting.values()) done({ error: { message: 'Chrome\'s DevTools connection closed' } }); waiting.clear(); };
+  const send = (method, params = {}, ms = 15000, what = '') => new Promise((resolve, reject) => {
+    if (ws.readyState !== WebSocket.OPEN) return reject(new Error(`${method}: Chrome's DevTools connection has closed`));
+    const id = ++seq;
+    const t = setTimeout(() => { waiting.delete(id); reject(new Error(`Chrome didn't answer ${method} within ${ms / 1000} s${what && `: ${what}`}`)); }, ms);
+    waiting.set(id, r => { clearTimeout(t); r.error ? reject(new Error(`${method}: ${r.error.message}`)) : resolve(r.result); });
+    ws.send(JSON.stringify({ id, method, params }));
+  });
+  return { ws, send };
+}
+
+// 0182: one headless Chromium for the whole test file. The first browserPage() starts it and the rest share it, each
+// page in a browser context of its own, so it keeps nothing from the page before. It ends once the file's tests are
+// done, however they ended, or when its process exits.
+let chromium = null; // a promise of the file's Chromium, or null before the first page and once the file's tests are done
+const running = new Set(); // every Chromium started and not yet exited, with its profile, for the exit handler
+async function launch() {
+  // Named speck-keep-*, so tmp.mjs leaves it in place between tests, until the file's process exits.
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-keep-chrome-'));
+  const chrome = spawn(findChrome(), ['--headless', '--no-sandbox', '--disable-gpu', `--user-data-dir=${profile}`, '--remote-debugging-port=0', '--window-size=1280,900', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
+  const me = { chrome, profile };
+  running.add(me);
+  exitOnSignals();
+  chrome.once('exit', () => running.delete(me));
+  // Chrome mustn't keep the file's process going once its tests are done: after() below, or the exit handler, ends it.
+  chrome.unref();
+  chrome.stderr.unref();
+  const browserUrl = await new Promise((resolve, reject) => {
     let err = '';
     const t = setTimeout(() => { chrome.kill('SIGKILL'); reject(new Error(`chrome didn't start: ${err}`)); }, 15000);
-    chrome.stderr.on('data', d => { err += d; const m = err.match(/ws:\/\/127\.0\.0\.1:(\d+)\//); if (m) { clearTimeout(t); resolve(m[1]); } });
+    chrome.once('error', e => { clearTimeout(t); reject(new Error(`chrome didn't start: ${e.message}`)); });
+    chrome.stderr.on('data', d => { err += d; const m = err.match(/ws:\/\/127\.0\.0\.1:\d+\/devtools\/browser\/[\w-]+/); if (m) { clearTimeout(t); resolve(m[0]); } });
   });
   const close = async () => {
     ws?.close();
     try { await ended(chrome, 'Chrome'); } finally { fs.rmSync(profile, { recursive: true, force: true }); }
   };
   let ws;
+  let send;
+  try { ({ ws, send } = await devtools(browserUrl)); } catch (e) { await close(); throw e; }
+  const alive = () => chrome.exitCode === null && chrome.signalCode === null && ws.readyState === WebSocket.OPEN;
+  return { chrome, port: new URL(browserUrl).port, send, alive, close };
+}
+// A file starts Chromium at most once: a page asked for after it has exited, killed by a test for example, fails.
+async function sharedChromium() {
+  if (!chromium) chromium = launch();
+  const c = await chromium;
+  if (!c.alive()) throw new Error(`this test file's Chromium (pid ${c.chrome.pid}) has exited, and a test file starts it only once: a test that ends it should be in a file of its own`);
+  return c;
+}
+after(async () => {
+  const p = chromium;
+  chromium = null;
+  const c = await p?.catch(() => null);
+  await c?.close();
+});
+process.on('exit', () => {
+  for (const { chrome, profile } of running) {
+    try { chrome.kill('SIGKILL'); } catch { /* gone */ }
+    fs.rmSync(profile, { recursive: true, force: true });
+  }
+});
+// A file stopped with a signal, as the test runner stops one that runs out of time, exits through the handler above.
+let stopping = false;
+const exitOnSignals = () => {
+  if (stopping) return;
+  stopping = true;
+  for (const [sig, n] of [['SIGINT', 2], ['SIGTERM', 15], ['SIGHUP', 1]]) process.once(sig, () => process.exit(128 + n));
+};
+
+export async function browserPage(url) {
+  const c = await sharedChromium();
+  const { browserContextId } = await c.send('Target.createBrowserContext');
+  // Closing the page's browser context closes the page and drops everything it kept.
+  let closed = false;
+  const dispose = async () => {
+    if (closed) return;
+    closed = true;
+    if (c.alive()) await c.send('Target.disposeBrowserContext', { browserContextId }).catch(() => {});
+  };
+  let ws, send;
   try {
-    const target = await (await fetch(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(url)}`, { method: 'PUT', signal: AbortSignal.timeout(15000) })).json();
-    ws = new WebSocket(target.webSocketDebuggerUrl);
-    await new Promise((resolve, reject) => {
-      const t = setTimeout(() => reject(new Error('timed out waiting for Chrome\'s DevTools connection to open')), 15000);
-      ws.onopen = () => { clearTimeout(t); resolve(); };
-      ws.onerror = () => { clearTimeout(t); reject(new Error('Chrome\'s DevTools connection failed to open')); };
-    });
-  } catch (e) { await close(); throw e; }
-  let seq = 0;
-  const waiting = new Map();
-  ws.onmessage = m => { const r = JSON.parse(m.data); if (waiting.has(r.id)) { waiting.get(r.id)(r); waiting.delete(r.id); } };
-  // A DevTools call, failing if Chrome hasn't answered it in `ms` milliseconds.
-  const send = (method, params = {}, ms = 15000, what = '') => new Promise((resolve, reject) => {
-    const id = ++seq;
-    const t = setTimeout(() => { waiting.delete(id); reject(new Error(`Chrome didn't answer ${method} within ${ms / 1000} s${what && `: ${what}`}`)); }, ms);
-    waiting.set(id, r => { clearTimeout(t); r.error ? reject(new Error(`${method}: ${r.error.message}`)) : resolve(r.result); });
-    ws.send(JSON.stringify({ id, method, params }));
-  });
+    const { targetId } = await c.send('Target.createTarget', { url, browserContextId, width: 1280, height: 900 });
+    ({ ws, send } = await devtools(`ws://127.0.0.1:${c.port}/devtools/page/${targetId}`));
+  } catch (e) { await dispose(); throw e; }
+  const close = async () => { ws.close(); await dispose(); };
   const js = async (expr, ms) => {
     const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }, ms, expr);
     if (r.exceptionDetails) throw new Error(`${expr}: ${r.exceptionDetails.text}`);
@@ -339,7 +409,8 @@ export async function browserPage(url) {
     await mouse('mouseReleased', to);
   };
   const move = ([x, y]) => send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y }); // the pointer, with no button down (0041)
-  return { js, until, loaded, drag, move, close, send, pid: chrome.pid }; // send: a raw DevTools call, for example to emulate reduced motion (0055)
+  // send: a raw DevTools call to the page, for example to emulate reduced motion (0055). browser: one to Chromium itself (0182).
+  return { js, until, loaded, drag, move, close, send, browser: c.send, pid: c.chrome.pid };
 }
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();
