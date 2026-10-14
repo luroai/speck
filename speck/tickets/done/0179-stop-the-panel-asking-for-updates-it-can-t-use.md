@@ -1,7 +1,7 @@
 ---
 id: "0179"
 title: "Stop the panel asking for updates it can't use"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-stop-asking-for-a-log-once-its-build-has-ended.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0178"]                # ticket ids that must be done first
 created: 2026-10-14
+cancel_reason: "Replaced by 0187 (the panel pushes changes, so pages stop polling) and 0189 (an open build log is streamed)."
+cancelled: 2026-10-14
 
 ---
 # 0179 · Stop the panel asking for updates it can't use
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 The panel page asks for the board every 2 seconds, and for an open build log every second, even while its tab is hidden or the phone's screen is off. It also keeps asking for a finished build's log, which can't change. Each request costs the server work (see 0176 to 0178).
