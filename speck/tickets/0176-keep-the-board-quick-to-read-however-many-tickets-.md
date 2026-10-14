@@ -44,6 +44,7 @@ How long the board takes to read doesn't depend on how big the build logs are.
 - The field names of `speck status --json` are a contract (0030).
 - Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
 - Resumed 2026-10-14: the user stopped the build only to clear the queue. Merged main, where 0190 fixed 0165 AC1.
+- Self-check: added AC2 cases where the result repeats agent text from before the last piece read, with more than 50 readable lines after it (a check that ignored that text passed the first cases); moved the log code to `scripts/build-log.mjs` to keep `speck.mjs` under 600 lines; the AC1 timing now swaps pre-written logs in by renaming, so writing 400 MB doesn't overlap a timing.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
