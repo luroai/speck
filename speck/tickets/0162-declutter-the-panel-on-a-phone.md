@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0161"]                # ticket ids that must be done first
+after: ["0167"]                # ticket ids that must be done first
 created: 2026-10-14
 
 ---
@@ -29,7 +29,7 @@ The panel shows the same information in less space: no fixed instructions, a one
 1. The hints "Click one to open it", "Builds run in their own worktrees" and "Latest 5" are no longer shown.
 2. When nothing is in flight or ready, the Build section is a single line: its heading and "Nothing in flight or ready". It returns to its full layout as soon as a ticket is ready or in flight.
 3. Shipped shows three stat tiles: shipped today, median minutes and median builder cost. A "More stats" button below them shows and hides the other three (median review rounds, reviewer tokens and builder tokens). Every stat over 9,999 is shortened as the cards' figures are (for example "2.4M"), with the exact number as a tooltip.
-4. Each shipped card shows its id and title, its ship time and one line of figures ("12 min · 1 round · $2.91"). Tapping the card's "Details" button shows the full labelled figures and the Review pack button; tapping the title still opens the full ticket. Shipped titles are in the normal text colour and underlined when hovered or focused, not in the accent red.
+4. Each shipped card shows its id and title, its ship time and one line of figures ("12 min · 1 round · $2.91"). Tapping the card's "Details" button shows the full labelled figures and the Review pack button; tapping the title still opens the full ticket.
 5. The gaps between a card's tags are equal, including beside the priority tag with its tap area, and no test that passed before this change fails, except checks of the removed hints and the old Shipped layout, which are changed to check AC1 to AC4.
 
 ## Out of scope
@@ -37,7 +37,7 @@ The panel shows the same information in less space: no fixed instructions, a one
 - The Plan and Build card layouts beyond the tag gaps.
 
 ## Notes
-- Builds after 0161 so the two style changes don't clash.
+- Builds after 0167, which takes colour out of titles and links and builds on 0161, so the style changes don't clash.
 - Reported 2026-10-14 from phone screenshots; the user liked the layout but felt it might be cluttered.
 
 ## In plain words
