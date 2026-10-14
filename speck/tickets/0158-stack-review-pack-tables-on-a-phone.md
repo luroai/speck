@@ -129,3 +129,80 @@ On a phone, each row of a table in the review pack or a ticket shows as its own 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "539f1b821dda5d8eaf9b45ee5e98400b5fff30cf",
+    "thread_id": "01a137d2-f383-79d1-859f-167539d42423",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 193148,
+      "cached_input_tokens": 144256,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1437,
+      "reasoning_output_tokens": 140
+    },
+    "saved_at": "2026-10-14T00:35:22.623Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "mdBlocks() retains cell heading labels and scoped mobile stacking rules. Both AC1 tests pass, including browser coverage of the review pack and opened Plan note."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The .ac-table ordering rules remain intact; the AC2 browser test passes with the expanded evidence fixture."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html:367 now uses overflow-wrap: normal and cell-level horizontal scrolling. The passing AC3 browser test includes a long unbroken token and checks word integrity, block separation and absence of page or pane horizontal overflow."
+      },
+      {
+        "id": 4,
+        "status": "unclear",
+        "evidence": "Desktop layout and desktop copying tests pass. The 375 px copying test fails because selected text omits the rounds table's request_changes cell. Its drag helper does not scroll target text into view, so the expanded fixture may invalidate its coordinates; phone copying needs reliable verification."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full test log reports 1399 passes, one failure and three skips. The sole failure is the newly added 0158 copying test; no test from before this build fails."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:367",
+        "issue": "Long words previously split internally in mobile table cells.",
+        "suggested_fix": "Implemented: normal word wrapping with cell-level scrolling, covered by the expanded AC3 browser test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0158.test.mjs:220",
+        "issue": "Phone copying verification now fails, leaving AC4 unverified. The longer fixture pushes later table content down, while the test drags using bounding coordinates without first ensuring the target table is visible.",
+        "suggested_fix": "Make the copy test scroll the target table and selection endpoints into view, handling pane scrolling as needed, while retaining assertions for every cell. If reliable selection still omits content, fix the implementation. Re-run the full suite.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The long-word issue is fixed, and phone blocks and desktop layout still pass their checks. Approval is held because the phone copying test now fails; it needs reliable verification with the longer evidence text."
+  }
+}
+```
+
+</details>

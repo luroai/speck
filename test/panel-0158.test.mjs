@@ -225,7 +225,10 @@ for (const width of [375, 1280]) {
     for (const t of order) {
       if (!t.pane && !(await b.js(`document.getElementById('full-ticket').hidden`))) await b.js(`document.querySelector('#full-ticket .close').click()`);
       await b.js(`getSelection().removeAllRanges()`);
+      // The table at the top of the screen, so the drag's two ends are on it.
+      await b.js(`document.querySelectorAll('#full-ticket .md table, .shaping .md table')[${t.i}].scrollIntoView({ block: 'start' })`);
       const { from, to } = (await b.js(ENDS))[t.i];
+      assert.ok(await b.js(`${from[1]} > 0 && ${to[1]} < innerHeight`), 'the whole table is on the screen');
       await b.drag(from, to);
       const copied = await b.js(`getSelection().toString()`);
       for (const c of t.cells) assert.ok(copied.includes(c), `${JSON.stringify(c)} is in what's copied: ${JSON.stringify(copied)}`);
