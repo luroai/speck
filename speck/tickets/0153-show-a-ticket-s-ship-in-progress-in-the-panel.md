@@ -1,7 +1,7 @@
 ---
 id: "0153"
 title: "Show a ticket's ship in progress in the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-13T23:42:21.427Z"
 ---
 # 0153 · Show a ticket's ship in progress in the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build's own ship (`speck ship <id> --auto`) is running, or has stopped without shipping, the panel shows the ticket as plainly approved, the same as a ticket waiting for the user. On 2026-10-13, 0149's auto-ship hung for nine minutes and the user only found out by clicking Ship.
@@ -57,3 +57,75 @@ The panel shows when a ticket is being shipped, by anyone, for how long, and say
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5c9c85a3376539b227aa24b5923d4874996b565a",
+    "thread_id": "01a137b3-1c08-7601-8dab-4b2d49e69556",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 249635,
+      "cached_input_tokens": 188928,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1136,
+      "reasoning_output_tokens": 188
+    },
+    "saved_at": "2026-10-13T23:58:05.810Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.html panelModel excludes done tickets from the Build queue. scripts/ship.mjs shipTicket marks the ticket done and merges before pushing, so a running push loses its Shipping… row. A read-only panelModel reproduction returned an empty queue for a done ticket with ship.running=true. The passing AC1 tests only cover approved tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "takeShip refuses an existing running ship; shipPart disables the button. Passing tests exercise CLI refusal across checkouts, unchanged state and disabled button clicks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "endShip retains auto-ship failures and shipState recognises killed processes. Passing ship and panel AC3 tests cover failures, refusals, killed ships, messages and recovery instructions on approved tickets."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdShip checks autoShipBlocker before creating a record. Passing AC4 tests cover excluded risk/configuration and ordinary approved tickets without ship messages."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0153-tests.txt: 1380 tests, 1377 passed, zero failures, three skipped. No existing tests were changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Shipping visibility disappears before the ship finishes. shipTicket marks and merges the ticket as done before running git push and remote cleanup, but panelModel only computes shipping for unfinished queue tickets. During a stalled push, the ticket appears shipped with no Shipping… timer, including after reload.",
+        "suggested_fix": "Keep tickets with a running ship record in the Build queue and compute their shipping state regardless of ticket status. Add coverage for a ship held during the push after its ticket becomes done, including reload and the disabled Ship button.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Shipping progress and auto-ship failure messages work while a ticket remains approved, and the existing suite passes. However, progress disappears while the final push is still running, making a stalled ship look completed. Fix that gap before merge."
+  }
+}
+```
+
+</details>

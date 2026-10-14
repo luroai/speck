@@ -479,7 +479,9 @@ function panelModel(state) {
   const spent = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
   // When a build ended: its approval (0139), or none when that's missing, unreadable or before it started.
   const approvedAt = t => { const a = time(t.approved), s = time(t.started); return a !== null && s !== null && a >= s ? a : null; };
-  const done = tickets.filter(is('done')).map(t => {
+  // 0153: speck ship sets a ticket done before it pushes, so one whose ship is still running stays in the queue until it ends.
+  const beingShipped = t => !!t.ship && typeof t.ship === 'object' && t.ship.running === true;
+  const done = tickets.filter(t => t.status === 'done' && !beingShipped(t)).map(t => {
     const start = time(t.started), end = time(t.finished), until = approvedAt(t) ?? end;
     return { ...t, end, when: shippedAt(end, now), roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
       builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
@@ -498,7 +500,7 @@ function panelModel(state) {
     // Follow-ups waiting in the inbox, in JSON order.
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
     // One list: in-flight tickets, then ready ones, each group in JSON order.
-    queue: [...tickets.filter(is(...IN_FLIGHT)), ...tickets.filter(is('ready'))].map(chain).map(t => {
+    queue: [...tickets.filter(t => IN_FLIGHT.includes(t.status) || (t.status === 'done' && beingShipped(t))), ...tickets.filter(is('ready'))].map(chain).map(t => {
       const inFlight = t.status !== 'ready', start = time(t.started);
       // An approved ticket's timer stops at its approval (0139); every other in-flight one counts on.
       const approved_at = t.status === 'approved' ? approvedAt(t) : null;
@@ -520,7 +522,7 @@ function panelModel(state) {
       const to_ship = t.status === 'approved' && exit_label !== null && !auto_failed;
       // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
-      return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
+      return { ...t, inFlight, pausable, paused: pausable && t.paused === true, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
         exit_message: auto_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
           : exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         ship_hint: auto_failed ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,
@@ -1340,7 +1342,7 @@ function queueItem(t) {
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
-    if (t.status === 'approved') q.appendChild(packButton(t));
+    if (t.status === 'approved' || t.shipping) q.appendChild(packButton(t));
     if (t.pausable) {
       q.appendChild(stopButton(t));
       if (stopRefused.has(id)) q.appendChild(el('div', 'stop-refused', stopRefused.get(id)));

@@ -153,3 +153,33 @@ test('0153 AC4: a state from an older speck with no ship field shows none of the
   await p.settle();
   for (const r of queueRows(p)) for (const l of LABELS) assert.ok(!texts(p, r).includes(l), l);
 });
+
+test('0153 AC1 AC2: a ticket speck ship has set done while its push still runs stays in the queue as shipping, with its Ship button disabled', async () => {
+  const state = { tickets: [T('0001', 'done', { started: ago(3600), approved: ago(600), finished: ago(5), rounds: [round(1, 1)], ...runningShip(90) })], ideas: [] };
+  const m = panelModel()(state);
+  assert.deepEqual(m.queue.map(t => t.id), ['0001']);
+  assert.equal(m.queue[0].shipping, true);
+  assert.equal(m.queue[0].steps.find(s => s.state === 'now').label, 'Ship');
+  assert.equal(m.shipped.length, 0, 'not in Shipped until the ship ends');
+  assert.equal(m.shippedTotal, 0);
+  for (let load = 0; load < 2; load++) { // and again after a reload
+    const p = page(state);
+    await p.settle();
+    assert.ok(findText(p, row(p), 'Shipping…'));
+    p.press(row(p).children.find(n => n.className === 'top'));
+    await p.settle();
+    p.press(buttons(p, row(p), /^Review pack$/)[0]);
+    await p.settle();
+    const b = buttons(p, p.byId('full-ticket'), /^Ship/)[0];
+    assert.ok(b, 'the pack shows its Ship button');
+    assert.equal(b.disabled, true);
+    assert.equal(b.textContent, 'Shipping…');
+    p.press(b);
+    await p.settle();
+    assert.equal(p.sent.length, 0, 'no ship sent');
+  }
+  // Once it has ended, it moves to Shipped.
+  const after = panelModel()({ tickets: [T('0001', 'done', { started: ago(3600), finished: ago(5), ship: null })], ideas: [] });
+  assert.equal(after.queue.length, 0);
+  assert.equal(after.shipped.length, 1);
+});

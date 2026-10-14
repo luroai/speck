@@ -257,3 +257,21 @@ test('0153 AC2: when the record can\'t be written, speck ship says so plainly an
     assert.deepEqual(r.snapshot(), snap);
   } finally { fs.chmodSync(path.join(cache, 'runs'), 0o700); }
 });
+
+test('0153 AC1: a ship held up in its push still shows as running once the ticket is done', async () => {
+  const gate = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-gate-')), 'go');
+  const r = shipRepo();
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
+  gIn(bare, 'init', '-q', '--bare', '-b', 'main');
+  r.g('remote', 'add', 'origin', bare);
+  r.g('push', '-q', '-u', 'origin', 'main');
+  fs.writeFileSync(path.join(bare, 'hooks', 'pre-receive'), `#!/bin/sh\nwhile [ ! -f ${gate} ]; do sleep 0.05; done\n`, { mode: 0o755 });
+  const s = shipping(r.dir);
+  try {
+    const t = await until(() => { const x = statusOf(r.dir); return x.status === 'done' && x.ship && x.ship.running ? x : null; }, 'the ticket to be done with its ship still running');
+    assert.equal(t.ship.running, true);
+  } finally { fs.writeFileSync(gate, ''); }
+  const out = await s.exited;
+  assert.equal(out.code, 0, out.err);
+  assert.equal(shipOf(r.dir), null);
+});
