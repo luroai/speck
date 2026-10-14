@@ -28,7 +28,7 @@ Every word and every control edge in the panel is comfortably readable in light 
 ## Acceptance criteria
 1. All text meets at least 4.5:1 against the background it sits on, and text smaller than 14 px (labels, counts, hints, tags) meets at least 7:1, in light and dark mode. A test works the ratios out from the panel's colour tokens and the backgrounds they're used on, and fails if any pair falls short.
 2. The visible edge of every control and card (buttons, tags, tabs, cards, the Auto-build and light/dark buttons, the priority menu) meets at least 3:1 against the background next to it, in light and dark mode, checked by the same test.
-3. No text is smaller than 12 px, and running text and labels use a weight of at least 400.
+3. No text is smaller than 12 px, and running text and labels use a weight of at least 400. The priority, size, risk, bug and fix tags are at least 14 px text in boxes at least 28 px tall, the same size wherever they appear (Plan, the Build queue and the full ticket pane).
 4. Every button, link and tab shows a clearly visible focus ring when reached with the keyboard (at least 2 px, at least 3:1 against the background around it), and the page can be zoomed by the user.
 5. No test that passed before this change fails, except checks of the old colour values, sizes and weights, which are changed to match.
 
@@ -37,7 +37,8 @@ Every word and every control edge in the panel is comfortably readable in light 
 - Changing the layout or what the panel shows.
 
 ## Notes
-- Measured 2026-10-14 from the tokens in `templates/panel.html`. Light: `--faint` 4.82:1 on the panel and 4.58:1 on the page background, `--warn` 4.68:1, `--line` 1.62:1, `--line-soft` 1.24:1. Dark: `--accent` 4.56:1, `--faint` 4.77:1, `--line` 1.52:1, `--line-soft` 1.09:1. Font sizes in use go down to 9 px; the body is `font: 300 13px`.
+- Measured 2026-10-14 from the tokens in `templates/panel.html`. Light: `--faint` 4.82:1 on the panel and 4.58:1 on the page background, `--warn` 4.68:1, `--line` 1.62:1, `--line-soft` 1.24:1. Dark: `--accent` 4.56:1, `--faint` 4.77:1, `--line` 1.52:1, `--line-soft` 1.09:1. Font sizes in use go down to 9 px; the body is `font: 300 13px`; tags are `.tag { font-size: 10px; line-height: 17px }`.
+- The larger tags were asked for on 2026-10-14: they're hard to read on a phone.
 - WCAG 2.2: 1.4.3 (4.5:1 text), 1.4.6 (7:1, AAA), 1.4.11 (3:1 for control edges), 2.4.7 and 2.4.13 (focus visible and its appearance).
 - Keep the panel's look: darken or lighten the existing tokens rather than replacing the palette.
 
