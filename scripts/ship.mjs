@@ -6,6 +6,7 @@ import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, worktreeList, ticketBranches } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
 import { testRun } from './results.mjs';
+import { failingTests } from './tap.mjs';
 import { sharedCacheDir } from './turns.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
@@ -38,6 +39,7 @@ function shipChecks(repo, cfg, pad, branch) {
     throw new SpeckError(`These files changed after the reviewer approved: ${changed.join(', ')}. Run the review again so the reviewer sees them.`);
 }
 
+// Runs the tests in `repo`: { ok, output }, output being what a failing run wrote.
 function runTests(repo, cfg) {
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set, so speck can\'t check the tests pass before shipping. Set commands.test in speck/config.yml (for example `npm test`), commit it, then run this again.');
@@ -46,13 +48,21 @@ function runTests(repo, cfg) {
   const r = testRun(repo, cfg, cmd, { reuse: 'pass', onStart: () => console.log(`Running tests: ${cmd}`) });
   // A stall is no sign the change is broken, so it isn't checked against the base branch's tests (0152).
   if (r.stalled) throw new SpeckError('The tests stalled, so speck ended them and nothing was shipped. The ticket is still approved: ship it again to run the tests again.');
-  return r.status === 0;
+  return { ok: r.status === 0, output: r.output || '' };
 }
 
-// The refusal for tests that failed on the ticket branch. It runs the tests on the base branch as it is, in a
-// temporary worktree it removes afterwards, so a broken base branch isn't blamed on the ticket.
-function testFailure(repo, cfg, base, sha) {
-  const failed = 'Tests failed on the approved branch, so nothing was shipped.';
+// The failing tests named in a refusal: the first ten, and how many more.
+function named(failing) {
+  if (!failing.length) return '';
+  const more = failing.length > 10 ? `, and ${failing.length - 10} more` : '';
+  return ` Failing tests: ${failing.slice(0, 10).join('; ')}${more}.`;
+}
+
+// The refusal for tests that failed on the ticket merged with the base branch's commit `sha`. It runs the tests on
+// that commit alone, in a temporary worktree it removes afterwards, so a broken base branch isn't blamed on the ticket.
+// `moved` says whether the base branch has commits the ticket branch doesn't, and `failing` names the failing tests.
+function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {}) {
+  const failed = `Tests failed on the approved branch, so nothing was shipped.${moved ? ` They ran on it merged with ${base} as it is now.` : ''}`;
   const at = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-base-')), 'base');
   console.log(`Checking whether ${base}'s own tests pass, in a temporary worktree at ${at}.`);
   let admin = null; // git's own record of the temporary worktree
@@ -66,13 +76,35 @@ function testFailure(repo, cfg, base, sha) {
       const r = sh('sh', ['-c', setup], { cwd: at });
       if (r.status !== 0) return new SpeckError(`${failed} Couldn't check ${base}'s own tests: worktree_setup (${setup}) failed with exit ${r.status} there.`);
     }
-    if (runTests(at, cfg)) return new SpeckError(`${failed} ${base}'s tests pass, so the failure comes from this ticket's change.`);
-    return new SpeckError(`Tests failed on the approved branch, and ${base}'s own tests are failing too, so this isn't the ticket's fault. Nothing was shipped. Fix ${base}, then ship again.`, 14);
+    if (runTests(at, cfg).ok) return new SpeckError(moved
+      ? `${failed} ${base}'s own tests pass, so this ticket and ${base}'s newer changes fail together.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
+      : `${failed} ${base}'s tests pass, so the failure comes from this ticket's change.${named(failing)}`);
+    return new SpeckError(`Tests failed on the approved branch${moved ? ` merged with ${base} as it is now` : ''}, and ${base}'s own tests are failing too, so this isn't the ticket's fault. Nothing was shipped. Fix ${base}, then ship again.`, 14);
   } finally {
     // Only this worktree's record goes: a repo-wide prune would also drop other worktrees whose folders are missing.
     const removed = sh('git', ['worktree', 'remove', '--force', at], { cwd: repo });
     fs.rmSync(path.dirname(at), { recursive: true, force: true });
     if (removed.status !== 0 && admin) fs.rmSync(admin, { recursive: true, force: true });
+  }
+}
+
+// The ticket branch merged into the base branch's commit `target`, as a commit no branch points at, made in git's
+// object store only (merge-tree), so no branch, folder, index or hook is touched (0192). Null when the merge has
+// conflicts: the real merge then hits them and refuses, as before.
+function candidateMerge(repo, branch, target, message) {
+  const r = sh('git', ['merge-tree', '--write-tree', '--no-messages', target, branch], { cwd: repo });
+  if (r.status === 1) return null;
+  if (r.status !== 0) throw new SpeckError(`Couldn't work out the merge of ${branch} into the base branch, so nothing was shipped: ${(r.stderr || r.stdout).trim().split('\n').pop()}`);
+  return git(['commit-tree', r.stdout.split('\n')[0].trim(), '-p', target, '-p', branch, '-m', message], repo).trim();
+}
+
+// Runs the tests on `candidate`, checked out in the ticket branch's folder, then checks the branch out again there.
+function testMerged(work, cfg, branch, candidate) {
+  git(['checkout', '-q', '--detach', candidate], work);
+  try { return runTests(work, cfg); }
+  finally {
+    const out = sh('git', ['checkout', '-q', branch], { cwd: work });
+    if (out.status !== 0) throw new SpeckError(`Couldn't check ${branch} out again in ${work} after the tests (${out.stderr.trim().split('\n').pop()}), so nothing was shipped. Run \`git checkout ${branch}\` there, then ship again.`);
   }
 }
 
@@ -201,10 +233,24 @@ export function shipTicket(repo, id) {
   let baseSha = git(['rev-parse', base], repo).trim();
   git(['checkout', '-q', branch], work);
   const back = () => git(['checkout', '-q', start], work);
+  // The tests run on what will land: the ticket merged with the base branch as it is now, remote commits included
+  // (0192). If you commit to the base branch while they run, they run again with your commit.
+  let target = catchUp || baseSha, tested = null;
   try {
     shipChecks(work, cfg, pad, branch);
-    if (!runTests(work, cfg)) throw testFailure(work, cfg, base, catchUp || baseSha);
-    clash(', made while the tests ran');
+    const message = `speck(${pad}): ${findTicket(work, pad).fm.title}`;
+    for (let tries = 1; ; tries++) {
+      tested = candidateMerge(work, branch, target, message);
+      // A merge with conflicts can't be tested, so the branch alone is, as before: the merge then refuses with them.
+      const r = tested ? testMerged(work, cfg, branch, tested) : runTests(work, cfg);
+      if (!r.ok) throw testFailure(work, cfg, base, target, { moved: !!tested && !isAncestor(work, target, branchSha), failing: failingTests(r.output) });
+      clash(', made while the tests ran');
+      const now = git(['rev-parse', base], repo).trim();
+      if (!tested || catchUp || now === target) break; // after a catch-up, a local commit is the catch-up's to refuse
+      if (tries === 3) throw new SpeckError(`${base} got new commits each time the tests ran, so nothing was shipped. Ship again once it's quieter.`);
+      console.log(`${base} got new commits while the tests ran: running them again with those commits.`);
+      target = now;
+    }
   } catch (e) { back(); throw e; }
   // Waiting may have let you commit to the base branch, so a failure from here puts it back to that commit, not an older one.
   baseSha = git(['rev-parse', base], repo).trim();
@@ -277,6 +323,17 @@ export function shipTicket(repo, id) {
     const e = fail(`Merging ${branch} into ${base} hit a conflict, so nothing was shipped and ${base} is unchanged. Conflicting files: ${conflicts.join(', ')}. Merge ${target} into ${branch}, resolve the conflicts, get the result reviewed, then ship again.`);
     e.code = 13;
     throw e;
+  }
+  // What landed must be what the tests passed on, but for the ship commit's change to the ticket's own file (0192).
+  const shipped = new Set(git(['diff', '--no-renames', '--name-only', '-z', branchSha, branch], work).split('\0').filter(Boolean));
+  const untested = tested
+    ? git(['diff', '--no-renames', '--name-only', '-z', tested, 'HEAD'], mergeAt).split('\0').filter(f => f && !shipped.has(f))
+    : null;
+  if (!untested || untested.length) {
+    // Back to the base branch as the merge found it, so a commit made on it since the tests is kept.
+    if (!catchUp) baseSha = git(['rev-parse', 'HEAD^1'], mergeAt).trim();
+    undo();
+    throw fail(`Merging ${branch} into ${base} didn't give what the tests ran on${untested ? ` (these files differ: ${untested.join(', ')})` : ''}, so nothing was shipped and ${base} is unchanged. Ship again.`);
   }
   // From here on, run git from the main checkout, which always survives: the ticket's worktree is about to go.
   const branchRemote = sh('git', ['config', `branch.${branch}.remote`], { cwd: main }).stdout.trim() || remote;

@@ -42,6 +42,8 @@ What `speck ship` tests is exactly what lands on the base branch, and an approve
 - Related: 0048 (update a conflicting branch and re-review it), 0101 (the skill for ships that need a merge), 0116 (a ship that needs help inside the build).
 - High risk: it changes what guards the base branch. A clean merge is safe to ship unreviewed only because criterion 1 tests the combined result.
 - Failing before this build: none
+- AC3 and AC4's tests passed before any code: ship already merged a clean, moved-on base branch without a review and already refused conflicts. What's new for AC3 is that the tests run on the merged result first (AC1's tests).
+- Self-check: the check that what landed is what was tested now keeps a commit made on the base branch after the tests (it put the base back to before that commit), and the brief's claim about commits made while the tests run is narrowed to what happens after catching up with the remote, each with a test.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
