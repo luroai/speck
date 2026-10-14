@@ -1,7 +1,7 @@
 ---
 id: "0177"
 title: "Keep the panel answering while it reads the board"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T21:14:21.689Z"
+approved: "2026-10-14T21:41:25.936Z"
 
 ---
 # 0177 · Keep the panel answering while it reads the board
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel server works out the whole board for each `/api/state` request, and while it does (about 750 ms on 2026-10-14) it can't answer anything else. Every open tab asks every 2 seconds, and a request the page has already given up on is still worked out. On a busy machine requests pile up faster than they're answered: on 2026-10-14 the panel stopped answering, with 60 connections queued and its process at 100% CPU.
@@ -51,9 +52,16 @@ To see it, open the panel in several tabs and use the buttons while it refreshes
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 An outstanding state request can return a stale board after a write completes.; F2 Back to Plan still reads the entire board synchronously on the HTTP server thread.; F3 The responsiveness test uses a draft ticket for Stop build, a nonexistent ticket for Ship, and an already-off run switch.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,507,941
+- Elapsed since build started: 27 min
+- Changed lines: 117 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, none needing a ticket of their own, so no inbox notes):
 - If the board reader stops (it hasn't in testing), the next reading starts a new one, which loads the code as it is on disk then, not as the running server loaded it. The server restarts on any code change anyway.
