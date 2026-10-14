@@ -89,9 +89,10 @@ test('0120 AC3: Shipped rows label the existing figure as reviewer tokens and sh
     T('0012', 'done', { started: iso(now - 9 * 60000), finished: iso(now - 60000), rounds: [round(1, 300)], builder_tokens: 1000, builder_cost_usd: null }),
   ], ideas: [] }]);
   await p.settle();
-  const [a, b] = shippedRows(p).map(tr => tr.children[1].textContent);
-  assert.equal(a, '4 min · 1 round · 1,200 reviewer tokens · 2,345,678 builder tokens · $1.16 builder cost');
-  assert.equal(b, '8 min · 1 round · 300 reviewer tokens · 1,000 builder tokens', 'only what is recorded');
+  // 0157: label and value pairs, a token count from 10,000 up shortened.
+  const [a, b] = shippedRows(p).map(tr => tr.children.find(n => n.className === 'figs').textContent);
+  assert.equal(a, 'Time4 minReview rounds1Reviewer tokens1,200Builder tokens2.3MBuilder cost$1.16');
+  assert.equal(b, 'Time8 minReview rounds1Reviewer tokens300Builder tokens1,000', 'only what is recorded');
 });
 
 test('0120 AC4: the stats add median builder tokens and cost, each over the done tickets with that data', async () => {
@@ -111,7 +112,7 @@ test('0120 AC4: the stats add median builder tokens and cost, each over the done
   const p = fakePage([state]);
   await p.settle();
   const texts = p.byId('shipped-stats').children.map(c => c.textContent);
-  assert.deepEqual(texts.slice(3), ['–median reviewer tokens · 0 tickets', '300median builder tokens · 3 tickets', '$0.88median builder cost · 2 tickets']);
+  assert.deepEqual(texts.slice(3), ['–median reviewer tokens0 tickets', '300median builder tokens3 tickets', '$0.88median builder cost2 tickets']); // as 0157 lays them out
 });
 
 test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipped is unchanged', async () => {
@@ -119,9 +120,9 @@ test('0120 AC5: a ticket with no builder spend shows none, and the rest of Shipp
   const state = { tickets: [T('0011', 'done', { started: iso(now - 4 * 60000), finished: iso(now), rounds: [round(1, 1200), round(2, 300)] })], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
-  assert.equal(shippedRows(p)[0].children[1].textContent, '4 min · 2 rounds · 1,500 reviewer tokens');
+  assert.equal(shippedRows(p)[0].children.find(n => n.className === 'figs').textContent, 'Time4 minReview rounds2Reviewer tokens1,500'); // as 0157 lays them out
   assert.deepEqual(p.byId('shipped-stats').children.map(c => c.textContent),
-    ['1shipped today', '4median minutes · 1 ticket', '2median review rounds · 1 ticket', '1,500median reviewer tokens · 1 ticket', '–median builder tokens · 0 tickets', '–median builder cost · 0 tickets']);
+    ['1shipped today', '4median minutes1 ticket', '2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets', '–median builder cost0 tickets']);
   const m = panelModel()(state);
   assert.equal(m.shipped[0].tokens, 1500);
   assert.equal(m.shipped[0].builderTokens, null);

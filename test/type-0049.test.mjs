@@ -85,13 +85,8 @@ test('0049 AC4: a bug ticket shows a bug tag beside its id in Shaping, the queue
   ], ideas: [] }]);
   await p.settle();
   const idOf = row => p.all(row).find(n => n.className === 'id')._text;
-  const bugTag = row => {
-    const ids = p.all(row).filter(n => n.className === 'id');
-    const parent = p.all(row).find(n => (n.children || []).includes(ids[0]));
-    const next = parent.children[parent.children.indexOf(ids[0]) + 1];
-    return next && /\bbug\b/.test(next.className || '') ? next : null;
-  };
-  // 0151, 0155: in Plan and the queue the bug tag comes after the priority, size and risk tags, in the row under the title.
+  // 0151, 0155, 0157: in Plan, the queue and Shipped the bug tag comes last in the row under the title, after any
+  // priority, size and risk tags.
   const lastTag = row => {
     const tags = p.all(row).find(n => /\btag-row\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || ''));
     return /\bbug\b/.test(tags.at(-1)?.className || '') ? tags.at(-1) : null;
@@ -101,8 +96,8 @@ test('0049 AC4: a bug ticket shows a bug tag beside its id in Shaping, the queue
     const bug = rows.find(r => ['0001', '0003', '0005'].includes(idOf(r)));
     const other = rows.find(r => ['0002', '0004', '0006'].includes(idOf(r)));
     assert.ok(bug && other, `${where} lists both`);
-    const tag = where === 'Shipped' ? bugTag(bug) : lastTag(bug);
-    assert.ok(tag, `${where}: a bug tag ${where === 'Shipped' ? 'right after the id' : 'after the other tags'}`);
+    const tag = lastTag(bug);
+    assert.ok(tag, `${where}: a bug tag after any other tags`);
     assert.equal(tag._text, 'bug');
     assert.ok(!anyBug(other), `${where}: no tag on a ticket that isn't a bug`);
   }

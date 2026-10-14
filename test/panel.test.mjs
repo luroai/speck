@@ -829,17 +829,18 @@ test('0035 AC1: the stats row is drawn above the list, and a median with nothing
   await p.settle();
   const stats = p.byId('shipped-stats');
   assert.equal(stats.hidden, false);
+  // 0157: each tile has its number, then its label, then the tickets its median covers.
   assert.deepEqual(stats.children.map(c => c.textContent),
-    ['2shipped today', '4median minutes · 1 ticket', '2median review rounds · 1 ticket', '1,500median reviewer tokens · 1 ticket', '–median builder tokens · 0 tickets', '–median builder cost · 0 tickets']);
+    ['2shipped today', '4median minutes1 ticket', '2median review rounds1 ticket', '1,500median reviewer tokens1 ticket', '–median builder tokens0 tickets', '–median builder cost0 tickets']);
   const html = page();
   assert.ok(html.indexOf('id="shipped-stats"') < html.indexOf('id="shipped"'), 'stats come before the list');
   const none = fakePage([{ tickets: [T('0012', 'done', { finished: iso(now), rounds: [] })], ideas: [] }]);
   await none.settle();
   assert.deepEqual(none.byId('shipped-stats').children.map(c => c.textContent),
-    ['1shipped today', '–median minutes · 0 tickets', '–median review rounds · 0 tickets', '–median reviewer tokens · 0 tickets', '–median builder tokens · 0 tickets', '–median builder cost · 0 tickets']);
+    ['1shipped today', '–median minutes0 tickets', '–median review rounds0 tickets', '–median reviewer tokens0 tickets', '–median builder tokens0 tickets', '–median builder cost0 tickets']);
 });
 
-test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon HH:MM before, a dash with no finished time', async () => {
+test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon, HH:MM before (0157), labelled, and nothing with no finished time', async () => {
   const today = startOfToday();
   const at = (dayStart, h, m) => new Date(new Date(dayStart).setHours(h, m)).toISOString();
   const earlier = new Date(today); earlier.setDate(earlier.getDate() - 3); earlier.setHours(14, 2);
@@ -855,17 +856,17 @@ test('0035 AC2: each row shows when it shipped: HH:MM today, D Mon HH:MM before,
   const m = panelModel()(state);
   const when = id => m.shipped.find(t => t.id === id).when;
   assert.equal(when('0011'), hhmm(nowTime));
-  assert.equal(when('0012'), `${earlier.getDate()} ${months[earlier.getMonth()]} 14:02`);
-  if (startOfToday() !== new Date(2026, 9, 8).getTime()) assert.equal(when('0013'), '8 Oct 09:05');
+  assert.equal(when('0012'), `${earlier.getDate()} ${months[earlier.getMonth()]}, 14:02`);
+  if (startOfToday() !== new Date(2026, 9, 8).getTime()) assert.equal(when('0013'), '8 Oct, 09:05');
   assert.equal(when('0014'), '–');
   const p = fakePage([state]);
   await p.settle();
   const rows = shippedRows(p);
   assert.equal(rows.length, 4);
   const row = id => rows.find(r => r.textContent.startsWith(id));
-  assert.ok(row('0011').children.some(c => c.textContent === hhmm(nowTime)), 'today: HH:MM');
-  assert.ok(row('0012').children.some(c => c.textContent === `${earlier.getDate()} ${months[earlier.getMonth()]} 14:02`));
-  assert.ok(row('0014').children.some(c => c.textContent === '–'), 'no finished time: a dash');
+  assert.ok(row('0011').children.some(c => c.textContent === `Shipped ${hhmm(nowTime)}`), 'today: HH:MM');
+  assert.ok(row('0012').children.some(c => c.textContent === `Shipped ${earlier.getDate()} ${months[earlier.getMonth()]}, 14:02`));
+  assert.ok(!row('0014').children.some(c => c.textContent.startsWith('Shipped')), 'no finished time: no ship time (0157)');
 });
 
 test('0035 AC1, AC2: times use the browser\'s time zone, not UTC', () => {
@@ -873,7 +874,7 @@ test('0035 AC1, AC2: times use the browser\'s time zone, not UTC', () => {
   process.env.TZ = 'America/New_York';
   try {
     const m = panelModel()({ tickets: [T('0011', 'done', { finished: '2026-10-08T02:30:00Z' })], ideas: [] });
-    assert.equal(m.shipped[0].when, '7 Oct 22:30', 'UTC 8 Oct 02:30 is 7 Oct 22:30 in New York');
+    assert.equal(m.shipped[0].when, '7 Oct, 22:30', 'UTC 8 Oct 02:30 is 7 Oct 22:30 in New York');
   } finally {
     if (before === undefined) delete process.env.TZ; else process.env.TZ = before;
   }
