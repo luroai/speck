@@ -1,7 +1,7 @@
 ---
 id: "0176"
 title: "Keep the board quick to read however many tickets are built"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ created: 2026-10-14
 started: "2026-10-14T21:03:32.266Z"
 blocked_at: ""
 waited_seconds: 569
+approved: "2026-10-14T21:28:42.937Z"
 
 ---
 # 0176 · Keep the board quick to read however many tickets are built
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every read of the board (`speck status --json`, `speck run`'s check every 5 seconds, and the panel's `/api/state`) reads and parses every finished build's whole log to find its last 50 lines. With 128 logs (55 MB) on 2026-10-14, one read took about 750 ms of CPU, 63% of it in the logs. It grows with every ticket built, so `speck run` and the panel head towards being busy all the time.
@@ -58,9 +59,14 @@ Worth keeping an eye on: one of the new checks times the board with small and la
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 134,692
+- Elapsed since build started: 25 min
+- Changed lines: 136 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes): the remembered log ends are kept for the life of the process, one small entry per log, and never pruned; the AC1 test compares wall-clock times, so it could fail now and then on a heavily loaded machine.
 
