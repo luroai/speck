@@ -41,6 +41,7 @@ Each ticket in the Build queue is a card laid out like a Plan ticket after 0151,
 - Builds on 0151's card styles, so it waits for it.
 - Rows are built by `queueItem()` in `templates/panel.html`. The empty column is `.q .top`'s first grid column (26 px, 34 px under 700 px wide, the old `.rank` space) plus the `margin-left` on the bar and the lines under it.
 - Reported 2026-10-13 from a phone screenshot in dark mode.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
