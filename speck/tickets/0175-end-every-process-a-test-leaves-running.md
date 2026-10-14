@@ -1,7 +1,7 @@
 ---
 id: "0175"
 title: "End every process a test leaves running"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,13 +14,13 @@ source: "speck/ideas/done/2026-10-13-stop-the-pause-and-stop-tests-leaving-proce
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T19:37:04.183Z"
-blocked_at: "2026-10-14T20:43:46.080Z"
-waited_seconds: 247
+blocked_at: ""
+waited_seconds: 282
 
 ---
 # 0175 · End every process a test leaves running
 
-**Status:** ⛔ blocked
+**Status:** 🔍 reviewing
 
 ## Problem
 Every full test run leaves processes running for good. The test setup deletes each test file's temporary folder afterwards, but never ends what the tests started, and some test helpers wait for ever for a file in that folder. On 2026-10-14, 474 leftovers held about 13 GB of the machine's 15 GB of memory (7.5 GB of processes, and 5.8 GB of deleted logs they kept writing to in `/tmp`, which is held in memory here). The load average reached about 118, the panel stopped answering, the full suite went from 64 to 262 seconds, and builds took twice as long.
@@ -50,12 +50,13 @@ When a test file finishes, nothing it started is still running, however its test
 - Self-check: no changes
 - Answered 2026-10-14 (blocked question after review round 3: may an unmarked process whose starter exits before the clean-up's check sees it survive?): option (a). The remaining gap is accepted, and criteria 1 and 2 now cover every process that keeps a link to the test, or whose starter is still running when the check runs. No new work: ship it as built.
 - Answered 2026-10-14 (blocked on the review-round limit): option (a), one extra review round. The user raised `max_review_rounds` to 4 in this worktree only, uncommitted, for round 4; it's put back once that round is recorded.
+- Answered 2026-10-14 (blocked on the round limit setting): option (a). The limit is raised to 4 in a commit on this branch for round 4, then committed back to 3 straight away, whatever the verdict, so the branch has no net settings change.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-The extra review round couldn't run: speck only reviews saved work, and refuses while any file it tracks has unsaved changes, including the raised round limit in the settings, which you asked me never to save. So no round was recorded, and the limit is back at 3. How should the limit be raised for this one round? Options: (a) let me save the raise on this ticket's work, run the round, then save the setting back to 3 straight away, so what ships leaves the setting unchanged; (b) raise it on the main line yourself and save it there, then set it back after this ticket; (c) leave it for now. I recommend (a): what ships has no settings change, and it needs nothing from you but a yes.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
