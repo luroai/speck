@@ -228,7 +228,7 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       if (sel !== '#theme') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
     assert.match(await b.js(`document.querySelector('header .repo').textContent`), /speck-\w+ · base main/);
-    assert.ok(await b.js(`document.querySelector('#run .live').getBoundingClientRect().width > 0`), "Auto-build's square is shown");
+    assert.ok(await b.js(`document.querySelector('#run .mini').getBoundingClientRect().width > 0`), "Auto-build's builder is shown"); // 0163: in place of the square
   });
 });
 

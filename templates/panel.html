@@ -70,7 +70,6 @@
   .theme .sun { display: none; }
   :root[data-theme="dark"] .theme .sun { display: block; }
   :root[data-theme="dark"] .theme .moon { display: none; }
-  .live { display: inline-block; width: 6px; height: 6px; background: var(--run); margin-right: 6px; vertical-align: 1px; }
 
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); }
   section { background: var(--panel); border: .5px solid var(--line); }
@@ -232,13 +231,18 @@
   td.num { color: var(--muted); text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; white-space: nowrap; }
 
   /* Live panel additions */
-  .live.go { background: var(--ok); }
-  .live.stop { background: var(--bad); }
   /* 0150: Auto-build is one button, the same height as the light/dark one beside it */
   .run-state { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; white-space: nowrap; color: var(--muted); background: var(--panel); border: .5px solid var(--line); cursor: pointer; }
   .run-state:hover { color: var(--text); border-color: var(--text); }
   .run-state:disabled { cursor: default; opacity: .6; }
   .run-state[hidden] { display: none; }
+  /* 0163: the builder in place of the square, and a label that ends in "…" rather than wrap or overflow. The colour of
+     a ticket waiting for you: purple to ship it, red when it's blocked or its build stopped. */
+  .run-state { gap: 6px; max-width: 100%; min-width: 0; }
+  .run-state .mini { display: block; flex: none; width: 28px; height: 28px; margin-left: -4px; }
+  .run-state .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .run-state.run-wait { color: var(--idea); border-color: var(--idea); }
+  .run-state.run-bad { color: var(--bad); border-color: var(--bad); }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
@@ -377,6 +381,12 @@
     .logo span { letter-spacing: 0; margin-left: 0; }
     .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
     .run-state { justify-self: start; height: 44px; min-width: 44px; }
+    /* 0163: in two rows, Auto-build has the row under speck and the project to itself, but light/dark's place, so a
+       long label is cut short there rather than move the project's name. Slim, each is in its own column again. */
+    header:not(.slim) { grid-template-columns: auto minmax(0, 1fr) auto; }
+    header:not(.slim) .repo { grid-column: 2 / 4; }
+    header:not(.slim) .run-state { grid-column: 1 / 3; }
+    header:not(.slim) .theme { grid-column: 3; }
     .theme { justify-self: end; width: 44px; height: 44px; }
     .run-error, .offline, .restart { padding: 6px 16px; }
 
@@ -525,6 +535,19 @@ function badgeOf(t, d) {
   if (d.tone === 'bad') return { pose: 'bad', label: 'The builder needs you' };
   if (t.to_ship) return { pose: 'wait', label: 'The builder is waiting for you' };
   return { pose: 'still', label: t.paused ? 'The builder is paused' : 'The builder is waiting' };
+}
+// 0163: what the Auto-build button says while it's on, from the first in-flight ticket in the Build queue that is being
+// built, reviewed or shipped, or waits for you: its label, its colour ('bad', 'wait' or '') and whether its builder
+// hops. `shippingId` is the ticket whose ship from the panel hasn't been answered yet. Null when none is.
+function runLabel(queue, shippingId) {
+  for (const t of queue) {
+    if (!t.inFlight) continue;
+    const d = doing(t, t.shipping || shippingId === String(t.id)), now = t.steps.find(s => s.state === 'now');
+    if (d.tone === 'bad') return { text: `${t.id} needs you`, tone: 'bad', moving: false };
+    if (t.to_ship && !d.moving) return { text: `${t.id} needs you`, tone: 'wait', moving: false };
+    if ((d.moving || t.paused) && now) return { text: `Building ${t.id} · ${now.label.replace(/ \d+$/, '')}`, tone: '', moving: d.moving };
+  }
+  return null;
 }
 // An amount in US dollars, to the cent.
 const dollars = n => `$${n.toFixed(2)}`;
@@ -1727,7 +1750,14 @@ const BADGE = (() => {
     if (clip) g.clip();
     g.translate(28, 52); g.scale(.64, .64); POSES[pose](g, t); g.restore();
   }
-  return { C, POSES, STILL_AT, draw };
+  // 0163: the builder alone, without its tile, filling a 56-unit square, as the Auto-build button shows it: hopping
+  // gently while `moving`, otherwise still and facing front.
+  function bare(g, t, moving) {
+    const P = { t: moving ? t : 1000, lookX: 0, lookY: .1 };
+    if (moving) { const h = hop((t % 1400) / 1400, 1, 3); P.y = h.y; P.tuck = h.tuck * .5; }
+    g.save(); g.translate(28, 53); builder(g, P); g.restore();
+  }
+  return { C, POSES, STILL_AT, draw, bare };
 })();
 // The badge's colours, read from the panel's tokens each frame, so a change of look shows at once.
 function badgeColours() {
@@ -1736,17 +1766,20 @@ function badgeColours() {
   return Object.values(BADGE.C).join();
 }
 // Draws one badge at time `now`. One that doesn't move (a paused build, or every badge with reduced motion) is drawn
-// again only when its pose, size or colours change. Returns whether it moves.
+// again only when its pose, size or colours change. Returns whether it moves. 0163: a `mini` one is the Auto-build
+// button's builder, 28 px and without its tile, hopping or still.
 function paintBadge(c, now, colours) {
-  const name = c.className.split(' ')[1], pose = Object.hasOwn(BADGE.POSES, name) ? name : 'still';
+  const [kind, name] = c.className.split(' '), mini = kind === 'mini';
+  const pose = mini ? (name === 'hop' ? 'hop' : 'still') : Object.hasOwn(BADGE.POSES, name) ? name : 'still';
   const fixed = matchMedia('(prefers-reduced-motion: reduce)').matches || pose === 'still';
-  const size = Math.round(56 * (devicePixelRatio || 1)), key = `${pose} ${size} ${colours}`;
+  const size = Math.round((mini ? 28 : 56) * (devicePixelRatio || 1)), key = `${pose} ${size} ${colours}`;
   if (fixed && c.dataset.drawn === key) return false;
   if (c.width !== size) { c.width = size; c.height = size; }
   const g = c.getContext('2d');
   if (!g) return false; // the browser won't draw on it: the badge stays blank, and its name still says what it shows
   g.setTransform(size / 56, 0, 0, size / 56, 0, 0); g.clearRect(0, 0, 56, 56);
-  BADGE.draw(g, pose, fixed ? BADGE.STILL_AT[pose] : now);
+  if (mini) BADGE.bare(g, now, !fixed);
+  else BADGE.draw(g, pose, fixed ? BADGE.STILL_AT[pose] : now);
   c.dataset.drawn = fixed ? key : '';
   return !fixed;
 }
@@ -1759,7 +1792,7 @@ function drawBadges(fresh) {
   badgeFrame = requestAnimationFrame(function frame(now) {
     const colours = badgeColours();
     let moving = false;
-    for (const c of document.querySelectorAll('canvas.badge')) moving = paintBadge(c, now, colours) || moving;
+    for (const c of document.querySelectorAll('canvas.badge, canvas.mini')) moving = paintBadge(c, now, colours) || moving;
     badgeFrame = moving ? requestAnimationFrame(frame) : null;
   });
 }
@@ -2165,15 +2198,22 @@ function render() {
 
   // Whether speck run is on, shown as Auto-build (0144): when it's off, setting a ticket ready starts nothing. The
   // indicator is itself the switch (0150). The button stays put and only its contents change, so it keeps focus.
-  const on = !!(state.run && state.run.on);
+  // 0163: while it's on, it names the build in flight and where it's got to, or the ticket waiting for you, with the
+  // builder in place of the square, hopping while a build is at work. A label too long for the screen ends in "…", and
+  // the tooltip gives it in full before what a click does.
+  const on = !!(state.run && state.run.on), now = on && !runSwitching ? runLabel(m.queue, shippingId) : null;
   const run = $('run');
   run.hidden = false;
-  run.className = on ? 'run-state run-on' : 'run-state run-off';
-  run.replaceChildren(el('span', on ? 'live go' : 'live stop'),
-    document.createTextNode(runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Auto-build on' : 'Auto-build off'));
+  run.className = `run-state ${on ? 'run-on' : 'run-off'}${now && now.tone ? ` run-${now.tone}` : ''}`;
+  const builder = el('canvas', `mini ${now && now.moving ? 'hop' : 'still'}`);
+  builder.setAttribute('aria-hidden', 'true');
+  run.replaceChildren(builder, el('span', 'label',
+    runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : now ? now.text : on ? 'Auto-build on' : 'Auto-build off'));
+  drawBadges(builder);
   run.setAttribute('aria-pressed', String(on));
   run.disabled = !!runSwitching;
-  run.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets one at a time';
+  const click = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets one at a time';
+  run.title = now ? `${now.text}\n${click}` : click;
 }
 $('run').addEventListener('click', e => {
   e.stopPropagation();
