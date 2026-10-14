@@ -1,7 +1,7 @@
 ---
 id: "0192"
 title: "Test a ticket with the latest main before it ships"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0192 · Test a ticket with the latest main before it ships
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck ship` runs the tests on the ticket's branch alone, not on what will actually land: the ticket together with the base branch as it is now. Two tickets that each pass on their own can break the base branch together, and then every ship stops until someone fixes it. That happened twice on 2026-10-14 (0164 with 0165, fixed by 0190; 0177 with 0173, fixed by 0191). And an approved ticket whose base branch has moved on can't ship until a builder merges the base branch in and gets a merge review round, even when the merge is clean, which held up 0175, 0182 and 0183 for most of an evening.
