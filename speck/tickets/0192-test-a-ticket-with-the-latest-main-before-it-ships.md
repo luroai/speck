@@ -41,6 +41,7 @@ What `speck ship` tests is exactly what lands on the base branch, and an approve
 - `scripts/ship.mjs` runs the tests in the ticket's worktree (`runTests(work, cfg)`), and `shipChecks` refuses a ticket whose files outside `speck/` changed after approval, which any merge of the base branch does.
 - Related: 0048 (update a conflicting branch and re-review it), 0101 (the skill for ships that need a merge), 0116 (a ship that needs help inside the build).
 - High risk: it changes what guards the base branch. A clean merge is safe to ship unreviewed only because criterion 1 tests the combined result.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
