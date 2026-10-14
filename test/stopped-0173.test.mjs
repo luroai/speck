@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import net from 'node:net';
 import { fileURLToPath } from 'node:url';
-import { hasStopped, STOP_MS } from './support/stopped.mjs';
+import { hasStopped, portClosed, STOP_MS } from './support/stopped.mjs';
 import { alive, killAll } from './support/run.mjs';
+import { freePort } from './support/panel.mjs';
 
 // ---------- 0173: tests that check a stopped process has gone give it a moment to exit ----------
 
@@ -90,6 +92,29 @@ test('0173 AC3: a process still running when the time is up fails the check', as
     assert.equal(await hasStopped(() => !alive(child.pid), 400), false);
     assert.ok(Date.now() - t0 >= 400, 'it waited the whole time');
   } finally { killAll([child.pid]); }
+});
+
+test('0173 AC3 (round 1 F1): a check still running when the time is up fails, within the time', async () => {
+  const t0 = Date.now();
+  // It would say stopped after 600 ms, too late for a 200 ms limit.
+  assert.equal(await hasStopped(() => new Promise(r => setTimeout(() => r(true), 600)), 200), false);
+  assert.ok(Date.now() - t0 < 500, `it gave up at the limit (${Date.now() - t0} ms)`);
+});
+
+test('0173 AC3 (round 1 F1): a server that accepts connections but never answers has not stopped', async () => {
+  const sockets = [];
+  const server = net.createServer(s => sockets.push(s)); // accepts, never answers
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address();
+  try {
+    const t0 = Date.now();
+    assert.equal(await hasStopped(portClosed(port), 1500), false);
+    assert.ok(Date.now() - t0 < 2500, `it gave up at the limit (${Date.now() - t0} ms)`);
+  } finally { for (const s of sockets) s.destroy(); server.close(); }
+});
+
+test('0173 AC3 (round 1 F1): a port nothing listens on counts as closed', async () => {
+  assert.equal(await hasStopped(portClosed(await freePort()), 1000), true);
 });
 
 test('0173 AC3: the changed checks still say which process did not stop', () => {

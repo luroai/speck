@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm, fakePage, T, idea, findChrome, browserPage } from './support/panel.mjs';
-import { hasStopped, STOP_MS } from './support/stopped.mjs';
+import { hasStopped, portClosed, STOP_MS } from './support/stopped.mjs';
 
 // ---------- 0067: speck panel restarts by itself when its code changes ----------
 
@@ -35,8 +35,6 @@ const children = (p, c) => spawnSync('ps', ['-eo', 'pid=', '-o', 'args='], { enc
   .map(l => +l.trim().split(/\s+/)[0]).filter(pid => pid && pid !== p.child.pid && envHas(pid, c.cli));
 const envHas = (pid, text) => { try { return fs.readFileSync(`/proc/${pid}/environ`, 'utf8').includes(text); } catch { return false; } };
 const alive = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
-// True once nothing answers on `port`.
-const portClosed = port => async () => { try { await request(port); return false; } catch { return true; } };
 const restarts = p => (p.out().match(/restarted/g) || []).length;
 
 async function served(r = panelRepo()) {

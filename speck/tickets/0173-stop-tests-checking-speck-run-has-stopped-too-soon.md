@@ -1,7 +1,7 @@
 ---
 id: "0173"
 title: "Stop tests checking speck run has stopped too soon"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T20:36:47.075Z"
 ---
 # 0173 · Stop tests checking speck run has stopped too soon
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Some tests turn speck run off and then check once, straight away, that its process has gone. On a busy machine the process can take a moment to exit, so the full suite fails now and then (0128 AC3 or 0148 AC2) when nothing is wrong. That stops auto-ship: on 2026-10-14 it held up 0164's ship even though the same failure happened on `main`.
@@ -59,3 +59,75 @@ Tests that check a stopped process has gone give it a moment to exit, so a busy 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "721afce1901985b1edc48f27e350691cb5db363e",
+    "thread_id": "01a13c32-fa7b-7042-bf8c-d0360492796f",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 200591,
+      "cached_input_tokens": 152576,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1066,
+      "reasoning_output_tokens": 62
+    },
+    "saved_at": "2026-10-14T20:56:03.576Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both named tests now assert hasStopped(() => !alive(pid)); STOP_MS is 10000. stopped-0173 tests exercise delayed process exit."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Process-stop assertions in 0067, 0073, 0072 and 0152 now poll. The ticket Notes list the changes; the AC2 scan passes."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "panel-0067 portClosed treats every request error as successful closure, including the request helper's 15-second timeout. hasStopped awaits that check without enforcing its deadline, then accepts true before checking elapsed time. The new timeout test covers only synchronous predicates."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0173-ac4.sh and its logs: all 20 runs passed 26 tests each, with zero failures, while the script ran the full suite alongside."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Full output in /tmp/speck-0173-tests.txt records 1646 passes, three skips and only the explicitly documented pre-existing 0165 failure."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/stopped.mjs",
+        "issue": "The deadline does not bound asynchronous checks. The 0067 port check can wait 15 seconds and then report successful closure merely because a running server did not answer. This violates the ten-second limit and can conceal a shutdown failure. A direct probe with a 50 ms limit and a predicate resolving true after 150 ms returned true.",
+        "suggested_fix": "Enforce the remaining deadline around asynchronous checks and accept port closure only on a connection-refused result, rather than any request error. Add coverage for a check that exceeds the deadline and a listening server that accepts connections without responding.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The process checks now allow time for shutdown, and all 20 stress runs passed. One shutdown check can still mistake an unresponsive server for a stopped server and exceed the promised timeout. Fix that before merge."
+  }
+}
+```
+
+</details>
