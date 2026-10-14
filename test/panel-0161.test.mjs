@@ -354,7 +354,7 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
   for (const theme of ['light', 'dark']) {
     await withPanel(theme, async b => {
       const seen = [];
-      for (let i = 0; i < 25; i++) {
+      for (let i = 0; i < 60; i++) { // 60: since 0165 each tag is a stop too
         await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
         await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
         const f = await b.js(`(() => { ${LIB}

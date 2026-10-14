@@ -90,6 +90,10 @@
   .prio { position: relative; display: inline-block; }
   .tag.pick { cursor: pointer; }
   .tag.pick:hover { color: var(--text); border-color: var(--muted); }
+  /* 0165: a tag's tip, which says what it means, next to the tag */
+  #tag-tip { position: fixed; top: 0; left: 0; z-index: 11; max-width: min(300px, calc(100vw - 16px)); padding: 6px 10px; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--panel); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); }
+  #tag-tip[hidden] { display: none; }
+  .tag[role="button"]:not(.pick) { cursor: help; }
   .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; background: var(--panel); border: .5px solid var(--line); }
   .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
   .prio-menu button:hover { color: var(--text); }
@@ -307,7 +311,7 @@
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+  #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
   #full-ticket .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
@@ -408,6 +412,11 @@
     /* 0162: the tap area reaches 7 px past the tag on each side, into the gaps, so the gaps beside it match the rest */
     .item.ticket .prio { padding: 0 7px; margin: 0 -7px; }
     .tag.pick::after { content: ''; position: absolute; inset: 0; }
+    /* 0165: every other tag's tap area is an invisible 44 by 44 px box centred on it, and the gaps between tags are
+       wide enough that no two tap areas overlap */
+    .tag:not(.pick) { position: relative; }
+    .tag:not(.pick)::after { content: ''; position: absolute; inset: min(0px, calc((100% - 44px) / 2)); }
+    .tag-row, #full-ticket .top .tags { gap: 18px; }
     .prio-menu button { min-width: 44px; min-height: 44px; }
     .detail { grid-template-columns: minmax(0, 1fr); }
     .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
@@ -484,6 +493,7 @@
 </main>
 <div id="full-backdrop" hidden></div>
 <aside id="full-ticket" tabindex="-1" hidden></aside>
+<div id="tag-tip" role="tooltip" hidden></div>
 
 <script>
 'use strict';
@@ -976,19 +986,79 @@ function chainIcon(t) {
   return icon;
 }
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
-const typeTag = t => (t.type === 'bug' || t.type === 'fix' ? el('span', `tag ${t.type}`, t.type) : null);
+const typeTag = t => (t.type === 'bug' || t.type === 'fix'
+  ? explained(el('span', `tag ${t.type}`, t.type), t.type === 'bug' ? 'Bug: fixes a defect' : 'Fix: fixes a broken main, built before anything else') : null);
 // A ticket's priority, size and risk tags, each only when it has that field. `pick`: the priority tag opens the menu
 // that sets it (a draft in the Tickets list).
 function fieldTags(t, pick) {
   const out = [];
   if (t.priority !== undefined && t.priority !== null && t.priority !== '') {
     const tag = el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`);
-    out.push(pick ? priorityPicker(t, tag) : tag);
+    out.push(pick ? priorityPicker(t, tag) : explained(tag, priorityMeaning(t.priority)));
   }
-  if (t.size) out.push(el('span', 'tag', t.size));
-  if (t.risk) out.push(el('span', t.risk === 'high' ? 'tag high' : 'tag', t.risk));
+  if (t.size) {
+    const size = String(t.size), known = Object.hasOwn(SIZES, size);
+    out.push(explained(el('span', 'tag', size), known ? `${size}: ${SIZES[size]}` : `Size ${size}`, known ? `Size ${size}: ${SIZES[size]}` : `Size ${size}`));
+  }
+  if (t.risk) out.push(explained(el('span', t.risk === 'high' ? 'tag high' : 'tag', t.risk), riskMeaning(String(t.risk), t.auto_ship === true)));
   return out;
 }
+// 0165: what each tag means. The size wording follows /speck-ticket's size rules.
+const SIZES = { S: 'a small, contained change', M: 'several files or one new component', L: 'too big for one ticket, so it needs splitting' };
+function priorityMeaning(p) {
+  const n = Number(p);
+  if (!Number.isInteger(n) || n < 0) return `Priority ${p}`;
+  return `Priority ${n}: ${n === 0 ? 'built before any other ticket' : n === 1 ? 'built after P0 tickets' : `built after P0 to P${n - 1} tickets`}`;
+}
+// `autoShips`: the ticket's auto_ship, which follows auto_ship and auto_ship_risk in speck/config.yml (0167).
+function riskMeaning(risk, autoShips) {
+  const name = risk === 'low' ? 'Low risk' : risk === 'high' ? 'High risk' : `Risk ${risk}`;
+  return `${name}: ${autoShips ? 'ships by itself once approved' : 'waits for you to ship it'}`;
+}
+// A tag that shows its tip when it's tapped, clicked or pressed with Enter or Space, or hovered with a mouse. A screen
+// reader announces `label`, its meaning. The tap is for the tag only, so it never opens or closes its ticket.
+function explained(tag, tip, label = tip) {
+  tag.tip = tip;
+  tag.tabIndex = 0;
+  tag.setAttribute('role', 'button');
+  tag.setAttribute('aria-label', label);
+  tag.addEventListener('click', e => {
+    e.stopPropagation();
+    if (tipTag === tag && !tipByHover) closeTip();
+    else showTip(tag, false); // a tip a hover opened stays once it's clicked
+  });
+  tag.addEventListener('keydown', pressWithKeys);
+  tag.addEventListener('mouseenter', () => { if (canHover()) showTip(tag, true); });
+  tag.addEventListener('mouseleave', () => { if (tipTag === tag && tipByHover) closeTip(); });
+  return tag;
+}
+// Enter and Space click it, as a button's keys do, so an open priority menu only closes.
+function pressWithKeys(e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault(); // Space would scroll the page
+  e.stopPropagation();
+  e.currentTarget.click();
+}
+let tipTag = null, tipByHover = false; // the tag whose tip is showing, or null, and whether a hover opened it
+function showTip(tag, byHover) {
+  const box = $('tag-tip');
+  tipTag = tag;
+  tipByHover = byHover;
+  box.textContent = tag.tip;
+  box.hidden = false;
+  if (typeof tag.getBoundingClientRect !== 'function') return;
+  // Under the tag, or above it when there's no room below, and never past either side of the screen.
+  box.style.left = '0px'; // so its width is measured with the whole screen's width to fit in
+  const r = tag.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight, gap = 6;
+  box.style.left = `${Math.max(8, Math.min(r.left, innerWidth - w - 8))}px`;
+  box.style.top = `${r.bottom + gap + h <= innerHeight - 8 ? r.bottom + gap : Math.max(8, r.top - gap - h)}px`;
+}
+function closeTip() {
+  if (tipTag === null) return;
+  tipTag = null;
+  $('tag-tip').hidden = true;
+}
+const within = (n, box) => { for (; n; n = n.parentNode) if (n === box) return true; return false; };
 // View state only, kept across refreshes and never sent to the server.
 let shapingView = 'tickets'; // which Shaping list is showing: 'tickets', 'ideas' or 'inbox'
 const open = new Set(); // ids of the open tickets
@@ -1070,6 +1140,10 @@ function priorityPicker(t, tag) {
   const id = String(t.id), box = el('span', 'prio', null, tag);
   tag.className += ' pick';
   tag.title = 'Set the priority';
+  tag.tabIndex = 0; // 0165: reached with Tab, pressed with Enter or Space, and announced with its meaning
+  tag.setAttribute('role', 'button');
+  tag.setAttribute('aria-label', `${priorityMeaning(t.priority)}. Opens the priority menu`);
+  tag.addEventListener('keydown', pressWithKeys);
   tag.addEventListener('click', e => {
     e.stopPropagation(); // the click is for the tag, not the ticket
     priorityRefused.delete(id);
@@ -1356,7 +1430,7 @@ const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
 // and what the tags show.
 const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
 const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
-const tagData = t => [t.type, t.priority, t.size, t.risk];
+const tagData = t => [t.type, t.priority, t.size, t.risk, t.auto_ship === true]; // 0165: auto_ship changes the risk tag's tip
 // Shows the ticket whose id is in fullId wherever it shows: in the Tickets list, the queue or the Shipped list, the
 // first one in that order when ids repeat. It closes the pane when the ticket shows in none of them. The pane keeps
 // its nodes while what they show is unchanged, so text selected in it survives the refresh. When only a draft's
@@ -1447,19 +1521,22 @@ $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-bac
 $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render(); });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if (priorityMenu !== null) closePriorityMenu();
+  if (tipTag !== null) closeTip();
+  else if (priorityMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();
 });
 // While a priority menu is open, a click anywhere else only closes it: caught on its way down, before it reaches what
 // was clicked, so it neither opens nor closes a ticket nor presses a button.
 const inPriorityMenu = n => { for (; n; n = n.parentNode) if (/\bprio-menu\b/.test(String(n.className || ''))) return true; return false; };
 document.addEventListener('click', e => {
+  if (tipTag !== null && !within(e.target, tipTag) && !within(e.target, $('tag-tip'))) closeTip(); // 0165: a click anywhere else closes the tip
   if (priorityMenu === null || inPriorityMenu(e.target)) return;
   e.stopPropagation();
   e.preventDefault();
   closePriorityMenu();
 }, true);
 function closePriorityMenu() { priorityMenu = null; render(); }
+document.addEventListener('scroll', () => closeTip(), { capture: true, passive: true }); // 0165: a scroll anywhere closes the tip
 // The server sets the draft's priority and commits it, and the next refresh moves it to its place in the list.
 async function setPriority(id, n) {
   priorityMenu = null;
@@ -2229,6 +2306,7 @@ function render() {
   run.disabled = !!runSwitching;
   const click = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets one at a time';
   run.title = now ? `${now.text}\n${click}` : click;
+  if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
 }
 $('run').addEventListener('click', e => {
   e.stopPropagation();
