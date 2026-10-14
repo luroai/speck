@@ -1,6 +1,6 @@
 # Update the panel in real time
 
-Captured: 2026-10-11 · Status: idea
+Captured: 2026-10-11 · Status: ticketed (0187)
 
 ## What
 Replace the panel's polling with real-time updates: the panel server watches the project's files and pushes each change to the page as it happens, for example with Server-Sent Events. The board and an open build's log update the moment something changes.

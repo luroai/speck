@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0177"]                # ticket ids that must be done first
+after: ["0188"]                # ticket ids that must be done first
 created: 2026-10-14
 
 ---
@@ -20,13 +20,13 @@ created: 2026-10-14
 **Status:** 📝 draft
 
 ## Problem
-Each 2-second answer to the panel is 1.19 MB. 154 finished tickets make up 1.08 MB of it, including 515 KB of each finished build's log ending, which the panel never shows for a finished ticket. Through a tunnel to a phone that's roughly 0.5 GB an hour with the page open, and it grows with every ticket shipped.
+Each full board the panel sends a page is 1.19 MB: today every 2 seconds, and once changes are pushed (0187), each time a page opens or reconnects. 154 finished tickets make up 1.08 MB of it, including 515 KB of each finished build's log ending, which the panel never shows for a finished ticket. Today, through a tunnel to a phone, that's roughly 0.5 GB an hour with the page open, and it grows with every ticket shipped.
 
 ## Outcome
 The panel's regular update stays small however many tickets have shipped, and the panel shows the same as before.
 
 ## Acceptance criteria
-1. With 150 finished tickets, each `/api/state` answer is under 200 KB.
+1. With 150 finished tickets, the full board the panel sends a page is under 200 KB.
 2. Each further 100 finished tickets add less than 20 KB to it.
 3. The panel shows the same as before for the same tickets: the queue, Plan, the Shipped list and its figures, and each ticket's full text when it's opened, finished ones included.
 4. `speck status --json` prints the same as before.
@@ -34,7 +34,7 @@ The panel's regular update stays small however many tickets have shipped, and th
 
 ## Out of scope
 - How long the board takes to read (0176).
-- How often the page asks (0179).
+- How often the page gets the board, and sending only what changed (0187, 0188).
 
 ## Notes
 - Measured on 2026-10-14: `build_exit` 515 KB, acceptance criteria 156 KB, notes 147 KB, problem 49 KB across all tickets. Gzipped, the answer is 312 KB. The panel itself sends it uncompressed.
