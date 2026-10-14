@@ -42,6 +42,9 @@ On a phone, each row of a table in the review pack or a ticket shows as its own 
 - The criteria table's columns are `#`, `Criterion`, `Result` and `Evidence`.
 - Reported 2026-10-13 from a phone screenshot of 0149's review pack.
 - Failing before this build: none
+- The full ticket pane shows a ticket's own sections without formatting tables (0132 formats them only in the review pack), so the tables there are the review pack's. The phone layout applies to every formatted table in the pane and in opened Plan notes.
+- In a criteria table, the number, criterion and result go unlabelled on a phone, as AC2's example ("1 ✅", then the criterion) asks; only Evidence carries its label. Every other table labels every cell (AC1).
+- Self-check: restored the review pack's 44 px findings summary rule, which an edit had dropped (caught by 0140's tap-target test); no other changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

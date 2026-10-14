@@ -358,7 +358,21 @@
 
     /* The full ticket and review pack */
     #full-ticket .close, #full-ticket .ship { min-width: 44px; min-height: 44px; }
-    #full-ticket .md table, .shaping .md table { display: block; max-width: 100%; overflow-x: auto; }
+    /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
+    #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody,
+    #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td { display: block; }
+    #full-ticket .md thead, .shaping .md thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    #full-ticket .md tr, .shaping .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
+    #full-ticket .md tr:last-child, .shaping .md tr:last-child { border-bottom: 0; }
+    #full-ticket .md td, .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: break-word; }
+    #full-ticket .md td::before, .shaping .md td::before { content: attr(data-label); display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+    /* A review pack's criteria: the number and result on one line, then the criterion, then the labelled evidence */
+    #full-ticket .md .ac-table tr, .shaping .md .ac-table tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
+    #full-ticket .md .ac-table td:nth-child(-n+3)::before, .shaping .md .ac-table td:nth-child(-n+3)::before { display: none; }
+    #full-ticket .md .ac-table td:nth-child(1), .shaping .md .ac-table td:nth-child(1) { order: 0; font-weight: 600; }
+    #full-ticket .md .ac-table td:nth-child(3), .shaping .md .ac-table td:nth-child(3) { order: 1; }
+    #full-ticket .md .ac-table td:nth-child(2), .shaping .md .ac-table td:nth-child(2) { order: 2; flex-basis: 100%; }
+    #full-ticket .md .ac-table td:nth-child(n+4), .shaping .md .ac-table td:nth-child(n+4) { order: 3; flex-basis: 100%; }
     #full-ticket .md summary { min-height: 44px; padding-top: 12px; }
   }
 </style>
@@ -1148,8 +1162,13 @@ function mdBlocks(blocks) {
   return blocks.map(b => {
     if (b.type === 'code') return el('pre', null, null, el('code', null, b.text));
     if (b.type === 'table') {
-      const row = (tag, cs) => el('tr', null, null, ...cs.map(c => el(tag, null, null, ...mdInline(c))));
-      return el('table', null, null, el('thead', null, null, row('th', b.head)), el('tbody', null, null, ...b.rows.map(r => row('td', r))));
+      // 0158: each cell carries its column's heading, which a phone shows above it, and a review pack's criteria table
+      // is marked, so a phone puts each criterion's number and result on one line.
+      const heads = b.head.map(plainText);
+      const cell = (tag, c, i) => { const n = el(tag, null, null, ...mdInline(c)); if (tag === 'td') n.setAttribute('data-label', heads[i] ?? ''); return n; };
+      const row = (tag, cs) => el('tr', null, null, ...cs.map((c, i) => cell(tag, c, i)));
+      const criteria = heads.join('|') === '#|Criterion|Result|Evidence';
+      return el('table', criteria ? 'ac-table' : null, null, el('thead', null, null, row('th', b.head)), el('tbody', null, null, ...b.rows.map(r => row('td', r))));
     }
     if (b.type === 'heading') return el(b.level === 1 ? 'h5' : 'h6', `md-h${b.level}`, null, ...mdInline(b.inline));
     if (b.type === 'list') {
@@ -1160,6 +1179,8 @@ function mdBlocks(blocks) {
     return el('p', null, null, ...mdInline(b.inline));
   });
 }
+// Inline runs from markdown() as the text they show.
+const plainText = nodes => nodes.map(n => (n.inline ? plainText(n.inline) : n.text ?? '')).join('').trim();
 function mdInline(nodes) {
   return nodes.map(n => {
     if (n.type === 'text') return document.createTextNode(n.text);
