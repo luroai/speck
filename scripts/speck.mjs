@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
@@ -175,7 +175,7 @@ function cmdCancel(args) {
   // Stored as a JSON string, so text like `false`, `0` or `a "quoted" word` reads back exactly as typed. A reason kept from an earlier cancel is replaced in place.
   let text = setField(t.raw, 'cancel_reason', JSON.stringify(reason));
   text = setField(text, 'cancelled', new Date().toISOString().slice(0, 10));
-  fs.writeFileSync(t.file, syncHeader(setField(text, 'status', 'cancelled')));
+  fs.writeFileSync(t.file, syncHeader(waitFields(setField(text, 'status', 'cancelled'), t.fm.status, 'cancelled')));
   placeTicket(repo, t, 'cancelled');
   console.log(`${t.fm.id} cancelled → ${path.relative(repo, t.file)}`);
 }

@@ -217,3 +217,20 @@ test('0166 AC2: status --json gives waited_seconds as a number', () => {
   fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^status: .*$/m, 'status: blocked\nwaited_seconds: 90'));
   assert.equal(json(r.dir).tickets.find(x => x.id === '0001').waited_seconds, 90);
 });
+
+// ---------- review round 1 ----------
+
+test('0166 AC1: cancelling a blocked ticket adds its blocked stretch and clears blocked_at', () => {
+  const r = panelRepo();
+  assert.equal(r.run('set', '1', 'status', 'building').status, 0);
+  assert.equal(r.run('set', '1', 'status', 'blocked').status, 0);
+  backdate(r.file, 'blocked_at', 300);
+  const c = r.run('cancel', '1', 'Not needed');
+  assert.equal(c.status, 0, c.stderr);
+  const file = path.join(r.dir, c.stdout.trim().split(' → ')[1]);
+  const fm = fmOf(file);
+  assert.equal(fm.status, 'cancelled');
+  assert.equal(fm.cancel_reason, 'Not needed');
+  near(fm.waited_seconds, 300, 'the blocked stretch');
+  assert.ok(!fm.blocked_at, 'no longer blocked');
+});
