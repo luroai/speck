@@ -1,7 +1,7 @@
 ---
 id: "0171"
 title: "Colour a running ticket's border by its build stage"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0169"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T17:40:36.095Z"
 approved: "2026-10-14T17:58:29.634Z"
+finished: "2026-10-14T18:10:15.837Z"
 
 ---
 # 0171 · Colour a running ticket's border by its build stage
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0167, a running ticket's card looks the same as a queued one apart from its badge and stage line, so the user can't see at a glance which tickets are being worked on or what stage each has reached.
