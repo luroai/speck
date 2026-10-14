@@ -1,7 +1,7 @@
 ---
 id: "0177"
 title: "Keep the panel answering while it reads the board"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T21:14:21.689Z"
 approved: "2026-10-14T21:41:25.936Z"
+finished: "2026-10-14T21:43:35.337Z"
 
 ---
 # 0177 · Keep the panel answering while it reads the board
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel server works out the whole board for each `/api/state` request, and while it does (about 750 ms on 2026-10-14) it can't answer anything else. Every open tab asks every 2 seconds, and a request the page has already given up on is still worked out. On a busy machine requests pile up faster than they're answered: on 2026-10-14 the panel stopped answering, with 60 connections queued and its process at 100% CPU.
