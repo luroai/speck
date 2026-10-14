@@ -39,6 +39,9 @@ The whole suite passes on main again.
 <!-- Constraints, links and decisions. Optional. -->
 - Found by 0183's auto-ship (exit 14). Idea note on 0183's branch: speck/ideas/2026-10-14-fix-the-0177-test-that-breaks-the-0173-rule.md.
 - Failing before this build: 0173 AC2: no test in test/ checks once that a process it stopped has gone. This fix ticket exists to make it pass: the 0173 test itself is left unchanged (out of scope), and only the 0177 test it names is changed.
+- AC3 has no test of its own: the whole suite's output, given to the reviewer each round, shows every test passing.
+- One whole-suite run during the build had two other 0177 AC3 tests (Stop build, Ship) miss their 1-second limit (1306 ms, 1106 ms) while another build's suite ran at the same time. Neither is changed here; the next run passed in full.
+- Self-check: no changes. 0191 AC1 also asserts the 0173 AC2 line is in the child's output, so a name pattern that matched nothing can't pass it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
