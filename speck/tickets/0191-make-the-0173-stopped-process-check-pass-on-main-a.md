@@ -1,7 +1,7 @@
 ---
 id: "0191"
 title: "Make the 0173 stopped-process check pass on main again"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-14T22:48:21.730Z"
 
 ---
 # 0191 · Make the 0173 stopped-process check pass on main again
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On main, the test "0173 AC2: no test in test/ checks once that a process it stopped has gone" fails. Its output names one test that breaks that rule: `test/panel-0177.test.mjs` line 159, `assert.ok(!alive(…))`. Every build records it as failing before, and auto-ship refuses to ship any ticket while main's tests fail (0183 was held back by it).
