@@ -42,6 +42,7 @@ Every word and every control edge in the panel is comfortably readable in light 
 - The larger tags were asked for on 2026-10-14: they're hard to read on a phone.
 - WCAG 2.2: 1.4.3 (4.5:1 text), 1.4.6 (7:1, AAA), 1.4.11 (3:1 for control edges), 2.4.7 and 2.4.13 (focus visible and its appearance).
 - Keep the panel's look: darken or lighten the existing tokens rather than replacing the palette.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
