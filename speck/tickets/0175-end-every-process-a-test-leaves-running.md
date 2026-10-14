@@ -43,6 +43,7 @@ When a test file finishes, nothing it started is still running, however its test
 - Run one file at a time, only `test/ship-0153.test.mjs` leaves processes (two wait loops each run). The ticker leaks (pause, stop and waiting tests) show up only when the full suite runs under load, so they depend on timing: fix them by cleaning up, not by chasing each race.
 - Moved here from 0174, which had this as its AC3.
 - Supersedes the inbox note from 0152 (about 17 leftover tickers on 2026-10-13).
+- Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
