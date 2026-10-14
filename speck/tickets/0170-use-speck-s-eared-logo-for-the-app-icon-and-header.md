@@ -45,6 +45,7 @@ The home-screen icon, the tab icon and the panel header all use speck's logo wit
   - dot: `circle cx=32 cy=38 r=2.3`, `#b0412e` (`#d4664e` in dark)
 - The icons live in `templates/icons/` (0149). A phone keeps the icon it fetched when the app was added, so the user needs to remove and re-add the home-screen app to see the new one.
 - Asked for on 2026-10-14: "Use the logo with the ears from the landing page, and not the one with the legs."
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
