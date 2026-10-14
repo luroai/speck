@@ -62,7 +62,8 @@ const result = (r, fail = false) => ({ status: fail && r.status === 0 ? 1 : r.st
 // Runs the test command `cmd` in `repo` in a turn, recording the result when the code can be, or reuses the result
 // recorded for the same code. reuse is 'any' (a pass or a failure), 'pass' (only a pass) or 'none'. onStart runs when
 // the suite starts. Returns { status, signal, stalled, output }, stalled saying whether the run was ended for writing
-// nothing for test_stall_minutes (0152), and output what a failing run wrote, from its end ('' for a pass).
+// nothing for test_stall_minutes (0152), and output what a failing run wrote ('' for a pass): all of it from a run,
+// the end kept of a reused one.
 export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hint = '' } = {}) {
   testStallMs(cfg); // a bad test_stall_minutes is refused even when a recorded result would do
   const code = testedCode(repo, cmd);
@@ -75,7 +76,7 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
   }
   const output = path.join(resultsDir(repo), `run.${crypto.randomUUID()}.out`);
   const written = () => { try { return fs.readFileSync(output, 'utf8'); } catch { return ''; } };
-  const failed = (res, text) => ({ ...res, output: res.status === 0 ? '' : text.length > MAX_OUTPUT ? text.slice(-MAX_OUTPUT) : text });
+  const failed = (res, text) => ({ ...res, output: res.status === 0 ? '' : text });
   try {
     const r = runTestsInTurn(repo, cfg, cmd, onStart, output);
     if (!code) return failed(result(r), written());

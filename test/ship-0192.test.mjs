@@ -184,3 +184,33 @@ test('0192 AC1 (self-check): after catching up with the remote, a commit made on
   assert.equal(r.g('log', '-1', '--format=%s', 'main'), 'late', 'your commit is still on main');
   assert.equal(r.statusIn(r.wt), 'approved');
 });
+
+test('0192 AC1 (review F1): a hook that changes code in ship\'s own commit is caught: nothing ships', () => {
+  const r = scriptedShip();
+  // While ship commits the ticket as done, a pre-commit hook stages a change to another file.
+  r.hook('if git diff --cached --name-only | grep -q tickets/done/; then printf "hooked\\n" > notes.txt && git add notes.txt; fi', 'pre-commit');
+  const before = r.sha('main');
+  const res = runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 1, res.stderr + res.stdout);
+  noTrace(res);
+  assert.match(res.stderr, /didn't give what the tests ran on/);
+  assert.match(res.stderr, /notes\.txt/);
+  assert.equal(r.sha('main'), before, 'main is unchanged');
+  assert.equal(r.statusIn(r.wt), 'approved');
+});
+
+test('0192 AC2 (review F2): failing tests are named even when the output is over 1 MiB', () => {
+  const r = scriptedShip([
+    'if grep -q feature shared.txt && grep -q moved other.txt; then',
+    "  printf 'TAP version 13\\nnot ok 1 - early failure\\n'",
+    "  yes '# filler line for a long run' | head -c 1500000",
+    "  printf 'ok 2 - late pass\\n1..2\\n'",
+    '  exit 1',
+    'fi',
+  ].join('\n'));
+  mainMoves(r);
+  const res = spawnSync(process.execPath, [CLI, 'ship', '1'], { cwd: r.dir, encoding: 'utf8', env, maxBuffer: 64 * 1024 * 1024 });
+  assert.equal(res.status, 1, res.stderr.slice(0, 2000));
+  assert.match(res.stderr, /fail together/);
+  assert.match(res.stderr, /Failing tests: early failure\./);
+});

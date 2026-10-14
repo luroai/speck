@@ -257,7 +257,8 @@ export function shipTicket(repo, id) {
   // Close the ticket on the branch, so the merge is what makes it done.
   const t = findTicket(work, pad);
   writeField(t, 'status', 'done');
-  git(['add', '-A', '--', placeTicket(work, t, 'done'), t.file], work);
+  const ticketFiles = [placeTicket(work, t, 'done'), t.file]; // where it was, then where it is now
+  git(['add', '-A', '--', ...ticketFiles], work);
   git(['commit', '-q', '-m', `speck(${pad}): ship`], work);
   // Uncommitted changes to tracked files, taken again just before each step that moves a branch, so a failure can put them back exactly.
   const kept = {};
@@ -324,8 +325,8 @@ export function shipTicket(repo, id) {
     e.code = 13;
     throw e;
   }
-  // What landed must be what the tests passed on, but for the ship commit's change to the ticket's own file (0192).
-  const shipped = new Set(git(['diff', '--no-renames', '--name-only', '-z', branchSha, branch], work).split('\0').filter(Boolean));
+  // What landed must be what the tests passed on, but for the ship commit moving the ticket's own file to done (0192).
+  const shipped = new Set(ticketFiles.map(f => path.relative(work, f).split(path.sep).join('/')));
   const untested = tested
     ? git(['diff', '--no-renames', '--name-only', '-z', tested, 'HEAD'], mergeAt).split('\0').filter(f => f && !shipped.has(f))
     : null;
