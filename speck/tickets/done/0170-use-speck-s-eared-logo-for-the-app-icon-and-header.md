@@ -1,7 +1,7 @@
 ---
 id: "0170"
 title: "Use speck's eared logo across the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T15:38:58.848Z"
 approved: "2026-10-14T15:52:44.931Z"
+finished: "2026-10-14T15:59:14.947Z"
 
 ---
 # 0170 · Use speck's eared logo across the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel's home-screen app icon and tab icon (0149) are a plain ensō with a red dot, but speck's logo on the landing page is the ensō with two small ears. The panel's header shows only the word "speck", with no logo at all.
