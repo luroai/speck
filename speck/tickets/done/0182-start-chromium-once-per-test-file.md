@@ -1,7 +1,7 @@
 ---
 id: "0182"
 title: "Start Chromium once per test file"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-14T21:44:02.138Z"
 blocked_at: ""
 waited_seconds: 411
 approved: "2026-10-14T23:07:50.965Z"
+finished: "2026-10-14T23:07:52.148Z"
 
 ---
 # 0182 · Start Chromium once per test file
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Each of the 50 real-browser tests starts a Chromium of its own, about half a second and a few hundred MB each time. On 2026-10-14 these tests took 178 of the suite's 1,229 seconds of test time (14%), and every new panel ticket tends to add more. Each build runs the full suite three or four times, so this cost is paid on every build.
