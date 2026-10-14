@@ -40,6 +40,7 @@ How long the board takes to read doesn't depend on how big the build logs are.
 - `buildExit()` in `scripts/speck.mjs` reads the whole `<id>.log` and runs `readableLog()` over it for every ticket with a run record. On 2026-10-14 that was 63% of `statusData()`'s time.
 - The panel uses `build_exit.message` only for tickets in the queue (`templates/panel.html`, around line 681).
 - The field names of `speck status --json` are a contract (0030).
+- Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
