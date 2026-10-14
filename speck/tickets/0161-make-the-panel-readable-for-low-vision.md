@@ -1,7 +1,7 @@
 ---
 id: "0161"
 title: "Make the panel readable for low vision"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0161 · Make the panel readable for low vision
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel is hard to read for its own user, and harder for anyone with low vision. The colours pass the basic text contrast ratio, but only just (`--faint` is 4.6:1 on the light background), much of the text is small (labels at 9 to 11 px) and light (the body weight is 300), and the borders around cards, tags, tabs and buttons are 1.1 to 1.6:1 against the background, so the edges of things are hard to see.
