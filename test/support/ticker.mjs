@@ -17,7 +17,8 @@ export const state = pid => spawnSync('ps', ['-o', 'stat=', '-p', String(pid)], 
 
 // A build that keeps working: it writes a line to its log every 20ms, and starts a helper in a session and process
 // group of its own (as Claude Code does for each Bash command) that adds a line to <out>/helper.txt every 20ms and
-// saves its pid in <out>/helper.pid. It stops when <out>/stop exists.
+// saves its pid in <out>/helper.pid. It stops when <out>/stop exists, or once <out> is gone, so one left behind by a test
+// file that was killed outright doesn't run for ever.
 export const TICKER = `
 const fs = require('fs'), path = require('path'), { spawn } = require('child_process');
 const [helper, out, id, session] = process.argv.slice(2);
@@ -39,13 +40,13 @@ if (process.env.SELF_PAUSE) setTimeout(() => {
 // EXIT_ON_CONT: the build finishes the moment it's played, with exit code 3.
 if (process.env.EXIT_ON_CONT) process.on('SIGCONT', () => process.exit(3));
 let n = 0;
-setInterval(() => { console.log('tick ' + n++); if (fs.existsSync(path.join(out, 'stop'))) process.exit(0); }, 20);
+setInterval(() => { console.log('tick ' + n++); if (fs.existsSync(path.join(out, 'stop')) || !fs.existsSync(out)) process.exit(0); }, 20);
 `;
 export const HELPER = `
 const fs = require('fs'), path = require('path');
 const [out, name = 'helper'] = process.argv.slice(2);
 fs.writeFileSync(path.join(out, name + '.pid'), String(process.pid));
-setInterval(() => { fs.appendFileSync(path.join(out, name + '.txt'), 'h\\n'); if (fs.existsSync(path.join(out, 'stop'))) process.exit(0); }, 20);
+setInterval(() => { if (fs.existsSync(path.join(out, 'stop')) || !fs.existsSync(out)) process.exit(0); fs.appendFileSync(path.join(out, name + '.txt'), 'h\\n'); }, 20);
 `;
 
 export function tickerRepo(opts = {}) {

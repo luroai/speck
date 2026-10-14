@@ -44,6 +44,8 @@ When a test file finishes, nothing it started is still running, however its test
 - Moved here from 0174, which had this as its AC3.
 - Supersedes the inbox note from 0152 (about 17 leftover tickers on 2026-10-13).
 - Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
+- AC4 isn't an automated test: it takes ten full runs. Checked by hand on 2026-10-14 with a script that ran five rounds of two full `npm test` runs side by side, then, 10 seconds after each round, listed every process whose TMPDIR is a test run's folder (none in any round) and every process of the user's that wasn't there before the round (only the checking session's own shell and `sleep`). In round 4, under the double load, 0128 AC3 and 0148 AC2 each failed once on a 2-second "speck run has stopped" timing check; both passed in the other nine runs and in the plain full run.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

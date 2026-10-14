@@ -8,14 +8,8 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { CLI, env, gIn, runIn, shipRepo } from './support/ship.mjs';
 import { freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
+import { gated, gateDir, waitFor } from './support/gate.mjs';
 
-// A test command that waits until `gate` exists, so a ship stays running until the test lets it go. It makes `reached`
-// first, so a test can wait until the ship is in its tests, past any git command a kill could leave a lock behind from.
-const gated = () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-gate-'));
-  const gate = path.join(dir, 'go'), reached = path.join(dir, 'reached');
-  return { gate, reached, test: `sh -c 'touch ${reached}; while [ ! -f ${gate} ]; do sleep 0.05; done'` };
-};
 // Sets `key: value` in speck/config.yml on both branches and commits it, so both checkouts stay clean.
 const configure = (r, key, value) => {
   for (const dir of [r.dir, r.wt]) {
@@ -261,13 +255,13 @@ test('0153 AC2: when the record can\'t be written, speck ship says so plainly an
 });
 
 test('0153 AC1: a ship held up in its push still shows as running once the ticket is done', async () => {
-  const gate = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-gate-')), 'go');
+  const gate = path.join(gateDir(), 'go');
   const r = shipRepo();
   const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
   gIn(bare, 'init', '-q', '--bare', '-b', 'main');
   r.g('remote', 'add', 'origin', bare);
   r.g('push', '-q', '-u', 'origin', 'main');
-  fs.writeFileSync(path.join(bare, 'hooks', 'pre-receive'), `#!/bin/sh\nwhile [ ! -f ${gate} ]; do sleep 0.05; done\n`, { mode: 0o755 });
+  fs.writeFileSync(path.join(bare, 'hooks', 'pre-receive'), `#!/bin/sh\n${waitFor(gate)}\n`, { mode: 0o755 });
   const s = shipping(r.dir);
   try {
     const t = await until(() => { const x = statusOf(r.dir); return x.status === 'done' && x.ship && x.ship.running ? x : null; }, 'the ticket to be done with its ship still running');
