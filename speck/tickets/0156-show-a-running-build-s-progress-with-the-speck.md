@@ -41,6 +41,7 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
 ## Notes
 - Chosen on 2026-10-13 from a mockup of three options (option A1).
 - Failing before this build: none
+- Self-check: the timer is pinned to the ensō's 112 px box, so it stays inside the circle when a long title makes the card taller; a reviewer given as a non-string or blank falls back to "The reviewer".
 - Stages come from `progress()` in `templates/panel.html`; the bar is `.stages`, and its moving dot is the `sweep` animation.
 - The speck dot is the accent red (`--accent`), as in the ensō on the landing site; the circle itself stays neutral so the speck is the only red thing that moves.
 
