@@ -1,7 +1,7 @@
 ---
 id: "0165"
 title: "Explain each tag when it's tapped"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0161"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T18:10:45.412Z"
+approved: "2026-10-14T18:52:29.609Z"
 
 ---
 # 0165 · Explain each tag when it's tapped
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a draft ticket the priority tag opens the priority menu, so on a phone it needs a 44 px tap area, which makes it look bigger and spaced differently from the size, risk and type tags beside it. The other tags can't be tapped at all, and their short codes (P3, M, low, fix) don't explain themselves to someone new to speck.
@@ -54,9 +55,15 @@ Every tag on a ticket (its priority, size, risk, and bug or fix) now explains it
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The open full ticket pane does not refresh its risk explanation or accessible label when a configuration change changes the ticket's auto_ship value.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,238,140
+- Elapsed since build started: 42 min
+- Changed lines: 92 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Opening the Plan priority menu with Enter rebuilds the row, so keyboard focus drops back to the page and the menu's buttons aren't focused. Skipped as a new note: covered by speck/ideas/2026-10-14-reach-the-priority-tag-and-a-ticket-s-top-row-with-the-keyboard.md.
