@@ -1,7 +1,7 @@
 ---
 id: "0170"
 title: "Use speck's eared logo across the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T15:38:58.848Z"
 ---
 # 0170 · Use speck's eared logo across the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's home-screen app icon and tab icon (0149) are a plain ensō with a red dot, but speck's logo on the landing page is the ensō with two small ears. The panel's header shows only the word "speck", with no logo at all.
@@ -51,7 +51,11 @@ The home-screen icon, the tab icon and the panel header all use speck's logo wit
 - Self-check: the phone header was tightened so the project's name isn't cut short; the icon's stroke width was changed so its PNGs pass the model-name scan
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel now carries speck's logo with the two small ears, the same mark as on the landing page. It's the home-screen app icon and the browser tab icon, and it also appears just before the word "speck" at the top of the panel, in light and dark mode, on a phone and on a computer.
+
+To see it, open the panel: the logo is at the top left. A phone keeps the icon it saved when the app was added, so remove the home-screen app and add it again to get the new icon.
+
+Worth a look: on a phone the top row is a little tighter than before so the project's name still fits beside the logo.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,3 +65,68 @@ The home-screen icon, the tab icon and the panel header all use speck's logo wit
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The "no model name is hard-coded" test reads the PNG icons as text and can flag random compressed bytes such as "o6": saved to the inbox as speck/ideas/2026-10-14-skip-images-in-the-model-name-check.md.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f30e68659569c7398968e3881b83e70f7f89c3a3",
+    "thread_id": "01a13b1c-e857-7042-914c-879d87868f6e",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 110013,
+      "cached_input_tokens": 63488,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 731,
+      "reasoning_output_tokens": 13
+    },
+    "saved_at": "2026-10-14T15:52:25.852Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/icons/icon.svg contains the circle, ears and dot on #faf9f5 with 2.2-unit strokes. Passing 0170 AC1 tests verify centring, RGB PNGs, artwork pixels and SVG-to-PNG consistency for all three sizes. Visual inspection of apple-touch-icon.png confirms the mark."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The paths and dot in templates/icons/icon.svg and templates/panel.html match the landing-page shapes supplied in the ticket. Both 0170 AC2 shape-comparison tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html places the currentColor SVG immediately before speck and supplies light/dark dot colours. All four 0170 AC3 browser tests passed at 1280 and 375 px; phone tests also exercise the slim header. The existing 0140 header-fit test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The header SVG has aria-hidden=\"true\" and focusable=\"false\". Both accessibility tests and the asset-serving test passed. Existing 0149 tests for allowed/refused addresses, HTTP methods and manifest/icon routes also passed; route implementation is unchanged."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0170-tests.txt: 1575 tests, 1572 passed, zero failed, three unrelated existing skips. Only 0149 artwork assertions were updated; existing layout and address-check tests remain intact."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The app and tab icons now use speck’s eared logo, and the header displays the same mark in both themes and phone layouts. The artwork matches the supplied landing-page shapes, accessibility and address checks remain intact, and the full suite has no failures. Ready for the owner’s merge decision."
+  }
+}
+```
+
+</details>
