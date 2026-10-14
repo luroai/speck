@@ -1,7 +1,7 @@
 ---
 id: "0164"
 title: "Line up a ticket's dependency note"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T16:47:54.656Z"
 ---
 # 0164 · Line up a ticket's dependency note
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On a phone, a Plan card's "unlocks 0162, 0163" or "waiting on 0161" note sits lower and further right than the "5 criteria · lint passes" beside it, with wide gaps around each id and the comma: each id is a 44 px button centred on its own, so it pushes the line out of line. Separately, a card the user has tapped stays shaded grey, because its hover background sticks on touch screens.
@@ -56,3 +56,75 @@ A ticket's dependency note lines up with the rest of its details row and reads a
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9fd464e37e45e95d6702bfaad29060995832f665",
+    "thread_id": "01a13b5b-87df-7e71-ace0-92119b7031fd",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 98863,
+      "cached_input_tokens": 57728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 925,
+      "reasoning_output_tokens": 172
+    },
+    "saved_at": "2026-10-14T17:01:00.444Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: .checks uses align-items: baseline and wrapping. The AC1 browser tests in test/panel-0164.test.mjs passed at 1280 and 375 px, checking text alignment and left alignment after wrapping."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests passed, checking running text, comma spacing, baseline alignment and button rectangles of at least 44 px on a phone."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The hover background is restricted to @media (hover: hover). AC3 stylesheet and browser tests passed, including touch opening and closing while retaining the appropriate background."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The AC4 test passed for one id, but the mobile .goto rule creates overlapping hit areas when the note itself wraps across lines. Later buttons can intercept taps on earlier ids."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0164-tests.txt: 1620 tests, 1617 passed, zero failed and three skipped. Existing tests were not changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:412",
+        "issue": "The 44 px buttons have negative vertical margins that reduce their contribution to line height to 16 px. When a long dependency note wraps internally, successive lines remain roughly 18 px apart while their button hit areas are 44 px high. Those areas overlap substantially, so a later line's button can intercept a tap on an earlier line's visible id and navigate to the wrong ticket. The current interaction test taps only 0007 and does not check every link in a note spanning multiple lines.",
+        "suggested_fix": "Ensure ids on different lines cannot intercept one another's visible text or intended tap areas, while preserving the required baseline and target height. Add a browser test with a dependency note spanning several lines that taps every visible id and checks the destination, including taps in the expanded areas.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The dependency text lines up correctly, and touch cards no longer retain hover shading. The suite passes. However, long notes can have overlapping link tap areas across lines, causing a tap to open the wrong ticket. Fix that interaction before merging."
+  }
+}
+```
+
+</details>

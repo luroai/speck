@@ -136,6 +136,39 @@ test('0164 AC2: under 700 px each id\'s tap area is at least 44 px each way, its
   }
 }, { width: 375 }));
 
+// Review round 1, F1: a note that wraps onto several lines has its lines closer together than a tap area is high, so
+// each id's own text, and the band of its own line, must reach that id and not one on the line above or below.
+const WHERE = id => `(() => {
+  const card = [...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)});
+  const ids = [...card.querySelectorAll('.goto')];
+  ids[0].scrollIntoView({ block: 'center' });
+  return ids.map(n => { const r = document.createRange(); r.selectNodeContents(n); const t = r.getBoundingClientRect(); return { id: n.textContent, left: t.left, right: t.right, top: t.top, bottom: t.bottom }; });
+})()`;
+const HIT = (x, y) => `(() => { const n = document.elementFromPoint(${x}, ${y}); const b = n && n.closest('.goto'); return b ? b.textContent : null; })()`;
+
+test('0164 AC4: on a phone, in a note on several lines, each id\'s text and its own line reach that id, and a tap goes to it', skip, () => withBoard(async b => {
+  const ids = await b.js(WHERE('0001'));
+  const lines = [...new Set(ids.map(i => Math.round(i.top)))];
+  assert.ok(lines.length >= 2, `the note is on several lines: ${JSON.stringify(ids)}`);
+  const first = Math.min(...ids.map(i => i.top)), last = Math.max(...ids.map(i => i.bottom));
+  for (const i of ids) {
+    const mid = (i.left + i.right) / 2;
+    const points = [[mid, (i.top + i.bottom) / 2, 'the middle of its text'], [i.left + 1, i.top + 1, 'its text\'s top left'], [i.right - 1, i.bottom - 1, 'its text\'s bottom right'],
+      [i.left - 4, (i.top + i.bottom) / 2, 'just left of its text'], [i.right + 4, (i.top + i.bottom) / 2, 'just right of its text']];
+    if (Math.round(i.top) === Math.round(first)) points.push([mid, i.top - 10, 'above the note, in its tap area']);
+    if (Math.round(i.bottom) === Math.round(last)) points.push([mid, i.bottom + 10, 'below the note, in its tap area']);
+    for (const [x, y, what] of points) assert.equal(await b.js(HIT(x, y)), i.id, `${what} reaches ${i.id}`);
+  }
+  // A real tap on every id goes to that ticket.
+  await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+  for (const i of ids) {
+    const [at] = (await b.js(WHERE('0001'))).filter(x => x.id === i.id);
+    await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: (at.left + at.right) / 2, y: (at.top + at.bottom) / 2 }] });
+    await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await b.until(`[...document.querySelectorAll('.flash')].some(n => n.querySelector('.id').textContent === '${i.id}')`, `the highlight on ${i.id}`);
+  }
+}, { width: 375 }));
+
 // ---------- AC3 ----------
 
 // Every rule in the stylesheet that shades a card on :hover, with the @media rule it's in, if any.

@@ -410,6 +410,11 @@
     /* 0164: each id reads as running text, on the line's baseline with its comma straight after it. Its tap area is
        at least 44 px each way, but its negative margins give back what it reaches past the text, so nothing moves. */
     .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; }
+    /* A note on several lines has them closer together than that, so each id's text, and the band of its own line,
+       sit above every tap area in the note: a tap there reaches that id, not one on the line above or below. */
+    .item .checks, .act { isolation: isolate; }
+    .goto > span { position: relative; z-index: 1; }
+    .goto > span::before { content: ''; position: absolute; inset: -1px -6px; } /* not into the next id's: a comma and a space away */
 
     /* Queue: the top row is at least 44 px high */
     #queue { padding: 6px; }
@@ -2065,7 +2070,7 @@ function idLinks(ids) {
   return ids.flatMap((id, i) => [i ? document.createTextNode(', ') : null, onPage.has(String(id)) ? gotoButton(String(id)) : document.createTextNode(String(id))].filter(Boolean));
 }
 function gotoButton(id) {
-  const b = el('button', 'goto', id);
+  const b = el('button', 'goto', null, el('span', null, id)); // the span: its text, above the other ids' tap areas (0164)
   b.type = 'button';
   b.setAttribute('aria-label', `Go to ticket ${id}`);
   // Stopped here, so it neither opens nor closes the ticket it's in.
