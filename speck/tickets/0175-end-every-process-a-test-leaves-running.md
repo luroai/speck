@@ -16,7 +16,7 @@ created: 2026-10-14
 started: "2026-10-14T19:37:04.183Z"
 blocked_at: ""
 waited_seconds: 282
-approved: "2026-10-14T20:45:09.006Z"
+approved: "2026-10-14T21:16:36.434Z"
 
 ---
 # 0175 · End every process a test leaves running
@@ -64,12 +64,13 @@ Round 1 (codex): changes requested: F1 Cleanup does not cover every descendant.;
 Round 2 (codex): changes requested.
 Round 3 (codex): escalate.
 Round 4 (codex): approve.
+Round 5 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 4
+- Review rounds: 5, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 1,435,049
-- Elapsed since build started: 68 min
+- Reviewer tokens: 2,150,346
+- Elapsed since build started: 100 min
 - Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -384,6 +385,84 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Approved against the revised criteria. Cleanup and helper shutdown tests pass, and repeated paired runs found no test leftovers. The owner has accepted the documented gap for detached processes that lose every link before discovery. The only full-suite failure was already present."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 5 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 5,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4d8b5ff1fd95db3f15d932905c1789510cb92e0d",
+    "merge": true,
+    "thread_id": "01a13c05-29b1-7b82-b257-53f8e443340d",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 710724,
+      "cached_input_tokens": 574976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4573,
+      "reasoning_output_tokens": 519
+    },
+    "saved_at": "2026-10-14T21:16:25.884Z"
+  },
+  "verdict": {
+    "round": 5,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The merge preserves the approved reaper and revised ownership scope. AC1 tests for passing, failing and timed-out files all pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Signal cleanup remains unchanged. Tests covering SIGINT, SIGTERM and SIGHUP all pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Folder-removal checks remain intact in ticker.mjs and gate.mjs. All five AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The previously verified five paired full runs found no test leftovers. The merge changes none of the cleanup implementation or its tests."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The merged branch's fresh full-suite output reports 1652 passes, three skips and zero failures. The former 0165 failure was fixed on main by ticket 0190, outside this ticket's diff."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/reap.mjs:reaper",
+        "issue": "The owner-accepted ownership limitation remains documented and reflected in the revised criteria. The merge preserves the approved implementation.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/reap-0175.test.mjs:timeout fixture",
+        "issue": "The actual-timeout assertion remains intact and passes after the merge.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved after the merge. The approved cleanup behaviour is unchanged, and the full suite now passes. The accepted orphan-process limitation remains; macOS behaviour has only been checked by reading the code."
   }
 }
 ```
