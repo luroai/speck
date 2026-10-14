@@ -1,7 +1,7 @@
 ---
 id: "0162"
 title: "Declutter the panel on a phone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0167"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T15:59:37.015Z"
 approved: "2026-10-14T16:21:25.844Z"
+finished: "2026-10-14T16:25:01.135Z"
 
 ---
 # 0162 · Declutter the panel on a phone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a phone the panel takes a lot of scrolling for what it says. Three lines of instructions that never change ("Click one to open it", "Builds run in their own worktrees", "Latest 5") repeat on every visit, an empty Build section takes a full block, and Shipped, the least urgent section, is the longest: six large stat tiles with seven-digit numbers, then cards of about 600 px each. Shipped titles are in the accent red, which also means "look at this" elsewhere, and the gaps between a Plan card's tags are uneven.
