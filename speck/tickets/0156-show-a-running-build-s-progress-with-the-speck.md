@@ -41,6 +41,7 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
 ## Notes
 - Chosen on 2026-10-13 from a mockup of three options (option A1).
 - Failing before this build: none
+- Old tests changed (AC5): the shared helpers `stagesOf`, `stepText`, `stepState` and `nowStep` now read the stage dots, whose titles are the old labels; 0034, 0045, 0055, 0069, 0053, 0138 and 0153's bar checks follow them (shapes lose `stages`, which is now in the top row). Beyond the bar itself: 0050 and 0058's selection from the title across the timer now crosses the sentence and stage name, which come before the timer; 0140 compares two page snapshots with reduced motion on, as the speck would otherwise move between them; 0154 taps the ready card's Queued line (it has no bar now) and brings the mouse onto it from off the card; 0155 checks an in-flight card's timer in the ensō at the right padding instead of at the end of the id's row, and lets its tags wrap beside the ensō, clear of it, as the column beside it is narrow at 700 px.
 - Self-check: the timer is pinned to the ensō's 112 px box, so it stays inside the circle when a long title makes the card taller; a reviewer given as a non-string or blank falls back to "The reviewer".
 - Stages come from `progress()` in `templates/panel.html`; the bar is `.stages`, and its moving dot is the `sweep` animation.
 - The speck dot is the accent red (`--accent`), as in the ensō on the landing site; the circle itself stays neutral so the speck is the only red thing that moves.
