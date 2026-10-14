@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T22:11:54.010Z"
-approved: "2026-10-14T22:20:54.190Z"
+approved: "2026-10-14T23:10:18.828Z"
 
 ---
 # 0183 · Ask builders to keep new tests quick
@@ -54,12 +54,13 @@ The instructions an agent follows when it builds a ticket now ask it to test eac
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 127,972
-- Elapsed since build started: 9 min
+- Reviewer tokens: 392,286
+- Elapsed since build started: 58 min
 - Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -122,6 +123,67 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The build guide now asks builders to choose quick, meaningful tests and avoid unnecessary fixed waits. This repository also documents its specific testing options. The wording and tests meet the ticket; the full suite shows only the recorded pre-existing failure."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "065681d6cf6c2760c73554bf55dcbef7f8cd0a81",
+    "merge": true,
+    "thread_id": "01a13c80-646b-7b63-aace-a8ac01a3d607",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 262942,
+      "cached_input_tokens": 169600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1372,
+      "reasoning_output_tokens": 25
+    },
+    "saved_at": "2026-10-14T23:10:15.086Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md, Tests first step 1, retains the quickest meaningful check instruction and the exception for real behaviour. The 0183 AC1 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Tests first step 1 retains bounded event waits and short absence-check pauses. The 0183 AC2 test checks both instructions and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The added build instructions remain general, without repository-specific helpers or paths. The 0183 AC3 test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AGENTS.md retains all requested quick and slow options and explains when a slow option is warranted. All three 0183 AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0183-tests.txt: 1,683 passed, zero failed and three skipped. The previously failing 0173 AC2 now passes. Its fix came from merged base commit fb4283b4; this ticket makes no further changes to those tests."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved guidance and tests. The previously failing test was fixed separately on the base branch, and the full suite now passes. No blocking concerns remain."
   }
 }
 ```
