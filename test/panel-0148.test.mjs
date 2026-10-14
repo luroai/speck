@@ -7,6 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { CLI, env, panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm, readT } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { runRepo, alive, killAll } from './support/run.mjs';
+import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0148: speck panel --url serves the panel at one private https address too ----------
 
@@ -100,8 +101,7 @@ test('0148 AC2: Stop build works from the --url page', async () => {
     assert.equal(res.status, 200, res.body);
     assert.match(fs.readFileSync(r.file, 'utf8'), /^status: blocked/m);
     assert.equal(r.g('log', '-1', '--format=%s'), 'speck(0001): stopped');
-    await wait(200);
-    assert.equal(alive(build.pid), false, 'the build has stopped');
+    assert.ok(await hasStopped(() => !alive(build.pid)), 'the build has stopped');
   } finally { killAll([build.pid]); await stop(p); }
 });
 
@@ -127,7 +127,7 @@ test('0148 AC2: the Auto-build switch turns speck run on and off from the --url 
     assert.equal(alive(pid), true, 'speck run is running');
     const off = await remotePost(port, '/api/run/off', token);
     assert.equal(off.status, 200, off.body);
-    assert.equal(alive(pid), false, 'speck run has stopped');
+    assert.ok(await hasStopped(() => !alive(pid)), 'speck run has stopped');
   } finally { await stop(p); if (pid) killAll([pid]); }
 });
 

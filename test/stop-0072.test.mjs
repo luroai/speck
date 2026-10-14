@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, startRun, until, alive, stopRun, record } from './support/run.mjs';
 import { wait, runsPath, speck, size, json, state, tickerRepo, launched, growing, cleanup, failingPs, speckWith } from './support/ticker.mjs';
+import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0072: stop a running build from the CLI ----------
 
@@ -31,7 +32,7 @@ test('0072 AC1: stop ends the build and every process it started, and says so', 
     const r = speck(t.dir, 'stop', '0001');
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /0001[^\n]*stopped/i);
-    for (const p of pids) assert.ok(gone(p), `process ${p} is no longer running (${state(p)})`);
+    for (const p of pids) assert.ok(await hasStopped(() => gone(p)), `process ${p} is no longer running (${state(p)})`);
     const n = size(t.helperFile);
     await wait(300);
     assert.equal(size(t.helperFile), n, 'nothing it started still writes');
@@ -46,7 +47,7 @@ test('0072 AC1: stop ends a paused build too, and it is no longer marked paused'
     const r = speck(t.dir, 'stop', '0001');
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /0001[^\n]*stopped/i);
-    for (const p of pids) assert.ok(gone(p), `process ${p} is no longer running (${state(p)})`);
+    for (const p of pids) assert.ok(await hasStopped(() => gone(p)), `process ${p} is no longer running (${state(p)})`);
     assert.ok(!fs.existsSync(runsPath(t.dir, '0001.paused')), 'its paused mark is gone');
     assert.equal(json(t.dir).tickets.find(x => x.id === '0001').paused, false);
   } finally { await cleanup(t, run)(); }
@@ -114,7 +115,7 @@ test('0072 AC3: a build an earlier speck run launched is not reported as stopped
     assert.ok(await until(() => /0001[^\n]*already being built/i.test(run.out())), run.out());
     const pid = t.build('0001').pid;
     assert.equal(speck(t.dir, 'stop', '0001').status, 0);
-    assert.ok(gone(pid));
+    assert.ok(await hasStopped(() => gone(pid)), `process ${pid} is no longer running (${state(pid)})`);
     await wait(800);
     assert.doesNotMatch(run.out(), /0001[^\n]*(stopped|exited|failed|still ready)/i, run.out());
     assert.equal((run.out().match(/Launched 0001/g) || []).length, 0, 'not launched again');
@@ -190,7 +191,7 @@ test('0072 AC1 (round 1 F1): a process that ignores SIGTERM and leaves the build
     assert.ok(!fs.readFileSync(`/proc/${pid}/environ`, 'utf8').includes('SPECK_BUILD_SESSION'), 'it has no session in its environment');
     const r = speck(t.dir, 'stop', '0001');
     assert.equal(r.status, 0, r.stderr);
-    assert.ok(gone(pid), `the stubborn process is no longer running (${state(pid)})`);
+    assert.ok(await hasStopped(() => gone(pid)), `the stubborn process is no longer running (${state(pid)})`);
   } finally {
     try { process.kill(Number(fs.readFileSync(pidFile, 'utf8')), 'SIGKILL'); } catch {}
     await cleanup(t, run)();
