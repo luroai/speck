@@ -40,6 +40,7 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
 
 ## Notes
 - Chosen on 2026-10-13 from a mockup of three options (option A1).
+- Failing before this build: none
 - Stages come from `progress()` in `templates/panel.html`; the bar is `.stages`, and its moving dot is the `sweep` animation.
 - The speck dot is the accent red (`--accent`), as in the ensō on the landing site; the circle itself stays neutral so the speck is the only red thing that moves.
 
