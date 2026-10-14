@@ -1,7 +1,7 @@
 ---
 id: "0190"
 title: "Fix the 0165 phone tag-size test failing on main"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T20:59:04.574Z"
+approved: "2026-10-14T21:07:59.697Z"
 
 ---
 # 0190 · Fix the 0165 phone tag-size test failing on main
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 One test fails on main every time: "0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each". It reports "queue P0: these points of its 44 px tap area miss it", at two points (x 76.9 and 55.4, y 630.5). Because main's tests fail, no ticket can ship automatically: 0175 is approved and waiting on this.
@@ -50,9 +51,14 @@ To see it, open the panel on a phone and tap just under a tag on a queued ticket
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 89,658
+- Elapsed since build started: 9 min
+- Changed lines: 3 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - On a phone, a linked id in a queued ticket's Queued line ("unlocks …", "waiting on …") still takes taps from the bottom edge of the tags above it: its tap area reaches about 14 px up. Saved to the inbox as speck/ideas/2026-10-14-keep-a-queued-ticket-s-tags-tappable-above-a-linked-id.md.
