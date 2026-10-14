@@ -47,7 +47,7 @@ On a phone, each row of a table in the review pack or a ticket shows as its own 
 - Self-check: restored the review pack's 44 px findings summary rule, which an edit had dropped (caught by 0140's tap-target test); no other changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone, tables in the review pack and in opened Plan notes no longer squeeze into narrow columns. Each row now shows as its own block, with a thin line between blocks, and each entry has its column's name above it in small grey capitals. In the acceptance criteria table, each block starts with the criterion's number and its result together (for example "1 ✅"), then the criterion, then the evidence. To see it, open an approved or shipped ticket's review pack on a phone, or in a browser window narrower than 700 pixels. On a wider screen, tables look as they did before. Worth knowing: a single word too long for the screen, such as a long file path, stays whole and can be swiped sideways inside its own entry, and a line may still break after a hyphen, as it would in a sentence.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,9 @@ On a phone, each row of a table in the review pack or a ticket shows as its own 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- A word wider than a phone screen (for example a long file path with no spaces or hyphens) scrolls sideways inside its own cell rather than wrapping.
+- Lines may break after a hyphen inside a path, as at a space.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -201,6 +204,83 @@ On a phone, each row of a table in the review pack or a ticket shows as its own 
     ],
     "escalation_question": "",
     "summary": "The long-word issue is fixed, and phone blocks and desktop layout still pass their checks. Approval is held because the phone copying test now fails; it needs reliable verification with the longer evidence text."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5a63d4af2dd53285eaac8746848a88cc62b7103c",
+    "thread_id": "01a137d2-f383-79d1-859f-167539d42423",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 293204,
+      "cached_input_tokens": 241664,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2026,
+      "reasoning_output_tokens": 140
+    },
+    "saved_at": "2026-10-14T00:37:27.820Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: mdBlocks() supplies column labels; scoped mobile CSS stacks table rows and cells. Passing AC1 browser test covers review pack tables and an opened Plan note at 375 px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The .ac-table mobile rules place number and result together, followed by criterion and labelled evidence. Passing AC2 browser test verifies positions and labels."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Mobile rows have borders and spacing; cells preserve long words using overflow-wrap: normal and local scrolling. Passing AC3 browser test checks long tokens, labels, separation and page/pane overflow."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Responsive rules apply below 700 px only. AC4 desktop layout and copying tests pass. Updated copy tests scroll tables into view, recompute endpoints and retain assertions that every cell is selected at both 375 and 1280 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0158-tests.txt: 1403 tests, 1400 passed, zero failures and three skipped. All eight 0158 tests passed; existing tests were not changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:367",
+        "issue": "Long words previously split internally in mobile table cells.",
+        "suggested_fix": "Fixed with normal word wrapping and cell-level scrolling, covered by the expanded AC3 browser test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0158.test.mjs:220",
+        "issue": "Phone copying verification previously failed because the expanded fixture pushed selection endpoints outside the viewport.",
+        "suggested_fix": "Fixed by scrolling each table into view and recomputing endpoints before dragging. Every-cell selection assertions remain and pass at both viewport widths.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Phone tables now display as readable, separated blocks, with criterion numbers and results together. Long words remain intact, desktop tables retain their layout, and copying preserves every cell. All checks pass; both earlier findings are resolved."
   }
 }
 ```
