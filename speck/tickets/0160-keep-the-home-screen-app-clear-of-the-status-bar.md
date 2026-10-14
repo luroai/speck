@@ -42,6 +42,7 @@ The header stays at the top of the screen as the page scrolls, with the panel's 
 - Jumping to a ticket scrolls it into view; with a fixed header that needs `scroll-margin-top` (or equal) so the target isn't covered.
 - Reported 2026-10-14 from phone screenshots of the home-screen app.
 - Failing before this build: none
+- Self-check: the header now measures its slim height with a margin already in place and the browser's scroll anchoring off, as the in-between layout pulled the page up (and back from the very bottom); the header itself is left out of scroll anchoring.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

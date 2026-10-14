@@ -2,7 +2,7 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">
 <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="speck">
+<meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar">
 <meta name="theme-color" content="#faf9f5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)">
 <title>speck · control panel</title>
@@ -20,8 +21,12 @@
   const root = document.documentElement;
   const saved = () => { try { const t = localStorage.getItem('speck-theme'); return t === 'light' || t === 'dark' ? t : null; } catch { return null; } };
   const system = matchMedia('(prefers-color-scheme: dark)');
-  root.dataset.theme = saved() || (system.matches ? 'dark' : 'light');
-  system.addEventListener('change', e => { if (!saved()) root.dataset.theme = e.matches ? 'dark' : 'light'; });
+  // 0160: the home-screen app's status bar, over the header: light text on the dark look, dark text on the light one
+  const bar = look => { const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default'; };
+  const set = look => { root.dataset.theme = look; bar(look); };
+  set(saved() || (system.matches ? 'dark' : 'light'));
+  system.addEventListener('change', e => { if (!saved()) set(e.matches ? 'dark' : 'light'); });
+  globalThis.setLook = set; // for the light/dark button
 })();
 </script>
 <style>
@@ -36,12 +41,17 @@
   /* The zen look: a serif for headings and ticket titles, a light sans for body text and a monospace for labels. Each
      names the zen fonts first, used when they're installed, and none is loaded from another host. */
   * { box-sizing: border-box; border-radius: 0 !important; }
+  /* 0160: in the home-screen app the page reaches behind the status bar and home indicator (viewport-fit=cover). The
+     header pads the status bar, the page pads the home indicator and a phone's rounded corners on its sides. While the
+     header stays on screen, a ticket scrolled to sits below it (--head is its height, kept by the page script). */
+  html { scroll-padding-top: var(--head, 0px); }
+  body { padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
   body { margin: 0; font: 300 13px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); }
   b, strong { font-weight: 600; }
   code, .mono, .id { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   code { font-size: 12px; color: var(--muted); }
 
-  header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: 16px; padding: calc(14px + env(safe-area-inset-top)) 24px 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .logo { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -54,7 +64,7 @@
   :root[data-theme="dark"] .theme .moon { display: none; }
   .live { display: inline-block; width: 6px; height: 6px; background: var(--run); margin-right: 6px; vertical-align: 1px; }
 
-  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 24px; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); }
   section { background: var(--panel); border: .5px solid var(--line); }
   section.full { grid-column: 1 / -1; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
@@ -184,6 +194,11 @@
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
     @keyframes flash { 0%, 40% { background-color: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); } }
+    /* 0160: on a phone the header fades in as it slims to one row and as it goes back to two */
+    header.slim > * { animation: head-slim .15s ease-out; }
+    header.wide > * { animation: head-wide .15s ease-out; }
+    @keyframes head-slim { from { opacity: 0; } }
+    @keyframes head-wide { from { opacity: 0; } }
   }
   .question.exit.to-ship { border-left-color: var(--idea); }
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
@@ -295,7 +310,7 @@
   td .title-link { color: var(--accent); text-decoration: none; cursor: pointer; }
   td .title-link:hover { text-decoration: underline; }
   td .full-open { margin: 0; padding: 0 8px; font-size: 10px; white-space: nowrap; }
-  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 16px 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
+  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
@@ -367,14 +382,17 @@
      clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
   @media (max-width: 699.98px) {
     /* 0150: two rows, speck and the project, then Auto-build and light/dark, each pair at the two edges */
-    header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; padding: 10px 16px; }
+    header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; }
     header > * { white-space: nowrap; }
+    /* 0160: scrolled down, one row of speck, Auto-build and light/dark, 44 px buttons and 6 px above and below */
+    header.slim { grid-template-columns: auto minmax(0, 1fr) auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
+    header.slim .repo, header.slim .logo span { display: none; }
     .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
     .run-state { justify-self: start; height: 44px; min-width: 44px; }
     .theme { justify-self: end; width: 44px; height: 44px; }
     .run-error, .offline, .restart { padding: 6px 16px; }
 
-    main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
+    main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
     .sh { flex-wrap: wrap; align-items: center; }
     .sh .hint { margin-left: 0; flex-basis: 100%; }
     .toggle { min-width: 44px; min-height: 44px; }
@@ -1333,9 +1351,40 @@ function holdPage(on) {
 // 0136: the light/dark button switches the look and remembers it in this browser (the <head> script applies it on load).
 $('theme').addEventListener('click', () => {
   const root = document.documentElement;
-  root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  const look = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  if (typeof setLook === 'function') setLook(look); else root.dataset.theme = look;
   try { localStorage.setItem('speck-theme', root.dataset.theme); } catch { /* storage refused: the look still switches, until a reload */ }
 });
+// 0160: the header stays at the top of the screen. On a phone, once the page is scrolled down, it slims to one row, and
+// a margin below it makes up the height it lost, so nothing on the page moves. --head is its height on screen, so a
+// ticket scrolled to sits below it.
+const pageHeader = document.querySelector?.('header');
+if (pageHeader) {
+  const phone = matchMedia('(max-width: 699.98px)');
+  let width = innerWidth;
+  const fit = changed => {
+    const slim = phone.matches && scrollY > 4, was = pageHeader.classList.contains('slim');
+    if (slim === was && !changed) return;
+    // While it's measured, the page is never shorter than it ends up (that would pull the scroll back at the bottom),
+    // and the browser's scroll anchoring is off, so neither moves the page.
+    const root = document.documentElement;
+    root.style.overflowAnchor = 'none';
+    pageHeader.classList.remove('slim', 'wide');
+    pageHeader.style.marginBottom = '';
+    if (slim) {
+      const full = pageHeader.offsetHeight;
+      pageHeader.style.marginBottom = `${full}px`;
+      pageHeader.classList.add('slim');
+      pageHeader.style.marginBottom = `${full - pageHeader.offsetHeight}px`;
+    } else if (was) pageHeader.classList.add('wide');
+    void pageHeader.offsetHeight; // laid out as it ends, before anchoring is back on
+    root.style.overflowAnchor = '';
+  };
+  addEventListener('scroll', () => fit(false), { passive: true });
+  addEventListener('resize', () => { fit(innerWidth !== width); width = innerWidth; }); // a new width can change both heights
+  new ResizeObserver(() => document.documentElement.style.setProperty('--head', `${pageHeader.offsetHeight}px`)).observe(pageHeader);
+  fit(false);
+}
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
