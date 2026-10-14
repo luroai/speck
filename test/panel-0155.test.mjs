@@ -140,18 +140,18 @@ const LAYOUT = id => `(() => {
     if (same) { same.left = Math.min(same.left, r.left); same.right = Math.max(same.right, r.right); }
     else lines.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   }
-  const sub = card.querySelector('.top .sub'), enso = card.querySelector('.top .enso');
+  const sub = card.querySelector('.top .sub'), badge = card.querySelector('.top .badge');
   const under = [...card.children].filter(n => !n.classList.contains('top'));
   return { left, right, idSize: getComputedStyle(idN).fontSize, titleSize: ts.fontSize, id: rect(idN), lines,
     cut: t.scrollWidth > t.clientWidth + 0.5 || t.scrollHeight > t.clientHeight + 0.5 || ts.textOverflow === 'ellipsis' || lines.some(l => l.left < box.left || l.right > box.right + 0.5),
-    sub: sub.textContent ? rect(sub) : null, enso: enso ? rect(enso) : null,
+    sub: sub.textContent ? rect(sub) : null, badge: badge ? rect(badge) : null, line: rect(card.querySelector('.top .line')),
     tags: [...card.querySelectorAll('.top .tag')].map(n => ({ text: n.textContent, ...rect(n) })),
     under: under.map(n => ({ what: n.className, button: n.tagName === 'BUTTON', first: n === under.find(x => x.tagName === 'BUTTON'), ...rect(n) })),
     firstButton: (() => { const bs = under.filter(n => n.tagName === 'BUTTON'); return bs.length ? rect(bs[0]) : null; })() };
 })()`;
 
 for (const width of [375, 699, 700, 1000, 1280]) {
-  test(`0155 AC3: at ${width} px, a card has its id (14 px), title (17 px) and timer (in the ensō since 0156) on one row, its tags on a row of their own, then the rest, all from its left padding`, skip, async () => {
+  test(`0155 AC3: at ${width} px, a card has its id (14 px) and title (17 px) on one row, its tags on a row of their own, then the rest (since 0168 the badge, with the timer at the right of its row), all from its left padding`, skip, async () => {
     await withPanel(async b => {
       for (const id of Object.keys(STATES)) await open(b, id);
       for (const id of Object.keys(STATES)) {
@@ -168,15 +168,15 @@ for (const width of [375, 699, 700, 1000, 1280]) {
           assert.ok(line.left >= l.id.right, `${id}: a title line starts under the id`);
         }
         const titleBottom = Math.max(...l.lines.map(x => x.bottom)), titleRight = Math.max(...l.lines.map(x => x.right));
-        // A ticket in flight has its timer in the ensō (0156), which starts on the id's row and ends at the card's right
-        // padding; a ready one has neither.
-        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.enso === null, `${id}: a ready ticket has no timer`);
+        // A ticket in flight has its builder badge under the tags (0168), from the card's left padding, with the timer at
+        // the right of the badge's row, at the card's right padding; a ready one has neither. The title has the full width.
+        assert.ok(Math.abs(l.line.right - l.right) < 1, `${id}: the title's row ends at ${l.line.right}, not the card's right padding at ${l.right}`);
+        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.badge === null, `${id}: a ready ticket has no timer`);
         else {
-          assert.ok(l.sub && l.enso, `${id}: no timer`);
-          assert.ok(l.enso.top < l.id.bottom && l.enso.bottom > l.id.top, `${id}: the ensō is on the id's row`);
-          assert.ok(l.sub.left >= l.enso.left && l.sub.right <= l.enso.right && l.sub.top >= l.enso.top && l.sub.bottom <= l.enso.bottom, `${id}: the timer is in the ensō`);
-          assert.ok(Math.abs(l.enso.right - l.right) < 1, `${id}: the ensō ends at ${l.enso.right}, not the card's right padding at ${l.right}`);
-          assert.ok(l.enso.left >= titleRight, `${id}: the ensō overlaps the title`);
+          assert.ok(l.sub && l.badge, `${id}: no timer`);
+          assert.ok(Math.abs(l.badge.left - l.left) < 0.5, `${id}: the badge starts at ${l.badge.left}, not the card's left padding at ${l.left}`);
+          assert.ok(l.sub.top < l.badge.bottom && l.sub.bottom > l.badge.top, `${id}: the timer is on the badge's row`);
+          assert.ok(Math.abs(l.sub.right - l.right) < 1, `${id}: the timer ends at ${l.sub.right}, not the card's right padding at ${l.right}`);
         }
         // The tags: on a row of their own under the title, all the same height, the first at the left padding.
         assert.ok(l.tags.length >= 3, `${id}: ${l.tags.length} tags`);
@@ -184,12 +184,11 @@ for (const width of [375, 699, 700, 1000, 1280]) {
         for (const t of l.tags) {
           assert.ok(t.top >= titleBottom - 0.5, `${id}: ${t.text} is beside the title, not under it`);
           assert.ok(Math.abs(t.height - l.tags[0].height) < 0.5, `${id}: ${t.text} is ${t.height} px high, ${l.tags[0].text} ${l.tags[0].height} px`);
-          // Beside the ensō (0156) a narrow card's tags may wrap, but stay clear of it.
-          if (l.enso) assert.ok(t.right <= l.enso.left + 0.5, `${id}: ${t.text} runs under the ensō`);
-          else assert.ok(Math.abs(t.top - l.tags[0].top) < 0.5, `${id}: ${t.text} is on another row from ${l.tags[0].text}`);
+          assert.ok(Math.abs(t.top - l.tags[0].top) < 0.5, `${id}: ${t.text} is on another row from ${l.tags[0].text}`);
         }
         // Then everything under the top row (the bar went into it in 0156), starting at the left padding: no empty column on the left.
         const tagsBottom = Math.max(...l.tags.map(t => t.bottom));
+        if (l.badge) assert.ok(l.badge.top >= tagsBottom - 0.5 && l.under[0].top >= l.badge.bottom - 0.5, `${id}: the badge is between the tags and the rest`);
         assert.ok(l.under[0].top >= tagsBottom - 0.5, `${id}: ${l.under[0].what} is not under the tags`);
         for (const u of l.under) {
           if (u.button && !u.first) continue; // beside the first button
@@ -201,16 +200,15 @@ for (const width of [375, 699, 700, 1000, 1280]) {
   });
 }
 
-// The same widths as 0151's AC1 tests. A ready ticket has no timer, so its title wraps as a Plan ticket's does. A ticket
-// in flight has its ensō beside its title since 0156, so its title wraps in what's left of the row, uncut.
+// The same widths as 0151's AC1 tests. A ready ticket has no timer, so its title wraps as a Plan ticket's does. Since
+// 0168 so does a ticket in flight's, whose timer is on its badge's row (from 0156 its ensō was beside its title).
 for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3], [1280, 1], [1440, 1]]) {
-  test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, or beside the ensō uncut`, skip, async () => {
+  test(`0155 AC3: at ${width} px, the longest title wraps as in Plan, on at most ${most} ${most === 1 ? 'line' : 'lines'}, in flight or not`, skip, async () => {
     await withPanel(async b => {
       const ready = await b.js(LAYOUT('0306'));
       assert.ok(ready.lines.length >= 1 && ready.lines.length <= most, `0306: the title is on ${ready.lines.length} lines`);
       const flying = await b.js(LAYOUT('0301'));
-      assert.ok(flying.lines.length >= 1 && !flying.cut, '0301: the title is cut off');
-      assert.ok(Math.max(...flying.lines.map(x => x.right)) <= flying.enso.left + 0.5, '0301: the title runs under the ensō');
+      assert.ok(flying.lines.length >= 1 && flying.lines.length <= most && !flying.cut, `0301: the title is on ${flying.lines.length} lines, uncut`);
     }, { width });
   });
 }

@@ -220,11 +220,12 @@ export const items = p => p.byId('shaping').children.filter(n => /\bitem\b/.test
 export const top = item => item.children.find(n => /\bhead\b/.test(n.className)); // an item's top row, which opens and closes it (0039)
 
 export const queueRows = p => p.byId('queue').children.filter(n => /\bq\b/.test(n.className));
-// A queue row's five stage dots (0156; the five-part bar before it), each with its stage's name as its title.
-export const stagesOf = row => (function find(n) { if (/\bdots\b/.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
-export const dotsOf = row => (stagesOf(row) || { children: [] }).children.filter(n => /\bdot\b/.test(n.className || '')); // none on a ready ticket
-export const stepText = row => dotsOf(row).map(s => s.title);
-export const stepState = row => dotsOf(row).map(s => (/\bd\b/.test(s.className) ? 'done' : /\bnow\b/.test(s.className) ? 'now' : ''));
+// A queue row's node with this class, searched for through the whole row, or null.
+const inRow = (row, re) => (function find(n) { if (re.test(n.className || '')) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
+// An in-flight queue row's builder badge (0168; the ensō and five stage dots before it, the five-part bar before them),
+// and the current stage's name beside it. Both null on a ready ticket.
+export const badgeOf = row => inRow(row, /^badge\b/);
+export const stageOf = row => inRow(row, /^stage\b/);
 export const steps = t => t.steps.map(s => s.state || '');
 
 export function post(port, pathName, { origin = `http://127.0.0.1:${port}`, token, host = `127.0.0.1:${port}`, method = 'POST' } = {}) {
@@ -264,7 +265,6 @@ export const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0)
 
 export const exitOf = (message = 'speck ship refused: speck/config.yml has an uncommitted change.') => ({ build_exit: { at: '2026-10-09T14:55:00.000Z', code: 0, message } });
 export const isRed = n => /\b(bad|blocked)\b/.test(n.className || '');
-export const nowStep = row => dotsOf(row).find(s => /\bnow\b/.test(s.className)); // its stage's name is its title
 export const findText = (p, row, text) => p.all(row).find(n => n._text === text);
 
 // ---------- 0039: a real headless browser, for what the fake page can't show (text selection) ----------

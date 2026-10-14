@@ -43,6 +43,10 @@ Each in-flight ticket's Build card shows a small builder badge, speck's characte
 - One builder for every project: the version with ears.
 - Builds after 0167, so the badge's tile colours follow the "colour only for state" rule.
 - Failing before this build: none
+- The badge's pose follows the card's state: at the laptop while an agent is at work, the "?" when the card is crimson (blocked, stopped, or an auto-ship that failed), the flag when it waits for your decision (`to_ship`, as 0167 sets it), and otherwise still and facing front (paused, or approved and about to be auto-shipped).
+- The timer moved from the title's row to the right of the badge's row, as in the design reference, so the title keeps the card's full width.
+- Tests that checked 0156's ensō and stage dots (and the earlier bar through the dot helpers) now check the badge and the stage's name: 0034, 0045, 0055, 0069, 0071, 0138, 0153, 0155, 0156, 0161 and 0167.
+- Self-check: a canvas the browser won't draw on is left blank instead of stopping every badge's loop; a badge that holds still is drawn again when the screen's pixels per CSS pixel change (a zoom), so it stays sharp (new test); a stale comment about the speck updated.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

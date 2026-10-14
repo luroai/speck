@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, stagesOf, stepText, stepState, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, nowStep, dotsOf, findText, top, paletteProblems } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, badgeOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -283,7 +283,7 @@ test('0031 AC4: the page shows when it is disconnected, keeps polling and recove
   assert.equal(p.timers.length, 1, 'still polling while disconnected');
   p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.equal(nowStep(queueRows(p)[0]).title, 'Build', 'the ticket is now building');
+  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Build', 'the ticket is now building');
   assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
 });
 
@@ -340,11 +340,11 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
   assert.equal(p.timers.length, 1);
   p.timers.shift()(); await p.settle(); // overdue again, then the server answers
   assert.equal(p.byId('offline').hidden, true, 'recovered');
-  assert.equal(nowStep(queueRows(p)[0]).title, 'Build');
+  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Build');
   // The abandoned request answering late doesn't put the old state back.
   stalled.resolve({ ok: true, status: 200, json: async () => one });
   await p.settle();
-  assert.equal(nowStep(queueRows(p)[0]).title, 'Build');
+  assert.equal(stageOf(queueRows(p)[0]).textContent, 'Build');
   assert.doesNotMatch(p.byId('queue').textContent, /Queued/);
 });
 
@@ -516,20 +516,19 @@ test('0034 AC2: every queued ticket has a five-step bar, with done and current s
   assert.deepEqual(steps(by('0013')), ['done', '', 'done', 'done', 'now'], 'approved with self_check only: Ship is still current');
 });
 
-test('0034 AC2: the stage dots (the bar before 0156) are drawn on the page with their labels, done steps and current step', async () => {
+test('0034 AC2: the current stage (the bar before 0156, its dots before 0168) is named on the page', async () => {
   const state = { tickets: [T('0001', 'reviewing', { self_check: 'x', rounds: [round(1, 1), round(2, 1)] }), T('0002', 'approved', { rounds: [round(1, 1)] }),
     T('0003', 'approved'), T('0004', 'approved', { self_check: 'x' })], ideas: [] };
   const p = fakePage([state]);
   await p.settle();
   const [a, b, c, d] = queueRows(p);
-  assert.deepEqual(stepState(c), ['', '', 'done', 'done', 'now'], 'approved with no rounds: Ship is current');
-  assert.deepEqual(stepState(d), ['done', '', 'done', 'done', 'now'], 'approved with self_check only: Ship is current');
-  assert.deepEqual(stepText(a), ['Build', 'Self-check', 'Review 2', 'Approve', 'Ship']);
-  assert.deepEqual(stepState(a), ['done', 'done', 'now', '', '']);
-  assert.deepEqual(stepState(b), ['done', 'done', 'done', 'done', 'now']);
+  assert.deepEqual([a, b, c, d].map(r => stageOf(r).textContent), ['Review 2', 'Ship', 'Ship', 'Ship'], 'approved, with or without rounds or self_check: Ship is current');
+  const m = panelModel()(state).queue;
+  assert.deepEqual(m[0].steps.map(s => s.label), ['Build', 'Self-check', 'Review 2', 'Approve', 'Ship']);
+  assert.deepEqual(m.map(steps), [['done', 'done', 'now', '', ''], ['done', 'done', 'done', 'done', 'now'], ['', '', 'done', 'done', 'now'], ['done', '', 'done', 'done', 'now']]);
 });
 
-test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167) and current step, with its question under it, and nothing else is red', async () => {
+test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167), current stage and badge, with its question under it, and nothing else is red', async () => {
   const state = { tickets: [T('0001', 'blocked', { blocked_question: 'Split it or keep it?', self_check: 'x' }), T('0002', 'approved', { risk: 'high' }),
     T('0003', 'building', { risk: 'high' }), T('0004', 'reviewing'), T('0005', 'ready', { waiting_on: ['0001'] })], ideas: [] };
   assert.deepEqual(panelModel()(state).queue.map(t => t.red), [true, false, false, false, false]);
@@ -538,15 +537,15 @@ test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167)
   const rows = queueRows(p);
   const red = n => /\b(bad|blocked)\b/.test(n.className || '');
   assert.match(rows[0].className, /\bblocked\b/);
-  const now = nowStep(rows[0]);
-  assert.equal(now.title, 'Self-check');
-  assert.match(now.className, /\bbad\b/);
-  assert.equal(dotsOf(rows[0]).filter(red).length, 1, 'only the current step'); // since 0156 its name and the sentence are red too
+  const now = stageOf(rows[0]);
+  assert.equal(now.textContent, 'Self-check');
+  assert.match(now.className, /\bbad\b/); // and the sentence (0156)
+  assert.equal(badgeOf(rows[0]).className, 'badge bad', 'its badge (0168)');
   assert.ok(rows[0].textContent.includes('Split it or keep it?'));
   for (const r of rows.slice(1)) assert.ok(!p.all(r).some(red), `${r.textContent.slice(0, 4)} has nothing red`);
   const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
   assert.match(css, /\.q\.blocked \{[^}]*border-color:[^}]*var\(--bad\)/); // its border all round since 0167
-  assert.match(css, /\.q \.top \.dot\.now\.bad \{[^}]*color: var\(--bad\)/);
+  assert.match(css, /\.q \.top \.stage\.bad \{[^}]*color: var\(--bad\)/);
   assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--bad\)/, '0151 AC2: a high-risk tag in the queue is in the panel\'s red');
 });
 
@@ -557,7 +556,8 @@ test('0034 AC4: a ready ticket shows Queued, and since 0156 no progress, plus wa
   await p.settle();
   const [a, b] = queueRows(p);
   assert.ok(a.textContent.includes('Queued'));
-  assert.equal(stagesOf(a), null, 'no stage dots (0156)');
+  assert.equal(badgeOf(a), null, 'no badge (0168)');
+  assert.equal(stageOf(a), null, 'no stage');
   assert.deepEqual(panelModel()(state).queue[0].steps.map(s => s.label), ['Build', 'Self-check', 'Review 1', 'Approve', 'Ship'], 'AC2: Review <n> while it has rounds');
   assert.ok(!a.textContent.includes('waiting on'));
   assert.ok(b.textContent.includes('Queued') && b.textContent.includes('waiting on 0009, 0004'));
@@ -882,7 +882,7 @@ test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and s
 
 // ---------- 0045: flag a build that finished without shipping ----------
 
-test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its left edge and current step, with the label and message as text', async () => {
+test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its border (its left edge until 0167), current stage and badge, with the label and message as text', async () => {
   const message = 'Line one\n<b>not bold</b>\nShip refused.';
   const state = { tickets: [T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(message) }), T('0002', 'approved', { rounds: [round(1, 1)], build_exit: null })], ideas: [] };
   const m = panelModel()(state);
@@ -893,9 +893,9 @@ test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its lef
   await p.settle();
   const [a, b] = queueRows(p);
   assert.match(a.className, /\bto-ship\b/);
-  assert.equal(nowStep(a).title, 'Ship');
-  assert.match(nowStep(a).className, /\bto-ship\b/);
-  assert.equal(dotsOf(a).filter(n => /\bto-ship\b/.test(n.className || '')).length, 1, 'only the current step');
+  assert.equal(stageOf(a).textContent, 'Ship');
+  assert.match(stageOf(a).className, /\bto-ship\b/);
+  assert.equal(badgeOf(a).className, 'badge wait', 'its badge waits for you (0168)');
   assert.ok(!p.all(a).some(isRed), 'nothing red');
   assert.ok(findText(p, a, 'Build finished without shipping'), 'the label');
   assert.ok(findText(p, a, message), 'the message, as one text node with the HTML left as text');
@@ -926,8 +926,9 @@ test('0045 AC4: a building or reviewing ticket with a build_exit says the build 
   const [a, b] = queueRows(p);
   for (const [row, msg, step] of [[a, 'Stopped here.', 'Build'], [b, 'Out of turns.', 'Review 1']]) {
     assert.match(row.className, /\bblocked\b/);
-    assert.equal(nowStep(row).title, step);
-    assert.match(nowStep(row).className, /\bbad\b/);
+    assert.equal(stageOf(row).textContent, step);
+    assert.match(stageOf(row).className, /\bbad\b/);
+    assert.equal(badgeOf(row).className, 'badge bad');
     assert.ok(findText(p, row, 'Build stopped before finishing'));
     assert.ok(findText(p, row, msg));
     assert.ok(!row.textContent.includes('without shipping'));
