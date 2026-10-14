@@ -1,7 +1,7 @@
 ---
 id: "0171"
 title: "Colour a running ticket's border by its build stage"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T17:40:36.095Z"
 ---
 # 0171 · Colour a running ticket's border by its build stage
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0167, a running ticket's card looks the same as a queued one apart from its badge and stage line, so the user can't see at a glance which tickets are being worked on or what stage each has reached.
@@ -48,7 +48,7 @@ A ticket an agent is working on has a coloured border that shows its build stage
 - Self-check: no changes. AC3's test passes before any code, as it pins what stays the same. The 0155 and 0167 browser tests pinned a running card to the plain 1px border, which AC1 replaces, so their running cards now expect their stage's 2px border; nothing else in them changed. 0128 AC3 and 0148 AC2 (speck run timing) each failed once under a full run and passed alone and on a fresh full run.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket an agent is working on now has a thicker coloured border that shows how far along it is: blue while it writes tests and code, teal while it checks its own work, ochre while it's being reviewed, and green while it's being shipped. A coloured fill still means only that a ticket needs you: crimson when it's blocked or its build stopped, purple when it's waiting for you to ship it. To see it, start a build from the panel and watch its card's border change colour as it moves from one stage to the next. Worth keeping an eye on: the thicker border makes a card a touch taller once its build starts.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +58,69 @@ A ticket an agent is working on has a coloured border that shows its build stage
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- A ship started from a review pack in the panel takes the green border through the same check as any other ship, but no browser test starts one that way.
+- The 2px border makes a running card 2px taller than when it was queued; padding could make up for it if the jump shows.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7cf1ef073d2485a20dcdbf8ec4a9d32971537a43",
+    "thread_id": "01a13b90-1d0c-7761-921b-de7ac92cb017",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 145110,
+      "cached_input_tokens": 100480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 726,
+      "reasoning_output_tokens": 16
+    },
+    "saved_at": "2026-10-14T17:58:20.779Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: stageOf and queueItem assign the four stage classes; CSS gives each its specified 2px border without changing fill. Passing 0171 AC1 tests cover build, self-check, multiple review rounds and manual/automatic shipping, including computed browser styles."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing test '0171 AC2: when a running ticket moves to its next stage...' exercises panel timer updates through build, self-check, review and shipping without reloading. queueItem recalculates the stage when ticket data changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueItem prioritises blocked and to-ship states over stage classes; stageOf excludes non-moving cards. Passing 0171 AC3 and browser tests cover blocked, stopped, waiting, ready, paused and approved awaiting auto-ship cards."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Stage CSS follows open/highlight rules, preserving its border. Both passing 0171 browser tests verify closed, flashing and open cards, and check every stage token has at least 3:1 contrast against normal and open backgrounds in both themes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0171-tests.txt: 1614 tests, 1611 passed, zero failures, three skipped; all six 0171 tests passed. Existing test changes update superseded running-border expectations without weakening unrelated checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Running tickets now show their build stage through a coloured border, while tickets needing attention retain their existing colours and fills. Updates, open cards and flashing highlights are covered, and both themes meet the contrast requirement. The recorded full suite has no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
