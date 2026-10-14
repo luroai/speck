@@ -1,7 +1,7 @@
 ---
 id: "0169"
 title: Add the code-cloud loops to the builder badge                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0168"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T15:19:09.602Z"
 approved: "2026-10-14T15:35:40.110Z"
+finished: "2026-10-14T15:38:38.425Z"
 
 ---
 # 0169 · Add the code-cloud loops to the builder badge
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After 0168, the builder badge plays the same laptop loop through self-check and review, so the user can't tell from the badge whether the builder is checking its own work or being reviewed.
