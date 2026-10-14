@@ -1,7 +1,7 @@
 ---
 id: "0155"
 title: "Make each Build queue ticket a clear card"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T06:15:11.954Z"
 ---
 # 0155 · Make each Build queue ticket a clear card
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Build queue rows have no coloured edge (only a blocked ticket gets one), only a faint line between them and a wide empty column on their left where the old pause icon sat. Several tickets in the queue are hard to tell apart, and the rows look different from Plan's tickets.
@@ -48,7 +48,11 @@ Each ticket in the Build queue is a card laid out like a Plan ticket after 0151,
 - Self-check: the chain or padlock icon a kept row puts right is now added at the end of the row of tags, not before the title.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each ticket in the Build queue is now a card of its own, with a clear border and a gap before the next one, laid out like the tickets in Plan. The ticket number and a larger title sit on one line with the build timer at the right, the priority, size and risk labels sit in a tidy row underneath, and the progress bar and everything below it now start at the card's left edge, with no empty space on the left.
+
+The card's left edge shows where the ticket is at a glance: blue while it's being built or reviewed, purple when it's waiting for you to ship it, red when it's blocked or its build stopped, and the accent colour when it's ready and waiting its turn. It keeps that colour when you open the card.
+
+To see it, open the panel and look at Build, on a phone or a wide screen, in light or dark mode. Worth keeping an eye on: the timer takes a little room from the title, so a very long title on a ticket being built can take one more line than it would in Plan.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +62,69 @@ Each ticket in the Build queue is a card laid out like a Plan ticket after 0151,
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Known limit: beside the timer, the longest titles take one more line than in Plan (3 at 375 px, 2 at 1,280 px).
+  - Tidy-up: a ticket with no priority, size or risk still gets an empty row of tags, as in Plan (noted in 0151's Delivery log).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "190a03a23f48f3cf61eaf87702586b1bcbf6f230",
+    "thread_id": "01a13916-d501-72a2-9aba-98e21fda42c6",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 171671,
+      "cached_input_tokens": 117120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 852,
+      "reasoning_output_tokens": 21
+    },
+    "saved_at": "2026-10-14T06:26:27.951Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html gives #queue an 8 px gap and .q solid borders on all sides. Passing panel-0155 AC1 browser tests measure borders, contrast and spacing at phone and desktop widths in light and dark themes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "queueItem() assigns blocked, to-ship and queued classes; CSS applies the required state colours and preserves them when opened. Passing AC2 browser tests check all specified states, open and closed, in both themes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueItem() separates the id/title, timer and tag row; queueUpdate() updates the dependency icon in that tag row. Passing AC3 browser tests measure font sizes, wrapping, timer placement, tag heights and left alignment across responsive widths."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 browser tests exercise opening, closing, log loading, timer advancement, Full ticket and Review pack, and verify the Stop, Back to Plan and Ship requests. Existing action handlers remain unchanged."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full /tmp/speck-0155-tests.txt reports 1,442 passed, zero failed and three skipped, including all 22 ticket tests passing. Existing test changes retain type-tag and pause-icon checks while adapting their layout assertions."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Build queue tickets now appear as clearly separated cards with state-coloured edges and a layout matching Plan. Browser tests cover phone and desktop layouts, both themes and existing controls. The full suite reports no failures. No blocking issues found."
+  }
+}
+```
+
+</details>
