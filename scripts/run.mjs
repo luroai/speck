@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { builderSpend } from './core.mjs';
+import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly } from './speck.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
@@ -427,16 +427,33 @@ export function pauseBuild(repo, args) {
 }
 export function cmdPause(args) { console.log(pauseBuild(findRepoRoot(), args)); }
 
-// Carries the build on, then drops the paused mark. Until both have worked it stays marked paused, so play can be run again.
+// Adds the time a build has been paused to its ticket's waited_seconds and commits that, while the build is still
+// stopped so it can't be writing the ticket too. The mark then starts from now, so a play run again after something
+// failed counts only the time since. Returns a note for play to add when the time couldn't be recorded.
+function countPause(repo, b) {
+  let at, t;
+  try { ({ at, t } = buildTicket(repo, loadConfig(repo), b.id)); } catch { return ' Its paused time couldn\'t be added to its ticket, which wasn\'t found.'; }
+  const now = Date.now(), text = addPaused(t, pausedSince(b.mark), now);
+  if (text === t.raw) return '';
+  let commit;
+  try { fs.writeFileSync(t.file, text); commit = commitTicketOnly(at, t.file, t.raw, `speck(${b.id}): paused time`); } catch { commit = { status: 1 }; try { fs.writeFileSync(t.file, t.raw); } catch { /* never written */ } }
+  if (commit.status !== 0) return ` Its paused time couldn't be recorded in ${at}, so its ticket is unchanged and the time will count as build time.`;
+  try { saveRecord(b.mark, { ...JSON.parse(fs.readFileSync(b.mark, 'utf8')), paused: new Date(now).toISOString() }); } catch { /* play removes the mark next */ }
+  return '';
+}
+
+// Counts the paused time, carries the build on, then drops the paused mark. Until all have worked it stays marked
+// paused, so play can be run again.
 export function playBuild(repo, args) {
   const b = runRecord(repo, args, 'play');
   if (!b.paused) throw new SpeckError(`${b.id} isn't paused, so there's nothing to play.`);
+  const note = countPause(repo, b);
   const { error } = signalBuild(b, 'SIGCONT');
   if (error) throw new SpeckError(`Couldn't play ${b.id}: ${error} It may be only partly playing, so it's still marked paused. Run \`speck play ${b.id}\` again.`);
   try { fs.rmSync(b.mark, { force: true }); } catch (e) {
     throw new SpeckError(`${b.id} is playing, but its paused mark ${b.mark} couldn't be removed (${e.message}). Run \`speck play ${b.id}\` again.`);
   }
-  return `${b.id} playing again (session ${b.rec.session ?? 'unknown'}).`;
+  return `${b.id} playing again (session ${b.rec.session ?? 'unknown'}).${note}`;
 }
 export function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
 
@@ -541,6 +558,7 @@ export function stopBuild(repo, args, say) {
   const b = runRecord(repo, args, 'stop');
   if (!b.running) throw new SpeckError(`${b.id} has no running or paused build launched by speck run, so there's nothing to stop.`);
   const stopMark = path.join(path.dirname(b.mark), `${b.id}.stopped`);
+  const pausedAt = b.paused ? pausedSince(b.mark) : null;
   // The ticket's commit as the build ends, so speck run can tell when it has been committed again since.
   const ticketCommit = () => { try { const { at, t } = buildTicket(repo, cfg, b.id); return lastTicketCommit(at, path.relative(at, t.file)); } catch { return null; } };
   const mark = { session: b.rec.session ?? null, pid: b.pid, stopped: new Date().toISOString(), ticket_commit: ticketCommit() };
@@ -569,7 +587,8 @@ export function stopBuild(repo, args, say) {
   const d = new Date();
   const question = `Stopped by you on ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.`;
   const comments = old => (old.match(/<!--[\s\S]*?-->/g) || []).map(c => `${c}\n`).join('');
-  let text = setField(t.raw, 'status', 'blocked');
+  // A pause ends where the block begins: its time is added, and the blocked time starts now (0166).
+  let text = waitFields(setField(addPaused(t, pausedAt), 'status', 'blocked'), t.fm.status, 'blocked');
   text = /^## Blocked question[ \t]*$/m.test(text) ? replaceSection(text, 'Blocked question', old => `${comments(old)}${question}`, t.file)
     : `${text.replace(/\s*$/, '')}\n\n## Blocked question\n${question}\n`;
   fs.writeFileSync(t.file, syncHeader(text));

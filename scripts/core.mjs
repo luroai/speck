@@ -460,8 +460,37 @@ export function writeField(t, key, value) {
   // A build is timed to its latest approval, so time waiting for the user to ship it isn't counted (0139).
   if (key === 'status' && value === 'approved') text = setField(text, 'approved', new Date().toISOString());
   if (key === 'status' && value === 'done') text = setField(text, 'finished', new Date().toISOString());
+  if (key === 'status') text = waitFields(text, t.fm.status, value);
   fs.writeFileSync(t.file, syncHeader(text));
 }
+
+// Time a ticket spends blocked is waiting for the user, not building, so it's left out of its build time (0166):
+// blocked_at marks when it blocked, and leaving blocked adds that stretch to waited_seconds. A status change makes
+// both, whatever resumed the ticket.
+export function waitFields(text, from, to, now = Date.now()) {
+  if (to === 'blocked' && from !== 'blocked') return setField(text, 'blocked_at', new Date(now).toISOString());
+  if (from !== 'blocked' || to === 'blocked') return text;
+  const fm = parseTicket(text).fm, since = Date.parse(fm.blocked_at);
+  if (fm.blocked_at === undefined) return text;
+  return setField(Number.isFinite(since) ? addWaited(text, (now - since) / 1000) : text, 'blocked_at', '');
+}
+
+// Adds `seconds` of waiting to a ticket's waited_seconds, as a whole number. An unreadable total counts as none.
+export function addWaited(text, seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return text;
+  const old = Number(parseTicket(text).fm.waited_seconds);
+  return setField(text, 'waited_seconds', Math.round((Number.isFinite(old) && old > 0 ? old : 0) + seconds));
+}
+
+// When a paused build's pause began, in ms, from its <id>.paused mark, or null when that's unreadable.
+export function pausedSince(mark) {
+  try { const at = Date.parse(JSON.parse(fs.readFileSync(mark, 'utf8')).paused); return Number.isFinite(at) ? at : null; } catch { return null; }
+}
+
+// A pause is waiting for the user too, so the time since `since` is added to the ticket's text. Only a ticket the build
+// has in hand counts it: a blocked one is already counting its waiting, and an approved one's build time has ended.
+export const addPaused = (t, since, now = Date.now()) =>
+  (since !== null && (t.fm.status === 'building' || t.fm.status === 'reviewing') ? addWaited(t.raw, (now - since) / 1000) : t.raw);
 
 export const isAncestor = (repo, a, b) => sh('git', ['merge-base', '--is-ancestor', a, b], { cwd: repo }).status === 0;
 

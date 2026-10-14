@@ -42,6 +42,7 @@ A ticket's build time counts only the time an agent was working on it: from the 
 - A ticket can be resumed from blocked by `/speck-build`, by `speck run` resuming a killed build, or by hand, so the blocked time should be closed off by the status change itself, not by whatever resumed it.
 - Reported 2026-10-14: "I just want that timer to be the true build time, not the total elapsed time."
 - Failing before this build: none
+- Self-check: an unreadable `blocked_at` is now cleared when the ticket leaves blocked, and a paused time that can't be written to the ticket no longer stops `speck play` (it plays and says the time wasn't recorded).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
