@@ -1,7 +1,7 @@
 ---
 id: "0183"
 title: "Ask builders to keep new tests quick"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0183 · Ask builders to keep new tests quick
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Every ticket adds about ten tests, and each adds about a second to a full run of speck's own suite, which every build runs three or four times. Most of the suite's time goes on tests that start real browsers, panels or `speck run`: on 2026-10-14, tests over a second each took 73% of the test time, and the 50 real-browser tests 14%. The build instructions say nothing about how quick a test should be, so builders often start a real browser or process when a quicker check would test the same thing.
