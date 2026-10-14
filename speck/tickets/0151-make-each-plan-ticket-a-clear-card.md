@@ -43,6 +43,7 @@ Each ticket in Plan is its own clearly bounded card: a larger id and title on on
 - The tall priority tag comes from 0140's 44 px tap area (`.tag.pick` in the phone media query).
 - Reported 2026-10-13 from a phone screenshot in dark mode.
 - The high risk tag uses `--warn` today (`.tag.high` and `.q .tag.high`): `#9c6a10` in light mode, which reads as red-brown, and `#d6a24a` in dark mode, which reads as orange.
+- Failing before this build: none
 - Measured 2026-10-13 in the live panel: titles are 45 characters at the median, 58 at the 90th percentile and 68 at most. At 375 px a card has about 313 px for text; a 48-character title is 319 px wide at 17 px and a 68-character one 473 px, so a larger title can't stay on one line on a phone, but always fits in two. On desktop the card is wide enough for one line.
 
 ## In plain words
