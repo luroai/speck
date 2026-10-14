@@ -1,7 +1,7 @@
 ---
 id: "0162"
 title: "Declutter the panel on a phone"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0167"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T15:59:37.015Z"
+approved: "2026-10-14T16:21:25.844Z"
 
 ---
 # 0162 · Declutter the panel on a phone
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a phone the panel takes a lot of scrolling for what it says. Three lines of instructions that never change ("Click one to open it", "Builds run in their own worktrees", "Latest 5") repeat on every visit, an empty Build section takes a full block, and Shipped, the least urgent section, is the longest: six large stat tiles with seven-digit numbers, then cards of about 600 px each. Shipped titles are in the accent red, which also means "look at this" elsewhere, and the gaps between a Plan card's tags are uneven.
@@ -53,9 +54,14 @@ The panel takes less scrolling on a phone. The three fixed instructions beside t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 187,984
+- Elapsed since build started: 22 min
+- Changed lines: 99 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: at 375 px the More stats labels take three lines (one word each), as they can't fit two in a three-column row.
