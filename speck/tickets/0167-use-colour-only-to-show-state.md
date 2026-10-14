@@ -1,7 +1,7 @@
 ---
 id: "0167"
 title: "Use colour only to show state"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0161"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T14:32:21.212Z"
+approved: "2026-10-14T14:48:40.524Z"
 
 ---
 # 0167 · Use colour only to show state
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel uses colour for decoration as much as for meaning: each Plan tab and the Shipped section have their own accent stripe, every card has a coloured left edge, and ids and links are in the accent red. Red also means blocked and high risk, so colour no longer tells the user where to look.
@@ -55,9 +56,15 @@ Worth keeping an eye on: an open card is now shown by a darker border and a ligh
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Approved tickets only receive the purple border and background when a build exit is recorded.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 605,549
+- Elapsed since build started: 16 min
+- Changed lines: 100 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (tidy-ups and known limits, no inbox notes):
 - The `--inbox`, `--accent-bg` and `--inbox-bg` colour tokens are no longer used by any rule; they stay because the palette checks of 0126, 0134 and 0136 pin them. Remove them, and those checks, in a tidy-up.
