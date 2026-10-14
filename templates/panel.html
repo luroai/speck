@@ -113,7 +113,7 @@
   .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
   .item .head { margin: -10px -14px; padding: 10px 14px; } /* the item's padding opens and closes it too */
-  .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; }
   .item.open { background: var(--raise); border-color: var(--text); }
   .detail { margin-top: 10px; border-top: .5px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
   .detail h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
@@ -260,7 +260,8 @@
   .toggles { display: flex; }
   .toggle { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; padding: 1px 10px; background: transparent; border: .5px solid var(--line); margin-left: -.5px; color: var(--muted); cursor: pointer; }
   .toggle.on { color: var(--text); border-color: var(--text); position: relative; z-index: 1; }
-  .item:hover { background: var(--raise); }
+  /* 0164: only where the main pointer can hover, as a phone keeps a tapped card's :hover until the next tap */
+  @media (hover: hover) { .item:hover { background: var(--raise); } }
   /* The light tints. 0167: the open item in Shaping or the queue is set apart by a raised fill and a border in the text
      colour; only a ticket waiting for you or in trouble keeps a tint (below). */
   :root { --accent-bg: #f7ebe6; --idea-bg: #f2ecf3; --inbox-bg: #e9f2f0; --bad-bg: #fae6e8; }
@@ -421,7 +422,14 @@
     .detail { grid-template-columns: minmax(0, 1fr); }
     .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
     .set-ready, .full-open { min-width: 44px; min-height: 44px; }
-    .goto { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; vertical-align: middle; }
+    /* 0164: each id reads as running text, on the line's baseline with its comma straight after it. Its tap area is
+       at least 44 px each way, but its negative margins give back what it reaches past the text, so nothing moves. */
+    .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; }
+    /* A note on several lines has them closer together than that, so each id's text, and the band of its own line,
+       sit above every tap area in the note: a tap there reaches that id, not one on the line above or below. */
+    .item .checks, .act { isolation: isolate; }
+    .goto > span { position: relative; z-index: 1; }
+    .goto > span::before { content: ''; position: absolute; inset: -1px -6px; } /* not into the next id's: a comma and a space away */
 
     /* Queue: the top row is at least 44 px high */
     #queue { padding: 6px; }
@@ -2154,7 +2162,7 @@ function idLinks(ids) {
   return ids.flatMap((id, i) => [i ? document.createTextNode(', ') : null, onPage.has(String(id)) ? gotoButton(String(id)) : document.createTextNode(String(id))].filter(Boolean));
 }
 function gotoButton(id) {
-  const b = el('button', 'goto', id);
+  const b = el('button', 'goto', null, el('span', null, id)); // the span: its text, above the other ids' tap areas (0164)
   b.type = 'button';
   b.setAttribute('aria-label', `Go to ticket ${id}`);
   // Stopped here, so it neither opens nor closes the ticket it's in.
