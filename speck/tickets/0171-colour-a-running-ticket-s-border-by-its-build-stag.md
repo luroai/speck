@@ -44,6 +44,7 @@ A ticket an agent is working on has a coloured border that shows its build stage
 - Checked 2026-10-14: each stage token has at least 7.9:1 contrast against the card background in both themes (`--run` 8.52/7.99, `--inbox` 8.60/7.98, `--warn` 8.54/7.96, `--ok` 8.54/8.00 against `#ffffff` and `#1f1f1f`; computed from `templates/panel.html`).
 - The stage is already worked out for the badge and the sentence under it (`doing` and `badgeOf` in `templates/panel.html`).
 - Builds after 0169, which changed the same card.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
