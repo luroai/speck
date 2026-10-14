@@ -42,6 +42,7 @@ Builders write each new test the quickest way that still really checks its crite
 - The place in the instructions: section 2, "Tests first", step 1 of `skills/speck-build/SKILL.md`. `.claude/skills/speck-build` links to it.
 - Related: 0182 shares one Chromium per test file, and 0117 split the slowest test file.
 - From the 2026-10-14 look at test suite cost. Moving later review rounds off the full suite was considered and left out: `speck ship` has to run the full suite after any fix anyway, so it would save only about a quarter of a run per ticket.
+- Failing before this build: 0173 AC2: no test in test/ checks once that a process it stopped has gone (it flags panel-0177.test.mjs:159)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
