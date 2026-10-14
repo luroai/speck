@@ -53,7 +53,7 @@ When a test file finishes, nothing it started is still running, however its test
 - Answered 2026-10-14 (blocked on the round limit setting): option (a). The limit is raised to 4 in a commit on this branch for round 4, then committed back to 3 straight away, whatever the verdict, so the branch has no net settings change.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Running the tests no longer leaves programs running in the background afterwards. Before, every full test run left some behind, and over a day they piled up until the machine ran out of memory and slowed to a crawl. Now each group of tests ends everything it started when it finishes, even if it failed, ran out of time or was stopped part-way. Helpers that sit waiting also give up by themselves once their test's folder is gone. To see it, run the full tests twice and check that nothing from them is still running a few seconds later. Keep an eye on how long the full tests take: one run was a little slower than before, possibly because of the new clean-up check.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -66,6 +66,9 @@ When a test file finishes, nothing it started is still running, however its test
 
 Follow-ups:
 - The full suite took 126 s after the round 2 fixes (and 128 s on the last run), against about 100 s before this build. The machine was busy with other sessions at the time (load average 9 to 24), so it may be noise, but the clean-up's watch, four times a second in every test file (about 5 ms a pass), may be the cause. Worth timing the suite with and without the watch on a quiet machine.
+- Known limit, accepted by the user: a process with no link back to its test whose starter exits before the clean-up's next check has seen it can still be left running.
+- macOS: the clean-up's macOS code (ps and lsof) was checked only by reading; every run was on Linux.
+- Skipped as duplicates: two timing tests (0128 AC3, 0148 AC2) failed once each under two full runs at once, matching ticket 0173; allowing one more review round without editing the settings matches speck/ideas/2026-10-09-allow-one-more-review-round-without-editing-config.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
