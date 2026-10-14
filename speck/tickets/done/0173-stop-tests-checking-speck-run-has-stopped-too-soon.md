@@ -1,7 +1,7 @@
 ---
 id: "0173"
 title: "Stop tests checking speck run has stopped too soon"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T20:36:47.075Z"
 approved: "2026-10-14T21:18:28.618Z"
+finished: "2026-10-14T21:18:29.524Z"
 
 ---
 # 0173 · Stop tests checking speck run has stopped too soon
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Some tests turn speck run off and then check once, straight away, that its process has gone. On a busy machine the process can take a moment to exit, so the full suite fails now and then (0128 AC3 or 0148 AC2) when nothing is wrong. That stops auto-ship: on 2026-10-14 it held up 0164's ship even though the same failure happened on `main`.
