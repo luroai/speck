@@ -41,6 +41,7 @@ Every tag looks the same size and can be tapped: the priority tag on a draft sti
 - Builds after 0161, which sets the tags' size and colours.
 - Tags are built by `tags()` and `typeTag()` in `templates/panel.html`; the priority menu is `priorityPicker()`. The 44 px tap area on the priority tag alone comes from 0140's `.tag.pick` rule.
 - The size wording follows `/speck-ticket`'s size rules.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
