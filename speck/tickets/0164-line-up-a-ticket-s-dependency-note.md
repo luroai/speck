@@ -42,6 +42,7 @@ A ticket's dependency note lines up with the rest of its details row and reads a
 - The sticky shading is `.item.ticket:hover, .item.idea:hover, .item.inbox:hover { background: var(--raise) }`, which iOS keeps after a tap.
 - Builds after 0161, which changes the same styles.
 - Reported 2026-10-14 from a phone screenshot.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
