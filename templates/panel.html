@@ -279,6 +279,12 @@
      nothing is wrong (0138). Each keeps its border and background whether it's open, highlighted or set back. */
   .q.blocked { border-color: var(--bad); background: var(--bad-bg); }
   .q.to-ship { border-color: var(--idea); background: var(--idea-bg); }
+  /* 0171: a ticket an agent is at work on has a 2px border in its stage's colour, and its fill stays as it is, as only a
+     ticket that needs you is filled. It keeps it whether it's open, highlighted or set back. */
+  .q.at-build { border-color: var(--run); border-width: 2px; }
+  .q.at-check { border-color: var(--inbox); border-width: 2px; }
+  .q.at-review { border-color: var(--warn); border-width: 2px; }
+  .q.at-ship { border-color: var(--ok); border-width: 2px; }
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
   .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
@@ -535,6 +541,14 @@ function badgeOf(t, d) {
   if (d.tone === 'bad') return { pose: 'bad', label: 'The builder needs you' };
   if (t.to_ship) return { pose: 'wait', label: 'The builder is waiting for you' };
   return { pose: 'still', label: t.paused ? 'The builder is paused' : 'The builder is waiting' };
+}
+// 0171: the stage a ticket an agent is at work on has reached, for its card's border: 'build', 'check', 'review' or
+// 'ship', from what it's doing (`d`, from doing), as its badge shows it. Null when no agent is at work on it.
+function stageOf(t, d) {
+  if (!d.moving) return null;
+  if (d.sentence === 'Shipping') return 'ship';
+  if (t.status === 'reviewing') return 'review';
+  return (Array.isArray(t.steps) ? t.steps : []).findIndex(s => s.state === 'now') === 1 ? 'check' : 'build';
 }
 // 0163: what the Auto-build button says while it's on, from the first in-flight ticket in the Build queue that is being
 // built, reviewed or shipped, or waits for you: its label, its colour ('bad', 'wait' or '') and whether its builder
@@ -1508,8 +1522,9 @@ function shapingToggle(m) {
 // A queue row: the ticket, its progress when it's in flight (0156), then what's under it. A blocked ticket is red, and so
 // is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and purple.
 function queueItem(t) {
-  const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
-  const id = String(t.id), isOpen = openQueue.has(id);
+  const id = String(t.id), isOpen = openQueue.has(id), d = t.inFlight ? doing(t, t.shipping || shippingId === id) : null;
+  const stage = d && !t.red && !t.to_ship ? stageOf(t, d) : null; // 0171: a running ticket's border shows its stage
+  const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : stage ? ` at-${stage}` : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   // 0155: the id and title, the timer at the right of their row, then the tags on a row of their own, as in Plan.
   const top = el('div', 'top', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)),
     el('div', 'row tag-row', null, ...fieldTags(t, false), typeTag(t), t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
@@ -1518,7 +1533,7 @@ function queueItem(t) {
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
   const q = goable(el('div', `${cls}${isOpen ? ' open' : ''}`, null, top), t);
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
-  else progressOf(top, t, doing(t, t.shipping || shippingId === id));
+  else progressOf(top, t, d);
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));
     if (isOpen) {

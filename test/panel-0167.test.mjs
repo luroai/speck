@@ -122,6 +122,8 @@ const STATE = {
     idea('2026-10-14-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0161\n\nSome text.\n')],
 };
 // Each queue card's state colour: its border and its background, or none.
+// 0171: a running card has a 2px border in its stage's colour instead, and no fill (RUNNING).
+const RUNNING = { '0301': 'run' };
 const STATES = { '0301': null, '0302': ['--idea', '--idea-bg'], '0303': ['--bad', '--bad-bg'], '0304': ['--bad', '--bad-bg'], '0305': null, '0306': ['--idea', '--idea-bg'] };
 
 const stub = theme => `(() => {
@@ -156,7 +158,7 @@ const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAn
 // A colour as the browser computes it, from a CSS value such as var(--bad).
 const RGB = v => `(() => { const s = document.createElement('span'); s.style.color = ${JSON.stringify(v)}; document.body.appendChild(s);
   const c = getComputedStyle(s).color; s.remove(); return c; })()`;
-const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'idea', 'idea-bg', 'bad', 'bad-bg', 'panel']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
+const colours = async b => { const c = {}; for (const k of ['line', 'text', 'muted', 'idea', 'idea-bg', 'bad', 'bad-bg', 'panel', 'run']) c[k] = await b.js(RGB(`var(--${k})`)); return c; };
 // Each element's four border colours and widths, and its background.
 const LOOK = sel => `[...document.querySelectorAll(${JSON.stringify(sel)})].map(n => { const s = getComputedStyle(n);
   return { id: (n.querySelector('.id') || n).textContent.slice(0, 40), cls: n.className, back: s.backgroundColor,
@@ -197,6 +199,8 @@ for (const theme of ['light', 'dark']) {
           if (state) {
             sameAllRound(card, c[state[0].slice(2)], `${card.id} ${when}`);
             assert.equal(card.back, c[state[1].slice(2)], `${card.id} ${when}: its background`);
+          } else if (RUNNING[card.id]) {
+            for (const [k, [col, width]] of card.sides.entries()) assert.deepEqual([col, width], [c[RUNNING[card.id]], 2], `${card.id} ${when}: side ${k}`);
           } else sameAllRound(card, /\bopen\b/.test(card.cls) ? c.text : c.line, `${card.id} ${when}`);
         }
       };

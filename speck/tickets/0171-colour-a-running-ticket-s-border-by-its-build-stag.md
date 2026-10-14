@@ -45,6 +45,7 @@ A ticket an agent is working on has a coloured border that shows its build stage
 - The stage is already worked out for the badge and the sentence under it (`doing` and `badgeOf` in `templates/panel.html`).
 - Builds after 0169, which changed the same card.
 - Failing before this build: none
+- Self-check: no changes. AC3's test passes before any code, as it pins what stays the same. The 0155 and 0167 browser tests pinned a running card to the plain 1px border, which AC1 replaces, so their running cards now expect their stage's 2px border; nothing else in them changed. 0128 AC3 and 0148 AC2 (speck run timing) each failed once under a full run and passed alone and on a fresh full run.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
