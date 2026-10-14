@@ -145,6 +145,9 @@
     .stages .now.moving::after { content: ''; position: absolute; top: -3px; left: 0; width: 16px; height: 3px;
       background: linear-gradient(90deg, transparent, var(--panel), transparent); animation: sweep 1.6s ease-in-out infinite alternate; }
     @keyframes sweep { to { left: calc(100% - 16px); } }
+    /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
+    .item.flash, .q.flash { animation: flash 1.5s ease-out; }
+    @keyframes flash { 0%, 40% { background-color: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); } }
   }
   .question.exit.to-ship { border-left-color: var(--idea); }
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
@@ -220,6 +223,11 @@
   .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
   .item.hl, .q.hl { background: var(--accent-bg); }
   .item.dim, .q.dim { opacity: .35; }
+  /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
+  .goto { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+  .goto:hover { text-decoration-style: solid; }
+  /* It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
+  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { background-color: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); } }
 
   /* The full ticket, in a side pane over the right of the page. While it's open, the page behind it holds still and a
      backdrop over the rest of the page takes every click outside it. */
@@ -324,6 +332,7 @@
     .detail { grid-template-columns: minmax(0, 1fr); }
     .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
     .set-ready, .full-open { min-width: 44px; min-height: 44px; }
+    .goto { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; vertical-align: middle; }
 
     /* Queue: the top row is 44 px high, with a 34 px space on its left, and the rows below it move over to match */
     .q .top { grid-template-columns: 34px minmax(0, 1fr) auto; min-height: 44px; align-items: center; }
@@ -861,7 +870,7 @@ const list = v => (Array.isArray(v) ? v : []);
 function ticketItem(t) {
   const isOpen = open.has(t.id);
   const why = priorityRefused.has(String(t.id)) ? el('div', 'bad prio-refused', priorityRefused.get(String(t.id))) : null;
-  return hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, ticketHead(t), why, isOpen ? ticketDetail(t, list(t.acceptance_criteria)) : null), t);
+  return goable(hoverable(el('div', `item ticket${isOpen ? ' open' : ''}`, null, ticketHead(t), why, isOpen ? ticketDetail(t, list(t.acceptance_criteria)) : null), t), t);
 }
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
@@ -874,8 +883,8 @@ function ticketHead(t) {
   if (lint.errors) checks.appendChild(check('bad', false, `lint: ${plural(lint.errors, 'error')}`));
   else checks.appendChild(check('ok', true, 'lint passes'));
   if (lint.warnings) checks.appendChild(check('warn', false, plural(lint.warnings, 'warning')));
-  if (t.chain) checks.appendChild(el('span', null, `unlocks ${t.unlocks.join(', ')}`));
-  else if (t.waiting_on.length) checks.appendChild(el('span', null, `waiting on ${t.waiting_on.join(', ')}`));
+  if (t.chain) checks.appendChild(el('span', null, 'unlocks ', ...idLinks(t.unlocks)));
+  else if (t.waiting_on.length) checks.appendChild(el('span', null, 'waiting on ', ...idLinks(t.waiting_on)));
   head.appendChild(checks);
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
@@ -1311,7 +1320,7 @@ function queueItem(t) {
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
-  const q = el('div', `${cls}${isOpen ? ' open' : ''}`, null, top);
+  const q = goable(el('div', `${cls}${isOpen ? ' open' : ''}`, null, top), t);
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
   const bar = el('div', 'stages');
   const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red && !t.paused; // an agent is at work on it
@@ -1497,7 +1506,11 @@ function setLogText(node, text) {
   setText(node, text);
 }
 const queueCounter = t => (t.counter !== null ? `${t.paused ? 'Paused · ' : ''}${t.counter}` : t.paused ? 'Paused' : '');
-const queuedLine = t => el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ` · unlocks ${t.unlocks.join(', ')}` : t.waiting_on.length ? ` · waiting on ${t.waiting_on.join(', ')}` : ''));
+function queuedLine(t) {
+  const line = el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ' · unlocks ' : t.waiting_on.length ? ' · waiting on ' : ''), ...idLinks(noteIds(t)));
+  line.links = shownLinks(t).join(','); // which ids are buttons, as the text alone doesn't say
+  return line;
+}
 // Puts new text in a node with one text node by replacing only the characters that differ, in place, so a selection in
 // or across it stays and moves with the text. A browser would pull a selection's end inside those characters back to
 // their start, so it is put at their new end instead.
@@ -1530,7 +1543,7 @@ function queueUpdate(q, t) {
     if (old) row.removeChild(old);
   }
   const act = child(q, 'act'), line = queuedLine(t);
-  if (act.textContent !== line.textContent) { q.insertBefore(line, act); q.removeChild(act); }
+  if (act.textContent !== line.textContent || act.links !== line.links) { q.insertBefore(line, act); q.removeChild(act); }
 }
 // The counters run on their own 1-second timer, apart from the state poll and render(), so they move on between polls.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.
@@ -1574,9 +1587,15 @@ function copyLabel(id) {
 // The classes are set on the nodes in place, so a Shaping item keeps its node (and any text selected in it).
 let hovered = null; // the id of the ticket under the pointer, or null
 let linked = new Map(); // id → the ids linked to it, from the last render
+// A tap on a touch screen, such as a phone's, sends mouseenter too, and nothing ends it until a tap somewhere else, so
+// only a mouse lights tickets up, not a finger or a pen (0154). The pointer that sent it is known from the pointerover a browser sends just before.
+// The (hover: none) media query can't say this: a touch laptop's mouse hovers, and headless Chrome reports none with a mouse.
+let pointerKind = null; // the type of the pointer that last moved over something: 'mouse', 'touch' or 'pen', or null before any
+document.addEventListener('pointerover', e => { pointerKind = e.pointerType; }, true);
+const canHover = () => pointerKind === null || pointerKind === 'mouse';
 function hoverable(node, t) {
   node.ticketId = String(t.id);
-  node.addEventListener('mouseenter', () => { hovered = node.ticketId; lightUp(); });
+  node.addEventListener('mouseenter', () => { if (!canHover()) return; hovered = node.ticketId; lightUp(); });
   node.addEventListener('mouseleave', () => { if (hovered === node.ticketId) hovered = null; lightUp(); });
   return node;
 }
@@ -1587,6 +1606,43 @@ function lightUp() {
   for (const n of rows) {
     const cls = n.className.replace(/ (hl|dim)\b/g, '');
     n.className = !group ? cls : `${cls} ${group.includes(n.ticketId) ? 'hl' : 'dim'}`;
+  }
+}
+// 0154: each id in a "waiting on" or "unlocks" note is a button that scrolls its ticket into view and lights it for
+// 1.5 seconds, when that ticket is on the page (in the queue, or a draft while Plan shows its tickets); otherwise plain text.
+let onPage = new Set(); // the ids of the tickets on the page, from the last render
+const FLASH_MS = 1500;
+let flashId = null, flashes = 0; // the id lit by the latest tap on its id, until its time is up, and how many taps there have been
+const noteIds = t => (t.chain ? t.unlocks : t.waiting_on); // the ids in its note
+const shownLinks = t => noteIds(t).filter(id => onPage.has(String(id))); // the ones that are buttons
+function idLinks(ids) {
+  return ids.flatMap((id, i) => [i ? document.createTextNode(', ') : null, onPage.has(String(id)) ? gotoButton(String(id)) : document.createTextNode(String(id))].filter(Boolean));
+}
+function gotoButton(id) {
+  const b = el('button', 'goto', id);
+  b.type = 'button';
+  b.setAttribute('aria-label', `Go to ticket ${id}`);
+  // Stopped here, so it neither opens nor closes the ticket it's in.
+  b.addEventListener('click', e => { e.stopPropagation(); goTo(id); });
+  return b;
+}
+function goable(node, t) { node.gotoId = String(t.id); return node; }
+const ticketRows = () => [...$('shaping').children, ...$('queue').children].filter(n => n.gotoId !== undefined);
+function goTo(id) {
+  const row = ticketRows().find(n => n.gotoId === id);
+  if (!row) return;
+  if (typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'center' });
+  if (flashId === id) { flashId = null; flash(); void row.offsetWidth; } // lit already: start its fade again
+  flashId = id;
+  const mine = ++flashes;
+  flash();
+  setTimeout(() => { if (mine === flashes) { flashId = null; flash(); } }, FLASH_MS);
+}
+// Puts the class on the lit ticket's node, and on no other, so a node rebuilt by a refresh keeps it.
+function flash() {
+  for (const n of ticketRows()) {
+    const cls = n.className.replace(/ flash\b/g, '');
+    n.className = n.gotoId === flashId ? `${cls} flash` : cls;
   }
 }
 // Puts the nodes in the box in order, leaving in place any that are already there, so a node kept from the last
@@ -1624,6 +1680,7 @@ function render() {
   // A menu whose ticket isn't showing any more is closed, so it can't catch the next click.
   if (priorityMenu !== null && (shapingView !== 'tickets' || !m.drafts.some(t => String(t.id) === priorityMenu))) priorityMenu = null;
   shapingToggle(m);
+  onPage = new Set([...(shapingView === 'tickets' ? m.drafts : []), ...m.queue].map(t => String(t.id)));
   // A refused stop's reason goes once its ticket has no Stop build button, so a later build of it doesn't show it.
   for (const id of stopRefused.keys()) if (!m.queue.some(t => String(t.id) === id && t.pausable)) stopRefused.delete(id);
   // The same for a refused Back to Plan once its ticket isn't ready in the queue.
@@ -1632,14 +1689,14 @@ function render() {
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
     t => [open.has(t.id), settingReady.has(t.id), refused.get(t.id) ?? null, priorityMenu === String(t.id), priorityRefused.get(String(t.id)) ?? null], ticketItem,
-    { own: ownData, derived: t => [t.chain, t.unlocks], update: newHead }), 'No draft tickets.');
+    { own: ownData, derived: t => [t.chain, t.unlocks, shownLinks(t)], update: newHead }), 'No draft tickets.');
   renderFull(m);
 
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null,
     unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null], queueItem,
-    { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks], update: queueUpdate });
+    { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
   startCounters(m.queue.flatMap((t, i) => [...(t.counter !== null && t.approved_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : []),
     ...(t.ship_counter !== null ? [[shipTime(rows[i]), t.ship_since, false]] : [])]));
@@ -1648,6 +1705,7 @@ function render() {
   queueIds = new Set(m.queue.map(t => String(t.id)));
   linked = new Map([...m.drafts, ...m.queue].map(t => [String(t.id), t.linked]));
   lightUp();
+  flash();
   const flying = m.queue.filter(t => t.inFlight).length;
   $('queue-n').textContent = `${flying} in flight · ${m.queue.length - flying} queued`;
 

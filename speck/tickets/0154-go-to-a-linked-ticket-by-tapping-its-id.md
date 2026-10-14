@@ -41,6 +41,9 @@ On touch screens nothing highlights on its own; instead, on every device, the li
 - The hover highlight is `hoverable()` and `lightUp()` in `templates/panel.html`, with the `.hl` and `.dim` classes. The "unlocks" note is built in `ticketHead()`; the "waiting on" note appears there and on queued rows.
 - Reported 2026-10-13: the highlight is hard to use on a phone.
 - Failing before this build: none
+- AC1 is met by the pointer a hover comes from rather than by the `(hover: none)` query itself: a tap sends a touch `pointerover` just before its `mouseenter`, so only a mouse lights tickets up. On a `(hover: none)` device every hover comes from a tap, so nothing lights up there. The query alone couldn't be used: headless Chrome reports `(hover: none)` even with a mouse, and can't be told otherwise, so 0041's real-browser hover test would fail. A touch laptop's mouse still lights tickets up.
+- When the browser asks for reduced motion, the highlight stays still for its 1.5 seconds rather than fading, as 0055 keeps every animation inside the no-preference block.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
