@@ -1,7 +1,7 @@
 ---
 id: "0164"
 title: "Line up a ticket's dependency note"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0161"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T16:47:54.656Z"
+approved: "2026-10-14T17:31:29.600Z"
 
 ---
 # 0164 · Line up a ticket's dependency note
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a phone, a Plan card's "unlocks 0162, 0163" or "waiting on 0161" note sits lower and further right than the "5 criteria · lint passes" beside it, with wide gaps around each id and the comma: each id is a 44 px button centred on its own, so it pushes the line out of line. Separately, a card the user has tapped stays shaded grey, because its hover background sticks on touch screens.
@@ -56,9 +57,16 @@ Worth keeping an eye on: on a touchscreen laptop whose main input is the touchsc
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The 44 px buttons have negative vertical margins that reduce their contribution to line height to 16 px.
+Round 2 (codex): changes requested: F2 Criterion 5 remains unverified because the latest full suite fails 0128 AC3.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 584,836
+- Elapsed since build started: 44 min
+- Changed lines: 16 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Skipped as a duplicate: the full suite fails one of `0128 AC3` or `0148 AC2` ("speck run has stopped") when the machine is busy, on the base branch too. Matches speck/ideas/2026-10-13-stop-tests-checking-speck-run-stopped-too-soon.md.
