@@ -12,11 +12,27 @@ export const PNGS = { 'icon-192.png': 192, 'icon-512.png': 512, 'apple-touch-ico
 const num = (s, re) => Number((s.match(re) || [])[1]);
 const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
 
-// The logo as the SVG gives it: the background, the ensō arc (an SVG arc from one point to another, turned into its
-// centre and the angles it covers) with its stroke, and the dot.
+// The logo as the SVG gives it: the background, each arc (an SVG arc from one point to another, absolute or relative,
+// turned into its centre and the angles it covers) with their shared stroke, the dot, and the group's translate (0170).
 export function logo(svg = fs.readFileSync(path.join(ICONS, 'icon.svg'), 'utf8')) {
-  const d = (svg.match(/<path[^>]* d="([^"]+)"/) || [])[1] || '';
-  const [x1, y1, r, , , large, sweep, x2, y2] = d.replace(/[MA]/g, ' ').trim().split(/[\s,]+/).map(Number);
+  const arcs = [...svg.matchAll(/<path[^>]* d="([^"]+)"/g)].map(m => arc(m[1]));
+  const move = (svg.match(/<g[^>]* transform="translate\(([-\d.]+)[\s,]+([-\d.]+)\)"/) || []).slice(1).map(Number);
+  return {
+    bg: rgb((svg.match(/<rect[^>]* fill="(#[0-9a-f]{6})"/i) || [])[1]),
+    ink: rgb((svg.match(/<(?:g|path)[^>]* stroke="(#[0-9a-f]{6})"/i) || [])[1]),
+    half: num(svg, /stroke-width="([\d.]+)"/) / 2,
+    arcs,
+    at: move.length ? move : [0, 0],
+    dot: { cx: num(svg, /<circle[^>]* cx="([\d.]+)"/), cy: num(svg, /<circle[^>]* cy="([\d.]+)"/), r: num(svg, /<circle[^>]* r="([\d.]+)"/),
+      fill: rgb((svg.match(/<circle[^>]* fill="(#[0-9a-f]{6})"/i) || [])[1]) },
+  };
+}
+
+// One path of a move and an arc: "M x1 y1 A r r 0 large sweep x2 y2", or with "a" and x2 y2 relative to x1 y1.
+export function arc(d) {
+  const relative = d.includes('a');
+  const [x1, y1, r, , , large, sweep, ex, ey] = d.replace(/[MAa]/g, ' ').trim().split(/[\s,]+/).map(Number);
+  const x2 = relative ? x1 + ex : ex, y2 = relative ? y1 + ey : ey;
   // SVG's endpoint-to-centre conversion, for a circle (rx = ry = r, no rotation).
   const mx = (x1 - x2) / 2, my = (y1 - y2) / 2, h2 = mx * mx + my * my;
   const k = (large === sweep ? -1 : 1) * Math.sqrt(Math.max(0, (r * r - h2) / h2));
@@ -26,17 +42,10 @@ export function logo(svg = fs.readFileSync(path.join(ICONS, 'icon.svg'), 'utf8')
   // sweep 1 draws with the angle growing, 0 with it shrinking: the arc covers the angles it passes on the way.
   const span = sweep ? turn(a2 - a1) : turn(a1 - a2);
   const onArc = a => (sweep ? turn(a - a1) : turn(a1 - a)) <= span;
-  return {
-    bg: rgb((svg.match(/<rect[^>]* fill="(#[0-9a-f]{6})"/i) || [])[1]),
-    ink: rgb((svg.match(/<path[^>]* stroke="(#[0-9a-f]{6})"/i) || [])[1]),
-    half: num(svg, /stroke-width="([\d.]+)"/) / 2,
-    arc: { cx, cy, r, onArc, ends: [[x1, y1], [x2, y2]] },
-    dot: { cx: num(svg, /<circle[^>]* cx="([\d.]+)"/), cy: num(svg, /<circle[^>]* cy="([\d.]+)"/), r: num(svg, /<circle[^>]* r="([\d.]+)"/),
-      fill: rgb((svg.match(/<circle[^>]* fill="(#[0-9a-f]{6})"/i) || [])[1]) },
-  };
+  return { cx, cy, r, onArc, ends: [[x1, y1], [x2, y2]] };
 }
 
-// The distance from a point to the arc, with its round caps.
+// The distance from a point to an arc, with its round caps.
 function toArc({ cx, cy, r, onArc, ends }, x, y) {
   if (onArc(Math.atan2(y - cy, x - cx))) return Math.abs(Math.hypot(x - cx, y - cy) - r);
   return Math.min(...ends.map(([ex, ey]) => Math.hypot(x - ex, y - ey)));
@@ -48,9 +57,10 @@ export function draw(size, L = logo()) {
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     let ink = 0, dot = 0;
     for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) {
-      const u = (x + (sx + 0.5) / n) * 64 / size, v = (y + (sy + 0.5) / n) * 64 / size;
+      // A point on the icon, moved back by the group's translate onto the mark's own shapes.
+      const u = (x + (sx + 0.5) / n) * 64 / size - L.at[0], v = (y + (sy + 0.5) / n) * 64 / size - L.at[1];
       if (Math.hypot(u - L.dot.cx, v - L.dot.cy) <= L.dot.r) dot++;
-      else if (toArc(L.arc, u, v) <= L.half) ink++;
+      else if (L.arcs.some(a => toArc(a, u, v) <= L.half)) ink++;
     }
     const s = n * n;
     for (let c = 0; c < 3; c++) px[(y * size + x) * 3 + c] = Math.round((L.bg[c] * (s - ink - dot) + L.ink[c] * ink + L.dot.fill[c] * dot) / s);

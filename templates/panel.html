@@ -57,6 +57,10 @@
 
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: 16px; padding: calc(14px + env(safe-area-inset-top)) 24px 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .logo { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
+  /* 0170: speck's eared logo from the landing page, before the wordmark, in the text colour with the red dot */
+  .logo .mark { width: 1em; height: 1em; vertical-align: -.16em; margin-right: 6px; }
+  .logo .mark .dot { fill: #b0412e; }
+  :root[data-theme="dark"] .logo .mark .dot { fill: #d4664e; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .logo, .run-state, .theme { flex-shrink: 0; }
@@ -358,6 +362,10 @@
     header.slim { grid-template-columns: auto minmax(0, 1fr) auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
     header.slim .repo, header.slim .logo span { display: none; }
     .logo span { letter-spacing: .02em; } /* 0161: room for the project's name beside it, at 12 px */
+    /* 0170: and room for the mark before speck */
+    header { column-gap: 6px; }
+    .logo .mark { width: .9em; height: .9em; margin-right: 4px; }
+    .logo span { letter-spacing: 0; margin-left: 0; }
     .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
     .run-state { justify-self: start; height: 44px; min-width: 44px; }
     .theme { justify-self: end; width: 44px; height: 44px; }
@@ -418,7 +426,7 @@
 </head>
 <body>
 <header>
-  <div class="logo">speck <span>control panel</span></div>
+  <div class="logo"><svg class="mark" viewBox="8 11 48 48" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M14.5 22.5 A21.5 21.5 0 1 0 22 16.2"/><path d="M12.6 19.8 a5.2 5.2 0 0 1 8.2 -5.6"/><path d="M43.2 14.2 a5.2 5.2 0 0 1 8.2 5.6"/><circle class="dot" cx="32" cy="38" r="2.3" stroke="none"/></svg>speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
   <button class="run-state" id="run" type="button" aria-pressed="false" hidden></button>
   <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">

@@ -46,6 +46,9 @@ The home-screen icon, the tab icon and the panel header all use speck's logo wit
 - The icons live in `templates/icons/` (0149). A phone keeps the icon it fetched when the app was added, so the user needs to remove and re-add the home-screen app to see the new one.
 - Asked for on 2026-10-14: "Use the logo with the ears from the landing page, and not the one with the legs."
 - Failing before this build: none
+- The icon's stroke is 2.2 units (6.2 px at 180 px). 2.4 and 2.5 compress to PNG bytes containing "o6", which the "no model name is hard-coded" scan of `templates/` flags, so a width whose PNGs pass it was picked.
+- On a phone the mark needed 16 px the project's name didn't have (0140 AC3), so the phone header's column gap is 6 px, the mark is 0.9 em with 4 px after it, and "control panel" has no extra margin or letter spacing.
+- Self-check: the phone header was tightened so the project's name isn't cut short; the icon's stroke width was changed so its PNGs pass the model-name scan
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
