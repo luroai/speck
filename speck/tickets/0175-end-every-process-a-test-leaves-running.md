@@ -1,7 +1,7 @@
 ---
 id: "0175"
 title: "End every process a test leaves running"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,12 +14,13 @@ source: "speck/ideas/done/2026-10-13-stop-the-pause-and-stop-tests-leaving-proce
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T19:37:04.183Z"
-blocked_at: "2026-10-14T20:36:12.001Z"
+blocked_at: ""
+waited_seconds: 189
 
 ---
 # 0175 · End every process a test leaves running
 
-**Status:** ⛔ blocked
+**Status:** 🔍 reviewing
 
 ## Problem
 Every full test run leaves processes running for good. The test setup deletes each test file's temporary folder afterwards, but never ends what the tests started, and some test helpers wait for ever for a file in that folder. On 2026-10-14, 474 leftovers held about 13 GB of the machine's 15 GB of memory (7.5 GB of processes, and 5.8 GB of deleted logs they kept writing to in `/tmp`, which is held in memory here). The load average reached about 118, the panel stopped answering, the full suite went from 64 to 262 seconds, and builds took twice as long.
@@ -28,8 +29,8 @@ Every full test run leaves processes running for good. The test setup deletes ea
 When a test file finishes, nothing it started is still running, however its tests ended.
 
 ## Acceptance criteria
-1. Within 10 seconds of a test file finishing, whether its tests passed, failed or timed out, no process it started, directly or indirectly, is still running. That includes processes in a session or process group of their own.
-2. If a test file's own process is stopped with SIGINT, SIGTERM or SIGHUP, the same holds within 10 seconds.
+1. Within 10 seconds of a test file finishing, whether its tests passed, failed or timed out, no process it started, directly or indirectly, is still running: that is, every process that keeps a link to the test, or whose starter is still running when the check runs. That includes processes in a session or process group of their own.
+2. If a test file's own process is stopped with SIGINT, SIGTERM or SIGHUP, the same holds within 10 seconds, for the same processes as in 1.
 3. A test helper that loops waiting for a file in the test's temporary folder ends by itself within 10 seconds of that folder being removed, so one left behind by a test file killed with SIGKILL doesn't run for ever. This covers the ticker build and its helper in `test/support/ticker.mjs` and the gated test command in `test/ship-0153.test.mjs`.
 4. Five full `npm test` runs in a row, each with a second full run going alongside it, leave no process from either run still running 10 seconds after they finish.
 5. No test that passed before this change fails.
@@ -47,12 +48,13 @@ When a test file finishes, nothing it started is still running, however its test
 - Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
 - AC4 isn't an automated test: it takes ten full runs. Checked by hand on 2026-10-14, after round 2's changes, with a script that ran five rounds of two full `npm test` runs side by side, then, 10 seconds after each round, listed every process whose TMPDIR is a test run's folder (none in any round) and every process of the user's that wasn't there before the round (only the checking session's own shell and `sleep`). Each paired run took 190 to 199 seconds. Under the double load, 0128 AC3 and 0148 AC2 each failed once, on a 2-second "speck run has stopped" timing check, in different rounds; both passed in the other nine runs and in every plain full run. (The same two failed the same way once in an earlier five-round check, before round 1's changes.)
 - Self-check: no changes
+- Answered 2026-10-14 (blocked question after review round 3: may an unmarked process whose starter exits before the clean-up's check sees it survive?): option (a). The remaining gap is accepted, and criteria 1 and 2 now cover every process that keeps a link to the test, or whose starter is still running when the check runs. No new work: ship it as built.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-The clean-up now ends every process a test file starts, except one rare kind: a process with no link back to the test (a blank environment, working outside the test's folder, nothing in its command naming it) whose starter quits before the clean-up's check, which runs four times a second, has seen it. No test in the suite starts one like that, and ten full runs, five pairs side by side, left nothing behind. Closing that gap completely would mean running each test file inside a group the operating system tracks for us, which only Linux with systemd offers, so it wouldn't hold on macOS and is a bigger change. Is the remaining gap acceptable? Options: (a) accept it, and change criteria 1 and 2 to say "every process that keeps a link to the test, or whose starter is still running when the check runs"; (b) require the full guarantee on Linux only, using systemd's tracking, in a follow-up ticket; (c) require it everywhere, which no approach can do without extra tools. I recommend (a): it fixes the problem the ticket was written for, and the gap needs a test to go out of its way to hide a process.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
