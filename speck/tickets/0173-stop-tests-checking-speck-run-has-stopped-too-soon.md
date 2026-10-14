@@ -43,6 +43,7 @@ Tests that check a stopped process has gone give it a moment to exit, so a busy 
 - `panelRunOff()` in `scripts/panel.mjs` returns 200 once the process has gone or the run lock no longer names it, so the lock can be gone a moment before the process has exited.
 - Also seen on 2026-10-14 in a full run on a quiet machine: "0067 AC5: if speck panel is killed outright, its server stops too" failed once with "Missing expected rejection" (the server still answered), and passed 3 times out of 3 on its own. It's the same kind of check, so AC2 covers it.
 - The waits use a time limit so a process that really doesn't stop still fails the test rather than hanging the suite (see 0159).
+- Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
