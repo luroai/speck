@@ -1,7 +1,7 @@
 ---
 id: "0176"
 title: "Keep the board quick to read however many tickets are built"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-14T21:03:32.266Z"
 
 ---
 # 0176 · Keep the board quick to read however many tickets are built
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Every read of the board (`speck status --json`, `speck run`'s check every 5 seconds, and the panel's `/api/state`) reads and parses every finished build's whole log to find its last 50 lines. With 128 logs (55 MB) on 2026-10-14, one read took about 750 ms of CPU, 63% of it in the logs. It grows with every ticket built, so `speck run` and the panel head towards being busy all the time.
