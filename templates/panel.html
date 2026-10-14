@@ -71,7 +71,6 @@
   .tag.high { color: var(--bad); border-color: var(--bad); }
   .tag.bug { color: var(--bug); border-color: var(--bug); }
   .tag.fix { color: var(--fix); border-color: var(--fix); }
-  #shipped .tag.bug, #shipped .tag.fix { margin-left: 8px; }
   .prio { position: relative; display: inline-block; }
   .tag.pick { cursor: pointer; }
   .tag.pick:hover { color: var(--text); border-color: var(--muted); }
@@ -196,11 +195,29 @@
   .next { color: var(--ok); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
-  .stats { display: flex; border-bottom: .5px solid var(--line-soft); }
-  .stat { padding: 8px 14px; border-right: .5px solid var(--line-soft); }
-  .stat b { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; margin-right: 6px; }
-  .stat span { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+  /* 0157: a green accent, the stats a grid of tiles of equal size, each number over its label and the tickets its
+     median covers, and each shipped ticket a card of its own, laid out as a Plan ticket, with a green left edge */
+  section.shipped { border-top: 2px solid var(--ok); }
+  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line-soft); border-bottom: .5px solid var(--line-soft); }
+  .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 12px; background: var(--panel); }
+  .stat .num { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1.3; }
+  .stat .label { font-size: 11px; line-height: 1.4; color: var(--muted); }
+  .stat .count { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; color: var(--faint); }
   .stats[hidden] { display: none; }
+  section.shipped table { display: block; }
+  #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  #shipped .empty { padding: 0 4px; }
+  #shipped tr { display: block; padding: 10px 14px 10px 12px; border: 1px solid var(--line); border-left: 2px solid var(--ok); }
+  #shipped td { display: block; padding: 0; border: 0; }
+  #shipped .line { display: flex; align-items: baseline; gap: 8px; }
+  #shipped .line .id { flex: none; font-size: 14px; }
+  #shipped .line .title-link { flex: 1 1 auto; min-width: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 17px; overflow-wrap: anywhere; }
+  #shipped .tag-row { margin-top: 4px; }
+  #shipped .when { margin-top: 4px; color: var(--muted); }
+  #shipped .figs { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px 16px; margin-top: 8px; }
+  #shipped .fig .k { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  #shipped .fig .v { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  #shipped .full-cell { margin-top: 8px; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 6px 14px; border-bottom: .5px solid var(--line-soft); font-size: 12px; }
   tr:last-child td { border-bottom: 0; }
@@ -383,14 +400,9 @@
     .resume .cmd { min-width: 0; }
     .resume .copy { min-width: 44px; min-height: 44px; }
 
-    /* Shipped: the stats wrap, and each row's details go on a line of their own under its title */
-    .stats { flex-wrap: wrap; }
-    #shipped tr { display: flex; flex-wrap: wrap; align-items: center; border-bottom: .5px solid var(--line-soft); }
-    #shipped tr:last-child { border-bottom: 0; }
-    #shipped td { border-bottom: 0; }
-    #shipped td:first-child { flex-basis: 100%; }
-    #shipped td.num { text-align: left; white-space: normal; padding-right: 0; }
-    #shipped td.full-cell { width: auto; margin-left: auto; padding-left: 14px; }
+    /* Shipped: the stats two to a row (0157) */
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #shipped { padding: 6px; }
     td .title-link { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
     td .full-open { min-height: 44px; }
 
@@ -438,7 +450,7 @@
     <div class="sh"><h2>Build</h2><span class="n" id="queue-n"></span><span class="hint">builds run in their own worktrees</span></div>
     <div id="queue"></div>
   </section>
-  <section class="full">
+  <section class="full shipped">
     <div class="sh"><h2>Shipped</h2><span class="n" id="shipped-n"></span><span class="hint">latest 5</span></div>
     <div class="stats" id="shipped-stats" hidden></div>
     <table><tbody id="shipped"></tbody></table>
@@ -496,11 +508,11 @@ function median(values) {
 }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-// When a ticket shipped, in the browser's time zone: HH:MM today, otherwise D Mon HH:MM, or a dash with no time.
+// When a ticket shipped, in the browser's time zone: HH:MM today, otherwise D Mon, HH:MM (0157), or a dash with no time.
 function shippedAt(ms, now) {
   if (ms === null) return '–';
   const d = new Date(ms), pad = n => String(n).padStart(2, '0'), hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  return sameDay(d, new Date(now)) ? hm : `${d.getDate()} ${MONTHS[d.getMonth()]} ${hm}`;
+  return sameDay(d, new Date(now)) ? hm : `${d.getDate()} ${MONTHS[d.getMonth()]}, ${hm}`;
 }
 // Links through after: among the tickets that aren't done or cancelled. For each id: the ones that list it in after:
 // (unlocks, in JSON order, each once) and every ticket linked to it in either direction, through others too (linked).
@@ -1056,6 +1068,15 @@ function fullButton(t) {
     openFull(t);
   });
   return b;
+}
+// 0157: a token count from 10,000 up shortened to thousands or millions ("108k", "2.4M"), with the exact number as its
+// tooltip; below that, the exact number.
+function tokenCount(n) {
+  const exact = n.toLocaleString('en-GB'), k = Math.round(n / 1000);
+  if (n < 10000) return el('span', 'v', exact);
+  const v = el('span', 'v', k < 1000 ? `${k}k` : `${(n / 1e6).toFixed(1).replace(/\.0$/, '')}M`);
+  v.title = exact;
+  return v;
 }
 // 0137: a Shipped row's title, which opens the full ticket as Full ticket does.
 // 0141: not a link, so no browser can follow it to another address or reload the page. Tab, Enter and Space work as on a button.
@@ -1804,15 +1825,21 @@ function render() {
   const flying = m.queue.filter(t => t.inFlight).length;
   $('queue-n').textContent = `${flying} in flight · ${m.queue.length - flying} queued`;
 
-  // The shipped time turns from the time alone to date and time after midnight, so it is put right on a kept row.
+  // 0157: each shipped ticket is a card: its id and title (and a bug or fix tag), when it shipped, its figures as label
+  // and value pairs, leaving out any it doesn't have, then Review pack. The shipped time turns from the time alone to
+  // date and time after midnight, so it is put right on a kept card.
   fill('shipped', keptItems('shipped', m.shipped, t => String(t.id), () => null, t => {
-    const bits = [t.minutes !== null ? `${t.minutes} min` : null, plural(t.roundCount, 'round'), `${t.tokens.toLocaleString('en-GB')} reviewer tokens`,
-      t.builderTokens !== null ? `${t.builderTokens.toLocaleString('en-GB')} builder tokens` : null, t.builderCost !== null ? `${dollars(t.builderCost)} builder cost` : null].filter(Boolean);
-    const name = el('td', null, null, el('span', 'id', t.id), typeTag(t), document.createTextNode('\u00a0 '), fullLink(t));
-    return el('tr', null, null, name, el('td', 'num', bits.join(' · ')), el('td', 'num', t.when), el('td', 'full-cell', null, packButton(t)));
-  }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => setText(tr.children[2], t.when) }), 'Nothing shipped yet.');
-  const stat = (value, label, s) => el('div', 'stat', null, el('b', null, value),
-    el('span', null, s ? `${label} · ${plural(s.count, 'ticket')}` : label));
+    const fig = (label, value) => el('div', 'fig', null, el('span', 'k', label), typeof value === 'string' ? el('span', 'v', value) : value);
+    const figs = [t.minutes !== null ? fig('Time', `${t.minutes} min`) : null, t.roundCount > 0 ? fig('Review rounds', String(t.roundCount)) : null,
+      t.tokens > 0 ? fig('Reviewer tokens', tokenCount(t.tokens)) : null, t.builderTokens !== null ? fig('Builder tokens', tokenCount(t.builderTokens)) : null,
+      t.builderCost !== null ? fig('Builder cost', dollars(t.builderCost)) : null].filter(Boolean);
+    const tag = typeTag(t);
+    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), fullLink(t)), tag && el('div', 'row tag-row', null, tag));
+    return el('tr', null, null, name, t.end !== null ? el('td', 'when', `Shipped ${t.when}`) : null, figs.length ? el('td', 'figs', null, ...figs) : null,
+      el('td', 'full-cell', null, packButton(t)));
+  }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => { const w = child(tr, 'when'); if (w) setText(w, `Shipped ${t.when}`); } }), 'Nothing shipped yet.');
+  const stat = (value, label, s) => el('div', 'stat', null, el('b', 'num', value), el('span', 'label', label),
+    s ? el('span', 'count', plural(s.count, 'ticket')) : null);
   const med = (s, fmt = String) => (s.median === null ? '–' : fmt(s.median));
   $('shipped-stats').hidden = m.shippedTotal === 0;
   $('shipped-stats').replaceChildren(...(m.shippedTotal ? [stat(m.stats.today, 'shipped today'),

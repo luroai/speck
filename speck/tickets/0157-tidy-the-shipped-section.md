@@ -42,6 +42,7 @@ Shipped has a green accent, its stats sit in a tidy grid of small labelled tiles
 - The rows are filled by `fill('shipped', …)` and the stats by `$('shipped-stats')` in `templates/panel.html`; the time comes from `shippedAt()`.
 - Reported 2026-10-13 from a phone screenshot in dark mode.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -135,14 +135,14 @@ test('0050 AC4: the in-flight time since started (MM:SS since 0058) and a Shippe
   const keptRow = held(p, 'queue', byClass(p, rowOf(p, '0003'), 'title'));
   const keptShip = held(p, 'shipped', shipOf(p, '0010').children[0]);
   const minutes = () => rowOf(p, '0003').textContent.match(/(\d\d):00/)[1];
-  const when = () => shipOf(p, '0010').children[2].textContent;
+  const when = () => shipOf(p, '0010').children.find(n => n.className === 'when').textContent; // labelled since 0157
   assert.equal(minutes(), '05');
-  assert.equal(when(), '23:48');
+  assert.equal(when(), 'Shipped 23:48');
   now += 3 * 60000; // 00:01 tomorrow
   await refresh(p);
   assert.ok(keptRow() && keptShip(), 'both selections stayed');
   assert.equal(minutes(), '08', 'the minutes moved on');
-  assert.match(when(), /^\d+ \w{3} 23:48$/, 'the time became date and time');
+  assert.match(when(), /^Shipped \d+ \w{3}, 23:48$/, 'the time became date and time');
   now += 60000;
   await refresh(p);
   assert.ok(keptRow() && keptShip());
@@ -165,7 +165,7 @@ test('0050 AC5: when a row\'s own ticket data changes, the new content shows in 
   assert.ok(!rowOf(p, '0002').textContent.includes('Which way'));
   assert.equal(byClass(p, rowOf(p, '0003'), 'exit').textContent, 'A new last message.');
   assert.ok(rowOf(p, '0005').textContent.includes('Renamed ready'));
-  assert.match(shipOf(p, '0011').textContent, /2 rounds · 15 reviewer tokens/);
+  assert.match(shipOf(p, '0011').textContent, /Review rounds2Reviewer tokens15/); // label and value pairs since 0157
   await refresh(p);
   assert.ok(rowOf(p, '0003').textContent.includes('Stopped and blocked.'));
   assert.ok(!byClass(p, rowOf(p, '0003'), 'exit'), 'a blocked ticket shows its question, not the build message');
@@ -271,11 +271,11 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     window.Date = class extends R { constructor(...a) { super(...(a.length ? a : [R.now() + window.shift])); } static now() { return R.now() + window.shift; } }; })()`);
   const select = (sel1, from, sel2, to) => b.js(`(() => { const r = document.createRange(); r.setStart(document.querySelector(${JSON.stringify(sel1)}).firstChild, ${from});
     r.setEnd(document.querySelector(${JSON.stringify(sel2)}).firstChild, ${to}); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
-  const sub = '#queue .q .sub', when = '#shipped tr td:nth-child(3)'; // the time: Full ticket (0063) comes after it
+  const sub = '#queue .q .sub', when = '#shipped tr td.when'; // the labelled time (0157)
   try {
     await b.until(`!!document.querySelector('${sub}')`, 'the page');
     await clock(late);
-    await b.until(`document.querySelector('${sub}') && /^05:3\\d$/.test(document.querySelector('${sub}').textContent) && document.querySelector('${when}').textContent === '23:48'`, 'the page on its moved clock');
+    await b.until(`document.querySelector('${sub}') && /^05:3\\d$/.test(document.querySelector('${sub}').textContent) && document.querySelector('${when}').textContent === 'Shipped 23:48'`, 'the page on its moved clock');
     // Only the minutes (MM:SS since 0058).
     await select(sub, 0, sub, 2);
     assert.equal(await sel(), '05');
@@ -283,13 +283,13 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     await b.until(`document.querySelector('${sub}').textContent.startsWith('06:')`, 'the minutes to move on');
     assert.equal(await sel(), '06', 'the selected number is still selected, and updated');
     // The Shipped time, after midnight.
-    await select(when, 0, when, 5);
+    await select(when, 8, when, 13);
     assert.equal(await sel(), '23:48');
     await clock(late + 2 * 60000);
-    await b.until(`document.querySelector('${when}').textContent !== '23:48'`, 'midnight to pass');
+    await b.until(`document.querySelector('${when}').textContent !== 'Shipped 23:48'`, 'midnight to pass');
     const date = await b.js(`document.querySelector('${when}').textContent`);
-    assert.match(date, /^\d+ \w{3} 23:48$/, 'past midnight it shows date and time');
-    assert.equal(await sel(), date, 'and the selection grows with it');
+    assert.match(date, /^Shipped \d+ \w{3}, 23:48$/, 'past midnight it shows date and time');
+    assert.equal(await sel(), date.slice('Shipped '.length), 'and the selection grows with it');
     // From the title across the minutes.
     await select('#queue .q .title', 2, sub, 5);
     assert.match(await sel(), /^long build\s+S\s+low\s+Writing tests and code\s+Build\s+07:\d\d$/); // what it's doing and its stage come before the timer since 0156

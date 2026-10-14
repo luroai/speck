@@ -134,9 +134,9 @@ test('0137 AC1-AC4: in a real browser, the title link opens the full ticket by m
     await b.send('Accessibility.enable');
     const { nodes } = await b.send('Accessibility.getFullAXTree');
     assert.ok(nodes.some(n => n.role && n.role.value === 'button' && n.name && n.name.value === 'A shipped one'), 'AC2: a button named "A shipped one" (a link until 0141)');
-    // AC4: the row is no taller with its Review pack cell than without it.
-    const [withPack, without] = await b.js(`(() => { const tr = document.querySelector('#shipped tr'), h = tr.getBoundingClientRect().height;
-      const cell = tr.querySelector('td.full-cell'), next = cell.nextSibling; cell.remove(); const h2 = tr.getBoundingClientRect().height; tr.insertBefore(cell, next); return [h, h2]; })()`);
-    assert.ok(withPack <= without, `AC4: ${withPack}px with Review pack, ${without}px without`);
+    // AC4 until 0157, when each shipped ticket became a card: Review pack now sits at the bottom of the card, under the rest.
+    const [packTop, above] = await b.js(`(() => { const tr = document.querySelector('#shipped tr'), cell = tr.querySelector('td.full-cell');
+      return [cell.getBoundingClientRect().top, Math.max(...[...tr.children].filter(n => n !== cell).map(n => n.getBoundingClientRect().bottom))]; })()`);
+    assert.ok(packTop >= above - 0.5, `Review pack at ${packTop}px, the rest of the card down to ${above}px`);
   } finally { await b.close(); await stop(panel); }
 });
