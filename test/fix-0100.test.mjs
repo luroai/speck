@@ -120,15 +120,15 @@ test('0100 AC4: the panel shows a fix tag beside a fix ticket\'s id in Shaping, 
     const parent = p.all(row).find(n => (n.children || []).includes(id));
     return parent.children[parent.children.indexOf(id) + 1];
   };
-  // 0151: in Plan the fix tag comes after the priority, size and risk tags, in the row under the title.
+  // 0151, 0155: in Plan and the queue the fix tag comes after the priority, size and risk tags, in the row under the title.
   const lastTag = row => p.all(row).find(n => /\btag-row\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || '')).at(-1);
   const anyFix = row => p.all(row).some(n => /\bfix\b/.test(n.className || ''));
   for (const [where, rows] of [['Shaping', items(p)], ['queue', queueRows(p)], ['Shipped', shippedRows(p)]]) {
     const fix = rows.find(r => ['0001', '0003', '0005'].includes(idOf(r)));
     const other = rows.find(r => ['0002', '0004', '0006'].includes(idOf(r)));
     assert.ok(fix && other, `${where} lists both`);
-    const tag = where === 'Shaping' ? lastTag(fix) : afterId(fix);
-    assert.match(tag.className || '', /\btag fix\b/, `${where}: a fix tag ${where === 'Shaping' ? 'after the other tags' : 'right after the id'}`);
+    const tag = where === 'Shipped' ? afterId(fix) : lastTag(fix);
+    assert.match(tag.className || '', /\btag fix\b/, `${where}: a fix tag ${where === 'Shipped' ? 'right after the id' : 'after the other tags'}`);
     assert.equal(tag._text, 'fix');
     assert.ok(!anyFix(other), `${where}: no fix tag on another ticket`);
   }

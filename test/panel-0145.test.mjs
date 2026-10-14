@@ -38,7 +38,8 @@ test('0145 AC1: no queue row has a pause or play icon, running, paused or neithe
       const r = rowOf(p, id);
       assert.ok(!p.all(r).some(n => /\btoggle-build\b/.test(n.className || '')), `${id}: no icon`);
       assert.ok(!buttons(p, r).some(b => /pause|play/i.test(`${b.title || ''} ${b.textContent}`)), `${id}: no pause or play button`);
-      assert.equal(topOf(r).children[0].children.length, 0, `${id}: the space on the left of the top row stays empty`);
+      // 0155: the old space on the left of the top row is gone: the row starts with the ticket's id.
+      assert.equal(topOf(r).children[0].children[0].className, 'id', `${id}: the top row starts with the id`);
     }
   }
   assert.doesNotMatch(html(), /toggle-build|toggleIcon|toggleBuild|\/(pause|play)`/, 'the page has no icon or its requests left');

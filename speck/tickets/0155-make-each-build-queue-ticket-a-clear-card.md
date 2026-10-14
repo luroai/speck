@@ -42,6 +42,10 @@ Each ticket in the Build queue is a card laid out like a Plan ticket after 0151,
 - Rows are built by `queueItem()` in `templates/panel.html`. The empty column is `.q .top`'s first grid column (26 px, 34 px under 700 px wide, the old `.rank` space) plus the `margin-left` on the bar and the lines under it.
 - Reported 2026-10-13 from a phone screenshot in dark mode.
 - Failing before this build: none
+- Measured 2026-10-14 in headless Chromium: the timer takes about 43 px of the title's row (12 px of space and the time itself), so a ticket in flight with the longest title (68 characters) takes one line more than in Plan: 3 lines at 375 px rather than 2, and 2 at 1,280 px rather than 1. A ready ticket has no timer, so its title wraps exactly as a Plan ticket's does. The tests check both: Plan's limits for a ready ticket, one line more for a ticket in flight.
+- The chain or padlock icon ends the row of tags, as in Plan (0151), and the bug or fix tag sits in that row after the risk tag rather than beside the id. 0049's and 0100's checks of a queue type tag right after the id are changed to match, as is 0145's check that the old left-hand space stays empty.
+- A ready ticket's card has the class `queued`, not `ready`, since `.ready` is Plan's Set ready section, which has its own phone styles.
+- Self-check: the chain or padlock icon a kept row puts right is now added at the end of the row of tags, not before the title.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

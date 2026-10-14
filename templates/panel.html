@@ -117,14 +117,22 @@
   .item.ticket .prio { display: inline-flex; }
 
   /* Queue */
-  .q { padding: 10px 14px; border-bottom: .5px solid var(--line-soft); }
-  .q:last-child { border-bottom: 0; }
-  .q .top { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: baseline; cursor: pointer; }
-  .q .log { margin: 6px 0 4px 34px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border-left: 2px solid var(--line-soft);
+  /* 0155: each ticket is a card of its own, laid out as a Plan ticket, with its left edge in the colour of its state:
+     blue at work, purple waiting to ship, red blocked or stopped, the accent ready */
+  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  #queue .empty { padding: 0 4px; }
+  .q { padding: 10px 14px 10px 12px; border: 1px solid var(--line); border-left: 2px solid var(--run); }
+  .q.queued { border-left: 2px solid var(--accent); }
+  .q .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 0; align-items: baseline; cursor: pointer; }
+  .q .top .line { grid-area: 1 / 1; display: flex; align-items: baseline; gap: 8px; }
+  .q .top .line .id { flex: none; font-size: 14px; }
+  .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
+  .q .top .sub { grid-area: 1 / 2; }
+  .q .top .sub:not(:empty) { margin-left: 12px; }
+  .q .top .tag-row { grid-area: 2 / 1 / 3 / 3; }
+  .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border-left: 2px solid var(--line-soft);
     font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
-  .q .rank { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--accent); font-size: 12px; }
   .q.wait { opacity: .5; }
-  .q.wait .rank { color: var(--muted); }
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
@@ -133,19 +141,18 @@
   .q .back-to-plan { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .q .back-to-plan:hover { color: var(--text); border-color: var(--text); }
   .q .back-to-plan:disabled { cursor: default; opacity: .6; }
-  .q .stop-refused, .q .plan-refused { margin: 4px 0 0 34px; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
-  .q .indent { margin-left: 34px; }
-  .question { margin: 6px 0 4px 34px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
-  .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 8px 0 4px 34px; }
+  .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
+  .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
+  .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 8px 0 4px; }
   .stages div { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .12em; padding-top: 5px; border-top: 3px solid var(--line-soft); }
   .stages .d { border-top-color: var(--ok); color: var(--muted); }
   .stages .now { border-top-color: var(--run); color: var(--run); }
-  .act { margin-left: 34px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+  .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
-  .q.blocked { border-left: 2px solid var(--bad); padding-left: 12px; }
+  .q.blocked { border-left: 2px solid var(--bad); }
   .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
   /* An approved ticket whose build has exited is waiting for you to ship it: purple, as nothing is wrong (0138) */
-  .q.to-ship { border-left: 2px solid var(--idea); padding-left: 12px; }
+  .q.to-ship { border-left: 2px solid var(--idea); }
   .stages .now.to-ship { border-top-color: var(--idea); color: var(--idea); }
   .act.to-ship { color: var(--idea); }
   /* A step a build is working on now: a dot of light moves side to side along its line, unless the browser asks for reduced motion */
@@ -160,7 +167,7 @@
   }
   .question.exit.to-ship { border-left-color: var(--idea); }
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
-  .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px 34px; }
+  .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
   .resume .cmd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
   .resume .copy { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
   .resume .copy:hover { color: var(--text); }
@@ -215,7 +222,7 @@
   .item.ticket.open, .item.ticket.open:hover { background: var(--accent-bg); }
   .item.idea.open, .item.idea.open:hover { background: var(--idea-bg); }
   .item.inbox.open, .item.inbox.open:hover { background: var(--inbox-bg); }
-  .q.open { background: var(--accent-bg); border-left: 2px solid var(--accent); padding-left: 12px; }
+  .q.open { background: var(--accent-bg); } /* its left edge keeps the colour of its state (0155) */
   .q.blocked.open { background: var(--bad-bg); border-left-color: var(--bad); }
   .q.to-ship.open { background: var(--idea-bg); border-left-color: var(--idea); }
   .note { margin: 0; color: var(--text); }
@@ -245,7 +252,7 @@
   #full-backdrop[hidden] { display: none; }
   .full-open { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
-  .q .full-open { margin: 6px 0 2px 34px; padding: 1px 10px; font-size: 10px; }
+  .q .full-open { margin: 6px 0 2px; padding: 1px 10px; font-size: 10px; }
   td.full-cell { width: 1%; padding-left: 0; }
   td .title-link { color: var(--accent); text-decoration: none; cursor: pointer; }
   td .title-link:hover { text-decoration: underline; }
@@ -346,10 +353,10 @@
     .set-ready, .full-open { min-width: 44px; min-height: 44px; }
     .goto { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; vertical-align: middle; }
 
-    /* Queue: the top row is 44 px high, with a 34 px space on its left, and the rows below it move over to match */
-    .q .top { grid-template-columns: 34px minmax(0, 1fr) auto; min-height: 44px; align-items: center; }
-    .q .log, .q .stop-refused, .q .indent, .question, .stages, .act, .resume { margin-left: 42px; }
-    .q .full-open { margin-left: 42px; min-height: 44px; }
+    /* Queue: the top row is at least 44 px high */
+    #queue { padding: 6px; }
+    .q .top { min-height: 44px; }
+    .q .full-open { min-height: 44px; }
     .q .stop-build, .q .back-to-plan { min-width: 44px; min-height: 44px; }
     .stages { grid-template-columns: repeat(5, minmax(min-content, 1fr)); }
     .stages div { text-transform: none; letter-spacing: 0; white-space: nowrap; }
@@ -845,10 +852,6 @@ function chainIcon(t) {
 }
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
 const typeTag = t => (t.type === 'bug' || t.type === 'fix' ? el('span', `tag ${t.type}`, t.type) : null);
-// A Build queue row's id, type tag, chain icon, title and tags, all on one line.
-function tags(t, icon) {
-  return el('div', 'row', null, el('span', 'id', t.id), typeTag(t), icon, el('span', 'title', t.title), ...fieldTags(t, false));
-}
 // A ticket's priority, size and risk tags, each only when it has that field. `pick`: the priority tag opens the menu
 // that sets it (a draft in the Tickets list).
 function fieldTags(t, pick) {
@@ -1349,9 +1352,11 @@ function shapingToggle(m) {
 // unless it's approved: then it's waiting for you to ship it, and purple.
 // A building or reviewing ticket that isn't red has a dot moving on its current step, unless its build is paused.
 function queueItem(t) {
-  const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
+  const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const id = String(t.id), isOpen = openQueue.has(id);
-  const top = el('div', 'top', null, el('span', 'rank'), tags(t, t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
+  // 0155: the id and title, the timer at the right of their row, then the tags on a row of their own, as in Plan.
+  const top = el('div', 'top', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)),
+    el('div', 'row tag-row', null, ...fieldTags(t, false), typeTag(t), t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
@@ -1572,9 +1577,9 @@ function queueUpdate(q, t) {
   setText(sub, queueCounter(t));
   if (t.ship_counter !== null) setText(shipTime(q), t.ship_counter);
   if (t.inFlight) return;
-  const row = child(child(q, 'top'), 'row'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
+  const row = child(child(q, 'top'), 'row tag-row'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
-    if (icon) row.insertBefore(icon, child(row, 'title'));
+    if (icon) row.appendChild(icon); // the icon ends the row of tags
     if (old) row.removeChild(old);
   }
   const act = child(q, 'act'), line = queuedLine(t);
