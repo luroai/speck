@@ -1,7 +1,7 @@
 ---
 id: "0170"
 title: "Use speck's eared logo across the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T15:38:58.848Z"
+approved: "2026-10-14T15:52:44.931Z"
 
 ---
 # 0170 · Use speck's eared logo across the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's home-screen app icon and tab icon (0149) are a plain ensō with a red dot, but speck's logo on the landing page is the ensō with two small ears. The panel's header shows only the word "speck", with no logo at all.
@@ -61,9 +62,14 @@ Worth a look: on a phone the top row is a little tighter than before so the proj
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 110,744
+- Elapsed since build started: 14 min
+- Changed lines: 18 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - The "no model name is hard-coded" test reads the PNG icons as text and can flag random compressed bytes such as "o6": saved to the inbox as speck/ideas/2026-10-14-skip-images-in-the-model-name-check.md.
