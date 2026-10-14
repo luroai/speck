@@ -1,7 +1,7 @@
 ---
 id: "0156"
 title: "Show a running build's progress with the speck"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0155"]                # ticket ids that must be done first
 created: 2026-10-13
+started: "2026-10-14T06:28:34.965Z"
 
 ---
 # 0156 · Show a running build's progress with the speck
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A running build's progress is a thin five-part bar with small uppercase stage labels ("SELF-CHECK", "REVIEW 1") squeezed under it. On a phone the moving part is too small to notice, and the labels make the bar look cramped. The bar was designed for several builds running side by side; speck now builds one ticket at a time, so the running build can have more room.
