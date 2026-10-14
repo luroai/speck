@@ -1,7 +1,7 @@
 ---
 id: "0168"
 title: "Show the builder badge on running tickets"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T14:51:40.867Z"
 ---
 # 0168 · Show the builder badge on running tickets
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A running build's progress is shown by 0156's ensō, a red speck circling it and a row of stage dots. It doesn't feel like an agent is doing something, it takes a full block of each card, and on a phone it's hard to read at a glance.
@@ -49,7 +49,11 @@ Each in-flight ticket's Build card shows a small builder badge, speck's characte
 - Self-check: a canvas the browser won't draw on is left blank instead of stopping every badge's loop; a badge that holds still is drawn again when the screen's pixels per CSS pixel change (a zoom), so it stays sharp (new test); a stale comment about the speck updated.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each ticket that's being built, reviewed, shipped, blocked or waiting for you now has a small drawing of speck's builder on its Build card, in place of the circle with the moving red dot and the row of stage dots. While an agent is working, the builder sits behind a laptop typing, with bits of code flying off, and every few seconds slams a key and a finished block pops out. When a ticket waits for you to ship it, the builder waves a purple flag and the tile has a purple edge. When it's blocked or its build has stopped, the builder has a red question mark over its head and the tile has a red edge. A paused build shows the builder standing still. The ticket's title now uses the card's full width, with the badge, a sentence saying what's happening and the timer on the row below.
+
+To see it, open the panel while a build runs, and try it in light and dark mode and on a phone. If your device is set to reduce motion, each badge holds a still pose instead.
+
+Worth keeping an eye on: an approved ticket that auto-ship is about to ship shows a still builder but still says "waiting for you to ship it" in purple for a moment (saved to the inbox as a follow-up).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +63,69 @@ Each in-flight ticket's Build card shows a small builder badge, speck's characte
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- An approved ticket that auto-ship is about to ship keeps 0156's purple "waiting for you" sentence while its card and badge aren't purple: speck/ideas/2026-10-14-keep-an-auto-shipping-ticket-s-sentence-out-of-purple.md
+- The badge's zoom redraw is checked by changing the page's width and pixel density together, as a browser zoom does: headless Chromium doesn't report a change of pixel density alone, so moving the window to another screen is checked only by reading the code.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "08cfc2346dfd74242799bf9be09f21a6f97a58dc",
+    "thread_id": "01a13afb-0d21-7b20-bb8e-2c605d3dd1c5",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 234451,
+      "cached_input_tokens": 169088,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 788,
+      "reasoning_output_tokens": 33
+    },
+    "saved_at": "2026-10-14T15:15:31.477Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html progressOf and BADGE.builder implement the badge and replace the ensō and dots. Passing 0168 AC1 browser tests verify 56 × 56 px sizing, placement and full-width titles at phone and desktop widths."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "BADGE.POSES.type matches the main checkout's mockup laptop drawing and 2800 ms timing, including alternating paws, code, pause, slam and finished block. Passing 0168 AC2 and browser motion tests exercise working-state selection and actual canvas movement."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "badgeOf selects laptop, flag, question mark or still poses from the card state. Passing 0168 AC3 tests cover waiting, blocked, stopped, paused, pending auto-ship and failed auto-ship; browser tests verify motion and state-coloured edges."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "progressOf supplies role=img and descriptive aria-labels; ready cards omit progressOf. paintBadge uses fixed poses with reduced motion. Passing 0168 AC4 and browser tests verify names, absence on ready tickets and unchanged frames under reduced motion."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "badgeColours reads panel tokens. Passing browser tests cover both themes, unclipped drawings throughout each loop, theme changes and zoom. Verified full test log: 1546 passed, zero failed, three skipped. Existing test changes replace removed progress visuals without unrelated fixes."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Running tickets now show the builder character beside their progress text, with distinct working, waiting, blocked and paused poses. The implementation follows the design reference, supports reduced motion and both colour themes, and preserves the title’s full width. All acceptance criteria pass; no blocking concerns found."
+  }
+}
+```
+
+</details>
