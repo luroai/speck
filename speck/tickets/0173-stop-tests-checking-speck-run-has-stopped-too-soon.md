@@ -49,7 +49,7 @@ Tests that check a stopped process has gone give it a moment to exit, so a busy 
 - Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes in speck itself: this only makes speck's own tests steadier. Some tests switch speck run, the panel or a build off and then check it has gone. They used to look once, straight away, so on a busy machine they could fail even though nothing was wrong, and that could stop a ticket shipping automatically. Now they give the process up to 10 seconds to go, and still fail if it hasn't gone by then. To see it, run the test suite while the machine is busy: the speck run on-and-off tests should pass every time. Worth watching: the phone tag-size test still fails on its own, and fix ticket 0190 covers that.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,9 @@ Tests that check a stopped process has gone give it a moment to exit, so a busy 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (Delivery log only, no inbox note):
+  - Pre-existing failure "0165 AC1: at 375 px, every tag … 44 by 44 px tap area each" is left as it was; it duplicates fix ticket 0190.
+  - A few tests still wait less than 10 seconds for something to go away, but assert nothing on the result or aren't checking a stopped process (`run.test.mjs` 0043 AC1 waits 5 s without asserting; `pause-0070.test.mjs` waits 5 s for `speck pause` to finish). Tidy-up only, if they ever flake.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -126,6 +129,75 @@ Tests that check a stopped process has gone give it a moment to exit, so a busy 
     ],
     "escalation_question": "",
     "summary": "The process checks now allow time for shutdown, and all 20 stress runs passed. One shutdown check can still mistake an unresponsive server for a stopped server and exceed the promised timeout. Fix that before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "129f21096c93804658ecc63e47fb7dac46912b16",
+    "thread_id": "01a13c32-fa7b-7042-bf8c-d0360492796f",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 307005,
+      "cached_input_tokens": 251648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1722,
+      "reasoning_output_tokens": 62
+    },
+    "saved_at": "2026-10-14T20:59:04.985Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both named tests use hasStopped(() => !alive(pid)), with STOP_MS set to 10000. Passing 0173 tests cover delayed process exit and both call sites."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The shutdown checks in 0067, 0073, 0072, 0148 and 0152 poll for up to ten seconds. The Notes list the changed tests, and the AC2 scan passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "hasStopped now bounds asynchronous checks by the remaining deadline. portClosed accepts only ECONNREFUSED. Passing regression tests cover late results, an unresponsive listening server and a closed port; assertions retain descriptive failure messages."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Previously inspected stress-run script and logs record 20 consecutive runs of both panel files alongside the full suite: all 20 passed, with 26 tests passing per run."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Fresh full-suite output records 1649 passes, three skips and only the documented pre-existing 0165 failure. All 11 tests named with 0173 passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/stopped.mjs",
+        "issue": "The asynchronous deadline and false-positive port-closure problems are fixed, with regression coverage.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The tests now give stopped processes time to exit while still failing when shutdown does not complete. The timeout flaw is fixed and covered by regression tests. Stress runs passed; the full suite has only the documented pre-existing failure."
   }
 }
 ```
