@@ -442,9 +442,11 @@ export function runsOf(repo) {
 // The field names are a contract (0030); don't rename them.
 // Whether a pid leads its own process group, as a build speck run launched does. ps runs once, and only if needed.
 const groupLeader = (rows = null) => pid => { try { rows ??= processRows(); } catch { rows = []; } return rows.some(([p, , g]) => p === pid && g === pid); };
-// 0177: one ticket's status, worktree and build_running as statusData gives them, without reading the whole board.
+// 0177: one ticket's status, worktree and build_running as statusData gives them, reading only that ticket: from the
+// worktree its branch is checked out in, as statusTickets does, or else from here.
 export function ticketShown(repo, id) {
-  const t = statusTickets(repo, loadConfig(repo)).find(x => padId(x.fm.id) === padId(id));
+  let t = ticketsElsewhere(repo, loadConfig(repo), id).at(-1);
+  if (!t) try { t = findTicket(repo, id); } catch { return null; }
   return t ? { status: t.fm.status, worktree: t.at || null, build_running: buildRunning(runsOf(repo), t.fm.id, groupLeader()) } : null;
 }
 

@@ -141,3 +141,88 @@ The panel keeps answering promptly, however many tabs are open and however slow 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "752c6c29432a14e97f09e722b641a269bce9f86a",
+    "thread_id": "01a13c4e-c0ba-7d71-9189-b4afeb5836d9",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 571573,
+      "cached_input_tokens": 462976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2759,
+      "reasoning_output_tokens": 471
+    },
+    "saved_at": "2026-10-14T21:36:34.685Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "askState shares the active reading; the passing AC1 test verifies ten concurrent requests cause one reading."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "nextReading filters closed connections, including requeued recipients. The expanded AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Back to Plan calls ticketShown synchronously. ticketShown calls statusTickets, which reads and parses every ticket through core.mjs listTickets. Slow ticket-file reading can therefore still block the server. The passing AC3 tests inject delay only at statusData's entry, bypassing this shared underlying work."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "nextReading now compares done.at with writes and requeues recipients of invalidated readings. The passing AC4 test checks both the outstanding request and the request sent after the write, and verifies a second reading occurs."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0177-tests.txt: 1652 tests, 1649 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel.mjs",
+        "issue": "Completed readings are now checked against the write generation before delivery; invalidated recipients wait for a fresh reading.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs:447",
+        "issue": "The blocking board scan remains in Back to Plan under a different function. ticketShown calls statusTickets before selecting one ticket; statusTickets calls listTickets, which synchronously reads and parses every live and completed ticket, and scans worktrees. If this shared board-reading work takes five seconds, Back to Plan still blocks the HTTP server for that time. Removing linting and other enrichment reduces work but does not isolate slow board reads.",
+        "suggested_fix": "Remove the full synchronous ticket scan from this request path, preserving the checks for worktree status and a running build. Move the required scan off the server thread or perform a genuinely targeted lookup. Add a timing test that slows the underlying ticket scan used by both statusData and ticketShown, rather than only statusData's entry.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/panel-0177.test.mjs",
+        "issue": "The expanded tests now exercise successful Stop build, real run on/off operations, and successful shipping, checking outcomes and response times.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Sharing, cancellation and fresh answers after writes now work, and the expanded tests exercise successful writes. One blocking issue remains: Back to Plan still scans every ticket on the server thread, so slow board-file reading can freeze the panel. The full suite passes, but its injected delay misses this remaining path."
+  }
+}
+```
+
+</details>

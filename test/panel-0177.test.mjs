@@ -12,17 +12,21 @@ import { runRepo, alive, killAll } from './support/run.mjs';
 
 // ---------- 0177: the panel keeps answering while it reads the board ----------
 
-// A copy of the CLI whose statusData, the board reading, adds a line to a file and then waits SPECK_TEST_READ_MS
-// whenever the panel's server process calls it, on any thread, so a test can count the readings and make each one
-// slow. `extra` is more code to run there. Other commands (speck ship, speck run) read at their usual speed.
+// A copy of the CLI in which, whenever the panel's server process does them, on any thread: each board reading
+// (statusData) adds a line to a file, so a test can count them, and each scan of every ticket file (listTickets, which
+// a board reading does once) waits SPECK_TEST_READ_MS first, so it's slow. `extra` is more code to run in each
+// reading. Other commands (speck ship, speck run) run at their usual speed.
 function slowCli(extra = '') {
   const { cli } = cliCopy();
-  const src = fs.readFileSync(cli, 'utf8');
-  const at = 'export function statusData(repo) {\n';
-  assert.ok(src.includes(at), 'speck.mjs has statusData');
-  const hook = "  if (process.execArgv.includes('--input-type=module') && process.env.SPECK_TEST_READS) { fs.appendFileSync(process.env.SPECK_TEST_READS, 'read\\n'); "
-    + `Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(process.env.SPECK_TEST_READ_MS)); ${extra}}\n`;
-  fs.writeFileSync(cli, src.replace(at, at + hook));
+  const panelOnly = "process.execArgv.includes('--input-type=module') && process.env.SPECK_TEST_READS";
+  const patch = (file, at, code) => {
+    const src = fs.readFileSync(file, 'utf8');
+    assert.ok(src.includes(at), `${path.basename(file)} has ${at.trim()}`);
+    fs.writeFileSync(file, src.replace(at, `${at}  if (${panelOnly}) { ${code} }\n`));
+  };
+  patch(cli, 'export function statusData(repo) {\n', `fs.appendFileSync(process.env.SPECK_TEST_READS, 'read\\n'); ${extra}`);
+  patch(path.join(path.dirname(cli), 'core.mjs'), 'export function listTickets(repo) {\n',
+    'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(process.env.SPECK_TEST_READ_MS));');
   return cli;
 }
 
@@ -95,7 +99,7 @@ test('0177 AC2: a request whose connection closed before its reading started cau
 test('0177 AC3: while one reading takes 5 seconds, the page, its icons, a build log, Set ready, Back to Plan and priority answer within 1 second', async () => {
   const s = await slowPanel(5000);
   try {
-    const slow = state(s.port);
+    const slow = timed(() => state(s.port));
     await wait(300);
     const asks = [
       ['the page', () => request(s.port), 200],
@@ -111,7 +115,9 @@ test('0177 AC3: while one reading takes 5 seconds, the page, its icons, a build 
       assert.ok(ms < 1000, `${name} answered in ${ms} ms`);
     }
     assert.match(fs.readFileSync(path.join(s.r.dir, 'speck', 'tickets', '0002-two.md'), 'utf8'), /^status: draft$/m, 'set ready, then back to Plan');
-    assert.equal((await slow).status, 200);
+    const read = await slow;
+    assert.equal(read.out.status, 200);
+    assert.ok(read.ms >= 4500, `the reading took ${read.ms} ms`);
   } finally { await stop(s.p); }
 });
 
