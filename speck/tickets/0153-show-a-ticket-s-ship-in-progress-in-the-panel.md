@@ -1,7 +1,7 @@
 ---
 id: "0153"
 title: "Show a ticket's ship in progress in the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ approved: "2026-10-14T00:02:21.102Z"
 ---
 # 0153 · Show a ticket's ship in progress in the panel
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build's own ship (`speck ship <id> --auto`) is running, or has stopped without shipping, the panel shows the ticket as plainly approved, the same as a ticket waiting for the user. On 2026-10-13, 0149's auto-ship hung for nine minutes and the user only found out by clicking Ship.
@@ -69,6 +69,7 @@ Round 2 (codex): approve.
   - Tidy-up: the panel server's own one-ship-at-a-time guard (`shipping` in `scripts/panel.mjs`) now overlaps with speck ship's record; it could go.
   - `speck status` (text) doesn't show a ship in progress; only `--json` and the panel do.
   - The idea `speck/ideas/2026-10-12-show-a-panel-ship-in-progress-after-a-reload.md` is covered by this ticket.
+- The first auto-ship stopped in its own test run: a 0153 test killed a ship mid `git checkout`, leaving git's lock file. The tests now wait until the ship is in its tests before killing it; round 3 re-checked that.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -205,6 +206,75 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Shipping progress now remains visible through the final push and survives reloads. Duplicate ships are refused, and unsuccessful auto-ships show their message and next steps. The earlier gap is fixed, all tests pass, and the change is ready for owner review."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "137ad32dfb27f37be3035b61ddb4ddff056e78b1",
+    "thread_id": "01a137b3-1c08-7601-8dab-4b2d49e69556",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 609114,
+      "cached_input_tokens": 530432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2534,
+      "reasoning_output_tokens": 226
+    },
+    "saved_at": "2026-10-14T00:06:36.091Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Unchanged shipState/statusData and panelModel retain shipping progress through the push. Passing AC1 tests cover elapsed time, reload, all launch paths and a real gated push after the ticket becomes done."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Unchanged takeShip refuses duplicate ships and shipPart disables the button. Passing AC2 tests verify unchanged state on refusal and recovery after a killed ship. The revised test still kills a real ship and verifies the next ship succeeds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Unchanged endShip/shipState retain failed auto-ship messages and recognise killed processes. Passing AC3 tests cover failures, refusals, killed ships and panel instructions. Waiting for the test-command marker preserves the killed-process assertions."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Unchanged autoShipBlocker prevents records for excluded tickets. Passing AC4 tests cover excluded risks/configuration and user-started ships, including a real killed process."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0153-tests.txt: 1382 tests, 1379 passed, zero failures, three skipped. The timing changes retain all assertions and avoid interrupting unrelated git operations."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Shipping visibility previously disappeared when the ticket became done before the push finished.",
+        "suggested_fix": "Keep tickets with running ship records in the Build queue through the push, with reload and disabled-button coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The test timing fix still checks real killed ships without interrupting git mid-operation. The shipping implementation and the earlier fix remain intact. All tests pass, and the change remains approved for owner review."
   }
 }
 ```
