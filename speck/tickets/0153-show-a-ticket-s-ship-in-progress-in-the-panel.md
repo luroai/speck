@@ -47,7 +47,7 @@ The panel shows when a ticket is being shipped, by anyone, for how long, and say
 - Self-check: a record whose pid now belongs to another program (or another ticket's ship) no longer holds the ticket; a record folder that can't be written gives a plain error instead of a stack trace.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+While a ticket is being shipped, its row in the panel's Build list now says "Shipping…" with a timer, whether the ship was started by a build, by the Ship button or by /speck-ship, and it still says so after you reload the page. While that runs, the Ship button is greyed out, and a second ship of the same ticket is turned away without changing anything. If a build's automatic ship stops without shipping, the row turns red and says "Auto-ship didn't finish", with the reason and how to ship it yourself. To see it, click Ship on an approved ticket and reload the page while it runs. Worth watching: if a ship is killed, a ticket you shipped yourself simply goes back to waiting, with no message.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,11 @@ The panel shows when a ticket is being shipped, by anyone, for how long, and say
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Show when a ship merged but couldn't push: the ticket is done before the push, so a failed push shows as shipped. Saved to the inbox as `speck/ideas/2026-10-14-show-when-a-ship-merged-but-couldn-t-push.md`.
+  - Tidy-up: the panel server's own one-ship-at-a-time guard (`shipping` in `scripts/panel.mjs`) now overlaps with speck ship's record; it could go.
+  - `speck status` (text) doesn't show a ship in progress; only `--json` and the panel do.
+  - The idea `speck/ideas/2026-10-12-show-a-panel-ship-in-progress-after-a-reload.md` is covered by this ticket.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -124,6 +129,75 @@ The panel shows when a ticket is being shipped, by anyone, for how long, and say
     ],
     "escalation_question": "",
     "summary": "Shipping progress and auto-ship failure messages work while a ticket remains approved, and the existing suite passes. However, progress disappears while the final push is still running, making a stalled ship look completed. Fix that gap before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1d0d353ca134d836a1d10ada82a10501f6494857",
+    "thread_id": "01a137b3-1c08-7601-8dab-4b2d49e69556",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 457120,
+      "cached_input_tokens": 384512,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1978,
+      "reasoning_output_tokens": 226
+    },
+    "saved_at": "2026-10-14T00:02:02.879Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "shipState and statusData expose the shared ship record. panelModel now keeps done tickets with running ships in the Build queue. Passing AC1 tests cover elapsed time, reload, all entry points and a real push held by a pre-receive hook. Independently verified the model keeps shipping visible until the record clears."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "takeShip refuses another running ship; shipPart disables the Ship button. Passing AC2 tests verify refusal without changes and disabled buttons for both approved tickets and done tickets still pushing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "endShip retains auto-ship failure messages; shipState recognises killed ships. Passing AC3 tests exercise failures, refusals, killed processes, message ordering, recovery instructions and suppression of failures preceding the latest approval."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdShip checks autoShipBlocker before taking a record. Passing AC4 tests verify excluded configuration/risk produces no shipping messages and waiting tickets retain their purple presentation."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified full output at /tmp/speck-0153-tests.txt: 1382 tests, 1379 passed, zero failures and three skipped. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Shipping visibility previously disappeared when the ticket became done before the push finished.",
+        "suggested_fix": "Keep tickets with running ship records in the Build queue through the push, with reload and disabled-button coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Shipping progress now remains visible through the final push and survives reloads. Duplicate ships are refused, and unsuccessful auto-ships show their message and next steps. The earlier gap is fixed, all tests pass, and the change is ready for owner review."
   }
 }
 ```
