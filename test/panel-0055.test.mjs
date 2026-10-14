@@ -15,8 +15,8 @@ const clone = s => JSON.parse(JSON.stringify(s));
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const idOf = row => (function find(n) { if (n.className === 'id') return n._text; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 const rowOf = (p, id) => queueRows(p).find(r => idOf(r) === id);
-// A row's badge, when it's at work: at most one.
-const movingSteps = row => [badgeOf(row)].filter(b => b && b.className === 'badge type');
+// A row's badge, when it's at work: at most one. At the laptop, or since 0169 checking its own work or with the reviewer.
+const movingSteps = row => [badgeOf(row)].filter(b => b && /^badge (type|check|review)$/.test(b.className));
 
 const board = () => ({
   tickets: [

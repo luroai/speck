@@ -51,7 +51,7 @@ test('0071 AC4: played again, the badge moves (its dot until 0168) and "Paused" 
   p.timers.shift()();
   await p.settle();
   const row = rowOf(p, '0002');
-  assert.equal(badgeOf(row).className, 'badge type');
+  assert.equal(badgeOf(row).className, 'badge review', 'at work with the reviewer (0169)');
   assert.match(topOf(row).children.find(n => n.className === 'sub').textContent, /^01:0\d$/);
 });
 
