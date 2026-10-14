@@ -1,7 +1,7 @@
 ---
 id: "0165"
 title: "Explain each tag when it's tapped"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T18:10:45.412Z"
 ---
 # 0165 · Explain each tag when it's tapped
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 On a draft ticket the priority tag opens the priority menu, so on a phone it needs a 44 px tap area, which makes it look bigger and spaced differently from the size, risk and type tags beside it. The other tags can't be tapped at all, and their short codes (P3, M, low, fix) don't explain themselves to someone new to speck.
@@ -58,3 +58,75 @@ Every tag looks the same size and can be tapped: the priority tag on a draft sti
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "320bbcc238b2e2f17072c3961a76d4795d10e911",
+    "thread_id": "01a13bbe-a5cf-7802-948b-998c8df08c60",
+    "seconds": 53,
+    "usage": {
+      "input_tokens": 559167,
+      "cached_input_tokens": 503936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1905,
+      "reasoning_output_tokens": 168
+    },
+    "saved_at": "2026-10-14T18:49:25.431Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Mobile CSS gives tags invisible tap areas and equal gaps. Both 0165 AC1 browser tests passed, including hit testing at 375 px."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "explained(), priorityMeaning() and riskMeaning() implement the required interactions and wording; AC2 tests passed. However, renderFull() retains stale risk wording after auto_ship changes because tagData() omits auto_ship. Independently reproduced with fakePage: Plan updates to 'waits for you to ship it', while the open pane still says 'ships by itself once approved'."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The shared tooltip, document click/Escape/scroll handlers and showTip() positioning cover dismissal and containment. Both 0165 AC3 browser tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "fieldTags() preserves priorityPicker() for Plan drafts and uses explained() elsewhere. AC4 browser and fake-page tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Tags receive meaningful aria-labels, button roles and keyboard access; both AC5 tests passed. Verified /tmp/speck-0165-tests.txt reports 1625 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:1433",
+        "issue": "The open full ticket pane does not refresh its risk explanation or accessible label when a configuration change changes the ticket's auto_ship value. tagData() tracks risk but omits auto_ship, leaving users with incorrect shipping guidance until they reopen the pane.",
+        "suggested_fix": "Include auto_ship in tagData() and add a refresh regression test that changes only auto_ship while the pane remains open, checking both tooltip wording and aria-label.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The tags have consistent styling, larger phone tap areas and explanations accessible by touch, mouse and keyboard. The recorded suite passes, but an open ticket can show outdated shipping guidance after auto-ship settings change. Fix that refresh bug before merge."
+  }
+}
+```
+
+</details>

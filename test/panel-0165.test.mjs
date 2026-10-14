@@ -347,3 +347,19 @@ test('0165 AC4: the Plan priority tag keeps its pointer, and the tags that show 
     assert.equal(await b.js(`getComputedStyle(document.querySelectorAll('#queue .q .tag')[0]).cursor`), 'help');
   });
 });
+
+test('0165 AC2: an open full ticket pane updates its risk tip and label when only the ticket\'s auto_ship changes', async () => {
+  const board = autoShip => STATE({ tickets: [full('0203', { risk: 'low', auto_ship: autoShip })] });
+  const p = fakePage([board(true), board(false)]);
+  await p.settle();
+  p.press(top(items(p)[0]));
+  p.press(p.all(items(p)[0]).find(n => n.className === 'full-open'));
+  assert.equal(p.calls.length, 1, 'opening it asked for nothing more');
+  const risk = () => p.all(p.byId('full-ticket')).find(n => isTag(n) && n._text === 'low');
+  assert.equal(risk().attrs['aria-label'], MEANING.low);
+  p.timers.shift()(); // the next refresh
+  await p.settle();
+  assert.equal(risk().attrs['aria-label'], 'Low risk: waits for you to ship it');
+  p.press(risk());
+  assert.equal(p.byId('tag-tip').textContent, 'Low risk: waits for you to ship it');
+});

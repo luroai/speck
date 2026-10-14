@@ -1430,7 +1430,7 @@ const paneReadiness = t => readiness(t, list(t.acceptance_criteria), false);
 // and what the tags show.
 const fullText = t => [t.id, t.title, t.problem, t.outcome, t.acceptance_criteria, t.out_of_scope, t.notes];
 const readyData = t => [ownData(t), settingReady.has(t.id), refused.get(t.id) ?? null];
-const tagData = t => [t.type, t.priority, t.size, t.risk];
+const tagData = t => [t.type, t.priority, t.size, t.risk, t.auto_ship === true]; // 0165: auto_ship changes the risk tag's tip
 // Shows the ticket whose id is in fullId wherever it shows: in the Tickets list, the queue or the Shipped list, the
 // first one in that order when ids repeat. It closes the pane when the ticket shows in none of them. The pane keeps
 // its nodes while what they show is unchanged, so text selected in it survives the refresh. When only a draft's
