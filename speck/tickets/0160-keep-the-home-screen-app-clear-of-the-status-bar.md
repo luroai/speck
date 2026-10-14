@@ -43,12 +43,13 @@ The header stays at the top of the screen as the page scrolls, with the panel's 
 - Reported 2026-10-14 from phone screenshots of the home-screen app.
 - Failing before this build: none
 - Self-check: the header now measures its slim height with a margin already in place and the browser's scroll anchoring off, as the in-between layout pulled the page up (and back from the very bottom); the header itself is left out of scroll anchoring.
+- Answer 2026-10-14 (blocked question, round 2): ship it and defer the iPhone check. The user will check the status bar in the home-screen app, in both looks, once it is live.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-Everything else is done and approved by the reviewer, but no automated test can show how an iPhone draws the clock and battery over the header. Will you check it on your phone, or let it ship and check it afterwards? To check: open the home-screen app in the light look and in the dark look, scroll down, and see that the clock stays readable and nothing shows behind it (a switch of look may only show on the status bar after you close and reopen the app). I recommend letting it ship and checking afterwards: the header covers the status bar either way, and if the clock's colour is wrong in one look, that is a small follow-up ticket.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
