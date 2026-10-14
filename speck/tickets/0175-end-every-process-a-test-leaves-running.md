@@ -1,7 +1,7 @@
 ---
 id: "0175"
 title: "End every process a test leaves running"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T19:37:04.183Z"
 ---
 # 0175 · End every process a test leaves running
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Every full test run leaves processes running for good. The test setup deletes each test file's temporary folder afterwards, but never ends what the tests started, and some test helpers wait for ever for a file in that folder. On 2026-10-14, 474 leftovers held about 13 GB of the machine's 15 GB of memory (7.5 GB of processes, and 5.8 GB of deleted logs they kept writing to in `/tmp`, which is held in memory here). The load average reached about 118, the panel stopped answering, the full suite went from 64 to 262 seconds, and builds took twice as long.
@@ -58,3 +58,83 @@ When a test file finishes, nothing it started is still running, however its test
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7028b2a911ef919cee47729408169699c4268276",
+    "thread_id": "01a13c05-29b1-7b82-b257-53f8e443340d",
+    "seconds": 57,
+    "usage": {
+      "input_tokens": 182696,
+      "cached_input_tokens": 138368,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1432,
+      "reasoning_output_tokens": 248
+    },
+    "saved_at": "2026-10-14T20:06:30.557Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "test/support/reap.mjs:reap misses direct children started with an empty environment and orphaned descendants without markers. The timeout test also exercises cancellation rather than timeout."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The three signal tests pass for their fixtures, but the signal exit handler calls the same reap function, which misses unmarked direct children and orphaned descendants."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ticker.mjs and gate.mjs check whether the folder still exists. The passing AC3 tests exercise folder removal for the ticker, standalone helper, gated command and push hook."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "/tmp/speck-0175-ac4.sh and its output document five paired full runs, with zero test-marker processes remaining after each 10-second wait."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh full-suite output reports only the explicitly exempted 0165 AC1 failure. Two timing checks failed intermittently during paired load runs but passed in the plain full run."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/reap.mjs:43",
+        "issue": "Cleanup does not cover every descendant. A direct child spawned with env: {} has no marker, and its parent (the test process) is excluded from the discovery seeds, so it is never found. An unmarked detached grandchild is likewise invisible once its marked parent exits. The existing fixture keeps that parent alive, hiding this gap.",
+        "suggested_fix": "Include the test process's descendants in discovery without signalling the test process itself, and preserve ownership information for descendants whose parents exit. Add regression cases for an unmarked direct child and an unmarked detached grandchild whose parent exits before cleanup, including signal termination.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/reap-0175.test.mjs:45",
+        "issue": "The timeout fixture unreferences its only remaining timer. Node cancels the test because its event loop has finished, before the 300 ms timeout occurs. I reproduced this with a read-only inline test: failureType was cancelledByParent after about 4 ms. Checking only exit status 1 accepts this wrong failure mode.",
+        "suggested_fix": "Keep the event loop alive until the test timeout fires, clear the timer afterwards, and assert that the nested test output reports testTimeoutFailure before checking process cleanup.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The helper loops now stop when their folders disappear, and the repeated full runs left no observed processes behind. Two fixes remain: cleanup misses processes without inherited environment markers in some cases, and the timeout test does not actually reach a timeout."
+  }
+}
+```
+
+</details>

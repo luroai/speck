@@ -24,7 +24,7 @@ export const emptyRunTmp = () => {
 
 // Every process this file starts inherits these, even one in a session or process group of its own.
 const MARKS = ['TMPDIR', 'TMP', 'TEMP'].map(k => `${k}=${RUN_TMP}`);
-export const reapRun = () => reap(MARKS);
+export const reapRun = () => reap({ env: MARKS, folder: RUN_TMP });
 
 afterEach(emptyRunTmp);
 after(reapRun);

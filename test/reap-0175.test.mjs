@@ -24,32 +24,38 @@ const killAll = pids => { for (const p of pids) try { process.kill(p, 'SIGKILL')
 // A test file that starts a process of each kind a test can leave behind, saves their pids in $PIDS (one per line)
 // and then ends its tests the way $MODE says: pass, fail, timeout or hang.
 const FAKE = `
-import ${JSON.stringify(TMP_MJS)};
+import { RUN_TMP } from ${JSON.stringify(TMP_MJS)};
 import { test } from 'node:test';
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 const forever = 'setInterval(() => {}, 1000)';
 const save = pid => fs.appendFileSync(process.env.PIDS, pid + '\\n');
-test('leaves processes running', async () => {
-  // A plain child, one in a session and process group of its own, and one that starts a grandchild in a session of
-  // its own with an empty environment that ignores SIGTERM.
+const saved = () => fs.readFileSync(process.env.PIDS, 'utf8').trim().split('\\n').length;
+const gone = pid => { try { process.kill(pid, 0); return false; } catch { return true; } };
+const mode = process.env.MODE;
+test('leaves processes running', mode === 'timeout' ? { timeout: 300 } : {}, async t => {
+  // A plain child, one with an empty environment, and one in a session and process group of its own.
   const plain = spawn(process.execPath, ['-e', forever], { stdio: 'ignore' }); plain.unref(); save(plain.pid);
+  const bare = spawn(process.execPath, ['-e', forever], { stdio: 'ignore', env: {} }); bare.unref(); save(bare.pid);
   const own = spawn(process.execPath, ['-e', forever], { detached: true, stdio: 'ignore' }); own.unref(); save(own.pid);
+  // One that starts a grandchild in a session of its own with an empty environment that ignores SIGTERM, and stays.
   const grand = "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000)";
-  const parent = spawn(process.execPath, ['-e', \`const c = require('child_process').spawn(process.execPath, ['-e', \${JSON.stringify(grand)}], { detached: true, stdio: 'ignore', env: {} }); c.unref(); require('fs').appendFileSync(\${JSON.stringify(process.env.PIDS)}, c.pid + '\\\\n'); \${forever}\`], { detached: true, stdio: 'ignore' });
-  parent.unref(); save(parent.pid);
-  while (fs.readFileSync(process.env.PIDS, 'utf8').trim().split('\\n').length < 4) await new Promise(r => setTimeout(r, 20));
+  const starts = keep => \`const c = require('child_process').spawn(process.execPath, ['-e', \${JSON.stringify(grand)}], { detached: true, stdio: 'ignore', env: {}, cwd: \${JSON.stringify(RUN_TMP)} }); c.unref(); require('fs').appendFileSync(\${JSON.stringify(process.env.PIDS)}, c.pid + '\\\\n'); \${keep ? forever : ''}\`;
+  const parent = spawn(process.execPath, ['-e', starts(true)], { detached: true, stdio: 'ignore' }); parent.unref(); save(parent.pid);
+  // And one that does the same in the test's folder, then exits, leaving the grandchild with no parent from the test.
+  const quitter = spawn(process.execPath, ['-e', starts(false)], { detached: true, stdio: 'ignore' }); quitter.unref();
+  while (saved() < 6 || !gone(quitter.pid)) await new Promise(r => setTimeout(r, 20));
   fs.writeFileSync(process.env.PIDS + '.ready', '');
-  const mode = process.env.MODE;
   if (mode === 'fail') throw new Error('failed on purpose');
-  if (mode === 'timeout') await new Promise(r => setTimeout(r, 60000).unref());
+  // Waits until the test's timeout ends it, then lets the file finish.
+  if (mode === 'timeout') await new Promise(r => { const h = setTimeout(r, 60000); t.signal.addEventListener('abort', () => { clearTimeout(h); r(); }); });
   if (mode === 'hang') await new Promise(r => setTimeout(r, 60000));
 });
 `;
 const fake = mode => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-'));
   const file = path.join(dir, 'fake.test.mjs');
-  fs.writeFileSync(file, mode === 'timeout' ? FAKE.replace("test('leaves processes running', async", "test('leaves processes running', { timeout: 300 }, async") : FAKE);
+  fs.writeFileSync(file, FAKE);
   return { file, pidsFile: path.join(dir, 'pids'), pids: () => { try { return fs.readFileSync(path.join(dir, 'pids'), 'utf8').trim().split('\n').filter(Boolean).map(Number); } catch { return []; } } };
 };
 
@@ -60,8 +66,10 @@ for (const mode of ['pass', 'fail', 'timeout']) {
     try {
       const r = spawnSync(process.execPath, ['--test', f.file], { encoding: 'utf8', env: fakeEnv({ PIDS: f.pidsFile, MODE: mode }), timeout: 60000 });
       assert.equal(r.status, mode === 'pass' ? 0 : 1, r.stdout + r.stderr);
+      if (mode === 'timeout') assert.match(r.stdout, /failureType: 'testTimeoutFailure'/, r.stdout);
+      if (mode === 'fail') assert.match(r.stdout, /failed on purpose/, r.stdout);
       pids = f.pids();
-      assert.equal(pids.length, 4, r.stdout + r.stderr);
+      assert.equal(pids.length, 6, r.stdout + r.stderr);
       assert.ok(await until(() => pids.every(p => !alive(p))), `still running: ${pids.filter(alive).join(' ')}`);
     } finally { killAll(pids); }
   });
@@ -76,7 +84,7 @@ for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
     try {
       assert.ok(await until(() => fs.existsSync(f.pidsFile + '.ready'), 15000), 'the fake test file to start its processes');
       pids = f.pids();
-      assert.equal(pids.length, 4);
+      assert.equal(pids.length, 6);
       assert.ok(pids.every(alive));
       child.kill(sig);
       await exited;
