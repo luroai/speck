@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, request, fakePage, T, queueRows, shippedRows, deferred } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, request, fakePage, T, queueRows, shippedRows, deferred, openDetails } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 
 const pane = p => p.byId('full-ticket');
@@ -52,12 +52,12 @@ const LOG = { text: '', truncated: false };
 // Opens a queue row, as a click on its top row does, which also fetches its log.
 const openRow = async (p, row) => { p.press(row.children.find(n => n.className === 'top')); await p.settle(); };
 
-// Opens the pack from a row, after opening the row first if it's in the queue.
+// Opens the pack from a row, after opening the row first if it's in the queue, or its Details in Shipped (0162).
 async function openPack(row, response = { pack: PACK }) {
   const queued = row === approvedRow;
   const p = fakePage([clone(STATE), ...(queued ? [LOG] : []), response, clone(STATE)]);
   await p.settle();
-  if (queued) await openRow(p, row(p));
+  if (queued) await openRow(p, row(p)); else await openDetails(p);
   const b = packButtons(p, row(p))[0];
   assert.ok(b, 'the row has a Review pack button');
   p.press(b);
@@ -77,6 +77,8 @@ test('0132 AC1: each approved ticket in the queue, once opened, and each Shipped
     assert.ok(r.children.some(n => n.className === 'log'), 'the row is open');
     assert.equal(packButtons(p, r).length, r.textContent.includes('0005') ? 1 : 0, r.textContent.slice(0, 20));
   }
+  for (const r of shippedRows(p)) assert.equal(packButtons(p, r).length, 0, 'a Shipped card keeps Review pack under Details (0162)');
+  await openDetails(p);
   const shipped = shippedRows(p);
   assert.equal(shipped.length, 2);
   for (const r of shipped) assert.equal(packButtons(p, r).length, 1);
@@ -135,6 +137,7 @@ test('0132 AC2 (self-check): a pack that arrives after its pane was closed, or r
   const late = deferred();
   const p = fakePage([clone(STATE), late, clone(STATE)]);
   await p.settle();
+  await openDetails(p); // 0162
   p.press(packButtons(p, shippedRow(p))[0]);
   await p.settle();
   assert.ok(pane(p).textContent.includes('Loading the review pack'));
@@ -145,6 +148,7 @@ test('0132 AC2 (self-check): a pack that arrives after its pane was closed, or r
   const later = deferred();
   const q = fakePage([clone(STATE), later, clone(STATE)]);
   await q.settle();
+  await openDetails(q); // 0162
   q.press(packButtons(q, shippedRow(q))[0]);
   await q.settle();
   q.press(q.all(shippedRow(q)).find(x => x.className === 'title-link')); // its title opens the full ticket (0137)

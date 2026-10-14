@@ -7,8 +7,9 @@ import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } 
 
 const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
 const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').replace(/<style>[\s\S]*?<\/style>/g, '');
-// What each section header held before 0134: its heading, then its live count (or the Plan toggles) and its hint.
-const BEFORE = [['Plan', ['H2', 'toggles', 'hint']], ['Build', ['H2', 'n', 'hint']], ['Shipped', ['H2', 'n', 'hint']]];
+// What each section header held before 0134: its heading, then its live count (or the Plan toggles) and its hint, which
+// 0162 removed.
+const BEFORE = [['Plan', ['H2', 'toggles']], ['Build', ['H2', 'n']], ['Shipped', ['H2', 'n']]];
 
 test('0135 AC1-AC2: in a real browser, each section header starts with its heading and shows only what it did before 0134', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {
   const r = panelRepo();

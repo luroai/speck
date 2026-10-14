@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, shippedRows, queueRows, findChrome, browserPage } from './support/panel.mjs';
+import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, shippedRows, queueRows, findChrome, browserPage, openDetails } from './support/panel.mjs';
 
 // ---------- 0137: open a shipped ticket by clicking its title ----------
 
@@ -83,11 +83,14 @@ test('0137 AC1: a ticket with no title still gets a link to click, named by its 
   assert.equal(paneId(p), '0011');
 });
 
-test('0137 AC3: each Shipped row has exactly one button, Review pack, and it opens the review pack', async () => {
+test('0137 AC3: each Shipped row has exactly one button, Details, which shows Review pack (0162), and Review pack opens the review pack', async () => {
   const p = fakePage([STATE(), { pack: '## 0010 · Shipped ten\n**Verdict:** ✅ Approved by reviewer\n' }, STATE()]);
   await p.settle();
-  for (const id of ['0009', '0010']) assert.deepEqual(buttonsOf(p, rowOf(p, id)).map(b => b.textContent), ['Review pack'], id);
-  p.press(buttonsOf(p, rowOf(p, '0010'))[0]);
+  // 0162: Details is the card's one button, and opening it shows Review pack.
+  for (const id of ['0009', '0010']) assert.deepEqual(buttonsOf(p, rowOf(p, id)).map(b => b.textContent), ['Details'], id);
+  await openDetails(p);
+  for (const id of ['0009', '0010']) assert.deepEqual(buttonsOf(p, rowOf(p, id)).map(b => b.textContent), ['Details', 'Review pack'], id);
+  p.press(buttonsOf(p, rowOf(p, '0010'))[1]);
   await p.settle();
   assert.equal(paneId(p), '0010');
   assert.ok(pane(p).textContent.includes('Approved by reviewer'), 'the pack shows');
@@ -111,7 +114,7 @@ test('0137 AC1-AC4: in a real browser, the title link opens the full ticket by m
     assert.equal(look.color, look.textColour, 'AC1: the text colour (0167)');
     assert.equal(look.cursor, 'pointer', 'AC1: a pointer cursor');
     assert.equal(look.line, 'underline', 'AC1: underlined, to show it can be clicked (0167)');
-    assert.deepEqual(look.buttons, ['Review pack'], 'AC3: only Review pack');
+    assert.deepEqual(look.buttons, ['Details'], 'AC3: only Details, which holds Review pack (0162)');
     const [x, y] = await b.js(`(r => [r.left + r.width / 2, r.top + r.height / 2])(${link}.getBoundingClientRect())`);
     await b.move([x, y]);
     assert.equal(await b.js(`getComputedStyle(${link}).textDecorationThickness`), '2px', 'AC1: underlined more thickly on hover');
@@ -134,7 +137,9 @@ test('0137 AC1-AC4: in a real browser, the title link opens the full ticket by m
     await b.send('Accessibility.enable');
     const { nodes } = await b.send('Accessibility.getFullAXTree');
     assert.ok(nodes.some(n => n.role && n.role.value === 'button' && n.name && n.name.value === 'A shipped one'), 'AC2: a button named "A shipped one" (a link until 0141)');
-    // AC4 until 0157, when each shipped ticket became a card: Review pack now sits at the bottom of the card, under the rest.
+    // AC4 until 0157, when each shipped ticket became a card: Review pack now sits at the bottom of the card, under the rest,
+    // once Details has opened it (0162).
+    await b.js(`document.querySelector('#shipped tr .details').click()`);
     const [packTop, above] = await b.js(`(() => { const tr = document.querySelector('#shipped tr'), cell = tr.querySelector('td.full-cell');
       return [cell.getBoundingClientRect().top, Math.max(...[...tr.children].filter(n => n !== cell).map(n => n.getBoundingClientRect().bottom))]; })()`);
     assert.ok(packTop >= above - 0.5, `Review pack at ${packTop}px, the rest of the card down to ${above}px`);

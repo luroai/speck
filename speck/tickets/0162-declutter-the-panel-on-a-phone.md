@@ -41,6 +41,10 @@ The panel shows the same information in less space: no fixed instructions, a one
 - Builds after 0167, which takes colour out of titles and links and builds on 0161, so the style changes don't clash.
 - Reported 2026-10-14 from phone screenshots; the user liked the layout but felt it might be cluttered.
 - Failing before this build: none
+- Shipped titles were already in the text colour since 0167; 0162's browser test checks they stay that way.
+- On a phone the More stats labels ("median reviewer tokens") can't fit two lines in a three-column row, so they take three; 0157's line limit for them at 375 px is changed to match (an old Shipped layout check, as AC5 allows).
+- 0148 AC2 (Auto-build switch over --url) failed once in a full run under load and passes alone; it doesn't touch the page.
+- Self-check: corrected a CSS comment that said every stat label fits on two lines on a phone.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

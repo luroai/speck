@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, freePort, startPanel, stop, request, post, tokenOf, fakePage, T, queueRows, shippedRows, panelModel, deferred } from './support/panel.mjs';
+import { ROOT, freePort, startPanel, stop, request, post, tokenOf, fakePage, T, queueRows, shippedRows, panelModel, deferred, openDetails } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 
 const ago = min => new Date(Date.now() - min * 60000).toISOString();
@@ -56,7 +56,8 @@ test('0133 AC1: the review pack of an approved ticket has a Ship button', async 
 test('0133 AC1: a ticket in any other status has no Ship button, and there is none outside a review pack', async () => {
   const p = page();
   await p.settle();
-  // The shipped ticket's pack: done, so no Ship button.
+  // The shipped ticket's pack: done, so no Ship button. Its Review pack is under Details since 0162.
+  await openDetails(p);
   p.press(buttonsIn(p, shippedRows(p).find(r => r.textContent.includes('0010')), 'Review pack')[0]);
   await p.settle();
   assert.ok(pane(p).textContent.includes('Approved by reviewer'), 'the pack shows');
