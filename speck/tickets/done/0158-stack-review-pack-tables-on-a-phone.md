@@ -1,7 +1,7 @@
 ---
 id: "0158"
 title: "Stack review pack tables on a phone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T00:24:47.550Z"
 approved: "2026-10-14T00:37:36.588Z"
+finished: "2026-10-14T00:39:05.776Z"
 
 ---
 # 0158 · Stack review pack tables on a phone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a phone, the review pack's acceptance criteria table is squeezed into four narrow columns: the "Result" heading breaks into "Re / su / lt", and the criterion and evidence run down the screen a few words at a time, so a pack is hard to read where the user often reads it before shipping.
