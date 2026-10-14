@@ -1,7 +1,7 @@
 ---
 id: "0192"
 title: "Test a ticket with the latest main before it ships"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-11-ship-a-simple-merge-without-another-review.
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T23:06:04.002Z"
+approved: "2026-10-14T23:26:16.064Z"
 
 ---
 # 0192 · Test a ticket with the latest main before it ships
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck ship` runs the tests on the ticket's branch alone, not on what will actually land: the ticket together with the base branch as it is now. Two tickets that each pass on their own can break the base branch together, and then every ship stops until someone fixes it. That happened twice on 2026-10-14 (0164 with 0165, fixed by 0190; 0177 with 0173, fixed by 0191). And an approved ticket whose base branch has moved on can't ship until a builder merges the base branch in and gets a merge review round, even when the merge is clean, which held up 0175, 0182 and 0183 for most of an evening.
@@ -54,9 +55,15 @@ To see it, ship a ticket after another one has shipped: the ship runs the tests 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The final comparison exempts every path changed between branchSha and the ship commit, rather than only the ticket's status move.; F2 Failing output is reduced to its final 1 MiB before failingTests parses it.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 479,572
+- Elapsed since build started: 20 min
+- Changed lines: 117 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Idea: give the "fails together" refusal its own exit code so an auto-ship build can merge main in and fix it (`speck/ideas/2026-10-14-let-a-build-fix-a-ticket-that-fails-with-newer-main.md`).
