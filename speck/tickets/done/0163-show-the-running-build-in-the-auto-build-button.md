@@ -1,7 +1,7 @@
 ---
 id: "0163"
 title: "Show the running build in the Auto-build button"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0161","0168"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T16:25:26.868Z"
 approved: "2026-10-14T16:47:31.616Z"
+finished: "2026-10-14T16:47:35.070Z"
 
 ---
 # 0163 · Show the running build in the Auto-build button
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The header is the only part of the panel that's always on screen, but the Auto-build button only says "Auto-build on" or "off". To see what's being built and where it's got to, the user has to scroll to the Build section, which on a phone is below the whole Plan section.
