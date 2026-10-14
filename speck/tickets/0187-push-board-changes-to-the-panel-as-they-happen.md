@@ -42,8 +42,8 @@ The panel sends each change to every open page as it happens, and pages no longe
 - Server-Sent Events (`EventSource` in the page, a `text/event-stream` answer from the panel) fit: one-way, reconnecting by themselves, plain HTTP, and no dependency.
 - Over plain HTTP/1.1, as at `127.0.0.1`, a browser keeps only about six connections open per address, so each page should hold one stream, and 0189's log updates should share it.
 - The panel server already watches its own code for changes (`codeStamp()` in `scripts/panel.mjs`).
-- Unverified: Cloudflare, which carries the panel to the phone, closes a connection that's silent for about 100 seconds and passes `text/event-stream` through without buffering it (secondary sources only, not Cloudflare's own docs).
-- Unverified: Node's `fs.watch` with `recursive: true` works on Linux from Node 20 (not checked against Node's docs).
+- Checked 2026-10-14: Cloudflare's own docs give a 100-second proxy read timeout (error 524), and say Cloudflare Tunnel buffers proxied answers unless they're `Content-Type: text/event-stream`, which it streams as the data arrives.
+- Checked 2026-10-14: Node's docs say `fs.watch` gained `recursive` support on Linux in v19.1.0; it works on the installed Node v22.23.3.
 - Builds after 0177 (one shared reading of the board for every request) and 0186.
 
 ## In plain words
