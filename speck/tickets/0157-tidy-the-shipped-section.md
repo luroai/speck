@@ -1,7 +1,7 @@
 ---
 id: "0157"
 title: "Tidy the Shipped section"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T06:59:20.485Z"
 ---
 # 0157 · Tidy the Shipped section
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Shipped section is hard to read, worst on a phone. Its six stats stack as large numbers with long labels that wrap, and they're hard to tell apart. The section has no accent colour, unlike Plan. Shipped tickets run into each other. Each ticket's figures are one long run of values separated by dots, and the time in its bottom left corner has no label, so it isn't clear what it is.
@@ -45,7 +45,7 @@ Shipped has a green accent, its stats sit in a tidy grid of small labelled tiles
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Shipped section is easier to read, most of all on a phone. It has a green line along its top, like Plan's coloured one. Its six stats are small tiles, two to a row on a phone and all in one row on a wider screen, each with its number, a short label and how many tickets it covers. Each shipped ticket is now its own card with a green left edge: its number and title, then "Shipped 21:52" (or "Shipped 12 Oct, 21:52" for an earlier day), then its figures each under its own label, then the Review pack button. Big token counts read as "108k" or "2.4M"; hover over one to see the exact number. To see it, open the panel and scroll to Shipped, ideally on your phone in dark mode. Worth a look: on a phone a one-line title leaves a little space under it, because the title keeps a finger-sized tap area.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,71 @@ Shipped has a green accent, its stats sit in a tidy grid of small labelled tiles
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: speck/ideas/2026-10-14-shorten-big-numbers-in-the-shipped-stats.md (the stat tiles still show token medians in full).
+  - Known limit: at phone width a shipped card's title keeps its 44 px tap height (0140), so a one-line title leaves some space under it.
+  - Tidy-up: the `td.num` rule no longer styles anything in the panel; 0135's test still asserts it is unchanged, so it stayed.
+  - Updated checks of the old Shipped layout, as AC5 allows: 0035 (stats text, time format), 0049 and 0100 (the type tag now sits under the title, as in Plan), 0050 (the labelled time), 0120 (the figures) and 0137 AC4 (the row no taller with Review pack, now Review pack at the card's bottom).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "809454ebd5adfa501f2e691ea389cbc171554351",
+    "thread_id": "01a1393e-f9fb-7053-8f6e-db239fa3beac",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 124397,
+      "cached_input_tokens": 75776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 672,
+      "reasoning_output_tokens": 15
+    },
+    "saved_at": "2026-10-14T07:10:38.521Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: section.shipped sets a 2px solid var(--ok) top border. Both light and dark AC1 browser tests in test/panel-0157.test.mjs passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: .stats/.stat styles and render() create six equal tiles with separate numbers, labels and median counts. AC2 tests passed for content and browser geometry at 375, 700 and 1280px, including two-line mobile labels and smaller muted counts."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html: #shipped card styles provide all borders, a green left edge and 8px gaps; render() places id and fullLink() title first. AC3 tests passed for title opening, alignment, borders and spacing in both themes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html: shippedAt(), tokenCount() and render() provide labelled ship times, optional figure pairs, abbreviated tokens with exact tooltips and the final packButton(). AC4 tests passed for values, omissions, dates, layout and opening the review pack; updated panel-0050 tests retain midnight-update coverage."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Both 375px overflow browser tests passed. Verified /tmp/speck-0157-tests.txt: 1473 passed, zero failed and three unrelated existing skips. Changes to existing assertions reflect the requested Shipped layout; ticket selection, statistics calculations, Plan and Build implementation remain unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Shipped now has a green accent, compact stat tiles and separated cards with clearly labelled times and figures. Tests cover mobile sizing, both colour themes and existing ticket and review-pack actions. The full test log shows no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
