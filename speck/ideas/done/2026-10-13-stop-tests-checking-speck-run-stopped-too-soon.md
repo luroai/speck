@@ -1,6 +1,6 @@
 # Stop tests checking speck run has stopped too soon
 
-Captured: 2026-10-13 · Status: inbox
+Captured: 2026-10-13 · Status: ticketed (0173)
 From ticket: 0159
 
 ## What
