@@ -1,7 +1,7 @@
 ---
 id: "0165"
 title: "Explain each tag when it's tapped"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0165 · Explain each tag when it's tapped
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 On a draft ticket the priority tag opens the priority menu, so on a phone it needs a 44 px tap area, which makes it look bigger and spaced differently from the size, risk and type tags beside it. The other tags can't be tapped at all, and their short codes (P3, M, low, fix) don't explain themselves to someone new to speck.
