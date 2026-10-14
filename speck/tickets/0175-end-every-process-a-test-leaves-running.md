@@ -1,7 +1,7 @@
 ---
 id: "0175"
 title: "End every process a test leaves running"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-13-stop-the-pause-and-stop-tests-leaving-proce
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T19:37:04.183Z"
+blocked_at: "2026-10-14T20:36:12.001Z"
 
 ---
 # 0175 · End every process a test leaves running
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 Every full test run leaves processes running for good. The test setup deletes each test file's temporary folder afterwards, but never ends what the tests started, and some test helpers wait for ever for a file in that folder. On 2026-10-14, 474 leftovers held about 13 GB of the machine's 15 GB of memory (7.5 GB of processes, and 5.8 GB of deleted logs they kept writing to in `/tmp`, which is held in memory here). The load average reached about 118, the panel stopped answering, the full suite went from 64 to 262 seconds, and builds took twice as long.
@@ -51,7 +52,7 @@ When a test file finishes, nothing it started is still running, however its test
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+The clean-up now ends every process a test file starts, except one rare kind: a process with no link back to the test (a blank environment, working outside the test's folder, nothing in its command naming it) whose starter quits before the clean-up's check, which runs four times a second, has seen it. No test in the suite starts one like that, and ten full runs, five pairs side by side, left nothing behind. Closing that gap completely would mean running each test file inside a group the operating system tracks for us, which only Linux with systemd offers, so it wouldn't hold on macOS and is a bigger change. Is the remaining gap acceptable? Options: (a) accept it, and change criteria 1 and 2 to say "every process that keeps a link to the test, or whose starter is still running when the check runs"; (b) require the full guarantee on Linux only, using systemd's tracking, in a follow-up ticket; (c) require it everywhere, which no approach can do without extra tools. I recommend (a): it fixes the problem the ticket was written for, and the gap needs a test to go out of its way to hide a process.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -210,6 +211,83 @@ When a test file finishes, nothing it started is still running, however its test
     ],
     "escalation_question": "",
     "summary": "The timeout test is now valid, and cleanup handles children with empty environments. Orphan cleanup still has a gap, including on macOS for the newly added test case. The repeated paired-run check also needs refreshing after the final changes."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · escalate</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "47f8cc180929ecc3bd2709709a95483822d2a342",
+    "thread_id": "01a13c05-29b1-7b82-b257-53f8e443340d",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 408809,
+      "cached_input_tokens": 291200,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3297,
+      "reasoning_output_tokens": 519
+    },
+    "saved_at": "2026-10-14T20:35:59.538Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "escalate",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "reaper() now remembers observed descendants and discovers working directories on macOS. However, an unmarked descendant whose parent exits between observations remains undiscoverable. The header explicitly acknowledges this gap. WATCH_MS is only a scheduling interval; synchronous test work can delay observations beyond 250 ms."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The passing signal tests cover seven fixture processes, including an orphan whose parent deliberately stays alive for one second. They do not cover an unmarked orphan whose parent exits before the watcher observes it; signal cleanup cannot recover that ownership."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The ticker and gate helpers retain folder-existence checks, and all five AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The refreshed /tmp/speck-0175-ac4.txt records five paired full runs, each followed by a 10-second wait, with zero test-marker processes remaining."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh full run reports 1649 passes, three skips and only the explicitly exempted 0165 AC1 failure. The paired runs retain the previously reported intermittent timing failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/reap.mjs:reaper and test/support/tmp.mjs ownership interval",
+        "issue": "Ownership tracking improves coverage but remains best effort. A detached process with an empty environment, working outside the test folder and without matching arguments survives if its parent exits before an observation. The regression fixture keeps that parent alive for one second, allowing the watcher to discover it. Synchronous work can also delay the watcher indefinitely, so the gap is not bounded to parents lasting less than 250 ms. This still contradicts the unconditional acceptance criteria.",
+        "suggested_fix": "Obtain an explicit product decision on whether this residual gap is acceptable. If the guarantee remains unconditional, use ownership tracking or containment that does not depend on periodic observation, and test a parent that exits immediately.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/reap-0175.test.mjs:timeout fixture",
+        "issue": "The timeout fixture retains a referenced timer and asserts testTimeoutFailure. The fresh full run passes this check.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "May AC1 and AC2 permit unmarked detached descendants to survive when their parent exits before the ownership watcher observes them, or must cleanup guarantee that every descendant ends?",
+    "summary": "Cleanup now covers more orphaned processes, and the repeated paired runs found no marked leftovers. One known escape remains: a process can lose its parent before the watcher discovers it. The owner must decide whether that limitation is acceptable before this can be approved."
   }
 }
 ```
