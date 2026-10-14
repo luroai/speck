@@ -1,7 +1,7 @@
 ---
 id: "0153"
 title: "Show a ticket's ship in progress in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,12 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T23:42:21.427Z"
-approved: "2026-10-14T00:02:21.102Z"
+approved: "2026-10-14T00:06:42.304Z"
 
 ---
 # 0153 · Show a ticket's ship in progress in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build's own ship (`speck ship <id> --auto`) is running, or has stopped without shipping, the panel shows the ticket as plainly approved, the same as a ticket waiting for the user. On 2026-10-13, 0149's auto-ship hung for nine minutes and the user only found out by clicking Ship.
@@ -56,12 +56,13 @@ While a ticket is being shipped, its row in the panel's Build list now says "Shi
 ## Review log
 Round 1 (codex): changes requested: F1 Shipping visibility disappears before the ship finishes.
 Round 2 (codex): approve.
+Round 3 (codex): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 709,869
-- Elapsed since build started: 20 min
+- Reviewer tokens: 1,321,517
+- Elapsed since build started: 24 min
 - Changed lines: 153 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
