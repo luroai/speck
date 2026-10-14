@@ -1,7 +1,7 @@
 ---
 id: "0160"
 title: Keep the panel header on screen                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T12:31:12.452Z"
+approved: "2026-10-14T13:20:32.356Z"
 
 ---
 # 0160 · Keep the panel header on screen
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 The panel header, with the Auto-build button, scrolls away with the page, so on a phone the one control and status the user checks most is only at the top. In the home-screen app the iPhone's status bar has no background of its own, so once the page scrolls, cards and text slide underneath the clock and battery (seen 2026-10-14).
@@ -54,9 +55,16 @@ To see it, open the panel on your phone and scroll down. Worth a look: whether t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The full ticket pane has top safe-area padding inside its scrolling container.; F2 The claimed light/dark status-bar behaviour is tested only by reading the meta tag's content in Chromium.
+Round 2 (codex): escalate.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 650,310
+- Elapsed since build started: 49 min
+- Changed lines: 71 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Deferred by the user: check the status bar in the iPhone home-screen app in both looks, and after switching each way, once this is live.
