@@ -14,7 +14,7 @@ const phoneCss = () => (css().match(/@media \(max-width: 699\.98px\) \{([\s\S]*)
 // row in the Build queue has a button that jumps to 0001 (0154).
 const board = () => ({
   tickets: [
-    full('0001'),
+    full('0001', { problem: Array.from({ length: 60 }, (_, i) => `Line ${i + 1} of a long problem.`).join('\n\n') }),
     T('0002', 'ready', { after: ['0001'], waiting_on: ['0001'] }),
     ...Array.from({ length: 24 }, (_, i) => full(String(i + 10).padStart(4, '0'))),
     ...Array.from({ length: 12 }, (_, i) => T(String(i + 50).padStart(4, '0'), 'done', { shipped: new Date().toISOString() })),
@@ -93,7 +93,7 @@ test('0160 AC2: the page reaches behind the status bar, with a status bar style 
   assert.match(phone, /padding:\s*calc\(10px \+ env\(safe-area-inset-top\)\)/);
 });
 
-test('0160 AC2: the status bar\'s text is light on the dark look and dark on the light one, set before the page is drawn and on each switch', skip, async () => {
+test('0160 AC2: the status bar style tag says black-translucent (light text) on the dark look and default (dark text) on the light one, set before the page is drawn and on each switch', skip, async () => {
   for (const theme of ['light', 'dark']) {
     await withPanel(async b => {
       assert.equal(await b.js(`document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content`), theme === 'dark' ? 'black-translucent' : 'default', `${theme} look`);
@@ -202,6 +202,19 @@ test('0160 AC4: the full ticket pane\'s close button and first line sit below th
   assert.equal(await at(b, close.left + 4, close.top + 4), 'pane', 'and nothing covers it');
 }, { insets: { top: 47, bottom: 34 } }));
 
+test('0160 AC2: scrolled to its end, the full ticket shows nothing behind the status bar, not even its border', skip, () => withPanel(async b => {
+  await b.js(`(() => { const n = [...document.querySelectorAll('#shaping .item')].find(n => n.querySelector('.id').textContent === '0001'); n.querySelector('.head').click(); })()`);
+  await b.until(`!!document.querySelector('#shaping .item.open .full-open')`, 'the ticket to open');
+  await b.js(`document.querySelector('#shaping .item.open .full-open').click()`);
+  await b.until(`!document.querySelector('#full-ticket').hidden && document.querySelector('#full-ticket').scrollHeight > 2 * innerHeight`, 'the long full ticket');
+  await b.js(`document.querySelector('#full-ticket').scrollTop = 100000`);
+  await new Promise(r => setTimeout(r, 100));
+  assert.ok(await b.js(`document.querySelector('#full-ticket').scrollTop`) > 500, 'the pane scrolled');
+  const pane = await box(b, '#full-ticket');
+  assert.ok(pane.top >= 47, `the pane, border and all, starts below the status bar (at ${pane.top})`);
+  for (const x of [pane.left, pane.left + 1, pane.left + 20, 374]) for (const y of [1, 23, 46]) assert.notEqual(await at(b, x, y), 'pane', `(${x}, ${y})`);
+}, { insets: { top: 47, bottom: 34 } }));
+
 for (const insets of [null, { top: 47, bottom: 34 }]) {
   const where = insets ? 'in the home-screen app' : 'in a browser tab';
   test(`0160 AC5: ${where}, jumping to a ticket shows it below the header, not behind it`, skip, () => withPanel(async b => {
@@ -223,6 +236,6 @@ for (const insets of [null, { top: 47, bottom: 34 }]) {
     const close = await box(b, '#full-ticket .close');
     assert.equal(await at(b, close.left + 4, close.top + 4), 'pane');
     const pane = await box(b, '#full-ticket');
-    assert.equal(await at(b, pane.left + 20, 2), 'pane', 'the pane is above the header');
+    assert.equal(await at(b, pane.left + 20, pane.top + 2), 'pane', 'the pane is above the header');
   }, { insets }));
 }

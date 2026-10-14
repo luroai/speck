@@ -21,7 +21,8 @@
   const root = document.documentElement;
   const saved = () => { try { const t = localStorage.getItem('speck-theme'); return t === 'light' || t === 'dark' ? t : null; } catch { return null; } };
   const system = matchMedia('(prefers-color-scheme: dark)');
-  // 0160: the home-screen app's status bar, over the header: light text on the dark look, dark text on the light one
+  // 0160: the home-screen app's status bar: black-translucent (light text) on the dark look, default (dark text) on the
+  // light one. iOS reads it as the app opens.
   const bar = look => { const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default'; };
   const set = look => { root.dataset.theme = look; bar(look); };
   set(saved() || (system.matches ? 'dark' : 'light'));
@@ -42,7 +43,8 @@
      names the zen fonts first, used when they're installed, and none is loaded from another host. */
   * { box-sizing: border-box; border-radius: 0 !important; }
   /* 0160: in the home-screen app the page reaches behind the status bar and home indicator (viewport-fit=cover). The
-     header pads the status bar, the page pads the home indicator and a phone's rounded corners on its sides. While the
+     header pads the status bar, the page pads the home indicator and a phone's rounded corners on its sides, and the full
+     ticket starts below the status bar, so nothing it scrolls shows there. While the
      header stays on screen, a ticket scrolled to sits below it (--head is its height, kept by the page script). */
   html { scroll-padding-top: var(--head, 0px); }
   body { padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
@@ -310,7 +312,7 @@
   td .title-link { color: var(--accent); text-decoration: none; cursor: pointer; }
   td .title-link:hover { text-decoration: underline; }
   td .full-open { margin: 0; padding: 0 8px; font-size: 10px; white-space: nowrap; }
-  #full-ticket { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
+  #full-ticket { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }

@@ -1,7 +1,7 @@
 ---
 id: "0160"
 title: Keep the panel header on screen                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T12:31:12.452Z"
 ---
 # 0160 · Keep the panel header on screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel header, with the Auto-build button, scrolls away with the page, so on a phone the one control and status the user checks most is only at the top. In the home-screen app the iPhone's status bar has no background of its own, so once the page scrolls, cards and text slide underneath the clock and battery (seen 2026-10-14).
@@ -55,3 +55,83 @@ The header stays at the top of the screen as the page scrolls, with the panel's 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "197294b6e7748995c7e867b75a82479d60fb0722",
+    "thread_id": "01a13a70-d183-7390-964f-72c44cb04e5b",
+    "seconds": 49,
+    "usage": {
+      "input_tokens": 110244,
+      "cached_input_tokens": 66304,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 985,
+      "reasoning_output_tokens": 83
+    },
+    "saved_at": "2026-10-14T12:44:43.684Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html header rule provides sticky positioning, solid background and bottom border. Passing AC1 browser tests exercise scrolling at 375 and 1280 px."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The viewport and header padding are implemented, but #full-ticket scrolls its contents through the top safe area and places its left border there. The status-bar test checks only a meta-tag string in Chromium, not iOS rendering. Light mode uses default, which Apple's documentation says positions web content below the status bar."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The phone header.slim rules and fit() implement the compact row and restoration. Passing browser tests exercise height, visibility, alignment, safe-area padding and reduced motion."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "main includes bottom safe-area padding; #full-ticket includes top padding. Passing AC4 browser tests verify the last card and initial close-button/first-line positions."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "ResizeObserver maintains --head for html scroll-padding-top. Passing AC5 browser tests exercise ticket jumps and full-pane opening with zero and nonzero insets. /tmp/speck-0160-tests.txt confirms 1491 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:313",
+        "issue": "The full ticket pane has top safe-area padding inside its scrolling container. Once the pane scrolls, that padding scrolls away and ticket text can appear behind the status bar. Its left border also extends through that area. The tests inspect only the newly opened pane, so they miss this violation of AC2's 'ever' requirement.",
+        "suggested_fix": "Keep an opaque, stationary safe-area region above the pane's scrolling contents and keep borders below it. Add a browser test that scrolls a long full ticket and verifies the status-bar region stays clear.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:24; test/panel-0160.test.mjs",
+        "issue": "The claimed light/dark status-bar behaviour is tested only by reading the meta tag's content in Chromium. This does not exercise iOS status-bar text or its response to theme switches. Moreover, light mode selects default, which positions content below the status bar rather than extending the header behind it according to Apple's Supported Meta Tags documentation: https://developer-mdn.apple.com/library/archive/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html.",
+        "suggested_fix": "Verify the implementation in an iOS home-screen app in both themes, including theme switches, and adjust the status-bar strategy to meet AC2. Record platform evidence and make the automated test's claim accurately reflect what it exercises.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The header stays visible and compacts correctly on phones, and the suite passes. Two status-bar concerns remain: scrolling a full ticket can expose text behind the clock, and the tests do not establish the claimed iPhone behaviour in both themes."
+  }
+}
+```
+
+</details>
