@@ -62,6 +62,9 @@ Your answer (accept the remaining gap) is recorded and criteria 1 and 2 are narr
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
+Follow-ups:
+- The full suite took 126 s after the round 2 fixes (and 128 s on the last run), against about 100 s before this build. The machine was busy with other sessions at the time (load average 9 to 24), so it may be noise, but the clean-up's watch, four times a second in every test file (about 5 ms a pass), may be the cause. Worth timing the suite with and without the watch on a quiet machine.
+
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
 
