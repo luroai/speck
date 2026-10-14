@@ -1,7 +1,7 @@
 ---
 id: "0190"
 title: "Fix the 0165 phone tag-size test failing on main"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T20:59:04.574Z"
 approved: "2026-10-14T21:07:59.697Z"
+finished: "2026-10-14T21:10:36.908Z"
 
 ---
 # 0190 · Fix the 0165 phone tag-size test failing on main
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 One test fails on main every time: "0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each". It reports "queue P0: these points of its 44 px tap area miss it", at two points (x 76.9 and 55.4, y 630.5). Because main's tests fail, no ticket can ship automatically: 0175 is approved and waiting on this.
