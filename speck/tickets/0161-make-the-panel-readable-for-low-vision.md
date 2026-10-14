@@ -43,6 +43,10 @@ Every word and every control edge in the panel is comfortably readable in light 
 - WCAG 2.2: 1.4.3 (4.5:1 text), 1.4.6 (7:1, AAA), 1.4.11 (3:1 for control edges), 2.4.7 and 2.4.13 (focus visible and its appearance).
 - Keep the panel's look: darken or lighten the existing tokens rather than replacing the palette.
 - Failing before this build: none
+- New colours, each text colour at least 7:1 on every background in its look (page, panel, raised rows and the open tints), and `--line` at least 3:1. Light: `--line` #87847d, `--faint` #4d4c48, `--accent` #853123, `--ok` #3f522e, `--warn` #67460b, `--bad` #921f2d, `--run` #304f6d, `--idea` #623f6c, `--inbox` #22544c, `--bug` #7a3553, `--fix` #584c0e. Dark: `--line` #737373, `--muted` #c4c4c4, `--faint` #b4b4b4, `--accent` #e5a495, `--ok` #a5bb8e, `--warn` #daac5d, `--bad` #f39ba5, `--run` #97b7d8, `--idea` #c3abd1, `--inbox` #82bfb5, `--bug` #e0a2bf. Backgrounds and `--line-soft` (used only for dividers inside cards, not for control or card edges) are unchanged.
+- A waiting ticket (faded to .5) and the tickets outside a hovered chain (faded to .35) are now set back with the raised fill instead, as a fade can't keep the text at 7:1. A disabled button still fades to .6: WCAG 1.4.3 and 1.4.11 exempt inactive controls.
+- Kept the existing tests' order of sizes: stat labels 13 px over 12 px counts, and review-pack and note tables 13 px under their 12 px phone labels. On a phone, "control panel" in the header has tighter letter spacing so the project's name still fits beside it at 12 px.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
