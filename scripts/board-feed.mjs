@@ -15,7 +15,7 @@ const PANEL_PING_MS = 5000, BOARD_CHECK_PINGS = 3, BOARD_SETTLE_MS = 100, BOARD_
 // from the last, by its number, and returns that number. Changes to the files are gathered so that a burst of them,
 // such as a commit changing ten tickets, starts one reading.
 export function boardFeed(repo, runs, read) {
-  const streams = new Set();
+  const streams = new Set(), untold = new Set(); // untold: streams opened before the board was known
   let version = 0, shown = null, soon = null, soonAt = 0, pings = 0;
   const changed = (slow = false) => {
     const ms = slow ? BOARD_LOG_MS : BOARD_SETTLE_MS;
@@ -38,17 +38,19 @@ export function boardFeed(repo, runs, read) {
     watched: () => streams.size > 0,
     announce(body) {
       if (body !== shown) { shown = body; version++; for (const res of streams) res.write(`data: ${version}\n\n`); }
+      else for (const res of untold) res.write(`data: ${version}\n\n`);
+      untold.clear();
       return version;
     },
-    // A new stream is told of the latest board at once, or, until the board has been read (`known`), of the first
-    // reading, which this starts. One opened while the server is stopping ends at once, so the browser tries again.
+    // A new stream is told of the latest board at once, or, while there's no up-to-date reading (`known`), of the
+    // next one, which this starts, whether or not that board differs from the last. One opened while the server is stopping ends at once, so the browser tries again.
     open(res, known, stopping) {
       res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store, no-transform', 'X-Content-Type-Options': 'nosniff', 'X-Accel-Buffering': 'no' });
       res.write(`retry: ${STREAM_RETRY_MS}\n${known ? `data: ${version}\n` : ''}\n`);
       if (stopping) return res.end();
       streams.add(res);
-      res.on('close', () => streams.delete(res));
-      if (!known) changed();
+      res.on('close', () => { streams.delete(res); untold.delete(res); });
+      if (!known) { untold.add(res); changed(); }
     },
     close() {
       clearInterval(ping);
@@ -56,6 +58,7 @@ export function boardFeed(repo, runs, read) {
       files.close();
       for (const res of streams) res.end();
       streams.clear();
+      untold.clear();
     },
   };
 }

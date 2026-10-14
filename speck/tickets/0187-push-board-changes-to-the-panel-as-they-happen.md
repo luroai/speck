@@ -1,7 +1,7 @@
 ---
 id: "0187"
 title: "Push board changes to the panel as they happen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T22:06:47.011Z"
 ---
 # 0187 · Push board changes to the panel as they happen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel page asks for the whole board every 2 seconds, whether anything has changed or not. Changes show up as much as 2 seconds late, every open page costs the panel a full reading of the board every 2 seconds, and a slow answer flashes "Disconnected" across the top (0186).
@@ -64,3 +64,91 @@ The panel sends each change to every open page as it happens, and pages no longe
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "149468c60bbfcfac00b4163d4c380c4f4905b2e3",
+    "thread_id": "01a13c95-f6df-7db3-9d63-666dca07ead5",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 178829,
+      "cached_input_tokens": 129152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1312,
+      "reasoning_output_tokens": 90
+    },
+    "saved_at": "2026-10-14T22:44:11.947Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/panel-0187.test.mjs covers ticket edits, ideas, build records, ships, worktrees and process exits; the supplied run reports these tests passing. boardWatcher watches the relevant files and periodically refreshes process state."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 tests exercise announcement-driven fetches and idle keep-alives. templates/panel.html removes the board polling timer."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The AC3 tests verify one reading across four streams, ten simultaneous ticket changes producing one announcement, and freshness after a page write."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Reconnect tests cover server restarts, but miss reconnecting after all streams close and files change. That path serves retained stale state. A failed state fetch also has no retry while the stream remains connected."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "The supplied full run fails build-log-0176.test.mjs AC1, which is not listed as failing before this build. The documented 0173 failure is exempt."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel.mjs:404",
+        "issue": "When all pages disconnect, file changes trigger nextReading(), which discards the refresh because feed.watched() is false. latest remains populated. A reconnecting page is immediately announced that old version, and askState() serves its stale board because external file changes do not increment writes. The current board can take another 15 seconds to appear.",
+        "suggested_fix": "Track invalidation even without streams and refresh before announcing a cached board to a reconnecting page. Add a test that closes every stream, edits a ticket, waits for the watcher, then reconnects and checks the first board.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:2375",
+        "issue": "A transient /api/state fetch failure immediately shows Disconnected and never retries if the event stream stays open and the board remains unchanged. Pings only redraw; periodic server readings suppress unchanged announcements. I reproduced this with fakePage: after one failed fetch and six pings, there was still only one fetch and Disconnected remained visible.",
+        "suggested_fix": "Retry failed state retrieval, or reconnect the stream to obtain another announcement, with the required 10-second connection grace period. Add coverage for a failed state fetch followed by recovery without a board change.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/build-log-0176.test.mjs:145",
+        "issue": "The full suite reports an additional failure outside the ticket's documented baseline: the finished-build log performance test. Consequently criterion 5 is not satisfied by the submitted evidence.",
+        "suggested_fix": "Investigate and provide a fresh passing full-suite result, or evidence establishing whether this is a pre-existing intermittent failure. Do not weaken the performance assertion.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Live board updates and shared readings are well covered, but recovery has two gaps: returning pages can initially receive an old board, and a temporary board-download failure can leave a page disconnected indefinitely. The suite also has an unexplained additional failure."
+  }
+}
+```
+
+</details>

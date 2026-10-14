@@ -2367,11 +2367,12 @@ function showRestartError(line) {
 // 0187: the panel tells the page each time the board changes, over one event stream, and the page then asks for that
 // board. Nothing asks on a timer: while nothing changes, the stream carries only a keep-alive (ping), on which the page
 // redraws what it works out from the clock. Only the latest request's answer is used, and one still waiting when the
-// next board is announced counts as disconnected and is dropped. A dropped stream reconnects by itself, and the panel
+// next board is announced counts as disconnected and is dropped; one that fails is asked again at the next ping. A dropped stream reconnects by itself, and the panel
 // tells the page of its board as soon as it's back, so "Disconnected" shows only if it stays gone for LOST_MS. Coming
 // back to the page, as a phone does when it wakes, starts a new stream at once, in case the old one died unnoticed.
-let seq = 0, pending = null, source = null, lost = null;
+let seq = 0, pending = null, source = null, lost = null, retry = null; // retry: the board a failed request asked for
 async function load(version) {
+  retry = null;
   if (pending) { pending.abort(); pending = null; setConnected(false); }
   const mine = ++seq, ctl = new AbortController();
   pending = ctl;
@@ -2380,10 +2381,13 @@ async function load(version) {
     let body = null;
     try { body = await res.json(); } catch (e) { body = null; }
     if (mine !== seq) return; // a newer request has taken over
-    if (!res.ok || !body || !Array.isArray(body.tickets)) setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
-    else { state = body; showRestartError(body.restart_error); setConnected(true); }
+    if (!res.ok || !body || !Array.isArray(body.tickets)) {
+      setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
+      // A board the panel couldn't read is announced again once it can; any other failure asks again at the next ping.
+      if (!(body && body.error)) retry = version;
+    } else { state = body; showRestartError(body.restart_error); setConnected(true); }
   } catch (e) {
-    if (mine === seq) setConnected(false);
+    if (mine === seq) { setConnected(false); retry = version; }
   } finally {
     if (pending === ctl) pending = null;
   }
@@ -2395,7 +2399,7 @@ function connect() {
   if (source) source.close();
   const s = source = new EventSource('/api/events');
   s.addEventListener('message', e => { if (source === s) { heard(); load(e.data); } });
-  s.addEventListener('ping', () => { if (source === s) { heard(); if (state) render(); } });
+  s.addEventListener('ping', () => { if (source === s) { heard(); if (retry !== null) load(retry); else if (state) render(); } });
   s.addEventListener('error', () => {
     if (source !== s) return;
     if (lost === null) lost = setTimeout(() => { lost = null; setConnected(false); }, LOST_MS);

@@ -362,3 +362,56 @@ test('0187 AC4: in a real browser, the page rides out the panel stopping and sta
     assert.equal(await b.js('window.__offline'), false, '"Disconnected" never showed');
   } finally { await b.close(); await stop(p); }
 });
+
+// ---------- review round 1 ----------
+
+test('0187 AC4: a page coming back after every page had gone gets the board as it is now, not the last one read', async () => {
+  const { r, p } = await served();
+  const s = openStream(p.port);
+  try {
+    await s.until(e => e.event === 'message', 5000);
+    assert.equal(ticket(await latest(p, s), '0001').status, 'ready');
+  } finally { s.close(); }
+  try {
+    await wait(300);
+    setField(r.file, /^status: ready/m, 'status: blocked');
+    await wait(500); // the change is seen with no page open
+    const back = openStream(p.port);
+    try {
+      const e = await back.until(e => e.event === 'message', 2000);
+      assert.equal(ticket((await stateFor(p.port, e.data)).body, '0001').status, 'blocked', 'the first board it gets');
+    } finally { back.close(); }
+  } finally { await stop(p); }
+});
+
+test('0187 AC4: a request for the board that fails is asked again at the next keep-alive, without waiting for a change', async () => {
+  const { EventSource, sources } = manualSources();
+  const timers = [];
+  const state = { tickets: [T('0001', 'ready')], ideas: [] };
+  const p = fakePage([new Error('blip'), state], { EventSource, setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimeout: () => {} });
+  sources[0].emit('open'); sources[0].emit('message', '7');
+  await p.settle();
+  assert.equal(p.byId('offline').hidden, false);
+  assert.deepEqual(timers, [], 'no timer of its own');
+  sources[0].emit('ping', '1');
+  await p.settle();
+  assert.equal(p.calls.filter(c => c.url === '/api/state').length, 2, 'asked again');
+  assert.equal(p.calls.at(-1).opts.headers['X-Speck-Board'], '7', 'for the same board');
+  assert.equal(p.byId('offline').hidden, true, 'back, with nothing on the board changed');
+  sources[0].emit('ping', '1');
+  await p.settle();
+  assert.equal(p.calls.filter(c => c.url === '/api/state').length, 2, 'and not again once it worked');
+});
+
+test('0187 AC4: a board the panel couldn\'t read isn\'t asked for again until the panel announces another', async () => {
+  const { EventSource, sources } = manualSources();
+  const timers = [];
+  const p = fakePage([{ status: 500, body: { error: 'Ticket 0002 has no frontmatter.' } }], { EventSource, setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimeout: () => {} });
+  sources[0].emit('open'); sources[0].emit('message', '1');
+  await p.settle();
+  assert.match(p.byId('offline').textContent, /couldn't read the tickets: Ticket 0002 has no frontmatter\./);
+  sources[0].emit('ping', '1');
+  await p.settle();
+  assert.equal(p.calls.filter(c => c.url === '/api/state').length, 1, 'not at a keep-alive');
+  assert.deepEqual(timers, [], 'nor on a timer');
+});

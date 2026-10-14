@@ -405,6 +405,8 @@ export async function panelServer() {
     const these = waiting.filter(res => !closed(res));
     waiting = [];
     const wanted = refresh && feed.watched();
+    // With no page open, a change isn't read until one asks, but the last reading is out of date.
+    if (refresh && !wanted) latest = null;
     refresh = false;
     if (!these.length && !wanted) return;
     reading = { at: writes, these };
