@@ -48,7 +48,7 @@ Every tag looks the same size and can be tapped: the priority tag on a draft sti
 - Self-check: the Plan priority tag's pointer was overridden by the new help pointer; it now applies only to tags that show a tip, with a test.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Every tag on a ticket (its priority, size, risk, and bug or fix) now explains itself. Tap or click one, or hover over it with a mouse, and a small note next to it says what it means, for example "M: several files or one new component" or "Low risk: ships by itself once approved". The risk note follows your auto-ship settings. On a draft in Plan, the priority tag still opens the menu that sets it. On a phone, every tag is now as easy to hit as the priority tag, and the tags are evenly spaced. To see it, open the panel and tap any tag. Worth a look: the gaps between tags are wider on a phone so the larger tap areas don't overlap, and keyboard users now pass through each tag when they press Tab.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +58,11 @@ Every tag looks the same size and can be tapped: the priority tag on a draft sti
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Opening the Plan priority menu with Enter rebuilds the row, so keyboard focus drops back to the page and the menu's buttons aren't focused. Skipped as a new note: covered by speck/ideas/2026-10-14-reach-the-priority-tag-and-a-ticket-s-top-row-with-the-keyboard.md.
+- Known limit: on a phone, a Shipped card's bug or fix tag's tap area reaches about 4 px into the title line above it.
+- Known limit: hovering one tag with a mouse replaces a tip opened by clicking another, and both close when the pointer leaves.
+- 0128 AC3 and 0148 AC2 still fail now and then in a full run (draft fix ticket 0173).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +130,75 @@ Every tag looks the same size and can be tapped: the priority tag on a draft sti
     ],
     "escalation_question": "",
     "summary": "The tags have consistent styling, larger phone tap areas and explanations accessible by touch, mouse and keyboard. The recorded suite passes, but an open ticket can show outdated shipping guidance after auto-ship settings change. Fix that refresh bug before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d2b9a986dcd444eef6906e6fffb073ada60d2000",
+    "thread_id": "01a13bbe-a5cf-7802-948b-998c8df08c60",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 674351,
+      "cached_input_tokens": 613632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2717,
+      "reasoning_output_tokens": 168
+    },
+    "saved_at": "2026-10-14T18:52:10.973Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html mobile tag rules preserve equal visible styling and extend tap areas invisibly. Both 0165 AC1 browser tests passed, checking spacing and 44 × 44 px hit areas across Plan, Build and the full pane."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "explained(), pressWithKeys(), priorityMeaning() and riskMeaning() provide the required interactions and explanations. AC2 tests passed, including configuration integration and the new refresh regression. Independently verified that changing only auto_ship updates the open pane's risk label and tooltip."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "showTip() positions the shared tooltip within the viewport; document click, Escape and scroll handlers dismiss it. Both AC3 browser tests passed, covering ticket isolation and containment at 375 px."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "fieldTags() retains priorityPicker() for Plan drafts and uses explained() elsewhere. AC4 browser and fake-page tests passed, including the priority cursor check."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "explained() and priorityPicker() supply meaningful aria-labels and keyboard access. Both AC5 tests passed. The full recorded output reports 1626 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:1433",
+        "issue": "The open full ticket pane previously retained outdated risk explanations when only auto_ship changed.",
+        "suggested_fix": "Include auto_ship in tagData() and cover label and tooltip updates with a refresh regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The tags now provide explanations by touch, mouse and keyboard, with consistent styling and larger phone tap areas. The outdated shipping guidance bug is fixed and covered by a regression test. All acceptance criteria pass, with no blocking concerns remaining."
   }
 }
 ```
