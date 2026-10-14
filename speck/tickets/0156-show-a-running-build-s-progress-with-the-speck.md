@@ -47,7 +47,11 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
 - The speck dot is the accent red (`--accent`), as in the ensō on the landing site; the circle itself stays neutral so the speck is the only red thing that moves.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each ticket being built in the Build queue now shows a large open circle, an ensō, at the right of its card, with how long the build has run inside it. A small red dot travels round the circle while an agent is working on the ticket, and rests at the top when the ticket is waiting for you, paused, blocked or stopped. Under the title, a short sentence says what's happening (for example "Codex is reviewing · round 2" or "Approved · waiting for you to ship it"), and a row of five dots shows which stage it has reached. Ready tickets show none of this.
+
+To see it, open the panel while a build is running, on your phone or computer, in light or dark mode. If your device asks for reduced motion, nothing moves.
+
+Worth keeping an eye on: when the panel's Build column is narrow (around 700 px wide), long titles and tags get squeezed beside the circle. The round number shown during a review is the last one recorded, so it can lag one round behind while the next round runs.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,11 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- To the inbox: speck/ideas/2026-10-14-give-a-running-build-room-in-a-narrow-build-column.md (titles and tags squeeze beside the ensō at about 700 px).
+- To the inbox: speck/ideas/2026-10-14-say-which-review-round-is-running.md ("round <n>" is the last recorded round, so it lags while the next one runs).
+- Known limit: a paused build's timer inside the ensō still reads "Paused · 01:05", as 0071 and 0145 check, though the sentence under the title says "Paused" too.
+- Known limit: the ensō, speck and stage dots override the panel's square-corners rule, as they must be round.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -201,6 +210,83 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
     ],
     "escalation_question": "",
     "summary": "The original waiting-colour issue is fixed and the suite passes. One related case remains: starting shipment from a completed build leaves the Shipping sentence purple instead of returning it to normal text colour."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f6605b467baa5e4db0883d20920786f8f6a549d5",
+    "thread_id": "01a1392c-926f-7cc2-8482-3c18605d9449",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 557505,
+      "cached_input_tokens": 490880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2572,
+      "reasoning_output_tokens": 136
+    },
+    "saved_at": "2026-10-14T06:56:40.377Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html progressOf() renders the ensō and elapsed timer only for in-flight tickets. Passing AC1 and browser tests verify its geometry and that ready tickets have no progress display."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doing() controls working and resting states; CSS provides a seven-second orbit. Passing tests cover panel-started shipping, paused, blocked, stopped and approved states, plus reduced motion."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "doing() now clears the tone before rendering Shipping and gives approved waiting tickets purple independently of build_exit. Passing sentence and regression tests cover both previously reported colour defects."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "progressOf() renders five stage dots and the current name. Passing AC4 and browser tests verify completion colours, current-state colour, halo, conditional pulse and reduced motion."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing browser tests cover 375 px and desktop widths in light and dark modes without overflow. The full test log confirms 1454 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Approved tickets without build_exit previously lacked purple waiting progress colours. The fix and regression coverage remain in place.",
+        "suggested_fix": "No further change needed.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Panel-started shipping previously retained purple from a completed build. doing() now returns the normal shipping tone immediately; the regression test starts shipping a ticket with build_exit and verifies the transition.",
+        "suggested_fix": "No further change needed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The progress display meets all five criteria. Both colour defects are fixed and covered by regression tests. Phone and desktop checks pass in both themes, with no suite failures. Ready for the product owner to consider merging."
   }
 }
 ```
