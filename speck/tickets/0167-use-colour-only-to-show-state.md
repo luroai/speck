@@ -1,7 +1,7 @@
 ---
 id: "0167"
 title: "Use colour only to show state"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0167 · Use colour only to show state
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel uses colour for decoration as much as for meaning: each Plan tab and the Shipped section have their own accent stripe, every card has a coloured left edge, and ids and links are in the accent red. Red also means blocked and high risk, so colour no longer tells the user where to look.
