@@ -39,6 +39,7 @@ While a build is running, the Auto-build button says which ticket and which stag
 
 ## Notes
 - Builds after 0161, as both change the header's styles, and after 0168, which draws the builder.
+- Failing before this build: none
 - The Build card's stage names come from `progress()` in `templates/panel.html`; the speck pulse should match the one 0156 added.
 
 ## In plain words
