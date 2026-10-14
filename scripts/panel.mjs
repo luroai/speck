@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
+import { boardFeed } from './board-feed.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship and the speck run switch) ----------
 
@@ -332,7 +333,7 @@ function boardReader(repo) {
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
 // POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
-// included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177). It also watches the code, and when it changes, hands over to a
+// included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
   const env = process.env;
@@ -380,36 +381,52 @@ export async function panelServer() {
   // connection has closed by the time its reading would start doesn't cause one.
   // The server is ready once its board reader has loaded the code, so a change to it after then can't reach the reader.
   const readBoard = await boardReader(repo);
+  const runs = runsOf(repo); // the main checkout's, which doesn't move
   let writes = 0, reading = null, waiting = [];
   const closed = res => res.destroyed || !res.socket || res.socket.destroyed;
+  // What /api/state answers with for a reading: the board, plus speck run's state and the last restart's error.
+  const stateOf = out => {
+    if (out.error) return { status: 500, body: JSON.stringify({ error: out.error }) };
+    // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
+    try { const run = runState(runs); return { status: 200, body: JSON.stringify({ ...out.board, ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) }) }; }
+    catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
+  };
   const answerState = (res, out) => {
     if (closed(res)) return;
-    if (out.error) return send(res, 500, 'application/json', JSON.stringify({ error: out.error }));
-    // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
-    try { const run = runState(runsOf(repo)); send(res, 200, 'application/json', JSON.stringify({ ...out.board, ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) })); }
-    catch (e) { send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+    const { status, body } = stateOf(out);
+    send(res, status, 'application/json', body);
   };
+  // 0187: each board that differs from the last is announced to every open page's event stream (see boardFeed), and
+  // latest is that reading, which each page then asks for, so a change is read once however many pages are open.
+  let latest = null, refresh = false;
+  const feed = boardFeed(repo, runs, () => { refresh = true; if (!reading) nextReading(); });
+  const announce = out => { latest = { out, at: writes, version: feed.announce(stateOf(out).body) }; };
   const nextReading = () => {
     const these = waiting.filter(res => !closed(res));
     waiting = [];
-    if (!these.length) return;
+    const wanted = refresh && feed.watched();
+    refresh = false;
+    if (!these.length && !wanted) return;
     reading = { at: writes, these };
     readBoard().then(out => {
       const done = reading;
       reading = null;
       // A write has finished since this reading started: its requests wait for the next one, which shows the write.
-      if (done.at !== writes) waiting = [...done.these, ...waiting];
-      else for (const res of done.these) answerState(res, out);
+      if (done.at !== writes) { waiting = [...done.these, ...waiting]; refresh = true; }
+      else { announce(out); for (const res of done.these) answerState(res, out); }
       nextReading();
     });
   };
-  const askState = res => {
+  const changed = feed.changed;
+  // A page asking for the board a stream announced gets the latest reading, unless a write has finished since it.
+  const askState = (res, told = null) => {
+    if (told !== null && latest && latest.at === writes && latest.version >= told) return answerState(res, latest.out);
     if (reading && reading.at === writes) return reading.these.push(res);
     waiting.push(res);
     if (!reading) nextReading();
   };
   // Every write's answer: what it did, after which a reading started before it is out of date.
-  const wrote = (res, out) => { writes++; send(res, out.status, 'application/json', JSON.stringify(out.body)); };
+  const wrote = (res, out) => { writes++; changed(); send(res, out.status, 'application/json', JSON.stringify(out.body)); };
   const server = http.createServer((req, res) => {
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return send(res, 403, 'text/plain', 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
     const where = req.url.split('?')[0];
@@ -489,7 +506,11 @@ export async function panelServer() {
       }
       return send(res, 200, icons[where], body);
     }
-    if (where === '/api/state') return askState(res);
+    if (where === '/api/events') return feed.open(res, latest !== null, stopping);
+    if (where === '/api/state') {
+      const told = String(req.headers['x-speck-board'] ?? '');
+      return askState(res, /^\d{1,15}$/.test(told) ? Number(told) : null);
+    }
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log$/);
     if (log) {
       try { return send(res, 200, 'application/json', JSON.stringify(panelLog(repo, log[1]))); }
@@ -523,6 +544,7 @@ export async function panelServer() {
   const stop = () => {
     stopping = true;
     clearInterval(watcher);
+    feed.close(); // each page reconnects, to the server taking over
     setTimeout(() => process.exit(0), PANEL_STOP_MS).unref();
     server.close(() => process.exit(0));
     server.closeIdleConnections();
@@ -530,7 +552,7 @@ export async function panelServer() {
   // Starts a server on the new code and hands over to it once it's ready. If it can't start, this one keeps serving and
   // says why, until a later change.
   const restart = () => {
-    if (codeHash() === running) { restartError = null; return; } // back to the code that's running: nothing to do
+    if (codeHash() === running) { if (restartError) { restartError = null; changed(); } return; } // back to the code that's running: nothing to do
     const { child } = startPanelServer(args, token, server, 4);
     successor = child;
     let settled = false;
@@ -541,6 +563,7 @@ export async function panelServer() {
       child.kill('SIGKILL');
       successor = null;
       restartError = line;
+      changed();
       console.error(`speck panel couldn't restart with the new code: ${line}\nIt's still running the code it had, and tries again on the next change.`);
     };
     const timer = setTimeout(() => fail(`it wasn't ready within ${PANEL_START_MS / 1000} seconds`), PANEL_START_MS);

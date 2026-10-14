@@ -93,7 +93,7 @@ test('0059 AC3: panel.html being a folder also gives a plain-text 500 naming the
   } finally { await stop(p); }
 });
 
-test('0059 AC4: /api/state reads afresh and the page still polls it every 2 seconds', async () => {
+test('0059 AC4: /api/state reads afresh, and the page asks for it when the panel says the board changed, not on a timer (0187)', async () => {
   const { r, port, p } = await served();
   try {
     const first = JSON.parse((await request(port, { pathName: '/api/state' })).body);
@@ -101,6 +101,7 @@ test('0059 AC4: /api/state reads afresh and the page still polls it every 2 seco
     const second = JSON.parse((await request(port, { pathName: '/api/state' })).body);
     assert.equal(second.tickets.length, first.tickets.length + 1);
     const html = (await request(port)).body;
-    assert.match(html, /POLL_MS = 2000/);
+    assert.match(html, /new EventSource\('\/api\/events'\)/);
+    assert.doesNotMatch(html, /POLL_MS/);
   } finally { await stop(p); }
 });

@@ -9,6 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { tickingSource } from './stream.mjs';
 
 // ---------- 0031: a read-only control panel in the browser ----------
 
@@ -189,7 +190,9 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     return { ok: true, status: 200, json: async () => next };
   };
   const script = page().match(/<script>([\s\S]*?)<\/script>/)[1];
-  vm.runInNewContext(script, { document, fetch, setTimeout: fn => timers.push(fn), setInterval, clearInterval, AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals });
+  const ctx = { document, fetch, setTimeout: fn => timers.push(fn), setInterval, clearInterval, AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals };
+  if (!Object.hasOwn(globals, 'EventSource')) ctx.EventSource = tickingSource(ctx); // 0187: the board's changes, as the poll's timer was
+  vm.runInNewContext(script, ctx);
   const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
   const settle = () => new Promise(r => setTimeout(r, 20));
   // A key pressed anywhere on the page, as the browser sends it to the document (0054).
@@ -206,7 +209,7 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
   };
   // A pointer of a type ('mouse', 'touch' or 'pen') moving over the page, as the browser tells the document first (0154).
   const pointer = type => { if (document.listeners.pointerover) document.listeners.pointerover({ pointerType: type }); };
-  return { byId: id => document.getElementById(id), timers, intervals, all, settle, calls, key, press, pointer };
+  return { byId: id => document.getElementById(id), document, timers, intervals, all, settle, calls, key, press, pointer }; // document: its listeners (0187)
 }
 
 export const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };

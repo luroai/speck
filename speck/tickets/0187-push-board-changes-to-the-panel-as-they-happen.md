@@ -45,6 +45,12 @@ The panel sends each change to every open page as it happens, and pages no longe
 - Checked 2026-10-14: Cloudflare's own docs give a 100-second proxy read timeout (error 524), and say Cloudflare Tunnel buffers proxied answers unless they're `Content-Type: text/event-stream`, which it streams as the data arrives.
 - Checked 2026-10-14: Node's docs say `fs.watch` gained `recursive` support on Linux in v19.1.0; it works on the installed Node v22.23.3.
 - Builds after 0177 (one shared reading of the board for every request) and 0186.
+- Design: the stream (`/api/events`) announces each new board by number, and the page then fetches `/api/state` with that number, answered from the one reading that board came from. The board isn't sent over the stream itself because 21 real-browser tests feed the page by replacing its fetch of `/api/state`, and criterion 5 keeps them passing. It also leaves room for 0188.
+- The page redraws on each keep-alive (every 5 seconds), so what it works out from the clock still moves on between changes, as it did with every poll. The board is read again every third keep-alive (15 seconds) for what no file records.
+- An answer still waiting when the next board is announced still shows "Disconnected", as before: 0186 changes that rule, and `test/panel.test.mjs` (0031 AC4) checks it.
+- Besides `test/panel-0059.test.mjs` AC4, `test/panel.test.mjs` 0031 AC4 also checked that the page polls every 2 seconds (`POLL_MS = 2000`, `setTimeout(poll, …)`), so it changes the same way.
+- The fake page in `test/support/panel.mjs` gets an EventSource whose server announces a new board each time the test runs its 2-second timer, as the poll's timer did, so the fake-page tests run unchanged.
+- Self-check: speck run's folder is now looked up once, not on every answer (one `git worktree list` each); a folder that isn't there yet is watched through its parent for only that name, since git rewrites its own files as it reads; a burst of build log writes starts at most one reading every 2 seconds.
 - Failing before this build: `0173 AC2: no test in test/ checks once that a process it stopped has gone` (it flags `test/panel-0177.test.mjs:159`).
 
 ## In plain words
