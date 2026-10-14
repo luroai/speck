@@ -3,9 +3,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, good, page, panelRepo, freePort, startPanel, stop, fakePage, round, exitOf, queueRows, stagesOf, nowStep, findChrome, browserPage } from './support/panel.mjs';
+import { T, fm, good, page, panelRepo, freePort, startPanel, stop, fakePage, round, exitOf, queueRows, dotsOf, nowStep, findChrome, browserPage } from './support/panel.mjs';
 
 // ---------- 0055: a moving dot of light on the current step of a ticket being built or reviewed ----------
+// Since 0156 the current step is a dot that pulses, and the speck goes round the ensō beside it (test/panel-0156.test.mjs).
 
 const chrome = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const refresh = async p => { p.timers.shift()(); await p.settle(); };
@@ -14,7 +15,7 @@ const ago = min => new Date(Date.now() - min * 60000).toISOString();
 const idOf = row => (function find(n) { if (n.className === 'id') return n._text; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; })(row);
 const rowOf = (p, id) => queueRows(p).find(r => idOf(r) === id);
 const moving = n => /(^| )moving( |$)/.test(n.className || '');
-const movingSteps = row => stagesOf(row).children.filter(moving);
+const movingSteps = row => dotsOf(row).filter(moving);
 
 const board = () => ({
   tickets: [
@@ -55,7 +56,7 @@ test('0055 AC3: the motion is drawn only when the browser doesn\'t ask for reduc
   let depth = 0, end = css.indexOf('{', at);
   for (let i = end; i < css.length; i++) { if (css[i] === '{') depth++; else if (css[i] === '}' && --depth === 0) { end = i; break; } }
   const inside = css.slice(at, end + 1), outside = css.slice(0, at) + css.slice(end + 1);
-  assert.match(inside, /\.moving::after\s*\{[^}]*animation:/, 'the moving dot is inside it');
+  assert.match(inside, /\.dot\.now\.moving\s*\{[^}]*animation:/, 'the pulsing dot is inside it');
   assert.doesNotMatch(outside, /\.moving/, 'no rule outside it changes a moving step');
   assert.doesNotMatch(outside, /animation:/, 'and nothing else animates');
 });
@@ -95,26 +96,19 @@ const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.query
 // The page point at a character offset in the text of the element an expression finds.
 const charIn = (expr, offset) => `(() => { const n = ${expr}.firstChild, r = document.createRange(); r.setStart(n, ${offset}); r.setEnd(n, ${offset} + 1);
   const x = r.getBoundingClientRect(); return [x.left + 1, x.top + x.height / 2]; })()`;
-const dotLeft = id => `parseFloat(getComputedStyle(${row(id)}.querySelector('.stages .now'), '::after').left)`;
 
-test('0055 AC1-AC4: in a real browser, only the in-flight step moves, side to side within itself, through refreshes, and not with reduced motion', chrome, async () => {
+test('0055 AC1-AC4: in a real browser, only the in-flight step moves, through refreshes, and not with reduced motion', chrome, async () => {
   const r = repoWithBoard();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const { port } = panel;
   const b = await browserPage(`http://127.0.0.1:${port}/`);
   try {
     await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the queue');
-    // AC1 and AC2: one animation, on 0002's current step, running forever (Infinity comes back as null) and back and forth.
-    const anims = `document.getAnimations().map(a => ({ target: a.effect.target === ${row('0002')}.querySelector('.stages .now'), pseudo: a.effect.pseudoElement,
-      iterations: a.effect.getTiming().iterations, direction: a.effect.getTiming().direction, state: a.playState }))`;
-    assert.deepEqual(await b.js(anims), [{ target: true, pseudo: '::after', iterations: null, direction: 'alternate', state: 'running' }]);
-    // The dot stays within the step: sample it as it goes.
-    const width = await b.js(`${row('0002')}.querySelector('.stages .now').clientWidth`);
-    const dot = await b.js(`parseFloat(getComputedStyle(${row('0002')}.querySelector('.stages .now'), '::after').width)`);
-    const seen = [];
-    for (let i = 0; i < 12; i++) { seen.push(await b.js(dotLeft('0002'))); await new Promise(res => setTimeout(res, 150)); }
-    assert.ok(new Set(seen.map(Math.round)).size > 3, `the dot moves: ${seen}`);
-    for (const x of seen) assert.ok(x >= 0 && x + dot <= width + 0.5, `the dot at ${x} stays within the ${width}px step`);
+    // AC1 and AC2: since 0156, two animations, both on 0002: its speck going round and its current step's dot pulsing,
+    // each running forever (Infinity comes back as null).
+    const anims = `document.getAnimations().map(a => ({ target: a.effect.target === ${row('0002')}.querySelector('.enso .orbit') ? 'orbit' : a.effect.target === ${row('0002')}.querySelector('.dot.now') ? 'dot' : 'other',
+      iterations: a.effect.getTiming().iterations, state: a.playState }))`;
+    assert.deepEqual(await b.js(anims), [{ target: 'orbit', iterations: null, state: 'running' }, { target: 'dot', iterations: null, state: 'running' }]);
     // AC4: the motion carries on through a refresh, and a selection in the row stays.
     const t = `${row('0002')}.querySelector('.title')`;
     await b.drag(await b.js(charIn(t, 0)), await b.js(charIn(t, 6)));
@@ -123,14 +117,10 @@ test('0055 AC1-AC4: in a real browser, only the in-flight step moves, side to si
     await refreshed(b, 'a refresh'); await refreshed(b, 'a second refresh');
     assert.equal(await b.js(`document.getAnimations()[0] === window.anim && window.anim.currentTime > window.at`), true, 'the same animation runs on');
     assert.equal(await b.js('getSelection().toString()'), 'A buil', 'the selection stays');
-    // AC3: with reduced motion, nothing moves, and the step looks as it did before 0055.
+    // AC3: with reduced motion, nothing moves, and the step keeps its in-flight blue.
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
     await b.until(`document.getAnimations().length === 0`, 'no animations');
-    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.stages .now'), '::after').content`), 'none', 'no dot is drawn');
-    const look = id => b.js(`(() => { const s = getComputedStyle(${row(id)}.querySelector('.stages .now')); return [s.borderTopColor, s.color, s.position, s.overflow]; })()`);
-    const blocked = await look('0004'); // a step 0055 doesn't touch, for its geometry
-    assert.deepEqual((await look('0002')).slice(2), blocked.slice(2), 'laid out as an untouched step');
-    assert.equal((await look('0002'))[0], 'rgb(59, 98, 134)', 'in the in-flight blue');
+    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.dot.now')).backgroundColor`), 'rgb(59, 98, 134)', 'in the in-flight blue');
   } finally {
     await b.close();
     await stop(panel);

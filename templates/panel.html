@@ -143,24 +143,45 @@
   .q .back-to-plan:disabled { cursor: default; opacity: .6; }
   .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
-  .stages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin: 8px 0 4px; }
-  .stages div { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: .12em; padding-top: 5px; border-top: 3px solid var(--line-soft); }
-  .stages .d { border-top-color: var(--ok); color: var(--muted); }
-  .stages .now { border-top-color: var(--run); color: var(--run); }
   .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .q.blocked { border-left: 2px solid var(--bad); }
-  .stages .now.bad { border-top-color: var(--bad); color: var(--bad); }
   /* An approved ticket whose build has exited is waiting for you to ship it: purple, as nothing is wrong (0138) */
   .q.to-ship { border-left: 2px solid var(--idea); }
-  .stages .now.to-ship { border-top-color: var(--idea); color: var(--idea); }
   .act.to-ship { color: var(--idea); }
-  /* A step a build is working on now: a dot of light moves side to side along its line, unless the browser asks for reduced motion */
+  /* 0156: an in-flight ticket's progress. The ensō sits at the right of its top row, with the timer over it, beside the
+     id, title, tags, a sentence saying what's happening and a dot for each stage. Its circle is a thin neutral line, open
+     at the top left; the red speck rests at the top. They and the stage dots are the panel's only round things. */
+  .q .top:has(> .enso) { grid-template-columns: minmax(0, 1fr) 112px; grid-template-rows: auto auto auto auto 1fr; column-gap: 14px; align-items: start; }
+  .q .top:has(> .enso) .line { grid-area: 1 / 1; }
+  .q .top:has(> .enso) .tag-row { grid-area: 2 / 1; }
+  .q .top .enso { grid-area: 1 / 2 / 6 / 3; position: relative; width: 112px; height: 112px; }
+  .q .top .enso .ring { position: absolute; inset: 0; border: 1px solid var(--faint); border-radius: 50% !important;
+    -webkit-mask: conic-gradient(from 285deg, transparent 0 50deg, #000 0); mask: conic-gradient(from 285deg, transparent 0 50deg, #000 0); }
+  .q .top .enso .orbit { position: absolute; inset: 0; }
+  .q .top .enso .speck { position: absolute; top: -4px; left: calc(50% - 4.5px); width: 9px; height: 9px; border-radius: 50% !important; background: var(--accent); }
+  .q .top:has(> .enso) .sub { grid-area: 1 / 2 / 6 / 3; align-self: start; justify-self: center; display: flex; align-items: center; height: 112px; margin: 0;
+    max-width: 84px; text-align: center; font-size: 13px; color: var(--text); }
+  .q .top .say { grid-area: 3 / 1; margin-top: 8px; font-size: 13px; color: var(--text); }
+  .q .top + .act { margin-top: 6px; } /* a ready ticket's Queued line, with no bar above it now */
+  .q .top .say.bad { color: var(--bad); }
+  .q .top .say.to-ship { color: var(--idea); }
+  .q .top .dots { grid-area: 4 / 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; margin-top: 8px; }
+  .q .top .dot { flex: none; width: 8px; height: 8px; border-radius: 50% !important; background: var(--line); }
+  .q .top .dot.d { background: var(--ok); }
+  .q .top .dot.now { color: var(--run); background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
+  .q .top .dot.now.bad { color: var(--bad); }
+  .q .top .dot.now.to-ship { color: var(--idea); }
+  .q .top .stage { margin-left: 3px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--run); }
+  .q .top .stage.bad { color: var(--bad); }
+  .q .top .stage.to-ship { color: var(--idea); }
+  /* While an agent is at work: the speck goes round the ensō, a lap about every 7 seconds, and the current stage's dot
+     pulses gently, unless the browser asks for reduced motion */
   @media (prefers-reduced-motion: no-preference) {
-    .stages .now.moving { position: relative; }
-    .stages .now.moving::after { content: ''; position: absolute; top: -3px; left: 0; width: 16px; height: 3px;
-      background: linear-gradient(90deg, transparent, var(--panel), transparent); animation: sweep 1.6s ease-in-out infinite alternate; }
-    @keyframes sweep { to { left: calc(100% - 16px); } }
+    .q .top .enso.moving .orbit { animation: orbit 7s linear infinite; }
+    @keyframes orbit { to { transform: rotate(1turn); } }
+    .q .top .dot.now.moving { animation: pulse 1.4s ease-in-out infinite alternate; }
+    @keyframes pulse { to { box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 8%, transparent); } }
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
     @keyframes flash { 0%, 40% { background-color: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); } }
@@ -358,8 +379,6 @@
     .q .top { min-height: 44px; }
     .q .full-open { min-height: 44px; }
     .q .stop-build, .q .back-to-plan { min-width: 44px; min-height: 44px; }
-    .stages { grid-template-columns: repeat(5, minmax(min-content, 1fr)); }
-    .stages div { text-transform: none; letter-spacing: 0; white-space: nowrap; }
     .resume { flex-wrap: wrap; }
     .resume .cmd { min-width: 0; }
     .resume .copy { min-width: 44px; min-height: 44px; }
@@ -444,6 +463,29 @@ function progress(t) {
   const labels = ['Build', 'Self-check', rounds.length ? `Review ${latest}` : 'Review', 'Approve', 'Ship'];
   const current = t.status === 'ready' ? -1 : approved ? 4 : done.indexOf(false); // approved: Ship is current
   return labels.map((label, i) => ({ label, state: t.status === 'ready' ? '' : done[i] ? 'done' : i === current ? 'now' : '' }));
+}
+// 0156: what an in-flight queue ticket is doing, as its card says it: a plain sentence, the card's state colour for it
+// ('bad', 'to-ship' or '' for the normal text colour), and whether an agent is at work on it, which moves its speck.
+// `shipping` is true while a ship of it is running, whoever started it.
+// An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet. One that is
+// shipping is at work, in the normal text colour.
+function doing(t, shipping) {
+  if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
+  const approved = t.status === 'approved' || t.status === 'done';
+  const tone = t.red ? 'bad' : t.to_ship || approved ? 'to-ship' : '';
+  const at = sentence => ({ sentence, tone, moving: false });
+  if (t.status === 'blocked') return at('Blocked · it has a question for you');
+  if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
+  if (t.paused) return at('Paused');
+  if (approved) return at('Approved · waiting for you to ship it');
+  const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
+  let sentence = now === 1 ? 'Checking its own work' : 'Writing tests and code';
+  if (t.status === 'reviewing') {
+    const who = typeof t.reviewer === 'string' && t.reviewer.trim() ? t.reviewer.trim() : 'the reviewer';
+    const n = (steps[2] && /(\d+)$/.exec(steps[2].label)) || [null, '1'];
+    sentence = `${who[0].toUpperCase()}${who.slice(1)} is reviewing · round ${n[1]}`;
+  }
+  return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };
 }
 // An amount in US dollars, to the cent.
 const dollars = n => `$${n.toFixed(2)}`;
@@ -1348,9 +1390,8 @@ function shapingToggle(m) {
   $('shaping-toggle').replaceChildren(button('tickets', 'Tickets', m.drafts.length), button('ideas', 'Ideas', m.ideas.length), button('inbox', 'Inbox', m.inbox.length));
   $('shaping-section').className = `shaping ${shapingView}`;
 }
-// A queue row: the ticket, its five-step bar, then what's under it. A blocked ticket is red, and so is one whose build has exited,
-// unless it's approved: then it's waiting for you to ship it, and purple.
-// A building or reviewing ticket that isn't red has a dot moving on its current step, unless its build is paused.
+// A queue row: the ticket, its progress when it's in flight (0156), then what's under it. A blocked ticket is red, and so
+// is one whose build has exited, unless it's approved: then it's waiting for you to ship it, and purple.
 function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   const id = String(t.id), isOpen = openQueue.has(id);
@@ -1362,10 +1403,7 @@ function queueItem(t) {
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
   const q = goable(el('div', `${cls}${isOpen ? ' open' : ''}`, null, top), t);
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
-  const bar = el('div', 'stages');
-  const moving = (t.status === 'building' || t.status === 'reviewing') && !t.red && !t.paused; // an agent is at work on it
-  for (const s of t.steps) bar.appendChild(el('div', s.state === 'done' ? 'd' : s.state === 'now' ? (t.red ? 'now bad' : t.to_ship ? 'now to-ship' : moving ? 'now moving' : 'now') : null, s.label));
-  q.appendChild(bar);
+  else progressOf(top, t, doing(t, t.shipping || shippingId === id));
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));
     if (isOpen) {
@@ -1399,6 +1437,23 @@ function queueItem(t) {
     q.appendChild(logBox(id));
   }
   return q;
+}
+// 0156: an in-flight ticket's progress, in its top row: the ensō, with the timer laid over it, then under the title what
+// it's doing in a sentence and a dot for each of the five stages, with the current one's name. The red speck goes round
+// the ensō, and the current stage's dot pulses, only while an agent is at work on it.
+function progressOf(top, t, d) {
+  const tone = d.tone ? ` ${d.tone}` : '';
+  top.insertBefore(el('div', `enso${d.moving ? ' moving' : ''}`, null, el('div', 'ring'), el('div', 'orbit', null, el('span', 'speck'))), child(top, 'sub'));
+  const sub = child(top, 'sub'); // the timer stays last in the top row (0058); the grid lays it over the ensō
+  top.insertBefore(el('div', `say${tone}`, d.sentence), sub);
+  const dots = el('div', 'dots'), now = t.steps.find(s => s.state === 'now');
+  for (const s of t.steps) {
+    const dot = el('span', s.state === 'done' ? 'dot d' : s.state === 'now' ? `dot now${tone}${d.moving ? ' moving' : ''}` : 'dot');
+    dot.title = s.label;
+    dots.appendChild(dot);
+  }
+  if (now) dots.appendChild(el('span', `stage${tone}`, now.label));
+  top.insertBefore(dots, sub);
 }
 // An open building or reviewing ticket whose build speck run launched and is running or paused has a Stop build button.
 // It asks first, and opens or closes nothing.

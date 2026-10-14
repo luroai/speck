@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelModel, T, round, fakePage, queueRows, stagesOf, exitOf, isRed, nowStep, findText } from './support/panel.mjs';
+import { page, panelModel, T, round, fakePage, queueRows, dotsOf, exitOf, isRed, nowStep, findText } from './support/panel.mjs';
 
 const MESSAGE = 'speck ship refused: tests failed.';
 const purple = n => /\bto-ship\b/.test(n.className || '');
@@ -48,9 +48,9 @@ test('0138 AC1: an approved ticket whose build has exited is purple on its left 
   assert.equal(m.queue[0].to_ship, true);
   const { p, rows: [a] } = await rows({ tickets: [waiting()], ideas: [] });
   assert.match(a.className, /\bto-ship\b/);
-  assert.equal(nowStep(a).textContent, 'Ship');
+  assert.equal(nowStep(a).title, 'Ship');
   assert.match(nowStep(a).className, /\bto-ship\b/);
-  assert.equal(stagesOf(a).children.filter(purple).length, 1, 'only the current step');
+  assert.equal(dotsOf(a).filter(purple).length, 1, 'only the current step');
   const label = findText(p, a, 'Build finished without shipping');
   assert.ok(label, 'the label');
   const line = p.all(a).find(n => n.children && n.children.includes(label)) || p.all(a).find(n => n.textContent === 'Build finished without shipping' && n.className);
@@ -70,8 +70,8 @@ test('0138 AC1: the CSS draws each of those in purple', () => {
   assert.equal(ruleVar('.q.to-ship', 'border-left'), '--idea', 'the left border');
   assert.equal(ruleVar('.q.to-ship.open', 'background'), '--idea-bg', 'the open row\'s tint');
   assert.equal(ruleVar('.q.to-ship.open', 'border-left-color'), '--idea', 'the open row\'s left border');
-  assert.equal(ruleVar('.stages .now.to-ship', 'border-top-color'), '--idea', 'the current step\'s line');
-  assert.equal(ruleVar('.stages .now.to-ship', 'color'), '--idea', 'the current step\'s label');
+  assert.equal(ruleVar('.q .top .dot.now.to-ship', 'color'), '--idea', 'the current step\'s dot (0156)');
+  assert.equal(ruleVar('.q .top .stage.to-ship', 'color'), '--idea', 'the current step\'s name (0156)');
   assert.equal(ruleVar('.act.to-ship', 'color'), '--idea', 'the label line');
   assert.equal(ruleVar('.question.exit.to-ship', 'border-left-color'), '--idea', 'the message\'s edge');
   // The open tint comes after .q.open, so it wins over the plain open tint.
@@ -111,7 +111,7 @@ test('0138 AC3: blocked, stopped-before-finishing and stopped-unexpectedly ticke
     assert.ok(p.all(row).some(n => n.className === 'act bad' && n.textContent === label), label);
   assert.equal(ruleVar('.q.blocked', 'border-left'), '--bad');
   assert.equal(ruleVar('.q.blocked.open', 'background'), '--bad-bg');
-  assert.equal(ruleVar('.stages .now.bad', 'border-top-color'), '--bad');
+  assert.equal(ruleVar('.q .top .dot.now.bad', 'color'), '--bad'); // the current step's dot since 0156
   assert.match(css(), /\.question\.exit \{ border-left-color: var\(--bad\);/);
   const { p: q, row } = await openRow(state, '0001');
   assert.match(row.className, /\bblocked\b.*\bopen\b|\bopen\b.*\bblocked\b/);

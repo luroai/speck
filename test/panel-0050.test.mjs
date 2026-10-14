@@ -292,10 +292,10 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     assert.equal(await sel(), date, 'and the selection grows with it');
     // From the title across the minutes.
     await select('#queue .q .title', 2, sub, 5);
-    assert.match(await sel(), /^long build\s+S\s+low\s+07:\d\d$/);
+    assert.match(await sel(), /^long build\s+S\s+low\s+Writing tests and code\s+Build\s+07:\d\d$/); // what it's doing and its stage come before the timer since 0156
     await clock(late + 3 * 60000);
     await b.until(`document.querySelector('${sub}').textContent.startsWith('08:')`, 'the minutes to move on again');
-    assert.match(await sel(), /^long build\s+S\s+low\s+08:\d\d$/, 'the selection across the title and minutes stays');
+    assert.match(await sel(), /^long build\s+S\s+low\s+Writing tests and code\s+Build\s+08:\d\d$/, 'the selection across the title and minutes stays');
   } finally {
     await b.close();
     await stop(panel);

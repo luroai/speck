@@ -221,8 +221,10 @@ test('0154 AC2: in a browser, pressing Enter on an id brings its ticket into vie
 }));
 
 test('0154 AC1: in a browser, a tap on a ticket lights nothing up, even for a moment, and a mouse over it still does', skip, () => withBoard(async b => {
-  const at = await b.js(`(() => { const r = [...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0002').querySelector('.stages').getBoundingClientRect();
+  // The middle of its Queued line: it has no bar since 0156.
+  const at = await b.js(`(() => { const r = [...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === '0002').querySelector('.act').getBoundingClientRect();
     return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  assert.ok(at[1] < await b.js('innerHeight'), 'it is on screen');
   // Every time a ticket is lit or dimmed, as headless Chrome sends a mouseleave straight after a tap's mouseenter, which a phone doesn't.
   await b.js(`window.marks = 0; window.tapped = false;
     new MutationObserver(ms => { for (const m of ms) if (/\\b(hl|dim)\\b/.test(m.target.className)) marks++; }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
@@ -234,6 +236,8 @@ test('0154 AC1: in a browser, a tap on a ticket lights nothing up, even for a mo
   await new Promise(r => setTimeout(r, 100));
   assert.equal(await b.js(`marks`), 0, 'nothing lit or dimmed by a tap');
   await b.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  // The mouse comes onto it from off the card, rather than counting on headless Chrome's mouseleave after the tap (0156).
+  await b.move([2, 2]);
   await b.move([at[0], at[1] + 1]);
   await b.until(`document.querySelectorAll('.hl, .dim').length > 0`, 'the mouse to light the chain up');
 }));

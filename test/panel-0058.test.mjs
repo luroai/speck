@@ -201,7 +201,7 @@ test('0058 AC3 and AC4: in a real browser the counter ticks between polls, and a
     assert.equal(await sel(), (await text()).slice(4), 'the selected digit is still selected, and updated');
     // From the title across the counter.
     await select('#queue .q .title', 2, sub, 5);
-    assert.match(await sel(), /^long build\s+S\s+low\s+\d\d:\d\d$/);
+    assert.match(await sel(), /^long build\s+S\s+low\s+Writing tests and code\s+Build\s+\d\d:\d\d$/); // what it's doing and its stage come before the timer since 0156
     await next();
     const shown = await text();
     assert.ok((await sel()).startsWith('long build') && (await sel()).endsWith(shown), 'the selection across the title and counter stays, updated');

@@ -53,7 +53,7 @@ test('0053 AC2: opening the ticket shows its worktree path in full, as text, in 
   assert.match(page().match(/<style>([\s\S]*?)<\/style>/)[1].match(/\.act\s*\{([^}]*)\}/)[1], /monospace/);
   // It sits in the open details, after the bar (0069: no status line under it now) and before the log.
   const kids = row.children, at = kids.indexOf(line);
-  assert.ok(at > kids.findIndex(n => n.className === 'stages'), 'after the bar');
+  assert.ok(at > kids.findIndex(n => n.className === 'top'), 'after the top row, with the progress in it since 0156');
   assert.ok(at < kids.findIndex(n => /(^| )log( |$)/.test(n.className)), 'before the log');
   await open(p, '0003');
   assert.ok(pathOf(p, rowOf(p, '0003')).textContent.includes('/tmp/wt/0003'), 'a blocked ticket too');
@@ -91,19 +91,19 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   await p.settle();
   const shape = row => row.children.map(n => n.className);
   const a = rowOf(p, '0001');
-  assert.deepEqual(shape(a), ['top', 'stages'], 'top row, then the bar (0069: no status line under it)');
-  assert.match(topOf(a).textContent, /03:0\d$/, 'the time since started, in the top row (MM:SS since 0058)');
+  assert.deepEqual(shape(a), ['top'], 'the top row, with the progress in it since 0156 (0069: no status line under it)');
+  assert.match(topOf(a).children.find(n => n.className === 'sub').textContent, /^03:0\d$/, 'the time since started, in the top row (MM:SS since 0058)');
   const c = rowOf(p, '0003');
-  assert.deepEqual(shape(c), ['top', 'stages', 'question', 'act']);
-  assert.equal(c.children[3].textContent, 'Answer the question, then run /speck-build 0003'); // 0069
+  assert.deepEqual(shape(c), ['top', 'question', 'act']);
+  assert.equal(c.children[2].textContent, 'Answer the question, then run /speck-build 0003'); // 0069
   const waiting = rowOf(p, '0004');
-  assert.deepEqual(shape(waiting), ['top', 'stages', 'act']);
-  assert.equal(waiting.children[2].textContent, 'Queued · waiting on 0005');
+  assert.deepEqual(shape(waiting), ['top', 'act']);
+  assert.equal(waiting.children[1].textContent, 'Queued · waiting on 0005');
   assert.ok(p.all(topOf(waiting)).some(n => n.className === 'lock'), 'the padlock in the top row');
   const chain = rowOf(p, '0005');
-  assert.equal(chain.children[2].textContent, 'Queued · unlocks 0004');
+  assert.equal(chain.children[1].textContent, 'Queued · unlocks 0004');
   assert.ok(p.all(topOf(chain)).some(n => n.className === 'chain'), 'the chain icon in the top row');
   // Opened, the path goes between the bar and the log, and the rest keeps its place.
   await open(p, '0001');
-  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'stages', 'act path', 'full-open', 'log']); // Full ticket: 0063
+  assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'act path', 'full-open', 'log']); // Full ticket: 0063
 });
