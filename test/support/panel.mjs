@@ -204,7 +204,9 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     for (let n = node; n && !stopped; n = n.parentNode) if (n.listeners && n.listeners.click) n.listeners.click(e);
     return caught;
   };
-  return { byId: id => document.getElementById(id), timers, intervals, all, settle, calls, key, press };
+  // A pointer of a type ('mouse', 'touch' or 'pen') moving over the page, as the browser tells the document first (0154).
+  const pointer = type => { if (document.listeners.pointerover) document.listeners.pointerover({ pointerType: type }); };
+  return { byId: id => document.getElementById(id), timers, intervals, all, settle, calls, key, press, pointer };
 }
 
 export const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };
