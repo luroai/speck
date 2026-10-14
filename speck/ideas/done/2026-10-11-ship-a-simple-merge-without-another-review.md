@@ -1,6 +1,6 @@
 # Ship a simple merge without another review
 
-Captured: 2026-10-11 · Status: idea
+Captured: 2026-10-11 · Status: ticketed (0192)
 
 ## What
 Let `speck ship` accept a ticket that merged the base branch in after it was approved, without another review round, when every conflict in that merge was `added-lines` or `lockfile` (as `speck merge-check` classes them) and the tests pass.
