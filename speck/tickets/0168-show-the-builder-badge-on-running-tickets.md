@@ -1,7 +1,7 @@
 ---
 id: "0168"
 title: "Show the builder badge on running tickets"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0167"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T14:51:40.867Z"
+approved: "2026-10-14T15:15:57.324Z"
 
 ---
 # 0168 · Show the builder badge on running tickets
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A running build's progress is shown by 0156's ensō, a red speck circling it and a row of stage dots. It doesn't feel like an agent is doing something, it takes a full block of each card, and on a phone it's hard to read at a glance.
@@ -59,9 +60,14 @@ Worth keeping an eye on: an approved ticket that auto-ship is about to ship show
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 235,239
+- Elapsed since build started: 24 min
+- Changed lines: 219 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - An approved ticket that auto-ship is about to ship keeps 0156's purple "waiting for you" sentence while its card and badge aren't purple: speck/ideas/2026-10-14-keep-an-auto-shipping-ticket-s-sentence-out-of-purple.md
