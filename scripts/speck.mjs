@@ -10,7 +10,7 @@ import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff 
 import { cmdPack } from './pack.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
-import { cmdShip } from './ship.mjs';
+import { cmdShip, shipState } from './ship.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdConfig } from './config.mjs';
@@ -481,6 +481,7 @@ export function statusData(repo) {
       paused: buildPaused(runs, t.fm.id),
       build_running: buildRunning(runs, t.fm.id, leads),
       build_stopped: inHand(t) && !!buildKilled(runs, t.fm.id),
+      ship: shipState(runs, t.fm.id),
       ...(spent => ({ builder_tokens: spent.tokens, builder_cost_usd: spent.cost_usd }))(builderSpent(runs, t.fm.id)),
     };
   });
