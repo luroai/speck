@@ -32,12 +32,12 @@
 </script>
 <style>
   :root {
-    --bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #cccbc8; --line-soft: #e8e7e3;
-    --text: #141413; --muted: #3d3d3a; --faint: #73726c;
-    --accent: #b0412e; --ok: #56713f; --warn: #9c6a10; --bad: #c42a3c; --run: #3b6286; --idea: #7a4f86;
-    --inbox: #2f7469; /* the inbox's own colour */
-    --bug: #a3466f; /* the bug tag's own colour */
-    --fix: #7a6a14; /* the fix tag's own colour */
+    --bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #87847d; --line-soft: #e8e7e3;
+    --text: #141413; --muted: #3d3d3a; --faint: #4d4c48;
+    --accent: #853123; --ok: #3f522e; --warn: #67460b; --bad: #921f2d; --run: #304f6d; --idea: #623f6c;
+    --inbox: #22544c; /* the inbox's own colour */
+    --bug: #7a3553; /* the bug tag's own colour */
+    --fix: #584c0e; /* the fix tag's own colour */
   }
   /* The zen look: a serif for headings and ticket titles, a light sans for body text and a monospace for labels. Each
      names the zen fonts first, used when they're installed, and none is loaded from another host. */
@@ -48,14 +48,16 @@
      header stays on screen, a ticket scrolled to sits below it (--head is its height, kept by the page script). */
   html { scroll-padding-top: var(--head, 0px); }
   body { padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left); }
-  body { margin: 0; font: 300 13px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  body { margin: 0; font: 400 13px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); }
   b, strong { font-weight: 600; }
+  /* 0161: a clear ring round whatever the keyboard reaches */
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
   code, .mono, .id { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   code { font-size: 12px; color: var(--muted); }
 
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: 16px; padding: calc(14px + env(safe-area-inset-top)) 24px 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .logo { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
-  .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
+  .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .logo, .run-state, .theme { flex-shrink: 0; }
   .theme { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
@@ -71,14 +73,14 @@
   section.full { grid-column: 1 / -1; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
   .sh h2 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
-  .sh .n { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); font-size: 11px; }
-  .sh .hint { margin-left: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
-  .group { padding: 7px 14px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
+  .sh .n { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); font-size: 12px; }
+  .sh .hint { margin-left: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
+  .group { padding: 7px 14px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
   .group.attn { color: var(--warn); }
   .group.run { color: var(--run); }
 
   .id { font-size: 12px; color: var(--muted); }
-  .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; padding: 0 6px; border: .5px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 17px; display: inline-block; }
+  .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 27px; display: inline-block; }
   .tag.p1 { color: var(--accent); border-color: var(--accent); }
   .tag.high { color: var(--bad); border-color: var(--bad); }
   .tag.bug { color: var(--bug); border-color: var(--bug); }
@@ -87,7 +89,7 @@
   .tag.pick { cursor: pointer; }
   .tag.pick:hover { color: var(--text); border-color: var(--muted); }
   .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; background: var(--panel); border: .5px solid var(--line); }
-  .prio-menu button { font: inherit; font-size: 10px; padding: 1px 8px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+  .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
   .prio-menu button:hover { color: var(--text); }
   .prio-menu button.on { color: var(--accent); }
   .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -108,13 +110,13 @@
   .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
   .item.open { background: var(--raise); border-left: 2px solid var(--accent); padding-left: 12px; }
   .detail { margin-top: 10px; border-top: .5px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
-  .detail h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
+  .detail h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
   .detail p { margin: 0 0 8px; color: var(--text); }
   .detail ol { margin: 0; padding-left: 18px; color: var(--text); }
   .detail ol li { margin-bottom: 4px; }
   .ready { border-left: .5px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
   .ready div { padding: 3px 0; }
-  .set-ready { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin-top: 10px; padding: 4px 12px; background: var(--accent); color: var(--panel); border: .5px solid var(--accent); cursor: pointer; }
+  .set-ready { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-top: 10px; padding: 4px 12px; background: var(--accent); color: var(--panel); border: .5px solid var(--accent); cursor: pointer; }
   .set-ready:disabled { background: transparent; color: var(--faint); border-color: var(--line); cursor: not-allowed; }
   .ready div.refused { white-space: pre-wrap; }
   .item.idea .id { color: var(--idea); }
@@ -143,18 +145,18 @@
   .q .top .tag-row { grid-area: 2 / 1 / 3 / 3; }
   .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border-left: 2px solid var(--line-soft);
     font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
-  .q.wait { opacity: .5; }
+  .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
-  .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .stop-build { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .q .stop-build:hover { color: var(--bad); border-color: var(--bad); }
   .q .stop-build:disabled { cursor: default; opacity: .6; }
   /* An open ready ticket's Back to Plan button, beside Full ticket, and why the server refused it */
-  .q .back-to-plan { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .q .back-to-plan { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 2px 8px; padding: 1px 10px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .q .back-to-plan:hover { color: var(--text); border-color: var(--text); }
   .q .back-to-plan:disabled { cursor: default; opacity: .6; }
   .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
-  .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+  .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .q.blocked { border-left: 2px solid var(--bad); }
   /* An approved ticket whose build has exited is waiting for you to ship it: purple, as nothing is wrong (0138) */
@@ -183,7 +185,7 @@
   .q .top .dot.now { color: var(--run); background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); }
   .q .top .dot.now.bad { color: var(--bad); }
   .q .top .dot.now.to-ship { color: var(--idea); }
-  .q .top .stage { margin-left: 3px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; color: var(--run); }
+  .q .top .stage { margin-left: 3px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--run); }
   .q .top .stage.bad { color: var(--bad); }
   .q .top .stage.to-ship { color: var(--idea); }
   /* While an agent is at work: the speck goes round the ensō, a lap about every 7 seconds, and the current stage's dot
@@ -206,20 +208,20 @@
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
   .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
   .resume .cmd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
-  .resume .copy { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
+  .resume .copy { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
   .resume .copy:hover { color: var(--text); }
   .q .tag.high { color: var(--bad); border-color: var(--bad); }
-  .next { color: var(--ok); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; border: .5px solid var(--ok); padding: 0 5px; }
+  .next { color: var(--ok); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
   /* 0157: a green accent, the stats a grid of tiles of equal size, each number over its label and the tickets its
      median covers, and each shipped ticket a card of its own, laid out as a Plan ticket, with a green left edge */
   section.shipped { border-top: 2px solid var(--ok); }
-  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line-soft); border-bottom: .5px solid var(--line-soft); }
+  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: .5px solid var(--line-soft); }
   .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 12px; background: var(--panel); }
   .stat .num { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1.3; }
-  .stat .label { font-size: 11px; line-height: 1.4; color: var(--muted); }
-  .stat .count { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; color: var(--faint); }
+  .stat .label { font-size: 13px; line-height: 1.4; color: var(--muted); }
+  .stat .count { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--faint); }
   .stats[hidden] { display: none; }
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
@@ -232,19 +234,19 @@
   #shipped .tag-row { margin-top: 4px; }
   #shipped .when { margin-top: 4px; color: var(--muted); }
   #shipped .figs { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px 16px; margin-top: 8px; }
-  #shipped .fig .k { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  #shipped .fig .k { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   #shipped .fig .v { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; }
   #shipped .full-cell { margin-top: 8px; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 6px 14px; border-bottom: .5px solid var(--line-soft); font-size: 12px; }
   tr:last-child td { border-bottom: 0; }
-  td.num { color: var(--muted); text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; white-space: nowrap; }
+  td.num { color: var(--muted); text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; white-space: nowrap; }
 
   /* Live panel additions */
   .live.go { background: var(--ok); }
   .live.stop { background: var(--bad); }
   /* 0150: Auto-build is one button, the same height as the light/dark one beside it */
-  .run-state { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; white-space: nowrap; color: var(--muted); background: var(--panel); border: .5px solid var(--line); cursor: pointer; }
+  .run-state { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; white-space: nowrap; color: var(--muted); background: var(--panel); border: .5px solid var(--line); cursor: pointer; }
   .run-state:hover { color: var(--text); border-color: var(--text); }
   .run-state:disabled { cursor: default; opacity: .6; }
   .run-state[hidden] { display: none; }
@@ -259,7 +261,7 @@
 
   /* Shaping: tickets, ideas and the inbox, one list at a time, each with its own accent colour */
   .toggles { display: flex; }
-  .toggle { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 1px 10px; background: transparent; border: .5px solid var(--line); margin-left: -.5px; color: var(--muted); cursor: pointer; }
+  .toggle { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; padding: 1px 10px; background: transparent; border: .5px solid var(--line); margin-left: -.5px; color: var(--muted); cursor: pointer; }
   .toggle.tickets.on { color: var(--accent); border-color: var(--accent); position: relative; z-index: 1; }
   .toggle.ideas.on { color: var(--idea); border-color: var(--idea); position: relative; z-index: 1; }
   .toggle.inbox.on { color: var(--inbox); border-color: var(--inbox); position: relative; z-index: 1; }
@@ -293,7 +295,7 @@
   .lock::before { content: ''; position: absolute; left: 3px; top: 0; width: 6px; height: 5px; border: 1.5px solid currentColor; border-bottom: 0; }
   .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
   .item.hl, .q.hl { background: var(--accent-bg); }
-  .item.dim, .q.dim { opacity: .35; }
+  .item.dim, .q.dim { background: var(--raise); } /* 0161: set back by its fill, not faded */
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
   .goto { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
@@ -303,24 +305,24 @@
   /* The full ticket, in a side pane over the right of the page. While it's open, the page behind it holds still and a
      backdrop over the rest of the page takes every click outside it. */
   html.held { overflow: hidden; }
-  #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: none; }
+  #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }
   #full-backdrop[hidden] { display: none; }
-  .full-open { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
+  .full-open { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 10px 0 0 8px; padding: 4px 12px; background: transparent; color: var(--muted); border: .5px solid var(--line); cursor: pointer; }
   .full-open:hover { color: var(--text); }
-  .q .full-open { margin: 6px 0 2px; padding: 1px 10px; font-size: 10px; }
+  .q .full-open { margin: 6px 0 2px; padding: 1px 10px; font-size: 12px; }
   td.full-cell { width: 1%; padding-left: 0; }
   td .title-link { color: var(--accent); text-decoration: none; cursor: pointer; }
   td .title-link:hover { text-decoration: underline; }
-  td .full-open { margin: 0; padding: 0 8px; font-size: 10px; white-space: nowrap; }
+  td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
   #full-ticket { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
-  #full-ticket .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #full-ticket .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
-  #full-ticket h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
+  #full-ticket h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
   #full-ticket .md, #full-ticket ol.criteria { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
   #full-ticket ol.criteria { padding-left: 18px; }
   #full-ticket ol.criteria > li { margin-bottom: 4px; }
@@ -337,14 +339,14 @@
   #full-ticket pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   #full-ticket pre code { font-size: 12px; }
   /* 0132: a review pack's table, and its findings, which fold away */
-  #full-ticket .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 12px; }
-  #full-ticket .md th, #full-ticket .md td { border: .5px solid var(--line-soft); padding: 2px 6px; text-align: left; vertical-align: top; }
+  #full-ticket .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 13px; }
+  #full-ticket .md th, #full-ticket .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
   #full-ticket .md th { font-weight: 600; background: var(--raise); }
   #full-ticket .md details { margin: 0 0 8px; }
   #full-ticket .md summary { cursor: pointer; color: var(--muted); }
   td .full-open + .full-open { margin-left: 6px; }
   /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said */
-  #full-ticket .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--accent); color: var(--panel); border: .5px solid var(--accent); cursor: pointer; }
+  #full-ticket .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--accent); color: var(--panel); border: .5px solid var(--accent); cursor: pointer; }
   #full-ticket .ship:disabled { cursor: default; opacity: .6; }
   #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad { color: var(--bad); }
@@ -363,17 +365,17 @@
   .shaping code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
   .shaping .md pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
   .shaping .md pre code { font-size: 12px; }
-  .shaping .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 12px; }
-  .shaping .md th, .shaping .md td { border: .5px solid var(--line-soft); padding: 2px 6px; text-align: left; vertical-align: top; }
+  .shaping .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 13px; }
+  .shaping .md th, .shaping .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
   .shaping .md th { font-weight: 600; background: var(--raise); }
   .shaping .md a { color: var(--accent); }
 
   /* The dark look, "the same garden at night", switched to with the button in the header */
   :root[data-theme="dark"] {
-    --bg: #181818; --panel: #1f1f1f; --raise: #222222; --line: #3d3d3d; --line-soft: #262626;
-    --text: #e4e4e4; --muted: #b4b4b4; --faint: #8a8a8a;
-    --accent: #d4664e; --ok: #9db584; --warn: #d6a24a; --bad: #ec5a6b; --run: #7ea6cf; --idea: #b597c6;
-    --inbox: #6fb5aa; --bug: #d685ab; --fix: #c9b65c;
+    --bg: #181818; --panel: #1f1f1f; --raise: #222222; --line: #737373; --line-soft: #262626;
+    --text: #e4e4e4; --muted: #c4c4c4; --faint: #b4b4b4;
+    --accent: #e5a495; --ok: #a5bb8e; --warn: #daac5d; --bad: #f39ba5; --run: #97b7d8; --idea: #c3abd1;
+    --inbox: #82bfb5; --bug: #e0a2bf; --fix: #c9b65c;
     --accent-bg: #2e2320; --idea-bg: #2a2430; --inbox-bg: #1d2a28; --bad-bg: #341d21;
     color-scheme: dark;
   }
@@ -389,6 +391,7 @@
     /* 0160: scrolled down, one row of speck, Auto-build and light/dark, 44 px buttons and 6 px above and below */
     header.slim { grid-template-columns: auto minmax(0, 1fr) auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
     header.slim .repo, header.slim .logo span { display: none; }
+    .logo span { letter-spacing: .02em; } /* 0161: room for the project's name beside it, at 12 px */
     .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
     .run-state { justify-self: start; height: 44px; min-width: 44px; }
     .theme { justify-self: end; width: 44px; height: 44px; }
@@ -435,7 +438,7 @@
     #full-ticket .md tr, .shaping .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
     #full-ticket .md tr:last-child, .shaping .md tr:last-child { border-bottom: 0; }
     #full-ticket .md td, .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
-    #full-ticket .md td::before, .shaping .md td::before { content: attr(data-label); display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+    #full-ticket .md td::before, .shaping .md td::before { content: attr(data-label); display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
     /* A review pack's criteria: the number and result on one line, then the criterion, then the labelled evidence */
     #full-ticket .md .ac-table tr, .shaping .md .ac-table tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
     #full-ticket .md .ac-table td:nth-child(-n+3)::before, .shaping .md .ac-table td:nth-child(-n+3)::before { display: none; }

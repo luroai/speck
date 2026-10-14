@@ -120,7 +120,7 @@ test('0055 AC1-AC4: in a real browser, only the in-flight step moves, through re
     // AC3: with reduced motion, nothing moves, and the step keeps its in-flight blue.
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
     await b.until(`document.getAnimations().length === 0`, 'no animations');
-    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.dot.now')).backgroundColor`), 'rgb(59, 98, 134)', 'in the in-flight blue');
+    assert.equal(await b.js(`getComputedStyle(${row('0002')}.querySelector('.dot.now')).backgroundColor`), 'rgb(48, 79, 109)', 'in the in-flight blue');
   } finally {
     await b.close();
     await stop(panel);

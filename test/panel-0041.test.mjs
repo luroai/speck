@@ -151,7 +151,7 @@ test('0041 AC5: hovering a ticket highlights every ticket linked to it through a
   assert.deepEqual(look(p), { '0001': 'dim', '0003': 'dim', '0006': 'hl', '0010': 'dim', '0002': 'dim', '0004': 'dim', '0005': 'hl' });
   shaping(p, '0010').listeners.mouseenter();
   assert.deepEqual(Object.entries(look(p)).filter(([, v]) => v === 'hl').map(([k]) => k), ['0010'], 'a ticket with no links lights only itself');
-  assert.match(rule('.item.dim, .q.dim'), /opacity/);
+  assert.match(rule('.item.dim, .q.dim'), /background: var\(--raise\)/); // 0161: set back by its fill, not faded
 });
 
 test('0041 AC5: the highlight lasts through a refresh, keeps the Shaping item on the page and ends when the pointer leaves', async () => {
@@ -212,7 +212,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
   try {
     await b.until(`document.querySelectorAll('#shaping .item').length === 2 && !!document.querySelector('#queue .q')`, 'the tickets');
     assert.equal(await b.js(`document.querySelector('#queue .q .chain').title`), 'Starts a chain: unlocks 0002');
-    assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), 'rgb(176, 65, 46)', 'the accent colour');
+    assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), 'rgb(133, 49, 35)', 'the accent colour');
     assert.ok(await b.js(`document.querySelector('#queue .q .chain').getBoundingClientRect().width > 0`), 'the icon takes up room');
     assert.equal(await b.js(`document.querySelector('#shaping .item .lock').title`), 'Waiting on 0001');
     assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('waiting on 0001')`));
