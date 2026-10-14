@@ -42,6 +42,7 @@ Each in-flight ticket's Build card shows a small builder badge, speck's characte
 - The design reference is `mockups/builder-badge/index.html` in the main checkout (local only: `mockups/` isn't in git, so it isn't in a build's worktree; `git worktree list` shows the main checkout first) (the "At the laptop" building style, and the Waiting for you and Blocked states). Its drawing code and timings can be reused.
 - One builder for every project: the version with ears.
 - Builds after 0167, so the badge's tile colours follow the "colour only for state" rule.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
