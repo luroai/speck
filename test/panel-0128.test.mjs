@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fakePage, startPanel, stop, freePort, request, post, tokenOf, env as panelEnv, CLI } from './support/panel.mjs';
 import { runRepo, startRun, stopRun, until, alive, killAll } from './support/run.mjs';
+import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0128: the panel turns speck run on and off ----------
 
@@ -101,7 +102,7 @@ test('0128 AC3: a speck run started from the panel can be turned off from it, an
       pids.push(pid);
       const off = await post(port, OFF, { token });
       assert.equal(off.status, 200, off.body);
-      assert.equal(alive(pid), false, 'speck run has stopped');
+      assert.ok(await hasStopped(() => !alive(pid)), 'speck run has stopped');
       assert.equal(await apiRun(port), undefined);
     }
     assert.notEqual(pids[0], pids[1]);

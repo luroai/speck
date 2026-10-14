@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { CLI, env, T, fakePage, queueRows, click, exitOf, panelRepo, freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
+import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0073: stop a build from its open queue row ----------
 
@@ -189,8 +190,8 @@ test('0073 AC2: the stop request stops the build exactly as speck stop does', as
     const res = await post(b.port, '/api/tickets/0001/stop', { token: b.token });
     assert.equal(res.status, 200, res.body);
     assert.match(JSON.parse(res.body).message, /0001[^\n]*stopped/);
-    assert.ok(!alive(b.pid), 'the build is no longer running');
-    assert.ok(!alive(b.child), 'nor is the process it started');
+    assert.ok(await hasStopped(() => !alive(b.pid)), 'the build is no longer running');
+    assert.ok(await hasStopped(() => !alive(b.child)), 'nor is the process it started');
     const mark = JSON.parse(fs.readFileSync(runs(b.r.dir, '0001.stopped'), 'utf8'));
     assert.equal(mark.session, 's-0073');
     assert.equal(mark.pid, b.pid);
@@ -210,7 +211,7 @@ test('0073 AC2: a paused build stops from the panel too', async () => {
     assert.equal(cli(b.r.dir, 'pause', '0001').status, 0);
     const res = await post(b.port, '/api/tickets/0001/stop', { token: b.token });
     assert.equal(res.status, 200, res.body);
-    assert.ok(!alive(b.pid) && !alive(b.child));
+    assert.ok(await hasStopped(() => !alive(b.pid) && !alive(b.child)), 'the build and the process it started are no longer running');
     assert.ok(!fs.existsSync(runs(b.r.dir, '0001.paused')), 'no longer marked paused');
   } finally { await b.done(); }
 });

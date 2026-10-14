@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { panelRepo, cliCopy, freePort, startPanel, stop, request, post, tokenOf, readyPath, fm, fakePage, T, idea, findChrome, browserPage } from './support/panel.mjs';
+import { hasStopped, STOP_MS } from './support/stopped.mjs';
 
 // ---------- 0067: speck panel restarts by itself when its code changes ----------
 
@@ -34,6 +35,8 @@ const children = (p, c) => spawnSync('ps', ['-eo', 'pid=', '-o', 'args='], { enc
   .map(l => +l.trim().split(/\s+/)[0]).filter(pid => pid && pid !== p.child.pid && envHas(pid, c.cli));
 const envHas = (pid, text) => { try { return fs.readFileSync(`/proc/${pid}/environ`, 'utf8').includes(text); } catch { return false; } };
 const alive = pid => { try { process.kill(pid, 0); return true; } catch { return false; } };
+// True once nothing answers on `port`.
+const portClosed = port => async () => { try { await request(port); return false; } catch { return true; } };
 const restarts = p => (p.out().match(/restarted/g) || []).length;
 
 async function served(r = panelRepo()) {
@@ -190,8 +193,8 @@ test('0067 AC5: the URL prints once, and Ctrl+C stops it with no process left be
     const exited = new Promise(res => p.child.on('exit', res));
     p.child.kill('SIGINT');
     await exited;
-    await within(3000, () => kids.every(k => !alive(k)), 'every child to stop');
-    await assert.rejects(request(port), 'the port is closed');
+    await within(STOP_MS, () => kids.every(k => !alive(k)), 'every child to stop');
+    assert.ok(await hasStopped(portClosed(port)), 'the port is closed');
   } finally { if (p.child.exitCode === null && p.child.signalCode === null) await stop(p); }
 });
 
@@ -202,8 +205,8 @@ test('0067 AC5: if speck panel is killed outright, its server stops too', async 
   const exited = new Promise(res => p.child.on('exit', res));
   p.child.kill('SIGKILL');
   await exited;
-  await within(3000, () => kids.every(k => !alive(k)), 'every child to stop');
-  await assert.rejects(request(port));
+  await within(STOP_MS, () => kids.every(k => !alive(k)), 'every child to stop');
+  assert.ok(await hasStopped(portClosed(port)), 'the port is closed');
 });
 
 test('0067 AC5: Ctrl+C while new code is still starting stops that process too', async () => {
@@ -216,7 +219,7 @@ test('0067 AC5: Ctrl+C while new code is still starting stops that process too',
     const exited = new Promise(res => p.child.on('exit', res));
     p.child.kill('SIGINT');
     await exited;
-    await within(3000, () => kids.every(k => !alive(k)), 'every child to stop');
+    await within(STOP_MS, () => kids.every(k => !alive(k)), 'every child to stop');
   } finally { if (p.child.exitCode === null && p.child.signalCode === null) await stop(p); }
 });
 

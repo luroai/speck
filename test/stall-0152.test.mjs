@@ -8,6 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { shipRepo, CLI, env, gIn } from './support/ship.mjs';
 import { testStallMs } from '../scripts/turns.mjs';
+import { hasStopped } from './support/stopped.mjs';
 
 // speck's own tests can't wait minutes for a stall, so they set it in milliseconds.
 const STALL_MS = 1500;
@@ -40,7 +41,7 @@ const setStall = (dir, line) => {
   fs.writeFileSync(file, `${fs.readFileSync(file, 'utf8').replace(/^test_stall_minutes:.*\n/m, '')}${line}\n`);
 };
 
-test('0152 AC1: speck test ends a run that writes nothing for the stall time, and every process it started', () => {
+test('0152 AC1: speck test ends a run that writes nothing for the stall time, and every process it started', async () => {
   const h = hanging();
   const r = testRepo(h.cmd);
   const started = Date.now();
@@ -49,10 +50,10 @@ test('0152 AC1: speck test ends a run that writes nothing for the stall time, an
   assert.ok(Date.now() - started < 30000, 'it did not wait for the hang');
   noTrace(res);
   assert.match(res.stdout + res.stderr, STALLED);
-  assert.equal(alive(h.pid()), false, 'the background process the tests started was ended too');
+  assert.ok(await hasStopped(() => !alive(h.pid())), 'the background process the tests started was ended too');
 });
 
-test('0152 AC1: a run with uncommitted changes, which records nothing, is ended too', () => {
+test('0152 AC1: a run with uncommitted changes, which records nothing, is ended too', async () => {
   const h = hanging();
   const r = testRepo(h.cmd);
   fs.writeFileSync(path.join(r.dir, 'app.txt'), 'changed\n');
@@ -60,7 +61,7 @@ test('0152 AC1: a run with uncommitted changes, which records nothing, is ended 
   assert.notEqual(res.status, 0);
   noTrace(res);
   assert.match(res.stdout + res.stderr, STALLED);
-  assert.equal(alive(h.pid()), false);
+  assert.ok(await hasStopped(() => !alive(h.pid())), 'the background process the tests started was ended too');
 });
 
 test('0152 AC1: test_stall_minutes defaults to 5', () => {
@@ -98,7 +99,7 @@ test('0152 AC2: a stalled run is recorded as a failure, and never reused as a pa
   assert.notEqual(recorded[0].status, 0);
 });
 
-test('0152 AC3: speck ship whose tests stall merges nothing, leaves the ticket approved and says to ship again', () => {
+test('0152 AC3: speck ship whose tests stall merges nothing, leaves the ticket approved and says to ship again', async () => {
   const pidFile = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'hang-'))), 'pid');
   const r = shipRepo({ test: `sleep 300 & echo $! > ${pidFile}; echo ok 1 - export; wait` });
   const before = r.snapshot();
@@ -113,7 +114,7 @@ test('0152 AC3: speck ship whose tests stall merges nothing, leaves the ticket a
   assert.match(res.stderr, /ship (it )?again/i);
   assert.deepEqual(r.snapshot(), before, 'nothing merged or changed');
   assert.equal(r.statusIn(r.wt), 'approved');
-  assert.equal(alive(Number(fs.readFileSync(pidFile, 'utf8'))), false);
+  assert.ok(await hasStopped(() => !alive(Number(fs.readFileSync(pidFile, 'utf8')))), 'the background process the tests started was ended too');
 });
 
 test('0152 AC4: speck config set refuses a test_stall_minutes that is not a whole number of 1 or more', () => {
@@ -160,7 +161,7 @@ test('0152 AC1: a test command that exits on its own keeps its exit code and out
   assert.doesNotMatch(res.stdout + res.stderr, /stalled/);
 });
 
-test('0152 AC1: speck test --files ends a run of only some test files that stalls, and every process it started', () => {
+test('0152 AC1: speck test --files ends a run of only some test files that stalls, and every process it started', async () => {
   const pidFile = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'hang-'))), 'pid');
   const r = testRepo('true');
   assert.equal(speck(r.dir, 'config', 'set', 'commands.test_files', `sleep 300 & echo $! > ${pidFile}; echo 'ok 3 - {files}'; wait`).status, 0);
@@ -170,7 +171,7 @@ test('0152 AC1: speck test --files ends a run of only some test files that stall
   const line = (res.stdout + res.stderr).split('\n').find(l => STALLED.test(l));
   assert.ok(line, res.stdout + res.stderr);
   assert.match(line, /ok 3 - app\.txt/);
-  assert.equal(alive(Number(fs.readFileSync(pidFile, 'utf8'))), false);
+  assert.ok(await hasStopped(() => !alive(Number(fs.readFileSync(pidFile, 'utf8')))), 'the background process the tests started was ended too');
   const passing = speck(r.dir, 'config', 'set', 'commands.test_files', 'echo ok 1 - {files}; exit 0');
   assert.equal(passing.status, 0);
   const ok = speck(r.dir, 'test', '--files', 'app.txt');
