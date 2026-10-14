@@ -69,7 +69,7 @@ Follow-ups:
 - Idea: give the "fails together" refusal its own exit code so an auto-ship build can merge main in and fix it (`speck/ideas/2026-10-14-let-a-build-fix-a-ticket-that-fails-with-newer-main.md`).
 - Known limit: if a test run changes a tracked file in the ticket's folder that main has also changed, ship can't switch that folder back to the ticket branch afterwards and refuses, saying how to fix it.
 - Known limit: after catching up with the remote, a commit you make on main while the tests run refuses the ship rather than re-testing with it.
-- Known limit: failing tests are named only when the output is TAP (as `node --test` writes it); otherwise the refusal points at the test output above it.
+- Known limit: failing tests are named only when the output is TAP (as `node --test` writes it); otherwise the refusal leaves the names out, and only the test output printed above it shows them.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
