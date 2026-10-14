@@ -20,25 +20,27 @@ created: 2026-10-14
 **Status:** 📝 draft
 
 ## Problem
-On desktop, hovering any ticket in Plan or the build queue turns every other ticket grey, so they all look highlighted. Hovering lights the ticket and the tickets linked to it through `after:`, and sets the rest back. Since 0161, "set back" is the raised fill (it used to be a fade, which 0161 removed for low vision), and that's the same grey as the hover fill. A ticket with no links counts as a group of one, so it happens on every hover, and the more tickets there are, the more it shows.
+speck's logo has a small red dot below the circle's centre, which reads as a nose. The builder badge (0168) uses the same character with the red dot as a larger eye above the centre, so the logo and the character don't match.
 
 ## Outcome
-Hovering a ticket makes it and its linked tickets stand out, and every other ticket looks exactly as it does when nothing is hovered.
+The logo's red dot is the builder's eye wherever the panel shows the logo: larger, and just above the circle's centre.
 
 ## Acceptance criteria
-1. While a ticket in Plan or the queue is hovered with a mouse, every ticket outside its linked group looks exactly as it does with nothing hovered: the same background, border and text colours.
-2. When the hovered ticket is linked to others through `after:`, it and each linked ticket are marked in a way that differs from both the normal look and the hover fill, in the light and dark looks, and their text keeps a contrast of at least 7:1 (0161).
-3. Hovering a ticket with no links changes nothing but that ticket's own hover fill.
-4. 1 to 3 hold with 25 tickets in the queue and 25 in Plan.
-5. No test that passed before this change fails, except checks in `test/panel-0041.test.mjs` and `test/panel-0154.test.mjs` that expect the tickets outside the group to be set back, which change to expect criteria 1 and 3.
+1. In `templates/icons/icon.svg` the dot is a circle with `cx="31.7"`, `cy="33.2"` and `r="4.8"`, in the same colour as before (`#b0412e`). The circle, the ears, the background, the stroke and the group's translate are unchanged.
+2. `icon-192.png`, `icon-512.png` and `apple-touch-icon.png` are made again from the new `icon.svg` and match it, by the same check that compares them today (0149, 0170).
+3. The mark in the panel header has the same dot (`cx` 31.7, `cy` 33.2, `r` 4.8), still `#b0412e` in light mode and `#d4664e` in dark mode, and the dot doesn't touch the circle's stroke on phone or desktop, including the slim header (0160).
+4. No test that passed before this change fails, except checks of the old dot (`cy` 38, `r` 2.3), which are changed to check AC1 to AC3.
 
 ## Out of scope
-- Touch screens, which don't light tickets up on a tap (0154).
-- The "waiting on" and "unlocks" notes, and tapping an id to go to its ticket (0154).
+- The landing page and the GitHub avatars (speck-site; the avatars were updated by hand on 2026-10-14).
+- The builder badge itself.
 
 ## Notes
-- `lightUp()` in `templates/panel.html` gives the tickets outside the group the `dim` class, styled `.item.dim, .q.dim { background: var(--raise) }` since 0161, the same as `.item:hover`. `linked` gives a ticket with no links a group of just itself.
-- Reported on 2026-10-14 from desktop: "whenever I hover over any tickets in the plan panel, they all highlight themselves", and the same in the build queue with lots of tickets.
+- Asked for 2026-10-14: "The red dot is now an eye and not a nose, so I think it needs to be larger and higher on the logo."
+- The eye: `cx` 31.7, `cy` 33.2, `r` 4.8 in the mark's 64-unit box. The circle's centre is (31.7, 35.38) and its radius 21.5, so this puts the eye 2.2 units above the centre, at about a fifth of the circle's width, the same place and size as the builder badge's eye (0168: eye radius 4.5 at 2 units above the centre of a body of radius 20).
+- The old dot is pinned in `test/panel-0149.test.mjs` and `test/panel-0170.test.mjs`. The PNGs are made with `node -e "import('./test/support/icons.mjs').then(m => m.writeIcons())"`.
+- 0170 notes that some stroke widths make PNG bytes that the "no model name is hard-coded" scan of `templates/` flags; the new dot could do the same.
+- A phone keeps the home-screen icon it fetched, so the user needs to remove and re-add the app to see the new one.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
