@@ -1,7 +1,7 @@
 ---
 id: "0151"
 title: "Make each Plan ticket a clear card"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T00:08:24.350Z"
 approved: "2026-10-14T06:13:29.749Z"
+finished: "2026-10-14T06:15:01.152Z"
 
 ---
 # 0151 · Make each Plan ticket a clear card
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In Plan's ticket list the id and title are small and hard to read, the priority, size and risk tags wrap unpredictably beside the title at different heights (the priority tag is much taller, for its tap area), and the faint lines between tickets make it hard to tell where one ticket ends and the next begins.
