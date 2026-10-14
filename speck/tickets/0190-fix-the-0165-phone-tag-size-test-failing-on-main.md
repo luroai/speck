@@ -36,6 +36,8 @@ The full test suite passes on main again.
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 - Seen on main at 59fc8d0 on 2026-10-14, and in every full run during 0175's build that day. The cause hasn't been looked into: the test output shows only that two points of the P0 queue tag's tap area miss it.
+- Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each. This is the test this fix ticket exists to make pass, so this build fixes it, without changing the test or what 0165 asks for.
+- Cause: 0164 gave the queue's Queued line its own stacking layer (`.act { isolation: isolate; }`), so it now sits above the tags' tap areas. On a phone that line starts 6 px below the tags, but each tag's tap area reaches 7.5 px below it, so the line covers the bottom 1.5 px of the tap areas of the tags above it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
