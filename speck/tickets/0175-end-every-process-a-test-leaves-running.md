@@ -1,7 +1,7 @@
 ---
 id: "0175"
 title: "End every process a test leaves running"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,13 +14,13 @@ source: "speck/ideas/done/2026-10-13-stop-the-pause-and-stop-tests-leaving-proce
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T19:37:04.183Z"
-blocked_at: "2026-10-14T20:42:27.587Z"
-waited_seconds: 189
+blocked_at: ""
+waited_seconds: 247
 
 ---
 # 0175 · End every process a test leaves running
 
-**Status:** ⛔ blocked
+**Status:** 🔍 reviewing
 
 ## Problem
 Every full test run leaves processes running for good. The test setup deletes each test file's temporary folder afterwards, but never ends what the tests started, and some test helpers wait for ever for a file in that folder. On 2026-10-14, 474 leftovers held about 13 GB of the machine's 15 GB of memory (7.5 GB of processes, and 5.8 GB of deleted logs they kept writing to in `/tmp`, which is held in memory here). The load average reached about 118, the panel stopped answering, the full suite went from 64 to 262 seconds, and builds took twice as long.
@@ -49,12 +49,13 @@ When a test file finishes, nothing it started is still running, however its test
 - AC4 isn't an automated test: it takes ten full runs. Checked by hand on 2026-10-14, after round 2's changes, with a script that ran five rounds of two full `npm test` runs side by side, then, 10 seconds after each round, listed every process whose TMPDIR is a test run's folder (none in any round) and every process of the user's that wasn't there before the round (only the checking session's own shell and `sleep`). Each paired run took 190 to 199 seconds. Under the double load, 0128 AC3 and 0148 AC2 each failed once, on a 2-second "speck run has stopped" timing check, in different rounds; both passed in the other nine runs and in every plain full run. (The same two failed the same way once in an earlier five-round check, before round 1's changes.)
 - Self-check: no changes
 - Answered 2026-10-14 (blocked question after review round 3: may an unmarked process whose starter exits before the clean-up's check sees it survive?): option (a). The remaining gap is accepted, and criteria 1 and 2 now cover every process that keeps a link to the test, or whose starter is still running when the check runs. No new work: ship it as built.
+- Answered 2026-10-14 (blocked on the review-round limit): option (a), one extra review round. The user raised `max_review_rounds` to 4 in this worktree only, uncommitted, for round 4; it's put back once that round is recorded.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-Your answer (accept the remaining gap) is recorded and criteria 1 and 2 are narrowed, but speck won't run a fourth review round: the limit is three, and this ticket used all three before it was blocked, so the reviewer can't approve it on the new wording. How should it get its review? Options: (a) raise the review-round limit from 3 to 4 for this one round, as a separate settings change you make or ask for, then rebuild; (b) start the review afresh as a new ticket that carries this work over; (c) leave it as it is for now. I recommend (a): it's one setting, the work and the answer are ready, and you can set the limit back to 3 afterwards.
+<!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
