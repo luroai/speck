@@ -46,7 +46,9 @@ What `speck ship` tests is exactly what lands on the base branch, and an approve
 - Self-check: the check that what landed is what was tested now keeps a commit made on the base branch after the tests (it put the base back to before that commit), and the brief's claim about commits made while the tests run is narrowed to what happens after catching up with the remote, each with a test.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Shipping now tests what will actually land: your ticket combined with the latest version of the main line, including anything other tickets shipped since it was approved. Two tickets that each work alone but break each other are now caught before they reach main. Ship stops, says the two fail together, and names the tests that broke. A ticket approved before others shipped no longer needs another review when the combination merges cleanly and its tests pass, so it simply ships.
+
+To see it, ship a ticket after another one has shipped: the ship runs the tests on the combination, and only that tested result lands. Worth watching: ships may now run the full tests where they used to reuse an earlier result, because main has moved on, so a busy day's ships can take a little longer.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +58,11 @@ What `speck ship` tests is exactly what lands on the base branch, and an approve
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Idea: give the "fails together" refusal its own exit code so an auto-ship build can merge main in and fix it (`speck/ideas/2026-10-14-let-a-build-fix-a-ticket-that-fails-with-newer-main.md`).
+- Known limit: if a test run changes a tracked file in the ticket's folder that main has also changed, ship can't switch that folder back to the ticket branch afterwards and refuses, saying how to fix it.
+- Known limit: after catching up with the remote, a commit you make on main while the tests run refuses the ship rather than re-testing with it.
+- Known limit: failing tests are named only when the output is TAP (as `node --test` writes it); otherwise the refusal points at the test output above it.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +138,83 @@ What `speck ship` tests is exactly what lands on the base branch, and an approve
     ],
     "escalation_question": "",
     "summary": "The change tests the combined ticket and latest main, and the existing suite passes. Two gaps need fixing: Git hooks can introduce untested code that still ships, and large test logs lose the failing test names promised by the ticket."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c3da388d5fe5fe62ea443394485ade5caca4d394",
+    "thread_id": "01a13cb8-25e9-7f92-8a10-0fbe8ec6df9e",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 319874,
+      "cached_input_tokens": 262272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1953,
+      "reasoning_output_tokens": 166
+    },
+    "saved_at": "2026-10-14T23:25:47.317Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs tests candidateMerge through testMerged and compares the landed tree with the tested tree, exempting only the ticket's two paths. Passing AC1 tests cover local and remote base changes, concurrent commits, and hook-introduced changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "testFailure checks the base alone and reports combined failures with names. testRun now returns complete fresh failure output; ship never reuses failures. Passing AC2 tests cover unchanged repository snapshots and an early failure followed by over 1 MiB of output."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 integration test verifies that a clean merge into moved-on main ships successfully without adding a review round."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 integration test verifies exit 13, named conflicts and unchanged repository snapshots, with and without a worktree."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0192-tests.txt: 1693 tests, 1690 passed, 3 skipped and zero failures. Both new regression tests passed; existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "The final comparison previously exempted arbitrary files changed by the ship commit, allowing untested hook changes to ship.",
+        "suggested_fix": "Resolved: exemptions now contain only the original and destination ticket paths. The passing F1 regression test verifies that a hook-staged change refuses shipping and preserves main and approval.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/results.mjs",
+        "issue": "Truncating fresh failure output before parsing previously lost failing test names in large TAP runs.",
+        "suggested_fix": "Resolved: fresh failure output remains complete for parsing, while recorded output remains bounded. The passing F2 regression test verifies an early failure is named after 1.5 MB of output.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both review findings are fixed and covered by meaningful regression tests. Shipping checks the combined ticket and latest main, rejects untested changes, and names failures even in large logs. All acceptance criteria pass."
   }
 }
 ```
