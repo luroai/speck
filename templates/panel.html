@@ -434,6 +434,9 @@
     /* Queue: the top row is at least 44 px high */
     #queue { padding: 6px; }
     .q .top { min-height: 44px; }
+    /* 0190: the line under a queue row's top, such as a ready ticket's Queued line, starts below the 7.5 px its tags'
+       tap areas reach past them, as that line sits above those tap areas */
+    .q .top + .act { margin-top: 8px; }
     .q .full-open { min-height: 44px; }
     .q .stop-build, .q .back-to-plan { min-width: 44px; min-height: 44px; }
     .resume { flex-wrap: wrap; }
