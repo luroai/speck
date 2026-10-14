@@ -140,7 +140,14 @@ test('0051 AC2: only the top row opens and closes it: clicking inside the open t
   assert.ok(isOpen(row));
   // Nothing else in the row reacts to a click (a click there, or a drag to select text, can't close it).
   // Its Full ticket button (0063) opens the side pane, and the click goes no further, so the ticket stays open.
-  for (const n of p.all(row)) if (n !== topOf(row) && n.className !== 'full-open' && n.listeners && n.listeners.click) assert.fail(`${n.className} reacts to a click`);
+  // Since 0165 a tag shows its tip, and its click goes no further either.
+  const isTag = n => (n.className || '').split(' ').includes('tag');
+  for (const n of p.all(row)) if (n !== topOf(row) && n.className !== 'full-open' && !isTag(n) && n.listeners && n.listeners.click) assert.fail(`${n.className} reacts to a click`);
+  for (const n of p.all(row).filter(isTag)) {
+    let goes = true;
+    n.listeners.click({ stopPropagation() { goes = false; } });
+    assert.ok(!goes, `the ${n.textContent} tag's click goes no further`);
+  }
   const full = p.all(row).find(n => n.className === 'full-open');
   let stopped = false;
   full.listeners.click({ stopPropagation() { stopped = true; } });

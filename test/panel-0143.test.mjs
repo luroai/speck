@@ -128,8 +128,8 @@ test('0143 AC4: the pane\'s priority tag only shows the value: clicking it opens
   assert.ok(tag);
   assert.ok(!/\bpick\b/.test(tag.className), 'not styled as clickable');
   assert.equal(tag.title, undefined, 'no "Set the priority" hover text');
-  assert.equal(Object.keys(tag.listeners).length, 0, 'no click handler of its own');
   p.press(tag);
+  assert.equal(p.byId('tag-tip').textContent, 'Priority 1: built after P0 tickets', 'since 0165 its click shows its tip, not a menu');
   assert.equal(p.all(p.byId('shaping')).filter(n => n.className === 'prio-menu').length, 0, 'no menu in the list');
   assert.equal(p.all(pane(p)).filter(n => n.className === 'prio-menu').length, 0, 'none in the pane');
   assert.equal(paneTop(p).children[0].textContent, '0001', 'the pane stays open');

@@ -42,6 +42,10 @@ Every tag looks the same size and can be tapped: the priority tag on a draft sti
 - Tags are built by `tags()` and `typeTag()` in `templates/panel.html`; the priority menu is `priorityPicker()`. The 44 px tap area on the priority tag alone comes from 0140's `.tag.pick` rule.
 - The size wording follows `/speck-ticket`'s size rules.
 - Failing before this build: none
+- The risk tip uses each ticket's `auto_ship` from `speck status --json` (0167), which follows `auto_ship` and `auto_ship_risk`. A board-wide field would have broken 0030, 0031 and 0044, which pin the top-level keys and require `/api/state` to match `status --json`.
+- Older tests that pinned tags as unclickable, which AC2 and AC3 change on purpose, now expect the tip instead, as 0039 already did for 0077: 0039 AC1 skips tags (as it skips the priority tag), 0051 AC2 checks a tag's click goes no further, 0077 AC1 and 0143 AC4 press the tag and check it opens no menu. 0161 AC4 presses Tab up to 60 times instead of 25, since each tag is now a Tab stop. Nothing else in them changed.
+- 0128 AC3 and 0148 AC2 (speck run timing, draft fix ticket 0173) fail now and then in a full run and pass alone. This build doesn't touch them.
+- Self-check: the Plan priority tag's pointer was overridden by the new help pointer; it now applies only to tags that show a tip, with a test.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
