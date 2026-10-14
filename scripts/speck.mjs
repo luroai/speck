@@ -398,14 +398,22 @@ export function runsOf(repo) {
 
 // What `speck status --json` prints: everything status knows, for programs such as the control panel.
 // The field names are a contract (0030); don't rename them.
+// Whether a pid leads its own process group, as a build speck run launched does. ps runs once, and only if needed.
+const groupLeader = (rows = null) => pid => { try { rows ??= processRows(); } catch { rows = []; } return rows.some(([p, , g]) => p === pid && g === pid); };
+// 0177: one ticket's status, worktree and build_running as statusData gives them, reading only that ticket: from the
+// worktree its branch is checked out in, as statusTickets does, or else from here.
+export function ticketShown(repo, id) {
+  let t = ticketsElsewhere(repo, loadConfig(repo), id).at(-1);
+  if (!t) try { t = findTicket(repo, id); } catch { return null; }
+  return t ? { status: t.fm.status, worktree: t.at || null, build_running: buildRunning(runsOf(repo), t.fm.id, groupLeader()) } : null;
+}
+
 export function statusData(repo) {
   const cfg = loadConfig(repo);
   const tickets = statusTickets(repo, cfg);
   const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
   const runs = runsOf(repo);
-  // Whether a pid leads its own process group, as a build speck run launched does. ps runs once, and only if needed.
-  let rows = null;
-  const leads = pid => { try { rows ??= processRows(); } catch { rows = []; } return rows.some(([p, , g]) => p === pid && g === pid); };
+  const leads = groupLeader();
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const question = contentLines(t.sections['blocked question']).join('\n');

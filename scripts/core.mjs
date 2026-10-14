@@ -504,13 +504,13 @@ export function worktreeList(repo) {
   });
 }
 
-// Tickets being built in other worktrees, read from that worktree's copy, which has the real status.
-export function ticketsElsewhere(repo, cfg) {
+// Tickets being built in other worktrees, read from that worktree's copy, which has the real status. With `only`, just that ticket's.
+export function ticketsElsewhere(repo, cfg, only = null) {
   const here = fs.realpathSync(repo);
   const ticketBranch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d{4})-`);
   return worktreeList(repo).flatMap(w => {
     const m = w.branch && w.branch.match(ticketBranch);
-    if (!m || w.path === here || !fs.existsSync(w.path)) return [];
+    if (!m || (only !== null && m[1] !== padId(only)) || w.path === here || !fs.existsSync(w.path)) return [];
     try { return [{ ...findTicket(w.path, m[1]), at: w.path }]; } catch { return []; }
   });
 }
