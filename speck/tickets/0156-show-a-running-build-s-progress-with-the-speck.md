@@ -129,3 +129,80 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2c366caa1eef296f5ce0a87ac9c376480ba80847",
+    "thread_id": "01a1392c-926f-7cc2-8482-3c18605d9449",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 429199,
+      "cached_input_tokens": 367360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1899,
+      "reasoning_output_tokens": 136
+    },
+    "saved_at": "2026-10-14T06:53:46.467Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "progressOf() renders the ensō and timer for in-flight tickets only. Passing panel-0156 AC1 and browser tests cover geometry and removal of the old bar."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doing() and motion CSS provide the seven-second orbit and resting states. Passing tests cover panel-started shipping, paused/stopped states and reduced motion."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Waiting colours are fixed, but doing(t, true) retains t.to_ship for an approved ticket with build_exit. Direct verification returns Shipping with tone 'to-ship', whereas shipping requires normal text colour."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "progressOf() renders five stage dots with completion colours, current-stage halo and conditional pulse. Passing AC4 and browser tests cover these and reduced motion; the new regression test covers approved tickets without build_exit."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing browser tests cover 375 px and desktop widths in both themes. The full test log confirms 1454 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Approved tickets without a recorded build exit previously lacked purple waiting progress colours. The updated doing() now supplies them, and the regression test exercises this state.",
+        "suggested_fix": "No further change needed for this finding.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "When the panel starts shipping an approved ticket whose build has exited, t.to_ship remains true. doing() consequently renders 'Shipping' in purple instead of normal text colour. The new shipping test omits build_exit, so it misses this common path.",
+        "suggested_fix": "Ensure the shipping branch uses normal text colour regardless of the previous waiting tone. Extend the panel-started shipping test to use an approved ticket with build_exit and assert the Shipping sentence's colour.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The original waiting-colour issue is fixed and the suite passes. One related case remains: starting shipment from a completed build leaves the Shipping sentence purple instead of returning it to normal text colour."
+  }
+}
+```
+
+</details>

@@ -71,8 +71,8 @@ test('0156 AC2: the speck moves only while an agent is at work on the ticket', a
   assert.doesNotMatch(css.replace(motion, ''), /animation: orbit/, 'nowhere else');
 });
 
-test('0156 AC2: a ship the panel itself started moves the speck and says "Shipping"', async () => {
-  const tickets = [T('0405', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)] })];
+test('0156 AC2 and AC3: a ship the panel itself started moves the speck and says "Shipping" in the normal text colour', async () => {
+  const tickets = [T('0405', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], ...exitOf('Done.') })]; // its build has exited
   const never = new Promise(() => {});
   const p = fakePage([], {
     fetch: async (url, opts) => (opts && opts.method === 'POST' ? never
@@ -81,6 +81,7 @@ test('0156 AC2: a ship the panel itself started moves the speck and says "Shippi
   });
   await p.settle();
   assert.equal(find(p, rowOf(p, '0405'), /\bsay\b/)[0].textContent, 'Approved · waiting for you to ship it');
+  assert.equal(find(p, rowOf(p, '0405'), /\bsay\b/)[0].className, 'say to-ship');
   // Open the card, then its review pack, and press Ship.
   p.press(topOf(rowOf(p, '0405')));
   await p.settle();
@@ -92,6 +93,8 @@ test('0156 AC2: a ship the panel itself started moves the speck and says "Shippi
   await p.settle();
   const row = rowOf(p, '0405');
   assert.equal(find(p, row, /\bsay\b/)[0].textContent, 'Shipping');
+  assert.equal(find(p, row, /\bsay\b/)[0].className, 'say', 'no longer purple: it is at work, not waiting');
+  assert.equal(find(p, row, /\bdot now\b/)[0].className, 'dot now moving', 'its current dot pulses in the in-flight colour');
   assert.ok(classes(topOf(row).children.find(n => classes(n).includes('enso'))).includes('moving'));
 });
 

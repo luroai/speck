@@ -467,12 +467,13 @@ function progress(t) {
 // 0156: what an in-flight queue ticket is doing, as its card says it: a plain sentence, the card's state colour for it
 // ('bad', 'to-ship' or '' for the normal text colour), and whether an agent is at work on it, which moves its speck.
 // `shipping` is true while a ship of it is running, whoever started it.
-// An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet.
+// An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet. One that is
+// shipping is at work, in the normal text colour.
 function doing(t, shipping) {
+  if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   const approved = t.status === 'approved' || t.status === 'done';
-  const tone = t.red ? 'bad' : t.to_ship || (approved && !shipping) ? 'to-ship' : '';
+  const tone = t.red ? 'bad' : t.to_ship || approved ? 'to-ship' : '';
   const at = sentence => ({ sentence, tone, moving: false });
-  if (shipping) return { sentence: 'Shipping', tone, moving: true };
   if (t.status === 'blocked') return at('Blocked · it has a question for you');
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
