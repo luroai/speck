@@ -1,7 +1,7 @@
 ---
 id: "0156"
 title: "Show a running build's progress with the speck"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T06:28:34.965Z"
 ---
 # 0156 · Show a running build's progress with the speck
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A running build's progress is a thin five-part bar with small uppercase stage labels ("SELF-CHECK", "REVIEW 1") squeezed under it. On a phone the moving part is too small to notice, and the labels make the bar look cramped. The bar was designed for several builds running side by side; speck now builds one ticket at a time, so the running build can have more room.
@@ -57,3 +57,75 @@ Each in-flight ticket in the Build queue shows its progress as speck's ensō: th
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b20ff90244154f8f6b3a498c5a54724f488542d6",
+    "thread_id": "01a1392c-926f-7cc2-8482-3c18605d9449",
+    "seconds": 60,
+    "usage": {
+      "input_tokens": 249350,
+      "cached_input_tokens": 194048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 963,
+      "reasoning_output_tokens": 45
+    },
+    "saved_at": "2026-10-14T06:50:44.200Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html progressOf() replaces the bar with the ensō and timer. panel-0156 AC1 and browser layout tests cover in-flight and ready tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doing() controls movement; CSS uses a seven-second orbit. Tests cover working, paused, blocked, stopped, approved and panel-started shipping states, including reduced motion."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "doing() derives waiting colour only from t.to_ship, which requires a build exit. Direct fakePage verification of an approved ticket without build_exit produces class 'say', leaving its waiting sentence in normal text colour."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The same approved-ticket path produces 'dot now' and 'stage', making the current Ship dot blue instead of the required purple waiting colour. Other stage and reduced-motion behaviour is covered by panel-0156 tests."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Browser tests cover 375 px and desktop widths in light and dark themes. /tmp/speck-0156-tests.txt confirms 1453 passing tests, zero failures and three skips. Existing test changes correspond to the progress redesign."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "An approved ticket without a recorded build exit says it is waiting for shipment, but its sentence and current stage dot do not use the purple waiting colour. The tests check waiting colours only with build_exit present, missing this supported state.",
+        "suggested_fix": "Derive the progress waiting colour from approved status when not shipping, while preserving existing red failure states and leaving the out-of-scope card border unchanged. Add coverage for an approved ticket without build_exit, checking both the sentence and current dot.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The ensō progress display works across phone and desktop layouts, and the reported suite passes. One waiting state needs fixing: approved tickets without a recorded build exit show the wrong progress colours."
+  }
+}
+```
+
+</details>

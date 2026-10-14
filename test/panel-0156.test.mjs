@@ -125,6 +125,24 @@ test('0156 AC3: a reviewer that isn\'t named is "The reviewer", and an approved 
   assert.equal(say('0503').textContent, 'Constructor is reviewing · round 1');
 });
 
+test('0156 AC3 and AC4: an approved ticket waits in purple whether or not its build has exited, and not while it ships', async () => {
+  const p = fake([
+    T('0601', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], build_running: true }), // no build_exit yet
+    T('0602', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], build_exit: null }),
+    T('0603', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], ship: { running: true, started: ago(5) } }),
+  ]);
+  await p.settle();
+  for (const id of ['0601', '0602']) {
+    const row = rowOf(p, id);
+    assert.equal(find(p, row, /\bsay\b/)[0].className, 'say to-ship', `${id}: the sentence is purple`);
+    assert.equal(find(p, row, /\bdot now\b/)[0].className, 'dot now to-ship', `${id}: the current dot is purple`);
+    assert.equal(find(p, row, /\bstage\b/)[0].className, 'stage to-ship', `${id}: the stage's name is purple`);
+  }
+  const shipping = rowOf(p, '0603');
+  assert.equal(find(p, shipping, /\bsay\b/)[0].className, 'say', 'shipping: the normal text colour');
+  assert.equal(find(p, shipping, /\bdot now\b/)[0].className, 'dot now moving', 'shipping: at work, in the in-flight colour');
+});
+
 test('0156 AC4: five stage dots under the sentence, then the current stage\'s name; the current one pulses only while an agent works', async () => {
   const p = fake();
   await p.settle();
