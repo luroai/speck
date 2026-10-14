@@ -49,14 +49,14 @@ test('0141 AC2: clicking or tapping the title opens that ticket in the full tick
   assert.ok(!pane(p).textContent.includes('Review pack'), 'the full ticket, not the review pack');
 });
 
-test('0141 AC3: the title keeps its look: accent colour, pointer cursor, underlined only on hover, 44 px on a phone', () => {
+test('0141 AC3: the title keeps its look: text colour and underlined since 0167, pointer cursor, 44 px on a phone', () => {
   const s = css();
   const rule = sel => (s.match(new RegExp(`\\n\\s*${sel.replace(/[.:]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
   const base = rule('td .title-link'), hover = rule('td .title-link:hover');
-  assert.match(base, /color:\s*var\(--accent\)/);
+  assert.match(base, /color:\s*var\(--text\)/);
   assert.match(base, /cursor:\s*pointer/);
-  assert.match(base, /text-decoration:\s*none/);
-  assert.match(hover, /text-decoration:\s*underline/);
+  assert.match(base, /text-decoration:\s*underline/);
+  assert.match(hover, /text-decoration-thickness:\s*2px/);
   const phone = s.slice(s.indexOf('@media (max-width: 699.98px)'));
   assert.match(phone, /td \.title-link \{[^}]*min-width:\s*44px;[^}]*min-height:\s*44px/);
 });
@@ -127,11 +127,11 @@ test('0141 AC1-AC4: in a real phone-sized browser, the title has no address, ope
     assert.equal(what.links, 0, 'AC1: no link in the row');
     // AC3: the look, and the tap area.
     const look = await b.js(`(() => { const a = ${title}, s = getComputedStyle(a), probe = document.createElement('span'), r = a.getBoundingClientRect();
-      probe.style.color = 'var(--accent)'; document.body.appendChild(probe); const accent = getComputedStyle(probe).color; probe.remove();
-      return { color: s.color, accent, cursor: s.cursor, line: s.textDecorationLine, width: r.width, height: r.height }; })()`);
-    assert.equal(look.color, look.accent, 'AC3: the accent colour');
+      probe.style.color = 'var(--text)'; document.body.appendChild(probe); const text = getComputedStyle(probe).color; probe.remove();
+      return { color: s.color, text, cursor: s.cursor, line: s.textDecorationLine, width: r.width, height: r.height }; })()`);
+    assert.equal(look.color, look.text, 'AC3: the text colour (0167)');
     assert.equal(look.cursor, 'pointer', 'AC3: a pointer cursor');
-    assert.equal(look.line, 'none', 'AC3: not underlined until hovered');
+    assert.equal(look.line, 'underline', 'AC3: underlined, to show it can be clicked (0167)');
     assert.ok(look.width >= 43.5 && look.height >= 43.5, `AC3: a 44 px tap area (${look.width}x${look.height})`);
     // AC2: a tap, with the page scrolled down to the row, opens it without moving or reloading the page.
     await b.js(`${title}.scrollIntoView({ block: 'center' })`);

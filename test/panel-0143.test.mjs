@@ -56,7 +56,7 @@ test('0143 AC1: the pane shows priority, size and risk under the title, whicheve
 });
 
 test('0143 AC1: the tags are styled as in the lists, and sit on their own line under the title', () => {
-  assert.match(rule('.tag.p1'), /color:\s*var\(--accent\)/);
+  assert.match(rule('.tag.p1'), /color:\s*var\(--text\)/); // the text colour since 0167: the speck red is only for the speck
   assert.match(rule('.tag.high'), /color:\s*var\(--bad\)/); // red since 0151
   assert.match(rule('#full-ticket .top'), /flex-wrap:\s*wrap/);
   assert.match(rule('#full-ticket .top .tags'), /flex-basis:\s*100%/);

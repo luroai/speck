@@ -141,11 +141,11 @@ const RGB = v => `(() => { const s = document.createElement('span'); s.style.col
 const SECTION = `document.getElementById('shipped').closest('section')`;
 
 for (const theme of ['light', 'dark']) {
-  test(`0157 AC1: in the ${theme} look, Shipped has a 2 px top border in the panel's green`, skip, async () => {
+  test(`0157 AC1: in the ${theme} look, Shipped's top border is as plain as its other sides (its green stripe went in 0167)`, skip, async () => {
     await withPanel(async b => {
-      const [width, style, color] = await b.js(`(() => { const s = getComputedStyle(${SECTION}); return [s.borderTopWidth, s.borderTopStyle, s.borderTopColor]; })()`);
-      assert.deepEqual([width, style], ['2px', 'solid']);
-      assert.equal(color, await b.js(RGB('var(--ok)')));
+      const [top, bottom] = await b.js(`(() => { const s = getComputedStyle(${SECTION}); return [[s.borderTopWidth, s.borderTopStyle, s.borderTopColor], [s.borderBottomWidth, s.borderBottomStyle, s.borderBottomColor]]; })()`);
+      assert.deepEqual(top, bottom);
+      assert.equal(top[2], await b.js(RGB('var(--line)')));
     }, { theme });
   });
 }
@@ -210,17 +210,16 @@ const CARDS = `(() => {
 
 for (const theme of ['light', 'dark']) {
   for (const width of [375, 1280]) {
-    test(`0157 AC3: at ${width} px in the ${theme} look, each shipped ticket is a bordered card with a green left edge, 8 px or more from the next`, skip, async () => {
+    test(`0157 AC3: at ${width} px in the ${theme} look, each shipped ticket is a bordered card with no stripe (since 0167), 8 px or more from the next`, skip, async () => {
       await withPanel(async b => {
-        const cards = await b.js(CARDS), ok = await b.js(RGB('var(--ok)'));
+        const cards = await b.js(CARDS);
         assert.equal(cards.length, 5);
         for (const c of cards) {
-          for (const k of ['top', 'right', 'bottom']) {
+          for (const k of ['top', 'right', 'bottom', 'left']) {
             assert.ok(c[k].width >= 0.5 && c[k].style === 'solid', `${c.id}: no ${k} border`);
             assert.ok(c[k].contrast >= 1.4, `${c.id}: the ${k} border (${c[k].color}) is hard to see, contrast ${c[k].contrast.toFixed(2)}`);
           }
-          assert.ok(c.left.width >= 2 && c.left.style === 'solid', `${c.id}: its left edge is ${c.left.width} px`);
-          assert.equal(c.left.color, ok, `${c.id}: its left edge is green`);
+          assert.deepEqual([c.left.width, c.left.color], [c.right.width, c.right.color], `${c.id}: no stripe on its left edge`);
           if (c.gap !== null) assert.ok(c.gap >= 7.99, `${c.id}: only ${c.gap} px to the next card`);
         }
       }, { width, theme });

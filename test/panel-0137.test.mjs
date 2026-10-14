@@ -53,13 +53,13 @@ test('0137 AC1: the id and the bug tag stay beside the title, outside the link',
   assert.match(row.children[0].textContent, /bug/);
 });
 
-test('0137 AC1: the link is in the accent colour with a pointer cursor, and underlined only on hover', () => {
+test('0137 AC1: the link has a pointer cursor and, since 0167, is in the text colour and underlined, more thickly on hover', () => {
   const rule = sel => (css().match(new RegExp(`\\n\\s*${sel.replace(/[.:]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
   const base = rule('td .title-link'), hover = rule('td .title-link:hover');
-  assert.match(base, /color:\s*var\(--accent\)/);
+  assert.match(base, /color:\s*var\(--text\)/);
   assert.match(base, /cursor:\s*pointer/);
-  assert.match(base, /text-decoration:\s*none/);
-  assert.match(hover, /text-decoration:\s*underline/);
+  assert.match(base, /text-decoration:\s*underline/);
+  assert.match(hover, /text-decoration-thickness:\s*2px/);
 });
 
 test('0137 AC2: the link has an address, so Tab reaches it and Enter opens it, and its text is the title', async () => {
@@ -105,16 +105,16 @@ test('0137 AC1-AC4: in a real browser, the title link opens the full ticket by m
   try {
     await b.until(`!!${link}`, 'the Shipped row\'s title link');
     const look = await b.js(`(() => { const a = ${link}, s = getComputedStyle(a), probe = document.createElement('span');
-      probe.style.color = 'var(--accent)'; document.body.appendChild(probe); const accent = getComputedStyle(probe).color; probe.remove();
-      return { text: a.textContent, color: s.color, accent, cursor: s.cursor, line: s.textDecorationLine, buttons: [...a.closest('tr').querySelectorAll('button')].map(x => x.textContent) }; })()`);
+      probe.style.color = 'var(--text)'; document.body.appendChild(probe); const text = getComputedStyle(probe).color; probe.remove();
+      return { text: a.textContent, color: s.color, textColour: text, cursor: s.cursor, line: s.textDecorationLine, buttons: [...a.closest('tr').querySelectorAll('button')].map(x => x.textContent) }; })()`);
     assert.equal(look.text, 'A shipped one');
-    assert.equal(look.color, look.accent, 'AC1: the accent colour');
+    assert.equal(look.color, look.textColour, 'AC1: the text colour (0167)');
     assert.equal(look.cursor, 'pointer', 'AC1: a pointer cursor');
-    assert.equal(look.line, 'none', 'AC1: not underlined until hovered');
+    assert.equal(look.line, 'underline', 'AC1: underlined, to show it can be clicked (0167)');
     assert.deepEqual(look.buttons, ['Review pack'], 'AC3: only Review pack');
     const [x, y] = await b.js(`(r => [r.left + r.width / 2, r.top + r.height / 2])(${link}.getBoundingClientRect())`);
     await b.move([x, y]);
-    assert.equal(await b.js(`getComputedStyle(${link}).textDecorationLine`), 'underline', 'AC1: underlined on hover');
+    assert.equal(await b.js(`getComputedStyle(${link}).textDecorationThickness`), '2px', 'AC1: underlined more thickly on hover');
     await b.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
     await b.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1 });
     await b.until(opened, 'AC1: the pane opened from a click on the title');

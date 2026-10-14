@@ -393,21 +393,11 @@ test('0033 AC3: Shaping has a Tickets / Ideas toggle, Tickets first, one list at
   assert.match(p.byId('shaping-section').className, /\btickets\b/);
 });
 
-test('0033 AC3: tickets and ideas each have their own accent colour on the toggle, the section top edge and each item', () => {
+test('0033 AC3: since 0167, tickets and ideas share one plain look: the selected toggle in the text colour, and no coloured section edge or item stripe', () => {
   const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
-  const colourOf = selector => {
-    const rule = css.split('\n').find(l => l.trim().startsWith(selector + ' {') || l.trim().startsWith(selector + ','));
-    assert.ok(rule, `a rule for ${selector}`);
-    return (rule.match(/var\(--(accent|idea)\)/) || [])[1];
-  };
-  const pairs = [['.toggle.tickets.on', '.toggle.ideas.on'], ['#shaping-section.tickets', '#shaping-section.ideas'], ['.item.ticket', '.item.idea']];
-  for (const [t, i] of pairs) {
-    assert.equal(colourOf(t), 'accent', t);
-    assert.equal(colourOf(i), 'idea', i);
-  }
-  assert.match(css, /#shaping-section\.tickets \{[^}]*border-top:[^}]*var\(--accent\)/);
-  assert.match(css, /\.item\.ticket \{[^}]*border-left:[^}]*var\(--accent\)/);
-  assert.match(css, /\.item\.idea \{[^}]*border-left:[^}]*var\(--idea\)/);
+  assert.match(css, /\n\s*\.toggle\.on \{[^}]*color: var\(--text\);[^}]*border-color: var\(--text\)/);
+  assert.doesNotMatch(css, /#shaping-section\.(tickets|ideas) \{/);
+  assert.doesNotMatch(css, /\.item\.(ticket|idea) \{[^}]*border-left/);
 });
 
 test('0033 AC4: the Tickets list shows drafts in JSON order, and an open ticket shows everything needed to judge it', async () => {
@@ -539,7 +529,7 @@ test('0034 AC2: the stage dots (the bar before 0156) are drawn on the page with 
   assert.deepEqual(stepState(b), ['done', 'done', 'done', 'done', 'now']);
 });
 
-test('0034 AC3: a blocked ticket is red on its left edge and current step, with its question under it, and nothing else is red', async () => {
+test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167) and current step, with its question under it, and nothing else is red', async () => {
   const state = { tickets: [T('0001', 'blocked', { blocked_question: 'Split it or keep it?', self_check: 'x' }), T('0002', 'approved', { risk: 'high' }),
     T('0003', 'building', { risk: 'high' }), T('0004', 'reviewing'), T('0005', 'ready', { waiting_on: ['0001'] })], ideas: [] };
   assert.deepEqual(panelModel()(state).queue.map(t => t.red), [true, false, false, false, false]);
@@ -555,7 +545,7 @@ test('0034 AC3: a blocked ticket is red on its left edge and current step, with 
   assert.ok(rows[0].textContent.includes('Split it or keep it?'));
   for (const r of rows.slice(1)) assert.ok(!p.all(r).some(red), `${r.textContent.slice(0, 4)} has nothing red`);
   const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
-  assert.match(css, /\.q\.blocked \{[^}]*border-left:[^}]*var\(--bad\)/);
+  assert.match(css, /\.q\.blocked \{[^}]*border-color:[^}]*var\(--bad\)/); // its border all round since 0167
   assert.match(css, /\.q \.top \.dot\.now\.bad \{[^}]*color: var\(--bad\)/);
   assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--bad\)/, '0151 AC2: a high-risk tag in the queue is in the panel\'s red');
 });

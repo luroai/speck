@@ -42,6 +42,7 @@ Cards are plain, set apart by their border, space and type, and colour only appe
 - Builds after 0161, which sets the colour tokens' contrast.
 - Stripes today: `#shaping-section.tickets/.ideas/.inbox { border-top: 2px … }`, the Shipped section's top border (0157), and card left edges from 0151, 0155 and 0157 (`templates/panel.html`).
 - Failing before this build: none
+- Self-check: no changes. The state colours (crimson, purple) come after the open, highlight and set-back rules, so a ticket in trouble or waiting keeps its colour whatever else applies. The unused list colour tokens (--inbox, --accent-bg, --inbox-bg) stay, as the palette checks of 0134, 0136 and 0126 pin them.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

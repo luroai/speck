@@ -96,7 +96,7 @@ test('0154 AC2: tapping or clicking an id scrolls its ticket into view and highl
   p.timers.at(-1)();
   assert.ok(!flashing(shaping(p, '0001')), 'then it ends by itself');
   assert.match(css(), /\.flash\b[^{]*\{[^}]*animation:[^;}]*1\.5s/, 'and fades out over that time');
-  assert.match(css(), /@media \(prefers-reduced-motion: reduce\) \{ \.item\.flash, \.q\.flash \{ background-color: var\(--accent-bg\)/, 'or, asked for less motion, stays lit without fading');
+  assert.match(css(), /@media \(prefers-reduced-motion: reduce\) \{ \.item\.flash, \.q\.flash \{ background-color: var\(--raise\)/, 'or, asked for less motion, stays lit without fading (in the raised fill since 0167)');
 });
 
 test('0154 AC2: a tap on an id in a Plan ticket\'s top row doesn\'t open that ticket, and a newer tap\'s highlight isn\'t cut short', async () => {
