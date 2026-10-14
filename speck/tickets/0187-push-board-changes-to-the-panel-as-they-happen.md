@@ -1,7 +1,7 @@
 ---
 id: "0187"
 title: "Push board changes to the panel as they happen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-11-update-the-panel-in-real-time.md"          
 after: ["0177"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T22:06:47.011Z"
+approved: "2026-10-14T23:02:07.828Z"
 
 ---
 # 0187 · Push board changes to the panel as they happen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel page asks for the whole board every 2 seconds, whether anything has changed or not. Changes show up as much as 2 seconds late, every open page costs the panel a full reading of the board every 2 seconds, and a slow answer flashes "Disconnected" across the top (0186).
@@ -64,9 +65,16 @@ Worth keeping an eye on: if the panel can't be reached when the page asks for th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 When all pages disconnect, file changes trigger nextReading(), which discards the refresh because feed.watched() is false.; F2 A transient /api/state fetch failure immediately shows Disconnected and never retries if the event stream stays open and the board remains unchanged.; F3 The full suite reports an additional failure outside the ticket's documented baseline: the finished-build log performance test.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 898,265
+- Elapsed since build started: 55 min
+- Changed lines: 232 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Timing checks (0176 AC1, 0177 AC3) fail now and then when other builds run tests at the same time: saved as `speck/ideas/2026-10-14-keep-timing-checks-steady-while-other-builds-test.md`.
