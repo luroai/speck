@@ -40,6 +40,7 @@ On touch screens nothing highlights on its own; instead, on every device, the li
 ## Notes
 - The hover highlight is `hoverable()` and `lightUp()` in `templates/panel.html`, with the `.hl` and `.dim` classes. The "unlocks" note is built in `ticketHead()`; the "waiting on" note appears there and on queued rows.
 - Reported 2026-10-13: the highlight is hard to use on a phone.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
