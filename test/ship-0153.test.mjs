@@ -9,10 +9,12 @@ import { spawn } from 'node:child_process';
 import { CLI, env, gIn, runIn, shipRepo } from './support/ship.mjs';
 import { freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
 
-// A test command that waits until `gate` exists, so a ship stays running until the test lets it go.
+// A test command that waits until `gate` exists, so a ship stays running until the test lets it go. It makes `reached`
+// first, so a test can wait until the ship is in its tests, past any git command a kill could leave a lock behind from.
 const gated = () => {
-  const gate = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-gate-')), 'go');
-  return { gate, test: `sh -c 'while [ ! -f ${gate} ]; do sleep 0.05; done'` };
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-gate-'));
+  const gate = path.join(dir, 'go'), reached = path.join(dir, 'reached');
+  return { gate, reached, test: `sh -c 'touch ${reached}; while [ ! -f ${gate} ]; do sleep 0.05; done'` };
 };
 // Sets `key: value` in speck/config.yml on both branches and commits it, so both checkouts stay clean.
 const configure = (r, key, value) => {
@@ -137,10 +139,10 @@ test('0153 AC2: a second speck ship for the same ticket refuses, saying a ship i
 });
 
 test('0153 AC2: a ship that was killed doesn\'t stop the next one', async () => {
-  const { gate, test: cmd } = gated();
+  const { gate, reached, test: cmd } = gated();
   const r = shipRepo({ test: cmd });
   const s = shipping(r.dir);
-  await until(() => running(r.dir), 'the ship to start');
+  await until(() => running(r.dir) && fs.existsSync(reached), 'the ship to reach its tests');
   killGroup(s.child);
   await s.exited;
   fs.writeFileSync(gate, '');
@@ -175,11 +177,11 @@ test('0153 AC3: an auto-ship that refuses (here, files changed after approval) l
 });
 
 test('0153 AC3: an auto-ship that was killed shows as ended, with no message', async () => {
-  const { test: cmd } = gated();
+  const { reached, test: cmd } = gated();
   const r = shipRepo({ test: cmd });
   autoOn(r);
   const s = shipping(r.wt, '--auto');
-  await until(() => running(r.dir), 'the auto-ship to start');
+  await until(() => running(r.dir) && fs.existsSync(reached), 'the auto-ship to reach its tests');
   killGroup(s.child);
   await s.exited;
   const rec = shipOf(r.dir);
@@ -221,10 +223,10 @@ test('0153 AC4: a ship the user started that fails leaves no auto-ship message',
 });
 
 test('0153 AC4: a ship the user started that was killed leaves no auto-ship message', async () => {
-  const { test: cmd } = gated();
+  const { reached, test: cmd } = gated();
   const r = shipRepo({ test: cmd });
   const s = shipping(r.dir);
-  await until(() => running(r.dir), 'the ship to start');
+  await until(() => running(r.dir) && fs.existsSync(reached), 'the ship to reach its tests');
   killGroup(s.child);
   await s.exited;
   assert.equal(shipOf(r.dir), null);
