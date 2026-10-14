@@ -326,10 +326,15 @@ function deleteRemoteBranch(repo, remote, branch) {
 function autoShipBlocker(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
   if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
-  const t = findTicket(repo, pad);
+  return autoShipWhyNot(cfg, pad, findTicket(repo, pad).fm.risk, rounds(repo, pad));
+}
+
+// The same, from a ticket's risk and its review rounds as already read, as `speck status --json` has them (0167).
+export function autoShipWhyNot(cfg, pad, risk, roundList) {
+  if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
   const allowed = [].concat(cfg.auto_ship_risk ?? []).map(String);
-  if (!allowed.includes(String(t.fm.risk))) return `ticket ${pad} has risk "${t.fm.risk}", and auto_ship_risk only allows ${allowed.length ? allowed.join(', ') : 'none'}`;
-  const blind = rounds(repo, pad).filter(r => r.meta.sandbox_ok === false).map(r => r.meta.round);
+  if (!allowed.includes(String(risk))) return `ticket ${pad} has risk "${risk}", and auto_ship_risk only allows ${allowed.length ? allowed.join(', ') : 'none'}`;
+  const blind = roundList.filter(r => r?.meta?.sandbox_ok === false).map(r => r.meta.round);
   if (blind.length) return `the reviewer couldn't inspect the repo in round ${blind.join(', ')}, so it only reviewed the diff`;
   return '';
 }

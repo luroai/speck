@@ -10,7 +10,7 @@ import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff 
 import { cmdPack } from './pack.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
-import { cmdShip, shipState } from './ship.mjs';
+import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdConfig } from './config.mjs';
@@ -468,6 +468,8 @@ export function statusData(repo) {
       notes: sectionText(t.sections.notes),
       self_check: selfCheck(t.sections.notes),
       lint_messages: { errors: lint.errors, warnings: lint.warnings },
+      // 0167: whether speck ship --auto would ship it once approved, so the panel knows an approved one is waiting for you
+      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds) === '',
       rounds: ticketRounds(t.raw).rounds.map(r => ({
         round: r?.meta?.round ?? null,
         reviewer: r?.meta?.reviewer ?? null,

@@ -191,7 +191,7 @@
     @keyframes pulse { to { box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 8%, transparent); } }
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
-    @keyframes flash { 0%, 40% { background-color: var(--raise); box-shadow: inset 0 0 0 1px var(--text); } }
+    @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
     /* 0160: on a phone the header fades in as it slims to one row and as it goes back to two */
     header.slim > * { animation: head-slim .15s ease-out; }
     header.wide > * { animation: head-wide .15s ease-out; }
@@ -283,7 +283,7 @@
   .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
   /* It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
-  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { background-color: var(--raise); box-shadow: inset 0 0 0 1px var(--text); } }
+  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
 
   /* The full ticket, in a side pane over the right of the page. While it's open, the page behind it holds still and a
      backdrop over the rest of the page takes every click outside it. */
@@ -623,8 +623,8 @@ function panelModel(state) {
       const exit_label = shipping ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
-      // unless its auto-ship failed.
-      const to_ship = t.status === 'approved' && exit_label !== null && !auto_failed;
+      // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
+      const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || (t.auto_ship === false && !shipping));
       // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       const paused = pausable && t.paused === true;

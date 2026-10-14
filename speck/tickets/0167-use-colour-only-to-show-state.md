@@ -1,7 +1,7 @@
 ---
 id: "0167"
 title: "Use colour only to show state"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T14:32:21.212Z"
 ---
 # 0167 · Use colour only to show state
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel uses colour for decoration as much as for meaning: each Plan tab and the Shipped section have their own accent stripe, every card has a coloured left edge, and ids and links are in the accent red. Red also means blocked and high risk, so colour no longer tells the user where to look.
@@ -55,3 +55,83 @@ Cards are plain, set apart by their border, space and type, and colour only appe
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "53b0e093ae65f28eb714869fe1f7afc333dd88b1",
+    "thread_id": "01a13add-d2a7-78e1-9d4a-315f89856cf6",
+    "seconds": 55,
+    "usage": {
+      "input_tokens": 238239,
+      "cached_input_tokens": 183296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1033,
+      "reasoning_output_tokens": 80
+    },
+    "saved_at": "2026-10-14T14:43:52.977Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html removes section stripes and card left edges while retaining full borders. panel-0167 and updated 0151/0155/0157 browser tests cover both themes."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "panelModel in templates/panel.html:627 requires an exit_label before setting to_ship. An approved ticket without build_exit remains plain, even when auto-ship does not cover it. The new browser fixture only tests approval with build_exit."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Neutral text colours and click indicators are checked by panel-0167 AC3 tests, including browser checks in both themes and updated shipped-title tests."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The high, bug and fix tag rules retain their tokens; panel-0167 AC4 explicitly checks their text and borders."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Browser coverage checks light and dark themes; existing contrast tests remain intact. Full test output confirms 1530 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:627",
+        "issue": "Approved tickets only receive the purple border and background when a build exit is recorded. A manually built approved ticket without build_exit can need the user's shipping decision yet remain plain. Auto-ship eligibility is not considered by this condition.",
+        "suggested_fix": "Determine the waiting-for-user state from approval and auto-ship eligibility, while preserving shipping and failure states. Add coverage for an approved ticket without build_exit when auto-ship is disabled or excludes its risk.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "templates/panel.html:194",
+        "issue": "The linked-ticket flash replaces a blocked or waiting ticket's coloured background with the neutral raised fill. The reduced-motion rule does the same, contrary to the self-check claim that state colours always remain visible.",
+        "suggested_fix": "Preserve state backgrounds during flashing, using a neutral outline or shadow as the navigation indicator, and cover state-coloured linked targets.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Decorative stripes are removed, links use normal text colours, and the tests pass. One required state is missed: approved tickets without a recorded build exit can lack the purple cue that tells the user they need to ship them."
+  }
+}
+```
+
+</details>

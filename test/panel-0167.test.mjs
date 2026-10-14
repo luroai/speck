@@ -1,7 +1,10 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round } from './support/panel.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, panelModel, T, full, idea, round } from './support/panel.mjs';
+import { good, fm, startRepo } from './support/speck.mjs';
 import { rules, selectors, tokens, get, rule } from './support/css.mjs';
 
 // ---------- 0167: use colour only to show state ----------
@@ -61,6 +64,40 @@ test('0167 AC4: the high risk tag stays red, and the bug and fix tags keep their
   }
 });
 
+test('0167 AC2: an approved ticket is waiting for you when auto-ship doesn\'t cover it, even with no build exit recorded', () => {
+  const m = panelModel()({ tickets: [
+    T('0001', 'approved', { auto_ship: false }), // built by hand, and auto-ship doesn't cover it
+    T('0002', 'approved', { auto_ship: true }), // its build is about to ship it
+    T('0003', 'approved', { auto_ship: false, ship: { running: true, auto: false, started: new Date().toISOString() } }), // shipping now
+    T('0004', 'approved', { auto_ship: true, build_exit: { code: 0 } }), // its build finished without shipping
+    T('0005', 'approved', {}), // from an older speck status, with no auto_ship field
+  ], ideas: [] });
+  const by = Object.fromEntries(m.queue.map(t => [t.id, [t.to_ship, t.red]]));
+  assert.deepEqual(by, { '0001': [true, false], '0002': [false, false], '0003': [false, false], '0004': [true, false], '0005': [false, false] });
+});
+
+test('0167 AC2: speck status --json says whether auto-ship covers each ticket', () => {
+  const r = startRepo({ config: { worktrees: 'false', auto_ship: 'true', auto_ship_risk: '[low]' } });
+  const write = (name, o) => fs.writeFileSync(path.join(r.dir, 'speck', 'tickets', name), `---\n${fm(o)}\n---\n${good}`);
+  write('0002-low.md', { id: '"0002"', title: 'Low', status: 'approved', risk: 'low' });
+  write('0003-high.md', { id: '"0003"', title: 'High', status: 'approved', risk: 'high' });
+  const covers = () => Object.fromEntries(JSON.parse(r.run('status', '--json').stdout).tickets.filter(t => t.id !== '0001').map(t => [t.id, t.auto_ship]));
+  assert.deepEqual(covers(), { '0002': true, '0003': false });
+  const cfg = path.join(r.dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf8').replace(/^auto_ship:.*$/m, 'auto_ship: false'));
+  assert.deepEqual(covers(), { '0002': false, '0003': false });
+});
+
+test('0167 AC2: a linked ticket lights up with a ring, leaving a state\'s tint as it is', () => {
+  const rs = rules();
+  const flash = rs.filter(r => r.at.some(a => a.startsWith('@keyframes flash')) || selectors(r).some(s => /\.flash$/.test(s) && !r.decls.some(([k]) => k === 'animation')));
+  assert.ok(flash.length >= 2, 'the fading light and the still one');
+  for (const r of flash) {
+    assert.deepEqual(r.decls.map(([k]) => k), ['box-shadow'], `${r.sel}: only a ring`);
+    assert.deepEqual(tokens(get(r, 'box-shadow')), ['--text']);
+  }
+});
+
 // ---------- In the browser ----------
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
@@ -74,6 +111,7 @@ const STATE = {
     T('0303', 'blocked', { title: 'A blocked ticket', started: ago(3000), blocked_question: 'Which one?' }),
     T('0304', 'building', { title: 'A build that stopped', started: ago(200), build_exit: { code: 1, message: 'It ended.' } }),
     T('0305', 'ready', { title: 'A ready ticket' }),
+    T('0306', 'approved', { title: 'Approved, built by hand, and not for auto-ship', started: ago(900), approved: ago(60), auto_ship: false, rounds: [round(1, 100)] }),
     T('0401', 'done', { title: 'A shipped ticket', started: ago(1500), finished: ago(600), rounds: [round(1, 500)] }),
     T('0402', 'done', { title: 'Another shipped ticket', started: ago(5000), finished: ago(1800), rounds: [round(1, 500)] }),
   ],
@@ -81,7 +119,7 @@ const STATE = {
     idea('2026-10-14-a-follow-up', 'inbox', '# A follow-up\n\nStatus: inbox\nFrom ticket: 0161\n\nSome text.\n')],
 };
 // Each queue card's state colour: its border and its background, or none.
-const STATES = { '0301': null, '0302': ['--idea', '--idea-bg'], '0303': ['--bad', '--bad-bg'], '0304': ['--bad', '--bad-bg'], '0305': null };
+const STATES = { '0301': null, '0302': ['--idea', '--idea-bg'], '0303': ['--bad', '--bad-bg'], '0304': ['--bad', '--bad-bg'], '0305': null, '0306': ['--idea', '--idea-bg'] };
 
 const stub = theme => `(() => {
   try { localStorage.setItem('speck-theme', ${JSON.stringify(theme)}); } catch {}
@@ -106,7 +144,7 @@ async function withPanel(fn, theme) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(theme) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q').length === 5 && document.querySelectorAll('#shipped tr').length === 2`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q').length === 6 && document.querySelectorAll('#shipped tr').length === 2`, 'the panel');
     assert.equal(await b.js(`document.documentElement.dataset.theme`), theme);
     await fn(b);
   } finally { await b.close(); await stop(panel); }
