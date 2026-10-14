@@ -1,7 +1,7 @@
 ---
 id: "0160"
 title: Keep the panel header on screen                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T12:31:12.452Z"
 ---
 # 0160 · Keep the panel header on screen
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 The panel header, with the Auto-build button, scrolls away with the page, so on a phone the one control and status the user checks most is only at the top. In the home-screen app the iPhone's status bar has no background of its own, so once the page scrolls, cards and text slide underneath the clock and battery (seen 2026-10-14).
@@ -48,7 +48,7 @@ The header stays at the top of the screen as the page scrolls, with the panel's 
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+Everything else is done and approved by the reviewer, but no automated test can show how an iPhone draws the clock and battery over the header. Will you check it on your phone, or let it ship and check it afterwards? To check: open the home-screen app in the light look and in the dark look, scroll down, and see that the clock stays readable and nothing shows behind it (a switch of look may only show on the status bar after you close and reopen the app). I recommend letting it ship and checking afterwards: the header covers the status bar either way, and if the clock's colour is wrong in one look, that is a small follow-up ticket.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -130,6 +130,83 @@ The header stays at the top of the screen as the page scrolls, with the panel's 
     ],
     "escalation_question": "",
     "summary": "The header stays visible and compacts correctly on phones, and the suite passes. Two status-bar concerns remain: scrolling a full ticket can expose text behind the clock, and the tests do not establish the claimed iPhone behaviour in both themes."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · escalate</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "74008978cce30333220c3b001eb0b15cbed06e16",
+    "thread_id": "01a13a70-d183-7390-964f-72c44cb04e5b",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 211516,
+      "cached_input_tokens": 158848,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1773,
+      "reasoning_output_tokens": 180
+    },
+    "saved_at": "2026-10-14T12:48:49.019Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "escalate",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html header rule retains sticky positioning, opaque background and bottom border. Passing AC1 browser tests exercise phone and desktop scrolling."
+      },
+      {
+        "id": 2,
+        "status": "unclear",
+        "evidence": "Viewport coverage and safe-area padding are implemented and exercised. The new long-ticket scrolling test verifies the pane and border remain below the inset. However, Chromium tests cannot establish iOS status-bar readability or whether changing the meta tag updates its rendered appearance during theme switches."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "header.slim and fit() retain compact layout and restoration. Passing AC3 browser tests exercise height, controls, hidden project details, animation and reduced motion."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "main retains bottom safe-area padding. #full-ticket now starts at the top inset. Passing AC4 tests verify last-card clearance and initial close-button/first-line positions."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The --head measurement and scroll-padding remain intact. Passing AC5 tests exercise ticket jumps and pane opening with zero and nonzero insets. Verified test output reports 1492 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:315",
+        "issue": "Previously, the full ticket's scrolling contents and border could enter the status-bar region. Moving the pane itself below the inset fixes this; the new test genuinely scrolls a long ticket and checks that region.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:24; test/panel-0160.test.mjs",
+        "issue": "The test now accurately describes checking the meta-tag value. The builder's strategy plausibly protects content with either zero or nonzero insets, but actual iOS readability remains unverified, especially after switching themes while the app is open. Lack of device access explains the evidence gap; it does not establish AC2. Whether to accept that gap requires the owner.",
+        "suggested_fix": "Obtain an iPhone home-screen check in both themes, including switches in both directions, or have the owner explicitly accept this platform verification as deferred.",
+        "state": "dispute_rejected"
+      }
+    ],
+    "escalation_question": "Will you verify status-bar readability and content coverage in the iPhone home-screen app, including switching themes in both directions, before approval, or accept that device check as deferred?",
+    "summary": "The scrolling ticket pane is fixed, and all automated tests pass. The remaining uncertainty is specific to the iPhone: the tests check layout and meta-tag values, but cannot confirm the clock stays readable when themes change. The owner needs to decide whether device verification is required before approval."
   }
 }
 ```
