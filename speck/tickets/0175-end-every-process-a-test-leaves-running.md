@@ -300,3 +300,80 @@ Follow-ups:
 ```
 
 </details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bff2cf38754dc35e220331d0d010344012e6adab",
+    "thread_id": "01a13c05-29b1-7b82-b257-53f8e443340d",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 548301,
+      "cached_input_tokens": 423936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3948,
+      "reasoning_output_tokens": 519
+    },
+    "saved_at": "2026-10-14T20:44:51.479Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The revised criterion accepts the previously identified ownership gap. reaper() covers marked processes, folder-linked processes, live descendants and remembered descendants. The pass, fail and actual-timeout AC1 tests all pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "tmp.mjs invokes the same cleanup on signal termination. The SIGINT, SIGTERM and SIGHUP tests pass for all seven fixture processes, meeting the revised scope."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ticker.mjs and gate.mjs terminate their loops when the folder disappears. All five AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The refreshed five paired full runs recorded zero test-marker processes after each 10-second wait. The cleanup code has not changed since that verification."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh full run reports 1649 passes, three skips and only the explicitly exempted 0165 AC1 failure."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/reap.mjs:reaper",
+        "issue": "The owner explicitly accepted the remaining unobserved-orphan gap, and acceptance criteria 1 and 2 now reflect that decision. The implementation meets the revised scope.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/reap-0175.test.mjs:timeout fixture",
+        "issue": "The timeout fixture now exercises and asserts an actual test timeout. It passes in the fresh full run.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved against the revised criteria. Cleanup and helper shutdown tests pass, and repeated paired runs found no test leftovers. The owner has accepted the documented gap for detached processes that lose every link before discovery. The only full-suite failure was already present."
+  }
+}
+```
+
+</details>
