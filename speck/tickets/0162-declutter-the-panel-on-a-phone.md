@@ -40,6 +40,7 @@ The panel shows the same information in less space: no fixed instructions, a one
 ## Notes
 - Builds after 0167, which takes colour out of titles and links and builds on 0161, so the style changes don't clash.
 - Reported 2026-10-14 from phone screenshots; the user liked the layout but felt it might be cluttered.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
