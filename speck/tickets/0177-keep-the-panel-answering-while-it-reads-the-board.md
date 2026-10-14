@@ -40,6 +40,7 @@ The panel keeps answering promptly, however many tabs are open and however slow 
 ## Notes
 - `panelServer()` in `scripts/panel.mjs` calls `statusData(repo)` inside the request handler. The page aborts a request still waiting when the next is due (`poll()` in `templates/panel.html`), but the server carries on working it out.
 - Failing before this build: none
+- Self-check: a board reader that stops now answers its reading with a plain error and the next reading starts a new one (new test). The full suite also showed the reader could load code changed just after the server started, so the server now waits for its reader to load before it's ready.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -5,6 +5,7 @@ import http from 'node:http';
 import net from 'node:net';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { Worker } from 'node:worker_threads';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
@@ -300,9 +301,38 @@ function codeHash() {
   return h.digest('hex');
 }
 
+// 0177: reads the board (speck status --json's data) in a worker thread, so the server keeps answering everything else
+// while it does. A module of its own, from a data: URL, that loads the code as the server did. Resolves once that code
+// has loaded, with a function that reads the board and resolves with { board } or { error }, one reading at a time.
+const BOARD_READER = `import { parentPort, workerData } from 'node:worker_threads';
+// Without a script name in argv[1], speck.mjs doesn't run as the CLI when it's imported.
+process.argv.splice(1);
+const code = import(workerData.code);
+code.then(() => parentPort.postMessage({ loaded: true }));
+parentPort.on('message', async () => {
+  try { const m = await code; const board = m.statusData(workerData.repo); parentPort.postMessage({ board }); }
+  catch (e) { parentPort.postMessage({ error: String(e && e.message || e) }); }
+});`;
+function boardReader(repo) {
+  const code = pathToFileURL(path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs')).href;
+  let worker = null, pending = null;
+  const start = () => new Promise((loaded, failed) => {
+    const w = worker = new Worker(new URL(`data:text/javascript,${encodeURIComponent(BOARD_READER)}`), { workerData: { repo, code } });
+    w.unref();
+    const answer = out => { if (worker !== w) return; if (out.loaded) return loaded(); const p = pending; pending = null; if (p) p(out); };
+    // A reader that stops answers its reading with the reason, and the next reading starts a new one.
+    const gone = message => { failed(new SpeckError(message)); answer({ error: message }); if (worker === w) worker = null; };
+    w.on('message', answer);
+    w.on('error', e => gone(`The board reader stopped: ${e.message}`));
+    w.on('exit', c => gone(`The board reader stopped with exit code ${c}.`));
+  });
+  const read = () => new Promise(resolve => { if (!worker) start().catch(() => {}); pending = resolve; worker.postMessage('read'); });
+  return start().then(() => read);
+}
+
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
 // POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
-// included, so a changed panel.html shows on a reload. It also watches the code, and when it changes, hands over to a
+// included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
   const env = process.env;
@@ -345,6 +375,34 @@ export async function panelServer() {
   const iconsDir = path.join(TEMPLATES, 'icons');
   const icons = { '/manifest.webmanifest': 'application/manifest+json', '/icon.svg': 'image/svg+xml',
     '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
+  // 0177: /api/state. Requests that arrive while the board is being read share that reading, unless a write has finished
+  // since it started: those wait for the next one, so the answer after a write shows it. A request whose connection
+  // has closed by the time its reading would start doesn't cause one.
+  // The server is ready once its board reader has loaded the code, so a change to it after then can't reach the reader.
+  const readBoard = await boardReader(repo);
+  let writes = 0, reading = null, waiting = [];
+  const closed = res => res.destroyed || !res.socket || res.socket.destroyed;
+  const answerState = (res, out) => {
+    if (closed(res)) return;
+    if (out.error) return send(res, 500, 'application/json', JSON.stringify({ error: out.error }));
+    // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
+    try { const run = runState(runsOf(repo)); send(res, 200, 'application/json', JSON.stringify({ ...out.board, ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) })); }
+    catch (e) { send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+  };
+  const nextReading = () => {
+    const these = waiting.filter(res => !closed(res));
+    waiting = [];
+    if (!these.length) return;
+    reading = { at: writes, these };
+    readBoard().then(out => { const done = reading; reading = null; for (const res of done.these) answerState(res, out); nextReading(); });
+  };
+  const askState = res => {
+    if (reading && reading.at === writes) return reading.these.push(res);
+    waiting.push(res);
+    if (!reading) nextReading();
+  };
+  // Every write's answer: what it did, after which a reading started before it is out of date.
+  const wrote = (res, out) => { writes++; send(res, out.status, 'application/json', JSON.stringify(out.body)); };
   const server = http.createServer((req, res) => {
     if (!hosts.has(String(req.headers.host || '').toLowerCase())) return send(res, 403, 'text/plain', 'Forbidden: open the panel at 127.0.0.1 or localhost.\n');
     const where = req.url.split('?')[0];
@@ -354,8 +412,8 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelSetReady(repo, ready[1]);
-        return send(res, out.status, 'application/json', JSON.stringify(out.body));
-      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+        return wrote(res, out);
+      } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
     const draft = where.match(/^\/api\/tickets\/(\d{1,4})\/draft$/);
     if (req.method === 'POST' && draft) {
@@ -363,8 +421,8 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelBackToPlan(repo, draft[1]);
-        return send(res, out.status, 'application/json', JSON.stringify(out.body));
-      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+        return wrote(res, out);
+      } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
     const priority = where.match(/^\/api\/tickets\/(\d{1,4})\/priority\/([^/]*)$/);
     if (req.method === 'POST' && priority) {
@@ -372,8 +430,8 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelSetPriority(repo, priority[1], priority[2]);
-        return send(res, out.status, 'application/json', JSON.stringify(out.body));
-      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+        return wrote(res, out);
+      } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
     const stopPath = where.match(/^\/api\/tickets\/(\d{1,4})\/stop$/);
     if (req.method === 'POST' && stopPath) {
@@ -381,8 +439,8 @@ export async function panelServer() {
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
         const out = panelStop(repo, stopPath[1]);
-        return send(res, out.status, 'application/json', JSON.stringify(out.body));
-      } catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
+        return wrote(res, out);
+      } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
     const ship = where.match(/^\/api\/tickets\/(\d{1,4})\/ship$/);
     if (req.method === 'POST' && ship) {
@@ -393,7 +451,7 @@ export async function panelServer() {
       shipping = padId(ship[1]);
       panelShip(repo, ship[1])
         .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }))
-        .then(out => { shipping = null; send(res, out.status, 'application/json', JSON.stringify(out.body)); });
+        .then(out => { shipping = null; wrote(res, out); });
       return;
     }
     const runSwitch = where.match(/^\/api\/run\/(on|off)$/);
@@ -404,7 +462,7 @@ export async function panelServer() {
       switching = true;
       Promise.resolve().then(() => (runSwitch[1] === 'on' ? panelRunOn(repo) : panelRunOff(repo)))
         .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }))
-        .then(out => { switching = false; send(res, out.status, 'application/json', JSON.stringify(out.body)); });
+        .then(out => { switching = false; wrote(res, out); });
       return;
     }
     // The panel no longer pauses or plays builds (0145): speck pause and speck play do. Their POSTs get the 404 below.
@@ -424,11 +482,7 @@ export async function panelServer() {
       }
       return send(res, 200, icons[where], body);
     }
-    if (where === '/api/state') {
-      // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
-      try { const run = runState(runsOf(repo)); return send(res, 200, 'application/json', JSON.stringify({ ...statusData(repo), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) })); }
-      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) })); }
-    }
+    if (where === '/api/state') return askState(res);
     const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log$/);
     if (log) {
       try { return send(res, 200, 'application/json', JSON.stringify(panelLog(repo, log[1]))); }
