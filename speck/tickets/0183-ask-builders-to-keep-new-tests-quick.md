@@ -1,7 +1,7 @@
 ---
 id: "0183"
 title: "Ask builders to keep new tests quick"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T22:11:54.010Z"
 ---
 # 0183 · Ask builders to keep new tests quick
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Every ticket adds about ten tests, and each adds about a second to a full run of speck's own suite, which every build runs three or four times. Most of the suite's time goes on tests that start real browsers, panels or `speck run`: on 2026-10-14, tests over a second each took 73% of the test time, and the 50 real-browser tests 14%. The build instructions say nothing about how quick a test should be, so builders often start a real browser or process when a quicker check would test the same thing.
@@ -46,7 +46,7 @@ Builders write each new test the quickest way that still really checks its crite
 - Self-check: AGENTS.md no longer claims each slow option takes a second or more (no test backs a timing); it says each starts a real process instead.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The instructions an agent follows when it builds a ticket now ask it to test each requirement the quickest way that still really checks it, and to avoid starting a real browser or long-running program unless the requirement is about that. They also ask it to wait for things with a time limit rather than pausing for a set time. Speck's own guide for agents now lists which of its test helpers are quick and which are slow. To see the change, read the "Tests first" part of the build instructions. Keep an eye on whether full test runs grow more slowly as new tickets ship.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,68 @@ Builders write each new test the quickest way that still really checks its crite
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The 0173 AC2 test fails on the base branch because a 0177 test checks once that a stopped process has gone: speck/ideas/2026-10-14-fix-the-0177-test-that-breaks-the-0173-rule.md
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a3ffc211b8f821fada573d15cada52a3dc020684",
+    "thread_id": "01a13c80-646b-7b63-aace-a8ac01a3d607",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 127248,
+      "cached_input_tokens": 88192,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 724,
+      "reasoning_output_tokens": 11
+    },
+    "saved_at": "2026-10-14T22:20:30.681Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md, Tests first step 1, requires the quickest meaningful check and permits real browsers, servers or processes when the criterion concerns that behaviour. The 0183 AC1 test checks this wording and passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Tests first step 1 requires waiting for an event with a time limit and keeping absence-check pauses as short as possible. The 0183 AC2 test exercises both instructions and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The added build instructions use general examples without repository-specific helpers or paths. The 0183 AC3 test checks for repository-specific references and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AGENTS.md names fakePage(), direct scripts/ calls, browserPage(), startPanel() and speck run, and explains when real behaviour warrants a slow option. All three 0183 AC4 tests passed; test/support/panel.mjs confirms the named helpers exist."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0183-tests.txt: 1,680 passed, three skipped and one failed. The sole failure is the documented pre-existing 0173 AC2 failure. No existing tests were changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The build guide now asks builders to choose quick, meaningful tests and avoid unnecessary fixed waits. This repository also documents its specific testing options. The wording and tests meet the ticket; the full suite shows only the recorded pre-existing failure."
+  }
+}
+```
+
+</details>
