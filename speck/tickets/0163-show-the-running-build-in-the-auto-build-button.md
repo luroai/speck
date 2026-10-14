@@ -1,7 +1,7 @@
 ---
 id: "0163"
 title: "Show the running build in the Auto-build button"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0161","0168"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T16:25:26.868Z"
+approved: "2026-10-14T16:47:31.616Z"
 
 ---
 # 0163 · Show the running build in the Auto-build button
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The header is the only part of the panel that's always on screen, but the Auto-build button only says "Auto-build on" or "off". To see what's being built and where it's got to, the user has to scroll to the Build section, which on a phone is below the whole Plan section.
@@ -54,9 +55,14 @@ Worth keeping an eye on: when more than one ticket is in flight, the button name
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 111,491
+- Elapsed since build started: 22 min
+- Changed lines: 68 (limit 5000)
 - Follow-ups:
   - Skipped as a duplicate: during this build, two server-side tests (0128 AC3 and 0148 AC2) each failed once in a full-suite run with "speck run has stopped" and passed when run again. This matches speck/ideas/2026-10-13-stop-tests-checking-speck-run-stopped-too-soon.md.
   - Tidy-up: the old tests for 0140, 0144 and 0150 now check for the builder where they checked for the green or red square. 0163 AC3 replaces the square.
