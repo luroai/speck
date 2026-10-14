@@ -1,7 +1,7 @@
 ---
 id: "0151"
 title: "Make each Plan ticket a clear card"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T00:08:24.350Z"
+approved: "2026-10-14T06:13:29.749Z"
 
 ---
 # 0151 · Make each Plan ticket a clear card
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In Plan's ticket list the id and title are small and hard to read, the priority, size and risk tags wrap unpredictably beside the title at different heights (the priority tag is much taller, for its tap area), and the faint lines between tickets make it hard to tell where one ticket ends and the next begins.
@@ -62,9 +63,15 @@ Worth keeping an eye on: idea and inbox cards still use the old, smaller title s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The wrapping tests allow three lines below 1280 px at several tested widths.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 319,554
+- Elapsed since build started: 365 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Blocked once before building: AC1 asked for one line from 700 px, which the two-column layout can't give. The user chose option (a), so titles fit on one line from 1,280 px.
 - Follow-ups:
