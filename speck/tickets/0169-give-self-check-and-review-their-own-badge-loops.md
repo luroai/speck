@@ -40,6 +40,7 @@ The badge's self-check and reviewing stages have their own loops, both built aro
 - The design reference is `mockups/builder-badge/index.html` in the main checkout (local only: `mockups/` isn't in git, so it isn't in a build's worktree; `git worktree list` shows the main checkout first) (the Self-check and Reviewing states). Its drawing code and timings can be reused.
 - Builds after 0168, which adds the badge.
 - Failing before this build: none
+- Self-check: no changes (checked that the tick at the mockup's height stays inside the tile, so kept it)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

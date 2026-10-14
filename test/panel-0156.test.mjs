@@ -61,7 +61,8 @@ test('0156 AC2: the builder is at work (the speck moved until 0168) only while a
   const p = fake();
   await p.settle();
   for (const t of TICKETS.filter(x => x.status !== 'ready')) {
-    assert.equal(badgeIn(p, rowOf(p, t.id)).className === 'badge type', MOVING.includes(t.id), `${t.id}: ${MOVING.includes(t.id) ? 'at work' : 'not at work'}`);
+    // At work: at the laptop, or since 0169 checking its own work or with the reviewer.
+    assert.equal(/^badge (type|check|review)$/.test(badgeIn(p, rowOf(p, t.id)).className), MOVING.includes(t.id), `${t.id}: ${MOVING.includes(t.id) ? 'at work' : 'not at work'}`);
   }
 });
 

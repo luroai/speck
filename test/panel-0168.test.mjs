@@ -24,8 +24,8 @@ const TICKETS = [
 // Each in-flight ticket's pose, its badge's accessible name, its sentence and its stage's name.
 const SHOWS = {
   '0401': ['type', 'The builder is writing code', 'Writing tests and code', 'Build'],
-  '0402': ['type', 'The builder is checking its own work', 'Checking its own work', 'Self-check'],
-  '0403': ['type', 'The builder is with the reviewer', 'Codex is reviewing · round 2', 'Review 2'],
+  '0402': ['check', 'The builder is checking its own work', 'Checking its own work', 'Self-check'], // its own loops since 0169
+  '0403': ['review', 'The builder is with the reviewer', 'Codex is reviewing · round 2', 'Review 2'],
   '0404': ['still', 'The builder is paused', 'Paused', 'Review'],
   '0405': ['wait', 'The builder is waiting for you', 'Approved · waiting for you to ship it', 'Ship'],
   '0406': ['bad', 'The builder needs you', 'Blocked · it has a question for you', 'Build'],
@@ -66,7 +66,7 @@ test('0168 AC2: the badge plays the laptop loop while an agent is at work, from 
   const p = fake();
   await p.settle();
   const at = FLIGHT.filter(id => SHOWS[id][0] === 'type');
-  assert.deepEqual(at, ['0401', '0402', '0403', '0408'], 'building, self-check, review and shipping');
+  assert.deepEqual(at, ['0401', '0408'], 'building and shipping (self-check and review too until 0169)');
   const js = script();
   const loop = js.match(/ {4}type\(g, t\) \{([\s\S]*?)\n {4}\},/)[1];
   assert.match(loop, /const CY = 2800/, 'a 2.8 second loop');
@@ -250,7 +250,7 @@ test('0168 AC5: in a real browser, no pose reaches past the tile\'s rounded edge
       badgeColours();
       const c = document.createElement('canvas'); c.width = c.height = 224; const g = c.getContext('2d'), out = {};
       const edge = new Path2D(); edge.roundRect(56 - 1.4, 56 - 1.4, 112 + 2.8, 112 + 2.8, 25.4); // the tile's edge and its line, at twice the size
-      for (const pose of Object.keys(BADGE.POSES)) {
+      for (const pose of Object.keys(BADGE.POSES).filter(k => k !== 'review')) { // the reviewer slides in past it: test/panel-0169.test.mjs
         out[pose] = 0;
         for (let t = 0; t < 8400; t += 23) {
           g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 224, 224); g.setTransform(2, 0, 0, 2, 56, 56);
@@ -262,6 +262,6 @@ test('0168 AC5: in a real browser, no pose reaches past the tile\'s rounded edge
       }
       return out;
     })()`, 60000);
-    assert.deepEqual(outside, { type: 0, wait: 0, bad: 0, still: 0 });
+    assert.deepEqual(outside, { type: 0, check: 0, wait: 0, bad: 0, still: 0 });
   });
 });

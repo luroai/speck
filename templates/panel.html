@@ -490,13 +490,16 @@ function doing(t, shipping) {
   return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };
 }
 // 0168: what an in-flight ticket's builder badge shows, from what it's doing (`d`, from doing): its pose and the badge's
-// accessible name. At the laptop while an agent is at work; with a "?" when it's blocked or stopped (the card's crimson);
+// accessible name. While an agent is at work: checking a cloud of code during self-check, going through one with the
+// reviewer during review (0169), otherwise at the laptop. With a "?" when it's blocked or stopped (the card's crimson);
 // with a flag while it waits for your decision (the card's purple); otherwise still, facing front.
 function badgeOf(t, d) {
   if (d.moving) {
     const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
-    return { pose: 'type', label: d.sentence === 'Shipping' ? 'The builder is shipping'
-      : t.status === 'reviewing' ? 'The builder is with the reviewer' : now === 1 ? 'The builder is checking its own work' : 'The builder is writing code' };
+    if (d.sentence === 'Shipping') return { pose: 'type', label: 'The builder is shipping' };
+    if (t.status === 'reviewing') return { pose: 'review', label: 'The builder is with the reviewer' };
+    if (now === 1) return { pose: 'check', label: 'The builder is checking its own work' };
+    return { pose: 'type', label: 'The builder is writing code' };
   }
   if (d.tone === 'bad') return { pose: 'bad', label: 'The builder needs you' };
   if (t.to_ship) return { pose: 'wait', label: 'The builder is waiting for you' };
@@ -1525,7 +1528,8 @@ const BADGE = (() => {
   const back = k => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
   const hop = (k, n, h) => { const q = (k * n) % 1, s = Math.sin(q * Math.PI); return { y: -s * h, tuck: s }; };
   const rnd = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  const blinkAt = t => (t % 3700) < 120;
+  const win = (p, a, b, f = .2) => { if (p < a || p > b) return 0; const k = (p - a) / (b - a); return Math.min(1, k / f, (1 - k) / f); };
+  const blinkAt = (t, phase = 0) => ((t + phase * 1000) % 3700) < 120;
   const ln = (g, x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
   const rr = (g, x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
   const GL = '{}<>;/=()[]*';
@@ -1535,6 +1539,12 @@ const BADGE = (() => {
     g.save(); g.globalAlpha *= o.a; g.translate(cx, by - s / 2); g.rotate(o.rot);
     g.fillStyle = C.paper; g.strokeStyle = C.ink; g.lineWidth = 1.7; g.beginPath(); g.rect(-s / 2, -s / 2, s, s); g.fill(); g.stroke(); g.restore();
   }
+  // 0169: a green tick, drawn k of the way.
+  function tick(g, x, y, k, a = 1) {
+    if (k <= 0 || a <= 0) return;
+    g.save(); g.globalAlpha *= a; g.strokeStyle = C.ok; g.lineWidth = 2.6; g.lineCap = 'round'; g.lineJoin = 'round';
+    g.setLineDash([19.2 * k, 100]); g.beginPath(); g.moveTo(x - 6, y); g.lineTo(x - 2, y + 4); g.lineTo(x + 7, y - 6); g.stroke(); g.restore();
+  }
   // The builder: an ensō-shaped round body open at the top left, two round ears, two short legs and the speck as its eye.
   function builder(g, P) {
     g.save(); g.translate(P.x || 0, P.y || 0); g.rotate(P.rot || 0); g.scale(1, P.sy || 1);
@@ -1542,7 +1552,7 @@ const BADGE = (() => {
     const tk = P.tuck || 0;
     ln(g, -7, -5, -9 + tk * 2, -tk * 3); ln(g, 7, -5, 9 - tk * 2, -tk * 3);
     g.fillStyle = C.paper;
-    for (const sx of [-1, 1]) { g.beginPath(); g.arc(sx * 12, -40, 5.5, 0, 7); g.fill(); g.stroke(); }
+    for (const sx of [-1, 1]) { g.beginPath(); g.arc(sx * 12, -40 - (sx === 1 ? P.ear || 0 : 0), 5.5, 0, 7); g.fill(); g.stroke(); }
     g.beginPath(); g.arc(0, -24, 20, 0, Math.PI * 2); g.fill();
     g.beginPath(); g.arc(0, -24, 20, -2.0, -2.35 + Math.PI * 2); g.stroke();
     if (P.flag != null) {
@@ -1553,6 +1563,27 @@ const BADGE = (() => {
     g.save(); g.translate(ex, ey); g.scale(1, blinkAt(P.t) ? .15 : 1); g.beginPath(); g.arc(0, 0, 4.5, 0, 7); g.fillStyle = C.speck; g.fill(); g.restore();
     if (P.q) { g.save(); g.translate(P.q.x, P.q.y); g.scale(P.q.s, P.q.s); g.fillStyle = C.bad; g.font = '600 24px "Shippori Mincho", "Noto Serif JP", Georgia, serif'; g.textAlign = 'center'; g.fillText('?', 0, 0); g.restore(); }
     g.restore();
+  }
+  // 0169: the reviewer, taller and squarer than the builder, with two small eyes and a mouth. (0, 0) is between its feet.
+  function reviewer(g, R) {
+    g.save(); g.translate(R.x, R.y || 0); g.rotate(R.rot || 0); g.scale(1, R.sy || 1);
+    g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.ink; g.lineWidth = 2.2;
+    ln(g, -7, -4, -8, 0); ln(g, 7, -4, 8, 0);
+    g.beginPath(); g.moveTo(-15, -4); g.lineTo(-16, -50); g.quadraticCurveTo(-15, -58, -6, -58); g.lineTo(8, -57); g.quadraticCurveTo(16, -56, 15, -48); g.lineTo(14, -4); g.closePath();
+    g.fillStyle = C.paper; g.fill(); g.stroke();
+    const dx = (R.lookX || 0) * 4, dy = (R.lookY || 0) * 4, b = blinkAt(R.t, 1.9) ? .15 : 1;
+    g.fillStyle = C.ink;
+    for (const x of [-5, 5]) { g.save(); g.translate(x + dx, -40 + dy); g.scale(1, b); g.beginPath(); g.arc(0, 0, 2.4, 0, 7); g.fill(); g.restore(); }
+    if (R.talk) { g.beginPath(); g.ellipse(dx, -30, 4, 1 + R.talk * 2.4, 0, 0, 7); g.stroke(); } // open while it talks
+    else if (R.mouth) { g.beginPath(); g.moveTo(-6 + dx, -31); g.quadraticCurveTo(dx, -26, 6 + dx, -31); g.stroke(); } // a smile
+    else ln(g, -6 + dx, -30, 6 + dx, -30);
+    g.restore();
+  }
+  // 0169: one character of code hanging in the air, in faint ink: larger and green once checked, ringed while it's discussed.
+  function glyph(g, x, y, ch, o) {
+    g.save(); g.translate(x, y); g.scale(o.s || 1, o.s || 1); g.globalAlpha *= o.a ?? .45;
+    if (o.ring) { g.strokeStyle = C.code; g.lineWidth = 1.1; g.beginPath(); g.arc(0, -3, 5.6, 0, 7); g.stroke(); }
+    g.fillStyle = o.good ? C.ok : C.code; g.font = '600 9px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.fillText(ch, 0, 0); g.restore();
   }
   const POSES = {
     // At the laptop, from behind its lid, a loop of 2.8 seconds: paws slapping the lid's top edge in turn with bits of code
@@ -1589,6 +1620,62 @@ const BADGE = (() => {
       g.globalAlpha = 1;
       if (p >= .86) { const k = seg(p, .86, 1), e = out(k); box(g, lerp(4, 24, e), lerp(-16, -52, e), { s: Math.min(1, back(seg(k, 0, .4))) * .8, rot: .4 * e, a: 1 - seg(k, .7, 1) }); }
     },
+    // 0169: self-check. Nine faint characters of code hang in a loose ring around it, drifting. Its eye moves to one at
+    // random every 0.64 seconds, the body turning a beat later and an ear twitching now and then, and each character it
+    // looks at turns green for a moment. Every seventh glance, a small hop and a green tick.
+    check(g, t) {
+      const N = 9, G = 640, n = Math.floor(t / G), k = (t % G) / G;
+      const pos = i => {
+        const ang = -Math.PI + (i + .5) / N * Math.PI + (rnd(i + 40) - .5) * .25, R = 33 + rnd(i + 50) * 7;
+        return { x: Math.cos(ang) * R + Math.sin(t / 1400 + i) * 1.6, y: -28 + Math.sin(ang) * R * .95 + Math.cos(t / 1100 + i * 1.7) * 1.6 };
+      };
+      const pick = j => Math.floor(rnd(j) * N);
+      const dir = i => { const q = pos(i), dx = q.x, dy = q.y + 26, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d }; };
+      const from = dir(pick(n - 1)), to = dir(pick(n)), m = io(seg(k, 0, .3)), body = io(seg(k, .08, .55));
+      const P = { t, x: lerp(from.x, to.x, body) * 2.5, lookX: lerp(from.x, to.x, m), lookY: lerp(from.y, to.y, m) };
+      P.rot = lerp(from.x, to.x, body) * .09; P.sy = 1 - .03 * Math.sin(seg(k, 0, .3) * Math.PI);
+      if (rnd(n + 7) > .7) P.ear = 2.5 * Math.sin(seg(k, .3, .6) * Math.PI);
+      const hopping = n % 7 === 6;
+      if (hopping) { const h = hop(k, 1, 7); P.y = h.y; P.tuck = h.tuck; P.lookX = 0; P.lookY = -.3; }
+      builder(g, P);
+      for (let i = 0; i < N; i++) {
+        let glow = 0; // from the glances that ended in the last 1.5 seconds, none before the loop began
+        for (let j = n; j > n - 4 && j >= 0; j--) if (pick(j) === i) { const since = t - (j * G + G * .3); if (since >= 0) glow = Math.max(glow, 1 - since / 1500); }
+        const q = pos(i);
+        glyph(g, q.x, q.y, GL[Math.floor(rnd(i + 60) * GL.length)], { a: .45 + .55 * glow, s: 1 + .3 * glow, good: glow > .05 });
+      }
+      if (hopping) tick(g, 0, -74, out(seg(k, 0, .5)), 1 - seg(k, .8, 1));
+    },
+    // 0169: review, a loop of 6.2 seconds. The reviewer slides in from the right, and seven faint characters float above
+    // the two of them. Three times, the reviewer looks at one and talks, and a ring goes round it; then the builder looks
+    // at the same one and answers with a bounce and an ear flick, and it turns green. Then the reviewer smiles and nods,
+    // the builder hops, and the reviewer slides out.
+    review(g, t) {
+      const CY = 6200, p = (t % CY) / CY, cycle = Math.floor(t / CY), N = 7;
+      const rx = p < .07 ? lerp(74, 30, out(seg(p, 0, .07))) : p < .93 ? 30 : lerp(30, 74, io(seg(p, .93, 1)));
+      const pos = i => ({ x: -36 + (i / (N - 1)) * 50 + (rnd(i + 5) - .5) * 5 + Math.sin(t / 1300 + i) * 1.5, y: -53 - rnd(i + 9) * 9 + Math.cos(t / 1000 + i * 1.3) * 1.2 });
+      const focus = [0, 1, 2].map(e => Math.floor(rnd(cycle * 3 + e + 1) * N));
+      const turns = [['R', .09, .22, 0], ['B', .24, .36, 0], ['R', .38, .47, 1], ['B', .49, .61, 1], ['R', .63, .71, 2], ['B', .73, .79, 2]];
+      const B = { t, x: -13, lookX: .6, lookY: -.6 }, R = { t, x: rx, lookX: -.6, lookY: -.6, rot: -.05 };
+      const aim = (who, i) => { const q = pos(i), dx = q.x - who.x, dy = q.y - (who === B ? -26 : -40), d = Math.hypot(dx, dy) || 1; who.lookX = dx / d; who.lookY = dy / d; };
+      const ring = new Set(), good = new Set();
+      for (const [who, a, b, e] of turns) {
+        if (p >= a && who === 'R') ring.add(focus[e]);
+        if (p >= b && who === 'B') { ring.delete(focus[e]); good.add(focus[e]); }
+        const w = win(p, a, b, .18);
+        if (w <= 0) continue;
+        const bounce = Math.abs(Math.sin(seg(p, a, b) * Math.PI * 5)) * w;
+        aim(B, focus[e]); aim(R, focus[e]);
+        if (who === 'R') { R.sy = 1 + .04 * bounce; R.rot = -.05 - .1 * w; R.talk = bounce; }
+        else { B.sy = 1 + .06 * bounce; B.rot = .08 * w; B.ear = 2.5 * bounce; }
+      }
+      if (p > .81 && p < .93) { const k = seg(p, .81, .93); R.mouth = 1; R.rot = -.05 - .1 * Math.abs(Math.sin(k * Math.PI * 2)); R.lookX = -1; R.lookY = .2; const h = hop(seg(p, .83, .91), 1, 7); B.y = h.y; B.tuck = h.tuck; B.lookX = .8; B.lookY = -.2; }
+      builder(g, B); reviewer(g, R);
+      for (let i = 0; i < N; i++) {
+        const q = pos(i), r = ring.has(i), ok = good.has(i);
+        glyph(g, q.x, q.y, GL[Math.floor(rnd(i + cycle * 11 + 60) * GL.length)], { a: r || ok ? 1 : .45, s: r ? 1.15 : ok ? 1.1 : 1, good: ok, ring: r });
+      }
+    },
     // Facing front, waving a small purple flag that ripples a moment behind the wave, with a hop every few seconds.
     wait(g, t) {
       const hp = (t % 3800) / 3800, P = { t, x: -6, lookX: 0, lookY: .1, flag: -.18 + .32 * Math.sin(t / 280), flagWave: 3 * Math.sin(t / 280 - 1), rot: .025 * Math.sin(t / 560), sy: 1 + .015 * Math.sin(t / 520) };
@@ -1604,7 +1691,8 @@ const BADGE = (() => {
     still(g, t) { builder(g, { t, lookX: 0, lookY: .1 }); },
   };
   // The time each pose is drawn at when nothing moves: with reduced motion, and always for a paused build. None blinks.
-  const STILL_AT = { type: 300, wait: 1000, bad: 1000, still: 1000 };
+  // Self-check looks at one green character; in review both look at one ringed character (0169).
+  const STILL_AT = { type: 300, check: 300, review: 1700, wait: 1000, bad: 1000, still: 1000 };
   // Draws the tile and the pose at time t into a 56-unit square. Unclipped, for the test that nothing reaches its edge.
   function draw(g, pose, t, clip = true) {
     const edge = pose === 'wait' ? C.wait : pose === 'bad' ? C.bad : C.line;
@@ -1617,7 +1705,7 @@ const BADGE = (() => {
 // The badge's colours, read from the panel's tokens each frame, so a change of look shows at once.
 function badgeColours() {
   const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(`--${k}`).trim();
-  Object.assign(BADGE.C, { ink: v('text'), paper: v('panel'), speck: v('accent'), line: v('line'), wait: v('idea'), bad: v('bad'), tile: v('raise') });
+  Object.assign(BADGE.C, { ink: v('text'), paper: v('panel'), speck: v('accent'), line: v('line'), wait: v('idea'), bad: v('bad'), tile: v('raise'), ok: v('ok'), code: v('text') });
   return Object.values(BADGE.C).join();
 }
 // Draws one badge at time `now`. One that doesn't move (a paused build, or every badge with reduced motion) is drawn
