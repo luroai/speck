@@ -1,7 +1,7 @@
 ---
 id: "0157"
 title: "Tidy the Shipped section"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0151"]                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T06:59:20.485Z"
+approved: "2026-10-14T07:10:55.977Z"
 
 ---
 # 0157 · Tidy the Shipped section
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Shipped section is hard to read, worst on a phone. Its six stats stack as large numbers with long labels that wrap, and they're hard to tell apart. The section has no accent colour, unlike Plan. Shipped tickets run into each other. Each ticket's figures are one long run of values separated by dots, and the time in its bottom left corner has no label, so it isn't clear what it is.
@@ -51,9 +52,14 @@ The Shipped section is easier to read, most of all on a phone. It has a green li
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 125,069
+- Elapsed since build started: 12 min
+- Changed lines: 75 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Inbox: speck/ideas/2026-10-14-shorten-big-numbers-in-the-shipped-stats.md (the stat tiles still show token medians in full).
