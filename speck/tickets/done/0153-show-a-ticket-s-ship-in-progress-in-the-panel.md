@@ -1,7 +1,7 @@
 ---
 id: "0153"
 title: "Show a ticket's ship in progress in the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-13T23:42:21.427Z"
 approved: "2026-10-14T00:06:42.304Z"
+finished: "2026-10-14T00:08:03.082Z"
 
 ---
 # 0153 · Show a ticket's ship in progress in the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a build's own ship (`speck ship <id> --auto`) is running, or has stopped without shipping, the panel shows the ticket as plainly approved, the same as a ticket waiting for the user. On 2026-10-13, 0149's auto-ship hung for nine minutes and the user only found out by clicking Ship.
