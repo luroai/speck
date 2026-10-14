@@ -45,7 +45,11 @@ Cards are plain, set apart by their border, space and type, and colour only appe
 - Self-check: no changes. The state colours (crimson, purple) come after the open, highlight and set-back rules, so a ticket in trouble or waiting keeps its colour whatever else applies. The unused list colour tokens (--inbox, --accent-bg, --inbox-bg) stay, as the palette checks of 0134, 0136 and 0126 pin them.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel is calmer. Cards no longer have coloured stripes along their top or left edges; each is a plain box with a thin border. Ticket numbers, titles, the Plan tabs and links are in the normal text colours, and links are underlined so you can still see what to click. Colour now only means something: a purple card is waiting for you to decide whether to ship it, a crimson card is blocked or its build stopped, green still means something passed, and speck's red is used only for the little speck going round a working build.
+
+To see it, open the panel in light and dark mode. An approved ticket that auto-ship won't ship for you now shows purple even if you built it by hand. Clicking a linked ticket number now briefly rings the ticket in a dark outline instead of shading it, so a purple or crimson card keeps its colour.
+
+Worth keeping an eye on: an open card is now shown by a darker border and a light grey fill rather than a coloured tint.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +59,10 @@ Cards are plain, set apart by their border, space and type, and colour only appe
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (tidy-ups and known limits, no inbox notes):
+- The `--inbox`, `--accent-bg` and `--inbox-bg` colour tokens are no longer used by any rule; they stay because the palette checks of 0126, 0134 and 0136 pin them. Remove them, and those checks, in a tidy-up.
+- The queue still gives a ready ticket a `queued` class that no style uses now.
+- A blocked or waiting ticket keeps its tint while another chain is highlighted, rather than being set back with the rest.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -130,6 +138,83 @@ Cards are plain, set apart by their border, space and type, and colour only appe
     ],
     "escalation_question": "",
     "summary": "Decorative stripes are removed, links use normal text colours, and the tests pass. One required state is missed: approved tickets without a recorded build exit can lack the purple cue that tells the user they need to ship them."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ccf382432c300294a9e6ae56114871cf76cd972e",
+    "thread_id": "01a13add-d2a7-78e1-9d4a-315f89856cf6",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 364652,
+      "cached_input_tokens": 298624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1625,
+      "reasoning_output_tokens": 88
+    },
+    "saved_at": "2026-10-14T14:48:28.952Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains full neutral card borders and removes decorative stripes. Passing panel-0167 and updated 0151/0155/0157 tests check sections and cards in both themes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "statusData exposes auto-ship eligibility using the shared autoShipWhyNot check. panelModel now marks approved tickets outside auto-ship coverage as waiting even without build_exit. Passing model, status integration and light/dark browser tests cover this case. Flash rules preserve state backgrounds; passing checks remain green."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Neutral ids, titles, tabs and links retain underlines or borders. Passing panel-0167 AC3 browser tests cover both themes; updated shipped-title tests verify click indicators."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "High risk, bug and fix tag colour rules remain unchanged. Passing panel-0167 AC4 checks their text and border tokens."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Light and dark browser tests pass, with existing contrast checks retained. Verified full test output reports 1533 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:627",
+        "issue": "Approved tickets without a build exit previously missed the purple waiting state.",
+        "suggested_fix": "Implemented: derive auto-ship eligibility through the shared check and mark uncovered approved tickets as waiting, with integration and browser coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "templates/panel.html:194",
+        "issue": "Linked-ticket flashing previously replaced state backgrounds with a neutral fill.",
+        "suggested_fix": "Implemented: both animation and reduced-motion styles use only a neutral inset ring; a passing test checks that neither changes the background.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The panel now uses plain cards and neutral links, reserving colour for meaningful states and the requested tags. Both earlier findings are fixed, including approved tickets built by hand. All acceptance criteria pass, with no remaining merge-blocking concerns."
   }
 }
 ```
