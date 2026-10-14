@@ -45,6 +45,7 @@ The panel sends each change to every open page as it happens, and pages no longe
 - Checked 2026-10-14: Cloudflare's own docs give a 100-second proxy read timeout (error 524), and say Cloudflare Tunnel buffers proxied answers unless they're `Content-Type: text/event-stream`, which it streams as the data arrives.
 - Checked 2026-10-14: Node's docs say `fs.watch` gained `recursive` support on Linux in v19.1.0; it works on the installed Node v22.23.3.
 - Builds after 0177 (one shared reading of the board for every request) and 0186.
+- Failing before this build: `0173 AC2: no test in test/ checks once that a process it stopped has gone` (it flags `test/panel-0177.test.mjs:159`).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
