@@ -1,7 +1,7 @@
 ---
 id: "0151"
 title: "Make each Plan ticket a clear card"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T00:08:24.350Z"
 ---
 # 0151 · Make each Plan ticket a clear card
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 In Plan's ticket list the id and title are small and hard to read, the priority, size and risk tags wrap unpredictably beside the title at different heights (the priority tag is much taller, for its tap area), and the faint lines between tickets make it hard to tell where one ticket ends and the next begins.
@@ -44,13 +44,14 @@ Each ticket in Plan is its own clearly bounded card: a larger id and title on on
 - Reported 2026-10-13 from a phone screenshot in dark mode.
 - The high risk tag uses `--warn` today (`.tag.high` and `.q .tag.high`): `#9c6a10` in light mode, which reads as red-brown, and `#d6a24a` in dark mode, which reads as orange.
 - Failing before this build: none
+- Measured 2026-10-14 in headless Chromium: a 68-character title at 17 px is 492 px wide; Plan's list is 314 px wide at a 700 px window, 464 px at 1000 px and 604 px at 1280 px.
 - Measured 2026-10-13 in the live panel: titles are 45 characters at the median, 58 at the 90th percentile and 68 at most. At 375 px a card has about 313 px for text; a 48-character title is 319 px wide at 17 px and a 68-character one 473 px, so a larger title can't stay on one line on a phone, but always fits in two. On desktop the card is wide enough for one line.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+AC1 says every title up to 68 characters fits on one line at 700 px wide and over, but from 700 px Plan shares the page with Build, so its column is only 314 px wide at 700 px and 464 px at 1000 px. Measured in the panel, a 68-character title is 492 px wide at 17 px, so it takes two or three lines until the window is about 1,230 px wide. Which should I do? (a) Change AC1 to "at 1,280 px and over every title fits on one line, and below that a title wraps onto at most one more line (two at most between 700 and 1,280 px), starting under the title"; (b) make Plan full width with Build below it up to about 1,230 px, which moves the Build list (out of scope today); or (c) keep 700 px and use a smaller title size. I recommend (a): it keeps the larger title and leaves Build alone, and on a typical laptop or desktop window the titles still sit on one line.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
