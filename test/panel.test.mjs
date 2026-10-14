@@ -557,7 +557,7 @@ test('0034 AC3: a blocked ticket is red on its left edge and current step, with 
   const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
   assert.match(css, /\.q\.blocked \{[^}]*border-left:[^}]*var\(--bad\)/);
   assert.match(css, /\.stages \.now\.bad \{[^}]*border-top-color: var\(--bad\)/);
-  assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--warn\)/, 'a high-risk tag in the queue is not red');
+  assert.match(css, /\.q \.tag\.high \{[^}]*color: var\(--bad\)/, '0151 AC2: a high-risk tag in the queue is in the panel\'s red');
 });
 
 test('0034 AC4: a ready ticket shows Queued and an empty bar, plus waiting on <ids> when it has any', async () => {

@@ -237,8 +237,10 @@ const CONTROLS = `(() => {
   const set = new Set(document.querySelectorAll('button, a[href], summary, select, input, .tag.pick, .head, .q .top'));
   for (const n of document.querySelectorAll('body *')) if (pointer(n) && !pointer(n.parentElement)) set.add(n);
   const prose = n => !!n.closest('#full-ticket .md, #full-ticket .criteria') && n.tagName === 'A';
+  // 0151: the priority tag looks as high as the other tags, and its tap area is the box around it, which a tap anywhere
+  // in reaches the tag (test/panel-0151.test.mjs checks that).
   return [...set].filter(n => shown(n) && !prose(n)).map(n => {
-    const r = n.getBoundingClientRect();
+    const r = (n.matches('.tag.pick') ? n.closest('.prio') : n).getBoundingClientRect();
     return { what: n.tagName.toLowerCase() + '.' + String(n.className).trim().split(/\\s+/).join('.') + ' "' + n.textContent.trim().slice(0, 20) + '"', width: r.width, height: r.height };
   });
 })()`;

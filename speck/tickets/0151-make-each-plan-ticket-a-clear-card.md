@@ -46,6 +46,8 @@ Each ticket in Plan is its own clearly bounded card: a larger id and title on on
 - Failing before this build: none
 - Answered 2026-10-14 (option a): AC1 changed from "at 700 px wide and over, every title fits on one line" to one line at 1,280 px and over, at most one more line below that (two at most between 700 and 1,280 px), starting under the title.
 - Measured 2026-10-14 in headless Chromium: a 68-character title at 17 px is 492 px wide; Plan's list is 314 px wide at a 700 px window, 464 px at 1000 px and 604 px at 1280 px.
+- The chain or padlock icon ends the row of tags rather than sitting beside the id: beside the id it takes 20 px from the title, and at 375 px the longest existing title (251 px needed for two lines, 254 px available) would then take three lines.
+- Self-check: no changes
 - Measured 2026-10-13 in the live panel: titles are 45 characters at the median, 58 at the 90th percentile and 68 at most. At 375 px a card has about 313 px for text; a 48-character title is 319 px wide at 17 px and a 68-character one 473 px, so a larger title can't stay on one line on a phone, but always fits in two. On desktop the card is wide enough for one line.
 
 ## In plain words

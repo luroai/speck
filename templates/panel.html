@@ -68,7 +68,7 @@
   .id { font-size: 12px; color: var(--muted); }
   .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; padding: 0 6px; border: .5px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 17px; display: inline-block; }
   .tag.p1 { color: var(--accent); border-color: var(--accent); }
-  .tag.high { color: var(--warn); border-color: var(--warn); }
+  .tag.high { color: var(--bad); border-color: var(--bad); }
   .tag.bug { color: var(--bug); border-color: var(--bug); }
   .tag.fix { color: var(--fix); border-color: var(--fix); }
   #shipped .tag.bug, #shipped .tag.fix { margin-left: 8px; }
@@ -88,10 +88,12 @@
   .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .run { color: var(--run); }
 
   /* Shaping */
-  .item { padding: 10px 14px; border-bottom: .5px solid var(--line-soft); }
+  /* 0151: each item is a card of its own, with space between cards */
+  #shaping { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  #shaping .empty { padding: 0 4px; }
+  .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
   .item .head { margin: -10px -14px -10px -12px; padding: 10px 14px 10px 12px; } /* the item's padding opens and closes it too */
-  .item:last-child { border-bottom: 0; }
   .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
   .item.open { background: var(--raise); border-left: 2px solid var(--accent); padding-left: 12px; }
   .detail { margin-top: 10px; border-top: .5px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
@@ -106,6 +108,13 @@
   .ready div.refused { white-space: pre-wrap; }
   .item.idea .id { color: var(--idea); }
   .item.inbox .id { color: var(--inbox); }
+  /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags */
+  .item.ticket .head { column-gap: 0; } /* its right-hand column is empty: the title gets the whole width */
+  .item.ticket .line { display: flex; align-items: baseline; gap: 8px; }
+  .item.ticket .line .id { flex: none; font-size: 14px; }
+  .item.ticket .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
+  .item.ticket .tag-row { grid-column: 1 / 2; }
+  .item.ticket .prio { display: inline-flex; }
 
   /* Queue */
   .q { padding: 10px 14px; border-bottom: .5px solid var(--line-soft); }
@@ -152,7 +161,7 @@
   .resume .cmd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
   .resume .copy { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
   .resume .copy:hover { color: var(--text); }
-  .q .tag.high { color: var(--warn); border-color: var(--warn); }
+  .q .tag.high { color: var(--bad); border-color: var(--bad); }
   .next { color: var(--ok); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
@@ -319,7 +328,10 @@
 
     /* Shaping */
     .head { min-height: 44px; }
-    .tag.pick { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+    /* 0151: the priority tag looks like the others, and its tap area is the 44 px box around it */
+    #shaping { padding: 6px; }
+    .item.ticket .prio { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
+    .tag.pick::after { content: ''; position: absolute; inset: 0; }
     .prio-menu button { min-width: 44px; min-height: 44px; }
     .detail { grid-template-columns: minmax(0, 1fr); }
     .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
@@ -810,11 +822,12 @@ function chainIcon(t) {
 }
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
 const typeTag = t => (t.type === 'bug' || t.type === 'fix' ? el('span', `tag ${t.type}`, t.type) : null);
-// `pick`: the priority tag opens the menu that sets it (a draft in the Tickets list).
-function tags(t, icon, pick) {
-  return el('div', 'row', null, el('span', 'id', t.id), typeTag(t), icon, el('span', 'title', t.title), ...fieldTags(t, pick));
+// A Build queue row's id, type tag, chain icon, title and tags, all on one line.
+function tags(t, icon) {
+  return el('div', 'row', null, el('span', 'id', t.id), typeTag(t), icon, el('span', 'title', t.title), ...fieldTags(t, false));
 }
-// A ticket's priority, size and risk tags, each only when it has that field.
+// A ticket's priority, size and risk tags, each only when it has that field. `pick`: the priority tag opens the menu
+// that sets it (a draft in the Tickets list).
 function fieldTags(t, pick) {
   const out = [];
   if (t.priority !== undefined && t.priority !== null && t.priority !== '') {
@@ -866,7 +879,8 @@ function ticketItem(t) {
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
 function ticketHead(t) {
-  const head = el('div', 'head', null, tags(t, chainIcon(t), true), el('span'));
+  const head = el('div', 'head', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)), el('span'),
+    el('div', 'row tag-row', null, ...fieldTags(t, true), typeTag(t), chainIcon(t)));
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
   const checks = el('div', 'checks');

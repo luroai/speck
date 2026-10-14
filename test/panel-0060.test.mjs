@@ -160,7 +160,9 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
 
     // AC3 and AC2: a click outside closes it and does nothing else, and the page is where it was.
     const before = await openStates();
-    const behind = await b.js(`(r => [r.left + 30, r.top + r.height / 2])(document.querySelectorAll('${item}')[6].querySelector('.head').getBoundingClientRect())`);
+    // A ticket row on screen behind the pane (since 0151 the cards are taller, so the seventh can be below the fold).
+    const behind = await b.js(`[...document.querySelectorAll('${item}')].map(n => (r => [r.left + 30, r.top + r.height / 2])(n.querySelector('.head').getBoundingClientRect()))
+      .find(([, y]) => y > 0 && y < 900) || [0, -1]`);
     assert.ok(behind[0] < 700 && behind[1] > 0 && behind[1] < 900, 'a ticket row lies under the backdrop');
     await press(behind);
     assert.ok(await isHidden(), 'a click outside closes the pane');
