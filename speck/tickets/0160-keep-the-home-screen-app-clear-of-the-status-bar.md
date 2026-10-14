@@ -1,9 +1,9 @@
 ---
 id: "0160"
-title: "Keep the home-screen app clear of the status bar"                # one outcome, no "and"
+title: Keep the panel header on screen                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
-size: S                  # S | M  (L is never ready; split it)
+size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 type: bug                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 builder: claude
@@ -15,29 +15,31 @@ after: []                # ticket ids that must be done first
 created: 2026-10-14
 
 ---
-# 0160 · Keep the home-screen app clear of the status bar
+# 0160 · Keep the panel header on screen
 
 **Status:** 📝 draft
 
 ## Problem
-Opened from the iPhone home screen, the panel runs full screen, but as the page scrolls its content slides under the status bar: on 2026-10-14 the Build section's text sat behind the clock and battery. The page leaves no room for the status bar and the bar has no background of its own.
+The panel header, with the Auto-build button, scrolls away with the page, so on a phone the one control and status the user checks most is only at the top. In the home-screen app the iPhone's status bar has no background of its own, so once the page scrolls, cards and text slide underneath the clock and battery (seen 2026-10-14).
 
 ## Outcome
-In the home-screen app the iPhone's status bar always has the panel's background behind it, and nothing scrolls underneath it.
+The header stays at the top of the screen as the page scrolls, with the panel's background behind the status bar, so nothing ever shows under it; on a phone the header slims to one row once scrolled.
 
 ## Acceptance criteria
-1. The page's viewport tag includes `viewport-fit=cover`, and the page has an `apple-mobile-web-app-status-bar-style` meta tag whose value keeps the status bar's text readable on the panel's background in light and dark mode.
-2. The top of the page is padded by `env(safe-area-inset-top)`, and that strip keeps the panel's background colour while the page scrolls, so no text, card or border shows behind the status bar.
-3. The bottom of the page is padded by `env(safe-area-inset-bottom)`, so the last card and the full ticket pane's content clear the home indicator.
-4. The full ticket pane, which covers the screen on a phone, also keeps its close button and first line below the status bar.
-5. In a normal browser tab, where the insets are 0, the page looks as it does today, and no test that passed before this change fails.
+1. The header stays fixed at the top of the screen while the page scrolls, on phone and desktop, with the panel's solid background and a line along its bottom edge, so content scrolls underneath it, never through it.
+2. In the home-screen app the header extends up behind the status bar: the page uses `viewport-fit=cover`, the header's top padding includes `env(safe-area-inset-top)`, and an `apple-mobile-web-app-status-bar-style` meta tag keeps the status bar's text readable in light and dark mode. No text, card or border is ever visible behind the status bar.
+3. At viewports under 700 px, once the page is scrolled down, the header slims to one row of at most 60 px plus the safe-area inset: "speck", the Auto-build button and the light/dark button, with the project name and base branch hidden. Back at the top of the page it shows both rows again. The change is a quick fade or slide, and instant with `prefers-reduced-motion: reduce`.
+4. The page's last card clears the home indicator (`env(safe-area-inset-bottom)`), and the full ticket pane's close button and first line sit below the status bar.
+5. Jumping to a ticket (0154) and opening the full ticket still show their target below the header, not hidden behind it. In a normal browser tab, where the insets are 0, nothing shows behind the header either. No test that passed before this change fails.
 
 ## Out of scope
-- Other home-screen app details from 0149.
+- What the header shows (0163 adds the running build to the Auto-build button).
+- Colours and contrast (0161).
 
 ## Notes
-- Today the viewport tag is `width=device-width, initial-scale=1` and the page has no safe-area padding (`templates/panel.html`).
-- Reported 2026-10-14 from a phone screenshot of the home-screen app.
+- Today the viewport tag is `width=device-width, initial-scale=1` and the header isn't sticky (`templates/panel.html`).
+- Jumping to a ticket scrolls it into view; with a fixed header that needs `scroll-margin-top` (or equal) so the target isn't covered.
+- Reported 2026-10-14 from phone screenshots of the home-screen app.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
