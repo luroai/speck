@@ -62,14 +62,17 @@ test('two at once', async () => {
   await goneWithin10s(f);
 });
 
-test('0182 AC1: a test whose Chromium was killed gets a new one, and the rest of the file shares that', skip, async () => {
+test('0182 AC1: a page asked for after the file\'s Chromium was killed fails, saying why, and starts no second one', skip, async () => {
   const f = await runFile(`
 test('kill it', async () => { const b = await browserPage('about:blank'); logPid(b.pid); process.kill(b.pid, 'SIGKILL'); await new Promise(r => setTimeout(r, 300)); await b.close(); });
-for (const n of [1, 2]) test('after ' + n, async () => { const b = await browserPage('about:blank'); logPid(b.pid); if (await b.js('1 + 1') !== 2) throw new Error('no answer'); await b.close(); });`);
+test('after', async () => {
+  const err = await browserPage('about:blank').then(() => null, e => e);
+  if (!err) throw new Error('a page opened');
+  logPid(err.message);
+});`);
   assert.equal(f.code, 0, f.out);
-  assert.equal(f.pids.length, 3, f.out);
-  assert.notEqual(f.pids[1], f.pids[0], 'a new Chromium after the first was killed');
-  assert.equal(f.pids[2], f.pids[1], 'the new one is shared');
+  const message = fs.readFileSync(path.join(f.dir, 'pids.log'), 'utf8').trim().split('\n')[1];
+  assert.equal(message, `this test file's Chromium (pid ${f.pids[0]}) has exited, and a test file starts it only once: a test that ends it should be in a file of its own`);
   await goneWithin10s(f);
 });
 

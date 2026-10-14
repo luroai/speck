@@ -314,8 +314,8 @@ async function devtools(url) {
 
 // 0182: one headless Chromium for the whole test file. The first browserPage() starts it and the rest share it, each
 // page in a browser context of its own, so it keeps nothing from the page before. It ends once the file's tests are
-// done, however they ended, or when its process exits; one that has exited meanwhile is started again.
-let chromium = null; // a promise of the file's Chromium, or null before the first page and once it has ended
+// done, however they ended, or when its process exits.
+let chromium = null; // a promise of the file's Chromium, or null before the first page and once the file's tests are done
 const running = new Set(); // every Chromium started and not yet exited, with its profile, for the exit handler
 async function launch() {
   // Named speck-keep-*, so tmp.mjs leaves it in place between tests, until the file's process exits.
@@ -344,16 +344,12 @@ async function launch() {
   const alive = () => chrome.exitCode === null && chrome.signalCode === null && ws.readyState === WebSocket.OPEN;
   return { chrome, port: new URL(browserUrl).port, send, alive, close };
 }
+// A file starts Chromium at most once: a page asked for after it has exited, killed by a test for example, fails.
 async function sharedChromium() {
-  for (;;) {
-    if (!chromium) chromium = launch();
-    const p = chromium;
-    let c;
-    try { c = await p; } catch (e) { if (chromium === p) chromium = null; throw e; }
-    if (c.alive()) return c;
-    if (chromium === p) chromium = null;
-    await c.close();
-  }
+  if (!chromium) chromium = launch();
+  const c = await chromium;
+  if (!c.alive()) throw new Error(`this test file's Chromium (pid ${c.chrome.pid}) has exited, and a test file starts it only once: a test that ends it should be in a file of its own`);
+  return c;
 }
 after(async () => {
   const p = chromium;
