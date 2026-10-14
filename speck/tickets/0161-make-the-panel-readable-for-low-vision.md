@@ -1,7 +1,7 @@
 ---
 id: "0161"
 title: "Make the panel readable for low vision"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T14:11:58.303Z"
 ---
 # 0161 · Make the panel readable for low vision
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel is hard to read for its own user, and harder for anyone with low vision. The colours pass the basic text contrast ratio, but only just (`--faint` is 4.6:1 on the light background), much of the text is small (labels at 9 to 11 px) and light (the body weight is 300), and the borders around cards, tags, tabs and buttons are 1.1 to 1.6:1 against the background, so the edges of things are hard to see.
@@ -49,7 +49,11 @@ Every word and every control edge in the panel is comfortably readable in light 
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel is easier to read, in both light and dark. Grey and coloured text is darker in the light look and lighter in the dark one, nothing is smaller than 12 px or in the thin weight, and the outlines of buttons, tags and cards are clearly visible. The priority, size, risk, bug and fix tags are bigger and the same size everywhere, which helps most on a phone. Moving around with the Tab key now shows a clear ring round whatever you've reached.
+
+To see it, open the panel and compare it with how it looked: the tags, small labels and card edges stand out most. Press Tab a few times to see the ring.
+
+Worth keeping an eye on: the red and other accents are deeper in the light look and paler in the dark one, so the panel no longer matches the landing page's colours exactly. Tickets waiting on another, and those dimmed while you hover over a chain, are now shown with a light grey fill rather than faded.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +63,71 @@ Every word and every control edge in the panel is comfortably readable in light 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: `speck/ideas/2026-10-14-reach-the-priority-tag-and-a-ticket-s-top-row-with-the-keyboard.md`: the priority tag and the top rows take only a click, so they get no focus ring.
+- Inbox: `speck/ideas/2026-10-14-match-the-landing-page-s-colours-to-the-panel-s-again.md`: the panel no longer matches the landing page's colours (0147), and the app icon keeps the old accent.
+- Known limit: `--line-soft` is unchanged (1.1 to 1.2:1). It's used only for dividers inside cards and tables, not for the edge of any control or card.
+- Known limit: disabled buttons still fade to 60%, which WCAG exempts as inactive controls.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b70139b99e1553a354339cfca7f9af90d2b5d794",
+    "thread_id": "01a13ad0-78f1-74f3-b36e-e128a4a41059",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 202148,
+      "cached_input_tokens": 143488,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 655,
+      "reasoning_output_tokens": 41
+    },
+    "saved_at": "2026-10-14T14:29:01.900Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html strengthens both palettes and removes text-fading states. Passing 0161 AC1 token tests calculate contrast across page, panel, raised and tinted backgrounds; passing light/dark browser tests check rendered text."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html uses stronger --line and accent tokens for control and card edges. The 0161 AC2 token-ratio test and both rendered-browser edge checks passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html sets body weight 400, all explicit text sizes to at least 12px, and .tag to 14px with 27px line-height plus borders. Passing static and browser tests verify sizes, weights and consistent tag heights across Plan, Build and the full pane."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html adds a global 2px solid :focus-visible outline and allows pinch zoom on the backdrop. Passing AC4 tests check outline contrast, actual keyboard Tab focus, viewport settings and zoom-blocking styles/scripts."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0161-tests.txt: 1522 tests, 1519 passed, zero failures, three skipped; all 12 ticket tests passed, including browser tests. Existing test changes update the superseded palette, size and fading expectations."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now has stronger contrast, larger labels and tags, and visible keyboard focus rings in both themes. The tests exercise the rendered panel as well as its colour calculations, and the full suite reports no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
