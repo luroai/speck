@@ -41,6 +41,7 @@ A test file's real-browser tests share one Chromium, so the browser tests take n
 ## Notes
 - `browserPage()` in `test/support/panel.mjs` starts Chromium with a new profile for every call. It's used 49 times across 41 test files.
 - Builds after 0175, which changes how test files clean up what they start.
+- Failing before this build: 0173 AC2: no test in test/ checks once that a process it stopped has gone (it flags test/panel-0177.test.mjs:159)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
