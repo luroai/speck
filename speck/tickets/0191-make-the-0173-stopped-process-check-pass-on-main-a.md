@@ -38,6 +38,7 @@ The whole suite passes on main again.
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 - Found by 0183's auto-ship (exit 14). Idea note on 0183's branch: speck/ideas/2026-10-14-fix-the-0177-test-that-breaks-the-0173-rule.md.
+- Failing before this build: 0173 AC2: no test in test/ checks once that a process it stopped has gone. This fix ticket exists to make it pass: the 0173 test itself is left unchanged (out of scope), and only the 0177 test it names is changed.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
