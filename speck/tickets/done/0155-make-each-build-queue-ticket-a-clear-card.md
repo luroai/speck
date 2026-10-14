@@ -1,7 +1,7 @@
 ---
 id: "0155"
 title: "Make each Build queue ticket a clear card"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0151"]                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T06:15:11.954Z"
 approved: "2026-10-14T06:26:38.005Z"
+finished: "2026-10-14T06:28:16.931Z"
 
 ---
 # 0155 · Make each Build queue ticket a clear card
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Build queue rows have no coloured edge (only a blocked ticket gets one), only a faint line between them and a wide empty column on their left where the old pause icon sat. Several tickets in the queue are hard to tell apart, and the rows look different from Plan's tickets.
