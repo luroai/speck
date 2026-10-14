@@ -1,7 +1,7 @@
 ---
 id: "0163"
 title: "Show the running build in the Auto-build button"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-14T16:25:26.868Z"
 ---
 # 0163 · Show the running build in the Auto-build button
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The header is the only part of the panel that's always on screen, but the Auto-build button only says "Auto-build on" or "off". To see what's being built and where it's got to, the user has to scroll to the Build section, which on a phone is below the whole Plan section.
@@ -44,7 +44,11 @@ While a build is running, the Auto-build button says which ticket and which stag
 - The Build card's stage names come from `progress()` in `templates/panel.html`; the speck pulse should match the one 0156 added.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Auto-build button at the top of the panel now says what's happening. While a ticket is being built it reads, for example, "Building 0151 · Review", with speck's little builder hopping beside it. When a ticket is waiting for you it reads "0158 needs you", in purple if it's ready to ship and in red if it's blocked or its build stopped. With nothing going on it still says "Auto-build on" or "off", and clicking it still pauses or starts Auto-build.
+
+To see it, turn Auto-build on and let a ticket build: the button follows it from anywhere on the page, on a phone too. Hover over the button to see the full label and what a click will do. On a narrow screen, a long label ends in "…".
+
+Worth keeping an eye on: when more than one ticket is in flight, the button names only the first in the Build list. If your device asks for reduced motion, the builder stays still.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,4 +57,69 @@ While a build is running, the Auto-build button says which ticket and which stag
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Skipped as a duplicate: during this build, two server-side tests (0128 AC3 and 0148 AC2) each failed once in a full-suite run with "speck run has stopped" and passed when run again. This matches speck/ideas/2026-10-13-stop-tests-checking-speck-run-stopped-too-soon.md.
+  - Tidy-up: the old tests for 0140, 0144 and 0150 now check for the builder where they checked for the green or red square. 0163 AC3 replaces the square.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "788f92947d9ef880499aa4351103c9042991583b",
+    "thread_id": "01a13b4f-4078-7be2-9cb4-898ae0d3b595",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 110849,
+      "cached_input_tokens": 67200,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 642,
+      "reasoning_output_tokens": 42
+    },
+    "saved_at": "2026-10-14T16:47:19.010Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html runLabel() uses the Build queue and progress() stage labels, removing review round numbers. Passing panel-0163 tests exercise Build, Self-check, Review, paused builds, Ship and queue ordering."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runLabel() and render() preserve idle/on/off labels and show waiting tickets in purple or red. Passing panel-0163 AC2 tests exercise idle, off, approved, blocked and stopped states."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "BADGE.bare(), paintBadge() and drawBadges() draw the existing builder without its tile at 28 px. Passing drawing and real-browser tests verify gentle movement, front-facing stillness and reduced-motion behaviour."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "render() preserves the button and click handler, supplies the full label and click action in its tooltip, and applies ellipsis styling. Passing interaction and real-browser tests verify toggling and both header layouts at 375 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0163-tests.txt: 1608 tests, 1605 passed, zero failed and three skipped. All 13 ticket-specific tests passed, including browser tests. Existing square assertions were updated to reflect the explicitly requested builder replacement."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The Auto-build button now shows the current ticket and stage, highlights tickets needing your attention, and displays an animated builder. Phone layouts and reduced-motion settings are covered by passing tests. No blocking issues found."
+  }
+}
+```
+
+</details>
