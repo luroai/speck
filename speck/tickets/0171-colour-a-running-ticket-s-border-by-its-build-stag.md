@@ -1,7 +1,7 @@
 ---
 id: "0171"
 title: "Colour a running ticket's border by its build stage"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0169"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T17:40:36.095Z"
+approved: "2026-10-14T17:58:29.634Z"
 
 ---
 # 0171 · Colour a running ticket's border by its build stage
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0167, a running ticket's card looks the same as a queued one apart from its badge and stage line, so the user can't see at a glance which tickets are being worked on or what stage each has reached.
@@ -54,9 +55,14 @@ A ticket an agent is working on now has a thicker coloured border that shows how
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 145,836
+- Elapsed since build started: 18 min
+- Changed lines: 21 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - A ship started from a review pack in the panel takes the green border through the same check as any other ship, but no browser test starts one that way.
