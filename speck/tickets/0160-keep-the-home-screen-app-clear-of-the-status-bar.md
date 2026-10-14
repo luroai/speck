@@ -41,6 +41,7 @@ The header stays at the top of the screen as the page scrolls, with the panel's 
 - Today the viewport tag is `width=device-width, initial-scale=1` and the header isn't sticky (`templates/panel.html`).
 - Jumping to a ticket scrolls it into view; with a fixed header that needs `scroll-margin-top` (or equal) so the target isn't covered.
 - Reported 2026-10-14 from phone screenshots of the home-screen app.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
