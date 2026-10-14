@@ -1,7 +1,7 @@
 ---
 id: "0158"
 title: "Stack review pack tables on a phone"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T00:24:47.550Z"
+approved: "2026-10-14T00:37:36.588Z"
 
 ---
 # 0158 · Stack review pack tables on a phone
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a phone, the review pack's acceptance criteria table is squeezed into four narrow columns: the "Result" heading breaks into "Re / su / lt", and the criterion and evidence run down the screen a few words at a time, so a pack is hard to read where the user often reads it before shipping.
@@ -53,9 +54,16 @@ On a phone, tables in the review pack and in opened Plan notes no longer squeeze
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Cells still break long words internally because overflow-wrap is set to break-word.
+Round 2 (codex): changes requested: F2 Phone copying verification now fails, leaving AC4 unverified.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 589,786
+- Elapsed since build started: 13 min
+- Changed lines: 27 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - A word wider than a phone screen (for example a long file path with no spaces or hyphens) scrolls sideways inside its own cell rather than wrapping.
