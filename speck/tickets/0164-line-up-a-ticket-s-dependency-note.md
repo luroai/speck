@@ -1,7 +1,7 @@
 ---
 id: "0164"
 title: "Line up a ticket's dependency note"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0164 · Line up a ticket's dependency note
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 On a phone, a Plan card's "unlocks 0162, 0163" or "waiting on 0161" note sits lower and further right than the "5 criteria · lint passes" beside it, with wide gaps around each id and the comma: each id is a 44 px button centred on its own, so it pushes the line out of line. Separately, a card the user has tapped stays shaded grey, because its hover background sticks on touch screens.
