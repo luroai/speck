@@ -40,11 +40,13 @@ test('leaves processes running', mode === 'timeout' ? { timeout: 300 } : {}, asy
   const own = spawn(process.execPath, ['-e', forever], { detached: true, stdio: 'ignore' }); own.unref(); save(own.pid);
   // One that starts a grandchild in a session of its own with an empty environment that ignores SIGTERM, and stays.
   const grand = "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000)";
-  const starts = keep => \`const c = require('child_process').spawn(process.execPath, ['-e', \${JSON.stringify(grand)}], { detached: true, stdio: 'ignore', env: {}, cwd: \${JSON.stringify(RUN_TMP)} }); c.unref(); require('fs').appendFileSync(\${JSON.stringify(process.env.PIDS)}, c.pid + '\\\\n'); \${keep ? forever : ''}\`;
-  const parent = spawn(process.execPath, ['-e', starts(true)], { detached: true, stdio: 'ignore' }); parent.unref(); save(parent.pid);
-  // And one that does the same in the test's folder, then exits, leaving the grandchild with no parent from the test.
-  const quitter = spawn(process.execPath, ['-e', starts(false)], { detached: true, stdio: 'ignore' }); quitter.unref();
-  while (saved() < 6 || !gone(quitter.pid)) await new Promise(r => setTimeout(r, 20));
+  const starts = (then, cwd = RUN_TMP) => \`const c = require('child_process').spawn(process.execPath, ['-e', \${JSON.stringify(grand)}], { detached: true, stdio: 'ignore', env: {}, cwd: \${JSON.stringify(cwd)} }); c.unref(); require('fs').appendFileSync(\${JSON.stringify(process.env.PIDS)}, c.pid + '\\\\n'); \${then}\`;
+  const parent = spawn(process.execPath, ['-e', starts(forever)], { detached: true, stdio: 'ignore' }); parent.unref(); save(parent.pid);
+  // One that does the same in the test's folder, then exits, leaving the grandchild with no parent from the test.
+  const quitter = spawn(process.execPath, ['-e', starts('')], { detached: true, stdio: 'ignore' }); quitter.unref();
+  // And one whose grandchild has no tie to the test at all, working in /, and that exits a second later.
+  const late = spawn(process.execPath, ['-e', starts('setTimeout(() => {}, 1000)', '/')], { detached: true, stdio: 'ignore' }); late.unref();
+  while (saved() < 7 || !gone(quitter.pid) || !gone(late.pid)) await new Promise(r => setTimeout(r, 20));
   fs.writeFileSync(process.env.PIDS + '.ready', '');
   if (mode === 'fail') throw new Error('failed on purpose');
   // Waits until the test's timeout ends it, then lets the file finish.
@@ -69,7 +71,7 @@ for (const mode of ['pass', 'fail', 'timeout']) {
       if (mode === 'timeout') assert.match(r.stdout, /failureType: 'testTimeoutFailure'/, r.stdout);
       if (mode === 'fail') assert.match(r.stdout, /failed on purpose/, r.stdout);
       pids = f.pids();
-      assert.equal(pids.length, 6, r.stdout + r.stderr);
+      assert.equal(pids.length, 7, r.stdout + r.stderr);
       assert.ok(await until(() => pids.every(p => !alive(p))), `still running: ${pids.filter(alive).join(' ')}`);
     } finally { killAll(pids); }
   });
@@ -84,7 +86,7 @@ for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
     try {
       assert.ok(await until(() => fs.existsSync(f.pidsFile + '.ready'), 15000), 'the fake test file to start its processes');
       pids = f.pids();
-      assert.equal(pids.length, 6);
+      assert.equal(pids.length, 7);
       assert.ok(pids.every(alive));
       child.kill(sig);
       await exited;

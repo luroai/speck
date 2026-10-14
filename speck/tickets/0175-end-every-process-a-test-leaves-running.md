@@ -44,7 +44,7 @@ When a test file finishes, nothing it started is still running, however its test
 - Moved here from 0174, which had this as its AC3.
 - Supersedes the inbox note from 0152 (about 17 leftover tickers on 2026-10-13).
 - Failing before this build: 0165 AC1: at 375 px, every tag in Plan, the Build queue and the full ticket pane has the same visible size and even gaps, with a 44 by 44 px tap area each
-- AC4 isn't an automated test: it takes ten full runs. Checked by hand on 2026-10-14 with a script that ran five rounds of two full `npm test` runs side by side, then, 10 seconds after each round, listed every process whose TMPDIR is a test run's folder (none in any round) and every process of the user's that wasn't there before the round (only the checking session's own shell and `sleep`). In round 4, under the double load, 0128 AC3 and 0148 AC2 each failed once on a 2-second "speck run has stopped" timing check; both passed in the other nine runs and in the plain full run.
+- AC4 isn't an automated test: it takes ten full runs. Checked by hand on 2026-10-14, after round 2's changes, with a script that ran five rounds of two full `npm test` runs side by side, then, 10 seconds after each round, listed every process whose TMPDIR is a test run's folder (none in any round) and every process of the user's that wasn't there before the round (only the checking session's own shell and `sleep`). Each paired run took 190 to 199 seconds. Under the double load, 0128 AC3 and 0148 AC2 each failed once, on a 2-second "speck run has stopped" timing check, in different rounds; both passed in the other nine runs and in every plain full run. (The same two failed the same way once in an earlier five-round check, before round 1's changes.)
 - Self-check: no changes
 
 ## In plain words
@@ -133,6 +133,83 @@ When a test file finishes, nothing it started is still running, however its test
     ],
     "escalation_question": "",
     "summary": "The helper loops now stop when their folders disappear, and the repeated full runs left no observed processes behind. Two fixes remain: cleanup misses processes without inherited environment markers in some cases, and the timeout test does not actually reach a timeout."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "08c725f0e2a41e9bc3b33bc593ed4a758a41211a",
+    "thread_id": "01a13c05-29b1-7b82-b257-53f8e443340d",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 284286,
+      "cached_input_tokens": 230912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2280,
+      "reasoning_output_tokens": 317
+    },
+    "saved_at": "2026-10-14T20:11:59.193Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "reap() now discovers unmarked direct children, and the timeout test checks testTimeoutFailure. However, orphan discovery remains incomplete. On macOS, tied() ignores working directories, so even the new orphan fixture cannot be discovered after its parent exits."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The three signal tests pass on Linux, but use the same incomplete orphan discovery. An unmarked orphan without a matching command-line argument survives on macOS even when its working directory is RUN_TMP."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The ticker and gate helpers retain their folder-existence checks. All five AC3 tests pass, covering folder removal and normal gate release."
+      },
+      {
+        "id": 4,
+        "status": "unclear",
+        "evidence": "The five paired runs documented previously passed the leftover-process check, but predate this round's changes to process discovery. The supplied fresh evidence covers one full run."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh full-suite output reports 1649 passes, three skips and only the explicitly exempted 0165 AC1 failure."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/reap.mjs:tied",
+        "issue": "The direct-child case is fixed, but orphan cleanup remains incomplete. In particular, the new fixture starts an empty-environment orphan whose only remaining tie is its working directory. Linux checks that directory; macOS explicitly does not. Its command line contains only the grandchild program, so macOS cannot find it. Orphans without any folder tie also remain outside the ticket's unconditional guarantee; documenting that limitation does not fulfil it.",
+        "suggested_fix": "Provide orphan ownership discovery that covers the supported platforms, including the working-directory-only fixture on macOS. Preserve ownership before ancestry disappears where necessary. Keep regression coverage for these cases, and repeat the five paired full runs after the final cleanup changes.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/reap-0175.test.mjs:FAKE timeout branch",
+        "issue": "Resolved: the fixture now retains its timer until the test signal aborts, clears it afterwards, and explicitly asserts testTimeoutFailure. The fresh full run passes this test.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The timeout test is now valid, and cleanup handles children with empty environments. Orphan cleanup still has a gap, including on macOS for the newly added test case. The repeated paired-run check also needs refreshing after the final changes."
   }
 }
 ```

@@ -10,7 +10,7 @@ import { after, afterEach } from 'node:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { reap } from './reap.mjs';
+import { reaper, WATCH_MS } from './reap.mjs';
 
 export const RUN_TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-test-'));
 for (const k of ['TMPDIR', 'TMP', 'TEMP']) process.env[k] = RUN_TMP;
@@ -24,7 +24,10 @@ export const emptyRunTmp = () => {
 
 // Every process this file starts inherits these, even one in a session or process group of its own.
 const MARKS = ['TMPDIR', 'TMP', 'TEMP'].map(k => `${k}=${RUN_TMP}`);
-export const reapRun = () => reap({ env: MARKS, folder: RUN_TMP });
+const run = reaper({ env: MARKS, folder: RUN_TMP });
+export const reapRun = () => run.reap();
+// Keeps track of what the file has started, so a process whose parent has exited is still found.
+setInterval(() => { try { run.remember(); } catch { /* try again next time */ } }, WATCH_MS).unref();
 
 afterEach(emptyRunTmp);
 after(reapRun);
