@@ -9,7 +9,7 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
 const header = () => page().match(/<header>([\s\S]*?)<\/header>/)[1];
 const runOf = p => p.byId('run');
-const dotOf = p => p.all(runOf(p)).find(n => /\blive\b/.test(n.className || ''));
+const dotOf = p => p.all(runOf(p)).find(n => /\bmini\b/.test(n.className || '')); // 0163: the builder in place of the square
 const ON = 'Pause Auto-build: ready tickets wait';
 const OFF = 'Start Auto-build: build ready tickets one at a time';
 
@@ -53,7 +53,7 @@ test('0150 AC2: on, it reads "Auto-build on" with a green square, aria-pressed t
   await p.settle();
   assert.equal(runOf(p).hidden, false);
   assert.equal(runOf(p).textContent, 'Auto-build on');
-  assert.match(dotOf(p).className, /\bgo\b/);
+  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
   assert.equal(runOf(p).attrs['aria-pressed'], 'true');
   assert.equal(runOf(p).title, ON);
   assert.equal(runOf(p).disabled, false);
@@ -63,7 +63,7 @@ test('0150 AC2: off, it reads "Auto-build off" with a red square, aria-pressed f
   const p = fakePage([state(null)]);
   await p.settle();
   assert.equal(runOf(p).textContent, 'Auto-build off');
-  assert.match(dotOf(p).className, /\bstop\b/);
+  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
   assert.equal(runOf(p).attrs['aria-pressed'], 'false');
   assert.equal(runOf(p).title, OFF);
 });
@@ -176,11 +176,11 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
   });
 });
 
-test('0150 AC2: the square keeps its green when on and red when off', skip, async () => {
-  const bg = `getComputedStyle(document.querySelector('#run .live')).backgroundColor`;
-  const colourOf = name => `(() => { const n = document.createElement('i'); n.style.color = 'var(${name})'; document.body.append(n); const c = getComputedStyle(n).color; n.remove(); return c; })()`;
-  await withPage({ on: true, pid: 7 }, 1280, async b => assert.equal(await b.js(bg), await b.js(colourOf('--ok'))));
-  await withPage(null, 1280, async b => assert.equal(await b.js(bg), await b.js(colourOf('--bad'))));
+// 0163: the builder took the square's place, and the label alone says whether it's on or off.
+test('0150 AC2: on or off, the button shows the builder rather than a square', skip, async () => {
+  const shown = `!document.querySelector('#run .live') && document.querySelector('#run canvas.mini').getBoundingClientRect().width > 0`;
+  await withPage({ on: true, pid: 7 }, 1280, async b => assert.equal(await b.js(shown), true));
+  await withPage(null, 1280, async b => assert.equal(await b.js(shown), true));
 });
 
 for (const width of [700, 1280]) {

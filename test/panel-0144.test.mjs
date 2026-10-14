@@ -9,14 +9,14 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
 // 0150: the indicator is itself the button, so there's no separate Pause or Start, and "ready tickets wait" moved into its tooltip.
 const pillOf = p => p.byId('run');
-const dotOf = p => p.all(pillOf(p)).find(n => /\blive\b/.test(n.className || ''));
+const dotOf = p => p.all(pillOf(p)).find(n => /\bmini\b/.test(n.className || '')); // 0163: the builder in place of the square
 const switchOf = pillOf;
 
 test('0144 AC1: while speck run is on, the indicator reads "Auto-build on" with a green square (0150: and is the button)', async () => {
   const p = fakePage([state({ on: true, pid: 7 })]);
   await p.settle();
   assert.equal(pillOf(p).textContent, 'Auto-build on');
-  assert.match(dotOf(p).className, /\bgo\b/);
+  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
   assert.equal(switchOf(p).title, 'Pause Auto-build: ready tickets wait');
 });
 
@@ -25,7 +25,7 @@ test('0144 AC2: while speck run is off, the indicator reads "Auto-build off" wit
   await p.settle();
   const pill = pillOf(p);
   assert.equal(pill.textContent, 'Auto-build off');
-  assert.match(dotOf(p).className, /\bstop\b/);
+  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
   assert.ok(!p.all(pill).some(n => /\brun-wait\b/.test(n.className || '')), 'no small print beside it');
 });
 
@@ -85,12 +85,10 @@ async function withPage(run, fn, width = 1280) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .live')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .mini')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
-const bg = sel => `getComputedStyle(document.querySelector(${JSON.stringify(sel)})).backgroundColor`;
-const colourOf = name => `(() => { const n = document.createElement('i'); n.style.color = 'var(${name})'; document.body.append(n); const c = getComputedStyle(n).color; n.remove(); return c; })()`;
 const LINES = sel => `(() => {
   const n = document.querySelector(${JSON.stringify(sel)}), range = document.createRange();
   range.selectNodeContents(n);
@@ -100,15 +98,16 @@ const LINES = sel => `(() => {
   return lines;
 })()`;
 
-test('0144 AC1: on, the square is the panel\'s green', skip, async () => {
+// 0163: the builder took the square's place, so neither is green or red: the label says whether it's on.
+test('0144 AC1: on, the button shows the builder rather than a green square', skip, async () => {
   await withPage({ on: true, pid: 7 }, async b => {
-    assert.equal(await b.js(bg('#run .live')), await b.js(colourOf('--ok')));
+    assert.equal(await b.js(`!document.querySelector('#run .live') && document.querySelector('#run canvas.mini').getBoundingClientRect().width > 0`), true);
   });
 });
 
-test('0144 AC2: off, the square is the panel\'s red', skip, async () => {
+test('0144 AC2: off, the button shows the builder rather than a red square', skip, async () => {
   await withPage(null, async b => {
-    assert.equal(await b.js(bg('#run .live')), await b.js(colourOf('--bad')));
+    assert.equal(await b.js(`!document.querySelector('#run .live') && document.querySelector('#run canvas.mini').getBoundingClientRect().width > 0`), true);
   });
 });
 
