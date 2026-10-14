@@ -1,7 +1,7 @@
 ---
 id: "0191"
 title: "Make the 0173 stopped-process check pass on main again"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T22:48:21.730Z"
+approved: "2026-10-14T22:58:16.640Z"
 
 ---
 # 0191 · Make the 0173 stopped-process check pass on main again
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On main, the test "0173 AC2: no test in test/ checks once that a process it stopped has gone" fails. Its output names one test that breaks that rule: `test/panel-0177.test.mjs` line 159, `assert.ok(!alive(…))`. Every build records it as failing before, and auto-ship refuses to ship any ticket while main's tests fail (0183 was held back by it).
@@ -54,9 +55,14 @@ Worth watching: two other timing tests in the same area can miss their 1-second 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 83,570
+- Elapsed since build started: 10 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - The 0177 AC3 Stop build and Ship tests missed their 1-second limit once (1306 ms, 1106 ms) while another build's suite ran at the same time. Saved as speck/ideas/2026-10-14-keep-the-0177-one-second-tests-passing-on-a-busy-machine.md.
