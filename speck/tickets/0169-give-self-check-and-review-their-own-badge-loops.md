@@ -1,7 +1,7 @@
 ---
 id: "0169"
 title: Add the code-cloud loops to the builder badge                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0168"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T15:19:09.602Z"
+approved: "2026-10-14T15:35:40.110Z"
 
 ---
 # 0169 · Add the code-cloud loops to the builder badge
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0168, the builder badge plays the same laptop loop through self-check and review, so the user can't tell from the badge whether the builder is checking its own work or being reviewed.
@@ -53,9 +54,14 @@ Worth keeping an eye on: the characters are faint by design, so on a dim screen 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 123,957
+- Elapsed since build started: 17 min
+- Changed lines: 102 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Earlier tests that took the laptop pose to mean "at work" (0055, 0071, 0156, 0168) now accept the self-check and review poses too; 0168's edge test leaves the review out, as its reviewer slides in past the tile's edge, and 0169's own test checks that pose's characters and rings instead.
 - Follow-ups skipped as duplicates: 0128 AC3 and 0148 AC2 each failed once in a full-suite run and passed alone (speck/ideas/2026-10-13-stop-tests-checking-speck-run-stopped-too-soon.md).
