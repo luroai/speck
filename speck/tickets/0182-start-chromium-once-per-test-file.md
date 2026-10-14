@@ -1,7 +1,7 @@
 ---
 id: "0182"
 title: "Start Chromium once per test file"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ created: 2026-10-14
 started: "2026-10-14T21:44:02.138Z"
 blocked_at: ""
 waited_seconds: 411
+approved: "2026-10-14T22:23:21.380Z"
 
 ---
 # 0182 · Start Chromium once per test file
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each of the 50 real-browser tests starts a Chromium of its own, about half a second and a few hundred MB each time. On 2026-10-14 these tests took 178 of the suite's 1,229 seconds of test time (14%), and every new panel ticket tends to add more. Each build runs the full suite three or four times, so this cost is paid on every build.
@@ -59,9 +60,15 @@ Speck's own browser tests now open one browser per test file and give each test 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 sharedChromium() deliberately starts another Chromium after the shared process dies.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 301,462
+- Elapsed since build started: 39 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Shorten the existing browser tests' waits, where most of their time goes: speck/ideas/2026-10-14-shorten-the-slowest-browser-tests-waits.md
