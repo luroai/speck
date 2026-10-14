@@ -91,13 +91,18 @@ test('0049 AC4: a bug ticket shows a bug tag beside its id in Shaping, the queue
     const next = parent.children[parent.children.indexOf(ids[0]) + 1];
     return next && /\bbug\b/.test(next.className || '') ? next : null;
   };
+  // 0151: in Plan the bug tag comes after the priority, size and risk tags, in the row under the title.
+  const lastTag = row => {
+    const tags = p.all(row).find(n => /\btag-row\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || ''));
+    return /\bbug\b/.test(tags.at(-1)?.className || '') ? tags.at(-1) : null;
+  };
   const anyBug = row => p.all(row).some(n => /\bbug\b/.test(n.className || ''));
   for (const [where, rows] of [['Shaping', items(p)], ['queue', queueRows(p)], ['Shipped', shippedRows(p)]]) {
     const bug = rows.find(r => ['0001', '0003', '0005'].includes(idOf(r)));
     const other = rows.find(r => ['0002', '0004', '0006'].includes(idOf(r)));
     assert.ok(bug && other, `${where} lists both`);
-    const tag = bugTag(bug);
-    assert.ok(tag, `${where}: a bug tag right after the id`);
+    const tag = where === 'Shaping' ? lastTag(bug) : bugTag(bug);
+    assert.ok(tag, `${where}: a bug tag ${where === 'Shaping' ? 'after the other tags' : 'right after the id'}`);
     assert.equal(tag._text, 'bug');
     assert.ok(!anyBug(other), `${where}: no tag on a ticket that isn't a bug`);
   }

@@ -11,8 +11,15 @@ const refresh = async p => { p.timers.shift()(); await p.settle(); };
 const nodes = (p, row, cls) => p.all(row).filter(n => new RegExp(`\\b${cls}\\b`).test(n.className || ''));
 const shaping = (p, id) => items(p).find(n => p.all(n).some(x => x.className === 'id' && x._text === id));
 const queued = (p, id) => queueRows(p).find(n => p.all(n).some(x => x.className === 'id' && x._text === id));
-const idRow = (p, row) => p.all(row).find(n => n.className === 'row'); // the row with the id, the title and the tags
-const iconOf = (p, row) => { const r = idRow(p, row); return r.children[1] && /\b(chain|lock)\b/.test(r.children[1].className) ? r.children[1] : null; };
+const idRow = (p, row) => p.all(row).find(n => n.className === 'row'); // the queue's row with the id, the title and the tags
+const tagRow = (p, row) => p.all(row).find(n => /\btag-row\b/.test(n.className || '')); // a Plan ticket's row of tags (0151)
+// In the queue the icon comes right after the id. In Plan it ends the row of tags under the title (0151).
+const iconOf = (p, row) => {
+  const tags = tagRow(p, row);
+  if (tags) return tags.children.find(c => /\b(chain|lock)\b/.test(c.className || '')) || null;
+  const r = idRow(p, row);
+  return r.children[1] && /\b(chain|lock)\b/.test(r.children[1].className) ? r.children[1] : null;
+};
 const css = () => page().match(/<style>([\s\S]*?)<\/style>/)[1];
 const rule = sel => (css().match(new RegExp(`(^|\\n)\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[2] || '';
 
@@ -39,7 +46,7 @@ test('0041 AC1: a ticket that starts a chain shows a chain icon after its id and
   await p.settle();
   const s = shaping(p, '0001');
   const icon = iconOf(p, s);
-  assert.ok(icon && /\bchain\b/.test(icon.className), 'Shaping: a chain icon right after the id');
+  assert.ok(icon && /\bchain\b/.test(icon.className), 'Shaping: a chain icon at the end of the tags');
   assert.ok(nodes(p, s, 'checks')[0].textContent.includes('unlocks 0002, 0003'), 'Shaping: unlocks the unfinished tickets that list it, in JSON order');
   assert.ok(!nodes(p, s, 'checks')[0].textContent.includes('0004'), 'a done ticket waiting on it does not count');
   assert.ok(!nodes(p, s, 'checks')[0].textContent.includes('0005'), 'a cancelled one does not count either');
@@ -66,7 +73,7 @@ test('0041 AC2: a waiting ticket shows a dimmed padlock after its id, with "wait
   const p = fakePage([chained()]);
   await p.settle();
   const s = shaping(p, '0003');
-  assert.ok(/\block\b/.test(iconOf(p, s).className), 'Shaping: a padlock right after the id');
+  assert.ok(/\block\b/.test(iconOf(p, s).className), 'Shaping: a padlock at the end of the tags');
   assert.ok(nodes(p, s, 'checks')[0].textContent.includes('waiting on 0001, 0099'), 'Shaping: waiting on its ids');
   const q = queued(p, '0007');
   assert.ok(/\block\b/.test(iconOf(p, q).className), 'queue: a padlock right after the id');
