@@ -104,7 +104,7 @@ test('0038 AC3: Ideas leaves out inbox and dropped ideas, its count matches its 
   assert.doesNotMatch(p.byId('shaping').textContent, /Gone|Follow/);
 });
 
-test('0038 AC4: Inbox has its own accent colour on the toggle, the section top edge and each item', () => {
+test('0038 AC4: Inbox keeps a colour of its own, and since 0167 its tab, section and items are in the plain colours', () => {
   const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
   const vars = Object.fromEntries([...css.matchAll(/--([a-z-]+):\s*(#[0-9a-f]{3,6})/gi)].map(m => [m[1], m[2].toLowerCase()]));
   const rule = selector => {
@@ -117,13 +117,12 @@ test('0038 AC4: Inbox has its own accent colour on the toggle, the section top e
     assert.ok(m, `${selector} sets ${prop} from a colour variable`);
     return m[1];
   };
-  const used = [colour('.toggle.inbox.on', 'color'), colour('.toggle.inbox.on', 'border-color'), colour('#shaping-section.inbox', 'border-top'), colour('.item.inbox', 'border-left')];
-  assert.equal(new Set(used).size, 1, 'one accent throughout');
-  const name = used[0];
+  // 0167: the selected tab is in the text colour, and the section and its items have no stripe.
+  assert.deepEqual([colour('.toggle.on', 'color'), colour('.toggle.on', 'border-color')], ['text', 'text']);
+  assert.doesNotMatch(css, /#shaping-section\.inbox \{|\.item\.inbox(\.open)? \{|\.item\.inbox \.id \{/, 'no rule of its own');
+  const name = 'inbox';
   assert.ok(vars[name], `--${name} is defined`);
   for (const other of ['accent', 'idea', 'bad', 'warn']) assert.notEqual(vars[name], vars[other], `not the same colour as --${other}`);
   assert.ok(!['accent', 'idea', 'bad', 'warn', 'run', 'ok', 'bug'].includes(name), 'a variable of its own');
   assert.ok(!Object.entries(vars).some(([k, v]) => k !== name && v === vars[name]), 'a colour no other variable uses');
-  assert.match(rule('.item.inbox.open'), /border-left-color:\s*var\(--/, 'an open item keeps its edge colour');
-  assert.ok(rule('.item.inbox.open').includes(`var(--${name})`));
 });

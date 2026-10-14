@@ -81,7 +81,7 @@
 
   .id { font-size: 12px; color: var(--muted); }
   .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 27px; display: inline-block; }
-  .tag.p1 { color: var(--accent); border-color: var(--accent); }
+  .tag.p1 { color: var(--text); border-color: var(--text); }
   .tag.high { color: var(--bad); border-color: var(--bad); }
   .tag.bug { color: var(--bug); border-color: var(--bug); }
   .tag.fix { color: var(--fix); border-color: var(--fix); }
@@ -91,7 +91,7 @@
   .prio-menu { position: absolute; top: calc(100% + 2px); left: 0; z-index: 5; display: flex; background: var(--panel); border: .5px solid var(--line); }
   .prio-menu button { font: inherit; font-size: 14px; padding: 1px 8px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
   .prio-menu button:hover { color: var(--text); }
-  .prio-menu button.on { color: var(--accent); }
+  .prio-menu button.on { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
   .item .prio-refused { margin-top: 6px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
   .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .title { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 14px; color: var(--text); }
@@ -106,9 +106,9 @@
   #shaping .empty { padding: 0 4px; }
   .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
-  .item .head { margin: -10px -14px -10px -12px; padding: 10px 14px 10px 12px; } /* the item's padding opens and closes it too */
+  .item .head { margin: -10px -14px; padding: 10px 14px; } /* the item's padding opens and closes it too */
   .item .checks { grid-column: 1 / 2; font-size: 12px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
-  .item.open { background: var(--raise); border-left: 2px solid var(--accent); padding-left: 12px; }
+  .item.open { background: var(--raise); border-color: var(--text); }
   .detail { margin-top: 10px; border-top: .5px solid var(--line-soft); padding-top: 8px; display: grid; grid-template-columns: 1fr 220px; gap: 16px; }
   .detail h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
   .detail p { margin: 0 0 8px; color: var(--text); }
@@ -116,11 +116,9 @@
   .detail ol li { margin-bottom: 4px; }
   .ready { border-left: .5px solid var(--line-soft); padding-left: 14px; font-size: 12px; }
   .ready div { padding: 3px 0; }
-  .set-ready { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-top: 10px; padding: 4px 12px; background: var(--accent); color: var(--panel); border: .5px solid var(--accent); cursor: pointer; }
+  .set-ready { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-top: 10px; padding: 4px 12px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
   .set-ready:disabled { background: transparent; color: var(--faint); border-color: var(--line); cursor: not-allowed; }
   .ready div.refused { white-space: pre-wrap; }
-  .item.idea .id { color: var(--idea); }
-  .item.inbox .id { color: var(--inbox); }
   /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags */
   .item.ticket .head { column-gap: 0; } /* its right-hand column is empty: the title gets the whole width */
   .item.ticket .line { display: flex; align-items: baseline; gap: 8px; }
@@ -130,12 +128,11 @@
   .item.ticket .prio { display: inline-flex; }
 
   /* Queue */
-  /* 0155: each ticket is a card of its own, laid out as a Plan ticket, with its left edge in the colour of its state:
-     blue at work, purple waiting to ship, red blocked or stopped, the accent ready */
+  /* 0155: each ticket is a card of its own, laid out as a Plan ticket. 0167: only a ticket waiting for you or in trouble
+     is coloured, by its border and background (below the highlights, so they win) */
   #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
   #queue .empty { padding: 0 4px; }
-  .q { padding: 10px 14px 10px 12px; border: 1px solid var(--line); border-left: 2px solid var(--run); }
-  .q.queued { border-left: 2px solid var(--accent); }
+  .q { padding: 10px 14px; border: 1px solid var(--line); }
   .q .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 0; align-items: baseline; cursor: pointer; }
   .q .top .line { grid-area: 1 / 1; display: flex; align-items: baseline; gap: 8px; }
   .q .top .line .id { flex: none; font-size: 14px; }
@@ -158,9 +155,6 @@
   .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
   .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
-  .q.blocked { border-left: 2px solid var(--bad); }
-  /* An approved ticket whose build has exited is waiting for you to ship it: purple, as nothing is wrong (0138) */
-  .q.to-ship { border-left: 2px solid var(--idea); }
   .act.to-ship { color: var(--idea); }
   /* 0156: an in-flight ticket's progress. The ensō sits at the right of its top row, with the timer over it, beside the
      id, title, tags, a sentence saying what's happening and a dot for each stage. Its circle is a thin neutral line, open
@@ -197,7 +191,7 @@
     @keyframes pulse { to { box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 8%, transparent); } }
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
-    @keyframes flash { 0%, 40% { background-color: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); } }
+    @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
     /* 0160: on a phone the header fades in as it slims to one row and as it goes back to two */
     header.slim > * { animation: head-slim .15s ease-out; }
     header.wide > * { animation: head-wide .15s ease-out; }
@@ -214,9 +208,8 @@
   .next { color: var(--ok); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; border: .5px solid var(--ok); padding: 0 5px; }
 
   /* Shipped */
-  /* 0157: a green accent, the stats a grid of tiles of equal size, each number over its label and the tickets its
-     median covers, and each shipped ticket a card of its own, laid out as a Plan ticket, with a green left edge */
-  section.shipped { border-top: 2px solid var(--ok); }
+  /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers, and
+     each shipped ticket a card of its own, laid out as a Plan ticket */
   .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: .5px solid var(--line-soft); }
   .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 12px; background: var(--panel); }
   .stat .num { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1.3; }
@@ -226,7 +219,7 @@
   section.shipped table { display: block; }
   #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
   #shipped .empty { padding: 0 4px; }
-  #shipped tr { display: block; padding: 10px 14px 10px 12px; border: 1px solid var(--line); border-left: 2px solid var(--ok); }
+  #shipped tr { display: block; padding: 10px 14px; border: 1px solid var(--line); }
   #shipped td { display: block; padding: 0; border: 0; }
   #shipped .line { display: flex; align-items: baseline; gap: 8px; }
   #shipped .line .id { flex: none; font-size: 14px; }
@@ -259,48 +252,38 @@
   .question, .title { white-space: pre-wrap; overflow-wrap: anywhere; }
   .ready div { overflow-wrap: anywhere; }
 
-  /* Shaping: tickets, ideas and the inbox, one list at a time, each with its own accent colour */
+  /* Shaping: tickets, ideas and the inbox, one list at a time. The selected tab has a border in the text colour (0167). */
   .toggles { display: flex; }
   .toggle { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; padding: 1px 10px; background: transparent; border: .5px solid var(--line); margin-left: -.5px; color: var(--muted); cursor: pointer; }
-  .toggle.tickets.on { color: var(--accent); border-color: var(--accent); position: relative; z-index: 1; }
-  .toggle.ideas.on { color: var(--idea); border-color: var(--idea); position: relative; z-index: 1; }
-  .toggle.inbox.on { color: var(--inbox); border-color: var(--inbox); position: relative; z-index: 1; }
-  #shaping-section.tickets { border-top: 2px solid var(--accent); }
-  #shaping-section.ideas { border-top: 2px solid var(--idea); }
-  #shaping-section.inbox { border-top: 2px solid var(--inbox); }
-  .item.ticket { border-left: 2px solid var(--accent); padding-left: 12px; }
-  .item.idea { border-left: 2px solid var(--idea); padding-left: 12px; }
-  .item.inbox { border-left: 2px solid var(--inbox); padding-left: 12px; }
-  .item.ticket:hover, .item.idea:hover, .item.inbox:hover { background: var(--raise); }
-  .item.idea.open { border-left-color: var(--idea); }
-  .item.inbox.open { border-left-color: var(--inbox); }
-  /* The open item in Shaping or the queue is tinted with its list's colour */
+  .toggle.on { color: var(--text); border-color: var(--text); position: relative; z-index: 1; }
+  .item:hover { background: var(--raise); }
+  /* The light tints. 0167: the open item in Shaping or the queue is set apart by a raised fill and a border in the text
+     colour; only a ticket waiting for you or in trouble keeps a tint (below). */
   :root { --accent-bg: #f7ebe6; --idea-bg: #f2ecf3; --inbox-bg: #e9f2f0; --bad-bg: #fae6e8; }
-  .item.ticket.open, .item.ticket.open:hover { background: var(--accent-bg); }
-  .item.idea.open, .item.idea.open:hover { background: var(--idea-bg); }
-  .item.inbox.open, .item.inbox.open:hover { background: var(--inbox-bg); }
-  .q.open { background: var(--accent-bg); } /* its left edge keeps the colour of its state (0155) */
-  .q.blocked.open { background: var(--bad-bg); border-left-color: var(--bad); }
-  .q.to-ship.open { background: var(--idea-bg); border-left-color: var(--idea); }
+  .q.open { background: var(--raise); border-color: var(--text); }
   .note { margin: 0; color: var(--text); }
   .empty { padding: 10px 14px; color: var(--faint); font-size: 12px; }
   .path { overflow-wrap: anywhere; }
 
   /* Chains through after:: a chain icon on a ticket that unlocks others, a padlock on one that waits */
   .chain, .lock { display: inline-block; position: relative; width: 12px; height: 10px; vertical-align: -1px; cursor: help; }
-  .chain { color: var(--accent); transform: rotate(-35deg); }
+  .chain { color: var(--muted); transform: rotate(-35deg); }
   .chain::before, .chain::after { content: ''; position: absolute; top: 3px; width: 6px; height: 4px; border: 1.5px solid currentColor; }
   .chain::before { left: 0; } .chain::after { left: 4px; }
   .lock { color: var(--faint); }
   .lock::before { content: ''; position: absolute; left: 3px; top: 0; width: 6px; height: 5px; border: 1.5px solid currentColor; border-bottom: 0; }
   .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
-  .item.hl, .q.hl { background: var(--accent-bg); }
+  .item.hl, .q.hl { border-color: var(--text); }
   .item.dim, .q.dim { background: var(--raise); } /* 0161: set back by its fill, not faded */
+  /* 0167: a ticket in trouble, blocked or its build stopped, is crimson; one waiting for you to ship it is purple, as
+     nothing is wrong (0138). Each keeps its border and background whether it's open, highlighted or set back. */
+  .q.blocked { border-color: var(--bad); background: var(--bad-bg); }
+  .q.to-ship { border-color: var(--idea); background: var(--idea-bg); }
   /* 0154: a linked ticket's id in a "waiting on" or "unlocks" note, which goes to that ticket and lights it briefly */
-  .goto { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+  .goto { font: inherit; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
   .goto:hover { text-decoration-style: solid; }
   /* It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
-  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { background-color: var(--accent-bg); box-shadow: inset 0 0 0 1px var(--accent); } }
+  @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
 
   /* The full ticket, in a side pane over the right of the page. While it's open, the page behind it holds still and a
      backdrop over the rest of the page takes every click outside it. */
@@ -311,10 +294,10 @@
   .full-open:hover { color: var(--text); }
   .q .full-open { margin: 6px 0 2px; padding: 1px 10px; font-size: 12px; }
   td.full-cell { width: 1%; padding-left: 0; }
-  td .title-link { color: var(--accent); text-decoration: none; cursor: pointer; }
-  td .title-link:hover { text-decoration: underline; }
+  td .title-link { color: var(--text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
+  td .title-link:hover { text-decoration-thickness: 2px; }
   td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
-  #full-ticket { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 2px solid var(--accent); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
+  #full-ticket { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 1px solid var(--line); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
   #full-ticket[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
@@ -346,11 +329,11 @@
   #full-ticket .md summary { cursor: pointer; color: var(--muted); }
   td .full-open + .full-open { margin-left: 6px; }
   /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said */
-  #full-ticket .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--accent); color: var(--panel); border: .5px solid var(--accent); cursor: pointer; }
+  #full-ticket .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ship:disabled { cursor: default; opacity: .6; }
   #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad { color: var(--bad); }
-  #full-ticket .md a, #full-ticket .criteria a { color: var(--accent); }
+  #full-ticket .md a, #full-ticket .criteria a { color: var(--text); }
   /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
   .shaping .md { overflow-wrap: anywhere; }
   .shaping .md p { margin: 0 0 8px; color: var(--text); }
@@ -368,7 +351,7 @@
   .shaping .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 13px; }
   .shaping .md th, .shaping .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
   .shaping .md th { font-weight: 600; background: var(--raise); }
-  .shaping .md a { color: var(--accent); }
+  .shaping .md a { color: var(--text); }
 
   /* The dark look, "the same garden at night", switched to with the button in the header */
   :root[data-theme="dark"] {
@@ -640,8 +623,8 @@ function panelModel(state) {
       const exit_label = shipping ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
-      // unless its auto-ship failed.
-      const to_ship = t.status === 'approved' && exit_label !== null && !auto_failed;
+      // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
+      const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || (t.auto_ship === false && !shipping));
       // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       const paused = pausable && t.paused === true;

@@ -53,7 +53,7 @@ test('0041 AC1: a ticket that starts a chain shows a chain icon after its id and
   const q = queued(p, '0006');
   assert.ok(/\bchain\b/.test(iconOf(p, q).className), 'queue: a ready ticket that starts a chain has the icon');
   assert.ok(nodes(p, q, 'act')[0].textContent.includes('unlocks 0007'), 'queue: unlocks under its title');
-  assert.match(rule('.chain'), /var\(--accent\)/, 'the chain icon is in the accent colour');
+  assert.match(rule('.chain'), /var\(--muted\)/, 'the chain icon is in the muted colour, as the speck red is only for the speck (0167)');
 });
 
 test('0041 AC1: only tickets with nothing to wait on and an unfinished ticket waiting on them start a chain', () => {
@@ -212,7 +212,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
   try {
     await b.until(`document.querySelectorAll('#shaping .item').length === 2 && !!document.querySelector('#queue .q')`, 'the tickets');
     assert.equal(await b.js(`document.querySelector('#queue .q .chain').title`), 'Starts a chain: unlocks 0002');
-    assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), 'rgb(133, 49, 35)', 'the accent colour');
+    assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), 'rgb(61, 61, 58)', 'the muted colour (0167)');
     assert.ok(await b.js(`document.querySelector('#queue .q .chain').getBoundingClientRect().width > 0`), 'the icon takes up room');
     assert.equal(await b.js(`document.querySelector('#shaping .item .lock').title`), 'Waiting on 0001');
     assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('waiting on 0001')`));

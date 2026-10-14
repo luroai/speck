@@ -67,15 +67,15 @@ test('0138 AC1: the open row is tinted purple, and nothing in it is red', async 
 });
 
 test('0138 AC1: the CSS draws each of those in purple', () => {
-  assert.equal(ruleVar('.q.to-ship', 'border-left'), '--idea', 'the left border');
-  assert.equal(ruleVar('.q.to-ship.open', 'background'), '--idea-bg', 'the open row\'s tint');
-  assert.equal(ruleVar('.q.to-ship.open', 'border-left-color'), '--idea', 'the open row\'s left border');
+  // 0167: its border all round and its tint, open or closed, in place of a left edge
+  assert.equal(ruleVar('.q.to-ship', 'border-color'), '--idea', 'the border');
+  assert.equal(ruleVar('.q.to-ship', 'background'), '--idea-bg', 'the tint');
   assert.equal(ruleVar('.q .top .dot.now.to-ship', 'color'), '--idea', 'the current step\'s dot (0156)');
   assert.equal(ruleVar('.q .top .stage.to-ship', 'color'), '--idea', 'the current step\'s name (0156)');
   assert.equal(ruleVar('.act.to-ship', 'color'), '--idea', 'the label line');
   assert.equal(ruleVar('.question.exit.to-ship', 'border-left-color'), '--idea', 'the message\'s edge');
-  // The open tint comes after .q.open, so it wins over the plain open tint.
-  assert.ok(css().indexOf('.q.to-ship.open') > css().indexOf('.q.open {'), '.q.to-ship.open comes after .q.open');
+  // The tint comes after .q.open, so it wins over the plain open fill.
+  assert.ok(css().indexOf('.q.to-ship {') > css().indexOf('.q.open {'), '.q.to-ship comes after .q.open');
 });
 
 test('0138 AC2: the purple reads clearly in light and dark, and is visibly different from red and amber', () => {
@@ -109,8 +109,8 @@ test('0138 AC3: blocked, stopped-before-finishing and stopped-unexpectedly ticke
   }
   for (const [row, label] of [[all[1], 'Build stopped before finishing'], [all[2], 'Build stopped before finishing'], [all[3], 'Build stopped unexpectedly']])
     assert.ok(p.all(row).some(n => n.className === 'act bad' && n.textContent === label), label);
-  assert.equal(ruleVar('.q.blocked', 'border-left'), '--bad');
-  assert.equal(ruleVar('.q.blocked.open', 'background'), '--bad-bg');
+  assert.equal(ruleVar('.q.blocked', 'border-color'), '--bad'); // its border all round since 0167
+  assert.equal(ruleVar('.q.blocked', 'background'), '--bad-bg');
   assert.equal(ruleVar('.q .top .dot.now.bad', 'color'), '--bad'); // the current step's dot since 0156
   assert.match(css(), /\.question\.exit \{ border-left-color: var\(--bad\);/);
   const { p: q, row } = await openRow(state, '0001');

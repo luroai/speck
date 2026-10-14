@@ -192,7 +192,7 @@ for (const theme of ['light', 'dark']) {
   for (const width of [375, 1280]) {
     test(`0151 AC4: at ${width} px in the ${theme} look, every ticket, idea and inbox note in Plan is a bordered card, 8 px or more from the next`, skip, async () => {
       await withPanel(async b => {
-        const accent = await b.js(RGB('var(--accent)'));
+        const line = await b.js(RGB('var(--line)'));
         for (const [view, count] of [['tickets', 3], ['ideas', 2], ['inbox', 2]]) {
           await tab(b, view);
           if (view === 'tickets') { await b.js(`${ITEM('0202')}.querySelector('.head').click()`); await settle(b); } // an open card too
@@ -204,7 +204,8 @@ for (const theme of ['light', 'dark']) {
               assert.ok(c[k].contrast >= 1.4, `${c.what}: the ${k} border (${c[k].color}) is hard to see, contrast ${c[k].contrast.toFixed(2)}`);
             }
             if (c.gap !== null) assert.ok(c.gap >= 7.99, `${c.what}: only ${c.gap} px to the next card`);
-            if (view === 'tickets') assert.deepEqual([c.left.width, c.left.color], [2, accent], `${c.what}: the draft stripe on its left edge`);
+            // 0167: no stripe. A closed card's left edge is as plain as its other sides.
+            if (!/\bopen\b/.test(c.what)) assert.deepEqual([c.left.width, c.left.color], [c.right.width, line], `${c.what}: no stripe on its left edge`);
           }
         }
       }, { width, theme });

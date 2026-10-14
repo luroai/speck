@@ -26,7 +26,9 @@ const STATE = {
   ],
   ideas: [],
 };
-const STATES = { '0301': 'run', '0302': 'run', '0303': 'idea', '0304': 'bad', '0305': 'bad', '0306': 'accent', '0307': 'accent' };
+// The colour of each card's border by its state since 0167: plain while at work or ready, purple waiting to ship, red
+// blocked or stopped. A ready ticket is 'ready'.
+const STATES = { '0301': 'line', '0302': 'line', '0303': 'idea', '0304': 'bad', '0305': 'bad', '0306': 'ready', '0307': 'ready' };
 
 // Before the page's own script runs: the look to use, a confirm that says yes, and a fetch that answers with the board
 // above and records each POST.
@@ -101,15 +103,18 @@ for (const theme of ['light', 'dark']) {
       }, { width, theme });
     });
 
-    test(`0155 AC2: at ${width} px in the ${theme} look, each card's left edge is coloured by its state, open or closed`, skip, async () => {
+    test(`0155 AC2: at ${width} px in the ${theme} look, each card's border is coloured by its state (all round since 0167), open or closed`, skip, async () => {
       await withPanel(async b => {
         const colour = {};
-        for (const k of ['run', 'idea', 'bad', 'accent']) colour[k] = await b.js(RGB(`var(--${k})`));
+        for (const k of ['line', 'idea', 'bad', 'text']) colour[k] = await b.js(RGB(`var(--${k})`));
         assert.equal(new Set(Object.values(colour)).size, 4, 'four different colours');
         const check = async when => {
           for (const c of await b.js(CARDS)) {
-            assert.equal(c.left.color, colour[STATES[c.id]], `${c.id} ${when}: its left edge should be --${STATES[c.id]}`);
-            assert.ok(c.left.width >= 2, `${c.id} ${when}: its left edge is only ${c.left.width} px wide`);
+            const state = STATES[c.id] === 'ready' ? 'line' : STATES[c.id];
+            // A plain card that's open has a border in the text colour; one in a state keeps its state's colour.
+            const want = state === 'line' && c.open ? 'text' : state;
+            for (const k of ['top', 'right', 'bottom', 'left']) assert.equal(c[k].color, colour[want], `${c.id} ${when}: its ${k} edge should be --${want}`);
+            assert.equal(c.left.width, c.right.width, `${c.id} ${when}: no stripe on its left edge`);
           }
         };
         await check('closed');
@@ -165,7 +170,7 @@ for (const width of [375, 699, 700, 1000, 1280]) {
         const titleBottom = Math.max(...l.lines.map(x => x.bottom)), titleRight = Math.max(...l.lines.map(x => x.right));
         // A ticket in flight has its timer in the ensō (0156), which starts on the id's row and ends at the card's right
         // padding; a ready one has neither.
-        if (STATES[id] === 'accent') assert.ok(l.sub === null && l.enso === null, `${id}: a ready ticket has no timer`);
+        if (STATES[id] === 'ready') assert.ok(l.sub === null && l.enso === null, `${id}: a ready ticket has no timer`);
         else {
           assert.ok(l.sub && l.enso, `${id}: no timer`);
           assert.ok(l.enso.top < l.id.bottom && l.enso.bottom > l.id.top, `${id}: the ensō is on the id's row`);
