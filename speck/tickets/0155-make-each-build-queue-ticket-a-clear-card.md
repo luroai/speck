@@ -1,7 +1,7 @@
 ---
 id: "0155"
 title: "Make each Build queue ticket a clear card"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0151"]                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T06:15:11.954Z"
+approved: "2026-10-14T06:26:38.005Z"
 
 ---
 # 0155 · Make each Build queue ticket a clear card
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Build queue rows have no coloured edge (only a blocked ticket gets one), only a faint line between them and a wide empty column on their left where the old pause icon sat. Several tickets in the queue are hard to tell apart, and the rows look different from Plan's tickets.
@@ -58,9 +59,14 @@ To see it, open the panel and look at Build, on a phone or a wide screen, in lig
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 172,523
+- Elapsed since build started: 11 min
+- Changed lines: 61 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Known limit: beside the timer, the longest titles take one more line than in Plan (3 at 375 px, 2 at 1,280 px).
