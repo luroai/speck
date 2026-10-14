@@ -1,7 +1,7 @@
 ---
 id: "0173"
 title: "Stop tests checking speck run has stopped too soon"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-13-stop-tests-checking-speck-run-stopped-too-s
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T20:36:47.075Z"
+approved: "2026-10-14T20:59:18.023Z"
 
 ---
 # 0173 · Stop tests checking speck run has stopped too soon
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Some tests turn speck run off and then check once, straight away, that its process has gone. On a busy machine the process can take a moment to exit, so the full suite fails now and then (0128 AC3 or 0148 AC2) when nothing is wrong. That stops auto-ship: on 2026-10-14 it held up 0164's ship even though the same failure happened on `main`.
@@ -55,9 +56,15 @@ Nothing changes in speck itself: this only makes speck's own tests steadier. Som
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The deadline does not bound asynchronous checks.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 510,384
+- Elapsed since build started: 23 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox note):
   - Pre-existing failure "0165 AC1: at 375 px, every tag … 44 by 44 px tap area each" is left as it was; it duplicates fix ticket 0190.
