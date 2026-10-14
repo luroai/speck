@@ -1,7 +1,7 @@
 ---
 id: "0154"
 title: "Go to a linked ticket by tapping its id"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T00:10:27.364Z"
+approved: "2026-10-14T00:23:02.917Z"
 
 ---
 # 0154 · Go to a linked ticket by tapping its id
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Hovering over a ticket in Plan or the Build queue highlights the tickets linked to it through `after:` and dims the rest. On a phone there's no hover: a tap sets the highlight off and it stays stuck until the next tap elsewhere, which is confusing and gets in the way of opening tickets.
@@ -52,9 +53,14 @@ On a phone, tapping a ticket no longer lights up its linked tickets and greys ou
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 150,845
+- Elapsed since build started: 13 min
+- Changed lines: 76 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox.
 - Known limit: a pen that can hover, as on some drawing tablets, doesn't light tickets up either, since only a mouse does.
