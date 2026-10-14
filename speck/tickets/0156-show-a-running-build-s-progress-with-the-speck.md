@@ -1,7 +1,7 @@
 ---
 id: "0156"
 title: "Show a running build's progress with the speck"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0155"]                # ticket ids that must be done first
 created: 2026-10-13
 started: "2026-10-14T06:28:34.965Z"
+approved: "2026-10-14T06:57:06.147Z"
 
 ---
 # 0156 · Show a running build's progress with the speck
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A running build's progress is a thin five-part bar with small uppercase stage labels ("SELF-CHECK", "REVIEW 1") squeezed under it. On a phone the moving part is too small to notice, and the labels make the bar look cramped. The bar was designed for several builds running side by side; speck now builds one ticket at a time, so the running build can have more room.
@@ -57,9 +58,16 @@ Worth keeping an eye on: when the panel's Build column is narrow (around 700 px 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 An approved ticket without a recorded build exit says it is waiting for shipment, but its sentence and current stage dot do not use the purple waiting colour.
+Round 2 (codex): changes requested: F2 When the panel starts shipping an approved ticket whose build has exited, t.to_ship remains true.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,241,488
+- Elapsed since build started: 29 min
+- Changed lines: 95 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - To the inbox: speck/ideas/2026-10-14-give-a-running-build-room-in-a-narrow-build-column.md (titles and tags squeeze beside the ensō at about 700 px).
