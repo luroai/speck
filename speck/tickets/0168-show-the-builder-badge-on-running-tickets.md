@@ -1,7 +1,7 @@
 ---
 id: "0168"
 title: "Show the builder badge on running tickets"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0168 · Show the builder badge on running tickets
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A running build's progress is shown by 0156's ensō, a red speck circling it and a row of stage dots. It doesn't feel like an agent is doing something, it takes a full block of each card, and on a phone it's hard to read at a glance.
