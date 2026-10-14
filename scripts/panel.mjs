@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { Worker } from 'node:worker_threads';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, statusData, runsOf, commitTicketOnly } from './speck.mjs';
+import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 
@@ -82,7 +82,7 @@ function panelBackToPlan(repo, id) {
   const pad = t.fm.id;
   // As the panel shows it: a ticket being built is read from its own worktree, where its status has moved on, and a
   // build speck run has launched may not have set it building yet.
-  const shown = statusData(repo).tickets.find(x => padId(x.id) === padId(pad)) || { status: t.fm.status };
+  const shown = ticketShown(repo, pad) || { status: t.fm.status };
   if (shown.status !== 'ready' || t.fm.status !== 'ready')
     return { status: 409, body: { error: `Ticket ${pad} is "${shown.status !== 'ready' ? shown.status : t.fm.status}", not waiting in the queue, so it can't go back to Plan from here.` } };
   if (shown.build_running)
@@ -376,8 +376,8 @@ export async function panelServer() {
   const icons = { '/manifest.webmanifest': 'application/manifest+json', '/icon.svg': 'image/svg+xml',
     '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
   // 0177: /api/state. Requests that arrive while the board is being read share that reading, unless a write has finished
-  // since it started: those wait for the next one, so the answer after a write shows it. A request whose connection
-  // has closed by the time its reading would start doesn't cause one.
+  // since it started: then they wait for the next one, so every answer after a write shows it. A request whose
+  // connection has closed by the time its reading would start doesn't cause one.
   // The server is ready once its board reader has loaded the code, so a change to it after then can't reach the reader.
   const readBoard = await boardReader(repo);
   let writes = 0, reading = null, waiting = [];
@@ -394,7 +394,14 @@ export async function panelServer() {
     waiting = [];
     if (!these.length) return;
     reading = { at: writes, these };
-    readBoard().then(out => { const done = reading; reading = null; for (const res of done.these) answerState(res, out); nextReading(); });
+    readBoard().then(out => {
+      const done = reading;
+      reading = null;
+      // A write has finished since this reading started: its requests wait for the next one, which shows the write.
+      if (done.at !== writes) waiting = [...done.these, ...waiting];
+      else for (const res of done.these) answerState(res, out);
+      nextReading();
+    });
   };
   const askState = res => {
     if (reading && reading.at === writes) return reading.these.push(res);
