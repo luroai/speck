@@ -16,7 +16,7 @@ created: 2026-10-14
 started: "2026-10-14T21:44:02.138Z"
 blocked_at: ""
 waited_seconds: 411
-approved: "2026-10-14T22:23:21.380Z"
+approved: "2026-10-14T23:07:50.965Z"
 
 ---
 # 0182 · Start Chromium once per test file
@@ -62,12 +62,13 @@ Speck's own browser tests now open one browser per test file and give each test 
 ## Review log
 Round 1 (codex): changes requested: F1 sharedChromium() deliberately starts another Chromium after the shared process dies.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 301,462
-- Elapsed since build started: 39 min
+- Reviewer tokens: 619,451
+- Elapsed since build started: 84 min
 - Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -209,6 +210,76 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Each test file now shares one Chromium while keeping pages isolated. Cleanup checks pass, recorded browser-test time is about 10% lower, and the suite has no new failures. The one-launch issue is resolved; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2d5244f2f0121f617d06581c2868a0e0fa6e367a",
+    "merge": true,
+    "thread_id": "01a13c7e-1159-7053-a014-0a13dea5bfec",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 315896,
+      "cached_input_tokens": 254208,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2093,
+      "reasoning_output_tokens": 255
+    },
+    "saved_at": "2026-10-14T23:07:45.832Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/panel.mjs sharedChromium() retains one launch promise and rejects requests after Chromium exits. Both 0182 AC1 tests pass after the merge, covering sequential/concurrent sharing and no replacement after termination."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "browserPage() creates a separate browser context per page. Both 0182 AC2 tests pass, checking storage, cookies, dialogs, selection, scrolling, dimensions and removal of closed pages."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The after hook and exit/signal handlers retain the approved cleanup behaviour. All four 0182 AC3 subprocess tests pass after the merge, covering success, failure, test timeout and file timeout."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Ticket Notes retain same-machine full-run measurements averaging 546.1 seconds before and 492.1 seconds after, approximately 10% lower. The measured browser implementation is unchanged by the merge."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0182-tests.txt: 1,685 passed, zero failed and three skipped. The 0191 fix is already in merged main; its test files have no differences against fb4283b4."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/panel.mjs",
+        "issue": "The original relaunch behaviour contradicted the one-launch limit. The corrected sharedChromium() still retains its original launch promise and rejects requests after Chromium exits.",
+        "suggested_fix": "Already implemented and verified by the passing 0182 AC1 tests after the merge.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved browser sharing, page isolation and cleanup behaviour. Browser-test time was measured about 10% lower. The full suite now passes, with the previous failure fixed separately on main. No blocking concerns remain."
   }
 }
 ```
