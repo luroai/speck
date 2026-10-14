@@ -1,7 +1,7 @@
 ---
 id: "0016"
 title: "Verify a Cursor builder end to end"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 5              # 1 (highest) to 5
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0012", "0014"]                # ticket ids that must be done first
 created: 2026-10-08
+cancel_reason: "Moved back to an idea: speck/ideas/2026-10-14-verify-a-cursor-builder-end-to-end.md"
+cancelled: 2026-10-14
 
 ---
 # 0016 · Verify a Cursor builder end to end
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 speck says it works with any agent, but Claude Code is the only builder that has ever run a ticket. Until another builder has run the whole loop, that claim is untested, and differences in how other agents read and follow the skills are unknown.

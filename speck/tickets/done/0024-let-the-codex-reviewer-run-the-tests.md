@@ -1,7 +1,7 @@
 ---
 id: "0024"
 title: "Let the Codex reviewer run the tests"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: cancelled            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 4              # 1 (highest) to 5
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -12,11 +12,13 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0028"]                # ticket ids that must be done first
 created: 2026-10-09
+cancel_reason: "Moved back to an idea: speck/ideas/2026-10-14-let-the-codex-reviewer-run-the-tests.md"
+cancelled: 2026-10-14
 
 ---
 # 0024 · Let the Codex reviewer run the tests
 
-**Status:** 📝 draft
+**Status:** ❌ cancelled
 
 ## Problem
 The Codex reviewer runs in a read-only sandbox, so it can't run the tests: every verdict on 0012–0014 said it relied on the builder's test output. A dishonest or stale test run would get through, and the reviewer spends tokens reasoning about tests it could simply run.
