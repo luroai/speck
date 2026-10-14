@@ -1,7 +1,7 @@
 ---
 id: "0175"
 title: "End every process a test leaves running"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ created: 2026-10-14
 started: "2026-10-14T19:37:04.183Z"
 blocked_at: ""
 waited_seconds: 282
+approved: "2026-10-14T20:45:09.006Z"
 
 ---
 # 0175 · End every process a test leaves running
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every full test run leaves processes running for good. The test setup deletes each test file's temporary folder afterwards, but never ends what the tests started, and some test helpers wait for ever for a file in that folder. On 2026-10-14, 474 leftovers held about 13 GB of the machine's 15 GB of memory (7.5 GB of processes, and 5.8 GB of deleted logs they kept writing to in `/tmp`, which is held in memory here). The load average reached about 118, the panel stopped answering, the full suite went from 64 to 262 seconds, and builds took twice as long.
@@ -59,9 +60,17 @@ Running the tests no longer leaves programs running in the background afterwards
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Cleanup does not cover every descendant.; F2 The timeout fixture unreferences its only remaining timer.
+Round 2 (codex): changes requested.
+Round 3 (codex): escalate.
+Round 4 (codex): approve.
 
 ## Delivery log
+- Review rounds: 4
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,435,049
+- Elapsed since build started: 68 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 Follow-ups:
