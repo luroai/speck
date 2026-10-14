@@ -1,7 +1,7 @@
 ---
 id: "0166"
 title: "Leave waiting time out of a ticket's build time"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T13:53:06.479Z"
+approved: "2026-10-14T14:09:25.508Z"
 
 ---
 # 0166 · Leave waiting time out of a ticket's build time
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket's build time still counts time spent waiting for the user. 0139 stopped the clock at approval, but a ticket that blocks with a question keeps counting until the user answers: 0151 blocked overnight, so its time includes hours nobody was building, and the Shipped section's median minutes are skewed by it. The same goes for a build the user pauses.
@@ -53,9 +54,15 @@ To see it, block a ticket that's building (or pause its build) and watch its tim
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 cmdCancel bypasses the new waiting bookkeeping.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 412,163
+- Elapsed since build started: 16 min
+- Changed lines: 82 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Inbox: `speck/ideas/2026-10-14-stop-the-build-timer-while-a-stopped-build-waits.md` (a build that stopped or exited mid-build still counts its idle time).
