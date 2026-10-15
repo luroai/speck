@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-10-highlight-p0-in-the-panel.md"              
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:12:28.214Z"
-approved: "2026-10-15T23:20:13.863Z"
+approved: "2026-10-15T23:24:31.600Z"
 
 ---
 # 0213 · Highlight a P0 priority tag at least as much as P1
@@ -53,12 +53,13 @@ The P0 priority tag, which marks the urgent fix for a broken main, is now red wh
 ## Review log
 Round 1 (codex): changes requested: F1 Hovering a P0 tag in Plan removes its red text and border because .tag.pick:hover has greater specificity than .tag.p0.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 281,044
-- Elapsed since build started: 8 min
+- Reviewer tokens: 537,581
+- Elapsed since build started: 12 min
 - Changed lines: 4 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
@@ -186,6 +187,70 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "P0 priority tags now stay red across the panel, including when hovered, in light and dark mode. Other priorities and accessibility behaviour are preserved. All 13 tests passed; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "511289c5f0b3aaf3c18bbc77c910b6badda7523e",
+    "merge": true,
+    "thread_id": "01a141da-0313-7922-8d19-132cdf70713a",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 254975,
+      "cached_input_tokens": 212480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1562,
+      "reasoning_output_tokens": 22
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:24:28.436Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains fieldTags()'s p0 class and both red colour rules, including hover. Passing AC1 tests cover all three panel locations and computed colours in both themes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "P1 and plain tag styling remain unchanged. Passing AC2 and browser tests check priority classes, colours and existing hover behaviour."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The implementation still changes only priority classes and colours, preserving wording, dimensions and tap area. AC3 passes. All 20 tests passed without skips, including suite-0233; the browser test is correctly registered in test/support/heavy.mjs."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:94",
+        "issue": "P0 tags previously lost their red text and border when hovered in Plan.",
+        "suggested_fix": "Fixed by .tag.p0.pick:hover, with passing browser coverage for both themes. The fix remains intact after merging main.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves the approved behaviour: P0 tags stay red throughout the panel, including on hover, in both themes. The browser test now follows main's test scheduling requirements. All 20 tests passed; no blocking concerns remain."
   }
 }
 ```
