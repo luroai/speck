@@ -8,6 +8,7 @@ reviewer: codex                  # codex | claude-subagent
 allow_same_model_review: false   # must be true for builder and reviewer to be the same agent
 reviewer_model: ""               # blank: the reviewer's own default. Otherwise a model name in the reviewer's own format
 reviewer_effort: ""              # blank: the reviewer's own default. Otherwise low | medium | high | xhigh | max
+review_timeout_minutes: 30       # a reviewer speck runs (codex, or a command under reviewer_options) that takes longer than this many minutes is ended, and the round fails
 
 auto_ship: false                 # true: the build ships a ticket as soon as the reviewer approves it, without waiting for /speck-ship
 auto_ship_risk: [low]            # which ticket risks auto_ship covers: low, high or both
