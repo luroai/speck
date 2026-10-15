@@ -42,6 +42,7 @@ A review pack read after approval shows the build's time up to its approval, not
 - `reviewTotals()` in `scripts/pack.mjs` works out the line for both the review pack and the Delivery log (`scripts/close.mjs`). `speck close` calls it before it sets `approved`, so on a ticket approved before (AC4), the old `approved` time is still in the frontmatter at that point.
 - `approved:` is written in the same format as `started:` (0139).
 - Failing before this build: none
+- Self-check: an `approved` time that isn't a date counts to now rather than printing NaN; added a test for it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
