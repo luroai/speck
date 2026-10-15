@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
-import { boardFeed, boardVersions } from './board-feed.mjs';
+import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship and the speck run switch) ----------
 
@@ -385,11 +385,12 @@ export async function panelServer() {
   let writes = 0, reading = null, waiting = [];
   const closed = res => res.destroyed || !res.socket || res.socket.destroyed;
   // What /api/state answers with for a reading: the board, plus speck run's state and the last restart's error, kept in
-  // parts so a page gets only what changed since the board it has (0188, see boardVersions).
+  // parts so a page gets only what changed since the board it has (0188, see boardVersions), with the finished tickets
+  // the page shows only in the Shipped figures cut down to those (0178, see panelBoard).
   const boards = boardVersions(), stateOf = out => {
     if (out.error) return { status: 500, body: JSON.stringify({ error: out.error }) };
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
-    try { const run = runState(runs); const snap = boards.snapshot({ ...out.board, ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) }); return { status: 200, body: snap.body, snap }; }
+    try { const run = runState(runs); const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) }); return { status: 200, body: snap.body, snap }; }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
   };
   const answerState = (res, have) => {
