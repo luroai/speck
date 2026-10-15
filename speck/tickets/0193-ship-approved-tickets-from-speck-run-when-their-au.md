@@ -1,7 +1,7 @@
 ---
 id: "0193"
 title: "Ship approved tickets from speck run when their auto-ship didn't finish"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T09:41:50.165Z"
 
 ---
 # 0193 · Ship approved tickets from speck run when their auto-ship didn't finish
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build's auto-ship can't finish (the base branch's tests were failing, the tests stalled, or staged files were in the way), its ticket stays approved until the user runs `/speck-ship`, even after the cause has gone. On 14 October approved tickets sat waiting after `main` was fixed, until they were shipped by hand.
