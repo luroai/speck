@@ -44,7 +44,7 @@ When a release ticket ships, its tag and GitHub release are published straight a
 - Risk is high because it's infrastructure that writes to the repository on GitHub.
 - Test the workflow's logic the quickest way that really checks it (for example by reading the workflow file, or a script it runs called directly with a stand-in for `git` and `gh`), not by pushing to GitHub.
 - Checked 2026-10-15: `gh release create` has `--verify-tag`, `--title`, `--notes-file` and `--target` (`gh release create --help`, gh 2.101.0). The repo has tags `v0.2.0`, `v0.3.0` and `v0.4.0` and no `.github/` folder.
-- Unverified: that `gh` is installed on GitHub's hosted runners and reads `GH_TOKEN` (not checked against GitHub's runner image documentation).
+- Checked 2026-10-15: `gh` is preinstalled on all GitHub-hosted runners and reads its token from `GH_TOKEN` (GitHub Docs, "Using GitHub CLI in workflows").
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
