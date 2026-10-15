@@ -2338,6 +2338,7 @@ async function switchRun(to) {
     if (res.ok && body && body.run) {
       if (body.run.on) state.run = body.run;
       else delete state.run;
+      have = null; // the page's board now differs from the one the panel numbered, so the next one comes whole (0188)
     } else showRunError(body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
   } catch {
     showRunError(`Couldn't reach the panel server, so speck run wasn't turned ${to}.`);
@@ -2370,22 +2371,51 @@ function showRestartError(line) {
 // next board is announced counts as disconnected and is dropped; one that fails is asked again at the next ping. A dropped stream reconnects by itself, and the panel
 // tells the page of its board as soon as it's back, so "Disconnected" shows only if it stays gone for LOST_MS. Coming
 // back to the page, as a phone does when it wakes, starts a new stream at once, in case the old one died unnoticed.
+// 0188: the page says which board it has (have, as the panel numbered it), and the panel answers with only what changed
+// since (applyDelta), or with the whole board. A new stream, or an update the page can't apply, gets the whole board.
 let seq = 0, pending = null, source = null, lost = null, retry = null; // retry: the board a failed request asked for
+let have = null;
+function applyDelta(old, d) {
+  if (!old || !d || d.from !== have || !Array.isArray(d.keys) || !d.set || !d.lists) return null;
+  const next = [];
+  for (const name of d.keys) {
+    if (Object.hasOwn(d.set, name)) { next.push([name, d.set[name]]); continue; }
+    const l = Object.hasOwn(d.lists, name) ? d.lists[name] : null;
+    if (!l) { if (!Object.hasOwn(old, name)) return null; next.push([name, old[name]]); continue; }
+    if (!Array.isArray(old[name]) || !Array.isArray(l.put) || !Array.isArray(l.drop)) return null;
+    const keyOf = x => String(x[l.by]), items = new Map(old[name].map(x => [keyOf(x), x])), added = [];
+    for (const k of l.drop) items.delete(k);
+    for (const x of l.put) { if (!items.has(keyOf(x))) added.push(keyOf(x)); items.set(keyOf(x), x); }
+    if (!Array.isArray(l.moves) || !l.moves.every(m => Array.isArray(m) && m.length === 2)) return null;
+    const moving = new Set(l.moves.map(m => m[0])), order = [...old[name].map(keyOf).filter(k => items.has(k)), ...added].filter(k => !moving.has(k));
+    for (const [k, after] of l.moves) { const i = after === null ? 0 : order.indexOf(after) + 1; if (after !== null && !i) return null; order.splice(i, 0, k); }
+    if (order.length !== items.size || new Set(order).size !== order.length || order.some(k => !items.has(k))) return null;
+    next.push([name, order.map(k => items.get(k))]);
+  }
+  return Object.fromEntries(next);
+}
 async function load(version) {
   retry = null;
   if (pending) { pending.abort(); pending = null; setConnected(false); }
   const mine = ++seq, ctl = new AbortController();
   pending = ctl;
   try {
-    const res = await fetch('/api/state', { cache: 'no-store', signal: ctl.signal, headers: { 'X-Speck-Board': String(version) } });
+    const res = await fetch('/api/state', { cache: 'no-store', signal: ctl.signal, headers: { 'X-Speck-Board': String(version), ...(have ? { 'X-Speck-Have': have } : {}) } });
     let body = null;
     try { body = await res.json(); } catch (e) { body = null; }
     if (mine !== seq) return; // a newer request has taken over
+    let now = res.headers && typeof res.headers.get === 'function' ? res.headers.get('X-Speck-Board') : null;
+    if (res.ok && body && body.delta) {
+      const next = applyDelta(state, body.delta);
+      if (!next) { have = null; pending = null; return load(version); }
+      now = body.delta.to;
+      body = next;
+    }
     if (!res.ok || !body || !Array.isArray(body.tickets)) {
       setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
       // A board the panel couldn't read is announced again once it can; any other failure asks again at the next ping.
       if (!(body && body.error)) retry = version;
-    } else { state = body; showRestartError(body.restart_error); setConnected(true); }
+    } else { state = body; have = now; showRestartError(body.restart_error); setConnected(true); }
   } catch (e) {
     if (mine === seq) { setConnected(false); retry = version; }
   } finally {
@@ -2397,7 +2427,9 @@ function heard() {
 }
 function connect() {
   if (source) source.close();
+  have = null; // it may have missed boards while it had no stream, so the next one comes whole
   const s = source = new EventSource('/api/events');
+  s.addEventListener('open', () => { if (source === s) have = null; }); // and so may one the browser has reconnected
   s.addEventListener('message', e => { if (source === s) { heard(); load(e.data); } });
   s.addEventListener('ping', () => { if (source === s) { heard(); if (retry !== null) load(retry); else if (state) render(); } });
   s.addEventListener('error', () => {
