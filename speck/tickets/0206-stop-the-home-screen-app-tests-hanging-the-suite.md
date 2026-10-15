@@ -1,7 +1,7 @@
 ---
 id: "0206"
 title: "Stop the home-screen app tests hanging the suite"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-13-stop-the-home-screen-app-test-hanging-the-s
 after: ["0198"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T14:47:21.062Z"
+approved: "2026-10-15T15:01:03.408Z"
 
 ---
 # 0206 · Stop the home-screen app tests hanging the suite
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's home-screen app tests (0149) drive headless Chrome, and each call to it waits for an answer with no time limit. When Chrome doesn't answer, the whole suite hangs until speck's stall limit ends it after 5 minutes, and the run fails, so a build or ship fails at random and loses those minutes.
@@ -55,9 +56,14 @@ To see it, run the full test suite: it should finish in its usual few minutes ev
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 96,943
+- Elapsed since build started: 14 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-up only, no inbox note): about 20 other browser test files still start a panel, then open the page outside their `try`, so a page that can't be opened leaves that panel running until the file's tests are done, when the test setup ends it. It can't hang the suite, so it's left as is.
 
