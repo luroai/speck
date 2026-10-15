@@ -1,6 +1,6 @@
 # Stop the build timer while a stopped build waits
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: ticketed (0217)
 From ticket: 0166
 
 ## What

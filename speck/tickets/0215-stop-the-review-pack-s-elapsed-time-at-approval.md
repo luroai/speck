@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: "speck/ideas/done/2026-10-12-stop-the-review-packs-elapsed-time-at-approval.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: []                # ticket ids that must be done first
+after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 
 ---

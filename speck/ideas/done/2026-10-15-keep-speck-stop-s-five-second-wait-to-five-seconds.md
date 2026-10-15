@@ -1,6 +1,6 @@
 # Keep speck stop's five-second wait to five seconds
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0218)
 From ticket: 0198
 
 ## What

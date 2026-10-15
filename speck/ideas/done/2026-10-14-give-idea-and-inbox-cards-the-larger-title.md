@@ -1,6 +1,6 @@
 # Give idea and inbox cards the larger title
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: ticketed (0214)
 From ticket: 0151
 
 ## What

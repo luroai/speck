@@ -1,6 +1,6 @@
 # List a test that failed on both tries once
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0221)
 From ticket: 0209
 
 ## What

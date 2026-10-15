@@ -1,6 +1,6 @@
 # Share one panel across a browser test file
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0234)
 From ticket: 0198
 
 ## What

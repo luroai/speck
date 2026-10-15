@@ -1,6 +1,6 @@
 # Don't say speck run will retry a ship that merged
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0216)
 From ticket: 0204
 
 ## What

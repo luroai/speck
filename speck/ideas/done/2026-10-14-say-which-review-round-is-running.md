@@ -1,6 +1,6 @@
 # Say which review round is running
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: ticketed (0223)
 From ticket: 0156
 
 ## What

@@ -1,6 +1,6 @@
 # Stop the review pack's elapsed time at approval
 
-Captured: 2026-10-12 · Status: inbox
+Captured: 2026-10-12 · Status: ticketed (0215)
 From ticket: 0139
 
 ## What

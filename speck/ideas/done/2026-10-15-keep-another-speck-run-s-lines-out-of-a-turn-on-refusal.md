@@ -1,6 +1,6 @@
 # Keep another speck run's lines out of a Turn on refusal
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0220)
 From ticket: 0207
 
 ## What

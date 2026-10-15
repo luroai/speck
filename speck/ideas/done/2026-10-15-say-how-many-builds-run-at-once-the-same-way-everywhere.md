@@ -1,6 +1,6 @@
 # Say how many builds run at once the same way everywhere
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0225)
 From ticket: 0210
 
 ## What

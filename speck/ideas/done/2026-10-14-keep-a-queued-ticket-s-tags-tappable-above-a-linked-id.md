@@ -1,6 +1,6 @@
 # Keep a queued ticket's tags tappable above a linked id
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: ticketed (0224)
 From ticket: 0190
 
 ## What

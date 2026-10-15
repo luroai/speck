@@ -1,6 +1,6 @@
 # Resume a build stopped before it started its ticket
 
-Captured: 2026-10-09 · Status: inbox
+Captured: 2026-10-09 · Status: ticketed (0219)
 Triaged: 1
 From ticket: 0072
 

@@ -1,6 +1,6 @@
 # Shorten big numbers in the Shipped stats
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 From ticket: 0157
 
 ## What

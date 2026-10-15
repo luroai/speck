@@ -1,6 +1,6 @@
 # Say in the plain pack when the reviewer couldn't see the code
 
-Captured: 2026-10-12 · Status: inbox
+Captured: 2026-10-12 · Status: ticketed (0222)
 From ticket: 0131
 
 ## What
