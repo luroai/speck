@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-14-stop-the-build-timer-while-a-stopped-build-
 after: ["0214"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:34:36.098Z"
-approved: "2026-10-15T23:43:51.384Z"
+approved: "2026-10-15T23:46:49.015Z"
 
 ---
 # 0217 · Stop the build timer while a stopped build waits
@@ -57,12 +57,13 @@ Worth keeping an eye on: if you resume a stopped build's session yourself and it
 ## Review log
 Round 1 (codex): changes requested: F1 Manual resumption of a killed build fails to exclude its waiting time, even when the resumed builder runs speck start.; F2 The ticket's waited_seconds is committed before the counted marker is saved, and marker-write failure is silently ignored.
 Round 2 (codex): approve.
+Round 3 (codex): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 544,404
-- Elapsed since build started: 9 min
+- Reviewer tokens: 1,013,751
+- Elapsed since build started: 12 min
 - Changed lines: 94 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
@@ -219,6 +220,82 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Stopped builds now freeze their timers, retain their stop times and exclude waiting time when resumed. Both previous issues are fixed, with regression tests covering them. All 15 reported tests passed, and no blocking findings remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8a64dedfa93d7b14cace66bd06ba7466287073e7",
+    "thread_id": "01a141f0-ac8a-7e63-920b-19ac1ddb2440",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 465991,
+      "cached_input_tokens": 394496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3356,
+      "reasoning_output_tokens": 667
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:46:45.739Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel still holds the timer at build_exit.at. Passing AC1 tests cover building and reviewing tickets, existing waiting time and unchanged timer ticks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/stop-wait.mjs buildStop still persists the first observation against the build's session and pid. Passing AC2 tests cover persistence across processes, stale-marker rejection and a frozen timer."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Restart accounting is unchanged since round 2. Passing tests cover automatic and manual resumption, counting the interval once, subsequent stop detection, write-failure retries, approval time and shipped minutes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests cover running, blocked and paused builds. test/support/heavy.mjs now correctly lists the new test file because it calls startRun. The existing 0233 completeness test remains unchanged. All 22 reported tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/stop-wait.mjs",
+        "issue": "Manual resumption previously prevented recovery of the saved stop time once the session became active.",
+        "suggested_fix": "Fixed in round 2: restart accounting consumes the matching saved stop while the resumed session is active. Its regression test still passes.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/stop-wait.mjs",
+        "issue": "A failed counted-marker write previously allowed retries to subtract the same waiting interval repeatedly.",
+        "suggested_fix": "Fixed in round 2: update the marker before committing waiting time and restore it after ticket-write failure. Failure-path and retry tests still pass.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The timer changes remain approved. This round correctly registers the new process-starting test in the suite's required list without weakening any checks. All 22 reported tests passed, and both earlier findings remain resolved."
   }
 }
 ```
