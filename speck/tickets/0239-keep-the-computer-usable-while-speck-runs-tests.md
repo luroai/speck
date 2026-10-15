@@ -44,6 +44,7 @@ The computer stays usable while speck runs tests, because they run one at a time
 - 0237 changes how `testRun()` uses turns, after 0228 changes the retry, and 0238 adds `--recorded` to `cmdTest()`. Build this after them.
 - Checked 2026-10-15: `nice` is a POSIX utility, present on Linux and macOS (`command -v nice` on this box).
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { sh } from './core.mjs';
-import { runTestsInTurn, sharedCacheDir, testStallMs, shellWord } from './turns.mjs';
+import { inTurn, runTestsInTurn, sharedCacheDir, testStallMs, shellWord } from './turns.mjs';
 import { failingTestFiles, passingTests, RETRY_NOTE, FLAKY } from './tap.mjs';
 
 const MAX_OUTPUT = 1024 * 1024; // the most of a failing run's output kept, from its end
@@ -108,15 +108,21 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
   const written = () => { try { return fs.readFileSync(output, 'utf8'); } catch { return ''; } };
   const failed = (res, text) => ({ ...res, output: res.status === 0 ? '' : text });
   try {
-    const r = runTestsInTurn(repo, cfg, cmd, onStart, output, () => reusable(true));
-    if (r.reused) return reused(r.reused);
-    let text = written();
-    // A run that failed with an exit code gets one more try at its failing tests (0195). One that passes it counts as
-    // passed, and one that doesn't keeps the first run's result, with both runs' output.
-    if (/^\d+$/.test(r.ended) && r.ended !== '0') {
-      const again = retry(repo, cfg, cmd, text, branch);
-      if (again?.passed) { Object.assign(r, { status: 0, ended: '0' }); text = ''; } else if (again) text += again.output;
-    }
+    // The retry runs in the full run's turn, so no other run goes in between (0239).
+    const ran = inTurn(repo, cfg, () => {
+      const r = runTestsInTurn(repo, cfg, cmd, onStart, output, () => reusable(true));
+      if (r.reused) return r;
+      let text = written();
+      // A run that failed with an exit code gets one more try at its failing tests (0195). One that passes it counts
+      // as passed, and one that doesn't keeps the first run's result, with both runs' output.
+      if (/^\d+$/.test(r.ended) && r.ended !== '0') {
+        const again = retry(repo, cfg, cmd, text, branch);
+        if (again?.passed) { Object.assign(r, { status: 0, ended: '0' }); text = ''; } else if (again) text += again.output;
+      }
+      return { r, text };
+    });
+    if (ran.reused) return reused(ran.reused);
+    const { r, text } = ran;
     if (!code) return failed(result(r), text);
     const exit = r.ended === 'stalled' ? '1' : r.ended;
     // No exit code means the run was stopped before the tests ended, or a signal stopped them: nothing is recorded.

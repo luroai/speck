@@ -1,5 +1,5 @@
-// Turns at running the test suite (0109). Builds work in parallel, but no more than max_parallel_tests full test runs
-// go at once in a repo, from any of its worktrees, so a heavy suite can't run the machine out of memory.
+// Turns at running the tests (0109). Builds work in parallel, but no more than max_parallel_tests test runs, full or
+// --files (0239), go at once in a repo, from any of its worktrees, so a heavy suite can't run the machine out of memory.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -121,17 +121,17 @@ function holders(dir, max) {
   return out;
 }
 
-// Runs the test command `cmd` in `repo` once this process has a turn, waiting for one if max_parallel_tests runs are
-// already going, and frees the turn afterwards. A turn left by a run that was killed is freed when someone next needs
-// it. onStart runs once the turn is ours. A run that writes nothing for test_stall_minutes is ended (0152). With
-// `output` (a file path), the output, stdout and stderr together, is copied to it. Returns { status, signal, ended },
-// where ended is how the run ended: the exit code as text, `signal <name>`, `stalled`, or '' if it never said. Once the
-// turn is ours, `reuse` gives a recorded result to use instead, if there is one now: then the tests don't run, the turn
-// is freed straight away and this returns { reused }, with that result (0237).
-export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', reuse = () => null) {
+// The turn this process holds now, if any, as its folder and its run's files: a run started while it holds one runs
+// in it (0239).
+let holding = null;
+
+// Runs fn() once this process has a turn in `repo`, waiting for one if max_parallel_tests runs are already going, and
+// frees the turn afterwards, returning what fn returns. fn gets the run's files (see runFiles), for one run at a time.
+// In a turn this process already holds, fn runs straight away, in that turn, with the same files (0239).
+export function inTurn(repo, cfg, fn) {
   const max = maxParallelTests(cfg);
-  const stallMs = testStallMs(cfg);
   const dir = turnsDir(repo);
+  if (holding?.dir === dir) return fn(holding.files);
   const run = crypto.randomUUID();
   const text = JSON.stringify({ pid: process.pid, cwd: repo, run });
   // Files left by speck processes that were killed: claim files made while waiting, and old files of killed runs.
@@ -156,29 +156,31 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', 
       sleep(POLL_MS * (0.5 + Math.random())); // spread out, so runs that backed off together don't clash again
     }
   } finally { fs.rmSync(mine, { force: true }); }
-  const files = runFiles(dir, run);
-  try {
-    const reused = reuse();
-    if (reused) return { reused };
-    onStart();
-    const r = sh('sh', ['-c', TEST_SHELL, 'sh', files.pid, files.started, cmd, process.execPath, STALL_SCRIPT, String(stallMs), files.ended, output], { cwd: repo, stdio: 'inherit' });
-    const ended = (read(files.ended) || '').split('\n')[0].trim();
-    fs.rmSync(files.ended, { force: true });
-    return { status: ended === 'stalled' && r.status === 0 ? 1 : r.status, signal: r.signal, ended };
-  } finally {
+  holding = { dir, files: runFiles(dir, run) };
+  try { return fn(holding.files); } finally {
+    holding = null;
     if (read(lock) === text) forget(lock, text, true);
   }
 }
 
-// Runs the test command `cmd` in `repo` through stall.mjs, without a turn: { status, signal }, signal being the one
-// that stopped the tests, if any.
-function watched(repo, cmd, stallMs) {
-  const ended = path.join(turnsDir(repo), `run.${crypto.randomUUID()}.ended`);
-  try {
-    const r = sh(process.execPath, [STALL_SCRIPT, cmd, String(stallMs), ended], { cwd: repo, stdio: 'inherit' });
-    const how = (read(ended) || '').split('\n')[0].trim();
-    return { status: how === 'stalled' && r.status === 0 ? 1 : r.status, signal: r.signal || how.match(/^signal (\w+)$/)?.[1] || null };
-  } finally { fs.rmSync(ended, { force: true }); }
+// Runs the test command `cmd` in `repo` once this process has a turn (see inTurn), and frees the turn afterwards. A turn left by a run that was killed is freed when someone next needs
+// it. onStart runs once the turn is ours. A run that writes nothing for test_stall_minutes is ended (0152). With
+// `output` (a file path), the output, stdout and stderr together, is copied to it. Returns { status, signal, ended },
+// where ended is how the run ended: the exit code as text, `signal <name>`, `stalled`, or '' if it never said. Once the
+// turn is ours, `reuse` gives a recorded result to use instead, if there is one now: then the tests don't run, the turn
+// is freed straight away and this returns { reused }, with that result (0237).
+export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', reuse = () => null) {
+  const stallMs = testStallMs(cfg);
+  return inTurn(repo, cfg, files => {
+    const reused = reuse();
+    if (reused) return { reused };
+    onStart();
+    try {
+      const r = sh('sh', ['-c', TEST_SHELL, 'sh', files.pid, files.started, cmd, process.execPath, STALL_SCRIPT, String(stallMs), files.ended, output], { cwd: repo, stdio: 'inherit' });
+      const ended = (read(files.ended) || '').split('\n')[0].trim();
+      return { status: ended === 'stalled' && r.status === 0 ? 1 : r.status, signal: r.signal, ended };
+    } finally { for (const f of [files.pid, files.started, files.ended]) fs.rmSync(f, { recursive: true, force: true }); }
+  });
 }
 
 // A word the shell reads back as exactly `s`.
@@ -186,7 +188,8 @@ export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
-// those files (0113), from the repo root, without a turn or a recorded result, as it isn't a full run. `speck test
+// those files (0113), from the repo root, taking a turn as a full run does (0239) but without a recorded result, as it
+// isn't a full run. `speck test
 // --recorded` runs no tests: it prints the result recorded for the same code, if any, and exits with its exit code (0238).
 export function cmdTest(args) {
   const files = args[0] === '--files' ? args.slice(1) : null;
@@ -201,8 +204,9 @@ export function cmdTest(args) {
     if (!only.includes('{files}')) throw new SpeckError(`commands.test_files in speck/config.yml has no {files} to stand for the test files (got ${JSON.stringify(only)}). Fix it with \`speck config set commands.test_files "node --test {files}"\`, then run this again.`);
     // Relative to the repo root, where the command runs. One starting with - gets ./ so it isn't read as an option.
     const words = files.map(f => { const rel = path.relative(repo, path.resolve(f)) || '.'; return shellWord(rel.startsWith('-') ? `./${rel}` : rel); });
-    const r = watched(repo, only.replaceAll('{files}', () => words.join(' ')), testStallMs(cfg));
-    if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
+    const r = runTestsInTurn(repo, cfg, only.replaceAll('{files}', () => words.join(' ')));
+    const signal = r.signal || r.ended.match(/^signal (\w+)$/)?.[1];
+    if (r.status !== 0) throw new SpeckError(signal ? `The tests were stopped by ${signal}.` : '', r.status ?? 1);
     return;
   }
   if (files) console.log('commands.test_files is blank in speck/config.yml, so this runs the whole suite (commands.test) instead.');
