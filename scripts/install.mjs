@@ -103,6 +103,21 @@ export function onPath(cmd) {
   return (process.env.PATH || '').split(path.delimiter).filter(Boolean).some(d => exts.some(e => ok(path.join(d, cmd + e))));
 }
 
+// When builder is Codex, Cursor or Gemini but build_command starts Claude Code, speck run would build with the wrong
+// agent (0211). Returns what's wrong and how to fix it, or null when they match. Shared by speck run and speck doctor.
+export function builderMismatch(cfg = {}) {
+  const builder = cfg.builder || 'claude';
+  if (builder === 'claude' || !Object.hasOwn(BUILDERS, builder) || typeof cfg.build_command !== 'string') return null;
+  let first = '';
+  try { first = splitCommand(cfg.build_command.trim())[0] || ''; } catch { return null; } // an unclosed quote is reported elsewhere
+  if (path.basename(first) !== 'claude') return null;
+  const [label, cmd] = BUILDERS[builder];
+  return {
+    problem: `builder in speck/config.yml is ${builder} (${label}), but build_command starts claude (Claude Code), so speck run would build every ticket with Claude Code instead.`,
+    fix: `In speck/config.yml, set a build_command that starts ${cmd}, or set builder back to claude.`,
+  };
+}
+
 // `platform` is process.platform unless given, so tests can check what Windows sees.
 export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   const reviewer = cfg.reviewer || 'codex';
@@ -125,6 +140,8 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
     const [label, cmd, fix] = BUILDERS[builder];
     checks.push(check(`${label} (builds tickets)`, onPath(cmd), fix));
   } else checks.push({ name: `speck can't check builder "${builder}": it only knows ${Object.keys(BUILDERS).join(', ')}. Make sure it reads skills from .agents/skills/ or .claude/skills/.`, ok: true, info: true });
+  const mismatch = builderMismatch(cfg);
+  if (mismatch) checks.push(check(`build_command matches the builder: ${mismatch.problem}`, false, mismatch.fix));
   // speck ships locally with git, so the GitHub CLI is only a convenience.
   const ghInstalled = runs('gh', ['--version']);
   checks.push({ ...check('GitHub CLI (optional)', ghInstalled,

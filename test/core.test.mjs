@@ -154,11 +154,13 @@ const BUILDERS = { claude: ['Claude Code', 'claude'], cursor: ['Cursor CLI', 'cu
 
 test('0014 AC1: doctor checks only the configured builder, by name, with an install link', () => {
   for (const [builder, [label, cmd]] of Object.entries(BUILDERS)) {
-    const missing = doctorRepo({ config: { builder, reviewer: 'claude-subagent' } });
+    // Claude Code's default build_command with another builder is a ✗ of its own since 0211, so those get a blank one.
+    const config = { builder, reviewer: 'claude-subagent', ...(builder === 'claude' ? {} : { build_command: '""' }) };
+    const missing = doctorRepo({ config });
     assert.match(missing.out, new RegExp(`✗ ${label} \\(builds tickets\\)\\n\\s+Fix: .*https://`), builder);
     for (const [other, [otherLabel]] of Object.entries(BUILDERS))
       if (other !== builder) assert.doesNotMatch(missing.out, new RegExp(`${otherLabel} \\(builds tickets\\)`), `${builder} checks no other builder`);
-    const present = doctorRepo({ config: { builder, reviewer: 'claude-subagent' }, tools: [cmd] });
+    const present = doctorRepo({ config, tools: [cmd] });
     assert.match(present.out, new RegExp(`✓ ${label} \\(builds tickets\\)`), builder);
     assert.equal(present.status, 0, `${builder}: ${present.out}`);
   }

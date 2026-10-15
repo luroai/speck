@@ -43,6 +43,9 @@ When the user picks Codex, Cursor or Gemini as the builder in `/speck-setup`, `b
 - Builder names and their commands: `claude` (`claude`), `codex` (`codex`), `cursor` (`cursor-agent`), `gemini` (`gemini`), from `skills/speck-setup/SKILL.md` section 5. `speck run`'s check of `build_command` is in `cmdRun` in `scripts/run.mjs`; `speck doctor` is in `scripts/install.mjs` (`doctorChecks`).
 - No other open ticket changes these files.
 - Failing before this build: none
+- AC2 and AC5 clashed on one test: `0014 AC1` in `test/core.test.mjs` ran doctor with builder codex, cursor or gemini and Claude Code's default `build_command`, and expected it to pass. That is the mismatch AC2 says doctor must report, so the test now gives those builders a blank `build_command`. Every 0014 assertion is unchanged.
+- "Starts with claude" also matches a path to it, such as `/usr/local/bin/claude`.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

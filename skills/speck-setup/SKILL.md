@@ -95,7 +95,11 @@ Look at `agents` in `speck detect`:
 
 ## 6. Builds that `speck run` starts
 
-`speck run` starts a build for each ready ticket without anyone watching, using `build_command`. Its default passes `--dangerously-skip-permissions`, so those builds skip all permission prompts: the agent can run any command on this machine without asking. Explain that, and that builds started with `/speck-build <id>` in an open agent session still ask as usual. Ask whether to keep it.
+`speck run` starts a build for each ready ticket without anyone watching, using `build_command`. Its default starts Claude Code.
+
+If the builder is one other than Claude Code (`codex`, `cursor` or `gemini`), the default can't stay: explain that `build_command` must start that builder without anyone watching, running `/speck-build {id}` with no prompts to answer, where speck puts the ticket's id in place of `{id}`. speck doesn't know the right command for each agent, as their options change between versions. Ask them for the command, and set it with `speck config set build_command '<their command>'`, or offer to leave it blank with `speck config set build_command ""`, so that `speck run` refuses to start builds and they build each ticket with `/speck-build <id>` in an open agent session instead. Never leave Claude Code's default in place: `speck run` refuses to start and `speck doctor` reports it while `build_command` starts `claude` with another builder. Then skip the rest of this section.
+
+With Claude Code as the builder, the default passes `--dangerously-skip-permissions`, so those builds skip all permission prompts: the agent can run any command on this machine without asking. Explain that, and that builds started with `/speck-build <id>` in an open agent session still ask as usual. Ask whether to keep it.
 
 - If yes, leave `build_command` as it is.
 - If no, run `speck config set build_command ""`. `speck run` then refuses to start builds, and they build each ticket with `/speck-build <id>` instead.
