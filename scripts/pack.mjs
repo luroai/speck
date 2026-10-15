@@ -127,7 +127,8 @@ const sectionText = (t, name) => (t.sections[name] || []).join('\n').replace(/<!
 export function plainPack(repo, id) {
   const cfg = loadConfig(repo);
   const { t, diff } = packSource(repo, cfg, id);
-  const last = ticketsRounds(repo, t).at(-1);
+  const all = ticketsRounds(repo, t);
+  const last = all.at(-1);
   if (!last) throw new SpeckError(NO_ROUNDS);
   const v = last.verdict;
   const label = { pass: '✅ passed', fail: '❌ failed', unclear: '⚠️ unclear' };
@@ -140,6 +141,8 @@ export function plainPack(repo, id) {
     `## ${t.fm.id} · ${t.fm.title}`, '',
     v.verdict === 'approve' ? 'The reviewer approved this change.' : "The reviewer hasn't approved this change yet.",
     ...(why.length ? ['', `This change ${why.join(' and ')}, so it's worth a closer look before you ship it.`] : []),
+    // Any round the full pack marks with NO_INSPECT (0222).
+    ...(all.some(r => r.meta.sandbox_ok === false) ? ['', 'In at least one review round, the reviewer could only see the change itself, not the rest of the code.'] : []),
     '', '### What it should do', sectionText(t, 'outcome') || "The ticket doesn't say.",
     '', '### In plain words', sectionText(t, 'in plain words') || "The builder didn't write this change up in plain words.",
     '', '### Did it do what was asked?',

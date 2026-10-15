@@ -40,6 +40,8 @@ The plain pack says when the reviewer couldn't see the rest of the code.
 - `plainPack()` in `scripts/pack.mjs` reads only the latest round today; the full pack checks every round's `sandbox_ok`.
 - 0131's tests limit the plain pack: no paths, models or tokens, and exactly one sentence matching `risk`, `sensitive` or `closer look`. The sentence in AC1 uses none of those words.
 - The note's open question is settled as any round, as the full pack does.
+- Failing before this build: none
+- Self-check: no changes. Also updated the `speck pack` row in `docs/brief.md` to list the new note.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
