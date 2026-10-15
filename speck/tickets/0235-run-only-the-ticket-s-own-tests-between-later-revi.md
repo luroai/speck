@@ -30,14 +30,16 @@ After review round 1, a build runs only the ticket's own tests between rounds, a
 1. `/speck-build` tells the builder, before each review round after the first (merge rounds aside), to run the ticket's own test files and the files of any test that failed in its last whole-suite run (`speck test --files`), instead of the whole suite.
 2. Before round 1, and before a merge round, it still runs the whole suite, as today.
 3. `/speck-review` says the same, and tells the builder to say in that round's response file which test files it ran, so the reviewer knows it wasn't the whole suite.
-4. No test that passed before this change fails.
+4. `docs/brief.md` (the `speck test` row) and `skills/speck-build/SKILL.md` describe when a build runs the whole suite as these criteria do, with no line left saying it runs before every review round.
+5. No test that passed before this change fails.
 
 ## Out of scope
 - Running only the tests related to the changed files, which speck can't work out for every project.
 - Changing what `speck ship` runs.
 
 ## Notes
-- Decision to confirm before ready: a reviewer may then approve a round without a whole-suite run since the last changes. The whole-suite run in `speck ship` on the merged result, and its hand-back when tests fail together, are what catch a break elsewhere.
+- Decided 2026-10-15: a reviewer may approve a round without a whole-suite run since the last changes. The whole-suite run in `speck ship` on the merged result, and its hand-back when tests fail together (exit 16), are what catch a break elsewhere.
+- Lines that say otherwise today: `skills/speck-review/SKILL.md` ("from the whole suite… never `speck test --files`", and "This holds for every round"), `skills/speck-build/SKILL.md` section 4 and its step 1 line "Every build runs the whole suite at least once per review round", and the `speck test` row in `docs/brief.md`. `test/brief-0111.test.mjs` may pin some of this wording.
 - The steps are in `skills/speck-build/SKILL.md` (section 4) and `skills/speck-review/SKILL.md`; this repo builds from its installed copies in `.claude/skills/`.
 - 0227 changes the same skills and comes first.
 

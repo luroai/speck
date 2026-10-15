@@ -9,7 +9,7 @@ builder: claude
 reviewer: codex
 reviewer_model: ""       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
-source: "speck/ideas/2026-10-08-ship-locally-without-a-pr.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
+source: "speck/ideas/done/2026-10-08-ship-locally-without-a-pr.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-08
 started: "2026-10-08T16:09:04.507Z"

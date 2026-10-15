@@ -9,7 +9,7 @@ builder: claude
 reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
-source: "speck/ideas/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
+source: "speck/ideas/done/2026-10-08-speck-board.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0039"]                # ticket ids that must be done first
 created: 2026-10-09
 started: "2026-10-09T15:32:10.353Z"
