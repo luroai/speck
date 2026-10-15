@@ -1,8 +1,8 @@
 ---
 id: "0180"
 title: "Give the reviewer a time limit"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 type: bug                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0180 · Give the reviewer a time limit
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 speck runs the Codex reviewer, and any reviewer set up as a command, with no time limit. If one hangs, the review waits for ever, and so does its build, which keeps holding one of `max_parallel_builds`.
