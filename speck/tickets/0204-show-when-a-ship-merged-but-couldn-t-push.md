@@ -1,7 +1,7 @@
 ---
 id: "0204"
 title: "Show when a ship merged but couldn't push"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-14-show-when-a-ship-merged-but-couldn-t-push.m
 after: ["0203"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T14:57:48.916Z"
+approved: "2026-10-15T15:10:50.620Z"
 
 ---
 # 0204 · Show when a ship merged but couldn't push
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck ship` sets a ticket done before it pushes the base branch. If the push fails, the panel moves the ticket to Shipped as if all went well. Now that `speck run`'s queue ships with nobody watching, nobody learns that the remote is behind.
@@ -56,9 +57,15 @@ Worth knowing: speck notices the push the next time it looks at what git last kn
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Attempting `speck ship 1` again after its push failed erases the warning without pushing anything.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 397,643
+- Elapsed since build started: 13 min
+- Changed lines: 60 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - speck run's ship queue still says an auto-ship that merged but couldn't push "didn't ship" and will be tried again: speck/ideas/2026-10-15-don-t-say-speck-run-will-retry-a-ship-that-merged.md.
