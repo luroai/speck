@@ -1,7 +1,7 @@
 ---
 id: "0222"
 title: "Say in the plain pack when the reviewer couldn't see the code"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T23:20:05.089Z"
 ---
 # 0222 · Say in the plain pack when the reviewer couldn't see the code
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a reviewer couldn't look round the project in a review round and judged the change from the diff alone, the full review pack warns about it but `speck pack <id> --plain` doesn't. The readers of the plain pack are the ones who can't check the code themselves, so they most need to know the review was done half-blind.
@@ -44,7 +44,7 @@ The plain pack says when the reviewer couldn't see the rest of the code.
 - Self-check: no changes. Also updated the `speck pack` row in `docs/brief.md` to list the new note.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The short, plain review pack now tells you when the reviewer could only see the change itself in a review round, not the rest of the project. That matters because such a review can miss how the change fits with everything else. To see it, open the plain review pack for a ticket whose reviewer couldn't look round the project: it carries one sentence saying so, however many rounds it happened in. Tickets reviewed with full access look the same as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,60 @@ The plain pack says when the reviewer couldn't see the rest of the code.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "39b7a0403381ec5c08127277ac1050c4dcf0a4d9",
+    "thread_id": "01a141e1-1106-71c0-9a66-30dd29688440",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 139010,
+      "cached_input_tokens": 92800,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 685,
+      "reasoning_output_tokens": 12
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:24:15.996Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/pack.mjs plainPack() checks every round for sandbox_ok === false, matching reviewPack(), and adds the exact required sentence. Passing test '0222 AC1' covers both latest and earlier restricted rounds."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "plainPack() uses some() to insert the sentence once. Passing '0222 AC2' tests cover multiple restricted rounds, unrestricted rounds and missing historical metadata."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0222-tests.txt: all 18 tests passed across pack-0222 and the existing pack-0131 regression tests. Existing tests were unchanged; the full suite remains the shipping check."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The plain pack now warns once when any review round could only see the change itself. It matches the full pack’s existing warning condition, and all 18 relevant tests passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
