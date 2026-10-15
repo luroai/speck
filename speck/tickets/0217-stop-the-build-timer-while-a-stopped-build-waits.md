@@ -1,7 +1,7 @@
 ---
 id: "0217"
 title: "Stop the build timer while a stopped build waits"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-14-stop-the-build-timer-while-a-stopped-build-
 after: ["0214"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:34:36.098Z"
+approved: "2026-10-15T23:43:51.384Z"
 
 ---
 # 0217 · Stop the build timer while a stopped build waits
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build stops or exits before finishing while its ticket is still building or reviewing, the Build queue says so but the ticket's timer keeps counting, and the wait ends up in its shipped minutes. Nobody is building the ticket then, so this counts time spent waiting for the user, which 0166 removed for blocked and paused tickets.
@@ -54,9 +55,15 @@ Worth keeping an eye on: if you resume a stopped build's session yourself and it
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Manual resumption of a killed build fails to exclude its waiting time, even when the resumed builder runs speck start.; F2 The ticket's waited_seconds is committed before the counted marker is saved, and marker-write failure is silently ignored.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 544,404
+- Elapsed since build started: 9 min
+- Changed lines: 94 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Know when a stopped build starts again: a session resumed by hand that never runs `speck start` isn't counted as a new start. `speck status` text still says a killed build stopped after `/speck-build` has started it again in a new session, and `speck run` may resume the old session too. Saved to `speck/ideas/2026-10-15-know-when-a-stopped-build-starts-again.md`.
