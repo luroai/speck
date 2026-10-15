@@ -42,6 +42,7 @@ Each ticket keeps its place in the Build list from when its build starts until i
 - `speck status --json` sorts tickets by priority (`byPriority`, `scripts/core.mjs`), and `panelModel()` in `templates/panel.html` lists in-flight tickets in that order. Likely cause: a newly started ticket with a higher priority goes above the ones already in flight. Not reproduced.
 - A ticket's build start is its `started` time.
 - Failing before this build: none
+- Self-check: no changes. Checked a missing, null or unreadable start time, two started at the same moment, a ship running on a done ticket and a hand-back; all covered by the tests.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

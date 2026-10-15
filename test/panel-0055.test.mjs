@@ -108,7 +108,9 @@ test('0055 AC1-AC4: in a real browser, only the in-flight step moves, through re
     await b.until(`document.querySelectorAll('#queue .q').length === 4`, 'the queue');
     // AC1 and AC2: since 0168, 0002's builder badge is the one at work, drawn afresh each frame, and nothing animates in CSS.
     const frame = `${row('0002')}.querySelector('canvas.badge').toDataURL()`;
-    assert.deepEqual(await b.js(`[...document.querySelectorAll('canvas.badge')].map(c => c.className)`), ['badge type', 'badge bad', 'badge bad']);
+    // 0200: the rows go in the order their builds started, so 0002, started last, is the last row.
+    assert.deepEqual(await b.js(`[...document.querySelectorAll('canvas.badge')].map(c => c.className)`), ['badge bad', 'badge bad', 'badge type']);
+    assert.equal(await b.js(`${row('0002')}.querySelector('canvas.badge').className`), 'badge type');
     assert.deepEqual(await b.js(`document.getAnimations().length`), 0);
     await b.js(`window.drawn = ${frame}`);
     await b.until(`${frame} !== window.drawn`, 'the badge moves');
