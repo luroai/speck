@@ -41,6 +41,8 @@ An open build log shows new lines as they're written, without the page asking on
 - Use the stream 0187 sets up, so a page holds one connection (see 0187's Notes).
 - Covers the open-log part of 0179, which 0187 and this ticket replace, and the idea note `speck/ideas/done/2026-10-09-stop-asking-for-a-log-once-its-build-has-ended.md`.
 
+- Failing before this build: none
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
