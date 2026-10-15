@@ -124,3 +124,71 @@ A ticket under review says whether the reviewer is running a round, and which on
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f9d4f878c2ec1ff0cee74daac48800a37b4bd25d",
+    "thread_id": "01a141fb-bcb2-7592-9106-6de0a79104b9",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 243386,
+      "cached_input_tokens": 188672,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1424,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:55:29.010Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "cmdReviewStarted() records activity but leaves a first-round ticket building; doing() only displays reviewer activity for reviewing tickets. Also, roundRunning() hides an active subagent after review_timeout_minutes even though subagent reviews have no enforced timeout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doing() displays the builder fixing the last recorded round when review_running is null. The passing AC2 card test exercises this."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Persistence and command-review cleanup have passing tests. However, a failed subagent leaves its marker running until expiry while the builder remains alive; the skill provides no failure cleanup command."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "progress() remains unchanged and the passing AC4 test preserves the last recorded stage number. The supplied run reports 291 passing tests, three skipped and no failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review.mjs",
+        "issue": "Subagent support remains incomplete. review-started leaves the first round's ticket building, so its card never enters the reviewer wording. Its expiry also mistakes a long-running reviewer for builder work, while a failed reviewer can remain shown as running until expiry. The new tests assert the status field but do not exercise the first-round card through this workflow.",
+        "suggested_fix": "Have the subagent start lifecycle enter reviewing, and provide explicit completion/failure cleanup in the skill workflow. Track continued activity without treating elapsed time alone as proof that an unlimited subagent review ended. Add tests for the first-round card, a failed subagent with a surviving builder, and a still-active review beyond the configured command-review timeout.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new command records subagent activity, but the first review still shows builder work. Failed reviews can remain shown as running, and long reviews can disappear while still active. The command-review path and existing stage labels remain covered by passing tests."
+  }
+}
+```
+
+</details>

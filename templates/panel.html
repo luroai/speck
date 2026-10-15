@@ -538,6 +538,8 @@ function progress(t) {
 // shipping is at work, in the normal text colour. 0196: so is one auto-ship will ship once its build has ended, and
 // one whose build is closing out says it waits to ship, in the normal text colour, unless it's waiting for you.
 // 0203: while speck run is off, one auto-ship covers waits for you to turn Auto-build on, in purple.
+// 0223: the review round a building or reviewing ticket's reviewer is running, or null.
+const reviewRunning = t => ((t.status === 'building' || t.status === 'reviewing') && Number.isInteger(t.review_running) && t.review_running > 0 ? t.review_running : null);
 function doing(t, shipping) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
@@ -552,14 +554,16 @@ function doing(t, shipping) {
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
   const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
   let sentence = now === 1 ? 'Checking its own work' : 'Writing tests and code';
-  // 0223: while a round is running (review_running), the round being run; otherwise the builder is fixing the last
-  // recorded round's findings. A board that doesn't say whether one is running names the last recorded round, as before.
-  if (t.status === 'reviewing') {
-    const name = (v, none) => { const w = typeof v === 'string' && v.trim() ? v.trim() : none; return `${w[0].toUpperCase()}${w.slice(1)}`; };
+  // 0223: while a round is running (review_running), the round being run, even on a building ticket whose first round
+  // a subagent is running; otherwise the builder is fixing the last recorded round's findings. A board that doesn't say
+  // whether one is running names the last recorded round, as before.
+  const name = (v, none) => { const w = typeof v === 'string' && v.trim() ? v.trim() : none; return `${w[0].toUpperCase()}${w.slice(1)}`; };
+  const running = reviewRunning(t);
+  if (running !== null) sentence = `${name(t.reviewer, 'the reviewer')} is reviewing · round ${running}`;
+  else if (t.status === 'reviewing') {
     const n = (steps[2] && /(\d+)$/.exec(steps[2].label)) || [null, '1'];
-    const running = Number.isInteger(t.review_running) && t.review_running > 0 ? t.review_running : null;
-    if (running === null && t.review_running === null && n[0] !== null) sentence = `${name(t.builder, 'the builder')} is fixing round ${n[1]}'s findings`;
-    else sentence = `${name(t.reviewer, 'the reviewer')} is reviewing · round ${running ?? n[1]}`;
+    if (t.review_running === null && n[0] !== null) sentence = `${name(t.builder, 'the builder')} is fixing round ${n[1]}'s findings`;
+    else sentence = `${name(t.reviewer, 'the reviewer')} is reviewing · round ${n[1]}`;
   }
   return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };
 }
@@ -573,7 +577,7 @@ function badgeOf(t, d) {
     const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
     if (d.sentence === 'Shipping') return { pose: 'ship', label: 'The builder is shipping' };
     if (t.ship_waiting) return { pose: 'ship', label: 'The builder is about to ship' };
-    if (t.status === 'reviewing') return { pose: 'review', label: 'The builder is with the reviewer' };
+    if (t.status === 'reviewing' || reviewRunning(t) !== null) return { pose: 'review', label: 'The builder is with the reviewer' };
     if (now === 1) return { pose: 'check', label: 'The builder is checking its own work' };
     return { pose: 'type', label: 'The builder is writing code' };
   }

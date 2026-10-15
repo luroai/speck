@@ -147,43 +147,60 @@ test('0223 AC3: a records folder that can\'t be written doesn\'t stop the round'
 const subagent = () => reviewRepo({ config: 'allow_same_model_review: true\n', ticketFields: 'reviewer: claude-subagent\nstatus: building' });
 const verdictFile = (r, v) => { const f = path.join(r.dir, '..', `verdict-${path.basename(r.dir)}.json`); fs.writeFileSync(f, JSON.stringify(v)); return f; };
 
-test('0223 AC1, AC3: a subagent\'s round counts as running from speck review-started until speck record records it', () => {
+test('0223 AC1, AC3: a subagent\'s round counts as running from speck review-running until speck record records it', () => {
   const r = subagent();
-  let res = r.run('review-started', '1');
+  let res = r.run('review-running', '1');
   assert.equal(res.status, 0, res.stderr);
   assert.match(res.stdout, /Round 1 of 0001 is shown as running/);
   assert.equal(one(statusData(r.dir)).review_running, 1);
   res = r.run('record', '1', verdictFile(r, changesVerdict), '--reviewer=claude-subagent');
   assert.equal(res.status, 10, res.stderr);
   assert.equal(one(statusData(r.dir)).review_running, null, 'recorded: the builder is fixing its findings');
-  assert.equal(r.run('review-started', '1').status, 0);
+  assert.equal(r.run('review-running', '1').status, 0);
   assert.equal(one(statusData(r.dir)).review_running, 2, 'the last recorded round plus one');
 });
 
-test('0223 AC3: a subagent\'s round stops counting once the build it ran in has gone, or once it has run past the review time limit', async () => {
+test('0223 AC1: the card of a building ticket whose first round a subagent is running says the reviewer is reviewing round 1', async () => {
+  const r = subagent();
+  assert.equal(r.run('review-running', '1').status, 0);
+  const t = one(statusData(r.dir));
+  assert.equal(t.status, 'building', 'speck record sets it to reviewing, not speck review-running');
+  const p = fake([{ ...t, started: ago(65), build_running: true, self_check: 'no changes' }]);
+  await p.settle();
+  assert.equal(say(p, '0001'), 'Claude-subagent is reviewing · round 1');
+  assert.equal(find(p, rowOf(p, '0001'), /^badge\b/)[0].attrs['aria-label'], 'The builder is with the reviewer');
+});
+
+test('0223 AC3: a subagent\'s round given up on, or whose build has gone, stops counting; a long one that is still going keeps counting', async () => {
   const r = subagent();
   const runs = runsIn(r.dir);
   fs.mkdirSync(runs, { recursive: true });
-  // A build speck run started: this test's own process stands in for it.
+  // A build speck run started: this test's own process stands in for it, and lives on after the subagent fails.
   fs.writeFileSync(path.join(runs, '0001.json'), JSON.stringify({ id: '0001', session: 's', pid: process.pid, started: ago(60) }));
-  assert.equal(r.run('review-started', '1').status, 0);
+  assert.equal(r.run('review-running', '1').status, 0);
   const rec = path.join(runs, '0001.review.json');
   assert.equal(JSON.parse(fs.readFileSync(rec, 'utf8')).build_pid, process.pid);
+  // Running for longer than review_timeout_minutes (30) still counts: nothing ends a subagent for taking long.
+  fs.writeFileSync(rec, JSON.stringify({ ...JSON.parse(fs.readFileSync(rec, 'utf8')), started: ago(120 * 60) }));
   assert.equal(one(statusData(r.dir)).review_running, 1);
+  const res = r.run('review-running', '1', '--ended');
+  assert.equal(res.status, 0, res.stderr);
+  assert.match(res.stdout, /No review round of 0001 is shown as running/);
+  assert.equal(one(statusData(r.dir)).review_running, null, 'given up on while the builder lives on');
+
+  assert.equal(r.run('review-running', '1').status, 0);
   const gone = spawn(process.execPath, ['-e', '']);
   await new Promise(resolve => gone.on('exit', resolve));
   fs.writeFileSync(rec, JSON.stringify({ ...JSON.parse(fs.readFileSync(rec, 'utf8')), build_pid: gone.pid }));
   assert.equal(one(statusData(r.dir)).review_running, null, 'the build was killed');
 
   fs.rmSync(path.join(runs, '0001.json'));
-  assert.equal(r.run('review-started', '1').status, 0);
-  assert.equal(one(statusData(r.dir)).review_running, 1, 'a build not started by speck run');
-  fs.writeFileSync(rec, JSON.stringify({ ...JSON.parse(fs.readFileSync(rec, 'utf8')), started: ago(31 * 60) }));
-  assert.equal(one(statusData(r.dir)).review_running, null, 'past review_timeout_minutes (30)');
+  assert.equal(r.run('review-running', '1').status, 0);
+  assert.equal(one(statusData(r.dir)).review_running, 1, 'a build not started by speck run counts until it is recorded or ended');
 });
 
-test('0223 AC1: the review skill has the builder run speck review-started before each subagent round', () => {
+test('0223 AC1, AC3: the review skill has the builder run speck review-running before each subagent round, and end one given up on', () => {
   const text = skillText('speck-review');
-  assert.match(text, /Run `speck review-started <id>`[^\n]*Then spawn a fresh subagent/);
-  assert.match(text, /\*\*claude-subagent:\*\* run `speck review-started <id>`, then use SendMessage/);
+  assert.match(text, /Run `speck review-running <id>`[^\n]*`speck review-running <id> --ended`[^\n]*Then spawn a fresh subagent/);
+  assert.match(text, /\*\*claude-subagent:\*\* run `speck review-running <id>` \(and `speck review-running <id> --ended` if you give up on the round\), then use SendMessage/);
 });

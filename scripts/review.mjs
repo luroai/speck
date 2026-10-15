@@ -1,4 +1,4 @@
-// speck review, record, prompt, diff, next, review-started and reviewer-settings: review rounds, kept in each ticket, and the codex reviewer.
+// speck review, record, prompt, diff, next, review-running and reviewer-settings: review rounds, kept in each ticket, and the codex reviewer.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -358,14 +358,17 @@ export function cmdNext(args) {
   console.log(`${next.action}${next.reason ? `: ${next.reason}` : ''}`);
 }
 
-// 0223: records that a reviewer subagent is running the next round, for the panel, until `speck record` records it.
-export function cmdReviewStarted(args) {
-  if (!args[0]) throw new SpeckError('Usage: speck review-started <id>');
+// 0223: records that a reviewer subagent is running the next round, for the panel, until `speck record` records it,
+// or, with --ended, that the round was given up on.
+export function cmdReviewRunning(args) {
+  const id = args.find(a => !a.startsWith('--'));
+  if (!id) throw new SpeckError('Usage: speck review-running <id> [--ended]');
   const repo = findRepoRoot();
-  const t = findTicket(repo, args[0]);
-  const round = rounds(repo, args[0]).length + 1;
-  markSubagentRound(repo, t.fm.id || args[0], round);
-  console.log(`Round ${round} of ${t.fm.id || args[0]} is shown as running until \`speck record\` records it.`);
+  const t = findTicket(repo, id), pad = t.fm.id || id;
+  if (args.includes('--ended')) { endRound(repo, pad); console.log(`No review round of ${pad} is shown as running.`); return; }
+  const round = rounds(repo, id).length + 1;
+  markSubagentRound(repo, pad, round);
+  console.log(`Round ${round} of ${pad} is shown as running until \`speck record\` records it, or \`speck review-running ${pad} --ended\` ends it.`);
 }
 
 export function cmdReviewerSettings(args) {
