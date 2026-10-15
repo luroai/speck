@@ -2,51 +2,18 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { panelRepo, fm, freePort, startPanel, stop, request, post, tokenOf, cliCopy } from './support/panel.mjs';
-import { shipRepo } from './support/ship.mjs';
+import { panelRepo, fm, stop, request, post } from './support/panel.mjs';
+import { slowServe, slowPanel } from './support/slow-panel.mjs';
+import { shipRepo, runIn } from './support/ship.mjs';
+import { waitedForReading } from './support/timing.mjs';
 import { runRepo, alive, killAll } from './support/run.mjs';
 import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0177: the panel keeps answering while it reads the board ----------
 
-// A copy of the CLI in which, whenever the panel's server process does them, on any thread: each board reading
-// (statusData) adds a line to a file, so a test can count them, and each scan of every ticket file (listTickets, which
-// a board reading does once) waits SPECK_TEST_READ_MS first, so it's slow. `extra` is more code to run in each
-// reading. Other commands (speck ship, speck run) run at their usual speed.
-function slowCli(extra = '') {
-  const { cli } = cliCopy();
-  const panelOnly = "process.execArgv.includes('--input-type=module') && process.env.SPECK_TEST_READS";
-  const patch = (file, at, code) => {
-    const src = fs.readFileSync(file, 'utf8');
-    assert.ok(src.includes(at), `${path.basename(file)} has ${at.trim()}`);
-    fs.writeFileSync(file, src.replace(at, `${at}  if (${panelOnly}) { ${code} }\n`));
-  };
-  patch(cli, 'export function statusData(repo) {\n', `fs.appendFileSync(process.env.SPECK_TEST_READS, 'read\\n'); ${extra}`);
-  patch(path.join(path.dirname(cli), 'core.mjs'), 'export function listTickets(repo) {\n',
-    'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(process.env.SPECK_TEST_READ_MS));');
-  return cli;
-}
-
-// The slowed panel serving `dir`, each reading taking `ms`.
-async function slowServe(dir, ms, extra) {
-  const reads = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-reads-')), 'reads.txt');
-  fs.writeFileSync(reads, '');
-  const p = await startPanel(dir, ['--port', String(await freePort())], slowCli(extra), { SPECK_TEST_READS: reads, SPECK_TEST_READ_MS: String(ms) });
-  const token = tokenOf((await request(p.port)).body);
-  const readings = () => fs.readFileSync(reads, 'utf8').split('\n').filter(Boolean).length;
-  return { p, port: p.port, token, readings };
-}
-// A panel repo with a draft 0002 as well, committed, served slowed.
-async function slowPanel(ms, extra) {
-  const r = panelRepo();
-  r.write('0002-two.md', fm({ id: '"0002"', title: 'Two', priority: 3 }));
-  r.g('add', '-A'); r.g('commit', '-qm', 'two');
-  return { r, ...(await slowServe(r.dir, ms, extra)) };
-}
 const state = port => request(port, { pathName: '/api/state' });
 const wait = ms => new Promise(r => setTimeout(r, ms));
 // How long a request takes to be answered, in ms, with its answer.
@@ -98,85 +65,123 @@ test('0177 AC2: a request whose connection closed before its reading started cau
 });
 
 // Each AC3 test waits about 10 seconds for its slow reading and the one after its write, on a panel of its own, so they
-// run at the same time (0198).
+// run at the same time (0198). Each compares an answer given while a reading runs with the same ask on the same panel
+// with nothing reading, timed in the same test, rather than with 1 second, so a busy machine slows both alike (0207).
+// An answer that waits for the reading takes the rest of the reading longer (waitedForReading): the length of one
+// reading, as the panel measured it, since a request that a write made out of date waits for a second one too.
+const notWaited = (name, ms, base, reading) =>
+  assert.ok(!waitedForReading({ ms, base, reading }), `${name} answered in ${ms} ms while a reading took ${reading} ms, against ${base} ms with nothing reading`);
+// A stand-in build for ticket `id` of `r`, launched as speck run does, leading its own process group, with its run record.
+function standIn(r, id) {
+  const build = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
+  build.unref();
+  fs.mkdirSync(path.join(r.dir, 'speck', '.cache', 'runs'), { recursive: true });
+  fs.writeFileSync(path.join(r.dir, 'speck', '.cache', 'runs', `${id}.json`), JSON.stringify({ session: `s-0177-${id}`, pid: build.pid, cwd: r.dir }));
+  return build.pid;
+}
+
 describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { concurrency: true }, () => {
   test('0177 AC3: while one reading takes 5 seconds, the page, its icons, a build log, Set ready, Back to Plan and priority answer within 1 second', async () => {
     const s = await slowPanel(5000);
     try {
-      const slow = timed(() => state(s.port));
-      await wait(300);
-      const asks = [
+      const asks = priority => [
         ['the page', () => request(s.port), 200],
         ['an icon', () => request(s.port, { pathName: '/icon.svg' }), 200],
         ['a build log', () => request(s.port, { pathName: '/api/tickets/1/log' }), 200],
-        ['priority', () => post(s.port, '/api/tickets/2/priority/4', { token: s.token }), 200],
+        ['priority', () => post(s.port, `/api/tickets/2/priority/${priority}`, { token: s.token }), 200],
         ['Set ready', () => post(s.port, '/api/tickets/2/ready', { token: s.token }), 200],
         ['Back to Plan', () => post(s.port, '/api/tickets/2/draft', { token: s.token }), 200],
       ];
-      for (const [name, ask, status] of asks) {
-        const { ms, out } = await timed(ask);
-        assert.equal(out.status, status, `${name}: ${out.body}`);
-        assert.ok(ms < 1000, `${name} answered in ${ms} ms`);
-      }
+      // Each ask with nothing reading, then each again while a reading runs.
+      const times = async list => {
+        const ms = {};
+        for (const [name, ask, status] of list) {
+          const t = await timed(ask);
+          assert.equal(t.out.status, status, `${name}: ${t.out.body}`);
+          ms[name] = t.ms;
+        }
+        return ms;
+      };
+      const base = await times(asks(4));
+      const slow = timed(() => state(s.port));
+      await wait(300);
+      const during = await times(asks(5));
       assert.match(fs.readFileSync(path.join(s.r.dir, 'speck', 'tickets', '0002-two.md'), 'utf8'), /^status: draft$/m, 'set ready, then back to Plan');
       const read = await slow;
       assert.equal(read.out.status, 200);
       assert.ok(read.ms >= 4500, `the reading took ${read.ms} ms`);
+      for (const name of Object.keys(during)) notWaited(name, during[name], base[name], s.readingMs());
     } finally { await stop(s.p); }
   });
 
   test('0177 AC3: while one reading takes 5 seconds, Stop build stops a running build within 1 second', async () => {
     const r = panelRepo();
     fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^status: .*$/m, 'status: building'));
+    r.write('0002-two.md', fm({ id: '"0002"', title: 'Two', status: 'building' }));
     r.g('add', '-A'); r.g('commit', '-qm', 'building');
-    // A stand-in build launched as speck run does, leading its own process group, with its run record.
-    const build = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
-    build.unref();
-    fs.mkdirSync(path.join(r.dir, 'speck', '.cache', 'runs'), { recursive: true });
-    fs.writeFileSync(path.join(r.dir, 'speck', '.cache', 'runs', '0001.json'), JSON.stringify({ session: 's-0177', pid: build.pid, cwd: r.dir }));
+    const builds = [standIn(r, '0001'), standIn(r, '0002')];
     const s = await slowServe(r.dir, 5000);
     try {
-      const slow = state(s.port);
+      const stopping = async id => {
+        const t = await timed(() => post(s.port, `/api/tickets/${id}/stop`, { token: s.token }));
+        assert.equal(t.out.status, 200, t.out.body);
+        assert.match(JSON.parse(t.out.body).message, new RegExp(`000${id}[^\\n]*stopped`));
+        return t.ms;
+      };
+      const base = await stopping(2);
+      const slow = timed(() => state(s.port));
       await wait(300);
-      const { ms, out } = await timed(() => post(s.port, '/api/tickets/1/stop', { token: s.token }));
-      assert.equal(out.status, 200, out.body);
-      assert.match(JSON.parse(out.body).message, /0001[^\n]*stopped/);
-      assert.ok(ms < 1000, `Stop build answered in ${ms} ms`);
-      assert.equal((await slow).status, 200);
-    } finally { killAll([build.pid]); await stop(s.p); }
+      const ms = await stopping(1);
+      const read = await slow;
+      assert.equal(read.out.status, 200);
+      notWaited('Stop build', ms, base, s.readingMs());
+    } finally { killAll(builds); await stop(s.p); }
   });
 
   test('0177 AC3: while one reading takes 5 seconds, the speck run switch turns it on and off within 1 second each', async () => {
     const r = runRepo({ tickets: [] });
     const s = await slowServe(r.dir, 5000);
-    let pid = null;
+    const pids = [];
     try {
-      const slow = state(s.port);
+      // Turns speck run on and off, with how long each answer took.
+      const onOff = async () => {
+        const on = await timed(() => post(s.port, '/api/run/on', { token: s.token }));
+        assert.equal(on.out.status, 200, on.out.body);
+        const pid = JSON.parse(on.out.body).run.pid;
+        pids.push(pid);
+        const off = await timed(() => post(s.port, '/api/run/off', { token: s.token }));
+        assert.equal(off.out.status, 200, off.out.body);
+        assert.ok(await hasStopped(() => !alive(pid)), 'speck run has stopped');
+        return { on: on.ms, off: off.ms };
+      };
+      const base = await onOff();
+      const slow = timed(() => state(s.port));
       await wait(300);
-      const on = await timed(() => post(s.port, '/api/run/on', { token: s.token }));
-      assert.equal(on.out.status, 200, on.out.body);
-      pid = JSON.parse(on.out.body).run.pid;
-      assert.ok(on.ms < 1000, `on answered in ${on.ms} ms`);
-      const off = await timed(() => post(s.port, '/api/run/off', { token: s.token }));
-      assert.equal(off.out.status, 200, off.out.body);
-      assert.ok(off.ms < 1000, `off answered in ${off.ms} ms`);
-      assert.ok(await hasStopped(() => !alive(pid)), 'speck run has stopped');
-      assert.equal((await slow).status, 200);
-    } finally { if (pid) killAll([pid]); await stop(s.p); }
+      const during = await onOff();
+      const read = await slow;
+      assert.equal(read.out.status, 200);
+      notWaited('on', during.on, base.on, s.readingMs());
+      notWaited('off', during.off, base.off, s.readingMs());
+    } finally { killAll(pids); await stop(s.p); }
   });
 
   test('0177 AC3: while one reading takes 5 seconds, Ship ships an approved ticket, answering within 1 second', async () => {
+    // The same ship with nothing reading: another approved ticket shipped by the speck ship the Ship button runs.
+    const other = shipRepo();
+    const base = await timed(async () => runIn(other.dir, 'ship', '1'));
+    assert.equal(base.out.status, 0, base.out.stderr);
     const r = shipRepo();
     const s = await slowServe(r.dir, 5000);
     try {
-      const slow = state(s.port);
+      const slow = timed(() => state(s.port));
       await wait(300);
       const { ms, out } = await timed(() => post(s.port, '/api/tickets/1/ship', { token: s.token }));
       assert.equal(out.status, 200, out.body);
       assert.match(JSON.parse(out.body).message, /Shipped 0001/);
       assert.equal(r.statusIn(r.dir), 'done');
-      assert.ok(ms < 1000, `Ship answered in ${ms} ms`);
-      assert.equal((await slow).status, 200);
+      const read = await slow;
+      assert.equal(read.out.status, 200);
+      notWaited('Ship', ms, base.ms, s.readingMs());
     } finally { await stop(s.p); }
   });
 });

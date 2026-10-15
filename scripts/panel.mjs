@@ -188,8 +188,8 @@ async function panelShip(repo, id) {
 
 // 0128: the panel's speck run switch. Turning it on starts `speck run` for this repo in its own process group, with its
 // output going to speck/.cache/runs/run.log, so it keeps running after the page is closed and after `speck panel` stops,
-// Ctrl+C included. Resolves with { status, body }: 200 and the run once it holds the lock, or 409 and speck run's own
-// message when it refused, having changed nothing.
+// Ctrl+C included. Resolves with { status, body }: 200 and the run once it holds the lock and has said so (0207, so its first
+// line isn't read as part of a refusal from the next one), or 409 and speck run's own message when it refused.
 const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50;
 function panelRunOn(repo) {
   const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
@@ -211,9 +211,9 @@ function panelRunOn(repo) {
     child.on('exit', code => finish({ status: 409, body: { error: said() || `speck run stopped with exit code ${code} before it was on.` } }));
     check = setInterval(() => {
       const run = runState(runsOf(repo));
-      if (run.on && run.pid === child.pid) finish({ status: 200, body: { ok: true, run } });
+      if (run.on && run.pid === child.pid && said()) finish({ status: 200, body: { ok: true, run } });
     }, RUN_SWITCH_POLL_MS);
-    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock within ${RUN_SWITCH_MS / 1000} seconds. Its output is in ${path.relative(repo, log)}.` } }), RUN_SWITCH_MS);
+    timer = setTimeout(() => finish({ status: 500, body: { error: `speck run (process ${child.pid}) started but didn't take its lock and say it's watching within ${RUN_SWITCH_MS / 1000} seconds. Its output is in ${path.relative(repo, log)}.` } }), RUN_SWITCH_MS);
   });
 }
 

@@ -13,7 +13,10 @@ import { ROOT, shipRepo } from './support/speck.mjs';
 const START = spawnSync('git', ['log', '-1', '--format=%H', '--fixed-strings', '--grep', 'speck(0198): start'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim() + '^';
 const FIVE = ['reap-0175', 'build-log-0176', 'panel-0177', 'ship', 'stop-0072'].map(n => `test/${n}.test.mjs`);
 const then = f => spawnSync('git', ['show', `${START}:${f}`], { cwd: ROOT, encoding: 'utf8' });
-const now = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+// The file as 0198 left it: at its approved commit, or as it is now while 0198 is still being built. Later tickets may
+// change these files' tests themselves, as 0207 changed 0177 AC3's timing checks.
+const DONE = spawnSync('git', ['log', '-1', '--format=%H', '--fixed-strings', '--grep', 'speck(0198): approved'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim();
+const now = f => (DONE ? spawnSync('git', ['show', `${DONE}:${f}`], { cwd: ROOT, encoding: 'utf8' }).stdout : fs.readFileSync(path.join(ROOT, f), 'utf8'));
 // Each test's name as written, in a test( call, and each line that asserts, without its indentation.
 const names = src => [...src.matchAll(/\btest\(\s*((['"`])(?:\\.|(?!\2).)*\2)/g)].map(m => m[1]).sort();
 const asserts = src => src.split('\n').map(l => l.trim()).filter(l => /\bassert\b/.test(l) && !/^import /.test(l)).sort();

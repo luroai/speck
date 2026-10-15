@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { readableLog, statusData } from '../scripts/speck.mjs';
 import { CLI, env, runRepo, startRun, until, stopRun } from './support/run.mjs';
+import { costMs } from './support/timing.mjs';
 
 // ---------- 0176: keep the board quick to read however many tickets are built ----------
 
@@ -140,13 +141,13 @@ describe('0176: the board stays quick to read however many tickets are built', {
       assert.equal(messages(dir)['0001'], null);
     });
 
-    // How long `speck status --json` takes, in ms: the least of several runs, so a busy moment on the machine doesn't count.
+    // How long `speck status --json` takes, in ms of the CPU time it uses (costMs), so other builds' test runs on the
+    // same machine don't count (0207): the least of several runs, so a busy moment on the machine doesn't count either.
     function statusMs(dir, tries) {
       let best = Infinity;
       for (let i = 0; i < tries; i++) {
-        const t = process.hrtime.bigint();
-        const r = spawnSync(process.execPath, [CLI, 'status', '--json'], { cwd: dir, env, maxBuffer: 1 << 30 });
-        best = Math.min(best, Number(process.hrtime.bigint() - t) / 1e6);
+        let r;
+        best = Math.min(best, costMs(() => { r = spawnSync(process.execPath, [CLI, 'status', '--json'], { cwd: dir, env, maxBuffer: 1 << 30 }); }));
         assert.equal(r.status, 0, String(r.stderr));
       }
       return best;
