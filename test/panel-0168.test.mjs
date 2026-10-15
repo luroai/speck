@@ -30,7 +30,7 @@ const SHOWS = {
   '0405': ['wait', 'The builder is waiting for you', 'Approved · waiting for you to ship it', 'Ship'],
   '0406': ['bad', 'The builder needs you', 'Blocked · it has a question for you', 'Build'],
   '0407': ['bad', 'The builder needs you', 'The build stopped', 'Build'],
-  '0408': ['ship', 'The builder is shipping', 'Shipping', 'Ship'], // its own loop since 0172
+  '0408': ['ship', 'The builder is shipping', 'Shipping', null], // its own loop since 0172; no stage's name since 0201
 };
 const FLIGHT = Object.keys(SHOWS);
 
@@ -54,8 +54,9 @@ test('0168 AC1: each in-flight card has a badge row under its title: the badge, 
     const [badge, text] = rows[0].children;
     assert.equal(badge.tagName, 'canvas', `${id}: the badge is drawn`);
     assert.deepEqual(classes(badge), ['badge', pose], `${id}: its pose`);
-    assert.equal(text.className, 'badgetext');
-    assert.deepEqual(text.children.map(n => [n.className.split(' ')[0], n.textContent]), [['say', sentence], ['stage', stage]], `${id}: the sentence and the stage`);
+    assert.equal(text.className, stage ? 'badgetext' : 'badgetext ship-line');
+    const shown = text.children.map(n => [n.className.split(' ')[0], n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
+    assert.deepEqual(shown, [['say', sentence], stage ? ['stage', stage] : ['ship-at', ' · MM:SS']], `${id}: the sentence and the stage, or the ship's time (0201)`);
     assert.equal(top.children[top.children.length - 1].className, 'sub', `${id}: the timer is still last in the top row`);
     assert.equal(p.all(top).filter(n => /\b(enso|orbit|speck|dots|dot)\b/.test(n.className || '')).length, 0, `${id}: no ensō, speck or stage dots`);
   }
@@ -160,7 +161,7 @@ const LOOK = id => `(() => {
   const cs = getComputedStyle(card);
   return { card: rect(card), padRight: parseFloat(cs.paddingRight) + parseFloat(cs.borderRightWidth), padLeft: parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth),
     line: rect(card.querySelector('.top .line')), title: rect(card.querySelector('.top .title')), badge: rect(card.querySelector('.badge')),
-    say: rect(card.querySelector('.say')), stage: rect(card.querySelector('.stage')), sub: rect(card.querySelector('.top .sub')) };
+    say: rect(card.querySelector('.say')), stage: rect(card.querySelector('.stage') || card.querySelector('.ship-at')), sub: rect(card.querySelector('.top .sub')) };
 })()`;
 // How many of a badge's pixels are in each colour: its pixels as [r, g, b] for each opaque one.
 const PIXELS = id => `(() => { const c = ${CARD(id)}.querySelector('canvas.badge'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, out = [];
@@ -182,7 +183,9 @@ for (const theme of ['light', 'dark']) {
           for (const k of ['say', 'stage']) assert.ok(l[k].left >= l.badge.right, `${id}: its ${k} is right of the badge`);
           const mid = (l.badge.top + l.badge.bottom) / 2;
           assert.ok(l.say.top < mid && l.stage.bottom > mid, `${id}: the sentence and the stage's name are beside the badge`);
-          assert.ok(l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name under the sentence`);
+          // 0201: a shipping card has no stage's name; how long its ship has run follows "Shipping" on the same line.
+          if (id === '0408') assert.ok(Math.abs(l.stage.top - l.say.top) < 2 && l.stage.left >= l.say.right - 0.5, `${id}: the ship's time on the sentence's line`);
+          else assert.ok(l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name under the sentence`);
           assert.ok(l.sub.left >= l.say.right && l.sub.top < mid && l.sub.bottom > mid, `${id}: the timer at the right of the badge's row`);
           for (const k of ['badge', 'say', 'stage', 'sub', 'line']) assert.ok(l[k].left >= l.card.left - 0.5 && l[k].right <= l.card.right + 0.5, `${id}: its ${k} overflows the card`);
         }

@@ -11,7 +11,7 @@ const approved = (o = {}) => T('0001', 'approved', { started: ago(3600), approve
 const runningShip = (secs, o = {}) => ({ ship: { running: true, auto: false, started: ago(secs), ...o } });
 const failedShip = (o = {}) => ({ ship: { running: false, auto: true, started: ago(300), ended: ago(60), message: MESSAGE, ...o } });
 const SHIP_IT = 'Ship it from its review pack, or run /speck-ship 0001';
-const LABELS = ['Shipping…', "Auto-ship didn't finish", SHIP_IT];
+const LABELS = ['Shipping', "Auto-ship didn't finish", SHIP_IT]; // "Shipping" beside the badge since 0201
 
 // A page whose /api/state answers with `state`, each pack with PACK, and whose confirm question says yes.
 function page(state) {
@@ -38,14 +38,14 @@ async function openPack(p) {
   await p.settle();
 }
 
-test('0153 AC1: a running ship shows "Shipping…" on its queue row, with how long it has been running', async () => {
+test('0153 AC1: a running ship shows "Shipping" on its queue row, with how long it has been running', async () => {
   const m = panelModel()({ tickets: [approved(runningShip(125))], ideas: [] });
   assert.equal(m.queue[0].shipping, true);
   assert.equal(m.queue[0].ship_counter, '02:05');
   const p = page({ tickets: [approved(runningShip(125))], ideas: [] });
   await p.settle();
   const r = row(p);
-  assert.ok(findText(p, r, 'Shipping…'), 'the label');
+  assert.ok(findText(p, r, 'Shipping'), 'the label'); // once, beside the badge, since 0201
   assert.ok(texts(p, r).some(t => /^0?2:0[5-6]$/.test(t)), `how long: ${texts(p, r).join(' | ')}`);
   assert.ok(!p.all(r).some(isRed), 'nothing red while it ships');
 });
@@ -68,7 +68,7 @@ test('0153 AC1: any running ship shows, whoever started it, and a reload shows i
     for (let load = 0; load < 2; load++) { // a fresh page each time, as a reload gives
       const p = page(state);
       await p.settle();
-      assert.ok(findText(p, row(p), 'Shipping…'), `auto ${auto}, load ${load}`);
+      assert.ok(findText(p, row(p), 'Shipping'), `auto ${auto}, load ${load}`);
     }
   }
 });
@@ -166,7 +166,7 @@ test('0153 AC1 AC2: a ticket speck ship has set done while its push still runs s
   for (let load = 0; load < 2; load++) { // and again after a reload
     const p = page(state);
     await p.settle();
-    assert.ok(findText(p, row(p), 'Shipping…'));
+    assert.ok(findText(p, row(p), 'Shipping'));
     p.press(row(p).children.find(n => n.className === 'top'));
     await p.settle();
     p.press(buttons(p, row(p), /^Review pack$/)[0]);

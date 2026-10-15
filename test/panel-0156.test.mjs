@@ -89,7 +89,7 @@ test('0156 AC2 and AC3: a ship the panel itself started puts the builder to work
   const row = rowOf(p, '0405');
   assert.equal(find(p, row, /\bsay\b/)[0].textContent, 'Shipping');
   assert.equal(find(p, row, /\bsay\b/)[0].className, 'say', 'no longer purple: it is at work, not waiting');
-  assert.equal(find(p, row, /^stage\b/)[0].className, 'stage', 'its stage\'s name in the in-flight colour');
+  assert.equal(find(p, row, /^stage\b/).length, 0, 'no stage\'s name while it ships (0201)');
   assert.equal(badgeIn(p, row).className, 'badge ship', 'the builder is at work (0168), shipping (0172)');
 });
 
@@ -137,13 +137,13 @@ test('0156 AC3 and AC4: an approved ticket waits in purple whether or not its bu
   }
   const shipping = rowOf(p, '0603');
   assert.equal(find(p, shipping, /\bsay\b/)[0].className, 'say', 'shipping: the normal text colour');
-  assert.equal(find(p, shipping, /^stage\b/)[0].className, 'stage', 'shipping: at work, in the in-flight colour');
+  assert.equal(find(p, shipping, /^stage\b/).length, 0, 'shipping: no stage\'s name (0201)');
 });
 
 test('0156 AC4: the current stage\'s name follows the sentence (its five dots went in 0168), in the state colour', async () => {
   const p = fake();
   await p.settle();
-  const expect = { '0401': 'Build', '0402': 'Self-check', '0403': 'Review 2', '0404': 'Review', '0405': 'Ship', '0406': 'Build', '0407': 'Build', '0408': 'Ship' };
+  const expect = { '0401': 'Build', '0402': 'Self-check', '0403': 'Review 2', '0404': 'Review', '0405': 'Ship', '0406': 'Build', '0407': 'Build' }; // 0408 ships, so it has no stage's name since 0201
   for (const [id, name] of Object.entries(expect)) {
     const text = find(p, rowOf(p, id), /^badgetext$/)[0];
     assert.deepEqual(text.children.map(n => n.className.split(' ')[0]), ['say', 'stage'], `${id}: the sentence, then the stage`);
@@ -188,8 +188,8 @@ const RGB = v => `(() => { const s = document.createElement('span'); s.style.col
 const LOOK = id => `(() => {
   const card = ${CARD(id)}, rect = n => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
   return { card: rect(card), title: rect(card.querySelector('.top .title')), id: rect(card.querySelector('.top .id')),
-    say: rect(card.querySelector('.say')), stage: rect(card.querySelector('.stage')),
-    sayColor: getComputedStyle(card.querySelector('.say')).color, stageColor: getComputedStyle(card.querySelector('.stage')).color };
+    say: rect(card.querySelector('.say')), stage: card.querySelector('.stage') && rect(card.querySelector('.stage')), shipAt: card.querySelector('.ship-at') && rect(card.querySelector('.ship-at')),
+    sayColor: getComputedStyle(card.querySelector('.say')).color, stageColor: card.querySelector('.stage') && getComputedStyle(card.querySelector('.stage')).color };
 })()`;
 
 for (const theme of ['light', 'dark']) {
@@ -204,11 +204,17 @@ for (const theme of ['light', 'dark']) {
           // AC3: the sentence under the title, in the state colour or the text colour.
           assert.ok(l.say.top >= l.title.bottom - 0.5, `${id}: the sentence is under the title`);
           assert.equal(l.sayColor, tone ? tones[tone] : colour.text, `${id}: the sentence's colour`);
-          // AC4: the stage's name under the sentence, in the state colour.
-          assert.ok(l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name is under the sentence`);
-          assert.equal(l.stageColor, tones[tone], `${id}: the stage's colour`);
+          // AC4: the stage's name under the sentence, in the state colour. 0201: a shipping card has none, and how long
+          // its ship has run follows "Shipping" on the same line.
+          if (id === '0408') {
+            assert.equal(l.stage, null, `${id}: no stage's name`);
+            assert.ok(Math.abs(l.shipAt.top - l.say.top) < 2 && l.shipAt.left >= l.say.right - 0.5, `${id}: the ship's time on the sentence's line`);
+          } else {
+            assert.ok(l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name is under the sentence`);
+            assert.equal(l.stageColor, tones[tone], `${id}: the stage's colour`);
+          }
           // AC5: everything in the card stays inside it.
-          for (const k of ['say', 'stage', 'title', 'id']) assert.ok(l[k].left >= l.card.left - 0.5 && l[k].right <= l.card.right + 0.5, `${id}: its ${k} overflows the card`);
+          for (const k of id === '0408' ? ['say', 'shipAt', 'title', 'id'] : ['say', 'stage', 'title', 'id']) assert.ok(l[k].left >= l.card.left - 0.5 && l[k].right <= l.card.right + 0.5, `${id}: its ${k} overflows the card`);
         }
         assert.equal(await b.js(`document.documentElement.scrollWidth <= innerWidth`), true, 'the page doesn\'t scroll sideways');
       }, { width, theme });
