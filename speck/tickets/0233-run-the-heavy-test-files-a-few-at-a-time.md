@@ -47,7 +47,11 @@ speck's heavy test files run a few at a time while the light ones run as many at
 - Self-check: no changes. Checked an empty heavy list, every file heavy, listed files that don't exist, a heavy file that can't load, a todo failure, the terminal (spec) report as well as TAP, and that every file's time is still recorded.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a smaller computer, with 8 cores or fewer like the MacBook Air, speck's own test run now starts only 2 of its heaviest tests at a time: the ones that open a real control panel, a browser or an automatic build. The rest of the tests still run as many at a time as before, beside them. On bigger computers nothing changes, so the test run takes as long as it did.
+
+To see it, run speck's tests on an 8-core machine: the heavy tests stop crowding each other out, so fewer of them miss their time limits. The test results look the same as before, with one set of totals for the whole run.
+
+Worth keeping an eye on: a new test that opens a panel or browser must be added to the list of heavy tests; a check fails if it isn't. A bigger computer that's short of memory isn't covered (saved to the inbox).
 
 ## Blocked question
 Running the 88 heavy test files 2 at a time everywhere makes the whole suite more than 3 times slower on a big machine (2 min 47 s today, over 9 minutes, measured on a 16-core box), so which do you want?
@@ -62,3 +66,64 @@ I recommend C: it fixes the MacBook Air the ticket is about with the limit the t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-15-also-slow-the-heavy-tests-on-machines-short-of-memory.md (a machine with more than 8 cores and little memory still starts every heavy file at once).
+- Known limit: the check that keeps the heavy list complete looks for calls to the support helpers that start a panel, browser or `speck run`. A test file that starts one another way, such as spawning `speck panel` itself, isn't caught.
+- Known limit: with the limit on, up to 2 heavy files run on top of the other files' usual number, so for a while the run has 2 more test processes than before.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9ca89e5fcbc713b70f1434ef008bcbc38824e622",
+    "thread_id": "01a141c5-f7e2-7700-b4b7-837b5df93eec",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 143792,
+      "cached_input_tokens": 101376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 632,
+      "reasoning_output_tokens": 106
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:54:35.325Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/suite.mjs uses heavyLimit() and the single HEAVY list to run heavy files at concurrency 2 on machines with at most 8 cores, alongside light files at their existing concurrency. Above 8 cores it uses one unrestricted group. The five passing AC1 tests exercise these rules and list completeness."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runSuite() partitions files without duplication; merged() combines reports and totals. Passing AC2 tests verify every fixture file runs once, sequential TAP numbering, summary and retry parsing, recorded timings, and failure exits including a file that cannot load. The existing npm-test entry-point test also passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The supplied full output confirms all 18 tests in suite-0229.test.mjs and suite-0233.test.mjs passed. Existing tests were unchanged. The implementation preserves the previous runner path on larger machines; whole-suite regression checks remain the ship gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change applies the agreed limit of two heavy test files on machines with eight cores or fewer, while preserving existing concurrency on larger machines. The targeted tests pass and verify that combined results still support summaries, retries and failure detection. No blocking concerns found."
+  }
+}
+```
+
+</details>
