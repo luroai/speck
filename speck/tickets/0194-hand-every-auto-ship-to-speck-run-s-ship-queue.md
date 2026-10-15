@@ -1,7 +1,7 @@
 ---
 id: "0194"
 title: "Hand every auto-ship to speck run's ship queue"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0193"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T10:10:54.829Z"
 
 ---
 # 0194 · Hand every auto-ship to speck run's ship queue
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Each build still ships its own ticket, holding its build slot while it merges, tests and sorts out conflicts, and ships started by different builds aren't in one ordered queue. Moving every auto-ship to one queue in `speck run` is what lets builds and shipping run separately, and later side by side, without racing for `main`.
