@@ -41,6 +41,7 @@ Each ticket keeps its place in the Build list from when its build starts until i
 - Asked for 2026-10-15: "When a ticket joins the shipped queue, it moved to the bottom of the build panels list. The tickets need to remain in order and arguably just stay where they are."
 - `speck status --json` sorts tickets by priority (`byPriority`, `scripts/core.mjs`), and `panelModel()` in `templates/panel.html` lists in-flight tickets in that order. Likely cause: a newly started ticket with a higher priority goes above the ones already in flight. Not reproduced.
 - A ticket's build start is its `started` time.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
