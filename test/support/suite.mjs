@@ -2,13 +2,16 @@
 // but starts the slowest files first. Each full run records how long each file took in speck/.cache/test-times.json,
 // which git ignores, and the next run starts the files longest first, then any with no recorded time alphabetically.
 // `node --test` sorts the files it's given, so the order is set here, through run() from node:test.
+// On a machine with 8 cores or fewer, the heavy files (heavy.mjs) run at most 2 at a time beside the others (0233).
 
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { run } from 'node:test';
 import { spec, tap } from 'node:test/reporters';
 import { fileURLToPath } from 'node:url';
+import { HEAVY } from './heavy.mjs';
 
 export const timesFile = root => path.join(root, 'speck', '.cache', 'test-times.json');
 
@@ -39,9 +42,59 @@ function writeTimes(file, times) {
   fs.renameSync(tmp, file); // whole, so a run never reads half of it
 }
 
+// How many heavy files run at once on a machine with `cores` cores: 2 with 8 or fewer, otherwise null, for no limit of
+// their own.
+export const heavyLimit = cores => (cores <= 8 ? 2 : null);
+
+const ROOT_TOTAL = /^([a-z_]+) (\d+(?:\.\d+)?)$/;
+const endsTopLevelTest = e => e.data?.nesting === 0 && (e.type === 'test:pass' || e.type === 'test:fail');
+// The run's own plan, totals and summary, rather than a file's.
+const runLevel = e => e.data?.nesting === 0 && e.data.file === undefined
+  && (e.type === 'test:plan' || e.type === 'test:summary' || (e.type === 'test:diagnostic' && ROOT_TOTAL.test(e.data.message)));
+
+// The events of several runs as one run's: each top-level test's events kept together, the top-level tests numbered
+// in turn, and one plan, one set of totals and one summary at the end, adding up the runs'.
+async function* merged(streams) {
+  const startedAt = performance.now();
+  const queue = [];
+  let open = streams.length, wake = null, error = null, planned = 0, number = 0;
+  const totals = new Map();
+  const summary = { success: true, counts: {} };
+  const ready = () => { const w = wake; wake = null; w?.(); };
+  for (const s of streams) {
+    let held = [];
+    s.on('data', e => { held.push(e); if (endsTopLevelTest(e)) { queue.push(...held); held = []; ready(); } });
+    s.on('end', () => { queue.push(...held); held = []; open--; ready(); });
+    s.on('error', e => { error = e; ready(); });
+  }
+  while (open || queue.length) {
+    if (error) throw error;
+    if (!queue.length) { await new Promise(resolve => { wake = resolve; }); continue; }
+    const e = queue.shift();
+    if (runLevel(e)) {
+      if (e.type === 'test:plan') planned += e.data.count;
+      else if (e.type === 'test:summary') {
+        summary.success &&= e.data.success;
+        for (const [k, n] of Object.entries(e.data.counts || {})) summary.counts[k] = (summary.counts[k] || 0) + n;
+      } else {
+        const [, name, n] = ROOT_TOTAL.exec(e.data.message);
+        totals.set(name, (totals.get(name) || 0) + Number(n));
+      }
+      continue;
+    }
+    yield endsTopLevelTest(e) ? { ...e, data: { ...e.data, testNumber: ++number } } : e;
+  }
+  if (error) throw error;
+  const ms = performance.now() - startedAt;
+  yield { type: 'test:plan', data: { nesting: 0, count: planned } };
+  for (const [name, n] of totals) yield { type: 'test:diagnostic', data: { nesting: 0, message: `${name} ${name === 'duration_ms' ? ms : n}` } };
+  if (Object.keys(summary.counts).length) yield { type: 'test:summary', data: { ...summary, duration_ms: ms } };
+}
+
 // Runs every test/*.test.mjs file under `root`, writing the report to `out` (TAP, as `node --test` writes when it isn't
 // to a terminal), and records each file's time once the run has ended. Resolves to the exit code: 1 when any test failed.
-export async function runSuite(root, { concurrency = Math.max(os.availableParallelism() - 1, 1), out = process.stdout } = {}) {
+// With `cores` at 8 or fewer, the files in `heavy` run at most heavyLimit(cores) at a time, beside the other files.
+export async function runSuite(root, { cores = os.availableParallelism(), concurrency = Math.max(cores - 1, 1), heavy = HEAVY, out = process.stdout } = {}) {
   let names = [];
   try { names = fs.readdirSync(path.join(root, 'test')).filter(f => f.endsWith('.test.mjs')); } catch { /* no test folder */ }
   if (!names.length) {
@@ -55,13 +108,19 @@ export async function runSuite(root, { concurrency = Math.max(os.availableParall
   const given = new Map(files.map(f => [path.join(root, f), f]));
   const times = new Map();
   let failed = false;
-  const stream = run({ files: [...given.keys()], concurrency });
-  // A file's own entry, named with its path as given, ends once its process has.
-  stream.on('test:complete', d => { if (d.nesting === 0 && given.has(d.name)) times.set(given.get(d.name), d.details.duration_ms); });
-  // As with `node --test`, any failing test fails the run, a file that couldn't run included, but not a todo test.
-  // Node 20 has no test:summary, so this is worked out from each test that fails.
-  stream.on('test:fail', d => { if (!d.todo) failed = true; });
-  const reporter = out.isTTY ? stream.compose(new spec()) : stream.compose(tap);
+  const limit = heavyLimit(cores);
+  const isHeavy = new Set(limit ? heavy : []);
+  const groups = [[files.filter(f => !isHeavy.has(f)), concurrency], [files.filter(f => isHeavy.has(f)), limit]].filter(([g]) => g.length);
+  const streams = groups.map(([g, n]) => run({ files: g.map(f => path.join(root, f)), concurrency: n }));
+  for (const stream of streams) {
+    // A file's own entry, named with its path as given, ends once its process has.
+    stream.on('test:complete', d => { if (d.nesting === 0 && given.has(d.name)) times.set(given.get(d.name), d.details.duration_ms); });
+    // As with `node --test`, any failing test fails the run, a file that couldn't run included, but not a todo test.
+    // Node 20 has no test:summary, so this is worked out from each test that fails.
+    stream.on('test:fail', d => { if (!d.todo) failed = true; });
+  }
+  const events = streams.length === 1 ? streams[0] : Readable.from(merged(streams));
+  const reporter = out.isTTY ? events.compose(new spec()) : events.compose(tap);
   await new Promise((resolve, reject) => {
     reporter.on('error', reject);
     reporter.pipe(out, { end: false });
