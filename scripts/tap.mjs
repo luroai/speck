@@ -65,6 +65,17 @@ export function summariseTap(text, id, file) {
   ].join('\n');
 }
 
+// The failing tests in TAP output, each as its path of names, leaving out a test whose failure is only that one of its
+// subtests failed. Empty when the output isn't TAP or names no failing test.
+export function failingTests(text) {
+  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const header = lines.findIndex(l => HEADER.test(l));
+  if (header < 0) return [];
+  const failing = results(lines, header + 1).filter(t => !t.ok && t.directive !== 'TODO');
+  const leaves = failing.filter(t => !failing.some(o => o !== t && o.start >= t.start && o.end <= t.end && o.indent > t.indent));
+  return [...new Set(leaves.map(t => t.path).filter(Boolean))];
+}
+
 // The test output to put in the reviewer's prompt, from the file given with --tests.
 export function testOutput(file, id) {
   if (!file) return '(no test output provided)';

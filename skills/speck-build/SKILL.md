@@ -80,7 +80,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
    - If it shipped (exit code 0), tell the user: a one-line summary, that it's merged and pushed, how many follow-ups went to the inbox or that none did, and anything worth a look (risk flags, follow-up ideas).
    - If it exits with 12, auto-ship doesn't apply and nothing changed. Stop and tell the user: a one-line summary, why it didn't ship automatically (from its message), how many follow-ups went to the inbox or that none did, anything worth a look, and how to finish: read the review pack with `speck pack <id>`, then run `/speck-ship <id>` to merge it.
    - If it exits with 13, merging into the base branch hit a conflict (it names the conflicting files) and nothing changed. Follow "Conflict" below, without asking the user.
-   - If it exits with 14, the tests failed on the ticket's branch and on the base branch as it is, so it isn't this ticket's fault, and nothing changed. Follow "Base branch failing" below.
+   - If it exits with 14, the tests failed on the ticket (merged with the base branch as it is now) and on the base branch alone, so it isn't this ticket's fault, and nothing changed. Follow "Base branch failing" below.
    - If any other check refused, report the reason as the ship skill describes. Don't work around it.
 
 ### Conflict
