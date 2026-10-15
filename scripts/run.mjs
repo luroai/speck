@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
+import { resumeArgv, handBackQueue } from './hand-back.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -94,7 +95,8 @@ export function cmdRun() {
   const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
   const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
-  const running = new Set(), ships = shipQueue(repo, cfg); // the builds running, and the approved tickets to ship (0193)
+  // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
+  const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h) });
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
@@ -243,6 +245,8 @@ export function cmdRun() {
     }
   };
 
+  const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) });
+
   function tick() {
     checkAdopted();
     let tickets;
@@ -262,6 +266,7 @@ export function cmdRun() {
       if (Object.hasOwn(rec, 'resumed')) { reportStopped(t.id, rec, 'speck run had already resumed it once, so it won\'t resume it again'); continue; }
       if (running.size < max) resumeKilled(t.id, rec);
     }
+    handBacks.check(tickets);
     for (const t of tickets) {
       if (running.size >= max) break;
       if (t.status !== 'ready' || (t.waiting_on || []).length || launched.has(t.id)) continue;
@@ -283,19 +288,6 @@ export function cmdRun() {
   adoptEarlierBuilds();
   tick();
   setInterval(tick, pollMs);
-}
-
-// What a killed build is told when speck run resumes it.
-const resumeMessage = id => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with /speck-build ${id} from where you left off.`;
-
-// build_command turned into the command that resumes a build's session: --session-id {session} becomes
-// --resume {session}, and the one word with {id} in it (the prompt) becomes resumeMessage. null if it has neither.
-function resumeArgv(words, id, session) {
-  if (typeof session !== 'string' || !session) return null;
-  const at = words.findIndex((w, i) => w === '--session-id' && words[i + 1] === '{session}');
-  const prompts = words.flatMap((w, i) => (w.includes('{id}') ? [i] : []));
-  if (at < 0 || prompts.length !== 1) return null;
-  return words.map((w, i) => (i === at ? '--resume' : i === prompts[0] ? resumeMessage(id) : w.replace(/\{session\}/g, session)));
 }
 
 // A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.

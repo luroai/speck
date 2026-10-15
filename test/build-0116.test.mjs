@@ -20,8 +20,8 @@ const part = heading => {
   assert.ok(m, `section 5 has a "${heading}" part`);
   return m[1];
 };
-// The exit-13 and exit-14 bullets of section 5 step 3.
-const bullet = code => section5().split('\n').find(l => new RegExp(`exits with ${code}`).test(l)) || '';
+// The exit-13 and exit-14 bullets of section 5: since 0194, those of "When speck run hands it back".
+const bullet = code => section5().split('\n').find(l => new RegExp(`exit(s with|ed) ${code}`).test(l)) || '';
 
 test('0116 AC1: exit 13 sends the build to its conflict steps', () => {
   assert.match(bullet(13), /"Conflict"/);
@@ -47,14 +47,15 @@ test('0116 AC1: the tests and a merge round come before shipping again, with a f
   assert.match(s, /`speck review <id>/);
   assert.match(s, /response file fresh/i);
   assert.match(s, /each file you resolved and how, with its class/);
-  assert.match(s, /`speck close <id>`, then `speck ship <id> --auto` again/);
+  // Since 0194 the build stops at approved again, and speck run's ship queue ships it.
+  assert.match(s, /`speck close <id>`, then stop/);
   assert.ok(s.indexOf('speck test') < s.indexOf('speck review <id>'), 'tests before the merge round');
-  assert.ok(s.indexOf('speck review <id>') < s.lastIndexOf('speck ship <id> --auto'), 'merge round before shipping again');
+  assert.ok(s.indexOf('speck review <id>') < s.lastIndexOf('speck close <id>'), 'merge round before approving again');
 });
 
 test('0116 AC1: after two merges that still conflict, it blocks the ticket with the files in its question', () => {
-  const s = part('Conflict');
-  assert.match(s, /exits with 13 again after two merges/);
+  const s = part('Handed back again'); // since 0194: speck run says when it has handed the ticket back twice
+  assert.match(s, /handed this ticket back twice already/);
   assert.match(s, /block the ticket \(section 6\)/i);
   assert.match(s, /conflicting files in the question/);
 });
@@ -111,7 +112,7 @@ test('0116 AC3: the build asks only when two tickets contradict each other or a 
 });
 
 test('0116 AC3: the repeated-conflict question is in plain words too', () => {
-  assert.match(part('Conflict'), /exits with 13 again after two merges[^\n]*without git terms/);
+  assert.match(part('Handed back again'), /handed this ticket back twice already[^\n]*without git terms/);
 });
 
 const initRepo = () => {
@@ -160,12 +161,10 @@ test('0116 AC4: the skill is gone from speck and from this repo\'s skill folders
     assert.throws(() => fs.lstatSync(path.join(ROOT, base, 'speck-integrate')), /ENOENT/, base);
 });
 
-test('0116 AC4: the brief, the README and the skills no longer describe the skill or the ship queue', () => {
+// 0194 brought back a ship queue, in speck run, so only the skill's name is checked.
+test('0116 AC4: the brief, the README and the skills no longer describe the skill', () => {
   const files = ['docs/brief.md', 'README.md', ...fs.readdirSync(path.join(ROOT, 'skills')).map(s => `skills/${s}/SKILL.md`)];
-  for (const f of files) {
-    assert.doesNotMatch(read(f), /speck-integrate/, f);
-    assert.doesNotMatch(read(f), /ship queue/i, f);
-  }
+  for (const f of files) assert.doesNotMatch(read(f), /speck-integrate/, f);
 });
 
 test('0116 AC2 self-check: if setting the fix ticket ready is refused, it stays a draft and the report says so', () => {

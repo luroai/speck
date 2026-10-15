@@ -43,6 +43,11 @@ Builds end at approved, `speck run`'s ship queue (0193) does every auto-ship, an
 - `speck run` already resumes a killed build's session from `build_command` (`resumeArgv` in `scripts/run.mjs`); a hand-back can resume the same way with its own message.
 - "Fail together" refusals have no exit code of their own today (`testFailure` in `scripts/ship.mjs`); the builder can give them one.
 - Failing before this build: none
+- "Fail together" refusals, and a ticket's own failing tests with the base branch passing, exit 16, but only with `--auto` (speck run's ship queue is its only caller). `/speck-ship` and the Ship button still exit 1, as the 0099 and 0192 tests pin.
+- A hand-back waits in the build's run record (`hand_back`), so a restart of speck run still carries it out. It's dropped if the ticket's branch has moved since the ship, and the conflict and failing-test hand-backs are counted in the record (`hand_backs`), so the third tells the session to block.
+- AC3's "once" is read as one hand-back for each exit-14 refusal; the queue then holds, so the ticket isn't tried again until the base branch has a new commit.
+- Earlier tests that pinned the build running `speck ship <id> --auto` and handling its exit codes, or the brief's "Each build ships its own ticket", now check the new behaviour instead, as AC1, AC2 and AC5 replace it: `brief-0111` AC3, `build-0116` AC1, AC3 and AC4 (a ship queue is described again), `close` 0021 AC5, `followups-0036` AC4, `ship-0048` AC4 and `ship` "auto-ship: …". Nothing they check otherwise was loosened.
+- Self-check: run.mjs went over the 600-line limit for scripts, so the hand-back code moved to its own module.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

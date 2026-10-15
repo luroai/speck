@@ -235,7 +235,8 @@ const section5 = () => read(ROOT, 'skills/speck-build/SKILL.md').split(/^## 5\./
 
 test('0048 AC4: /speck-build section 5 says how to merge, resolve, re-review and ship again on exit 13', () => {
   const s = section5();
-  assert.match(s, /exits with 13/);
+  // Since 0194, speck run hands an exit 13 back to the build, which ends at approved again for its ship queue.
+  assert.match(s, /exited 13/);
   assert.match(s, /merge the base branch into the ticket branch/i);
   assert.match(s, /`<remote>\/<base_branch>`/, 'the remote copy when ship names it');
   assert.match(s, /in its worktree|in the ticket's worktree/i);
@@ -245,8 +246,8 @@ test('0048 AC4: /speck-build section 5 says how to merge, resolve, re-review and
   assert.match(s, /review round/i);
   assert.match(s, /each file you resolved and how/);
   assert.match(s, /`speck close <id>`/);
-  assert.match(s, /`speck ship <id> --auto` again/);
-  assert.match(s, /two merges/);
+  assert.match(s, /ship queue ships it/);
+  assert.match(s, /back twice/);
   assert.match(s, /block the ticket/i);
   assert.match(s, /conflicting files in the question/);
 });

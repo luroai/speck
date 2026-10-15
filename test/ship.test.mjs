@@ -424,12 +424,13 @@ test('auto-ship: plain speck ship ignores the auto-ship settings', () => {
   assert.equal(r.run('ship', '1').status, 0);
 });
 
-test('auto-ship: the build skill runs speck ship --auto after approval, and the rules allow only that', () => {
+// Since 0194 speck run's ship queue runs speck ship --auto, and the build skill ends at approved.
+test('auto-ship: speck run\'s ship queue runs speck ship --auto after approval, and the rules allow only that', () => {
   const build = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
   const approved = build.split('## 5. Approved')[1].split('\n## ')[0];
-  assert.match(approved, /speck ship <id> --auto/);
-  assert.ok(approved.indexOf('speck close') < approved.indexOf('--auto'), 'auto-ship comes after the approval is committed');
-  assert.match(approved, /exit code 12|exits with 12|exits 12/);
+  assert.doesNotMatch(approved, /--auto/);
+  assert.match(approved, /`speck run`'s ship queue/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'scripts', 'ship-queue.mjs'), 'utf8'), /\[CLI, 'ship', id, '--auto'\]/);
   for (const n of ['speck-build', 'speck-review'])
     assert.match(fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8'), /auto_ship/, n);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));

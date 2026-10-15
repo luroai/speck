@@ -43,8 +43,9 @@ test('AC2: the principle gives the reasons: bottleneck, simplicity, users, isola
   assert.match(p, /only as a deliberately designed feature/, 'coming back');
 });
 
-test('AC3: the brief says there is no separate shipping agent: each build ships its own ticket', () => {
-  assert.match(principle(), /each build ships its own ticket: there is no separate shipping agent/i);
+// 0194 replaced "Each build ships its own ticket: there is no separate shipping agent" with speck run's one ship queue.
+test('AC3: the brief says builds end at approved and one ship queue in speck run ships tickets', () => {
+  assert.match(principle(), /builds end at approved, and one ship queue in `speck run` ships tickets one at a time/i);
 });
 
 test('AC3: no part of the brief describes a shipping agent as part of speck', () => {
