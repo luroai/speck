@@ -1,7 +1,7 @@
 ---
 id: "0234"
 title: "Share one panel across a browser test file"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0234 · Share one panel across a browser test file
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Each test in the real-browser test files makes a repo and starts a `speck panel` only to serve the page, about 0.6 s of its 1 s or so. Tried on `test/panel-0155.test.mjs` during 0198, sharing one panel took the file from about 25 s to 9 s with all 22 tests passing.
