@@ -515,30 +515,32 @@ function heldByStop(repo, t) {
 }
 
 // Every process still running, as a set of pids. One that has exited and waits only for its parent to collect it is over.
-function runningPids() {
+export function runningPids() {
   const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
   if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
   return new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([p, s]) => /^\d+$/.test(p) && !/^Z/.test(s || '')).map(([p]) => Number(p)));
 }
 
 // Ends a build and everything it started, already held with SIGSTOP (`held`) so none can start anything more: asks each
-// to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there after a few seconds with SIGKILL.
+// to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there five seconds after first asking with
+// SIGKILL. The wait is timed rather than counted in checks, as each check lists every process and can be slow (0218).
 // Every process it has found stays on its list, so one that leaves the build's tree when its parent ends is still ended.
-// Returns the processes still running at the end.
-function endBuild(b, held) {
+// Returns the processes still running at the end. `opts` stands in for the clock, pauses, listing and signals in tests.
+export function endBuild(b, held, { now: clock = () => performance.now(), pause = sleep, running: listRunning = runningPids, kill = process.kill.bind(process) } = {}) {
   const known = new Set(held);
   const left = () => {
     for (const p of buildProcesses(b.pid, b.rec.session)) known.add(p);
-    const running = runningPids();
+    const running = listRunning();
     return [...known].filter(p => running.has(p));
   };
-  const each = (pids, signal) => { for (const p of pids) try { process.kill(p, signal); } catch { /* gone */ } };
+  const each = (pids, signal) => { for (const p of pids) try { kill(p, signal); } catch { /* gone */ } };
   const asked = new Set();
   const ask = pids => { const fresh = pids.filter(p => !asked.has(p)); for (const p of fresh) asked.add(p); each(fresh, 'SIGTERM'); each(fresh, 'SIGCONT'); };
   let now = left();
+  const until = clock() + 5000;
   ask(now);
-  for (let i = 0; i < 50 && now.length; i++) { sleep(100); now = left(); ask(now); }
-  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); sleep(100); now = left(); }
+  while (now.length && clock() < until) { pause(Math.min(100, Math.max(0, until - clock()))); now = left(); ask(now); }
+  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); pause(100); now = left(); }
   return now;
 }
 

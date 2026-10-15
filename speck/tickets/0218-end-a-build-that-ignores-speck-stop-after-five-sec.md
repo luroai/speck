@@ -39,6 +39,7 @@ started: "2026-10-15T23:48:31.383Z"
 - The wait is the loop in `endBuild()` in `scripts/run.mjs`, which counts checks rather than time.
 - Seen while timing `test/stop-0072.test.mjs` in 0198: its `speck stop` took about 11 s.
 - Failing before this build: none
+- Self-check: the five seconds are timed with a monotonic clock, so a change to the system clock can't shorten or stretch the wait.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
