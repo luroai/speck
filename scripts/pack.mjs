@@ -61,6 +61,17 @@ function changeLines(t, cfg, diff) {
       : `- ${label}: not available, because the ticket's branch no longer exists and its delivery log has no figure`];
 }
 
+// What the reviewer was told about the tests in round `r`, as its summary of the test output said (0209): none when the
+// round recorded nothing, because its test output wasn't TAP or it was recorded before speck kept this.
+function testsLines(r) {
+  const t = r.meta.tests;
+  if (!t || !Number.isInteger(t.failing) || !Array.isArray(t.second_try)) return [];
+  const again = t.second_try.length;
+  return ['', '### Tests',
+    `- Test output the reviewer was given in round ${r.meta.round}: ${t.failing} failing ${t.failing === 1 ? 'test' : 'tests'}${again ? `, ${again} passed on a second try` : ''}`,
+    ...(again ? [`- Passed on a second try: ${t.second_try.map(n => `\`${n}\``).join(', ')}`] : [])];
+}
+
 // What reviewPack and plainPack refuse with for a ticket that has no review rounds, so the panel can tell it apart.
 export const NO_ROUNDS = 'No review rounds recorded.';
 
@@ -86,6 +97,7 @@ export function reviewPack(repo, id) {
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
     '', '### Risk', `- Ticket risk: **${t.fm.risk}**`,
     ...changeLines(t, cfg, diff),
+    ...testsLines(last),
     '', '### Review history',
     ...all.map((r, i) => {
       const f = r.verdict.findings;

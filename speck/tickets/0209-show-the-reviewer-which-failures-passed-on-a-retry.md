@@ -40,6 +40,8 @@ The reviewer's test summary says which tests failed and then passed on the secon
 - Asked for 2026-10-15, for release 0.4.0.
 - The summary comes from `summariseTap` in `scripts/tap.mjs` (0119); the `Flaky:` line is written by `scripts/results.mjs` (0195) at the end of the output.
 - Failing before this build: none
+- AC4: `speck pack` had no test summary at all, so each review round now records what the reviewer's summary said (how many failing tests, and which passed on a second try), and the pack shows it for the latest round under "Tests". `speck record` takes `--tests=<file>` for this, and the review skill passes it.
+- Self-check: `speck record` and `speck review` given a test output file that can't be read now refuse in plain words rather than with a stack trace.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

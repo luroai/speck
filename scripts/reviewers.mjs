@@ -180,5 +180,5 @@ export function runCommandReview(repo, id, name, command, s) {
   const thread = (options.session_id_path ? atPath(envelope ?? jsonIn(r.stdout), options.session_id_path) : '') || (session === 'continued' ? lastThread : '');
   return saveRound(repo, id, verdict, { reviewer: name, ...settingsMeta(settings), reviewed_sha: s.head, ...(s.merge ? { merge: true } : {}), session,
     ...(thread ? { thread_id: thread } : {}), ...(s.response ? { builder_response: s.response } : {}),
-    seconds: Math.round((Date.now() - started) / 1000), ...usage });
+    seconds: Math.round((Date.now() - started) / 1000), ...usage, ...s.testsSeen });
 }
