@@ -1,7 +1,7 @@
 ---
 id: "0240"
 title: "Publish a GitHub release when a new version lands on main"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:24:37.941Z"
+approved: "2026-10-15T21:39:32.370Z"
 
 ---
 # 0240 · Publish a GitHub release when a new version lands on main
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each release ticket ends with the maintainer tagging the release and publishing its GitHub release page by hand once it has shipped. Until then the README's setup prompt names a tag that doesn't exist, so anyone following it gets an error, and with `auto_ship` on nobody is watching for the moment a release ticket ships.
@@ -55,9 +56,15 @@ When a new version of speck lands on GitHub, its version tag and release page no
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The fixed concurrency group retains only one pending run by default.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 414,888
+- Elapsed since build started: 15 min
+- Changed lines: 69 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes):
   - The release tickets 0236 and 0226 (out of scope here) still list tagging and publishing by hand in their Notes; that step is now done by the workflow, so it can be dropped when they're built.
