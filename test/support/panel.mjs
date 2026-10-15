@@ -302,7 +302,9 @@ export function findChrome() {
 // Every wait on Chrome has a time limit, and fails naming what it waited for rather than hanging the suite (0159).
 
 // A DevTools connection to `url`, Chrome's own or one page's. A call fails if Chrome hasn't answered it in `ms`
-// milliseconds, and at once when the connection has closed, as it does when Chrome exits.
+// milliseconds, and at once when the connection has closed, as it does when Chrome exits. Unless the call gives its
+// own, the limit is callMs(): 15 seconds, or SPECK_TEST_DEVTOOLS_MS, which 0206's tests set to make it short.
+const callMs = () => Number(process.env.SPECK_TEST_DEVTOOLS_MS) > 0 ? Number(process.env.SPECK_TEST_DEVTOOLS_MS) : 15000;
 async function devtools(url) {
   const ws = new WebSocket(url);
   try {
@@ -316,7 +318,7 @@ async function devtools(url) {
   const waiting = new Map();
   ws.onmessage = m => { const r = JSON.parse(m.data); if (waiting.has(r.id)) { waiting.get(r.id)(r); waiting.delete(r.id); } };
   ws.onclose = () => { for (const done of waiting.values()) done({ error: { message: 'Chrome\'s DevTools connection closed' } }); waiting.clear(); };
-  const send = (method, params = {}, ms = 15000, what = '') => new Promise((resolve, reject) => {
+  const send = (method, params = {}, ms = callMs(), what = '') => new Promise((resolve, reject) => {
     if (ws.readyState !== WebSocket.OPEN) return reject(new Error(`${method}: Chrome's DevTools connection has closed`));
     const id = ++seq;
     const t = setTimeout(() => { waiting.delete(id); reject(new Error(`Chrome didn't answer ${method} within ${ms / 1000} s${what && `: ${what}`}`)); }, ms);

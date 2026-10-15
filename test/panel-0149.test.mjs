@@ -164,8 +164,9 @@ test('0149 AC3: a missing icon file gets a plain 500 saying which file to put ba
 
 test('0149 AC4: in a browser, the page reports no manifest errors, and its icons load and match icon.svg', skip, async () => {
   const { p, port } = await served();
-  const b = await browserPage(`http://127.0.0.1:${port}/`);
+  let b;
   try {
+    b = await browserPage(`http://127.0.0.1:${port}/`); // in the try, so the panel is stopped even when the page can't be opened (0206)
     await b.loaded(); // the panel's page itself, not the blank one Chrome opens first: asked about that, Chrome never answers (0159)
     // Chrome reads the manifest a little after the page has loaded: until then it reports none.
     let app;
@@ -194,5 +195,5 @@ test('0149 AC4: in a browser, the page reports no manifest errors, and its icons
       return sum / (180 * 180 * 3);
     })()`);
     assert.ok(diff < 2, `the PNG differs from the browser's drawing of icon.svg by ${diff.toFixed(2)} a channel on average`);
-  } finally { await b.close(); await stop(p); }
+  } finally { try { await b?.close(); } finally { await stop(p); } }
 });
