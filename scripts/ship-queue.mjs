@@ -76,6 +76,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
   const last = new Map(); // each ticket's refs at its last try
   let current = null; // the ship this speck run has going
   let hold = null; // the base branch's commit a ship found failing (exit 14): no ship starts while it's still there
+  const killed = new Map(); // 0212: each ticket's refs when a ship of it killed partway was last tried again at once
 
   const ended = (id, prev, refs, log, since, code, error) => {
     current = null;
@@ -84,6 +85,14 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
     if (code === 15) return prev ? last.set(id, prev) : last.delete(id);
     // The record's message is this ship's only if the ship took the record after it started.
     const rec = shipState(runs, id);
+    // 0212: a ship killed partway left its record without an end. That's no answer about the ticket, so it's tried
+    // again on the next check, once for these refs: killed again with nothing new, it waits for a new commit.
+    const key = `${refs.base} ${refs.head}`;
+    if (rec && !rec.running && !rec.ended && rec.started >= since && killed.get(id) !== key) {
+      killed.set(id, key);
+      prev ? last.set(id, prev) : last.delete(id);
+      return say(`${id}'s ship was stopped partway, so speck run will try it again.`);
+    }
     const why = error || (rec?.started >= since && rec.message) || lastLine(log) || (code === null ? 'it was stopped' : `it exited with ${code}`);
     say(`${id} didn't ship: ${why}\nspeck run will try it again once ${base} or its branch has a new commit.`);
     if (code === 14) {

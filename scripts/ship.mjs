@@ -3,12 +3,13 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, worktreeList, ticketBranches } from './core.mjs';
+import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, ticketBranches } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
 import { testRun } from './results.mjs';
 import { failingTests } from './tap.mjs';
 import { sharedCacheDir } from './turns.mjs';
 import { removeScratch } from './scratch.mjs';
+import { shipFolders, putBranchBack } from './ship-folders.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -132,18 +133,6 @@ function remoteBaseCatchUp(repo, remote, base) {
   throw new SpeckError(`Your ${base} and ${remote}'s ${base} each have commits the other doesn't, so nothing was shipped. Combine them with \`git checkout ${base} && git pull\`, then ship again.`);
 }
 
-// Where shipping happens. The ticket-branch steps run where the branch is checked out (or in this folder if it
-// isn't checked out anywhere, as before worktrees). The merge runs where the base branch is checked out, or in
-// that same folder if it isn't checked out anywhere. `linked` is the ticket's own worktree, removed after shipping.
-function shipFolders(repo, branch, base) {
-  const list = worktreeList(repo);
-  const main = list[0].path;
-  const at = b => list.find(w => w.branch === b)?.path || null;
-  const branchAt = at(branch), baseAt = at(base);
-  const work = branchAt || fs.realpathSync(repo);
-  return { main, work, mergeAt: baseAt || work, linked: branchAt && branchAt !== main ? branchAt : null };
-}
-
 // Each tracked file with uncommitted changes, staged or not: its paths (a rename or copy has two, `from` first), its
 // name as git shows it, and whether the change is staged. --no-optional-locks keeps git status from rewriting the
 // index, so checking again and again while ship waits never gets in the way of your own `git commit`.
@@ -188,10 +177,11 @@ export function shipTicket(repo, id) {
   const base = cfg.base_branch;
   const branch = ticketBranch(repo, cfg, pad);
   const waitMinutes = shipWaitMinutes(cfg);
-  const { main, work, mergeAt, linked } = shipFolders(repo, branch, base);
+  const { main, work, mergeAt, linked, astray } = shipFolders(repo, branch, base);
   const here = fs.realpathSync(repo);
   if (!fs.existsSync(work))
     throw new SpeckError(`${branch} is checked out in a worktree at ${work}, but that folder is missing. Run \`git worktree prune\` so git forgets it, then ship again.`);
+  if (astray) putBranchBack(work, branch, astray);
   if (git(['status', '--porcelain'], work).trim())
     throw new SpeckError(work === here
       ? 'You have uncommitted or untracked changes. Commit or remove them so the working tree is clean, then run this again.'
@@ -567,7 +557,10 @@ export function cmdShip(args) {
     // Read the ticket where its branch is checked out, so the checks see the approved copy, not the base branch's.
     const cfg = loadConfig(repo);
     let folder = repo;
-    try { folder = shipFolders(repo, ticketBranch(repo, cfg, id), cfg.base_branch).work; } catch { /* no branch: shipTicket says so */ }
+    try {
+      const f = shipFolders(repo, ticketBranch(repo, cfg, id), cfg.base_branch);
+      if (!f.astray || f.astray === 'merge') folder = f.work; // anything else there: shipTicket refuses, naming it
+    } catch { /* no branch: shipTicket says so */ }
     const why = autoShipBlocker(folder, cfg, id);
     if (why) throw new SpeckError(`Not shipping automatically: ${why}. The ticket stays approved, waiting for you to run /speck-ship ${String(id).padStart(4, '0')}.`, 12);
   }
