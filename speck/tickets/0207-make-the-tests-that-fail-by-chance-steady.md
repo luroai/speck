@@ -42,6 +42,8 @@ Those four tests give the same result however busy the machine is.
 - From 0187's build: 0176 AC1 failed at 333 vs 377 ms against a 10% limit, and passed alone. From 0191's: the 0177 AC3 checks failed at 1306 and 1106 ms against 1 second while another suite ran.
 - Builds after 0206, which runs after 0198: 0198 may change these same test files.
 - Failing before this build: none (speck test reused the passing result of commit 315f9e6, with nothing outside speck/ changed since).
+- Self-check: the new 0176 check's own busy child spun for 300 ms of wall-clock time, so a busy machine gave it less CPU and it could fail by chance; it now works until it has used 300 ms of CPU.
+- Whole-suite run: "0198 AC3: test/panel-0177.test.mjs keeps every test and every assertion it had" compared the file as it is now with 0198's start, so it fails on any later change to those assertions, including AC3's removal of the 1-second limits. It now compares 0198's start with 0198's approved commit, which is the change it guards. panel.mjs also went one line over the 600-line limit (0078 AC2), so its comment was shortened.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -54,3 +56,5 @@ Those four tests give the same result however busy the machine is.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- 0128 AC4's cause (AC2): the panel showed speck run as on as soon as it held its lock, but speck run writes its first line ("speck run: watching for ready tickets…") to the shared run.log a moment later. On a busy machine that line landed after the second Turn on click had started reading the log, so the second speck run's refusal began with the first one's line, and the test's anchored match failed. Reproduced 3 times in 15 runs of that test with every core busy. Fixed in the panel: it shows speck run as on only once it holds the lock and has written its first line. 0 failures in 15 runs under the same load afterwards; 0207 AC2 pauses a copy of speck run between the two to check it every time.
+- Three runs in a row of each changed file, on 2026-10-15 (AC4): ship-0153 15/15 passed each time; panel-0128 13/13; build-log-0176 4/4; panel-0177 8/8; flaky-0207 5/5. Under every core kept busy as well: flaky-0207 3 runs, panel-0177 and ship-0153 2 runs, all passing; 0176 AC1 measured 440 ms against 440 ms of CPU, where wall-clock time had missed by 13%.

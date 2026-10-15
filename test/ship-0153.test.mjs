@@ -111,11 +111,13 @@ test('0153 AC1 AC2: the panel\'s Ship button shows as shipping in /api/state, an
 });
 
 test('0153 AC2: a second speck ship for the same ticket refuses, saying a ship is already running, and changes nothing', async () => {
-  const { gate, test: cmd } = gated();
+  const { gate, reached, test: cmd } = gated();
   const r = shipRepo({ test: cmd });
   autoOn(r); // so the --auto ship below gets as far as the record
   const s = shipping(r.dir);
   try {
+    // Once the first ship is in its tests, it has finished checking out the ticket's worktree, so the snapshot holds (0207).
+    await until(() => fs.existsSync(reached), 'the first ship to reach its tests');
     const rec = await until(() => running(r.dir), 'the first ship to start');
     const snap = r.snapshot();
     for (const [cwd, args] of [[r.dir, []], [r.wt, []], [r.dir, ['--auto']]]) {
