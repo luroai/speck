@@ -1,7 +1,7 @@
 ---
 id: "0187"
 title: "Push board changes to the panel as they happen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ approved: "2026-10-14T23:02:07.828Z"
 ---
 # 0187 · Push board changes to the panel as they happen
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel page asks for the whole board every 2 seconds, whether anything has changed or not. Changes show up as much as 2 seconds late, every open page costs the panel a full reading of the board every 2 seconds, and a slow answer flashes "Disconnected" across the top (0186).
@@ -335,6 +335,100 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Approved. Board changes reach open pages promptly, share one reading and recover automatically after stream interruptions. The stale reconnect and failed-download recovery defects are fixed. Existing failed-request banner timing remains for ticket 0186."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · changes_requested · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9ba18872dca16d94396ffa8436db3c343749cfca",
+    "merge": true,
+    "thread_id": "01a13c95-f6df-7db3-9d63-666dca07ead5",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 598757,
+      "cached_input_tokens": 441216,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4114,
+      "reasoning_output_tokens": 193
+    },
+    "saved_at": "2026-10-15T06:07:47.521Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "unclear",
+        "evidence": "The latest run passes all AC1 tests, but the builder reports an earlier failure of the new-worktree update test and has not established whether it was scheduling delay or a missed file event. boardWatcher checks folder existence before installing watches, without reconciling changes during installation. The documented possible 15-second delay would violate this criterion."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The merged page retains announcement-driven fetches and one event stream. Both AC2 tests pass, covering no board polling and idle keep-alives."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The shared reader and coalescing remain intact. Passing AC3 tests cover four subscribers sharing one reading, ten changes producing one update and freshness after writes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reconnect fixes remain intact, and all AC4 tests pass, including restart, waking, stale-cache invalidation and failed-fetch recovery. The accepted distinction concerning ticket 0186 remains applicable."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The merged full suite reports 1723 passes, zero failures and three skips. The shared test helper preserves both EventSource support and main's shared Chromium lifecycle. The former 0173 failure was fixed upstream by 0191, rather than by this ticket."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel.mjs:404",
+        "issue": "The previous stale-board reconnect defect remains fixed after the merge.",
+        "suggested_fix": "No further action required; retain the passing reconnect regression test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:2375",
+        "issue": "Failed board requests recover on keep-alives. Immediate failed-request notices remain covered by existing compatibility tests and ticket 0186.",
+        "suggested_fix": "Address failed-request notice timing through ticket 0186.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/build-log-0176.test.mjs:145",
+        "issue": "The previously reported additional performance-test failure is absent from the fresh merged-suite run.",
+        "suggested_fix": "No further action required; the assertion remains unchanged.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "scripts/board-feed.mjs:82",
+        "issue": "The newly disclosed worktree-update failure leaves AC1 unverified. The follow-up note explicitly records an uninvestigated possibility that a new worktree's first ticket change is missed until the 15-second reread. Passing a later run does not establish that this is only machine load, and deferring a possible failure of this ticket's core requirement is insufficient.",
+        "suggested_fix": "Investigate the failed run to distinguish slow processing from a missed watch event. Add a controlled regression check for folder creation and ticket changes during watch installation; fix any demonstrated gap. If it is solely scheduling delay, provide evidence identifying that delay rather than relying on subsequent passing runs.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both sets of changes and the latest suite passes. However, a newly disclosed failure may mean the first change in a new build workspace arrives up to 15 seconds late. That needs investigation before approval can be renewed."
   }
 }
 ```
