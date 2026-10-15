@@ -1,7 +1,7 @@
 ---
 id: "0216"
 title: "Say a merged but unpushed ship needs a push in speck run's log"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-don-t-say-speck-run-will-retry-a-ship-that-
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:12:23.185Z"
+approved: "2026-10-15T23:13:56.424Z"
 
 ---
 # 0216 · Say a merged but unpushed ship needs a push in speck run's log
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ship that `speck run` started merges a ticket but can't push it, speck run's log says the ticket "didn't ship" and that it will try again once the base branch or the ticket's branch has a new commit. The ticket is done, so speck run never tries again, and the user waits for a retry that never comes while the remote stays behind.
@@ -49,9 +50,14 @@ When speck run ships a ticket and the merge works but sending it to the shared c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 120,711
+- Elapsed since build started: 2 min
+- Changed lines: 2 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
