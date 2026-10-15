@@ -1,7 +1,7 @@
 ---
 id: "0188"
 title: "Send the panel only what changed"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0187"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T11:27:10.204Z"
+approved: "2026-10-15T11:47:03.035Z"
 
 ---
 # 0188 · Send the panel only what changed
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0187, each change pushed to the panel sends the whole board, 1.19 MB on 2026-10-14, to every open page, including a phone over its data connection, even when one ticket changed.
@@ -53,9 +54,15 @@ Worth keeping an eye on: after the page wakes up, reconnects or flips the Auto-b
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A priority change to one ticket can send the entire ticket order, so update size grows with the board.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 533,649
+- Elapsed since build started: 20 min
+- Changed lines: 178 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Known limit: flipping the Auto-build switch makes the next update the whole board, because the page changes its own copy of speck run's state.
