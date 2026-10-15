@@ -1,7 +1,7 @@
 ---
 id: "0223"
 title: "Say which review round is running"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-14-say-which-review-round-is-running.md"      
 after: ["0217"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:48:31.710Z"
+approved: "2026-10-15T23:57:46.058Z"
 
 ---
 # 0223 · Say which review round is running
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket stays `reviewing` between review rounds, and its card says "<reviewer> is reviewing · round <n>" with the last recorded round. After round 1 asks for changes, the card still says "round 1" while the builder fixes the findings and while the reviewer runs round 2, so someone watching can't tell who is at work.
@@ -49,9 +50,16 @@ A ticket under review in the Build queue now says who is at work. While the revi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Claude subagent reviews are never marked as running.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 756,966
+- Elapsed since build started: 9 min
+- Changed lines: 107 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The builder badge still shows the review pose while the builder fixes findings: speck/ideas/2026-10-15-show-the-builder-at-work-while-it-fixes-findings.md
