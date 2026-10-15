@@ -494,22 +494,37 @@ export const addPaused = (t, since, now = Date.now()) =>
 
 export const isAncestor = (repo, a, b) => sh('git', ['merge-base', '--is-ancestor', a, b], { cwd: repo }).status === 0;
 
-// Every checkout of this repo, the main one first, with the branch each one has (null when detached).
+// Every checkout of this repo, the main one first, with the branch each one has (null when detached) and its commit.
 export function worktreeList(repo) {
   return git(['worktree', 'list', '--porcelain'], repo).split('\n\n').filter(b => b.trim()).map(block => {
     const lines = block.split('\n');
     const at = lines.find(l => l.startsWith('worktree '))?.slice(9);
     const ref = lines.find(l => l.startsWith('branch '))?.slice(7);
-    return { path: fs.existsSync(at) ? fs.realpathSync(at) : at, branch: ref ? ref.replace(/^refs\/heads\//, '') : null };
+    const head = lines.find(l => l.startsWith('HEAD '))?.slice(5) || null;
+    return { path: fs.existsSync(at) ? fs.realpathSync(at) : at, branch: ref ? ref.replace(/^refs\/heads\//, '') : null, head };
   });
+}
+
+// 0196: while speck ship tests a ticket merged with the base branch, its worktree has that merge checked out detached
+// (0192). A detached worktree whose commit is a merge of a ticket branch's tip is taken as that branch's, so the ticket
+// shows as it is there, approved, rather than as the base branch's copy has it.
+function shipTestBranch(repo, w, isTicket, tips) {
+  if (w.branch || !w.head) return null;
+  const merged = sh('git', ['rev-parse', '--verify', '-q', `${w.head}^2`], { cwd: repo });
+  if (merged.status !== 0) return null;
+  tips.list ??= git(['for-each-ref', '--format=%(objectname) %(refname:short)', 'refs/heads/'], repo).split('\n')
+    .map(l => l.split(' ')).filter(([, name]) => name && isTicket(name));
+  return tips.list.find(([sha]) => sha === merged.stdout.trim())?.[1] ?? null;
 }
 
 // Tickets being built in other worktrees, read from that worktree's copy, which has the real status. With `only`, just that ticket's.
 export function ticketsElsewhere(repo, cfg, only = null) {
   const here = fs.realpathSync(repo);
   const ticketBranch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d{4})-`);
+  const tips = {}; // the ticket branches' tips, read once if a worktree is detached
   return worktreeList(repo).flatMap(w => {
-    const m = w.branch && w.branch.match(ticketBranch);
+    const branch = w.branch ?? shipTestBranch(repo, w, name => ticketBranch.test(name), tips);
+    const m = branch && branch.match(ticketBranch);
     if (!m || (only !== null && m[1] !== padId(only)) || w.path === here || !fs.existsSync(w.path)) return [];
     try { return [{ ...findTicket(w.path, m[1]), at: w.path }]; } catch { return []; }
   });

@@ -43,6 +43,8 @@ An approved ticket that `auto_ship` covers shows as on its way out from its appr
 - Cause of AC1: `doing()` and `to_ship` in `templates/panel.html` were written when a build shipped its own ticket, so an approved ticket whose build had ended was waiting for the user.
 - The ship record (`takeShip` in `scripts/ship.mjs`) says whether a ticket's ship is running.
 - Failing before this build: none
+- Changed test: `0167 AC2` expected an approved ticket auto-ship covers, whose build has ended, to wait for the user (to_ship true). AC1 makes that one wait to ship instead, so its expectation for that ticket is now to_ship false. It still passes.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
