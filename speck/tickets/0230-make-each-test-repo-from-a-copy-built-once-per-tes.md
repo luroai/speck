@@ -39,6 +39,7 @@ Tests get their temporary repos by copying one made earlier in the same test fil
 ## Notes
 - The helpers are in `test/support/speck.mjs`; `test/support/tmp.mjs` cleans up temporary folders and leaves `speck-keep-*` ones alone between tests.
 - Write the suite's total test time before and after, on the same machine, in the Delivery log.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
