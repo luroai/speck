@@ -44,6 +44,7 @@ speck's own test suite starts its slowest test files first.
 - Decided 2026-10-15: `npm test` runs a small runner script that orders the files by their last recorded times and starts them with `run()` from `node:test`, recording each file's time under `speck/.cache/`. Criterion 3 then rests on that script: its output must be what speck's test summary and retry read from `npm test` today, and it must fail when any test fails.
 - Measured 2026-10-15 on an 8 GB MacBook Air, from 0215's full run.
 - Failing before this build: none
+- Self-check: a times file that can't be written (speck/.cache/ not a folder, a read-only disk) no longer ends the run in a stack trace with the wrong exit code: it says so on stderr and the run keeps its tests' result. Added a test for it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
