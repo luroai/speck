@@ -1,7 +1,7 @@
 ---
 id: "0213"
 title: "Highlight a P0 priority tag at least as much as P1"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-10-highlight-p0-in-the-panel.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T23:12:28.214Z"
 
 ---
 # 0213 · Highlight a P0 priority tag at least as much as P1
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A fix ticket for a broken `main` is the most urgent thing on the board, but its P0 priority tag is plain grey, so it looks less important than a P1, whose tag is highlighted. Someone scanning the panel can miss what to deal with first.
