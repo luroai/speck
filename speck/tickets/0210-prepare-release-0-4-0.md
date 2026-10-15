@@ -1,7 +1,7 @@
 ---
 id: "0210"
 title: "Prepare release 0.4.0"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -11,13 +11,13 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0198", "0199", "0200", "0201", "0202", "0203", "0204", "0205", "0206", "0207", "0208", "0209"]                # ticket ids that must be done first
+after: ["0198", "0199", "0200", "0201", "0202", "0203", "0204", "0205", "0206", "0207", "0208", "0209", "0211"]                # ticket ids that must be done first
 created: 2026-10-15
 
 ---
 # 0210 · Prepare release 0.4.0
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Over 70 tickets have shipped since the `v0.3.0` tag on 11 October, including speck run's ship queue, testing the merged result before a ship, retrying chance test failures and the fixes for leaked processes. Anyone following the README's setup prompt still gets 0.3.0.
