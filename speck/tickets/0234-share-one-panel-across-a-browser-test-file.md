@@ -41,7 +41,7 @@ The real-browser test files whose page stub answers every request start one repo
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes for someone using speck: this only makes speck's own test suite quicker. Two of the slowest test files, the ones that check the Build queue cards and the panel's header in a real browser, used to start a fresh copy of the panel for every check. They now start one and share it across the file, so together they took about 12 seconds in this build. To see it, run those two test files and compare their time with before. Worth keeping an eye on: a check added to either file that changes the shared panel's tickets would now affect the checks after it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -51,6 +51,9 @@ The real-browser test files whose page stub answers every request start one repo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Round 1 was sent only the ticket's own test files, as the review skill says, while the build skill says round 1 gets the whole suite's output. The reviewer asked for the whole suite. Skipped as an inbox note: ticket 0235 is already changing which tests each round runs.
+  - Tidy-up: the other browser test files could share a panel too once their page stubs answer every request (out of scope here).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -112,6 +115,69 @@ The real-browser test files whose page stub answers every request start one repo
     ],
     "escalation_question": "",
     "summary": "The two browser test files now share a panel, and the lifecycle tests demonstrate cleanup after both passing and failing tests. The focused run passed all 45 tests. Approval needs a full-suite run to establish that existing tests still pass."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9d431ce7b8c604636c10a39c49d36f9590c328db",
+    "thread_id": "01a141b9-804d-7860-b828-534f3506420b",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 217304,
+      "cached_input_tokens": 185600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1373,
+      "reasoning_output_tokens": 67
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:45:33.575Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both browser files use sharedPanel(), whose cached startup promise shares one panel and repo. Passing 0234 AC1 tests verify identity across sequential and concurrent calls and survival between tests."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shared-panel.mjs registers an after() hook to stop the panel and remove its repo. Both 0234 AC2 subprocess tests pass, verifying cleanup after passing and failing test files."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0234-tests.txt: the full suite reports 2048 passed, 0 failed and 3 skipped. Implementation files are unchanged since round 1."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "/tmp/speck-0234-tests.txt",
+        "issue": "Round 1 supplied only focused test results, leaving whole-suite regression coverage unverified.",
+        "suggested_fix": "Provide fresh whole-suite results. Completed: 2048 passed, 0 failed and 3 skipped.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The two browser test files now share one panel each, with cleanup verified after both passing and failing tests. The full suite passes, resolving the remaining concern. Approved for the owner's merge decision."
   }
 }
 ```
