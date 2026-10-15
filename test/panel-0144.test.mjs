@@ -30,7 +30,7 @@ test('0144 AC2: while speck run is off, the indicator reads "Auto-build off" wit
 });
 
 test('0144 AC3: the indicator\'s tooltip says what a click does, on or off (0150)', async () => {
-  for (const [run, title] of [[null, 'Start Auto-build: build ready tickets one at a time'], [{ on: true, pid: 7 }, 'Pause Auto-build: ready tickets wait']]) {
+  for (const [run, title] of [[null, 'Start Auto-build: build ready tickets'], [{ on: true, pid: 7 }, 'Pause Auto-build: ready tickets wait']]) {
     const p = fakePage([state(run)]);
     await p.settle();
     assert.equal(pillOf(p).title, title);
