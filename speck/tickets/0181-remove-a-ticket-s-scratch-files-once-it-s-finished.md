@@ -38,6 +38,7 @@ A ticket's scratch files are removed once the ticket is shipped or cancelled.
 
 ## Notes
 - The paths come from `skills/speck-build/SKILL.md` and `skills/speck-review/SKILL.md`. Builders also write others under the same prefix, for example `/tmp/speck-0164-main-tests.txt`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
