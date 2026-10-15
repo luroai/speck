@@ -1,7 +1,7 @@
 ---
 id: "0217"
 title: "Stop the build timer while a stopped build waits"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-14-stop-the-build-timer-while-a-stopped-build-waits.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0214"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T23:34:36.098Z"
 
 ---
 # 0217 · Stop the build timer while a stopped build waits
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build stops or exits before finishing while its ticket is still building or reviewing, the Build queue says so but the ticket's timer keeps counting, and the wait ends up in its shipped minutes. Nobody is building the ticket then, so this counts time spent waiting for the user, which 0166 removed for blocked and paused tickets.
