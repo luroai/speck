@@ -41,22 +41,13 @@ if (process.env.FAKE_BLOCK) {
 setTimeout(() => process.env.FAKE_SIGNAL ? process.kill(process.pid, process.env.FAKE_SIGNAL) : process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
 `;
 
-// A repo with speck installed, the given tickets committed and build_command pointing at the fake builder. Each kind
-// is built once per test file and copied (copy.mjs), apart from one given a command of its own, which may name
-// folders made for that one call.
+// A repo with speck installed, the given tickets committed and build_command pointing at the fake builder, unless
+// `command` is given. Each kind is built once per test file and copied (copy.mjs).
 export function runRepo({ tickets = [['0001', {}]], max, command, worktrees = 'false' } = {}) {
-  let dir, out;
-  if (command !== undefined) {
-    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
-    out = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-out-'));
-    buildRunRepo(dir, { tickets, max, worktrees, cmd: command });
-  } else {
-    const fake = keptFile('fake-build.cjs', FAKE);
-    const cmd = `"${process.execPath}" "${fake}" @repo {id} {session}`;
-    dir = copied('run', [tickets, max, worktrees], 'speck-', d => buildRunRepo(d, { tickets, max, worktrees, cmd }));
-    out = path.join(dir, '.git', 'fake-out');
-    fs.mkdirSync(out);
-  }
+  const cmd = command !== undefined ? command : `"${process.execPath}" "${keptFile('fake-build.cjs', FAKE)}" @repo {id} {session}`;
+  const dir = copied('run', [tickets, max, worktrees, cmd], 'speck-', d => buildRunRepo(d, { tickets, max, worktrees, cmd }));
+  const out = path.join(dir, '.git', 'fake-out');
+  fs.mkdirSync(out);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   const cfgFile = path.join(dir, 'speck', 'config.yml');
   const calls = () => fs.readdirSync(out).filter(f => f.endsWith('.json')).map(f => ({ file: f, ...JSON.parse(fs.readFileSync(path.join(out, f), 'utf8')) })).sort((a, b) => a.at - b.at || (a.file < b.file ? -1 : 1)); // in launch order (builds launched together, by id)

@@ -40,6 +40,8 @@ const KINDS = {
   'ship.mjs shipRepo': () => ship.shipRepo(),
   'ship.mjs shipRepo without a worktree': () => ship.shipRepo({ worktree: false }),
   runRepo: () => run.runRepo(),
+  'runRepo with a command of its own': () => run.runRepo({ command: '/nonexistent/builder {id}' }),
+  'ship.mjs shipRepo whose test command names its main checkout': () => ship.shipRepo({ test: 'cd {main} && true' }),
   panelRepo: () => panel.panelRepo(),
 };
 
@@ -82,6 +84,16 @@ test('0230 AC2: a change in one copy never shows in another, including its fake 
   assert.equal(run.runOnce(r1.dir).status, 0);
   assert.ok(r1.calls().length >= 1);
   assert.equal(r2.calls().length, 0);
+});
+
+test('0230 AC2: {main} in a ship repo\'s test command is each copy\'s own main checkout, from its worktree', () => {
+  const a = ship.shipRepo({ test: 'printf x > {main}/marker.txt' }), b = ship.shipRepo({ test: 'printf x > {main}/marker.txt' });
+  const cmd = fs.readFileSync(path.join(a.wt, 'speck', 'config.yml'), 'utf8').match(/^  test: (.*)$/m)[1];
+  const res = spawnSync('sh', ['-c', JSON.parse(cmd)], { cwd: a.wt, encoding: 'utf8' });
+  assert.equal(res.status, 0, res.stderr);
+  assert.ok(fs.existsSync(path.join(a.dir, 'marker.txt')));
+  assert.equal(fs.existsSync(path.join(a.wt, 'marker.txt')), false);
+  assert.equal(fs.existsSync(path.join(b.dir, 'marker.txt')), false);
 });
 
 let earlier;
