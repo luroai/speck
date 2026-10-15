@@ -77,18 +77,27 @@ const result = (r, fail = false) => ({ status: fail && r.status === 0 ? 1 : r.st
 export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hint = '', branch = '' } = {}) {
   testStallMs(cfg); // a bad test_stall_minutes is refused even when a recorded result would do
   const code = testedCode(repo, cmd);
-  const kept = code && reuse !== 'none' ? recorded(repo, code, cmd) : null;
-  if (kept && (reuse === 'any' || kept.status === 0)) {
+  // The result recorded for `code` that this run may reuse, or null. Asked again once the run has a turn, so a result
+  // recorded while it waited is reused too (0237), as long as the checkout still holds the same code.
+  const reusable = (again = false) => {
+    if (!code || reuse === 'none' || (again && testedCode(repo, cmd)?.key !== code.key)) return null;
+    const kept = recorded(repo, code, cmd);
+    return kept && (reuse === 'any' || kept.status === 0) ? kept : null;
+  };
+  const reused = kept => {
     const result = kept.status === 0 ? 'passed' : `failed (exit code ${kept.status})`;
     console.log(`Reusing the test result from commit ${kept.commit.slice(0, 7)} at ${when(kept.at)}: ${result}. No file outside speck/ has changed since, nor has the test command.${hint}`);
     if (kept.output) process.stdout.write(kept.output.endsWith('\n') ? kept.output : `${kept.output}\n`);
     return { status: kept.status, signal: null, stalled: false, output: kept.output };
-  }
+  };
+  const kept = reusable();
+  if (kept) return reused(kept);
   const output = path.join(resultsDir(repo), `run.${crypto.randomUUID()}.out`);
   const written = () => { try { return fs.readFileSync(output, 'utf8'); } catch { return ''; } };
   const failed = (res, text) => ({ ...res, output: res.status === 0 ? '' : text });
   try {
-    const r = runTestsInTurn(repo, cfg, cmd, onStart, output);
+    const r = runTestsInTurn(repo, cfg, cmd, onStart, output, () => reusable(true));
+    if (r.reused) return reused(r.reused);
     let text = written();
     // A run that failed with an exit code gets one more try at its failing tests (0195). One that passes it counts as
     // passed, and one that doesn't keeps the first run's result, with both runs' output.
