@@ -40,6 +40,7 @@ A call to the test browser that's never answered fails its own test within a tim
 - Asked for 2026-10-15, for release 0.4.0.
 - From 0152's build: about one full run in three hung at test 714, with a panel server and Chrome open under `test/panel-0149.test.mjs`.
 - Builds after 0198, which may change the same browser test helpers.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
