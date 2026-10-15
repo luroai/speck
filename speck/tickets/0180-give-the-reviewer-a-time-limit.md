@@ -1,7 +1,7 @@
 ---
 id: "0180"
 title: "Give the reviewer a time limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T11:11:39.043Z"
+approved: "2026-10-15T11:34:32.380Z"
 
 ---
 # 0180 · Give the reviewer a time limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck runs the Codex reviewer, and any reviewer set up as a command, with no time limit. If one hangs, the review waits for ever, and so does its build, which keeps holding one of `max_parallel_builds`.
@@ -51,9 +52,16 @@ A review no longer waits for ever if the reviewer gets stuck. If Codex, or anoth
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Killing only -child.pid does not end every process the reviewer started.; F2 Valid large settings cause immediate timeouts.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 858,411
+- Elapsed since build started: 23 min
+- Changed lines: 142 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): `speck/ideas/2026-10-15-end-a-stalled-test-run-s-detached-processes-too.md`: test stall handling (0152) still ends only the process group, missing detached or orphaned processes.
 - Known limit: a process that clears its own environment and leaves both the reviewer's process group and its ancestry isn't found when the limit ends the reviewer.
