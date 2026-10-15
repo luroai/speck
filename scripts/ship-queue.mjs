@@ -12,7 +12,7 @@ const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
 // The approved tickets speck run may ship, from `speck status --json`'s tickets, in the order it ships them: fix
 // tickets first, then the one approved earliest. auto_ship there is what `speck ship --auto` decides. A ticket whose
-// build is still running is left to that build, which ships it itself.
+// build is still running, such as one handed back to it (0194), waits for that build to end.
 export function shipOrder(tickets) {
   const at = t => { const ms = Date.parse(t.approved); return Number.isFinite(ms) ? ms : Infinity; };
   return tickets.filter(t => t.status === 'approved' && t.auto_ship === true && !t.build_running)
@@ -23,7 +23,7 @@ export function shipOrder(tickets) {
 const headOf = (repo, branch) => { const r = sh('git', ['rev-parse', '--verify', '-q', `refs/heads/${branch}`], { cwd: repo }); return r.status === 0 ? r.stdout.trim() : ''; };
 
 // The commits the base branch and the ticket's branch are at: '' for one that isn't there, or when there's more than one.
-function refsOf(repo, cfg, id) {
+export function refsOf(repo, cfg, id) {
   let branches = [];
   try { branches = ticketBranches(repo, cfg, id); } catch { /* unreadable: no branch */ }
   return { base: headOf(repo, cfg.base_branch), head: branches.length === 1 ? headOf(repo, branches[0]) : '' };
@@ -61,16 +61,23 @@ export function launchShip(repo, id, log, done) {
   finally { if (fd !== null) fs.closeSync(fd); }
 }
 
+// The refusals a ticket's build has steps for, by the exit code of the ship, so speck run hands the ticket back (0194):
+// a conflict, the tests failing on the ticket merged with the base branch while the base branch's own pass, and the
+// base branch's own tests failing.
+const HAND_BACK = { 13: 'conflict', 16: 'tests', 14: 'base' };
+
 // speck run's queue. check(tickets), on each of speck run's checks, starts the next ship if one may start now. note()
-// is what speck run adds when it stops. `launch` starts a ship (launchShip), and `say` prints a line.
-export function shipQueue(repo, cfg, { say = console.log, launch = launchShip } = {}) {
+// is what speck run adds when it stops. `launch` starts a ship (launchShip), `say` prints a line, and `handBack` gets
+// { id, kind, why, head } for a refusal the ticket's build has steps for, head being its branch as the ship tried it.
+// A ticket for which `waiting(id)` is true has a hand-back still to run, so it isn't shipped until that has run.
+export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, handBack = () => {}, waiting = () => false } = {}) {
   const runs = sharedCacheDir(repo, 'runs');
   const base = cfg.base_branch;
   const last = new Map(); // each ticket's refs at its last try
   let current = null; // the ship this speck run has going
   let hold = null; // the base branch's commit a ship found failing (exit 14): no ship starts while it's still there
 
-  const ended = (id, prev, log, since, code, error) => {
+  const ended = (id, prev, refs, log, since, code, error) => {
     current = null;
     if (code === 0) return say(`Shipped ${id}.`);
     // Another ship started just before it: not a try, so it's tried again once that one has ended.
@@ -83,6 +90,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip } 
       hold = headOf(repo, base); // as the ship ended: it may have tested commits made while it ran
       say(`Shipping is on hold until ${base} passes: speck run won't start another ship until ${base} has a new commit.`);
     }
+    if (!error && HAND_BACK[code]) handBack({ id, kind: HAND_BACK[code], why, head: refs.head });
   };
 
   const check = tickets => {
@@ -93,6 +101,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip } 
       say(`${base} has a new commit, so speck run is shipping again.`);
     }
     for (const t of shipOrder(tickets)) {
+      if (waiting(t.id)) continue;
       const refs = refsOf(repo, cfg, t.id);
       if (!last.has(t.id)) {
         const message = earlierTry(repo, runs, t.id, refs);
@@ -108,7 +117,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip } 
       current = t.id;
       last.set(t.id, refs);
       say(`Shipping ${t.id}: speck ship ${t.id} --auto. Log: ${path.relative(repo, log)}`);
-      launch(repo, t.id, log, (code, error) => ended(t.id, prev, log, since, code, error));
+      launch(repo, t.id, log, (code, error) => ended(t.id, prev, refs, log, since, code, error));
       return;
     }
   };

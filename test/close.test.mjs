@@ -135,13 +135,13 @@ test('0021 AC4: a ticket missing a log section is refused with a plain message, 
   assert.deepEqual([r.text(), r.g('rev-parse', 'HEAD')], snap);
 });
 
-test('0021 AC5: the build skill closes with speck close, then speck ship --auto', () => {
+test('0021 AC5: the build skill closes with speck close, and since 0194 runs no speck ship after it', () => {
   const build = fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
   const approved = build.split('## 5. Approved')[1].split('\n## ')[0];
   assert.match(approved, /speck close <id>/);
   assert.doesNotMatch(approved, /speck set <id> status approved/);
   assert.ok(approved.indexOf('follow-up') < approved.indexOf('speck close'), 'follow-up ideas come first');
-  assert.ok(approved.indexOf('speck close') < approved.indexOf('speck ship <id> --auto'));
+  assert.doesNotMatch(approved, /speck ship <id> --auto/);
   assert.match(spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' }).stdout, /speck close <id>/);
 });
 

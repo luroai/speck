@@ -62,9 +62,9 @@ test('0036 AC4: the notes are committed by name on the ticket branch before spec
   assert.match(s, /by name/, 'staged by name');
   assert.match(s, /ticket branch/, 'on the ticket branch');
   const sec5 = build().slice(build().indexOf('## 5. Approved'), build().indexOf('## 6. Block'));
-  const shipped = sec5.split('\n').find(l => /exit code 0/.test(l));
-  const not12 = sec5.split('\n').find(l => /exits with 12/.test(l));
-  for (const [name, line] of [['shipped', shipped], ['exit 12', not12]]) {
+  // Since 0194 the build ends at approved, with one report whether or not speck run's ship queue ships it next.
+  const report = sec5.split('\n').find(l => /^3\. /.test(l));
+  for (const [name, line] of [['approved', report]]) {
     assert.match(line, /how many follow-ups went to the inbox/, `${name} report counts inbox notes`);
     assert.match(line, /or that none did/, `${name} report says when none did`);
   }
