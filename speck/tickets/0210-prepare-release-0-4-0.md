@@ -32,6 +32,7 @@ speck is ready to be released as 0.4.0.
 4. The brief's principle 7 describes how builds and shipping work in this release: builds end at approved, one ship queue in `speck run` ships tickets one at a time, and `max_parallel_builds` sets how many builds run at once (1 unless changed).
 5. No test that passed before this change fails. The test that checks the version in `package.json`, the newest changelog section and the README's setup prompt match passes with 0.4.0.
 6. `docs/releases/v0.4.0.md` holds the notes for the GitHub release page, written for someone deciding whether to try speck or upgrade: one short paragraph on what speck is and what this release is about, the three to five changes that matter most and why, how to install it (the setup prompt's command), what changes for someone upgrading from 0.3.0 (including that only `speck run` ships auto-ship tickets now, so it must be on), and a link to the full 0.4.0 section of `CHANGELOG.md`. Every claim in it matches a shipped ticket, and it uses no one's name.
+7. The README's "Built with speck" figures (tickets shipped and cancelled, the median time from a build starting to its ticket shipping, and the median review rounds with how many were approved first time) are worked out again from `speck/tickets/done/` as it is when this is built, the same way as before, and match it.
 
 ## Out of scope
 - Creating and pushing the `v0.4.0` tag, and publishing the GitHub release from `docs/releases/v0.4.0.md`, which the maintainer does once this has shipped.
