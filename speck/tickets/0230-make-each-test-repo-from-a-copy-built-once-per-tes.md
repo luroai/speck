@@ -43,7 +43,7 @@ Tests get their temporary repos by copying one made earlier in the same test fil
 - Self-check: no changes. The first whole-suite run found that the fake reviewer's log can't come from an environment variable, as one test runs speck review itself, so each copy's fake reviewer and fake builder log into that repo's own .git folder.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's own test suite now sets up each kind of practice project once per test file and hands every test a fresh copy of it, instead of building a new one from scratch for each test. Nothing changes for people using speck: this only affects how quickly speck's own tests run. To see it, run the test suite and compare its time with an earlier run on the same machine. On a busy machine the saving measured so far is small, a few per cent, so the bigger wins are expected from later tickets.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,11 @@ Tests get their temporary repos by copying one made earlier in the same test fil
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Suite time, whole suite with `speck test` on the same Linux box (other builds were running on it each time, so the numbers are noisy). Before: 1,982 tests, 128.7 s for the run, 1,661 s summed over the test files. After round 1's fixes: 1,999 tests, 124.8 s for the run, 1,608 s summed over the test files. An earlier run of the first version took 113.4 s and 1,442 s.
+- Follow-ups:
+  - Copy the repos that test files set up by hand (inbox: speck/ideas/2026-10-15-copy-test-repos-that-test-files-set-up-by-hand.md).
+  - Skipped: running the speck CLI inside the test process for a bigger saving, which 0231 covers.
+  - Known limit: a runRepo() or shipRepo() kind whose command names a folder made for one call (as tickerRepo() does) can never be reused, so each such call sets up a template that stays until its test file ends, then copies it. Such calls cost a copy more than before.
+  - Known limit: each fake builder and fake reviewer run now asks git for its repo's .git folder, to keep its log there.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +128,77 @@ Tests get their temporary repos by copying one made earlier in the same test fil
     ],
     "escalation_question": "",
     "summary": "The common helper paths now copy reusable repositories, and the suite passes with isolation and cleanup tests. Two supported helper variants still rebuild every time and need coverage and implementation before approval. The requested performance comparison is also missing."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "227ef60def851b8d7eeea625f988177a5ea2f35b",
+    "thread_id": "01a1418c-e991-7d12-90b7-ab2c3b1b1fc9",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 210818,
+      "cached_input_tokens": 158592,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1355,
+      "reasoning_output_tokens": 44
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:09:29.454Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "All shared repo helpers now use copied() in test/support/copy.mjs, including custom-command runRepo() and shipRepo() with {main}. Passing 0230 AC1 tests verify that repeated requests run no git init or setup commits and preserve repository contents."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0230 AC2 tests exercise independent commits, reviewer and builder logs, cleanup between tests, and subsequent copies. The new {main} test executes the configured command from a worktree and verifies that it writes only into that copy's main checkout."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0230-tests.txt: 1,999 tests, 1,996 passed, three skipped, zero failures. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/run.mjs; test/support/ship.mjs; test/repo-copy-0230.test.mjs",
+        "issue": "Custom-command and {main} helper variants previously bypassed copying.",
+        "suggested_fix": "Implemented: both variants now use cached templates, with passing tests covering repeated requests and per-copy main-checkout resolution.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "speck/tickets/0230-make-each-test-repo-from-a-copy-built-once-per-tes.md",
+        "issue": "The required before-and-after suite timing comparison was missing.",
+        "suggested_fix": "Implemented: the Delivery log records same-machine baseline and final timings, including the concurrent-load limitation.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All shared repository helpers now reuse templates while keeping test repositories independent and cleaning them up. Both earlier findings are resolved, and the full suite passes. Recorded timings show a modest improvement, though concurrent builds make the comparison noisy."
   }
 }
 ```
