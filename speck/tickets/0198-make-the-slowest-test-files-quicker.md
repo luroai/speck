@@ -42,6 +42,14 @@ The five slowest test files run quicker and still check everything they did.
 - Measured 2026-10-15 (whole suite, 1,727 tests, 146 s on 16 cores): total time of each ticket's tests: 0176 79 s, 0175 67 s, 0177 59 s, 0155 39 s, 0067 36 s, 0187 36 s, 0160 35 s. The likely files are `test/build-log-0176.test.mjs`, `test/reap-0175.test.mjs`, `test/panel-0177.test.mjs`, `test/panel-0155.test.mjs`, `test/panel-0067.test.mjs`, `test/panel-0187.test.mjs` and `test/panel-0160.test.mjs`, but AC1's own timing decides.
 - Checked 2026-10-15: `node --test` runs files in name order whatever order they're given in (Node v22.23.3), so starting slow files first isn't an option.
 - See the "Quick tests" section of `AGENTS.md` for what makes a test slow.
+- Failing before this build: none (`speck test` reused a passing result for this commit).
+- Timed at the start of the build (AC1): each of the 164 files in `test/` on its own with `node --test <file>`, three times, four files at a time, on a machine busy with other builds (load around 25 on 16 cores), so the times are higher than on a quiet one. The five slowest, middle time (and the other two):
+  1. `test/reap-0175.test.mjs`: 76.9 s (76.7, 78.1)
+  2. `test/build-log-0176.test.mjs`: 72.6 s (71.4, 90.6)
+  3. `test/panel-0177.test.mjs`: 55.7 s (55.6, 60.1)
+  4. `test/ship.test.mjs`: 52.7 s (21.4, 66.1)
+  5. `test/stop-0072.test.mjs`: 46.1 s (23.3, 46.1)
+  Next: `test/stall-0152.test.mjs` 41.3 s. `test/panel-0155.test.mjs` (61.3, 24.6, 24.2) and `test/panel-0160.test.mjs` (48.5, 23.4, 23.2) aren't among the five by their middle times.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
