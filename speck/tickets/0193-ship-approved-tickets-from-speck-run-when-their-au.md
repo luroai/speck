@@ -44,6 +44,9 @@ While `speck run` is on, it ships each approved ticket that `auto_ship` covers, 
 - `speck ship` already keeps a record of a ship in progress (`takeShip` in `scripts/ship.mjs`), which the panel reads; "any ship running" in AC1 can use it.
 - The builder decides how `speck run` remembers its last try per ticket; it must survive a restart of `speck run` only as far as AC2 needs (a restart may try each waiting ticket once more).
 - Failing before this build: none
+- speck run remembers each ticket's last try in memory. After a restart, an earlier auto-ship that ended without shipping (its ship record in speck/.cache/runs/) counts as the last try when neither the base branch nor the ticket's branch has a commit since it started, so a restart doesn't re-try those.
+- A ticket whose build is still running is left to that build, which ships it itself.
+- Self-check: the integration test waited only for the ticket to be done, not for its branch to be deleted, which ship does last; it now waits for both.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

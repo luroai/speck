@@ -28,6 +28,7 @@ export { reviewPack } from './pack.mjs';
 export { replaceSection, pathsOutside, commitTicketOnly } from './close.mjs';
 export { installTooling, doctorChecks } from './install.mjs';
 export { shipTicket } from './ship.mjs';
+export { shipQueue } from './ship-queue.mjs';
 export { readableLog } from './build-log.mjs';
 
 // `ticketed (<ids>)`, with the new id added unless it's already listed. Any other value is replaced.
@@ -519,7 +520,7 @@ const HELP = `speck: Your judgement, at agent speed.
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
   speck panel [--port <n>]           a control panel in your browser, at http://127.0.0.1:4777
                                       --url https://<hostname>: also serves it at that address, behind a private tunnel
-  speck run                           start a build for each ready ticket as it becomes ready, until stopped
+  speck run                           start a build for each ready ticket as it becomes ready, and ship approved ones auto_ship covers, until stopped
   speck pause <id>                    hold a build speck run launched where it is, until it's played
   speck play <id>                     carry a paused build on from where it was paused
   speck stop <id>                     end a build speck run launched for good, and block its ticket
