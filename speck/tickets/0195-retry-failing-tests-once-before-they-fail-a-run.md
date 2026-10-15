@@ -43,6 +43,7 @@ When a full test run fails, speck runs the failing tests' files once more, and t
 - Checked 2026-10-15: `node --test` with output that isn't a terminal writes TAP, and a failing test's details include `location: '<absolute path>:<line>:<col>'` (Node v22.23.3, tried on a one-test file).
 - `scripts/results.mjs` `testRun` is shared by `speck test` and `speck ship`; `scripts/tap.mjs` `failingTests` already reads failing test names from the output.
 - A result that passed only on the second try may be recorded as a pass for reuse.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
