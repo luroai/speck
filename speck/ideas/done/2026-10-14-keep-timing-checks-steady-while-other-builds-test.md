@@ -1,6 +1,6 @@
 # Keep timing checks steady while other builds test
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: ticketed (0207)
 From ticket: 0187
 
 ## What

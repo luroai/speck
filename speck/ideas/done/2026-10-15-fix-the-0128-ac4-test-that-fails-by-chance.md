@@ -1,6 +1,6 @@
 # Fix the 0128 AC4 test that fails by chance
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0207)
 From ticket: 0195
 
 ## What

@@ -1,6 +1,6 @@
 # Keep the 0177 one-second tests passing on a busy machine
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: ticketed (0207)
 From ticket: 0191
 
 ## What
