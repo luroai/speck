@@ -1,7 +1,7 @@
 ---
 id: "0189"
 title: "Stream an open build log as it's written"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0188"]                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-15T11:50:15.421Z"
 
 ---
 # 0189 · Stream an open build log as it's written
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 An open build log is asked for every second, and each time the panel reads and converts the whole log again, up to 2.5 MB, even when nothing has been added, and even after the build has ended.
