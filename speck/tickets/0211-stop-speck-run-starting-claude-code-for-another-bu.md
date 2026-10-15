@@ -1,7 +1,7 @@
 ---
 id: "0211"
 title: "Stop speck run starting Claude Code for another builder"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-match-build-command-to-the-chosen-builder.m
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T13:54:45.172Z"
+approved: "2026-10-15T14:16:24.208Z"
 
 ---
 # 0211 · Stop speck run starting Claude Code for another builder
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the user picks Codex, Cursor or Gemini as the builder in `/speck-setup`, `build_command` still starts Claude Code, so `speck run` builds every ticket with an agent they didn't choose, or fails if Claude Code isn't installed. Nothing says so, and a non-technical user won't spot it.
@@ -56,9 +57,14 @@ To see it, set the builder to Codex in the settings file while keeping the defau
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 461,623
+- Elapsed since build started: 22 min
+- Changed lines: 26 (limit 5000)
 Follow-ups:
 - To the inbox: `speck/ideas/2026-10-15-fix-the-0178-ac3-test-that-fails-by-chance.md`. 0178 AC3 failed by chance in this build's full run and passed on its re-run (not covered by 0207).
 - Known limit: only a first word that is `claude` or a path ending in `claude` counts. A command started through a wrapper such as `env FOO=1 claude …`, or `claude.exe`, isn't flagged.
