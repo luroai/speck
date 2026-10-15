@@ -125,8 +125,10 @@ function holders(dir, max) {
 // already going, and frees the turn afterwards. A turn left by a run that was killed is freed when someone next needs
 // it. onStart runs once the turn is ours. A run that writes nothing for test_stall_minutes is ended (0152). With
 // `output` (a file path), the output, stdout and stderr together, is copied to it. Returns { status, signal, ended },
-// where ended is how the run ended: the exit code as text, `signal <name>`, `stalled`, or '' if it never said.
-export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '') {
+// where ended is how the run ended: the exit code as text, `signal <name>`, `stalled`, or '' if it never said. Once the
+// turn is ours, `reuse` gives a recorded result to use instead, if there is one now: then the tests don't run, the turn
+// is freed straight away and this returns { reused }, with that result (0237).
+export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', reuse = () => null) {
   const max = maxParallelTests(cfg);
   const stallMs = testStallMs(cfg);
   const dir = turnsDir(repo);
@@ -156,6 +158,8 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '') 
   } finally { fs.rmSync(mine, { force: true }); }
   const files = runFiles(dir, run);
   try {
+    const reused = reuse();
+    if (reused) return { reused };
     onStart();
     const r = sh('sh', ['-c', TEST_SHELL, 'sh', files.pid, files.started, cmd, process.execPath, STALL_SCRIPT, String(stallMs), files.ended, output], { cwd: repo, stdio: 'inherit' });
     const ended = (read(files.ended) || '').split('\n')[0].trim();

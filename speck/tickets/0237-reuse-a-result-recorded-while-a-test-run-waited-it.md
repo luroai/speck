@@ -44,6 +44,7 @@ A test run that waited its turn reuses a result recorded for the same code while
 - Found 2026-10-15 while deciding 0235: a build's first whole-suite run is usually reused from the ship before it, except after a change to `main` made outside a ship.
 - 0228 changes the retry in `testRun()`. Build this after it.
 - Failing before this build: none
+- Self-check: the first look for a result no longer runs git twice; a result found after the wait is reused only if the checkout still holds the code the run started on. Two 0109 tests started a second plain `speck test` on the same code to show turn-taking, which now reuses the first's result, so their second run is `--fresh`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
