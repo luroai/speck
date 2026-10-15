@@ -1,7 +1,7 @@
 ---
 id: "0185"
 title: "Stop a hover making every other ticket look highlighted"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T13:00:03.542Z"
+approved: "2026-10-15T13:15:18.316Z"
 
 ---
 # 0185 · Stop a hover making every other ticket look highlighted
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On desktop, hovering any ticket in Plan or the build queue turns every other ticket grey, so they all look highlighted. Hovering lights the ticket and the tickets linked to it through `after:`, and sets the rest back. Since 0161, "set back" is the raised fill (it used to be a fade, which 0161 removed for low vision), and that's the same grey as the hover fill. A ticket with no links counts as a group of one, so it happens on every hover, and the more tickets there are, the more it shows.
@@ -50,9 +51,14 @@ Hovering a ticket in Plan or the build queue no longer turns every other ticket 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 142,402
+- Elapsed since build started: 15 min
+- Changed lines: 17 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
