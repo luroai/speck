@@ -1,7 +1,7 @@
 ---
 id: "0186"
 title: "Show the panel as disconnected only when it is"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-15T12:11:30.695Z"
 
 ---
 # 0186 · Show the panel as disconnected only when it is
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Every now and then the panel shows "Disconnected: can't reach speck panel" across the top, and it goes again a moment later. The page treats any answer to its 2-second request for the board that hasn't come back in time as a lost connection, but the panel is only slow: on 2026-10-14 each answer took 0.5 to 0.9 seconds with one build running, and longer during test runs or with a phone and a laptop both open.
