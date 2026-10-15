@@ -552,13 +552,14 @@ function doing(t, shipping) {
 }
 // 0168: what an in-flight ticket's builder badge shows, from what it's doing (`d`, from doing): its pose and the badge's
 // accessible name. While an agent is at work: checking a cloud of code during self-check, going through one with the
-// reviewer during review (0169), otherwise at the laptop. With a "?" when it's blocked or stopped (the card's crimson);
+// reviewer during review (0169), pushing the finished block off on a paper boat while it ships or waits to ship (0172), otherwise at the
+// laptop. With a "?" when it's blocked or stopped (the card's crimson);
 // with a flag while it waits for your decision (the card's purple); otherwise still, facing front.
 function badgeOf(t, d) {
   if (d.moving) {
     const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
-    if (d.sentence === 'Shipping') return { pose: 'type', label: 'The builder is shipping' };
-    if (t.ship_waiting) return { pose: 'type', label: 'The builder is about to ship' };
+    if (d.sentence === 'Shipping') return { pose: 'ship', label: 'The builder is shipping' };
+    if (t.ship_waiting) return { pose: 'ship', label: 'The builder is about to ship' };
     if (t.status === 'reviewing') return { pose: 'review', label: 'The builder is with the reviewer' };
     if (now === 1) return { pose: 'check', label: 'The builder is checking its own work' };
     return { pose: 'type', label: 'The builder is writing code' };
@@ -1700,6 +1701,7 @@ const BADGE = (() => {
   const blinkAt = (t, phase = 0) => ((t + phase * 1000) % 3700) < 120;
   const ln = (g, x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
   const rr = (g, x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+  const pt = (a, b, k) => ({ x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) });
   const GL = '{}<>;/=()[]*';
   // A finished block of work.
   function box(g, cx, by, o) {
@@ -1714,15 +1716,19 @@ const BADGE = (() => {
     g.setLineDash([19.2 * k, 100]); g.beginPath(); g.moveTo(x - 6, y); g.lineTo(x - 2, y + 4); g.lineTo(x + 7, y - 6); g.stroke(); g.restore();
   }
   // The builder: an ensō-shaped round body open at the top left, two round ears, two short legs and the speck as its eye.
+  // 0172: with short straight arms when a pose gives it them, each a shoulder and a hand: `backArms` behind its body,
+  // `arms` in front.
   function builder(g, P) {
     g.save(); g.translate(P.x || 0, P.y || 0); g.rotate(P.rot || 0); g.scale(1, P.sy || 1);
     g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.ink; g.lineWidth = 2.2;
     const tk = P.tuck || 0;
+    for (const a of P.backArms || []) ln(g, a.s.x, a.s.y, a.h.x, a.h.y);
     ln(g, -7, -5, -9 + tk * 2, -tk * 3); ln(g, 7, -5, 9 - tk * 2, -tk * 3);
     g.fillStyle = C.paper;
     for (const sx of [-1, 1]) { g.beginPath(); g.arc(sx * 12, -40 - (sx === 1 ? P.ear || 0 : 0), 5.5, 0, 7); g.fill(); g.stroke(); }
     g.beginPath(); g.arc(0, -24, 20, 0, Math.PI * 2); g.fill();
     g.beginPath(); g.arc(0, -24, 20, -2.0, -2.35 + Math.PI * 2); g.stroke();
+    for (const a of P.arms || []) ln(g, a.s.x, a.s.y, a.h.x, a.h.y);
     if (P.flag != null) {
       g.save(); g.translate(17, -34); g.rotate(P.flag); ln(g, 0, 0, 0, -26);
       g.beginPath(); g.moveTo(0, -26); g.quadraticCurveTo(8, -24 + (P.flagWave || 0), 16, -21); g.lineTo(0, -16); g.closePath(); g.fillStyle = C.wait; g.fill(); g.restore();
@@ -1844,6 +1850,48 @@ const BADGE = (() => {
         glyph(g, q.x, q.y, GL[Math.floor(rnd(i + cycle * 11 + 60) * GL.length)], { a: r || ok ? 1 : .45, s: r ? 1.15 : ok ? 1.1 : 1, good: ok, ring: r });
       }
     },
+    // 0172: shipping, a loop of 3.2 seconds. A finished block with a green tick sits on a small paper boat on a thin line
+    // of water in front of the builder. It puts both hands on the boat's stern, leans back, shoves, and the boat slides
+    // off to the right and out of the tile, the block on it. Its eye follows it, and a new boat pops up for the next loop.
+    ship(g, t) {
+      const CY = 3200, p = (t % CY) / CY, P = { t, x: -18, lookX: .6, lookY: .5 };
+      let bx = 18; // the boat's middle, on the water
+      if (p >= .42 && p < .5) bx = lerp(18, 24, io(seg(p, .42, .5)));
+      else if (p >= .5) { const k = seg(p, .5, 1); bx = 24 + 40 * (.6 * k + .4 * (1 - (1 - k) * (1 - k))); } // a shove, then a steady glide
+      const bs = p < .12 ? Math.min(1.08, back(seg(p, 0, .12))) : 1;
+      if (p >= .3 && p < .42) { const k = io(seg(p, .3, .42)); P.rot = -.05 * k; P.sy = 1 + .03 * k; P.lookX = .8; P.lookY = .4; }
+      else if (p >= .42 && p < .5) { const k = out(seg(p, .42, .5)); P.rot = lerp(-.05, .1, k); P.x = lerp(-18, -15, k); P.sy = lerp(1.03, .96, k); P.lookX = 1; P.lookY = .3; }
+      else if (p >= .5 && p < .62) { const k = sine(seg(p, .5, .62)); P.rot = lerp(.1, .03, k); P.x = lerp(-15, -16, k); P.sy = lerp(.96, 1, k); P.lookX = 1; P.lookY = lerp(.3, 0, k); }
+      else if (p >= .62) { const k = sine(seg(p, .88, 1)); P.rot = .03 * (1 - k); P.x = lerp(-16, -18, k); P.lookX = lerp(1, .6, k); P.lookY = lerp(0, .5, k); }
+      // From the tile into the builder's own turned and squashed frame, so its hands land on the boat's stern.
+      const local = w => { const dx = w.x - P.x, dy = w.y, r = -(P.rot || 0), c = Math.cos(r), s = Math.sin(r); return { x: dx * c - dy * s, y: (dx * s + dy * c) / (P.sy || 1) }; };
+      const restF = { s: { x: 18, y: -16 }, h: { x: 21, y: -7 } }, restB = { s: { x: -18, y: -16 }, h: { x: -21, y: -7 } };
+      const pushF = { x: 15, y: -11 }, pushB = { x: 11, y: -8 };
+      const stern = x => [local({ x: x - 15, y: -9 }), local({ x: x - 12.5, y: -3 })];
+      let F = restF, Bk = restB;
+      if (p >= .14 && p < .5) {
+        const k = sine(seg(p, .14, .28)), [hf, hb] = stern(bx);
+        F = { s: pt(restF.s, pushF, k), h: pt(restF.h, hf, k) }; Bk = { s: pt(restB.s, pushB, k), h: pt(restB.h, hb, k) };
+      } else if (p >= .5 && p < .66) {
+        const k = sine(seg(p, .5, .66)), [hf, hb] = stern(24);
+        F = { s: pt(pushF, restF.s, k), h: pt(hf, restF.h, k) }; Bk = { s: pt(pushB, restB.s, k), h: pt(hb, restB.h, k) };
+      }
+      P.arms = [F]; P.backArms = [Bk];
+      // The water, from in front of the builder's feet to near the tile's right edge.
+      g.save(); g.strokeStyle = C.ink; g.lineWidth = 1.4; g.globalAlpha *= .55; g.beginPath();
+      for (let x = -4; x <= 30; x += 2) { const y = 1 + Math.sin(x / 4 + t / 240) * .5; x === -4 ? g.moveTo(x, y) : g.lineTo(x, y); }
+      g.stroke(); g.restore();
+      builder(g, P);
+      // The boat, folded from paper: a hull with pointed ends turned up and a crease at each fold, its peak behind the block.
+      if (bs < .05) return; // the new boat has yet to pop up
+      g.save(); g.translate(bx, 0); g.scale(bs, bs); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.ink; g.fillStyle = C.paper; g.lineWidth = 1.8;
+      g.beginPath(); g.moveTo(-7, -4); g.lineTo(0, -23); g.lineTo(7, -4); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(-17, -11); g.lineTo(-9, -4); g.lineTo(9, -4); g.lineTo(17, -11); g.lineTo(11, 1); g.lineTo(-11, 1); g.closePath(); g.fill(); g.stroke();
+      g.lineWidth = 1.1; ln(g, -9, -4, -7, 1); ln(g, 9, -4, 7, 1);
+      box(g, 0, -4, { s: .8, rot: 0, a: 1 });
+      g.translate(0, -10.4); g.scale(.6, .6); tick(g, 0, 0, out(seg(p, .06, .2)));
+      g.restore();
+    },
     // Facing front, waving a small purple flag that ripples a moment behind the wave, with a hop every few seconds.
     wait(g, t) {
       const hp = (t % 3800) / 3800, P = { t, x: -6, lookX: 0, lookY: .1, flag: -.18 + .32 * Math.sin(t / 280), flagWave: 3 * Math.sin(t / 280 - 1), rot: .025 * Math.sin(t / 560), sy: 1 + .015 * Math.sin(t / 520) };
@@ -1859,8 +1907,9 @@ const BADGE = (() => {
     still(g, t) { builder(g, { t, lookX: 0, lookY: .1 }); },
   };
   // The time each pose is drawn at when nothing moves: with reduced motion, and always for a paused build. None blinks.
-  // Self-check looks at one green character; in review both look at one ringed character (0169).
-  const STILL_AT = { type: 300, check: 300, review: 1700, wait: 1000, bad: 1000, still: 1000 };
+  // Self-check looks at one green character; in review both look at one ringed character (0169). Shipping has both hands
+  // on the boat, the block ticked (0172).
+  const STILL_AT = { type: 300, check: 300, review: 1700, ship: 1100, wait: 1000, bad: 1000, still: 1000 };
   // Draws the tile and the pose at time t into a 56-unit square. Unclipped, for the test that nothing reaches its edge.
   function draw(g, pose, t, clip = true) {
     const edge = pose === 'wait' ? C.wait : pose === 'bad' ? C.bad : C.line;

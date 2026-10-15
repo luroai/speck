@@ -47,7 +47,7 @@ test('0169 AC1 and AC2: self-check and review have their own badge poses, with t
   assert.deepEqual(shows('0402'), ['badge check', 'The builder is checking its own work']);
   assert.deepEqual(shows('0403'), ['badge review', 'The builder is with the reviewer']);
   assert.deepEqual(shows('0404'), ['badge still', 'The builder is paused'], 'a paused review stands still');
-  assert.deepEqual(shows('0405'), ['badge type', 'The builder is shipping']);
+  assert.deepEqual(shows('0405'), ['badge ship', 'The builder is shipping']); // its own loop since 0172
   assert.deepEqual(shows('0406'), ['badge bad', 'The builder needs you']);
 });
 

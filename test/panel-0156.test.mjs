@@ -61,8 +61,8 @@ test('0156 AC2: the builder is at work (the speck moved until 0168) only while a
   const p = fake();
   await p.settle();
   for (const t of TICKETS.filter(x => x.status !== 'ready')) {
-    // At work: at the laptop, or since 0169 checking its own work or with the reviewer.
-    assert.equal(/^badge (type|check|review)$/.test(badgeIn(p, rowOf(p, t.id)).className), MOVING.includes(t.id), `${t.id}: ${MOVING.includes(t.id) ? 'at work' : 'not at work'}`);
+    // At work: at the laptop, or since 0169 checking its own work or with the reviewer, and since 0172 shipping.
+    assert.equal(/^badge (type|check|review|ship)$/.test(badgeIn(p, rowOf(p, t.id)).className), MOVING.includes(t.id), `${t.id}: ${MOVING.includes(t.id) ? 'at work' : 'not at work'}`);
   }
 });
 
@@ -90,7 +90,7 @@ test('0156 AC2 and AC3: a ship the panel itself started puts the builder to work
   assert.equal(find(p, row, /\bsay\b/)[0].textContent, 'Shipping');
   assert.equal(find(p, row, /\bsay\b/)[0].className, 'say', 'no longer purple: it is at work, not waiting');
   assert.equal(find(p, row, /^stage\b/)[0].className, 'stage', 'its stage\'s name in the in-flight colour');
-  assert.equal(badgeIn(p, row).className, 'badge type', 'the builder is at work (0168)');
+  assert.equal(badgeIn(p, row).className, 'badge ship', 'the builder is at work (0168), shipping (0172)');
 });
 
 test('0156 AC3: one plain sentence under the title says what is happening, in the card\'s state colour when it waits, is blocked or stopped', async () => {
