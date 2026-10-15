@@ -1,7 +1,7 @@
 ---
 id: "0232"
 title: "Let tests shorten the waits behind the slowest tests"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0231"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:33:37.045Z"
 approved: "2026-10-15T22:52:44.386Z"
+finished: "2026-10-15T22:55:03.337Z"
 
 ---
 # 0232 · Let tests shorten the waits behind the slowest tests
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck's slowest passing tests spend most of their time waiting for real limits to run out, such as `speck stop`'s 5-second wait or speck run's polling. On an 8 GB MacBook Air, 25 tests took 10 s or more each, 372 s in total.
