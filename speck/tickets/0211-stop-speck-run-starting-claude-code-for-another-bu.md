@@ -42,6 +42,7 @@ When the user picks Codex, Cursor or Gemini as the builder in `/speck-setup`, `b
 - Decided 2026-10-15: speck flags the mismatch rather than shipping known commands per builder, which settles the note's open question.
 - Builder names and their commands: `claude` (`claude`), `codex` (`codex`), `cursor` (`cursor-agent`), `gemini` (`gemini`), from `skills/speck-setup/SKILL.md` section 5. `speck run`'s check of `build_command` is in `cmdRun` in `scripts/run.mjs`; `speck doctor` is in `scripts/install.mjs` (`doctorChecks`).
 - No other open ticket changes these files.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
