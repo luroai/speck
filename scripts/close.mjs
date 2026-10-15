@@ -86,7 +86,8 @@ export function cmdClose(args) {
   if (outside.length)
     throw new SpeckError(`These files have uncommitted changes outside the ticket: ${outside.join(', ')}. Commit or remove them (the reviewer must see them first), then run this again.`);
 
-  const { tokens, elapsed } = reviewTotals(t, all);
+  // Timed to this approval: an `approved` time in the ticket is from an earlier one.
+  const { tokens, elapsed } = reviewTotals(t, all, new Date());
   const diff = changedLines(repo, cfg.base_branch);
   const figures = [
     `- ${roundsLine(all)}`,

@@ -20,13 +20,16 @@ export function roundsLine(all) {
 
 export const who = m => `${m.reviewer}, model ${m.reviewer_model || 'default'}, effort ${m.reviewer_effort || 'default'}`;
 
-// The reviewer tokens and elapsed time, worded for both the review pack and the delivery log.
-export function reviewTotals(t, all) {
+// The reviewer tokens and elapsed time, worded for both the review pack and the delivery log. The time runs to `end`,
+// or else to the ticket's approval, so a pack read later leaves out the wait to ship it (0215), or else to now.
+export function reviewTotals(t, all, end) {
   const tokens = all.reduce((n, r) => n + (r.meta.usage?.input_tokens || 0) + (r.meta.usage?.output_tokens || 0), 0);
   const started = t.fm.started ? new Date(t.fm.started) : null;
+  const approved = t.fm.approved ? new Date(t.fm.approved) : null;
+  const until = end || (approved && !isNaN(approved) ? approved : new Date());
   return {
     tokens: tokens.toLocaleString('en-GB'),
-    elapsed: started ? `Elapsed since build started: ${Math.round((Date.now() - started) / 60000)} min` : 'Elapsed: not recorded',
+    elapsed: started ? `Elapsed since build started: ${Math.round((until - started) / 60000)} min` : 'Elapsed: not recorded',
   };
 }
 
