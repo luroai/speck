@@ -1,7 +1,7 @@
 ---
 id: "0221"
 title: "List a test that failed on both tries once"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-list-a-test-that-failed-twice-once.md"     
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:12:18.848Z"
+approved: "2026-10-15T23:16:21.158Z"
 
 ---
 # 0221 · List a test that failed on both tries once
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a full test run fails and its failing tests fail again on the second try, the reviewer's test summary lists each failing test twice, once per run, and its totals are the second try's few files rather than the whole suite's. A reviewer sees double the failures and a suite that looks tiny, which can cost a review round asking about it.
@@ -49,9 +50,15 @@ When a full test run fails and the failing tests fail again on their second try,
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Retry matching treats distinct tests with the same name path as one test.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 443,995
+- Elapsed since build started: 4 min
+- Changed lines: 52 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: after a run that failed on both tries, the "Tests named with" list gives each test's result from the full run only, so one that failed first and passed on the second try still shows as failed.
 - Follow-ups: none.
