@@ -1,7 +1,7 @@
 ---
 id: "0232"
 title: "Let tests shorten the waits behind the slowest tests"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T22:33:37.045Z"
 ---
 # 0232 · Let tests shorten the waits behind the slowest tests
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck's slowest passing tests spend most of their time waiting for real limits to run out, such as `speck stop`'s 5-second wait or speck run's polling. On an 8 GB MacBook Air, 25 tests took 10 s or more each, 372 s in total.
@@ -55,3 +55,90 @@ The slowest tests run against limits they set shorter, while speck itself waits 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Changed, measured on this box before and after: 0176 AC3 (61 s, the file 61 s to 18 s) and 0075 AC1 and 0100 AC3 (10 s each, now under 1.5 s).
+- Left as they are, slow for another reason than a speck limit:
+  - 0084 AC2 and AC3: each runs 0082's test file in its own `node --test`, which searches the tracked files with git grep.
+  - 0177 AC3: the 5-second reading is the test's own stand-in for a slow board, which its criterion names, not a limit of speck's.
+  - 0148 AC3, 0099 AC4 and the cancel reason AC1/AC4 test: many CLI and git starts, one for each value or case they check.
+  - 0176 AC1 and AC2: they time and compare `speck status` on 200 builds' logs, which is the work itself.
+- Follow-ups:
+  - 0230 AC2 (10.4 s) still waits for runOnce's 10-second time limit and could stop once its builds have launched, as 0075 AC1 and 0100 AC3 now do. It wasn't in this ticket's list.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "442178f6868bafa14d0eec932bbecd74eacc42b8",
+    "thread_id": "01a141bc-cb48-7082-b332-002f48a414c0",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 148689,
+      "cached_input_tokens": 99584,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 942,
+      "reasoning_output_tokens": 49
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:44:41.002Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "0176 AC3 uses idleCpu with pollMs: 1000; 0075 AC1 and 0100 AC3 use runUntilLaunched. The other listed tests exercise repeated CLI operations or deliberately slow board readings rather than waiting for speck limits."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "No production timing code changes. Passing 0232 AC2 tests check the default polling announcement and existing stall/review timeout values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0232 AC3 mutation tests exercise excessive CPU consumption and incorrect launch ordering, demonstrating that the retained assertions reject those regressions."
+      },
+      {
+        "id": 4,
+        "status": "unclear",
+        "evidence": "/tmp/speck-0232-tests.txt contains 52 passing tests from only the four relevant test files, not the whole suite required by the review protocol."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "/tmp/speck-0232-tests.txt",
+        "issue": "Only targeted test results were supplied. They cannot establish that no previously passing test fails, especially because the shared startRun helper changed.",
+        "suggested_fix": "Run the whole suite through speck test and supply its complete fresh output for the next review.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "speck/tickets/0232-let-tests-shorten-the-waits-behind-the-slowest-tes.md",
+        "issue": "The Delivery log does not explain why the other slow tests listed in Notes were left unchanged, as the ticket requests.",
+        "suggested_fix": "Record which listed tests spend time on repeated operations or deliberately slow readings rather than speck limits.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Three tests now finish sooner while preserving their ordering and CPU checks. Production waits are unchanged. The targeted tests pass, but approval needs a whole-suite result to confirm that other tests still work."
+  }
+}
+```
+
+</details>
