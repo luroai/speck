@@ -490,6 +490,8 @@ function takeShip(repo, pad, auto) {
       let rec = null;
       try { rec = JSON.parse(held); } catch { /* unreadable: replace it */ }
       if (rec && shipRunning(readShip(file), pad)) throw busy(rec);
+      // 0204: a ship that merged it but couldn't push keeps its record until the commit is on the remote.
+      if (rec && shipState(runs, pad)?.unpushed) throw new SpeckError(`Ticket ${pad} has already been merged, but its push failed, so there's nothing to ship. Nothing was changed. What speck ship said then:\n${rec.message ?? ''}`.trim());
       if (!link(recover)) {
         const other = readShip(recover);
         if (other && pidAlive(other.pid)) throw busy(other);

@@ -1,7 +1,7 @@
 ---
 id: "0204"
 title: "Show when a ship merged but couldn't push"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T14:57:48.916Z"
 ---
 # 0204 · Show when a ship merged but couldn't push
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck ship` sets a ticket done before it pushes the base branch. If the push fails, the panel moves the ticket to Shipped as if all went well. Now that `speck run`'s queue ships with nobody watching, nobody learns that the remote is behind.
@@ -56,3 +56,79 @@ A ticket whose ship merged but couldn't push says so in the panel, with what to 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8e2bbd236bbbfdb17a72f072b3f522f668e4aefb",
+    "thread_id": "01a14017-2045-7d01-8069-66b85bebc41d",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 147931,
+      "cached_input_tokens": 103040,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 810,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T15:04:11.092Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "shipTicket/endShip preserve failed-push details; panelModel/render display them in Shipped, including older tickets. Manual, automatic and panel tests in test/ship-0204.test.mjs passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "notPushed checks commit ancestry and the push-clearing tests pass, but takeShip replaces the saved warning when another ship is attempted for that ticket, before checking whether it can ship."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs includes shipState in status JSON. Both manual and automatic failed-push tests exercise status --json and verify the message."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests exercise successful pushes, repositories without remotes and ordinary panel cards."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0204-tests.txt reports 1935 passed, zero failed and three skipped; no existing tests were changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "Attempting `speck ship 1` again after its push failed erases the warning without pushing anything. takeShip replaces the ended unpushed record; shipTicket then refuses because the local ticket branch was deleted, and endShip removes the replacement record. The panel consequently shows plainly shipped while the remote is still behind. The tests do not cover this persistence case.",
+        "suggested_fix": "Preserve the existing unpushed record across subsequent refused ship attempts, or refuse before replacing it. Add a regression test that fails a push, attempts to ship the same ticket again and verifies that status JSON and the panel retain the original warning until the commit is pushed.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The warning appears correctly after manual and automatic push failures, and clears after a successful push. However, trying to ship the same ticket again silently removes it while the remote is still behind. Fix that persistence gap before merging."
+  }
+}
+```
+
+</details>

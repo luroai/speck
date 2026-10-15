@@ -133,3 +133,18 @@ test('0204 AC4: a ship record with an unreadable unpushed part counts as pushed,
     assert.equal(shipState(runs, '1'), null, JSON.stringify(bad));
   }
 });
+
+test('0204 AC2: shipping the ticket again before it\'s pushed refuses and keeps the message', async () => {
+  const r = shipRepo();
+  const remote = refusingRemote(r);
+  r.run('ship', '1');
+  const before = shipOf(r);
+  const again = r.run('ship', '1');
+  assert.notEqual(again.status, 0);
+  assert.match(again.stderr, /already been merged, but its push failed[\s\S]*Merged locally/);
+  assert.deepEqual(shipOf(r), before);
+  remote.allow();
+  assert.equal(gIn(r.dir, 'push', '-q', 'origin', 'main').status, 0);
+  assert.equal(shipOf(r), null);
+  assert.doesNotMatch(r.run('ship', '1').stderr, /already been merged/, 'once pushed, a ship is refused as before');
+});
