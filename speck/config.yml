@@ -10,7 +10,7 @@ reviewer_model: gpt-6.1-sol            # blank: the reviewer's own default. Othe
 reviewer_effort: ""              # blank: the reviewer's own default. Otherwise low | medium | high | xhigh | max
 
 auto_ship: true                  # true: the build ships a ticket as soon as the reviewer approves it, without waiting for /speck-ship
-auto_ship_risk: [low]            # which ticket risks auto_ship covers: low, high or both
+auto_ship_risk: [low, high]      # which ticket risks auto_ship covers: low, high or both
 
 worktrees: true                  # true: each build gets its own git worktree beside your checkout (speck start). false: builds branch in your checkout
 worktree_setup: ""               # run in each new worktree, for example: npm ci
