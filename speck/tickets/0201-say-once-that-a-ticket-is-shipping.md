@@ -41,6 +41,8 @@ A shipping ticket's card says it is shipping once, with how long the ship has be
 - Asked for 2026-10-15: "when a ticket is shipping, it says it 3 times.... not needed."
 - In `templates/panel.html`: `doing()` gives "Shipping"; the step name comes from the card's step line (0168); the separate line is the `act shipping` element with `ship_counter`.
 - Failing before this build: none
+- AC2 and AC5: AC2 removes the step name under a shipping card, so the checks of that step name on shipping cards in the 0156 and 0168 tests change with it, as do the checks of the "Shipping…" line in the 0153 and 0196 tests. The 0156 and 0168 real-browser checks now look for the ship's time on the same line as "Shipping" (AC1) instead.
+- Self-check: README and the brief still described the "Shipping…" line; both now say "Shipping" with how long. A test's exact " · 00:05" could miss by a second, so it matches any time.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

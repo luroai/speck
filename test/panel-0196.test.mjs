@@ -62,7 +62,7 @@ test('0196 AC2: an approved ticket being shipped shows as shipping in the Build 
   const s = shows(p, '0602');
   assert.equal(s.say, 'Shipping');
   assert.ok(!s.card.includes('queued'));
-  assert.ok(s.acts.some(a => a.startsWith('Shipping…')));
+  assert.deepEqual(s.acts, [], 'no separate Shipping line since 0201');
 });
 
 test('0196 AC4: one auto-ship doesn\'t cover, or whose last auto-ship didn\'t finish, shows as before', async () => {

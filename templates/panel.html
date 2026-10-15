@@ -175,6 +175,8 @@
   .q .top .badge { display: block; width: 56px; height: 56px; }
   .q .top .badgetext { display: grid; gap: 2px; min-width: 0; }
   .q .top .say { font-size: 13px; color: var(--text); }
+  .q .top .badgetext.ship-line { display: block; } /* 0201: "Shipping · 00:04" on one line */
+  .q .top .ship-at { font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums; }
   .q .top + .act { margin-top: 6px; } /* a ready ticket's Queued line, with no bar above it now */
   .q .top .say.bad { color: var(--bad); }
   .q .top .say.to-ship { color: var(--idea); }
@@ -1650,9 +1652,6 @@ function queueItem(t) {
   }
   if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
   if (t.status === 'blocked') q.appendChild(el('div', 'act', `Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
-  // 0153: a ship running from anywhere, with how long it has been running, which survives a reload.
-  if (t.shipping) q.appendChild(el('div', 'act shipping', null, el('b', null, 'Shipping…'), ...(t.ship_counter !== null ? [document.createTextNode(' · '), el('span', 'ship-time', t.ship_counter)] : [])));
-  else if (shippingId === id) q.appendChild(el('div', 'act', 'Shipping… (from its review pack)'));
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
@@ -1667,13 +1666,17 @@ function queueItem(t) {
 }
 // 0168: an in-flight ticket's progress, under its title: the builder badge, then what it's doing in a sentence and the
 // current stage's name. The timer stays last in the top row (0058); the grid puts it at the right of the badge's row.
+// 0201: a shipping ticket says so once, followed on the same line by how long its ship has been running (0153), with no
+// stage's name.
 function progressOf(top, t, d) {
   const tone = d.tone ? ` ${d.tone}` : '', b = badgeOf(t, d), now = t.steps.find(s => s.state === 'now');
   const badge = el('canvas', `badge ${b.pose}`);
   badge.setAttribute('role', 'img');
   badge.setAttribute('aria-label', b.label);
-  top.insertBefore(el('div', 'badgerow', null, badge, el('div', 'badgetext', null, el('span', `say${tone}`, d.sentence),
-    now ? el('span', `stage${tone}`, now.label) : null)), child(top, 'sub'));
+  const ships = d.sentence === 'Shipping';
+  top.insertBefore(el('div', 'badgerow', null, badge, el('div', ships ? 'badgetext ship-line' : 'badgetext', null, el('span', `say${tone}`, d.sentence),
+    ships ? (t.ship_counter !== null ? el('span', 'ship-at', ' · ', el('span', 'ship-time', t.ship_counter)) : null)
+      : now ? el('span', `stage${tone}`, now.label) : null)), child(top, 'sub'));
   drawBadges(badge);
 }
 // 0168: the builder badge, speck's character, drawn on a 56 px canvas from the panel's colour tokens, so it follows the
@@ -2155,7 +2158,8 @@ function setText(node, text) {
 const child = (node, cls) => [...node.children].find(n => n.className === cls); // children is an HTMLCollection, with no find
 // What a kept queue row shows from the clock or from other tickets, put right on its node: the counter, and for a
 // ready ticket its chain icon and Queued line. Only the parts that change are replaced.
-const shipTime = q => child(child(q, 'act shipping'), 'ship-time'); // a shipping row's time since its ship started (0153)
+// A shipping row's time since its ship started (0153), beside its "Shipping" since 0201.
+const shipTime = q => child(child(child(child(child(q, 'top'), 'badgerow'), 'badgetext ship-line'), 'ship-at'), 'ship-time');
 function queueUpdate(q, t) {
   const sub = child(child(q, 'top'), 'sub');
   setText(sub, queueCounter(t));
