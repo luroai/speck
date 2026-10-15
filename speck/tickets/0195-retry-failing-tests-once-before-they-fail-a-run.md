@@ -1,7 +1,7 @@
 ---
 id: "0195"
 title: "Retry failing tests once before they fail a run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T10:34:23.148Z"
+approved: "2026-10-15T10:51:19.525Z"
 
 ---
 # 0195 · Retry failing tests once before they fail a run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A test that fails once by chance fails the whole run: it cost 0164 a review round and can stop a ship, and then someone has to step in although nothing is wrong with the change.
@@ -54,9 +55,15 @@ A test that fails once by chance no longer fails a whole test run or stops a shi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 failingTestFiles keys failures only by their name path, discarding distinct failures with identical names.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 396,998
+- Elapsed since build started: 17 min
+- Changed lines: 121 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-15-show-the-reviewer-which-failures-passed-on-a-retry.md (the reviewer's summary still lists a failure that passed on the retry).
