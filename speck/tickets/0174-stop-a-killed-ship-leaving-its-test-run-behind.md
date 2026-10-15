@@ -1,7 +1,7 @@
 ---
 id: "0174"
 title: "Stop a killed ship leaving its test run behind"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0175"]                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-15T11:11:29.349Z"
 
 ---
 # 0174 · Stop a killed ship leaving its test run behind
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When `speck ship`, `speck test` or a build is killed while its tests run, the test command keeps running, because speck runs it in its own process group. The 0153 tests do this on purpose, and their test command waits for a file that is never made, so each full suite left loops behind that never end. On 2026-10-14, 346 of them, some 18 hours old, pushed the load average above 100, hung the panel and made other tests fail.
