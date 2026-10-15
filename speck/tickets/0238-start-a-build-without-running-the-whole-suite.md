@@ -1,7 +1,7 @@
 ---
 id: "0238"
 title: "Start a build without running the whole suite"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0238 · Start a build without running the whole suite
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Every build starts by running the whole suite, only to list the tests that already fail before it changes anything. Usually that reuses the result from the ship before it, but after any change to the base branch made outside a ship it's a whole run on a laptop that may already be busy, for a list that's nearly always "none".
