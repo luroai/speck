@@ -1,7 +1,7 @@
 ---
 id: "0225"
 title: "Say in the brief that raising max_parallel_builds is supported"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-say-how-many-builds-run-at-once-the-same-wa
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:14:11.526Z"
+approved: "2026-10-15T23:16:54.624Z"
 
 ---
 # 0225 · Say in the brief that raising max_parallel_builds is supported
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The brief's principle 7 says `max_parallel_builds` sets how many builds `speck run` keeps going at once, but its reasons still say tickets are built one after another and that parallel builds would come back only as a deliberately designed feature. Someone reading it can't tell whether raising the setting is supported.
@@ -49,9 +50,14 @@ speck's design guide now says plainly that building one ticket at a time is only
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 83,679
+- Elapsed since build started: 3 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The README's `run` row in the command table still says "one at a time" without mentioning `max_parallel_builds` (out of scope here): `speck/ideas/2026-10-15-say-in-the-readme-s-run-row-that-more-builds-can-run.md`.
