@@ -1,7 +1,7 @@
 ---
 id: "0197"
 title: "Run the full test suite once per review round in a build"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T13:17:42.890Z"
 
 ---
 # 0197 · Run the full test suite once per review round in a build
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A build runs the full test suite after implementing, again after each fix in its self-check, and again before each review round. With two builds at once each full run took 3 to 5 minutes on 2026-10-15, and full runs were 40 to 65% of every build's time (0180: 15 of 23 minutes). This slows every project that uses speck, more so the bigger its suite.
