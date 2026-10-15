@@ -1,7 +1,7 @@
 ---
 id: "0209"
 title: "Show the reviewer which failures passed on a retry"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0209 · Show the reviewer which failures passed on a retry
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a full test run passes only on its second try (0195), the summary of the test output the reviewer gets still lists the first try's failures as failing tests, beside a run that passed. A reviewer may then spend a round asking about them.
