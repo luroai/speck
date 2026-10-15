@@ -85,7 +85,7 @@ test('0143 AC2: a bug or fix ticket shows its bug or fix tag in the pane, as in 
   let p = fakePage([s(), s(), s()]);
   await p.settle();
   openFrom(p, 'build', '0006');
-  assert.deepEqual(paneTags(p), [['tag fix', 'fix'], ['tag', 'P0'], ['tag', 'S'], ['tag', 'low']]);
+  assert.deepEqual(paneTags(p), [['tag fix', 'fix'], ['tag p0', 'P0'], ['tag', 'S'], ['tag', 'low']]);
   p = fakePage([s(), s(), s()]);
   await p.settle();
   openFrom(p, 'shipped', '0010');
