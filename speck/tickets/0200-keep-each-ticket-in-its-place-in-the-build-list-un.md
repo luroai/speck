@@ -1,7 +1,7 @@
 ---
 id: "0200"
 title: "Keep each ticket in its place in the Build list until it ships"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0199"]              # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T14:09:54.836Z"
+approved: "2026-10-15T14:24:16.998Z"
 
 ---
 # 0200 · Keep each ticket in its place in the Build list until it ships
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Build list orders in-flight tickets by priority, so tickets move about as others start, are handed back or ship. On 2026-10-15 the user saw a ticket drop to the bottom of the list when it started shipping, which makes the list hard to follow.
@@ -51,9 +52,14 @@ Tickets in the Build list now stay in the order their builds started, earliest a
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 129,047
+- Elapsed since build started: 14 min
+- Changed lines: 7 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
