@@ -1,4 +1,9 @@
 // Reads the version from each place a release names it, so tests can check they agree.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { ROOT } from './panel.mjs';
 
 // The version of the newest (first) `## <version>` section of a changelog.
 export function changelogVersion(changelog) {
@@ -60,4 +65,16 @@ export function readmeFigures(readme) {
     medianMinutes: n(/\*\*(\d+) minutes?\*\* median/), medianRounds: n(/\*\*(\d+) review rounds?\*\* median/),
     firstRound: n(/(\d+) tickets were approved in the first round/),
   };
+}
+
+// The done tickets as they were in a commit, read with git. Throws when the commit is missing or can't be read.
+export function doneTicketsAt(commit) {
+  if (!commit) throw new Error('no commit to read the done tickets from');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const archive = spawnSync('git', ['archive', '--format=tar', commit, 'speck/tickets/done'], { cwd: ROOT, maxBuffer: 1 << 28 });
+  if (archive.status !== 0) throw new Error(String(archive.stderr));
+  const tar = spawnSync('tar', ['-x', '-C', dir], { input: archive.stdout });
+  if (tar.status !== 0) throw new Error(String(tar.stderr));
+  const done = path.join(dir, 'speck', 'tickets', 'done');
+  return fs.readdirSync(done).filter(f => f.endsWith('.md')).map(f => fs.readFileSync(path.join(done, f), 'utf8'));
 }

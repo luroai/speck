@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.5.0 · 15 October 2026
+
+What's changed since 0.4.0. A ticket now gets one run of the whole test suite, when it ships, instead of several while it's built, and test runs take turns and give way to your own programs, so the computer stays usable while builds run.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.5.0 init`.
+- Each new version of speck gets its tag and GitHub release page as soon as it lands, so the README's setup prompt works straight away.
+
+### Building and reviewing
+
+- A build no longer runs the whole suite. Before it changes anything, it lists the tests already failing from the result speck recorded for the same code, or writes `not checked` when there's none. After that it runs only test files: the ticket's own, any existing ones it changed and those of any test that failed in its last run.
+- The whole suite runs once per ticket, in `speck ship`, on the ticket as it would land. A ticket that breaks a test elsewhere is caught there and handed back to its build to fix.
+- The reviewer is told which test files the build ran, and judges "no test that passed before fails" from those and the change, leaving the whole-suite check to `speck ship`.
+- `speck test --recorded` prints the test result speck has recorded for this code, without running any tests.
+- The builder is told to wait for every test run and review round it starts to finish, so a build started by `speck run` doesn't stop partway, leaving its ticket stuck as building.
+
+### Test runs
+
+- `speck test --files` now waits its turn like a full run, sharing `max_parallel_tests`, so builds side by side no longer run their tests all at once.
+- Every test run speck starts runs at a lower priority than normal, through `nice` when the system has it, so your own programs stay responsive.
+- A test run that waited its turn reuses a result recorded for the same code while it waited, instead of running the suite again. A ship reuses only a passing result, and `speck test --fresh` always runs the tests.
+- The second try at failing tests leaves out tests that already fail on the base branch, once a result is recorded for its latest code. When those are the only failures, there's no second try, and speck says so in one line.
+
+### Working on speck
+
+- speck's own test suite runs faster: it starts the slowest files first, copies its practice repos instead of making each from scratch, runs most commands inside the test process, shortens the waits in its slowest tests, runs its heaviest files 2 at a time on machines with 8 cores or fewer, and shares one panel across each of two browser test files.
+
 ## 0.4.0 · 15 October 2026
 
 What's new since 0.3.0. Builds now stop at approved and `speck run` ships what's left in one queue, every ship tests exactly what will land, and the panel has become somewhere you can steer speck from, on your phone as well as your computer.

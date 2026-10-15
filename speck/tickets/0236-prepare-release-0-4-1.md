@@ -43,6 +43,9 @@ speck is ready to be released as 0.5.0.
 - Waits for every ticket planned for this release (0227 to 0235, and 0237 to 0239), so they're in it. Changes for speck's own test suite only (0229 to 0234) belong under a short heading for people working on speck, or are left out of the release notes.
 - After it ships, check that the `v0.5.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.0 --target main --title "speck 0.5.0" --notes-file docs/releases/v0.5.0.md`.
 - Failing before this build: none
+- The 0210 release tests named 0.4.0 as the current version and checked the README's figures as they are now; they now check the current version, and the figures as 0210 shipped them, as 0210 did for 0106's. Their helper that reads done tickets from a commit moved to `test/support/release.mjs` for 0236's tests to share.
+- Built with speck figures worked out from `speck/tickets/done/` at `speck(0239): Keep the computer usable while speck runs tests`, the same way as 0210: 209 shipped, 16 cancelled, 15 minutes, 1 round, 105 approved in the first round.
+- Self-check: narrowed the changelog's and release notes' claim that builds wait for their test runs, since 0227 tells the builder to rather than enforcing it. Also ran the other test files that read the README (18 files): all pass.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
