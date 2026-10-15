@@ -1,7 +1,7 @@
 ---
 id: "0180"
 title: "Give the reviewer a time limit"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T11:11:39.043Z"
 ---
 # 0180 · Give the reviewer a time limit
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck runs the Codex reviewer, and any reviewer set up as a command, with no time limit. If one hangs, the review waits for ever, and so does its build, which keeps holding one of `max_parallel_builds`.
@@ -55,3 +55,83 @@ A reviewer that runs too long is ended, and the review round fails with a messag
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "073ba130205d17c941c720de87f8055701b5bfd7",
+    "thread_id": "01a13f4d-3d0a-7a10-afc5-732a9055c923",
+    "seconds": 47,
+    "usage": {
+      "input_tokens": 183942,
+      "cached_input_tokens": 141824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1431,
+      "reasoning_output_tokens": 172
+    },
+    "saved_at": "2026-10-15T11:23:55.356Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/limit.mjs kills a process group, which excludes descendants that start their own groups. Also, accepted limits of 35792 minutes or more overflow Node's timer and expire immediately."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewRound restores the ticket on failure; runCodexReview removes timed-out verdict files. Both AC2 tests verify no saved round and a successful retry."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewTimeoutMs and config.mjs validate positive whole numbers. AC3 tests cover rejection, corrective wording and preventing reviewer execution."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 tests cover successful Codex and command reviews, non-zero command exits and missing commands."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0180-tests.txt confirms 1780 tests, 1777 passed, three skipped and zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/limit.mjs",
+        "issue": "Killing only -child.pid does not end every process the reviewer started. A descendant using detached:true or setsid starts another process group and survives the timeout. The new tests cover only a sleep process that inherits the reviewer's group.",
+        "suggested_fix": "Ensure timeout cleanup includes descendants in separate process groups, and test a reviewer that starts such a descendant.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/limit.mjs",
+        "issue": "Valid large settings cause immediate timeouts. reviewTimeoutMs accepts 35792 minutes, but setTimeout receives 2147520000 milliseconds, exceeding Node's timer range. A direct check confirmed Node reduces this delay to 1 millisecond.",
+        "suggested_fix": "Schedule long deadlines in bounded intervals and add a test covering a valid setting above Node's single-timer range.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The normal timeout and retry paths are covered, and the suite passes. Two gaps remain: detached subprocesses can survive cleanup, and very large valid limits end reviews immediately. Subprocess reproduction was blocked by the read-only environment; the timer overflow was reproduced directly."
+  }
+}
+```
+
+</details>

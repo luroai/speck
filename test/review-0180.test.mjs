@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { reviewRepo, commandRepo } from './support/speck.mjs';
 import { hasStopped } from './support/stopped.mjs';
 import { reviewTimeoutMs, tookTooLong } from '../scripts/reviewers.mjs';
@@ -116,4 +117,30 @@ test('0180 AC3: speck config set refuses a review_timeout_minutes that is not a 
   }
   assert.equal(r.run('config', 'set', 'review_timeout_minutes', '45').status, 0);
   assert.match(fs.readFileSync(path.join(r.dir, 'speck', 'config.yml'), 'utf8'), /^review_timeout_minutes: 45\b/m);
+});
+
+test('0180 AC1: a process the reviewer started in a process group of its own is ended too', async () => {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-detach-'));
+  const pids = path.join(bin, 'pid');
+  const script = path.join(bin, 'reviewer');
+  fs.writeFileSync(script, `#!${process.execPath}
+const c = require('child_process').spawn('sleep', ['300'], { stdio: 'ignore', detached: true });
+require('fs').writeFileSync(${JSON.stringify(pids)}, String(c.pid));
+setInterval(() => {}, 1e6);
+`, { mode: 0o755 });
+  const r = commandRepo({ command: script });
+  const res = r.runEnv(fast, 'review', '1');
+  assert.equal(res.status, 1, res.stderr);
+  assert.match(res.stderr, /took longer than 0\.7 seconds/);
+  const pid = Number(fs.readFileSync(pids, 'utf8'));
+  assert.ok(await hasStopped(() => !alive(pid)), 'the process in its own group was ended too');
+});
+
+test('0180 AC4: a limit longer than one timer can wait still lets a quick reviewer finish', () => {
+  // 35792 minutes is more than a single Node timer can wait, which would otherwise fire at once.
+  const res = spawnSync(process.execPath, [path.join(import.meta.dirname, '..', 'scripts', 'limit.mjs'), String(35792 * 60 * 1000), 'sh', '-c', 'sleep 0.3; cat; exit 4'],
+    { input: 'the prompt', encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe', 'pipe'], timeout: 30000 });
+  assert.equal(res.status, 4, res.stderr);
+  assert.equal(res.stdout, 'the prompt');
+  assert.equal(res.output[3], '', 'not ended for taking too long');
 });
