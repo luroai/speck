@@ -1,7 +1,7 @@
 ---
 id: "0205"
 title: "Chain tickets that change the same files while shaping them"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T13:43:03.148Z"
 ---
 # 0205 · Chain tickets that change the same files while shaping them
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The ticket skill sets `after:` only between the tickets one idea is split into. It doesn't check a new ticket against other open tickets that change the same files. With builds running side by side, two such tickets clash when the second ships and cost a merge round, as 0188 and 0189 did on 2026-10-15.
@@ -44,7 +44,7 @@ When the ticket skill makes tickets, any that would change the same files as ano
 - Self-check: said where to read open tickets' real statuses (`speck status --json`, which shows tickets under way in other worktrees), and that only the new ticket is edited, matching the rule against editing tickets being built.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When your agent turns an idea into tickets, it now checks which parts of the project each new ticket will touch and compares them with every ticket that's still open. If two would change the same parts, the new one is set to wait for the other, so they're built one after the other rather than side by side, where they'd clash when the second one ships. It does the same when it makes tickets while triaging the inbox. When it shows you the new tickets, each one that waits gets a line saying which ticket it waits for and which parts caused it. To see it, ask for a ticket on something an open ticket already changes. Keep an eye on whether it guesses the parts sensibly: a guess that's too broad makes tickets wait when they needn't, and one that's too narrow misses a clash.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,66 @@ When the ticket skill makes tickets, any that would change the same files as ano
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a942ba6e01f8421bf6597e86252c8673818c5d82",
+    "thread_id": "01a13fd9-70f5-7cd1-9c5c-44783f208930",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 160495,
+      "cached_input_tokens": 120320,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 721,
+      "reasoning_output_tokens": 31
+    },
+    "saved_at": "2026-10-15T13:56:45.012Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 6 lists likely files and compares every specified open status using speck status --json, Notes and named code. The AC1 test passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Step 6 adds dependencies only to new tickets, orders new siblings and checks transitive after: links before adding an edge. The AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Step 8 requires one line per ticket showing dependencies and the files responsible, including omitted cyclic links. The AC3 test passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Triage step 4 explicitly invokes step 6. Installed skill directories link to skills/; scripts/install.mjs installTooling copies the same source into both supported locations. The AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0205-tests.txt: 1,873 tests, 1,870 passed, three skipped and zero failed. No existing tests were changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The ticket skill now instructs agents to chain overlapping work, avoid dependency loops and explain the files behind each dependency. Inbox triage follows the same rules, and installed copies receive them. The tests pass; no blocking issues found."
+  }
+}
+```
+
+</details>
