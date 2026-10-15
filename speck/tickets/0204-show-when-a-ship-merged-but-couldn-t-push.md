@@ -43,6 +43,7 @@ A ticket whose ship merged but couldn't push says so in the panel, with what to 
 - The push and its error are near the end of `scripts/ship.mjs`. The ship record (`takeShip`/`endShip`) keeps an auto-ship's failure message; the panel shows it only on an approved ticket, and this one is done.
 - Builds after 0203: both change how the panel shows a ship's result in `templates/panel.html`.
 - Failing before this build: none
+- Self-check: an unreadable or odd "unpushed" part of a ship record now counts as pushed, and remote and branch names are checked before git sees them; narrowed the brief's claim to what the tests cover.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
