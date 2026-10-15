@@ -43,7 +43,7 @@ Tests that only check a command's output or changes run it inside the test proce
 - Self-check: no changes. The first whole-suite run found three tests about speck as a process: pause, play and stop leave out speck's own process and its children (a test's stand-in build is one in-process), so the shared helper starts a process for them as for panel and run; the 0196 and 0212 ship tests now start `speck ship` as a process (`speckProcess`), as one finds it by its command line and the other kills it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing changes for someone using speck: every command prints, changes and exits as before. What changes is speck's own test suite. Most of its checks on a command used to start a fresh copy of speck each time, and now run the command inside the test itself, which saves a little time on every one. The tests about speck as a running program, such as being paused, stopped or killed, still start a real one. To see it, run the test suite and compare its time with an earlier run on the same machine: across all the tests about an eighth less time was spent. Worth watching: a test added later that kills or signals speck must ask for a real one, or it would stop the test run itself.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,9 @@ Tests that only check a command's output or changes run it inside the test proce
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Suite time, on the same machine (16 cores, shared with other builds' test runs), from `speck test`'s TAP totals: 113.9 s before (2,015 tests), 108.5 s after (2,024 tests). Summed over every test, 1,433 s before and 1,259 s after, about 12% less. The suite's length is set mostly by the panel, run and browser tests, which still start real processes, so the wall time moved less.
+- Follow-ups:
+  - Idea: refuse built-in names such as `constructor` as commands (speck/ideas/2026-10-15-refuse-built-in-names-as-speck-commands.md).
+  - Idea: move the test files that start the CLI themselves onto the shared helper (speck/ideas/2026-10-15-run-the-cli-in-process-in-every-test-file.md).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -128,6 +131,82 @@ Tests that only check a command's output or changes run it inside the test proce
     ],
     "escalation_question": "",
     "summary": "The shared test helpers now run ordinary commands inside the test process, and the full suite passes. One environment-handling edge case needs fixing: a variable explicitly omitted by the caller can still leak into the command. The requested timing record also remains to be filled in."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ead6b57407c2d9402178f393a1b55802ec7501db",
+    "thread_id": "01a141ad-4cb4-7142-8212-2c9ac2a82f0f",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 345726,
+      "cached_input_tokens": 292096,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2268,
+      "reasoning_output_tokens": 208
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:30:21.418Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs exports runCommand; scripts/in-process.mjs captures output and status and restores process state. Passing AC1 tests cover folder, environment, child output, errors and exits, including the new undefined-variable regression test."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The CLI retains its dispatch and SpeckError exit handling. Passing AC2 tests compare command output, file changes and exit codes between CLI and in-process execution."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Shared helpers use test/support/cli.mjs:speck, which calls runCommand while preserving separate processes for long-running and process-sensitive commands. Both AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0231-tests.txt: 2,039 passed, zero failed, three skipped. The baseline had zero failures and the same three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/in-process.mjs",
+        "issue": "Undefined environment values previously retained inherited variables. setEnv now deletes them, and the passing regression test checks omission in the command and its child, agreement with spawnSync, and restoration afterwards.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "speck/tickets/0231-run-the-speck-cli-inside-the-test-process-for-outp.md",
+        "issue": "The Delivery log now records before-and-after suite timings on the same machine and identifies concurrent test runs as a measurement limitation.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Ordinary command checks now run inside the test process, while process-sensitive checks retain separate processes. Both previous findings are resolved, and the full suite passes. The change is ready for the product owner to consider for merge."
   }
 }
 ```
