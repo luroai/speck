@@ -43,6 +43,8 @@ The logo's red dot is the builder's eye wherever the panel shows the logo: large
 - 0170 notes that some stroke widths make PNG bytes that the "no model name is hard-coded" scan of `templates/` flags; the new dot could do the same.
 - A phone keeps the home-screen icon it fetched, so the user needs to remove and re-add the app to see the new one.
 
+- Failing before this build: none
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
