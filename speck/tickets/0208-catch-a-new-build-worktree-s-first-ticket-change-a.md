@@ -45,7 +45,7 @@ A ticket change in a new build's worktree reaches open pages within a second eve
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build starts, its ticket's first change now shows on the panel within a second every time. Before, if the panel happened to look while git was still setting up the build's own copy of the project, it could miss that copy until its next regular look, and the build's first status could take up to 15 seconds to appear. To see it, keep the panel open and start a build: its ticket should move to Building almost at once. Nothing else about how changes reach the panel is different.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,9 @@ A ticket change in a new build's worktree reaches open pages within a second eve
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none to the inbox):
+- Known limit: a folder in git's list of worktrees that never gets its `gitdir` file (a broken worktree) stays watched for it. It costs one watch and nothing else.
+- The real-panel test (a ticket changed as soon as its worktree is checked out reaches two open pages within 1 second) also passed before the fix, because the race needs load to show. The step-by-step and forced-race watcher tests are the ones that failed before it.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -121,6 +124,74 @@ A ticket change in a new build's worktree reaches open pages within a second eve
     ],
     "escalation_question": "",
     "summary": "The change fixes the tested startup gaps and the full suite passes. One timing gap remains: a worktree can become discoverable between two checks and receive neither kind of watch, so its first update can still arrive late. Add coverage and close that gap before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a4d4b833d5bb101eca4829cd9f9fa5e05e2f6e77",
+    "thread_id": "01a14020-354a-74e1-a150-837f70564645",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 308736,
+      "cached_input_tokens": 258560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1555,
+      "reasoning_output_tokens": 212
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T15:23:35.152Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/board-feed.mjs: wanted() checks pending metadata directories before worktreeList(), closing the discovery gap. All five AC1 tests in test/panel-0208.test.mjs pass, covering staged creation, the gitdir race, tickets-folder creation during watch setup, and delivery to two open streams within one second."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "boardWatcher.sync() requests one board reread after starting new watches. The passing AC2 test verifies exactly one callback and no additional callback when no watches start."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 test exercises ticket changes in an existing worktree and the main checkout within one second."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0208-tests.txt: 1,939 passed, zero failed, three skipped. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/board-feed.mjs",
+        "issue": "The previous discovery order could miss a worktree whose gitdir appeared between listing worktrees and checking metadata.",
+        "suggested_fix": "Implemented: inspect pending metadata before listing worktrees, with a deterministic regression test covering the previous gap.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The remaining timing gap is fixed and covered by a regression test. New worktree updates reach both tested open streams within one second, existing updates still work, and the full suite passes. Ready for the owner's merge decision."
   }
 }
 ```
