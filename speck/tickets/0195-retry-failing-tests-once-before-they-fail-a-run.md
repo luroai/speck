@@ -44,6 +44,8 @@ When a full test run fails, speck runs the failing tests' files once more, and t
 - `scripts/results.mjs` `testRun` is shared by `speck test` and `speck ship`; `scripts/tap.mjs` `failingTests` already reads failing test names from the output.
 - A result that passed only on the second try may be recorded as a pass for reuse.
 - Failing before this build: none
+- The second run counts as passed only if it exits 0 and every test that failed is among the tests that passed in it, so a location in a helper file that runs no tests of its own can't turn a failure into a pass.
+- Self-check: a location whose path can't be read (for example through a file) no longer throws; added a test for a commands.test_files with no {files}.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

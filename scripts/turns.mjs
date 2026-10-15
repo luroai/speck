@@ -178,7 +178,7 @@ function watched(repo, cmd, stallMs) {
 }
 
 // A word the shell reads back as exactly `s`.
-const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
+export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just

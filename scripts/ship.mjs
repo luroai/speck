@@ -39,13 +39,14 @@ function shipChecks(repo, cfg, pad, branch) {
     throw new SpeckError(`These files changed after the reviewer approved: ${changed.join(', ')}. Run the review again so the reviewer sees them.`);
 }
 
-// Runs the tests in `repo`: { ok, output }, output being what a failing run wrote.
-function runTests(repo, cfg) {
+// Runs the tests in `repo`: { ok, output }, output being what a failing run wrote. `branch` is the one the flaky log
+// names for a test that passes only on a second try (blank: the one checked out).
+function runTests(repo, cfg, branch = '') {
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set, so speck can\'t check the tests pass before shipping. Set commands.test in speck/config.yml (for example `npm test`), commit it, then run this again.');
   // The run takes a turn, as `speck test` does, so ships and builds don't all run the suite at once. A passing result
   // recorded for the same code is reused, but never a failure (0112).
-  const r = testRun(repo, cfg, cmd, { reuse: 'pass', onStart: () => console.log(`Running tests: ${cmd}`) });
+  const r = testRun(repo, cfg, cmd, { reuse: 'pass', branch, onStart: () => console.log(`Running tests: ${cmd}`) });
   // A stall is no sign the change is broken, so it isn't checked against the base branch's tests (0152).
   if (r.stalled) throw new SpeckError('The tests stalled, so speck ended them and nothing was shipped. The ticket is still approved: ship it again to run the tests again.');
   return { ok: r.status === 0, output: r.output || '' };
@@ -76,7 +77,7 @@ function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {})
       const r = sh('sh', ['-c', setup], { cwd: at });
       if (r.status !== 0) return new SpeckError(`${failed} Couldn't check ${base}'s own tests: worktree_setup (${setup}) failed with exit ${r.status} there.`);
     }
-    if (runTests(at, cfg).ok) return new SpeckError(moved
+    if (runTests(at, cfg, base).ok) return new SpeckError(moved
       ? `${failed} ${base}'s own tests pass, so this ticket and ${base}'s newer changes fail together.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
       : `${failed} ${base}'s tests pass, so the failure comes from this ticket's change.${named(failing)}`);
     return new SpeckError(`Tests failed on the approved branch${moved ? ` merged with ${base} as it is now` : ''}, and ${base}'s own tests are failing too, so this isn't the ticket's fault. Nothing was shipped. Fix ${base}, then ship again.`, 14);
@@ -101,7 +102,7 @@ function candidateMerge(repo, branch, target, message) {
 // Runs the tests on `candidate`, checked out in the ticket branch's folder, then checks the branch out again there.
 function testMerged(work, cfg, branch, candidate) {
   git(['checkout', '-q', '--detach', candidate], work);
-  try { return runTests(work, cfg); }
+  try { return runTests(work, cfg, branch); }
   finally {
     const out = sh('git', ['checkout', '-q', branch], { cwd: work });
     if (out.status !== 0) throw new SpeckError(`Couldn't check ${branch} out again in ${work} after the tests (${out.stderr.trim().split('\n').pop()}), so nothing was shipped. Run \`git checkout ${branch}\` there, then ship again.`);

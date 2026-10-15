@@ -82,3 +82,34 @@ export function testOutput(file, id) {
   const text = fs.readFileSync(file, 'utf8');
   return summariseTap(text, id, path.resolve(file)) ?? text;
 }
+
+// The failing tests in TAP output, as failingTests gives them, each with the file named by its `location:` (null when
+// it has none): [{ name, file }]. A test listed twice keeps the first file found for it.
+export function failingTestFiles(text) {
+  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const header = lines.findIndex(l => HEADER.test(l));
+  if (header < 0) return [];
+  const failing = results(lines, header + 1).filter(t => !t.ok && t.directive !== 'TODO');
+  const leaves = failing.filter(t => !failing.some(o => o !== t && o.start >= t.start && o.end <= t.end && o.indent > t.indent));
+  const found = new Map();
+  for (const t of leaves) {
+    if (!t.path) continue;
+    let file = null;
+    for (let i = t.at + 1; i <= t.end && file === null; i++) {
+      const m = /^\s*location: (?:'((?:[^']|'')*)'|"((?:[^"\\]|\\.)*)"|(\S.*?))\s*$/.exec(lines[i]);
+      if (!m) continue;
+      const where = m[1] !== undefined ? m[1].replaceAll("''", "'") : m[2] !== undefined ? m[2].replace(/\\(.)/g, '$1') : m[3];
+      file = /^(.+):\d+:\d+$/.exec(where)?.[1] ?? null;
+    }
+    if (!found.has(t.path) || (found.get(t.path) === null && file !== null)) found.set(t.path, file);
+  }
+  return [...found].map(([name, file]) => ({ name, file }));
+}
+
+// The tests in TAP output that passed, not skipped or todo, each as its path of names.
+export function passingTests(text) {
+  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const header = lines.findIndex(l => HEADER.test(l));
+  if (header < 0) return [];
+  return [...new Set(results(lines, header + 1).filter(t => t.ok && !t.directive).map(t => t.path).filter(Boolean))];
+}
