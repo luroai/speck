@@ -1,7 +1,7 @@
 ---
 id: "0185"
 title: "Stop a hover making every other ticket look highlighted"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-14
 ---
 # 0185 · Stop a hover making every other ticket look highlighted
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 On desktop, hovering any ticket in Plan or the build queue turns every other ticket grey, so they all look highlighted. Hovering lights the ticket and the tickets linked to it through `after:`, and sets the rest back. Since 0161, "set back" is the raised fill (it used to be a fade, which 0161 removed for low vision), and that's the same grey as the hover fill. A ticket with no links counts as a group of one, so it happens on every hover, and the more tickets there are, the more it shows.

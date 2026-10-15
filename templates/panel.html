@@ -528,16 +528,19 @@ function progress(t) {
 // badge to work (0168).
 // `shipping` is true while a ship of it is running, whoever started it.
 // An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet. One that is
-// shipping is at work, in the normal text colour.
+// shipping is at work, in the normal text colour. 0196: so is one auto-ship will ship once its build has ended, and
+// one whose build is closing out says it waits to ship, in the normal text colour, unless it's waiting for you.
 function doing(t, shipping) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
+  if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
   const approved = t.status === 'approved' || t.status === 'done';
-  const tone = t.red ? 'bad' : t.to_ship || approved ? 'to-ship' : '';
+  const autoShips = t.status === 'approved' && t.auto_ship === true && !t.red && !t.to_ship;
+  const tone = t.red ? 'bad' : t.to_ship || (approved && !autoShips) ? 'to-ship' : '';
   const at = sentence => ({ sentence, tone, moving: false });
   if (t.status === 'blocked') return at('Blocked · it has a question for you');
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
-  if (approved) return at('Approved · waiting for you to ship it');
+  if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
   const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
   let sentence = now === 1 ? 'Checking its own work' : 'Writing tests and code';
   if (t.status === 'reviewing') {
@@ -555,6 +558,7 @@ function badgeOf(t, d) {
   if (d.moving) {
     const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
     if (d.sentence === 'Shipping') return { pose: 'type', label: 'The builder is shipping' };
+    if (t.ship_waiting) return { pose: 'type', label: 'The builder is about to ship' };
     if (t.status === 'reviewing') return { pose: 'review', label: 'The builder is with the reviewer' };
     if (now === 1) return { pose: 'check', label: 'The builder is checking its own work' };
     return { pose: 'type', label: 'The builder is writing code' };
@@ -567,7 +571,7 @@ function badgeOf(t, d) {
 // 'ship', from what it's doing (`d`, from doing), as its badge shows it. Null when no agent is at work on it.
 function stageOf(t, d) {
   if (!d.moving) return null;
-  if (d.sentence === 'Shipping') return 'ship';
+  if (d.sentence === 'Shipping' || t.ship_waiting) return 'ship';
   if (t.status === 'reviewing') return 'review';
   return (Array.isArray(t.steps) ? t.steps : []).findIndex(s => s.state === 'now') === 1 ? 'check' : 'build';
 }
@@ -667,7 +671,10 @@ function panelModel(state) {
   const done = tickets.filter(t => t.status === 'done' && !beingShipped(t)).map(t => {
     const start = time(t.started), end = time(t.finished), until = approvedAt(t) ?? end;
     const took = start !== null && until !== null ? Math.max(0, until - start - waited(t)) : null;
-    return { ...t, end, when: shippedAt(end, now), roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+    // 0178: one the server cut down to the Shipped figures gives its rounds' count and tokens in review_total.
+    const total = t.review_total && typeof t.review_total === 'object' ? t.review_total : null;
+    return { ...t, end, when: shippedAt(end, now), roundCount: total ? Number(total.rounds) || 0 : rounds(t).length,
+      tokens: total ? Number(total.tokens) || 0 : rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
       builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
       exactMinutes: took !== null ? took / 60000 : null,
       minutes: took !== null ? Math.round(took / 60000) : null };
@@ -699,7 +706,10 @@ function panelModel(state) {
       const ship_since = shipping ? time(ship.started) : null;
       const shipEnd = ship ? time(ship.ended) ?? time(ship.started) : null, approvedTime = time(t.approved);
       const auto_failed = !!ship && ship.running === false && ship.auto === true && t.status === 'approved' && (approvedTime === null || (shipEnd !== null && shipEnd >= approvedTime));
-      const exit_label = shipping ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+      // 0196: an approved ticket auto-ship covers is on its way out once its build has ended, until its ship starts,
+      // unless its last auto-ship didn't finish: since 0194 a build ends at approved, and speck run's ship queue ships it.
+      const ship_waiting = t.status === 'approved' && t.auto_ship === true && !!exited && !shipping && !auto_failed;
+      const exit_label = shipping || ship_waiting ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
@@ -714,7 +724,7 @@ function panelModel(state) {
         exit_message: auto_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
           : exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         ship_hint: auto_failed ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,
-        shipping, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
+        shipping, ship_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight && start !== null ? start + waited(t) : null, approved_at, held_at, counter: inFlight && start !== null ? counter((held_at ?? Date.now()) - start - waited(t)) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
