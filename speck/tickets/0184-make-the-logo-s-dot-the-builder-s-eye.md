@@ -1,7 +1,7 @@
 ---
 id: "0184"
 title: "Make the logo's dot the builder's eye"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T12:51:28.852Z"
 ---
 # 0184 · Make the logo's dot the builder's eye
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck's logo has a small red dot below the circle's centre, which reads as a nose. The builder badge (0168) uses the same character with the red dot as a larger eye above the centre, so the logo and the character don't match.
@@ -49,7 +49,7 @@ The logo's red dot is the builder's eye wherever the panel shows the logo: large
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The red dot in speck's logo is now the builder's eye: bigger, and sitting just above the middle of the circle instead of low down like a nose. It shows this way in the panel's header, in light and dark mode, and on the home-screen icon. To see it, open the panel and look at the logo beside "speck". A phone keeps the home-screen icon it already has, so remove the app from the home screen and add it again to get the new one.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,3 +59,64 @@ The logo's red dot is the builder's eye wherever the panel shows the logo: large
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (all already in the inbox, so no new notes):
+  - The model-name scan reads the PNG icons as text and flagged the eye's level-9 PNGs; worked around by compressing at zlib's default level. Matches speck/ideas/2026-10-14-skip-images-in-the-model-name-check.md.
+  - 0128 AC4 failed once in a full run (speck run's start-up line came before its "already running" error) and passed 3 times alone. Matches speck/ideas/2026-10-15-fix-the-0128-ac4-test-that-fails-by-chance.md.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fe1429dc04408db69ea274b714d06057e47c83c6",
+    "thread_id": "01a13fb0-f046-7dc0-ac66-69ceff11dc58",
+    "seconds": 43,
+    "usage": {
+      "input_tokens": 141504,
+      "cached_input_tokens": 98176,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 805,
+      "reasoning_output_tokens": 42
+    },
+    "saved_at": "2026-10-15T13:12:45.018Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/icons/icon.svg changes only the dot to (31.7, 33.2), radius 4.8, preserving #b0412e and all other artwork. Passing test '0184 AC1' pins the complete SVG."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Independently regenerated all three PNGs in memory using test/support/icons.mjs: each matches the committed file exactly. Passing 0149, 0170 and 0184 AC2 tests also check artwork pixels."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html has the required geometry and theme colours. Passing 0184 AC3 tests check geometry and clearance; independently calculated clearance is 12.72 SVG units. The full log confirms 0170 browser checks passed in both themes at desktop and phone widths, including the slim header."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "/tmp/speck-0184-tests.txt confirms 1,840 tests: 1,837 passed, three skipped and zero failed. Existing artwork assertions were updated to the new eye without weakening their checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel logo and home-screen icons now use the larger, higher eye, with the existing colours and surrounding artwork preserved. The eye stays clear of the outline at every header size. Tests pass, and no blocking concerns were found."
+  }
+}
+```
+
+</details>
