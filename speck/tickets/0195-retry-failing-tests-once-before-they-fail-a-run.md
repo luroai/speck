@@ -48,7 +48,7 @@ When a full test run fails, speck runs the failing tests' files once more, and t
 - Self-check: a location whose path can't be read (for example through a file) no longer throws; added a test for a commands.test_files with no {files}.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A test that fails once by chance no longer fails a whole test run or stops a ship. When a full run fails, speck runs the files of the failing tests once more. If they all pass the second time, the run counts as passed, and its output ends with a line starting "Flaky:" that names those tests. Each one is also noted, with the time and the branch, in a log shared by every copy of the project. If any test fails again, the run fails just as before, showing both runs' output. To see it, look for a "Flaky:" line at the end of a test run, or in the log in the speck cache folder. Worth keeping an eye on the log: a test that keeps turning up there needs fixing, even though it no longer stops anything.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +58,13 @@ When a full test run fails, speck runs the failing tests' files once more, and t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-15-show-the-reviewer-which-failures-passed-on-a-retry.md (the reviewer's summary still lists a failure that passed on the retry).
+- Inbox: speck/ideas/2026-10-15-fix-the-0128-ac4-test-that-fails-by-chance.md.
+- Skipped, a duplicate: 0176 AC1 failing by chance under load matches speck/ideas/2026-10-14-keep-timing-checks-steady-while-other-builds-test.md.
+- Known limit: the flaky log in speck/.cache/flaky/flaky.log is only ever added to; nothing clears old lines.
+- Known limit: `node --test` writes no location for a passing test, so a second-run pass is matched to a failure by name (counted), not by file.
+- The build skill changed on main during this build (0194): it now leaves an approved ticket for speck run's ship queue, so this build stopped after approval rather than running `speck ship --auto`.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +132,75 @@ When a full test run fails, speck runs the failing tests' files once more, and t
     ],
     "escalation_question": "",
     "summary": "The normal retry and shared logging paths work, and the full suite passed after retrying a timing failure. However, tests with identical names can hide an unchecked failure and incorrectly allow shipping. Fix that before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "211be5b47cff57447535c13aa03affac7fc62c4f",
+    "thread_id": "01a13f2a-acf8-7932-a3e5-ce021ca8ff97",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 244465,
+      "cached_input_tokens": 207360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1821,
+      "reasoning_output_tokens": 155
+    },
+    "saved_at": "2026-10-15T10:50:50.551Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/results.mjs retry collects every failing occurrence's file and retries the distinct files once. Passing AC1 tests exercise speck test, speck ship and duplicate names across files."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "retry requires exit 0 and sufficient passing occurrences for every failing name; otherwise testRun retains failure and concatenates both outputs. Passing AC2 tests cover persistent failures, missing tests and duplicate-name counts."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 worktree test checks the final Flaky line, shared log, timestamps, branch and reuse of the passing result."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "retry rejects blank or unusable commands and any missing or invalid file location. testRun excludes stalled runs. Passing AC4 tests cover these conditions, including preserving a missing location alongside an identically named failure."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0195-tests.txt: 1753 tests, 1750 passed, 3 skipped and no failures. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/tap.mjs",
+        "issue": "Previously, identical test names discarded failing files and missing locations. The parser now preserves every occurrence, and retry requires a separate passing occurrence for each failure. Regression tests cover all three cases. The builder's explanation that passing TAP results lack file locations is accepted.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Failing full runs now retry only the affected files once and report recovered failures in a shared flaky-test log. The duplicate-name bug is fixed, all acceptance criteria are covered, and the full suite passes."
   }
 }
 ```
