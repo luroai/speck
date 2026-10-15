@@ -976,7 +976,8 @@ function linkTarget(s, from) {
 // ---- end model ----
 
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
-const POLL_MS = 2000;
+const LOST_MS = 10000; // how long the board's stream can be gone before the page says it's disconnected (0187)
+const RETRY_MS = 1000; // how soon the page starts again a stream the browser has given up on
 const LOG_MS = 1000; // how often an open queue ticket's log is asked for
 const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship and the speck run switch
 const $ = id => document.getElementById(id);
@@ -1316,7 +1317,7 @@ function packPane(t) {
 // 0133: an approved ticket's pack has a Ship button, above the pack. Clicking it is the user shipping (Gate 2), as
 // /speck-ship is: the server runs speck ship for it. Under it, that it's shipping, what speck ship said, or why it refused.
 // That it's shipping, and what speck ship said, show whatever the ticket's status: speck ship sets it done before it
-// pushes, so a poll can show it done while the push is still going, or after a push that failed.
+// pushes, so an update can show it done while the push is still going, or after a push that failed.
 function shipPart(t) {
   const id = String(t.id), pending = shippingId === id || t.shipping === true, out = [];
   if (shipped.has(id)) return [el('div', 'ship-said', shipped.get(id))];
@@ -1332,7 +1333,7 @@ function shipPart(t) {
   if (shipRefused.has(id)) out.push(el('div', 'ship-said bad', shipRefused.get(id)));
   return out;
 }
-// Asks first; cancelling changes nothing. The next poll shows the ticket in the Shipped table once it has shipped.
+// Asks first; cancelling changes nothing. The next update shows the ticket in the Shipped table once it has shipped.
 async function shipTicket(id) {
   if (shippingId !== null) return;
   if (typeof confirm !== 'function' || !confirm(`Ship ${id}? This runs speck ship, as /speck-ship does: it runs the tests, merges the ticket into the base branch, pushes it and deletes its branch.`)) return;
@@ -1917,7 +1918,7 @@ function stopButton(t) {
   b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) stopBuild(id); });
   return b;
 }
-// The server stops the build as speck stop does; the next poll shows the ticket blocked. A refusal shows under the
+// The server stops the build as speck stop does; the next update shows the ticket blocked. A refusal shows under the
 // button until the next click on it. Cancelling the question changes nothing.
 async function stopBuild(id) {
   if (stopping.has(id)) return;
@@ -1987,7 +1988,7 @@ function toggleLog(id) {
   logBoxes.delete(id);
   if (logPending.has(id)) { logPending.get(id).abort(); logPending.delete(id); }
 }
-// The log timer runs apart from the state poll and render(), so a refresh never restarts or doubles it. It stops once
+// The log timer runs apart from the state updates and render(), so a refresh never restarts or doubles it. It stops once
 // nothing is open.
 function startLogTimer() {
   if (logTimer || !openQueue.size) return;
@@ -2091,7 +2092,7 @@ function queueUpdate(q, t) {
   const act = child(q, 'act'), line = queuedLine(t);
   if (act.textContent !== line.textContent || act.links !== line.links) { q.insertBefore(line, act); q.removeChild(act); }
 }
-// The counters run on their own 1-second timer, apart from the state poll and render(), so they move on between polls.
+// The counters run on their own 1-second timer, apart from the state updates and render(), so they move on between updates.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.
 const COUNTER_MS = 1000;
 let counters = []; // [counter node, started plus time waited in ms, paused] for each counting queue row, from the last render
@@ -2351,8 +2352,8 @@ function showRunError(text) {
 function setConnected(ok, problem) {
   $('offline').hidden = ok;
   if (!ok) $('offline').textContent = problem
-    ? `speck panel couldn't read the tickets: ${problem} Showing the last state received. Retrying every 2 seconds…`
-    : "Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…";
+    ? `speck panel couldn't read the tickets: ${problem} Showing the last state received until it can read them again.`
+    : "Disconnected: can't reach speck panel. Showing the last state received. Reconnecting…";
   if (state) render();
 }
 
@@ -2363,30 +2364,51 @@ function showRestartError(line) {
   $('restart').textContent = line ? `speck panel couldn't restart with its changed code: ${line} It's still running the code it had, and tries again on the next change.` : '';
 }
 
-// Fetches the state every 2 seconds without reloading the page. Each poll schedules the next one before it starts, so
-// a request that never finishes can't stop polling. A request still pending when the next one is due counts as
-// disconnected and is aborted, and only the latest request's answer is used. A failure shows as disconnected and
-// polling carries on, so the page recovers by itself when the server is back.
-let seq = 0, pending = null;
-async function poll() {
-  setTimeout(poll, POLL_MS);
+// 0187: the panel tells the page each time the board changes, over one event stream, and the page then asks for that
+// board. Nothing asks on a timer: while nothing changes, the stream carries only a keep-alive (ping), on which the page
+// redraws what it works out from the clock. Only the latest request's answer is used, and one still waiting when the
+// next board is announced counts as disconnected and is dropped; one that fails is asked again at the next ping. A dropped stream reconnects by itself, and the panel
+// tells the page of its board as soon as it's back, so "Disconnected" shows only if it stays gone for LOST_MS. Coming
+// back to the page, as a phone does when it wakes, starts a new stream at once, in case the old one died unnoticed.
+let seq = 0, pending = null, source = null, lost = null, retry = null; // retry: the board a failed request asked for
+async function load(version) {
+  retry = null;
   if (pending) { pending.abort(); pending = null; setConnected(false); }
   const mine = ++seq, ctl = new AbortController();
   pending = ctl;
   try {
-    const res = await fetch('/api/state', { cache: 'no-store', signal: ctl.signal });
+    const res = await fetch('/api/state', { cache: 'no-store', signal: ctl.signal, headers: { 'X-Speck-Board': String(version) } });
     let body = null;
     try { body = await res.json(); } catch (e) { body = null; }
     if (mine !== seq) return; // a newer request has taken over
-    if (!res.ok || !body || !Array.isArray(body.tickets)) setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
-    else { state = body; showRestartError(body.restart_error); setConnected(true); }
+    if (!res.ok || !body || !Array.isArray(body.tickets)) {
+      setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
+      // A board the panel couldn't read is announced again once it can; any other failure asks again at the next ping.
+      if (!(body && body.error)) retry = version;
+    } else { state = body; showRestartError(body.restart_error); setConnected(true); }
   } catch (e) {
-    if (mine === seq) setConnected(false);
+    if (mine === seq) { setConnected(false); retry = version; }
   } finally {
     if (pending === ctl) pending = null;
   }
 }
-poll();
+function heard() {
+  if (lost !== null) { clearTimeout(lost); lost = null; }
+}
+function connect() {
+  if (source) source.close();
+  const s = source = new EventSource('/api/events');
+  s.addEventListener('message', e => { if (source === s) { heard(); load(e.data); } });
+  s.addEventListener('ping', () => { if (source === s) { heard(); if (retry !== null) load(retry); else if (state) render(); } });
+  s.addEventListener('error', () => {
+    if (source !== s) return;
+    if (lost === null) lost = setTimeout(() => { lost = null; setConnected(false); }, LOST_MS);
+    // A stream the browser won't try again by itself, such as one answered with an error, the page starts again.
+    if (s.readyState === 2) setTimeout(() => { if (source === s) connect(); }, RETRY_MS);
+  });
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') connect(); });
+connect();
 </script>
 </body>
 </html>

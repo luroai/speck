@@ -140,11 +140,11 @@ test('0031 AC4: a status change in this checkout or in another worktree shows in
   } finally { await stop(p); }
 });
 
-test('0031 AC4: the page polls /api/state every 2 seconds, says when it is disconnected and recovers', () => {
+test('0031 AC4: the page gets /api/state when the panel says the board changed, not on a timer (0187), says when it is disconnected and recovers', () => {
   const html = page();
   assert.match(html, /fetch\(['"]\/api\/state['"]/);
-  assert.match(html, /POLL_MS\s*=\s*2000\b/);
-  assert.match(html, /async function poll\(\) \{\n\s*setTimeout\(poll,\s*POLL_MS\)/, 'schedules the next poll before this one starts');
+  assert.match(html, /new EventSource\('\/api\/events'\)/);
+  assert.doesNotMatch(html, /POLL_MS|setTimeout\(poll/, 'no poll on a timer');
   assert.match(html, /disconnected/i);
   assert.doesNotMatch(html, /location\.reload/, 'no page reloads');
 });
