@@ -1,7 +1,7 @@
 ---
 id: "0214"
 title: "Give Plan's note cards a ticket card's larger title"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0214 · Give Plan's note cards a ticket card's larger title
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0151, ticket cards in Plan have a larger id and title, but idea and inbox cards still use the old small sizes. Switching between Plan's three lists looks uneven, and idea and inbox titles are harder to read on a phone.
