@@ -40,6 +40,7 @@ Tests that only check a command's output or changes run it inside the test proce
 - Commands end today by throwing a `SpeckError` with a code, caught at the bottom of `scripts/speck.mjs`, but some may call `process.exit` or change `process.cwd()` or `process.env` themselves; the function must leave those as they were.
 - Write the suite's total test time before and after, on the same machine, in the Delivery log.
 - Failing before this build: none
+- Self-check: no changes. The first whole-suite run found three tests about speck as a process: pause, play and stop leave out speck's own process and its children (a test's stand-in build is one in-process), so the shared helper starts a process for them as for panel and run; the 0196 and 0212 ship tests now start `speck ship` as a process (`speckProcess`), as one finds it by its command line and the other kills it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { copied } from './copy.mjs';
+import { speck } from './cli.mjs';
 
 export const CLI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'scripts', 'speck.mjs');
 export const env = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
@@ -14,7 +15,7 @@ const body = `## Problem\nUsers cannot export.\n## Outcome\nUsers can export CSV
 export const BRANCH = 'speck/0001-export-bookings';
 
 export const gIn = (cwd, ...a) => spawnSync('git', a, { cwd, encoding: 'utf8', env });
-export const runIn = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env });
+export const runIn = (cwd, ...a) => speck(cwd, env, ...a);
 
 // An approved ticket on its branch, which changes shared.txt. Tracked files notes.txt and other.txt are on both branches.
 // `test` is the test command, with {main} standing for the main checkout's path. With `worktree`, the branch is checked

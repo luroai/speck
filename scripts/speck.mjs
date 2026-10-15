@@ -19,6 +19,7 @@ import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
 import { logTail } from './build-log.mjs';
 import { removeScratch } from './scratch.mjs';
+import { runInProcess } from './in-process.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -542,12 +543,20 @@ const HELP = `speck: Your judgement, at agent speed.
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, new: cmdNew, lint: cmdLint, set: cmdSet, config: cmdConfig, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, 'merge-check': cmdMergeCheck, ship: cmdShip };
 
+// Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
+function dispatch([cmd, ...args]) {
+  if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);
+  else if (COMMANDS[cmd]) COMMANDS[cmd](args);
+  else throw new SpeckError(`Unknown command "${cmd}".\n\n${HELP}`);
+}
+
+// Runs one speck command, `args` as given after `speck` on the command line, in this process: see runInProcess.
+export { runInProcess };
+export const runCommand = (args, opts) => runInProcess(() => dispatch(args), opts);
+
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [cmd, ...args] = process.argv.slice(2);
   try {
-    if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);
-    else if (COMMANDS[cmd]) COMMANDS[cmd](args);
-    else throw new SpeckError(`Unknown command "${cmd}".\n\n${HELP}`);
+    dispatch(process.argv.slice(2));
   } catch (e) {
     if (e instanceof SpeckError) { if (e.message) console.error(e.message); process.exit(e.code); }
     throw e;

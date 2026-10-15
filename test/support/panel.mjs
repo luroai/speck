@@ -10,6 +10,7 @@ import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { after } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { speck } from './cli.mjs';
 import { tickingSource } from './stream.mjs';
 import { copied } from './copy.mjs';
 
@@ -27,7 +28,7 @@ export const fm = (o = {}) => Object.entries({ id: '"0001"', title: 'Export book
 // Each kind is built once per test file and copied (copy.mjs).
 export function panelRepo({ worktrees = 'false' } = {}) {
   const dir = copied('panel', [worktrees], 'speck-', d => buildPanelRepo(d, worktrees));
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => speck(dir, env, ...a);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   const file = path.join(dir, 'speck', 'tickets', '0001-export-bookings.md');
   const write = (name, fmText, body = good, where = 'speck/tickets') => {
@@ -37,7 +38,7 @@ export function panelRepo({ worktrees = 'false' } = {}) {
   return { dir, run, g, file, write };
 }
 function buildPanelRepo(dir, worktrees) {
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => speck(dir, env, ...a);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   g('init', '-q', '-b', 'main');
   assert.equal(run('init', '--skip-checks').status, 0);
