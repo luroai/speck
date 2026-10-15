@@ -1,7 +1,7 @@
 ---
 id: "0213"
 title: "Highlight a P0 priority tag at least as much as P1"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-10-highlight-p0-in-the-panel.md"              
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:12:28.214Z"
+approved: "2026-10-15T23:20:13.863Z"
 
 ---
 # 0213 · Highlight a P0 priority tag at least as much as P1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A fix ticket for a broken `main` is the most urgent thing on the board, but its P0 priority tag is plain grey, so it looks less important than a P1, whose tag is highlighted. Someone scanning the panel can miss what to deal with first.
@@ -50,9 +51,15 @@ The P0 priority tag, which marks the urgent fix for a broken main, is now red wh
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Hovering a P0 tag in Plan removes its red text and border because .tag.pick:hover has greater specificity than .tag.p0.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 281,044
+- Elapsed since build started: 8 min
+- Changed lines: 4 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
