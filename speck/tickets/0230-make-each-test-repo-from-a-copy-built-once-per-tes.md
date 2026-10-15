@@ -1,7 +1,7 @@
 ---
 id: "0230"
 title: "Make each test repo from a copy built once per test file"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T21:23:50.566Z"
 
 ---
 # 0230 · Make each test repo from a copy built once per test file
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Most of speck's tests make a fresh temporary git repo with speck set up in it, running `git init` and several commits each time. On an 8 GB MacBook Air, 507 tests took 1 to 3 s each, 43% of the suite's test time, and setting up their repos is a large part of that.
