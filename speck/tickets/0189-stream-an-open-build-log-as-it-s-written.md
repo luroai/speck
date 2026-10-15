@@ -40,8 +40,10 @@ An open build log shows new lines as they're written, without the page asking on
 - `panelLog()` in `scripts/panel.mjs` reads the whole log and runs `readableLog()` over it. A build writes one JSON event per line, and a line can arrive in more than one write, so only whole lines are converted.
 - Use the stream 0187 sets up, so a page holds one connection (see 0187's Notes).
 - Covers the open-log part of 0179, which 0187 and this ticket replace, and the idea note `speck/ideas/done/2026-10-09-stop-asking-for-a-log-once-its-build-has-ended.md`.
-
 - Failing before this build: none
+- Design: each stream is first sent its own name (event `stream`). The page asks for an open log once, naming its stream in an `X-Speck-Stream` header (the URL stays `/api/tickets/<id>/log`, which several browser tests stub), and the stream then sends `log` events: the lines to take off the end (a plain last line still being written) and the lines to add, or a new build's whole log. A half-written JSON event isn't shown until it's whole. A failed request is asked for again at the stream's next keep-alive.
+- Changed under AC5: the 0052 tests that checked the page asks every second (its four AC1 tests, the retries in its two AC4 tests and the repeated asks in its real-browser AC3 test) now check the stream's updates instead.
+- Self-check: closing and opening a log quickly could leave it closed when the close arrived last, so each open and close is numbered (`X-Speck-Order`) and a late one is ignored.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

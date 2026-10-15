@@ -15,8 +15,12 @@ const PANEL_PING_MS = 5000, BOARD_CHECK_PINGS = 3, BOARD_SETTLE_MS = 100, BOARD_
 // the server then gives announce() what /api/state would answer with, which tells every stream of a board that differs
 // from the last, by its number, and returns that number. Changes to the files are gathered so that a burst of them,
 // such as a commit changing ten tickets, starts one reading.
-export function boardFeed(repo, runs, read) {
+// 0189: each stream is first told its own name (event `stream`), by which the page opens build logs on it. `logs` (see
+// logFeed) hears of each stream that opens and closes, each write to a file in `runs` and each keep-alive, and send()
+// writes an event to a stream by its name.
+export function boardFeed(repo, runs, read, logs = {}) {
   const streams = new Set(), untold = new Set(); // untold: streams opened before the board was known
+  const named = new Map(); // a stream's name → the stream
   let version = 0, shown = null, soon = null, soonAt = 0, pings = 0;
   const changed = (slow = false) => {
     const ms = slow ? BOARD_LOG_MS : BOARD_SETTLE_MS;
@@ -25,18 +29,20 @@ export function boardFeed(repo, runs, read) {
     soonAt = Date.now() + ms;
     soon = setTimeout(() => { soon = null; read(); }, ms);
   };
-  const files = boardWatcher(repo, runs, changed);
+  const files = boardWatcher(repo, runs, changed, name => logs.written?.(name));
   // The keep-alive also looks again for what to watch.
   const pingMs = Number(process.env.SPECK_PANEL_PING_MS) > 0 ? Number(process.env.SPECK_PANEL_PING_MS) : PANEL_PING_MS;
   const ping = setInterval(() => {
     files.sync();
     for (const res of streams) res.write('event: ping\ndata: 1\n\n');
+    logs.ping?.();
     if (streams.size && ++pings % BOARD_CHECK_PINGS === 0) changed();
   }, pingMs);
   ping.unref();
   return {
     changed,
     watched: () => streams.size > 0,
+    send(name, event, data) { const res = named.get(name); if (res) res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); },
     announce(body) {
       if (body !== shown) { shown = body; version++; for (const res of streams) res.write(`data: ${version}\n\n`); }
       else for (const res of untold) res.write(`data: ${version}\n\n`);
@@ -49,8 +55,12 @@ export function boardFeed(repo, runs, read) {
       res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store, no-transform', 'X-Content-Type-Options': 'nosniff', 'X-Accel-Buffering': 'no' });
       res.write(`retry: ${STREAM_RETRY_MS}\n${known ? `data: ${version}\n` : ''}\n`);
       if (stopping) return res.end();
+      const name = crypto.randomBytes(16).toString('hex');
+      res.write(`event: stream\ndata: ${name}\n\n`);
       streams.add(res);
-      res.on('close', () => { streams.delete(res); untold.delete(res); });
+      named.set(name, res);
+      logs.opened?.(name);
+      res.on('close', () => { streams.delete(res); untold.delete(res); named.delete(name); logs.closed?.(name); });
       if (!known) { untold.add(res); changed(); }
     },
     close() {
@@ -66,9 +76,10 @@ export function boardFeed(repo, runs, read) {
 
 // 0187: watches the files the board is read from and calls changed(slow) on each change: speck/ in every checkout (its
 // tickets, ideas and config) and speck run's records, plus git's list of worktrees, so a build's new worktree is watched
-// once it's made. A build log growing is slow (only its spend shows), the rest isn't. A folder that isn't there yet is
+// once it's made. A build log growing is slow (only its spend shows), the rest isn't, and is also told to `log` with the
+// log's name (0189). A folder that isn't there yet is
 // watched through its parent until it is. sync() looks again for what to watch, and close() stops watching.
-export function boardWatcher(repo, runs, changed) {
+export function boardWatcher(repo, runs, changed, log = () => {}) {
   const watching = new Map(); // folder → its fs.FSWatcher
   let common = null;
   try { const r = sh('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo }); if (r.status === 0) common = r.stdout.trim() || null; } catch { /* not a git checkout */ }
@@ -114,7 +125,9 @@ export function boardWatcher(repo, runs, changed) {
           w = fs.watch(dir, { recursive, persistent: false }, (type, name) => {
             if (only !== null && name && String(name) !== only) return;
             if (again) sync();
-            changed(dir === runs && /\.log$/.test(String(name || '')));
+            const isLog = dir === runs && /\.log$/.test(String(name || ''));
+            if (isLog) log(String(name));
+            changed(isLog);
           });
         } catch { continue; } // gone already, or out of watches: the next sync tries again, and the keep-alive's reading covers it
         Object.assign(w, { recursive, again, only });

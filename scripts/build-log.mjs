@@ -12,6 +12,13 @@ export function readableLog(text, { times = false } = {}) {
   return readable(text, times, null).out.join('\n');
 }
 
+// readableLog's lines for a piece of a log, carried on from the piece before it (0189): `last` is what the piece before
+// it returned, or null at the start of the log. Returns { lines, last }, last being what the next piece takes.
+export function readablePiece(text, { times = false, last = null } = {}) {
+  const r = readable(text, times, last);
+  return { lines: r.out, last: r.last };
+}
+
 // readableLog's lines. last is the agent's latest text before this text starts, or UNSAID when it isn't known (a
 // piece cut from the end of a log); unsure then says whether a result needed it, so it may be wrong.
 const UNSAID = Symbol('unsaid');
@@ -51,7 +58,7 @@ function readable(text, times, last) {
       if (e.is_error === true || (e.subtype && e.subtype !== 'success')) out.push(`Build ended: ${e.subtype || 'error'}`);
     }
   }
-  return { out, unsure };
+  return { out, unsure, last };
 }
 
 // The last n lines of a build log as readableLog shows them, trailing blank lines dropped, or null when there are none.
