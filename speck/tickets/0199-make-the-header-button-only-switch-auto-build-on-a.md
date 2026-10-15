@@ -1,7 +1,7 @@
 ---
 id: "0199"
 title: Make the header button just the Auto-build switch                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0199 · Make the header button just the Auto-build switch
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0163 the header's Auto-build button names one ticket in flight and where it has got to, or a ticket that needs you. With two builds at once and a ship queue (0193, 0194), one ticket's status there is partial and repeats what the Build list already shows, and its tooltip still says builds go one at a time.
