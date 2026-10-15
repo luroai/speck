@@ -1,7 +1,7 @@
 ---
 id: "0222"
 title: "Say in the plain pack when the reviewer couldn't see the code"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-12-say-in-the-plain-pack-when-the-reviewer-cou
 after: ["0215"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:20:05.089Z"
+approved: "2026-10-15T23:24:21.685Z"
 
 ---
 # 0222 · Say in the plain pack when the reviewer couldn't see the code
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a reviewer couldn't look round the project in a review round and judged the change from the diff alone, the full review pack warns about it but `speck pack <id> --plain` doesn't. The readers of the plain pack are the ones who can't check the code themselves, so they most need to know the review was done half-blind.
@@ -50,9 +51,14 @@ The short, plain review pack now tells you when the reviewer could only see the 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 139,695
+- Elapsed since build started: 4 min
+- Changed lines: 7 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
