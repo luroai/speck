@@ -1,7 +1,7 @@
 ---
 id: "0229"
 title: "Start the slowest test files first"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T21:38:12.714Z"
 ---
 # 0229 · Start the slowest test files first
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `npm test` hands Node the test files in alphabetical order, so a slow file near the end can run on its own while the other workers sit idle. On an 8 GB MacBook Air the suite took 483 s of wall time for 2,132 s of test time across about 7 workers, so roughly three minutes went on uneven packing and contention.
@@ -57,3 +57,74 @@ speck's own test suite starts its slowest test files first.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f923928237da942262313f8caafb3087c2b58db3",
+    "thread_id": "01a14189-2c8d-7de1-bed2-972f6a2ac105",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 307030,
+      "cached_input_tokens": 255744,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1414,
+      "reasoning_output_tokens": 120
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T21:48:38.587Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "orderFiles() and runSuite() in test/support/suite.mjs implement duration ordering and recording. Passing AC1 integration tests exercise two successive runs."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 integration test verifies alphabetical starts without a cache; readTimes() handles missing and invalid records."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "File coverage, TAP summary and retry parsing are exercised by passing AC3 tests. However, runSuite() depends on test:summary for a successful exit, which is unavailable on supported Node 20."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Verified /tmp/speck-0229-tests.txt reports 1,989 passed, zero failed and three skipped on the builder's runtime. On supported Node 20, the new runner returns failure even when all tests pass; the successful-exit tests consequently fail."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/suite.mjs:54",
+        "issue": "success starts false and becomes true only through test:summary. Node 20, supported by package.json and README.md, does not emit that event, so a completely passing npm test exits 1. The Node 20 event list documents test:complete but no test:summary: [Node 20 documentation](https://nodejs.org/download/release/v20.19.0/docs/api/test.html#class-testsstream). The current tests cover only the builder's newer runtime.",
+        "suggested_fix": "Determine the exit result using events available on Node 20, accounting for failures and cancellations, and verify passing and failing fixtures on the minimum supported runtime.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The runner orders files by their previous durations, and the reported full suite passes. One compatibility bug blocks approval: on supported Node 20, even a passing suite reports failure. Fix the exit-result handling and check it on Node 20."
+  }
+}
+```
+
+</details>

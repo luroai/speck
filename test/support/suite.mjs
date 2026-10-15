@@ -50,13 +50,17 @@ export async function runSuite(root, { concurrency = Math.max(os.availableParall
   }
   const file = timesFile(root);
   const files = orderFiles(names.map(f => `test/${f}`), readTimes(file));
-  const given = new Set(files);
+  // run() is given each file's full path, so the files are found wherever the process was started (Node 20's run()
+  // has no cwd option), and the times are kept by the paths below root.
+  const given = new Map(files.map(f => [path.join(root, f), f]));
   const times = new Map();
-  let success = false;
-  const stream = run({ cwd: root, files, concurrency });
+  let failed = false;
+  const stream = run({ files: [...given.keys()], concurrency });
   // A file's own entry, named with its path as given, ends once its process has.
-  stream.on('test:complete', d => { if (d.nesting === 0 && given.has(d.name)) times.set(d.name, d.details.duration_ms); });
-  stream.on('test:summary', d => { if (d.file === undefined) success = d.success; });
+  stream.on('test:complete', d => { if (d.nesting === 0 && given.has(d.name)) times.set(given.get(d.name), d.details.duration_ms); });
+  // As with `node --test`, any failing test fails the run, a file that couldn't run included, but not a todo test.
+  // Node 20 has no test:summary, so this is worked out from each test that fails.
+  stream.on('test:fail', d => { if (!d.todo) failed = true; });
   const reporter = out.isTTY ? stream.compose(new spec()) : stream.compose(tap);
   await new Promise((resolve, reject) => {
     reporter.on('error', reject);
@@ -69,7 +73,7 @@ export async function runSuite(root, { concurrency = Math.max(os.availableParall
       console.error(`Couldn't record the test files' times in ${file} (${e.code || e.message}). The next run starts them alphabetically.`);
     }
   }
-  return success ? 0 : 1;
+  return failed ? 1 : 0;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

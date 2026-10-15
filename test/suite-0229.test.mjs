@@ -143,3 +143,16 @@ test('0229 AC3: a run whose times can\'t be recorded still exits with the tests\
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stderr, /^Couldn't record the test files' times in .*test-times\.json \(EEXIST\)\. The next run starts them alphabetically\.\n$/);
 });
+
+test('0229 AC3: a file that can\'t run fails the run, and a todo test that fails doesn\'t', () => {
+  const dir = fixture({ 'a.test.mjs': {} });
+  fs.writeFileSync(path.join(dir, 'test', 'todo.test.mjs'),
+    "import { test } from 'node:test';\ntest('to do', { todo: true }, () => { throw new Error('not yet'); });\n");
+  const todo = spawnSync(process.execPath, [SUITE], { cwd: dir, env: env(), encoding: 'utf8', timeout: 60000 });
+  assert.equal(todo.status, 0, todo.stderr);
+  assert.match(todo.stdout, /^# todo 1$/m);
+  fs.writeFileSync(path.join(dir, 'test', 'broken.test.mjs'), "throw new Error('it broke on loading');\n");
+  const broken = spawnSync(process.execPath, [SUITE], { cwd: dir, env: env(), encoding: 'utf8', timeout: 60000 });
+  assert.equal(broken.status, 1, broken.stderr);
+  assert.match(summariseTap(broken.stdout, '0229', 'out.txt'), /Failing tests \(1\):\nnot ok - .*broken\.test\.mjs/);
+});
