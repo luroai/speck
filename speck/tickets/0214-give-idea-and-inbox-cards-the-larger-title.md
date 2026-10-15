@@ -1,7 +1,7 @@
 ---
 id: "0214"
 title: "Give Plan's note cards a ticket card's larger title"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-14-give-idea-and-inbox-cards-the-larger-title.
 after: ["0213"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:27:49.181Z"
+approved: "2026-10-15T23:30:07.419Z"
 
 ---
 # 0214 · Give Plan's note cards a ticket card's larger title
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0151, ticket cards in Plan have a larger id and title, but idea and inbox cards still use the old small sizes. Switching between Plan's three lists looks uneven, and idea and inbox titles are harder to read on a phone.
@@ -50,9 +51,14 @@ In Plan, the idea and inbox cards now have the same larger title as the ticket c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 92,801
+- Elapsed since build started: 2 min
+- Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
