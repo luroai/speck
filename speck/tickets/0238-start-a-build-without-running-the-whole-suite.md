@@ -1,7 +1,7 @@
 ---
 id: "0238"
 title: "Start a build without running the whole suite"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0231","0235","0237"] # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:35:17.058Z"
+approved: "2026-10-15T22:39:37.868Z"
 
 ---
 # 0238 · Start a build without running the whole suite
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every build starts by running the whole suite, only to list the tests that already fail before it changes anything. Usually that reuses the result from the ship before it, but after any change to the base branch made outside a ship it's a whole run on a laptop that may already be busy, for a list that's nearly always "none".
@@ -53,9 +54,14 @@ A build no longer runs every test before it starts. It looks up the last test re
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 113,480
+- Elapsed since build started: 4 min
+- Changed lines: 49 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
