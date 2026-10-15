@@ -122,20 +122,21 @@ test('0209 AC1: two tests that each passed on a second try are both listed, and 
   assert.deepEqual(part(s, 'Totals'), ['Totals (the full run):', '# tests 2', '# fail 2']);
 });
 
-test('0209 AC2: a run that failed on both tries lists its failing tests as before, with no second-try part', () => {
+test('0209 AC2: a run that failed on both tries lists each failing test once, with the second try\'s details and no second-try part (0221)', () => {
   const s = summariseTap(FAILED_AGAIN, '0001', '/t.txt');
   assert.doesNotMatch(s, /^Result:/m);
   assert.equal(part(s, 'Passed on a second try'), null);
   const failing = part(s, 'Failing tests');
-  assert.equal(failing[0], 'Failing tests (4):', s);
-  assert.match(s, /error: 'chance'/);
+  assert.equal(failing[0], 'Failing tests (2):', s);
+  assert.doesNotMatch(s, /error: 'chance'/);
   assert.match(s, /error: 'not chance'/);
+  assert.ok(part(s, 'Totals').includes('# tests 3') && part(s, 'Totals').includes('# duration_ms 144.72'), s);
 });
 
 test('0209 AC2: a Flaky line that comes before the second try is not taken as a pass', () => {
   const s = summariseTap(`Flaky: group > 0001 AC1: widget adds up\n${FAILED_AGAIN}`, '0001', '/t.txt');
   assert.equal(part(s, 'Passed on a second try'), null);
-  assert.equal(part(s, 'Failing tests')[0], 'Failing tests (4):');
+  assert.equal(part(s, 'Failing tests')[0], 'Failing tests (2):');
 });
 
 test('0209 AC3: a run that passed first time is summarised exactly as before', () => {
@@ -175,9 +176,9 @@ test('0209 AC4: the pack counts the failing tests as the reviewer\'s summary doe
   const out = path.join(r.dir, '..', `tests-0209-${path.basename(r.dir)}.txt`);
   fs.writeFileSync(out, FAILED_AGAIN);
   assert.equal(r.run('review', '1', `--tests=${out}`).status, 10);
-  assert.deepEqual(r.roundFile(1).meta.tests, { failing: 4, second_try: [] });
+  assert.deepEqual(r.roundFile(1).meta.tests, { failing: 2, second_try: [] });
   const s = summariseTap(FAILED_AGAIN, '1', out);
-  assert.equal(part(s, 'Failing tests')[0], 'Failing tests (4):');
+  assert.equal(part(s, 'Failing tests')[0], 'Failing tests (2):');
 });
 
 test('0209 AC4: a round given no TAP output records nothing about the tests, and the pack has no tests part', () => {
