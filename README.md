@@ -23,7 +23,7 @@ idea → ticket → [you: ready] → agent builds → second agent reviews, turn
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
 
-> Status: 0.3.0, a public preview. It works end to end on a local machine. Expect rough edges.
+> Status: 0.4.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -31,7 +31,7 @@ Paste this prompt into your coding agent, opened in the folder of the project yo
 
 ```text
 Set up speck in this folder. If Node.js 20 or newer isn't installed, offer to
-install it first. Then run `npx github:luroai/speck#v0.3.0 init` and follow
+install it first. Then run `npx github:luroai/speck#v0.4.0 init` and follow
 the speck-setup skill it installs. Ask me before changing anything on my
 machine or in git.
 ```
@@ -149,9 +149,9 @@ speck/
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **131 tickets shipped** and 13 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
-- **10 minutes** median from a build starting to its ticket shipping.
-- **1 review round** median. 67 tickets were approved in the first round.
+- **195 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **14 minutes** median from a build starting to its ticket shipping.
+- **1 review round** median. 100 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 

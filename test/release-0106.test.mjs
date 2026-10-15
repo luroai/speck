@@ -14,16 +14,21 @@ import { changelogSection, releaseMismatches } from './support/release.mjs';
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const section = (text, heading) => text.match(new RegExp(`^## ${heading}\\s*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] || null;
 
-test('0106 AC1: package.json is version 0.3.0', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '0.3.0');
+// 0210 (release 0.4.0) made the checks below that named 0.3.0 as the current version check the current version instead.
+const version = () => JSON.parse(read('package.json')).version;
+const esc = v => v.replace(/\./g, '\\.');
+
+test('0106 AC1: package.json has the current release version', () => {
+  assert.match(version(), /^\d+\.\d+\.\d+$/);
+  assert.ok(changelogSection(read('CHANGELOG.md'), version()), 'with a changelog section of its own');
 });
 
-test('0106 AC1: speck init prints speck 0.3.0', () => {
+test('0106 AC1: speck init prints speck and the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 0\.3\.0: /m);
+  assert.match(r.stdout, new RegExp(`^speck ${esc(version())}: `, 'm'));
 });
 
 test('0106 AC2: CHANGELOG.md has a 0.3.0 section above 0.2.0, under a few headings', () => {
@@ -31,7 +36,6 @@ test('0106 AC2: CHANGELOG.md has a 0.3.0 section above 0.2.0, under a few headin
   const s = changelogSection(log, '0.3.0');
   assert.ok(s, 'CHANGELOG.md has a 0.3.0 section');
   assert.ok(log.indexOf(s) < log.indexOf(changelogSection(log, '0.2.0')), '0.3.0 comes above 0.2.0');
-  assert.equal(log.match(/^## .*$/m)[0].startsWith('## 0.3.0'), true, '0.3.0 is the newest section');
   const groups = [...s.matchAll(/^### .+$/gm)];
   assert.ok(groups.length >= 2 && groups.length <= 8, `a few headings, not ${groups.length}`);
   assert.ok([...s.matchAll(/^- /gm)].length >= groups.length, 'each heading lists what changed');
@@ -45,16 +49,16 @@ test('0106 AC2: the 0.2.0 section is unchanged', () => {
   assert.equal(crypto.createHash('sha256').update(s).digest('hex'), 'ea64d32025832543bbd1f26a0726978d393b7f9abd02eb92360709691afbb9f5');
 });
 
-test('0106 AC3: the README setup prompt names v0.3.0', () => {
-  assert.match(read('README.md'), /npx github:luroai\/speck#v0\.3\.0 init/);
+test('0106 AC3: the README setup prompt names the current version', () => {
+  assert.ok(read('README.md').includes(`npx github:luroai/speck#v${version()} init`));
   assert.doesNotMatch(read('README.md'), /#v0\.2\.0/);
 });
 
-test('0106 AC3: the README and brief status lines say 0.3.0, a public preview', () => {
+test('0106 AC3: the README and brief status lines say the current version, a public preview', () => {
   const readme = read('README.md').match(/^> Status:.*$/m)?.[0] || '';
   const brief = read('docs/brief.md').match(/^Status:.*$/m)?.[0] || '';
   for (const line of [readme, brief]) {
-    assert.match(line, /\b0\.3\.0, a public preview/);
+    assert.match(line, new RegExp(`\\b${esc(version())}, a public preview`));
     assert.doesNotMatch(line, /0\.2\.0/);
   }
 });

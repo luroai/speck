@@ -46,6 +46,9 @@ speck is ready to be released as 0.4.0.
 - The tag goes on straight after this ships, since until then the README points at a tag that doesn't exist yet. Then the GitHub release: `gh release create v0.4.0 --verify-tag --title "speck 0.4.0" --notes-file docs/releases/v0.4.0.md`.
 - Checked 2026-10-15: the repo has tags `v0.2.0` and `v0.3.0` but no GitHub releases yet (`gh release list`), so this is the first release page.
 - Failing before this build: none
+- The 0106 release tests named 0.3.0 as the current version; they now check the current version, as 0106 did for 0092's. 0106's checks that the 0.3.0 section sits above 0.2.0 and that 0.2.0 is unchanged stay.
+- Built with speck figures worked out from `speck/tickets/done/` at the commit this was built from (`speck(0212): Recover a ship that was stopped partway`): shipped = status done, cancelled = status cancelled, minutes = median of `finished` − `started`, rounds = median of the Delivery log's "Review rounds", first time = rounds of 1. The same method gives the figures last set in `Lead with judgement: new tagline and README opening` exactly (131, 13, 10 minutes, 1 round, 67).
+- Self-check: the changelog and release notes claimed every failing run gets a second try; narrowed to when `commands.test_files` is set, and added an upgrade note saying so. Principle 7's wording avoids phrases the 0111 check treats as parallel builds. The full suite then caught the new tests naming commits by id (0085 AC3); they now find them by message.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
