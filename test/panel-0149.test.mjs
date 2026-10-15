@@ -64,7 +64,8 @@ test('0149 AC1: each PNG is the logo from icon.svg, centred on a solid backgroun
   // 0170: the circle, the two ears and the dot of the landing page's mark, in place of the ensō and dot.
   assert.match(svg, /<g transform="translate\(([-\d.]+) ([-\d.]+)\)" fill="none" stroke="#141413" stroke-width="[\d.]+" stroke-linecap="round">/);
   assert.equal([...svg.matchAll(/<path d="[^"]+"\/>/g)].length, 3);
-  assert.match(svg, /<circle cx="32" cy="38" r="2\.3" fill="#b0412e" stroke="none"\/>/);
+  // 0184: the dot is the builder's eye, larger and just above the circle's centre.
+  assert.match(svg, /<circle cx="31\.7" cy="33\.2" r="4\.8" fill="#b0412e" stroke="none"\/>/);
   const [dx, dy] = (svg.match(/translate\(([-\d.]+) ([-\d.]+)\)/) || []).slice(1).map(Number);
   for (const [name, size] of Object.entries(PNGS)) {
     const file = fs.readFileSync(path.join(ICONS, name));
@@ -73,7 +74,7 @@ test('0149 AC1: each PNG is the logo from icon.svg, centred on a solid backgroun
     assert.equal(img.type, 2, `${name} is RGB, with no alpha channel`);
     const at = (u, v) => hex(img.at(Math.floor(u * size / 64), Math.floor(v * size / 64)));
     for (const [u, v] of [[1, 1], [63, 1], [1, 63], [63, 63], [32, 20]]) assert.equal(at(u, v), '#faf9f5', `${name} background at ${u},${v}`);
-    assert.equal(at(32 + dx, 38 + dy), '#b0412e', `${name} has the red dot`);
+    assert.equal(at(31.7 + dx, 33.2 + dy), '#b0412e', `${name} has the red dot`);
     for (const [u, v] of [[31.7, 56.9], [10.2, 35.4], [53.2, 35.4], [17.6, 13.1], [46.4, 13.1]]) assert.equal(at(u + dx, v + dy), '#141413', `${name} has the circle, the two ears at ${u},${v}`);
   }
 });

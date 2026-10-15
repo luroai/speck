@@ -44,6 +44,9 @@ The logo's red dot is the builder's eye wherever the panel shows the logo: large
 - A phone keeps the home-screen icon it fetched, so the user needs to remove and re-add the app to see the new one.
 
 - Failing before this build: none
+- The new eye's PNGs, compressed at level 9, held bytes ("O6", "o4") that the "no model name is hard-coded" scan flags, so the PNG writer in `test/support/icons.mjs` now uses zlib's default level, whose bytes pass it at all three sizes.
+- The "dot doesn't touch the stroke" check is geometric: the header's mark scales as a whole and no rule changes its stroke width, so one check covers phone, desktop and the slim header. 0170's browser checks still cover the dot's colour at each.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
