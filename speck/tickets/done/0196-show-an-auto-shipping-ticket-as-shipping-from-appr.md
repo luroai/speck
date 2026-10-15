@@ -1,7 +1,7 @@
 ---
 id: "0196"
 title: "Show an auto-shipping ticket as shipping from approval until it ships"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T12:18:36.741Z"
 approved: "2026-10-15T12:30:04.732Z"
+finished: "2026-10-15T12:30:17.176Z"
 
 ---
 # 0196 · Show an auto-shipping ticket as shipping from approval until it ships
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0194 a build ends at approved, and `speck run`'s ship queue ships the ticket a few seconds later. In between, the panel says "Approved · waiting for you to ship it" and the builder badge stands still, although nothing is waiting for the user. Then, while the ship tests the ticket merged with the base branch, the panel shows the ticket as Queued until the ship ends. Seen on 0178 on 2026-10-15.
