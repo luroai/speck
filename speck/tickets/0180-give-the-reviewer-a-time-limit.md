@@ -45,7 +45,7 @@ A reviewer that runs too long is ended, and the review round fails with a messag
 - Self-check: no changes to the code; the bad-value test now reuses one repo per reviewer, to keep it quick.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A review no longer waits for ever if the reviewer gets stuck. If Codex, or another reviewer speck runs for you, is still going after 30 minutes, speck stops it, along with anything it started, and says the reviewer took too long and nothing was recorded. The ticket stays as it was, so you can simply run the review again. You can change the 30 minutes with the `review_timeout_minutes` setting; it must be a whole number of minutes, and a wrong value is refused with a note on how to fix it. To see it, set the limit to 1 minute and point a reviewer at something that hangs. Worth knowing: the Claude reviewer that runs inside a build's own session has no such limit.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,8 @@ A reviewer that runs too long is ended, and the review round fails with a messag
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up (inbox): `speck/ideas/2026-10-15-end-a-stalled-test-run-s-detached-processes-too.md`: test stall handling (0152) still ends only the process group, missing detached or orphaned processes.
+- Known limit: a process that clears its own environment and leaves both the reviewer's process group and its ancestry isn't found when the limit ends the reviewer.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -207,6 +209,83 @@ A reviewer that runs too long is ended, and the review round fails with a messag
     ],
     "escalation_question": "",
     "summary": "The large-timeout bug is fixed, and all tests pass. Cleanup now reaches detached children whose ancestry remains intact, but background processes can still survive if their intermediate parent exits before timeout. The promise to end every process started by the reviewer remains incomplete."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6014f86c408201990c72fd4d874f1db55929c92b",
+    "thread_id": "01a13f4d-3d0a-7a10-afc5-732a9055c923",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 388694,
+      "cached_input_tokens": 331520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2883,
+      "reasoning_output_tokens": 242
+    },
+    "saved_at": "2026-10-15T11:34:10.954Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/limit.mjs ends the reviewer group, traceable descendants and processes carrying the unique run marker. AC1 tests cover Codex and command timeouts, detached children, orphaned descendants, the default limit and timeout wording."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewRound restores the ticket after failure; runCodexReview removes timed-out output. Both AC2 tests verify no recorded round and a successful retry."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewTimeoutMs and config.mjs validate positive whole numbers. AC3 tests cover refusal, corrective instructions and preventing reviewer execution."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 tests cover successful reviews, existing command-error behaviour and normal completion with a limit above Node's single-timer range."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0180-tests.txt confirms 1783 tests: 1780 passed, three skipped and zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/limit.mjs",
+        "issue": "The run marker now lets cleanup identify orphaned processes after their ancestry is lost. The new regression test exercises a helper that starts a detached process and exits before timeout.",
+        "suggested_fix": "",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/limit.mjs",
+        "issue": "Long deadlines use bounded timer intervals, avoiding immediate expiry from timer overflow. The large-limit regression test remains passing.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Reviewers now have a configurable time limit, with cleanup covering detached and orphaned subprocesses. Timed-out attempts record no round and can be retried. Both previous findings are resolved, and the full suite reports no failures."
   }
 }
 ```
