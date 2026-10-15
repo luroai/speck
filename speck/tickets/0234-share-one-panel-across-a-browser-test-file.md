@@ -1,7 +1,7 @@
 ---
 id: "0234"
 title: "Share one panel across a browser test file"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-share-one-panel-across-a-browser-test-file.
 after: ["0231"]               # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:33:39.940Z"
+approved: "2026-10-15T22:45:48.244Z"
 
 ---
 # 0234 · Share one panel across a browser test file
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each test in the real-browser test files makes a repo and starts a `speck panel` only to serve the page, about 0.6 s of its 1 s or so. Tried on `test/panel-0155.test.mjs` during 0198, sharing one panel took the file from about 25 s to 9 s with all 22 tests passing.
@@ -47,9 +48,15 @@ Nothing changes for someone using speck: this only makes speck's own test suite 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Only the three ticket-related files were tested.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 351,771
+- Elapsed since build started: 12 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Round 1 was sent only the ticket's own test files, as the review skill says, while the build skill says round 1 gets the whole suite's output. The reviewer asked for the whole suite. Skipped as an inbox note: ticket 0235 is already changing which tests each round runs.
