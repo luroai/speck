@@ -43,6 +43,8 @@ A build lists the tests already failing from a result speck has recorded, and ne
 - The builder's step is `skills/speck-build/SKILL.md` section 1 step 6; the reviewer's scope rule is item 4 in `templates/reviewer-prompt.md`.
 - 0235 changes the same skill and reviewer prompt, 0237 the same `testRun()` and `cmdTest()` code, and 0231 `scripts/speck.mjs`, where `speck test`'s usage lines are; all three come first.
 - Failing before this build: none
+- Self-check: the build skill's section 3 step 5 still said the whole suite ran before any change; reworded it, with a test.
+- The older tests that asserted the full-suite starting run (baseline-0095 AC1, files-0113 AC4, build-0197 AC4) now assert `speck test --recorded`, as this ticket replaces that step.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

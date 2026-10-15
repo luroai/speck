@@ -153,9 +153,9 @@ test('0113 AC3: the build skill runs only the ticket\'s own test files while che
   assert.match(fix, /until they pass/);
 });
 
-test('0113 AC4: the build skill runs the whole suite before changing anything, and test files after the self-check and after a merge (0235)', () => {
+test('0113 AC4: the build skill reads the recorded result before changing anything (0238), and runs test files after the self-check and after a merge (0235)', () => {
   const before = step(BUILD, '6. In that folder, before you change anything');
-  assert.match(before, /`speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/);
+  assert.match(before, /`speck test --recorded 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/);
   assert.doesNotMatch(before, /--files/);
   const round = step(BUILD.slice(BUILD.indexOf('## 3. Implement')), '5. After the self-check');
   assert.match(round, /before the first review round[^.]*`speck test --files <file>… 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/i, 'test files once, after the self-check');
