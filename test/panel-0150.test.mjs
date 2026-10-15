@@ -11,7 +11,7 @@ const header = () => page().match(/<header>([\s\S]*?)<\/header>/)[1];
 const runOf = p => p.byId('run');
 const dotOf = p => p.all(runOf(p)).find(n => /\bmini\b/.test(n.className || '')); // 0163: the builder in place of the square
 const ON = 'Pause Auto-build: ready tickets wait';
-const OFF = 'Start Auto-build: build ready tickets one at a time';
+const OFF = 'Start Auto-build: build ready tickets';
 
 test('0150 AC1: the header has no live, connecting… or disconnected indicator', async () => {
   const h = header();

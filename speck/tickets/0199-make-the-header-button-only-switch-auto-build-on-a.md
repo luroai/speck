@@ -41,6 +41,7 @@ The header button is only the Auto-build switch: it says whether Auto-build is o
 - Asked for 2026-10-15: "the status button in the header is redundant now because we're allowing multiple parallel builds, and can ship things in a queue. It just needs to be an auto-build on/off button again."
 - `runLabel()` and the button's render in `templates/panel.html` (0163, 0144, 0150).
 - Failing before this build: none
+- Self-check: no changes. The old "one at a time" tooltip in the 0144 and 0150 tests changes to AC4's wording, as AC4 requires.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

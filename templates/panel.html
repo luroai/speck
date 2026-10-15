@@ -240,13 +240,10 @@
   .run-state:hover { color: var(--text); border-color: var(--text); }
   .run-state:disabled { cursor: default; opacity: .6; }
   .run-state[hidden] { display: none; }
-  /* 0163: the builder in place of the square, and a label that ends in "…" rather than wrap or overflow. The colour of
-     a ticket waiting for you: purple to ship it, red when it's blocked or its build stopped. */
+  /* 0163: the builder in place of the square, and a label that ends in "…" rather than wrap or overflow. */
   .run-state { gap: 6px; max-width: 100%; min-width: 0; }
   .run-state .mini { display: block; flex: none; width: 28px; height: 28px; margin-left: -4px; }
   .run-state .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .run-state.run-wait { color: var(--idea); border-color: var(--idea); }
-  .run-state.run-bad { color: var(--bad); border-color: var(--bad); }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
@@ -577,18 +574,10 @@ function stageOf(t, d) {
   if (t.status === 'reviewing') return 'review';
   return (Array.isArray(t.steps) ? t.steps : []).findIndex(s => s.state === 'now') === 1 ? 'check' : 'build';
 }
-// 0163: what the Auto-build button says while it's on, from the first in-flight ticket in the Build queue that is being
-// built, reviewed or shipped, or waits for you: its label, its colour ('bad', 'wait' or '') and whether its builder
-// hops. `shippingId` is the ticket whose ship from the panel hasn't been answered yet. Null when none is.
-function runLabel(queue, shippingId) {
-  for (const t of queue) {
-    if (!t.inFlight) continue;
-    const d = doing(t, t.shipping || shippingId === String(t.id)), now = t.steps.find(s => s.state === 'now');
-    if (d.tone === 'bad') return { text: `${t.id} needs you`, tone: 'bad', moving: false };
-    if (t.to_ship && !d.moving) return { text: `${t.id} needs you`, tone: 'wait', moving: false };
-    if ((d.moving || t.paused) && now) return { text: `Building ${t.id} · ${now.label.replace(/ \d+$/, '')}`, tone: '', moving: d.moving };
-  }
-  return null;
+// 0199: whether any build or ship is at work, for the Auto-build button's builder. A ticket waiting its turn in the ship
+// queue isn't at work yet. `shippingId` is the ticket whose ship from the panel hasn't been answered yet.
+function atWork(queue, shippingId) {
+  return queue.some(t => t.inFlight && (t.shipping || shippingId === String(t.id) || (!t.ship_waiting && doing(t, false).moving)));
 }
 // An amount in US dollars, to the cent.
 const dollars = n => `$${n.toFixed(2)}`;
@@ -2389,22 +2378,20 @@ function render() {
 
   // Whether speck run is on, shown as Auto-build (0144): when it's off, setting a ticket ready starts nothing. The
   // indicator is itself the switch (0150). The button stays put and only its contents change, so it keeps focus.
-  // 0163: while it's on, it names the build in flight and where it's got to, or the ticket waiting for you, with the
-  // builder in place of the square, hopping while a build is at work. A label too long for the screen ends in "…", and
-  // the tooltip gives it in full before what a click does.
-  const on = !!(state.run && state.run.on), now = on && !runSwitching ? runLabel(m.queue, shippingId) : null;
+  // 0199: it says only whether Auto-build is on or off, with the builder in place of the square (0163), hopping while
+  // any build or ship is at work. The Build list says what each ticket is doing.
+  const on = !!(state.run && state.run.on);
   const run = $('run');
   run.hidden = false;
-  run.className = `run-state ${on ? 'run-on' : 'run-off'}${now && now.tone ? ` run-${now.tone}` : ''}`;
-  const builder = el('canvas', `mini ${now && now.moving ? 'hop' : 'still'}`);
+  run.className = `run-state ${on ? 'run-on' : 'run-off'}`;
+  const builder = el('canvas', `mini ${atWork(m.queue, shippingId) ? 'hop' : 'still'}`);
   builder.setAttribute('aria-hidden', 'true');
   run.replaceChildren(builder, el('span', 'label',
-    runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : now ? now.text : on ? 'Auto-build on' : 'Auto-build off'));
+    runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Auto-build on' : 'Auto-build off'));
   drawBadges(builder);
   run.setAttribute('aria-pressed', String(on));
   run.disabled = !!runSwitching;
-  const click = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets one at a time';
-  run.title = now ? `${now.text}\n${click}` : click;
+  run.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets';
   if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
 }
 $('run').addEventListener('click', e => {
