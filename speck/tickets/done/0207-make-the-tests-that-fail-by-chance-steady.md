@@ -1,7 +1,7 @@
 ---
 id: "0207"
 title: "Make the tests that fail by chance steady"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0206"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T15:06:38.152Z"
 approved: "2026-10-15T15:51:47.478Z"
+finished: "2026-10-15T15:56:20.820Z"
 
 ---
 # 0207 · Make the tests that fail by chance steady
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Several tests fail now and then in full runs and pass when run again. Since 0195 a chance failure is run again rather than failing the run, but each one still costs a second run of its file, shows in the flaky log and can hide a real failure. Seen on 2026-10-14 and 15: 0153 AC2, 0128 AC4, 0176 AC1 and 0177 AC3.
