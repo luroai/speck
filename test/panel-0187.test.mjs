@@ -9,6 +9,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { panelRepo, startPanel, stop, freePort, request, page, fakePage, T, findChrome, browserPage, cliCopy } from './support/panel.mjs';
 import { openStream, stateFor, countingGit, manualSources, wait } from './support/stream.mjs';
+import { boardWatcher } from '../scripts/board-feed.mjs';
 
 const FEED = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'scripts', 'board-feed.mjs');
 const runs = (r, f) => path.join(r.dir, 'speck', '.cache', 'runs', f);
@@ -414,4 +415,42 @@ test('0187 AC4: a board the panel couldn\'t read isn\'t asked for again until th
   await p.settle();
   assert.equal(p.calls.filter(c => c.url === '/api/state').length, 1, 'not at a keep-alive');
   assert.deepEqual(timers, [], 'nor on a timer');
+});
+
+// ---------- merge review round (F4) ----------
+
+// A build's worktree whose speck/tickets folder isn't there, and a watch on the files the board is read from that
+// makes it, with a ticket in it, just as the watch on its speck/ folder starts: after the watcher checked for it, so
+// that folder's watch can't see it appear.
+function raceWatch(r, wt, made) {
+  fs.rmSync(path.join(wt, 'speck', 'tickets'), { recursive: true, force: true });
+  const real = fs.watch;
+  fs.watch = (dir, opts, fn) => {
+    if (dir === path.join(wt, 'speck') && opts && opts.recursive === false && !made.done) {
+      made.done = true;
+      fs.mkdirSync(path.join(wt, 'speck', 'tickets'));
+      fs.writeFileSync(path.join(wt, 'speck', 'tickets', '0001-x.md'), 'status: ready\n');
+    }
+    return real(dir, opts, fn);
+  };
+  return () => { fs.watch = real; };
+}
+
+test('0187 AC1: a build worktree\'s tickets folder that appears while the watches start is watched, and a change in it seen at once', async () => {
+  const r = panelRepo();
+  const wt = `${r.dir}-wt-race`;
+  r.g('worktree', 'add', '-q', '-b', 'speck/0001-export-bookings', wt);
+  const calls = [];
+  const made = {};
+  const put = raceWatch(r, wt, made);
+  let files;
+  try { files = boardWatcher(fs.realpathSync(r.dir), runs(r, ''), () => calls.push(Date.now())); } finally { put(); }
+  try {
+    assert.ok(made.done, 'the folder appeared as the watch started');
+    await wait(200);
+    const from = calls.length;
+    fs.writeFileSync(path.join(wt, 'speck', 'tickets', '0001-x.md'), 'status: building\n');
+    await wait(300);
+    assert.ok(calls.length > from, 'the change in it was seen');
+  } finally { files.close(); fs.rmSync(wt, { recursive: true, force: true }); }
 });

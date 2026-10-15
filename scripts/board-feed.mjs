@@ -67,7 +67,7 @@ export function boardFeed(repo, runs, read) {
 // tickets, ideas and config) and speck run's records, plus git's list of worktrees, so a build's new worktree is watched
 // once it's made. A build log growing is slow (only its spend shows), the rest isn't. A folder that isn't there yet is
 // watched through its parent until it is. sync() looks again for what to watch, and close() stops watching.
-function boardWatcher(repo, runs, changed) {
+export function boardWatcher(repo, runs, changed) {
   const watching = new Map(); // folder → its fs.FSWatcher
   let common = null;
   try { const r = sh('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo }); if (r.status === 0) common = r.stdout.trim() || null; } catch { /* not a git checkout */ }
@@ -95,27 +95,36 @@ function boardWatcher(repo, runs, changed) {
     if (common) add(path.join(common, 'worktrees'), common, false, true);
     return want;
   };
-  const sync = () => {
-    const want = wanted();
-    for (const [dir, w] of watching) {
-      const k = want.get(dir);
-      if (!k || k.recursive !== w.recursive || k.again !== w.again || k.only !== w.only) { w.close(); watching.delete(dir); }
-    }
-    for (const [dir, { recursive, again, only }] of want) {
-      if (watching.has(dir)) continue;
-      let w;
-      try {
-        w = fs.watch(dir, { recursive, persistent: false }, (type, name) => {
-          if (only !== null && name && String(name) !== only) return;
-          if (again) sync();
-          changed(dir === runs && /\.log$/.test(String(name || '')));
-        });
-      } catch { continue; } // gone already, or out of watches: the next sync tries again, and the keep-alive's reading covers it
-      Object.assign(w, { recursive, again, only });
-      w.on('error', () => { w.close(); if (watching.get(dir) === w) watching.delete(dir); });
-      watching.set(dir, w);
+  // Once new watches have started, it looks again: a folder made after it looked but before a watch on its parent
+  // started (a build's new worktree being checked out, say) isn't seen by that watch. One found that way is watched
+  // too, and the board read again, in case something in it changed before its watch started.
+  const sync = (first = false) => {
+    for (let pass = 0; pass < 5; pass++) {
+      const want = wanted();
+      for (const [dir, w] of watching) {
+        const k = want.get(dir);
+        if (!k || k.recursive !== w.recursive || k.again !== w.again || k.only !== w.only) { w.close(); watching.delete(dir); }
+      }
+      let added = false;
+      for (const [dir, { recursive, again, only }] of want) {
+        if (watching.has(dir)) continue;
+        let w;
+        try {
+          w = fs.watch(dir, { recursive, persistent: false }, (type, name) => {
+            if (only !== null && name && String(name) !== only) return;
+            if (again) sync();
+            changed(dir === runs && /\.log$/.test(String(name || '')));
+          });
+        } catch { continue; } // gone already, or out of watches: the next sync tries again, and the keep-alive's reading covers it
+        Object.assign(w, { recursive, again, only });
+        w.on('error', () => { w.close(); if (watching.get(dir) === w) watching.delete(dir); });
+        watching.set(dir, w);
+        added = true;
+      }
+      if (!added) return;
+      if (pass > 0 && !first) changed();
     }
   };
-  sync();
+  sync(true);
   return { sync, close: () => { for (const w of watching.values()) w.close(); watching.clear(); } };
 }
