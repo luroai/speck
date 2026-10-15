@@ -46,7 +46,11 @@ A ticket whose ship merged but couldn't push says so in the panel, with what to 
 - Self-check: an unreadable or odd "unpushed" part of a ship record now counts as pushed, and remote and branch names are checked before git sees them; narrowed the brief's claim to what the tests cover.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If a ship merges a ticket but can't send it up to the shared copy of the project (for example, because the main branch there is protected), the panel now shows the ticket under Shipped with a crimson "Merged, but not pushed" line and the message saying how to fix it. Before, it simply looked shipped. The line stays until the change has actually reached the shared copy; then the ticket looks like any other shipped one. Trying to ship it again in the meantime is refused, and the warning stays.
+
+To see it, ship a ticket while pushing is blocked, look at Shipped, then push by hand and watch the line go.
+
+Worth knowing: speck notices the push the next time it looks at what git last knows about the shared copy, so a push made from another computer only clears the line after this one fetches.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,9 @@ A ticket whose ship merged but couldn't push says so in the panel, with what to 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- speck run's ship queue still says an auto-ship that merged but couldn't push "didn't ship" and will be tried again: speck/ideas/2026-10-15-don-t-say-speck-run-will-retry-a-ship-that-merged.md.
+- Tidy-up: a ship record whose commit has since been pushed stays in `speck/.cache/runs/`, costing two quick git calls per status read; it could be removed once seen pushed.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -127,6 +134,79 @@ A ticket whose ship merged but couldn't push says so in the panel, with what to 
     ],
     "escalation_question": "",
     "summary": "The warning appears correctly after manual and automatic push failures, and clears after a successful push. However, trying to ship the same ticket again silently removes it while the remote is still behind. Fix that persistence gap before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0259cb93c7a92e5cb046a680a3982eee60811454",
+    "thread_id": "01a14017-2045-7d01-8069-66b85bebc41d",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 247558,
+      "cached_input_tokens": 194816,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1344,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T15:10:26.055Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "shipTicket/endShip retain failed-push details for manual and automatic ships. panelModel/render show the warning and recovery message in Shipped. Passing tests cover both ship paths, panel rendering and tickets older than the latest five."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipState/notPushed retain the warning until the recorded commit reaches the remote branch. takeShip now refuses repeated attempts before replacing the record. Passing tests cover persistence, repeated ship attempts, clearing after pushing and panel updates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "status JSON includes shipState. Passing manual and automatic ship tests verify the unpushed flag and original failure message."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing tests verify successful pushes, ships without remotes and panel cards without an unpushed warning."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0204-tests.txt: 1936 passed, zero failed and three skipped. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "A repeated ship attempt previously erased the failed-push warning before the commit reached the remote.",
+        "suggested_fix": "Implemented: takeShip refuses before replacing an unpushed record. The new regression test verifies the original status message survives another attempt and clears after pushing.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Failed pushes now leave a visible warning and recovery instructions for both manual and automatic ships. The warning survives repeated ship attempts and clears after the commit is pushed. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
