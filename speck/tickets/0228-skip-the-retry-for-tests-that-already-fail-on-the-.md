@@ -44,7 +44,11 @@ The retry after a failing run leaves out tests that already fail on the base bra
 - Self-check: matched base-branch failures by name and the end of their file path, since the base run may have been in another worktree; normalised path separators; described the change in the brief's `speck test` row.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a test run fails, speck tries the failing tests once more to catch ones that failed by chance. Now it skips that second try for tests that were already failing on the main branch, since they aren't failing by chance. If nothing else failed, there's no second try at all, and speck says in one line that the failing tests already fail on the main branch. Builds and ships spend less time on tests while the main branch has broken tests.
+
+To see it: with a test failing on the main branch, run the tests there once, then run them on a ticket's branch. The output names the tests it left out of the second try.
+
+Worth keeping an eye on: this only works once the main branch's tests have been run on its latest code; until then the second try works as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +58,10 @@ The retry after a failing run leaves out tests that already fail on the base bra
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: `speck/ideas/2026-10-15-log-flaky-tests-when-base-failures-are-left-out.md` (a new failure that passes on the second try isn't logged as flaky when base branch failures were left out).
+- Known limit: a recorded failing output is kept only up to its last 1 MB; when that cuts off the `TAP version` line, the base branch's failing tests can't be read and nothing is left out (the retry works as before).
+- Known limit: results recorded before this change don't say which checkout ran them, so they leave nothing out until the base branch's tests run again.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -120,6 +128,74 @@ The retry after a failing run leaves out tests that already fail on the base bra
     ],
     "escalation_question": "",
     "summary": "The change skips known failures and preserves failing results, and the full suite passed. One path-matching bug can also skip newly failing tests in a different file. Fix that before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a9ea9c8d8d984f5eeeb1f35fe827175a2ab725b0",
+    "thread_id": "01a1418b-4858-7032-b6b5-c9f3e3b6d667",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 226461,
+      "cached_input_tokens": 177024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1208,
+      "reasoning_output_tokens": 71
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:00:55.468Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/results.mjs: failingOnBase() resolves recorded locations relative to the recorded checkout root; retry() compares exact relative paths and retains files containing new failures. AC1 tests cover separate files, shared files, identical names and suffix-sharing paths; all passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 test verifies no retry, a failing exit status and exactly one explanatory line when every failure also occurred on the base branch; passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "AC3 tests verify unchanged retry behaviour with absent or passing base results and older results lacking a checkout root; all passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 tests verify retained failure status, cached failure and correct Flaky output. The full output in /tmp/speck-0228-tests.txt reports 1,987 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/results.mjs: failingOnBase() and retry()",
+        "issue": "Suffix matching previously confused different files with identical test names and shared path endings.",
+        "suggested_fix": "Implemented: record the checkout root and compare exact repository-relative paths. The new regression test verifies the newly failing file is retried.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Known base-branch failures now avoid unnecessary retries while newly failing files still run again. The path-matching bug is fixed and covered by a regression test. All acceptance criteria pass, with no failures in the full suite."
   }
 }
 ```
