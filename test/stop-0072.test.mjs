@@ -52,7 +52,7 @@ describe('0072: stop a running build from the CLI', { concurrency: true }, () =>
     }
   });
 
-  describe('0072: the other tests', { concurrency: 1 }, () => {
+  describe('0072: the other tests', { concurrency: 2 }, () => {
     test('0072 AC1: stop ends the build and every process it started, and says so', async () => {
       const { t, run } = await started({ ORPHAN: '1' });
       try {

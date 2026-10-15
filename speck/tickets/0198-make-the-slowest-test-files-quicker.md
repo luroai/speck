@@ -65,3 +65,25 @@ The five slowest test files run quicker and still check everything they did.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+### Times before and after (AC2)
+Each file timed on its own with `node --test <file>`, three times, middle time. "At the start" is the AC1 timing in the Notes. "Paired" times the commit the build started from and this build's version one after the other in each of three rounds, so both met the same load from other builds on the machine.
+
+| File | At the start | Paired: before | Paired: after | Less than at the start |
+|---|---|---|---|---|
+| `test/reap-0175.test.mjs` | 76.9 s | 78.1 s | 8.7 s | 89% |
+| `test/build-log-0176.test.mjs` | 72.6 s | 82.1 s | 61.9 s | 15%: see below |
+| `test/panel-0177.test.mjs` | 55.7 s | 60.8 s | 26.0 s | 53% |
+| `test/ship.test.mjs` | 52.7 s | 31.5 s | 13.0 s | 75% |
+| `test/stop-0072.test.mjs` | 46.1 s | 22.1 s | 9.6 s | 79% |
+
+`test/stop-0072.test.mjs` was timed again, paired, after its last change, when the machine was quieter; its other rows are from the same paired runs as the rest.
+
+- `test/build-log-0176.test.mjs` can't lose a quarter without dropping a check: its AC3 test watches an idle `speck run` for a whole minute, since 0176 AC3 asks for "less than 5% of one core over a minute". The file can't end sooner than that minute plus starting `speck run` with 200 builds' logs, about 61 s. Its other tests, about 11 to 30 s depending on the load, now run during that minute instead of before it.
+
+### What changed
+- `test/reap-0175.test.mjs`: the fake test file's `timeout` case waited 60 s for an abort that had already happened, since starting its processes takes longer than its 300 ms time limit. It now ends at once when the signal has already aborted. And the 10 s time limit in `endsWhenRemoved` is a timer that's cleared once the helper ends, so it no longer keeps the file running 10 s after its last test.
+- `test/build-log-0176.test.mjs`: AC3's minute runs alongside the other tests, which still run one at a time and start once AC3's `speck run` is watching, so that their work, which blocks the test process, doesn't keep AC3 from seeing it start.
+- `test/panel-0177.test.mjs`: the four AC3 tests, each on a panel of its own and each waiting about 10 s for two 5 s readings, run at the same time.
+- `test/ship.test.mjs` (through `test/support/speck.mjs`): `shipRepo()` builds each kind of repo once per test file and gives each call a copy, instead of building it again each time (about 0.9 s). Every other test file that uses `shipRepo()` gets quicker too.
+- `test/stop-0072.test.mjs`: the test whose process ignores SIGTERM, which waits about 10 s for `speck stop` to give up asking, runs alongside the others, which run two at a time. Its `speck stop` runs without blocking the file's other tests.
+- `test/support/tmp.mjs`: the per-run temporary folder is emptied after a test only once no other test of the file is still running, so tests a file runs at the same time keep their folders. A file whose tests run one at a time is emptied after each test, as before.
