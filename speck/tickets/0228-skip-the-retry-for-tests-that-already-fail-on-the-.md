@@ -40,6 +40,7 @@ The retry after a failing run leaves out tests that already fail on the base bra
 ## Notes
 - The retry is `retry()` in `scripts/results.mjs`, called from `testRun()`. Results are recorded per code (`recorded()`), so the base branch's result is usually there already: a build's first full run is on the base branch's code.
 - Measured 2026-10-15 on an 8 GB MacBook Air: 26 tests failing on `main`, 52 failing rows (each failed twice), 316 s of test time.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
