@@ -1,7 +1,7 @@
 ---
 id: "0227"
 title: "Keep a build's test runs in the foreground"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T21:25:21.332Z"
 
 ---
 # 0227 · Keep a build's test runs in the foreground
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck runs a build as `claude -p "/speck-build <id>"`, which ends when the builder ends its turn. On a slow machine the full suite takes long enough that the builder ran it in the background and ended its turn to wait. That ended the build and killed the suite, leaving the ticket `building` with nothing to carry it on (0213, 15 October, on an 8 GB MacBook Air).
