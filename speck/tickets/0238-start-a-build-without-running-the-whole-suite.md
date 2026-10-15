@@ -42,6 +42,7 @@ A build lists the tests already failing from a result speck has recorded, and ne
 - Results are recorded per code in `scripts/results.mjs` (`testedCode()`, `recorded()`); `speck test` is `cmdTest()` in `scripts/turns.mjs`. A ship records the result for the code it lands, so a build started after it usually finds one.
 - The builder's step is `skills/speck-build/SKILL.md` section 1 step 6; the reviewer's scope rule is item 4 in `templates/reviewer-prompt.md`.
 - 0235 changes the same skill and reviewer prompt, 0237 the same `testRun()` and `cmdTest()` code, and 0231 `scripts/speck.mjs`, where `speck test`'s usage lines are; all three come first.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
