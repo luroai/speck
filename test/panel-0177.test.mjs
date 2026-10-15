@@ -2,11 +2,11 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-import { panelRepo, fm, freePort, startPanel, stop, request, post, tokenOf, cliCopy } from './support/panel.mjs';
+import { panelRepo, fm, stop, request, post } from './support/panel.mjs';
+import { slowServe, slowPanel } from './support/slow-panel.mjs';
 import { shipRepo, runIn } from './support/ship.mjs';
 import { waitedForReading } from './support/timing.mjs';
 import { runRepo, alive, killAll } from './support/run.mjs';
@@ -14,40 +14,6 @@ import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0177: the panel keeps answering while it reads the board ----------
 
-// A copy of the CLI in which, whenever the panel's server process does them, on any thread: each board reading
-// (statusData) adds a line to a file, so a test can count them, and each scan of every ticket file (listTickets, which
-// a board reading does once) waits SPECK_TEST_READ_MS first, so it's slow. `extra` is more code to run in each
-// reading. Other commands (speck ship, speck run) run at their usual speed.
-function slowCli(extra = '') {
-  const { cli } = cliCopy();
-  const panelOnly = "process.execArgv.includes('--input-type=module') && process.env.SPECK_TEST_READS";
-  const patch = (file, at, code) => {
-    const src = fs.readFileSync(file, 'utf8');
-    assert.ok(src.includes(at), `${path.basename(file)} has ${at.trim()}`);
-    fs.writeFileSync(file, src.replace(at, `${at}  if (${panelOnly}) { ${code} }\n`));
-  };
-  patch(cli, 'export function statusData(repo) {\n', `fs.appendFileSync(process.env.SPECK_TEST_READS, 'read\\n'); ${extra}`);
-  patch(path.join(path.dirname(cli), 'core.mjs'), 'export function listTickets(repo) {\n',
-    'Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Number(process.env.SPECK_TEST_READ_MS));');
-  return cli;
-}
-
-// The slowed panel serving `dir`, each reading taking `ms`.
-async function slowServe(dir, ms, extra) {
-  const reads = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-reads-')), 'reads.txt');
-  fs.writeFileSync(reads, '');
-  const p = await startPanel(dir, ['--port', String(await freePort())], slowCli(extra), { SPECK_TEST_READS: reads, SPECK_TEST_READ_MS: String(ms) });
-  const token = tokenOf((await request(p.port)).body);
-  const readings = () => fs.readFileSync(reads, 'utf8').split('\n').filter(Boolean).length;
-  return { p, port: p.port, token, readings };
-}
-// A panel repo with a draft 0002 as well, committed, served slowed.
-async function slowPanel(ms, extra) {
-  const r = panelRepo();
-  r.write('0002-two.md', fm({ id: '"0002"', title: 'Two', priority: 3 }));
-  r.g('add', '-A'); r.g('commit', '-qm', 'two');
-  return { r, ...(await slowServe(r.dir, ms, extra)) };
-}
 const state = port => request(port, { pathName: '/api/state' });
 const wait = ms => new Promise(r => setTimeout(r, ms));
 // How long a request takes to be answered, in ms, with its answer.
@@ -101,7 +67,8 @@ test('0177 AC2: a request whose connection closed before its reading started cau
 // Each AC3 test waits about 10 seconds for its slow reading and the one after its write, on a panel of its own, so they
 // run at the same time (0198). Each compares an answer given while a reading runs with the same ask on the same panel
 // with nothing reading, timed in the same test, rather than with 1 second, so a busy machine slows both alike (0207).
-// An answer that waits for the reading takes the rest of the reading longer (waitedForReading).
+// An answer that waits for the reading takes the rest of the reading longer (waitedForReading): the length of one
+// reading, as the panel measured it, since a request that a write made out of date waits for a second one too.
 const notWaited = (name, ms, base, reading) =>
   assert.ok(!waitedForReading({ ms, base, reading }), `${name} answered in ${ms} ms while a reading took ${reading} ms, against ${base} ms with nothing reading`);
 // A stand-in build for ticket `id` of `r`, launched as speck run does, leading its own process group, with its run record.
@@ -143,7 +110,7 @@ describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { 
       const read = await slow;
       assert.equal(read.out.status, 200);
       assert.ok(read.ms >= 4500, `the reading took ${read.ms} ms`);
-      for (const name of Object.keys(during)) notWaited(name, during[name], base[name], read.ms);
+      for (const name of Object.keys(during)) notWaited(name, during[name], base[name], s.readingMs());
     } finally { await stop(s.p); }
   });
 
@@ -167,7 +134,7 @@ describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { 
       const ms = await stopping(1);
       const read = await slow;
       assert.equal(read.out.status, 200);
-      notWaited('Stop build', ms, base, read.ms);
+      notWaited('Stop build', ms, base, s.readingMs());
     } finally { killAll(builds); await stop(s.p); }
   });
 
@@ -193,8 +160,8 @@ describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { 
       const during = await onOff();
       const read = await slow;
       assert.equal(read.out.status, 200);
-      notWaited('on', during.on, base.on, read.ms);
-      notWaited('off', during.off, base.off, read.ms);
+      notWaited('on', during.on, base.on, s.readingMs());
+      notWaited('off', during.off, base.off, s.readingMs());
     } finally { killAll(pids); await stop(s.p); }
   });
 
@@ -214,7 +181,7 @@ describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { 
       assert.equal(r.statusIn(r.dir), 'done');
       const read = await slow;
       assert.equal(read.out.status, 200);
-      notWaited('Ship', ms, base.ms, read.ms);
+      notWaited('Ship', ms, base.ms, s.readingMs());
     } finally { await stop(s.p); }
   });
 });

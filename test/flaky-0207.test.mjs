@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { startPanel, stop, freePort, request, post, tokenOf, cliCopy } from './support/panel.mjs';
 import { runRepo, killAll } from './support/run.mjs';
 import { waitedForReading, costMs } from './support/timing.mjs';
+import { slowPanel } from './support/slow-panel.mjs';
 
 // ---------- 0207: the tests that failed by chance give the same result however busy the machine is ----------
 
@@ -71,6 +72,23 @@ test('0207 AC3: an answer that waits for a reading counts as waiting, and one sl
   assert.equal(waitedForReading({ ms: 1106, base: 300, reading: 5000 }), false);
 });
 
+test('0207 AC3: on a panel whose readings take 2 seconds, an answer that waits for a reading counts as waiting, and one that doesn\'t wait doesn\'t', async () => {
+  const s = await slowPanel(2000);
+  const timed = async f => { const t = Date.now(); const out = await f(); return { ms: Date.now() - t, out }; };
+  const log = () => request(s.port, { pathName: '/api/tickets/1/log' }), state = () => request(s.port, { pathName: '/api/state' });
+  try {
+    const base = await timed(log);
+    const slow = state();
+    await new Promise(r => setTimeout(r, 300));
+    // Another /api/state request waits for the reading under way, as any answer would if the panel made it wait.
+    const [quick, waited] = await Promise.all([timed(log), timed(state)]);
+    for (const t of [base, quick, waited, { out: await slow }]) assert.equal(t.out.status, 200, t.out.body);
+    const reading = s.readingMs();
+    assert.equal(waitedForReading({ ms: waited.ms, base: base.ms, reading }), true, `waited ${waited.ms} ms, against ${base.ms} ms, for a ${reading} ms reading`);
+    assert.equal(waitedForReading({ ms: quick.ms, base: base.ms, reading }), false, `answered in ${quick.ms} ms, against ${base.ms} ms, during a ${reading} ms reading`);
+  } finally { await stop(s.p); }
+});
+
 test('0207 AC3: the 0177 AC3 tests compare each answer with the same ask made with nothing reading, not with 1 second', () => {
   const s = src('panel-0177.test.mjs');
   const from = s.indexOf("describe('0177 AC3"), to = s.indexOf("test('0177 AC4");
@@ -84,6 +102,7 @@ test('0207 AC3: the 0177 AC3 tests compare each answer with the same ask made wi
     assert.match(ac3.slice(at, next < 0 ? ac3.length : next), /notWaited\(/, `${name} uses the comparison`);
   }
   assert.match(s, /waitedForReading\(\{ ms, base, reading \}\)/);
+  assert.doesNotMatch(ac3, /notWaited\([^)]*read\.ms/, 'one reading, not the whole request, which a write can make wait for two');
 });
 
 test('0207 AC3: the 0176 AC1 timing counts the work speck status does, not time spent waiting for other processes', { skip: process.platform !== 'linux' && 'reads /proc' }, () => {
