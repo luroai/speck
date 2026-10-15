@@ -1,7 +1,7 @@
 ---
 id: "0201"
 title: "Say once that a ticket is shipping"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0200"]              # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T14:32:01.715Z"
+approved: "2026-10-15T14:39:18.269Z"
 
 ---
 # 0201 · Say once that a ticket is shipping
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 While a ticket ships, its card in the Build list says so three times: "Shipping" beside the builder badge, the step name "Ship" under it, and a separate "Shipping… · 00:04" line below. Seen on 0197 on 2026-10-15.
@@ -51,9 +52,14 @@ While a ticket is being shipped, its card in the Build list now says "Shipping" 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 155,505
+- Elapsed since build started: 7 min
+- Changed lines: 20 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-up only, no inbox note): the 0133 test's check that the card no longer says "Shipping…" once a ship ends now always passes, since that line is gone; it could check for "Shipping" instead.
 
