@@ -41,6 +41,7 @@ Idea and inbox cards in Plan show their label and title at the same sizes as a t
 - The cards are drawn by `ideaItem()` and `inboxItem()` in `templates/panel.html`; ticket cards get their sizes from `.item.ticket .line .id` and `.item.ticket .line .title`.
 - The note left open whether the label stays beside the title or moves under it. This ticket keeps it beside the title (AC2), as it is today.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

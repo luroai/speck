@@ -127,11 +127,12 @@
   .set-ready { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-top: 10px; padding: 4px 12px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
   .set-ready:disabled { background: transparent; color: var(--faint); border-color: var(--line); cursor: not-allowed; }
   .ready div.refused { white-space: pre-wrap; }
-  /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags */
+  /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags.
+     0214: an idea's or inbox note's label and title too */
   .item.ticket .head { column-gap: 0; } /* its right-hand column is empty: the title gets the whole width */
-  .item.ticket .line { display: flex; align-items: baseline; gap: 8px; }
-  .item.ticket .line .id { flex: none; font-size: 14px; }
-  .item.ticket .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
+  .item .line { display: flex; align-items: baseline; gap: 8px; }
+  .item .line .id { flex: none; font-size: 14px; }
+  .item .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
   .item.ticket .tag-row { grid-column: 1 / 2; }
   .item.ticket .prio { display: inline-flex; }
 
@@ -1608,14 +1609,14 @@ async function setReady(id) {
 }
 function ideaItem(i) {
   const isOpen = openIdeas.has(i.path);
-  const head = el('div', 'head', null, el('div', 'row', null, el('span', 'id', 'idea'), el('span', 'title', i.title)), el('span'),
+  const head = el('div', 'head', null, el('div', 'line', null, el('span', 'id', 'idea'), el('span', 'title', i.title)), el('span'),
     el('div', 'checks', null, el('span', null, i.status ? i.status : 'no status'), el('span', 'mono', i.path)));
   head.addEventListener('click', () => flip(openIdeas, i.path));
   return el('div', `item idea${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, noteOf(i)) : null);
 }
 function inboxItem(i) {
   const isOpen = openInbox.has(i.path);
-  const head = el('div', 'head', null, el('div', 'row', null, el('span', 'id', 'inbox'), el('span', 'title', i.title)), el('span'),
+  const head = el('div', 'head', null, el('div', 'line', null, el('span', 'id', 'inbox'), el('span', 'title', i.title)), el('span'),
     el('div', 'checks', null, i.from ? el('span', null, `from ${i.from}`) : null, el('span', 'mono', i.path)));
   head.addEventListener('click', () => flip(openInbox, i.path));
   return el('div', `item inbox${isOpen ? ' open' : ''}`, null, head, isOpen ? el('div', 'detail', null, noteOf(i)) : null);
