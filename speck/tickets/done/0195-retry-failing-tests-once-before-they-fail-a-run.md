@@ -1,7 +1,7 @@
 ---
 id: "0195"
 title: "Retry failing tests once before they fail a run"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T10:34:23.148Z"
 approved: "2026-10-15T11:09:27.048Z"
+finished: "2026-10-15T11:09:39.067Z"
 
 ---
 # 0195 · Retry failing tests once before they fail a run
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A test that fails once by chance fails the whole run: it cost 0164 a review round and can stop a ship, and then someone has to step in although nothing is wrong with the change.
