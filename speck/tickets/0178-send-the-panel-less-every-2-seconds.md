@@ -1,7 +1,7 @@
 ---
 id: "0178"
 title: "Keep the panel's full board small as tickets ship"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0188"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T11:50:15.782Z"
+approved: "2026-10-15T12:02:50.816Z"
 
 ---
 # 0178 · Keep the panel's full board small as tickets ship
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each full board the panel sends a page is 1.19 MB (measured 2026-10-14), sent each time a page opens or reconnects (0187). 154 finished tickets make up 1.08 MB of it, including 515 KB of each finished build's log ending, which the panel never shows for a finished ticket. Through a tunnel to a phone that's a slow first load and reconnect, and it grows with every ticket shipped.
@@ -51,9 +52,15 @@ The panel now sends much less when a page opens or reconnects. Tickets that ship
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 panelBoard's rounds.map retains an unbounded array, so older finished tickets are not guaranteed to fit within 500 bytes.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 487,704
+- Elapsed since build started: 13 min
+- Changed lines: 39 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none new. Skipped: the unrelated 0153 AC2 test that failed once on timing in round 2's run (matches speck/ideas/2026-10-15-fix-the-race-in-the-0153-second-ship-test.md).
 
