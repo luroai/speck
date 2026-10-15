@@ -41,6 +41,7 @@ When speck ends a stalled test run, every process that run started has ended too
 - Asked for 2026-10-15, for release 0.4.0.
 - From the 0180 review: the reviewer limit finds a run's processes by their descendants (through `ps`) and by an environment marker each one carries (`runLimited` in `scripts/reviewers.mjs`). The stall handling in `scripts/stall.mjs` (0152, 0174) still uses the process group alone.
 - Failing before this build: none
+- Self-check: a run started inside another keeps the outer run's mark, so the outer run still finds its processes, and a value under the mark's name that isn't a list of marks is replaced rather than kept.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
