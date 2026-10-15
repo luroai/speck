@@ -18,6 +18,7 @@ import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
 import { logTail } from './build-log.mjs';
+import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
 import { runInProcess } from './in-process.mjs';
 
@@ -214,6 +215,9 @@ function cmdStart(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
   const pad = t.fm.id;
+  // 0217: a build resuming a ticket its last build left stopped starts here, so the time it waited stops counting.
+  const note = countStop(repo, pad);
+  if (note) console.log(note.trim());
   // An existing build comes first, so resuming from anywhere (even inside its worktree) gets the path to carry on in.
   const list = worktreeList(repo);
   const existing = git(['for-each-ref', '--format=%(refname:short)', `refs/heads/${cfg.branch_prefix}${pad}-*`], repo).split('\n').filter(Boolean);
@@ -418,6 +422,7 @@ export function statusData(repo) {
     const question = contentLines(t.sections['blocked question']).join('\n');
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    const stop = inHand(t) ? buildStop(runs, t.fm.id) : null;
     return {
       ...t.fm,
       type: ticketType(t),
@@ -443,12 +448,14 @@ export function statusData(repo) {
         tokens: (num(r?.meta?.usage?.input_tokens) || 0) + (num(r?.meta?.usage?.output_tokens) || 0),
       })),
       waiting_on: after.filter(id => !done.has(padId(id))),
-      build_exit: buildExit(runs, t.fm.id),
+      // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
+      build_exit: stop?.counted ? null : buildExit(runs, t.fm.id),
       session: buildSession(runs, t.fm.id),
       paused: buildPaused(runs, t.fm.id),
       paused_at: (at => (at === null ? null : new Date(at).toISOString()))(buildPaused(runs, t.fm.id) ? pausedSince(path.join(runs, `${t.fm.id}.paused`)) : null),
       build_running: buildRunning(runs, t.fm.id, leads),
-      build_stopped: inHand(t) && !!buildKilled(runs, t.fm.id),
+      build_stopped: !!stop?.killed && !stop.counted,
+      build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null,
       ship: shipState(runs, t.fm.id),
       ...(spent => ({ builder_tokens: spent.tokens, builder_cost_usd: spent.cost_usd }))(builderSpent(runs, t.fm.id)),
     };

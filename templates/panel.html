@@ -729,7 +729,9 @@ function panelModel(state) {
       const paused = pausable && t.paused === true;
       // 0166: the timer leaves out the time waited, and stops while the ticket is blocked or its build is paused, at when
       // that began. One with no record of when keeps counting, as before.
-      const held_at = approved_at ?? (t.status === 'blocked' ? time(t.blocked_at) : null) ?? (paused ? time(t.paused_at) : null);
+      // 0217: and while its build has stopped before finishing, at its exit, or at when speck noticed it had been killed.
+      const stopped_at = stopped ? time(t.build_stopped_at) : exit_label === 'Build stopped before finishing' ? time(t.build_exit.at) : null;
+      const held_at = approved_at ?? (t.status === 'blocked' ? time(t.blocked_at) : null) ?? (paused ? time(t.paused_at) : null) ?? stopped_at;
       return { ...t, inFlight, pausable, paused, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
         exit_message: auto_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
           : exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,

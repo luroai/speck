@@ -89,5 +89,6 @@ export const HEAVY = [
   'test/split-0018.test.mjs',
   'test/start-0094.test.mjs',
   'test/stop-0072.test.mjs',
+  'test/stopped-wait-0217.test.mjs',
   'test/waiting-0166.test.mjs',
 ];
