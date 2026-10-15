@@ -85,6 +85,16 @@ export function boardWatcher(repo, runs, changed, log = () => {}) {
   try { const r = sh('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo }); if (r.status === 0) common = r.stdout.trim() || null; } catch { /* not a git checkout */ }
   // Each folder to watch → { recursive, again: whether a change in it can change what to watch }.
   const wanted = () => {
+    // 0208: git makes a worktree's folder in its list before the file that names where the worktree is (gitdir), and
+    // only that file puts it in worktreeList, so a folder without one is watched for it. They're found before the
+    // worktrees are listed, so one whose file is written in between is listed.
+    const pending = [];
+    if (common) {
+      const list = path.join(common, 'worktrees');
+      let names = [];
+      try { names = fs.readdirSync(list); } catch { /* no worktrees yet */ }
+      for (const name of names) if (!fs.existsSync(path.join(list, name, 'gitdir'))) pending.push(path.join(list, name));
+    }
     let trees = [];
     try { trees = worktreeList(repo).map(w => w.path).filter(Boolean); } catch { /* not a git checkout: this one */ }
     if (!trees.includes(repo)) trees.push(repo);
@@ -105,12 +115,15 @@ export function boardWatcher(repo, runs, changed, log = () => {}) {
     }
     add(runs, repo, false, false);
     if (common) add(path.join(common, 'worktrees'), common, false, true);
+    for (const dir of pending) if (!want.has(dir)) want.set(dir, { recursive: false, again: true, only: 'gitdir' });
     return want;
   };
   // Once new watches have started, it looks again: a folder made after it looked but before a watch on its parent
   // started (a build's new worktree being checked out, say) isn't seen by that watch. One found that way is watched
-  // too, and the board read again, in case something in it changed before its watch started.
+  // too. Then, unless it's the first look, the board is read again once, in case something changed before the new
+  // watches started (0208).
   const sync = (first = false) => {
+    let started = false;
     for (let pass = 0; pass < 5; pass++) {
       const want = wanted();
       for (const [dir, w] of watching) {
@@ -135,9 +148,10 @@ export function boardWatcher(repo, runs, changed, log = () => {}) {
         watching.set(dir, w);
         added = true;
       }
-      if (!added) return;
-      if (pass > 0 && !first) changed();
+      if (!added) break;
+      started = true;
     }
+    if (started && !first) changed();
   };
   sync(true);
   return { sync, close: () => { for (const w of watching.values()) w.close(); watching.clear(); } };
