@@ -1,7 +1,8 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T } from './support/panel.mjs';
+import { findChrome, browserPage, T } from './support/panel.mjs';
+import { sharedPanel } from './support/shared-panel.mjs';
 
 // ---------- 0155: each Build queue ticket a clear card ----------
 
@@ -51,8 +52,7 @@ const stub = theme => `(() => {
 })();`;
 
 async function withPanel(fn, { width = 1280, theme = 'light' } = {}) {
-  const r = panelRepo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const panel = await sharedPanel(); // one for the whole file: the page stub below answers every request (0234)
   const b = await browserPage('about:blank');
   try {
     await b.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 700 });
@@ -62,7 +62,7 @@ async function withPanel(fn, { width = 1280, theme = 'light' } = {}) {
     await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelectorAll('#queue .q').length === ${STATE.tickets.length}`, 'the panel');
     assert.equal(await b.js(`document.documentElement.dataset.theme`), theme);
     await fn(b);
-  } finally { await b.close(); await stop(panel); }
+  } finally { await b.close(); }
 }
 const settle = b => b.js(`new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`);
 // The queue card with this id.

@@ -25,9 +25,9 @@ export const good = `## Problem\nUsers cannot export.\n## Outcome\nUsers can exp
 export const fm = (o = {}) => Object.entries({ id: '"0001"', title: 'Export bookings as CSV', status: 'draft', size: 'S', risk: 'low', builder: 'claude', reviewer: 'codex', ...o }).map(([k, v]) => `${k}: ${v}`).join('\n');
 
 // A repo with speck installed and one ready ticket, committed.
-// Each kind is built once per test file and copied (copy.mjs).
-export function panelRepo({ worktrees = 'false' } = {}) {
-  const dir = copied('panel', [worktrees], 'speck-', d => buildPanelRepo(d, worktrees));
+// Each kind is built once per test file and copied (copy.mjs), into a new folder named `prefix…`.
+export function panelRepo({ worktrees = 'false', prefix = 'speck-' } = {}) {
+  const dir = copied('panel', [worktrees], prefix, d => buildPanelRepo(d, worktrees));
   const run = (...a) => speck(dir, env, ...a);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   const file = path.join(dir, 'speck', 'tickets', '0001-export-bookings.md');
