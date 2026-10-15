@@ -1,7 +1,7 @@
 ---
 id: "0214"
 title: "Give Plan's note cards a ticket card's larger title"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T23:27:49.181Z"
 ---
 # 0214 · Give Plan's note cards a ticket card's larger title
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0151, ticket cards in Plan have a larger id and title, but idea and inbox cards still use the old small sizes. Switching between Plan's three lists looks uneven, and idea and inbox titles are harder to read on a phone.
@@ -44,7 +44,7 @@ Idea and inbox cards in Plan show their label and title at the same sizes as a t
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In Plan, the idea and inbox cards now have the same larger title as the ticket cards, so switching between the Tickets, Ideas and Inbox lists looks even, and titles are easier to read on a phone. The small "idea" or "inbox" label stays just before the title, and a long title that wraps lines up under its own first letter. To see it, open the panel and switch Plan to Ideas or Inbox. Nothing else about the cards changed: they open and close as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,65 @@ Idea and inbox cards in Plan show their label and title at the same sizes as a t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4be1f557437c4e793ff1fb34b805fa51f861f2a2",
+    "thread_id": "01a141e6-5aa5-7de1-a4cc-8f9fa6e0bb9e",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 92155,
+      "cached_input_tokens": 34176,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 646,
+      "reasoning_output_tokens": 19
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:30:00.991Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html sets .item .line labels to 14px and titles to 17px. The passing browser test in test/panel-0214.test.mjs verifies computed sizes against ticket cards at all three widths."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ideaItem() and inboxItem() place the label before the title in the shared flex line. Passing AC2 tests check element order; the browser test verifies their positions share the first line."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC1/AC3 browser test checks actual text rectangles, overflow and aligned wrapped lines at 375, 700 and 1,280px. Existing overflow-wrap: anywhere remains applied to titles."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests exercise opening and closing both card types and verify status/from-ticket and path contents. Their markup, handlers and supporting styles remain unchanged. All five ticket tests passed without skips; whole-suite regression checking remains the ship gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Idea and inbox cards now use the same larger label and title sizes as ticket cards. Labels stay beside titles, wrapped text aligns correctly at all requested widths, and opening, closing and supporting details remain intact. The five relevant tests passed, and no blocking concerns were found."
+  }
+}
+```
+
+</details>
