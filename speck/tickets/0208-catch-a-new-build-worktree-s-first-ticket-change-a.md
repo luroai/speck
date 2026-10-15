@@ -41,6 +41,8 @@ A ticket change in a new build's worktree reaches open pages within a second eve
 - Likely cause (from 0187's ship, unconfirmed): the panel watches a folder that doesn't exist yet through its parent. If it appears between the panel's check and the watch starting, its creation is missed until the next look, every 5 seconds, and an edit in that gap shows only at the 15-second re-read.
 - `scripts/board-feed.mjs`. Builds after 0206, which builds after 0198: both may change the test helpers in `test/support/panel.mjs` or `test/panel-0187.test.mjs`.
 - Failing before this build: none (speck test reused the passing run from commit 315f9e6).
+- Cause found: git makes a worktree's folder in `.git/worktrees` before writing its `gitdir` file, and only `gitdir` lists the worktree. A look in that gap watched nothing in the new worktree, and nothing watched changed again until the 5-second look, which started the watches but read nothing, so an edit showed at the 15-second re-read. The fix watches such a folder for its `gitdir`, and reads the board once after any look that starts new watches.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
