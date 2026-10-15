@@ -2,23 +2,26 @@
 
 **Your judgement, at agent speed.**
 
-speck is an agentic coding workflow that puts your judgement first. You decide what gets built and what ships. An agent builds each ticket, a second, independent agent reviews it until it's right, and speck keeps the whole record in your repo.
+You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you. The tickets, the reviews and every decision stay in your repo.
 
 Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship. The agents do the typing; you do the steering.
-
-It's for product-minded builders who can write a good ticket but don't want to review code line by line: you set speck up by talking to your agent, write tickets, set them ready and walk away.
 
 ```
 idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, or auto-ship]
 ```
 
-- **You hold the gates.** You decide what's ready and what ships. Agents never merge or ship unless you run `/speck-ship` or click the Ship button in the panel, or you turn on `auto_ship` in `speck/config.yml` to ship whatever the reviewer approves.
-- **When it's stuck, it asks.** A build that can't decide something for you stops with one plain question and waits for your answer, rather than guessing.
+- **You hold the gates.** You decide what's ready and what ships. Agents never merge or ship unless you run `/speck-ship` or click the Ship button in the panel, or you turn on `auto_ship` in `speck/config.yml` so that `speck run` ships the risks you choose once the reviewer approves them.
+- **When it's stuck, it asks, then moves on.** A build that can't decide something for you stops with one plain question, the options and its recommendation, rather than guessing. `speck run` carries on with the next ticket while it waits for you.
 - **Tickets, not specifications.** Each change is a small numbered ticket in your repo, sized for one agent in one sitting. speck checks the size rules and makes you split anything bigger.
 - **Adversarial review built in.** The building agent (Claude Code by default) starts an independent reviewer (Codex by default) and they take turns: the builder fixes or disputes each finding, and the reviewer re-checks in the same session. It ends when the reviewer approves or a question comes back to you.
-- **One build at a time, out of your way.** `speck run` builds your ready tickets one after another, each in its own git worktree, so you keep writing ideas and tickets while it works. Running builds side by side caused more trouble than it saved, so speck doesn't.
+- **Out of your way.** `speck run` builds your ready tickets, each in its own git worktree, so you keep writing ideas and tickets while it works. It builds one at a time unless you raise `max_parallel_builds`, and one ship queue ships approved tickets one after another, so ships never race each other for `main`.
+- **It looks after itself.** When `main` breaks, the build that finds it raises a priority-0 fix ticket that goes to the front of the queue, rather than patching it inside someone else's work. When `main` has moved on, the build merges it in and has the merge reviewed again before it ships. A build that spots a bug or a better idea saves it to your inbox, and triage turns the inbox into at most three decisions.
 - **The code is the record.** The code, the tickets and the tests say what the product does. Each ticket keeps its review rounds and its actuals: time, review rounds and tokens.
 - **No GitHub needed.** Everything happens in your local repo. Shipping merges the approved branch into `main` and pushes it if you have a remote.
+
+**Who it's for.** You think in outcomes, not diffs. You're a PM, a founder, or the person on the team who always has the spec. You have more ideas than evenings, a coding agent you already trust with real work, and no wish to read every line it writes. You set speck up by talking to your agent, write tickets, set them ready and walk away.
+
+It's also for engineers who want a light, auditable loop: ticket, build, independent review, merge. It's not for large multi-team specs, or work that needs design documents spanning many changes.
 
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
@@ -63,6 +66,8 @@ To use the panel from your phone, put it behind a private tunnel that makes you 
 - git
 - Node.js 20 or newer, which your agent can install for you
 - Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
+
+Not yet: Windows (speck says so and suggests WSL), Jira or GitHub Issues sync, pull requests as the way to ship, and hosted or cloud builds.
 
 ## Without an agent
 
