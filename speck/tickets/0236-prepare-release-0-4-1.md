@@ -1,7 +1,7 @@
 ---
 id: "0236"
 title: Prepare release 0.5.0                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T23:00:22.014Z"
 ---
 # 0236 · Prepare release 0.5.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Builds spend most of their time running speck's test suite: about 8 minutes on an 8 GB MacBook Air, several times per ticket, with test runs from builds side by side taking over the computer. A build could also end itself while its suite ran in the background. The 0.5.0 tickets run the whole suite once per ticket, when it ships, make test runs take turns at a low priority, make the suite faster and keep test runs in the foreground, and anyone following the README's setup prompt still gets 0.4.0.
@@ -48,7 +48,7 @@ speck is ready to be released as 0.5.0.
 - Self-check: narrowed the changelog's and release notes' claim that builds wait for their test runs, since 0227 tells the builder to rather than enforcing it. Also ran the other test files that read the README (18 files): all pass.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to be released as version 0.5.0. Once this lands, the setup instructions in the README install 0.5.0, and the version's tag and release page should appear on GitHub by themselves a minute or so later. The changelog and the release page explain what's changed since 0.4.0: a ticket's full set of tests runs once, when it ships, rather than several times while it's built, and test runs take turns and give way to your own programs. The README's figures on how speck is built with speck are brought up to date. To see it, read the new changelog section and the release notes, and after it ships check the repository's Releases page. Worth keeping an eye on: this is the first release the automatic publishing has handled, so if no release page appears, it can be published by hand as the ticket's notes say.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +58,72 @@ speck is ready to be released as 0.5.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The brief's "Releases" section still says the maintainer tags each release by hand, which 0240 automated. Saved to the inbox: `speck/ideas/2026-10-15-say-in-the-brief-that-releases-publish-themselves.md`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c6fbe7d5fd73203d5bfa53f9dd192ae1da6428fe",
+    "thread_id": "01a141ce-28af-70d3-979e-b257c54f2586",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 219040,
+      "cached_input_tokens": 165120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1474,
+      "reasoning_output_tokens": 45
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:03:45.085Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.5.0. Both 0236 AC1 tests passed, including invoking speck init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.5.0 above 0.4.0 under four headings, covering shipped tickets 0227–0235 and 0237–0240. Both AC2 tests passed; independent comparison with v0.4.0 confirms its section is unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md updates the setup prompt, public-preview status and build/ship testing description; docs/brief.md updates its status. All three AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.5.0.md contains the requested paragraph, five main changes, installation command, upgrade guidance and changelog link, without personal names. Claims match the shipped tickets. All three AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent recalculation from the current done directory confirms 209 shipped, 16 cancelled, 15 minutes median, one review round median and 105 first-round approvals. Both AC5 tests passed; all 25 tests in the supplied release-test output passed. Historical 0210 checks retain coverage appropriate to that release."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The version, setup instructions, changelog and release notes consistently prepare speck 0.5.0. The notes reflect the shipped changes, the published figures match the ticket records, and the release tests pass. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
