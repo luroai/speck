@@ -42,7 +42,7 @@ test('0116 AC1: a conflict is classed with speck merge-check and each file resol
 
 test('0116 AC1: the tests and a merge round come before shipping again, with a fresh response file', () => {
   const s = part('Conflict');
-  assert.match(s, /`speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/);
+  assert.match(s, /`speck test --files <file>… 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/, 'the ticket\'s test files (0235)');
   assert.match(s, /merge round/i);
   assert.match(s, /`speck review <id>/);
   assert.match(s, /response file fresh/i);

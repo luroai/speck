@@ -528,7 +528,7 @@ const HELP = `speck: Your judgement, at agent speed.
   speck test --files <file>…          run only those test files with commands.test_files (blank: the whole suite)
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
-  speck prompt <id> [--tests=f]       print the reviewer prompt (for subagent reviewers)
+  speck prompt <id> [--tests=f] [--response=f]  print the reviewer prompt (for subagent reviewers)
   speck reviewer-settings <id>        print and save the model and effort to start a reviewer with
   speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck close <id>                    write the review and delivery logs, set approved and commit, once the reviewer approves

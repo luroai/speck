@@ -153,7 +153,12 @@ export function reviewerPrompt(repo, ticket, cfg, round, extra) {
   const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8');
   if (round === 1) {
     const values = { TICKET: stripRounds(ticket.raw), BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
-    return tpl.replace(/\{\{(TICKET|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
+    // Round 1's response file, when the builder gives one, says which test files it ran (0235). It goes before the
+    // test output, which ends the prompt, so a saved round-1 prompt still gives its test output back (savedTests).
+    const fill = s => s.replace(/\{\{(TICKET|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
+    const at = tpl.indexOf('## Test output (from the builder)');
+    if (!extra.response || at < 0) return fill(tpl);
+    return `${fill(tpl.slice(0, at))}## Builder response\n\n${extra.response.replace(/\n*$/, '')}\n\n${fill(tpl.slice(at))}`;
   }
   return [
     `# Review round ${round}`,
@@ -208,6 +213,14 @@ function reviewSince(repo, cfg, prior) {
   return { base, sinceSha: merged ? base : last, merged };
 }
 
+// The builder's response file given with --response, or '' without one.
+function readResponse(file) {
+  if (!file) return '';
+  try { return fs.readFileSync(file, 'utf8'); } catch (e) {
+    throw new SpeckError(`Can't read the builder's response in ${file} (${e.code || e.message}). Check the file given with --response, then run this again.`);
+  }
+}
+
 // Everything a review round needs, checked before any reviewer runs: the round number, the commit under review,
 // the diff since the last round and the builder's inputs.
 function reviewSetup(repo, id, opts) {
@@ -226,7 +239,7 @@ function reviewSetup(repo, id, opts) {
   const diff = reviewDiff(repo, sinceSha);
   const tests = testOutput(opts.tests, ticket.fm.id || id);
   const testsSeen = testsMeta(opts.tests);
-  const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
+  const response = readResponse(opts.response);
   return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, diff, tests, testsSeen, response };
 }
 
@@ -357,7 +370,8 @@ export function cmdPrompt(args) {
   const diff = reviewDiff(repo, base);
   const testsArg = args.find(a => a.startsWith('--tests='));
   const tests = testOutput(testsArg?.slice(8), t.fm.id || args[0]);
-  console.log(fullPrompt(repo, t, cfg, diff, tests));
+  const response = readResponse(args.find(a => a.startsWith('--response='))?.slice(11));
+  console.log(fullPrompt(repo, t, cfg, diff, tests, response));
 }
 
 export function cmdDiff(args) {

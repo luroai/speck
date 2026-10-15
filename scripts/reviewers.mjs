@@ -36,8 +36,8 @@ export function runLimited(cmd, args, { cwd, input, ms }) {
 }
 
 // The round-1 prompt with the verdict schema: what `speck prompt` prints, and what a command reviewer gets on stdin.
-export function fullPrompt(repo, ticket, cfg, diff, tests) {
-  return `${reviewerPrompt(repo, ticket, cfg, 1, { diff, tests })}\n\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`;
+export function fullPrompt(repo, ticket, cfg, diff, tests, response = '') {
+  return `${reviewerPrompt(repo, ticket, cfg, 1, { diff, tests, response })}\n\nReturn ONLY a JSON object matching this schema:\n${fs.readFileSync(path.join(TEMPLATES, 'review-verdict.schema.json'), 'utf8')}`;
 }
 
 // Splits a command into words the way a shell would for plain quoting, so it can run without a shell.
@@ -105,7 +105,7 @@ function roundOnePrompt(repo, s, id) {
   const ticket = { raw: at(posix(path.relative(repo, s.ticket.file))) ?? s.ticket.raw };
   // Against the base as it was then: the branch may have merged a newer base since.
   const base = git(['merge-base', s.cfg.base_branch, sha], repo).trim();
-  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), saved === null ? '(the round-1 test output was not kept)' : savedTests(saved));
+  return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), saved === null ? '(the round-1 test output was not kept)' : savedTests(saved), s.prior[0].meta.builder_response);
 }
 
 // Later rounds give a reviewer with no memory everything it has seen: the round-1 prompt, every earlier verdict and
@@ -113,7 +113,7 @@ function roundOnePrompt(repo, s, id) {
 function historyPrompt(repo, s, id) {
   const parts = [roundOnePrompt(repo, s, id), '# Earlier review rounds'];
   for (const r of s.prior) {
-    if (r.meta.builder_response) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
+    if (r.meta.builder_response && r.meta.round > 1) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
     parts.push(`## Your round ${r.meta.round} verdict`, '```json', JSON.stringify(r.verdict, null, 2), '```');
   }
   parts.push(reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }));
@@ -163,7 +163,7 @@ export function runCommandReview(repo, id, name, command, s) {
     if (!r) console.log(`Started a fresh ${name} session with the full history, because ${why}.`);
   }
   if (!r) {
-    const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests) : historyPrompt(repo, s, id);
+    const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests, s.response) : historyPrompt(repo, s, id);
     if (s.round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
     r = runReviewer(repo, name, command, values, prompt, ms);
   }
