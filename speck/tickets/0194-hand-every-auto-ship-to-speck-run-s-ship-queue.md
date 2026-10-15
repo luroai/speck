@@ -50,7 +50,11 @@ Builds end at approved, `speck run`'s ship queue (0193) does every auto-ship, an
 - Self-check: run.mjs went over the 600-line limit for scripts, so the hand-back code moved to its own module.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A build now stops once the reviewer approves its ticket. It no longer ships the ticket itself. With auto-ship on, `speck run` ships approved tickets one at a time, in one queue. Otherwise the ticket waits for you to ship it, as before. A ticket built without `speck run` on now waits until you turn `speck run` on, or ship it yourself.
+
+When a ship from the queue can't go through because of a clash with newer work on the main branch, or because the tests only fail with that newer work, `speck run` reopens that ticket's build. The build sorts it out, gets it reviewed again, and leaves the ticket approved for the queue to try again. This waits for a free build slot, like any build, and its output goes to the same build log. After two such tries the build asks you a question instead. When the main branch's own tests are failing, the build is reopened once to make sure a fix ticket exists, and shipping waits until the main branch has a new commit.
+
+To see it: with `speck run` on, approve a low-risk ticket that clashes with a change on main. `speck run`'s output says it's handing the ticket back, and its build log carries on. Keep an eye on tickets built outside `speck run`: if one of their ships needs work, `speck run` can't reopen that build. It says so once, with what to do.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +64,11 @@ Builds end at approved, `speck run`'s ship queue (0193) does every auto-ship, an
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: the count of hand-backs stays in the build's run record until the next build of the ticket. If you answer a blocked question and carry the same build on, the next conflict for that ticket goes straight to the block question again.
+- Known limit: a ticket built outside `speck run` has no build session that `speck run` can resume, so a ship needing work is reported once, and you resume that session by hand.
+- Tidy-up: the brief's workflow diagram and review-loop step still say an approved ticket "ships straight away" with `auto_ship`; that's true only while `speck run` is on.
+- Tidy-up: the panel's "Auto-ship didn't finish" wording still speaks of a build's auto-ship.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -127,6 +136,75 @@ Builds end at approved, `speck run`'s ship queue (0193) does every auto-ship, an
     ],
     "escalation_question": "",
     "summary": "Builds now stop at approval, and the queue can resume their sessions to resolve shipping problems. The reported suite passes, but a pending recovery does not stop another shipping attempt. Fix that race before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3ec72dac7d0aad0971eda8102955eee61133d80a",
+    "thread_id": "01a13f18-f3ab-7ac3-90cb-468d51554598",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 329258,
+      "cached_input_tokens": 262272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1616,
+      "reasoning_output_tokens": 160
+    },
+    "saved_at": "2026-10-15T10:30:56.093Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 5 stops at approved and reports either the ship queue or /speck-ship as the next step. Both AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipQueue hands exits 13 and 16 to handBackQueue, which persists recovery requests, resumes the build session and counts hand-backs. The build skill provides merge, repair, review and blocking steps. Passing regression tests cover waiting for a slot, base changes, restart persistence and avoiding an active ship."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Exit 14 produces the Base branch failing instructions while leaving the ticket approved. shipQueue holds shipping until the base changes, and its waiting guard prevents retrying a ticket before its pending hand-back runs. AC3 message and hold tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Hand-backs use run.mjs startBuild, count in running and append to the existing build log. The passing AC2 AC4 integration test verifies slot limits, session identity, running status and log output."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md principle 7 states that builds end at approved and one queue ships tickets one at a time. The full test output confirms 1755 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs; scripts/ship-queue.mjs; scripts/hand-back.mjs",
+        "issue": "Pending hand-backs previously allowed another shipping attempt before recovery, potentially overlapping shipping and build work.",
+        "suggested_fix": "Implemented: shipQueue skips persisted pending hand-backs, and handBackQueue waits while the ticket has an active ship. Regression tests cover base changes, restart persistence and active shipping.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Builds now finish at approval, and speck run handles automatic shipping and resumes builds when repairs are needed. The shipping race is fixed, regression tests cover it, and the full suite passes. Ready for the owner's merge decision."
   }
 }
 ```
