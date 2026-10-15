@@ -227,6 +227,10 @@
   #shipped .line .title-link { flex: 1 1 auto; min-width: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 17px; overflow-wrap: anywhere; }
   #shipped .tag-row { margin-top: 4px; }
   #shipped .when { margin-top: 4px; color: var(--muted); }
+  /* 0204: a ticket merged but not pushed, in crimson, with speck ship's message */
+  #shipped td.unpushed { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--bad); }
+  #shipped .unpushed-head { color: var(--bad); font-weight: 600; }
+  #shipped .unpushed-said { margin-top: 2px; font-size: 12px; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
   #shipped .figs { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px 16px; margin-top: 8px; }
   #shipped .fig .k { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   #shipped .fig .v { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; }
@@ -671,7 +675,9 @@ function panelModel(state) {
     const took = start !== null && until !== null ? Math.max(0, until - start - waited(t)) : null;
     // 0178: one the server cut down to the Shipped figures gives its rounds' count and tokens in review_total.
     const total = t.review_total && typeof t.review_total === 'object' ? t.review_total : null;
-    return { ...t, end, when: shippedAt(end, now), roundCount: total ? Number(total.rounds) || 0 : rounds(t).length,
+    // 0204: a ship that merged it but couldn't push the base branch, until speck sees the commit on the remote, with speck ship's message.
+    const unpushed = !!t.ship && typeof t.ship === 'object' && t.ship.unpushed === true;
+    return { ...t, end, unpushed, unpushed_message: unpushed && typeof t.ship.message === 'string' && t.ship.message ? t.ship.message : null, when: shippedAt(end, now), roundCount: total ? Number(total.rounds) || 0 : rounds(t).length,
       tokens: total ? Number(total.tokens) || 0 : rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
       builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
       exactMinutes: took !== null ? took / 60000 : null,
@@ -728,7 +734,8 @@ function panelModel(state) {
         shipping, ship_waiting, run_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight && start !== null ? start + waited(t) : null, approved_at, held_at, counter: inFlight && start !== null ? counter((held_at ?? Date.now()) - start - waited(t)) : null };
     }),
-    shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
+    // The latest 5, and any older one not pushed yet (0204).
+    shipped: [...finished, ...done.filter(t => t.end === null)].filter((t, i) => i < 5 || t.unpushed),
     shippedTotal: done.length,
     stats: {
       today: done.filter(t => t.end !== null && sameDay(new Date(t.end), new Date(now))).length,
@@ -2364,7 +2371,9 @@ function render() {
     details.addEventListener('click', e => { e.stopPropagation(); flip(openShipped, id); });
     const tag = typeTag(t);
     const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), fullLink(t)), tag && el('div', 'row tag-row', null, tag));
-    return el('tr', null, null, name, t.end !== null ? el('td', 'when', `Shipped ${t.when}`) : null, el('td', 'sum', null, line ? el('span', 'figline', line) : null, details),
+    // 0204: merged, but the push of the base branch failed: what speck ship said, which says how to fix it.
+    const unpushed = t.unpushed ? el('td', 'unpushed', null, el('div', 'unpushed-head', 'Merged, but not pushed'), t.unpushed_message ? el('div', 'unpushed-said', t.unpushed_message) : null) : null;
+    return el('tr', null, null, name, t.end !== null ? el('td', 'when', `Shipped ${t.when}`) : null, unpushed, el('td', 'sum', null, line ? el('span', 'figline', line) : null, details),
       isOpen && figs.length ? el('td', 'figs', null, ...figs) : null, isOpen ? el('td', 'full-cell', null, packButton(t)) : null);
   }, { own: t => { const { when, ...own } = t; return own; }, derived: t => t.when, update: (tr, t) => { const w = child(tr, 'when'); if (w) setText(w, `Shipped ${t.when}`); } }), 'Nothing shipped yet.');
   // 0162: three stats, and More stats shows the other three. A stat over 9,999 is shortened as a card's figures are,

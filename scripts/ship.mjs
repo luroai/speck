@@ -373,7 +373,10 @@ export function shipTicket(repo, id) {
     const fix = behind
       ? `${remote} got new commits on ${base} while you were shipping. Run \`git pull\`, then \`git push ${remote} ${base}\`.`
       : `If ${base} is protected on GitHub, allow direct pushes (turn off "Require a pull request before merging"), then run \`git push ${remote} ${base}\`.`;
-    throw new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\n${fix}${branchRemote ? ` ${branch} is kept on ${branchRemote} until then.` : ''}`);
+    const e = new SpeckError(`Merged locally, but pushing ${base} to ${remote} failed:\n${push.stderr.trim()}\n${fix}${branchRemote ? ` ${branch} is kept on ${branchRemote} until then.` : ''}`);
+    // 0204: the ship record keeps this, so the panel says so until the commit has reached the remote.
+    e.unpushed = { remote, base, sha: git(['rev-parse', base], main).trim() };
+    throw e;
   }
   console.log(`Pushed ${base} to ${remote}.`);
   deleteRemoteBranch(main, branchRemote, branch);
@@ -410,6 +413,8 @@ export function autoShipWhyNot(cfg, pad, risk, roundList) {
 // and whether it's an auto-ship, so the panel shows it wherever it was started from, and a second ship of the ticket
 // refuses. A ship that shipped, or one the user started, removes it as it ends. An auto-ship that didn't ship leaves it
 // for the panel, with when it ended and speck ship's message, and one that was killed leaves it with a pid that has gone.
+// 0204: a ship, whoever started it, that merged but couldn't push leaves it too, with the remote, the base branch and
+// the commit it merged, until that commit has reached the remote.
 
 const shipFile = (runs, pad) => path.join(runs, `${pad}.ship.json`);
 const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
@@ -429,7 +434,8 @@ function shipRunning(rec, pad) {
 
 // What the panel shows of a ticket's ship, from `runs` (the main checkout's speck/.cache/runs/): { running: true, auto,
 // started } while one runs, { running: false, auto: true, started, ended, message } for an auto-ship that ended without
-// shipping (ended and message are null when it was killed), or null.
+// shipping (ended and message are null when it was killed), { running: false, auto, started, ended, message, unpushed: true }
+// for a ship that merged but couldn't push, until the commit it merged has reached the remote (0204), or null.
 export function shipState(runs, id) {
   id = String(id ?? '');
   if (!/^\d+$/.test(id)) return null;
@@ -437,9 +443,23 @@ export function shipState(runs, id) {
   if (!rec) return null;
   const auto = rec.auto === true;
   if (shipRunning(rec, pad)) return { running: true, auto, started: rec.started };
-  if (!auto) return null;
   const text = v => (typeof v === 'string' && v !== '' ? v : null);
+  if (rec.unpushed && typeof rec.unpushed === 'object') {
+    if (!notPushed(runs, rec.unpushed)) return null;
+    return { running: false, auto, started: rec.started, ended: text(rec.ended), message: text(rec.message), unpushed: true };
+  }
+  if (!auto) return null;
   return { running: false, auto, started: rec.started, ended: text(rec.ended), message: text(rec.message) };
+}
+
+// True while `unpushed`'s commit isn't yet on its remote's copy of the base branch, as git last saw it: a push or fetch
+// updates that, so the record clears once the commit has gone, by whatever push. An unreadable record counts as pushed.
+function notPushed(runs, { remote, base, sha } = {}) {
+  const name = v => typeof v === 'string' && /^[\w./-]+$/.test(v) && !v.startsWith('-');
+  if (!name(remote) || !name(base) || !/^[0-9a-f]{7,64}$/.test(String(sha))) return false;
+  const tracked = `refs/remotes/${remote}/${base}`;
+  if (sh('git', ['rev-parse', '--verify', '-q', tracked], { cwd: runs }).status !== 0) return true;
+  return sh('git', ['merge-base', '--is-ancestor', sha, tracked], { cwd: runs }).status !== 0;
 }
 
 // True while a ship of any ticket but `pad` runs in the repo, whoever started it, from the ship records in `runs`.
@@ -470,6 +490,8 @@ function takeShip(repo, pad, auto) {
       let rec = null;
       try { rec = JSON.parse(held); } catch { /* unreadable: replace it */ }
       if (rec && shipRunning(readShip(file), pad)) throw busy(rec);
+      // 0204: a ship that merged it but couldn't push keeps its record until the commit is on the remote.
+      if (rec && shipState(runs, pad)?.unpushed) throw new SpeckError(`Ticket ${pad} has already been merged, but its push failed, so there's nothing to ship. Nothing was changed. What speck ship said then:\n${rec.message ?? ''}`.trim());
       if (!link(recover)) {
         const other = readShip(recover);
         if (other && pidAlive(other.pid)) throw busy(other);
@@ -518,16 +540,17 @@ function takeShipLock(runs, pad, alone) {
 }
 const releaseShipLock = lock => { try { if (fs.readFileSync(lock.file, 'utf8') === lock.text) fs.rmSync(lock.file, { force: true }); } catch { /* already gone */ } };
 
-// Ends the record this process took: removes it, or for an auto-ship that didn't ship, keeps it with when it ended and
-// speck ship's message. A record another ship has since replaced is left alone.
+// Ends the record this process took: removes it, or for an auto-ship that didn't ship, or any ship that merged but
+// couldn't push (0204), keeps it with when it ended and speck ship's message. A record another ship has since replaced is left alone.
 function endShip(took, auto, error) {
   let now;
   try { now = fs.readFileSync(took.file, 'utf8'); } catch { return; }
   if (now !== took.text) return;
   try {
-    if (!error || !auto) return fs.rmSync(took.file, { force: true });
+    const unpushed = error?.unpushed ?? null;
+    if (!error || (!auto && !unpushed)) return fs.rmSync(took.file, { force: true });
     const message = String(error?.message ?? error ?? '').trim() || null;
-    fs.writeFileSync(took.file, JSON.stringify({ ...JSON.parse(took.text), ended: new Date().toISOString(), message }));
+    fs.writeFileSync(took.file, JSON.stringify({ ...JSON.parse(took.text), ended: new Date().toISOString(), message, ...(unpushed ? { unpushed } : {}) }));
   } catch (e) { console.error(`Couldn't update the ship record ${took.file} (${e.message}), so the panel may show this ship out of date. Delete it if so.`); }
 }
 

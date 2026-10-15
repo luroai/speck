@@ -250,8 +250,8 @@ export function boardVersions() {
 // 0178: the board as the panel sends it. A finished ticket outside the Shipped list's latest five, which the page shows
 // only in the Shipped figures, keeps only what those use: its id and status, its times, its builder's spend and, in place
 // of its review rounds, how many there were and the reviewer tokens of them all (review_total). A cancelled one, which the page doesn't show,
-// keeps its id and status. The latest five, picked as the page picks them, and a ticket whose ship is still running stay
-// whole. `speck status --json` is unchanged.
+// keeps its id and status. The latest five, picked as the page picks them, a ticket whose ship is still running and one
+// merged but not pushed (0204) stay whole. `speck status --json` is unchanged.
 const SHIPPED_SHOWN = 5;
 export function panelBoard(board) {
   if (!board || !Array.isArray(board.tickets)) return board;
@@ -264,7 +264,7 @@ export function panelBoard(board) {
   const spent = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
   const slim = t => {
     if (t && t.status === 'cancelled') return { id: t.id, status: t.status };
-    if (!finished.has(t) || shown.has(t)) return t;
+    if (!finished.has(t) || shown.has(t) || (t.ship && typeof t.ship === 'object' && t.ship.unpushed === true)) return t;
     const rounds = Array.isArray(t.rounds) ? t.rounds : [];
     const tokens = rounds.reduce((n, r) => n + (Number(r && r.tokens) || 0), 0);
     return { id: t.id, status: t.status, started: at(t.started), finished: at(t.finished), approved: at(t.approved),
