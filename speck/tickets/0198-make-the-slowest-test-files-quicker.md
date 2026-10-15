@@ -1,7 +1,7 @@
 ---
 id: "0198"
 title: "Make the slowest test files quicker"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T13:17:42.080Z"
 
 ---
 # 0198 · Make the slowest test files quicker
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck's full suite takes about 2.5 minutes, and longer when two builds share the machine, and a build runs it 2 to 5 times plus once more at ship. A few test files take about a minute each on their own, and a full run can't end before its slowest file does. On 2026-10-15 the tests of 0176, 0175 and 0177 took 79, 67 and 59 seconds in all.
