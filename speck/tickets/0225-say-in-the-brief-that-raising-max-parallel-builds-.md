@@ -39,6 +39,7 @@ The brief says plainly that one build at a time is the default and raising `max_
 ## Notes
 - The reasons are in `docs/brief.md` under principle 7; `test/brief-0111.test.mjs` pins their wording and bans some phrases about parallel builds in the brief, README and skills.
 - The note's open question (supported, or only allowed) is settled as supported: `speck run` honours the setting and the README and principle 7 already say to raise it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
