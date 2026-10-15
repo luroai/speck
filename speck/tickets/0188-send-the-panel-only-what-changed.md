@@ -39,6 +39,7 @@ Each update to an open page carries only what changed, however many tickets ther
 ## Notes
 - 0187 (shipped) pushes the whole board on each change, through `scripts/board-feed.mjs`.
 - Ticket files run up to about 36 KB (0008), so an update's size limit is relative, not fixed.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
