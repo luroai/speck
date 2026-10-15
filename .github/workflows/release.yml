@@ -9,9 +9,11 @@ on:
 permissions:
   contents: write
 
+# One release run at a time, and every push waits its turn: with the default queue a newer push
+# cancels a waiting one, which could skip a version that landed in between.
 concurrency:
   group: release
-  cancel-in-progress: false
+  queue: max
 
 jobs:
   release:

@@ -18,6 +18,12 @@ test('0240 AC1: the workflow runs the release script on every push to main', () 
   assert.ok(fs.existsSync(path.join(ROOT, '.github', 'scripts', 'release.mjs')));
 });
 
+test('0240 AC1: release runs go one at a time, and a newer push never cancels a waiting one', () => {
+  const wf = workflow();
+  assert.match(wf, /^concurrency:\n  group: release\n  queue: max\n/m);
+  assert.doesNotMatch(wf, /cancel-in-progress: true/);
+});
+
 test('0240 AC1: an untagged version gets its tag on the pushed commit and a release with its notes', () => {
   const repo = releaseRepo({ version: '0.5.0', notes: true });
   const r = runRelease(repo, { sha: 'abc123' });
