@@ -1,6 +1,7 @@
 // 0187: the panel's event stream (/api/events), which tells every open page when the board changes, and the watch on
 // the files the board is read from that tells it when to read the board again.
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import { sh, worktreeList } from './speck.mjs';
 
@@ -127,4 +128,92 @@ export function boardWatcher(repo, runs, changed) {
   };
   sync(true);
   return { sync, close: () => { for (const w of watching.values()) w.close(); watching.clear(); } };
+}
+
+// 0188: what /api/state answers with, kept in parts, so a page that has an earlier one gets only what changed since.
+// The tickets (by id) and ideas (by path) are kept item by item, and everything else, such as speck run's state, whole.
+// An item unchanged since `prev` keeps prev's text, so the recent boards kept for the pages share it. A list with an
+// item that isn't an object with its own key, or two with the same key, is kept whole.
+const KEYED = { tickets: 'id', ideas: 'path' };
+export function boardSnapshot(state, prev = null) {
+  const keys = [], parts = new Map(), texts = [];
+  for (const [name, value] of Object.entries(state)) {
+    const by = Object.hasOwn(KEYED, name) && Array.isArray(value) ? KEYED[name] : null;
+    const was = prev && prev.parts.get(name);
+    let part = by ? keyedPart(value, by, was && was.by === by ? was : null) : null, text;
+    if (part) text = `[${part.order.map(k => part.items.get(k)).join(',')}]`;
+    else {
+      text = JSON.stringify(value);
+      if (text === undefined) continue; // left out, as JSON.stringify leaves it out of the board
+      part = { json: was && was.json === text ? was.json : text };
+    }
+    keys.push(name);
+    parts.set(name, part);
+    texts.push(`${JSON.stringify(name)}:${text}`);
+  }
+  return { keys, parts, body: `{${texts.join(',')}}` };
+}
+function keyedPart(list, by, was) {
+  const order = [], items = new Map();
+  for (const item of list) {
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) return null;
+    const key = item[by];
+    if (!Object.hasOwn(item, by) || (typeof key !== 'string' && typeof key !== 'number')) return null;
+    const k = String(key);
+    if (items.has(k)) return null;
+    const text = JSON.stringify(item), old = was && was.items.get(k);
+    order.push(k);
+    items.set(k, old === text ? old : text);
+  }
+  return { by, order, items };
+}
+
+// 0188: the update that turns board `from` (a snapshot, numbered `fromVersion`) into board `to`, as /api/state's
+// answer: { delta: { from, to, keys, set, lists } }. keys names every part of `to` in order (a part not named is gone),
+// set has each whole part that changed, and lists, for each list kept item by item on both sides, the items added or
+// changed (put), the keys of those gone (drop) and, only when it isn't the old order without those gone and with those
+// added at the end, the new order.
+export function boardDelta(from, to, fromVersion, toVersion) {
+  const set = [], lists = [];
+  for (const name of to.keys) {
+    const now = to.parts.get(name), was = from.parts.get(name);
+    if (now.by && was && was.by === now.by) {
+      const drop = was.order.filter(k => !now.items.has(k));
+      const added = now.order.filter(k => !was.items.has(k));
+      const put = now.order.filter(k => was.items.get(k) !== now.items.get(k)).map(k => now.items.get(k));
+      const same = [...was.order.filter(k => now.items.has(k)), ...added];
+      const moved = same.length !== now.order.length || same.some((k, i) => k !== now.order[i]);
+      if (put.length || drop.length || moved) lists.push(`${JSON.stringify(name)}:{"by":${JSON.stringify(now.by)},"put":[${put.join(',')}],"drop":${JSON.stringify(drop)}${moved ? `,"order":${JSON.stringify(now.order)}` : ''}}`);
+    } else {
+      const text = now.by ? `[${now.order.map(k => now.items.get(k)).join(',')}]` : now.json;
+      if (!was || was.by || was.json !== text) set.push(`${JSON.stringify(name)}:${text}`);
+    }
+  }
+  return `{"delta":{"from":${JSON.stringify(fromVersion)},"to":${JSON.stringify(toVersion)},"keys":${JSON.stringify(to.keys)},"set":{${set.join(',')}},"lists":{${lists.join(',')}}}}`;
+}
+
+// 0188: the server's recent boards, by the number boardFeed gave each. snapshot() keeps a board in parts after the last
+// one kept, and keep() keeps it as `version`, with the BOARDS_KEPT before it. answer() gives what /api/state answers a
+// page with: only what changed since the board the page says it has (X-Speck-Have, as this server numbered it), while
+// that's one of those kept, or else the whole board, and the name of the board the page then has, for its
+// X-Speck-Board header. A board is named `<epoch>:<version>`, so a page can't mistake one from an earlier server for
+// one of this one's.
+const BOARDS_KEPT = 16;
+export function boardVersions() {
+  const epoch = crypto.randomBytes(8).toString('hex'), kept = new Map(); // version → its snapshot
+  let last = null;
+  return {
+    snapshot: state => boardSnapshot(state, last),
+    keep(version, snap) {
+      last = snap;
+      kept.delete(version);
+      kept.set(version, snap);
+      for (const v of kept.keys()) if (kept.size > BOARDS_KEPT) kept.delete(v);
+    },
+    answer(snap, version, have) {
+      const m = /^([0-9a-f]{16}):(\d{1,15})$/.exec(have || ''), from = m && m[1] === epoch ? kept.get(Number(m[2])) : undefined;
+      const name = `${epoch}:${version}`;
+      return { body: from ? boardDelta(from, snap, `${epoch}:${m[2]}`, name) : snap.body, name };
+    },
+  };
 }
