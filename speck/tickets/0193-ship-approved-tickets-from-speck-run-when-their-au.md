@@ -139,3 +139,80 @@ While `speck run` is on, it ships each approved ticket that `auto_ship` covers, 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ed68d2f3f910985c7d23e1b66e798a8f9fc91036",
+    "thread_id": "01a13efa-e744-7920-8d8e-aa419c4b2462",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 304955,
+      "cached_input_tokens": 244736,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2459,
+      "reasoning_output_tokens": 326
+    },
+    "saved_at": "2026-10-15T09:58:32.456Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "shipOrder and passing AC1 tests cover eligibility, ordering and existing ships. However, cmdShip checks otherShipRunning only when SPECK_SHIP_ALONE is set. A manual or build-started ship can register after that check and proceed alongside the queue's ship."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipQueue.check compares remembered base and ticket branch hashes. Passing AC2 tests exercise unchanged refusals, changes to either branch and earlier failed auto-ship records. The new exit-15 test verifies a concurrency refusal does not consume a retry."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipQueue.ended now captures headOf(repo, base) when exit 14 is received. Both passing AC3 tests verify the hold, including a base commit made while shipping, and release only after a subsequent base commit."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "shipOrder filters approved status and statusData's auto_ship eligibility. Passing AC4 tests cover disabled auto-ship, excluded risks and other statuses. The integration test verifies a detached ship completes after speck run stops."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0193-tests.txt confirms 1739 tests: 1736 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs:515",
+        "issue": "The fix checks only queue-started ships, so mutual exclusion remains incomplete. A queue ship can take its record and finish otherShipRunning before a concurrent manual or build-started ship takes another ticket's record. That other ship never checks for the queue ship because alone is false, so both enter shipTicket. The claim that at least one sees the other requires both participants to check. The new test covers only an already registered competing ship.",
+        "suggested_fix": "Use shared atomic coordination that every ship entry point honours, preserving builds' existing responsibility for shipping. Add a concurrent-start regression covering the ordering where the queue ship checks first and the manual or build-started ship registers second.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/ship-queue.mjs:81",
+        "issue": "The hold now records the base commit when the ship ends, preventing commits made during shipping from immediately lifting it.",
+        "suggested_fix": "No further change required; the new AC3 regression covers the reported case.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The failing-base hold is fixed, and all tests pass. Concurrent shipping still needs fixing: a manual or build-started ship can bypass the queue ship's check and run alongside it."
+  }
+}
+```
+
+</details>
