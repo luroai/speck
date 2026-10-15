@@ -986,7 +986,8 @@ function linkTarget(s, from) {
 // ---- end model ----
 
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
-const LOST_MS = 10000; // how long the board's stream can be gone before the page says it's disconnected (0187)
+const LOST_MS = 10000; // how long the board's stream, or an answer for the board, can be missing before the page says it's disconnected (0187, 0186)
+const WAIT_MS = 15000; // how long the page waits for its request for the board before giving it up (0186)
 const RETRY_MS = 1000; // how soon the page starts again a stream the browser has given up on
 const LOG_LINES = 200; // how many of a log's last lines are shown, as the server first sends them (0189)
 const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship and the speck run switch
@@ -2384,7 +2385,9 @@ function showRunError(text) {
   $('run-error').hidden = !text;
   $('run-error').textContent = text || '';
 }
+let offline = false; // whether the page says it's disconnected, or can't read the tickets (0186)
 function setConnected(ok, problem) {
+  offline = !ok;
   $('offline').hidden = ok;
   if (!ok) $('offline').textContent = problem
     ? `speck panel couldn't read the tickets: ${problem} Showing the last state received until it can read them again.`
@@ -2401,14 +2404,17 @@ function showRestartError(line) {
 
 // 0187: the panel tells the page each time the board changes, over one event stream, and the page then asks for that
 // board. Nothing asks on a timer: while nothing changes, the stream carries only a keep-alive (ping), on which the page
-// redraws what it works out from the clock. Only the latest request's answer is used, and one still waiting when the
-// next board is announced counts as disconnected and is dropped; one that fails is asked again at the next ping. A dropped stream reconnects by itself, and the panel
-// tells the page of its board as soon as it's back, so "Disconnected" shows only if it stays gone for LOST_MS. Coming
-// back to the page, as a phone does when it wakes, starts a new stream at once, in case the old one died unnoticed.
+// redraws what it works out from the clock. One request for the board waits at a time, for up to WAIT_MS, and a board
+// announced meanwhile is asked for once it's answered (0186); one that fails is asked again at the next ping. A dropped
+// stream reconnects by itself, and the panel tells the page of its board as soon as it's back, so "Disconnected" shows
+// only if it stays gone for LOST_MS. Coming back to the page, as a phone does when it wakes, starts a new stream at once,
+// in case the old one died unnoticed.
+// 0186: a slow or failed answer for the board shows nothing either, until the page has gone LOST_MS without a board
+// since it asked (slow), and the notice goes with the next board that arrives.
 // 0188: the page says which board it has (have, as the panel numbered it), and the panel answers with only what changed
 // since (applyDelta), or with the whole board. A new stream, or an update the page can't apply, gets the whole board.
-let seq = 0, pending = null, source = null, lost = null, retry = null; // retry: the board a failed request asked for
-let have = null;
+let pending = null, source = null, lost = null, retry = null; // retry: the board a failed request asked for
+let have = null, want = null, slow = null, problem = null; // want: the latest board announced while a request waited
 function applyDelta(old, d) {
   if (!old || !d || d.from !== have || !Array.isArray(d.keys) || !d.set || !d.lists) return null;
   const next = [];
@@ -2429,32 +2435,46 @@ function applyDelta(old, d) {
   return Object.fromEntries(next);
 }
 async function load(version) {
-  retry = null;
-  if (pending) { pending.abort(); pending = null; setConnected(false); }
-  const mine = ++seq, ctl = new AbortController();
+  if (pending) { want = version; return; }
+  retry = null; want = null; problem = null;
+  const ctl = new AbortController(), giveUp = setTimeout(() => ctl.abort(), WAIT_MS);
   pending = ctl;
+  if (slow === null) slow = setTimeout(() => { slow = null; setConnected(false, problem); }, LOST_MS);
+  let again = null;
   try {
     const res = await fetch('/api/state', { cache: 'no-store', signal: ctl.signal, headers: { 'X-Speck-Board': String(version), ...(have ? { 'X-Speck-Have': have } : {}) } });
     let body = null;
     try { body = await res.json(); } catch (e) { body = null; }
-    if (mine !== seq) return; // a newer request has taken over
     let now = res.headers && typeof res.headers.get === 'function' ? res.headers.get('X-Speck-Board') : null;
     if (res.ok && body && body.delta) {
       const next = applyDelta(state, body.delta);
-      if (!next) { have = null; pending = null; return load(version); }
+      if (!next) { have = null; again = version; return; }
       now = body.delta.to;
       body = next;
     }
     if (!res.ok || !body || !Array.isArray(body.tickets)) {
-      setConnected(false, (body && body.error) || `the server answered ${res.status}.`);
+      failed((body && body.error) || `the server answered ${res.status}.`);
       // A board the panel couldn't read is announced again once it can; any other failure asks again at the next ping.
       if (!(body && body.error)) retry = version;
-    } else { state = body; have = now; showRestartError(body.restart_error); setConnected(true); }
+    } else {
+      state = body; have = now; showRestartError(body.restart_error);
+      if (slow !== null) { clearTimeout(slow); slow = null; }
+      setConnected(true);
+    }
   } catch (e) {
-    if (mine === seq) { setConnected(false); retry = version; }
+    failed(null); retry = version;
   } finally {
-    if (pending === ctl) pending = null;
+    clearTimeout(giveUp);
+    pending = null;
+    if (want !== null) load(want);
+    else if (again !== null) load(again);
   }
+}
+// A request for the board that failed: the notice says why once LOST_MS has passed without a board (slow has gone off),
+// or at once when it already shows.
+function failed(why) {
+  problem = why;
+  if (slow === null || offline) setConnected(false, why);
 }
 function heard() {
   if (lost !== null) { clearTimeout(lost); lost = null; }

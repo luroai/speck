@@ -149,6 +149,7 @@ test('0040 AC5: the queue\'s time since started (MM:SS since 0058), the connecti
   assert.equal(minutes(), '08', 'the time since started moved on');
   now += 4000;
   await refresh(p);
+  await p.elapse(10000); // 0186: the message shows once 10 seconds pass without a board
   assert.ok(kept(), 'a failed refresh keeps the selection too');
   assert.equal(p.byId('pills').children.length, 0, 'the header has no connection indicator (0150): the message below says it');
   assert.equal(p.byId('offline').hidden, false, 'the disconnected message shows');
