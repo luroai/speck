@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { copied, keptFile } from './copy.mjs';
+import { speck } from './cli.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -56,7 +57,7 @@ export function runRepo({ tickets = [['0001', {}]], max, command, worktrees = 'f
 function buildRunRepo(dir, { tickets, max, worktrees, cmd }) {
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   g('init', '-q', '-b', 'main');
-  assert.equal(spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8', env }).status, 0);
+  assert.equal(speck(dir, env, 'init', '--skip-checks').status, 0);
   const cfgFile = path.join(dir, 'speck', 'config.yml');
   let cfg = fs.readFileSync(cfgFile, 'utf8').replace(/^worktrees:.*$/m, `worktrees: ${worktrees}`);
   cfg = cfg.replace(/^build_command:.*$/m, '');

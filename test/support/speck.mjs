@@ -7,6 +7,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseTicket, setField, ticketRounds } from '../../scripts/speck.mjs';
 import { copied, keptFile } from './copy.mjs';
+import { speck } from './cli.mjs';
+
+export { speck };
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -24,7 +27,7 @@ export function reviewRepo({ config = '', ticketFields = '', extraEnv = {} } = {
   return reviewRepoIn(copied('review', [config, ticketFields], 'speck-', dir => buildReviewRepo(dir, { config, ticketFields })), extraEnv);
 }
 function buildReviewRepo(dir, { config, ticketFields }) {
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8' });
+  const run = (...a) => speck(dir, process.env, ...a);
   gitIn(dir, 'init', '-q', '-b', 'main');
   assert.equal(run('init', '--skip-checks').status, 0);
   const cfgFile = path.join(dir, 'speck', 'config.yml');
@@ -55,13 +58,13 @@ console.log(JSON.stringify({ type: 'thread.started', thread_id: 'T1' }));
 if (process.env.FAKE_CODEX_EVENT) console.log(process.env.FAKE_CODEX_EVENT);
 `, { mode: 0o755 });
   const env = { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` };
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...env, ...extraEnv } });
+  const run = (...a) => speck(dir, { ...env, ...extraEnv }, ...a);
   const file = path.join(dir, 'speck', 'tickets', '0001-export-bookings.md');
   const calls = () => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
   const prompts = () => fs.existsSync(log + '.prompts') ? fs.readFileSync(log + '.prompts', 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
   // Rounds are kept in the ticket file (0011).
   const roundFile = n => ticketRounds(fs.readFileSync(file, 'utf8')).rounds[n - 1];
-  const runEnv = (more, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...env, ...extraEnv, ...more } });
+  const runEnv = (more, ...a) => speck(dir, { ...env, ...extraEnv, ...more }, ...a);
   return { dir, run, runEnv, calls, prompts, roundFile, ticketFile: file, git: (...a) => gitIn(dir, ...a) };
 }
 
@@ -73,7 +76,7 @@ export const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 
 export function shipRepo({ test = 'true', approve = true } = {}) {
   const dir = copied('ship', [test, approve], 'speck-ship-', d => buildShipRepo(d, { test, approve }));
   const env = { ...process.env, ...gitEnv };
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => speck(dir, env, ...a);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   // A shipped ticket moves into speck/tickets/done/, so look in both places.
   const ticketAt = () => ['speck/tickets/0001-export-bookings.md', 'speck/tickets/done/0001-export-bookings.md']
@@ -84,7 +87,7 @@ export function shipRepo({ test = 'true', approve = true } = {}) {
 }
 function buildShipRepo(dir, { test, approve }) {
   const env = { ...process.env, ...gitEnv };
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => speck(dir, env, ...a);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   g('init', '-q', '-b', 'main');
   assert.equal(run('init', '--skip-checks').status, 0);
@@ -110,9 +113,9 @@ export function doneRepo() {
   const env = { ...process.env, ...gitEnv };
   const dir = copied('done', [], 'speck-done-', d => {
     spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: d, encoding: 'utf8', env });
-    assert.equal(spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: d, encoding: 'utf8', env }).status, 0);
+    assert.equal(speck(d, env, 'init', '--skip-checks').status, 0);
   });
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => speck(dir, env, ...a);
   const at = p => fs.existsSync(path.join(dir, p));
   const read = p => fs.readFileSync(path.join(dir, p), 'utf8');
   const fm = p => parseTicket(read(p)).fm;
@@ -169,7 +172,7 @@ if (mode === 'badshape') { console.log(JSON.stringify({ verdict: 'approve' })); 
   const r = reviewRepoIn(dir, {});
   const log = path.join(dir, '.git', 'fake-reviewer.log');
   const calls = () => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
-  const runEnv = (env, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: r.dir, encoding: 'utf8', env: { ...process.env, ...env } });
+  const runEnv = (env, ...a) => speck(r.dir, { ...process.env, ...env }, ...a);
   return { ...r, fake, calls, runEnv };
 }
 
@@ -177,7 +180,7 @@ export const buildSkill = () => fs.readFileSync(path.join(ROOT, 'skills', 'speck
 export function startRepo({ config = {}, ready = true, commitTooling = true } = {}) {
   const env = { ...process.env, ...gitEnv };
   const dir = copied('start', [config, ready, commitTooling], 'speck-', d => buildStartRepo(d, { config, ready, commitTooling }));
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => speck(dir, env, ...a);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   const file = path.join(dir, 'speck', 'tickets', '0001-export-bookings.md');
   const branch = 'speck/0001-export-bookings';
@@ -187,7 +190,7 @@ export function startRepo({ config = {}, ready = true, commitTooling = true } = 
 }
 function buildStartRepo(dir, { config, ready, commitTooling }) {
   const env = { ...process.env, ...gitEnv };
-  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const run = (...a) => speck(dir, env, ...a);
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   g('init', '-q', '-b', 'main');
   assert.equal(run('init', '--skip-checks').status, 0);

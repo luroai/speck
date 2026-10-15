@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { shipRepo, CLI, BRANCH } from './support/ship.mjs';
+import { shipRepo, CLI, BRANCH, env } from './support/ship.mjs';
+import { speckProcess } from './support/cli.mjs';
 import { runRepo, startRun, stopRun, until, killAll } from './support/run.mjs';
 import { statusData, ticketShown } from '../scripts/speck.mjs';
 
@@ -39,7 +40,7 @@ test('0196 AC2: a detached worktree that isn\'t a merge of a ticket branch count
 test('0196 AC2: while speck ship runs the tests on the merged result, speck status --json gives the ticket as approved and shipping', () => {
   const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0196-')), 'status.json');
   const r = shipRepo({ test: `cd {main} && "${process.execPath}" "${CLI}" status --json > "${out}"` });
-  const shipped = r.run('ship', '1');
+  const shipped = speckProcess(r.dir, env, 'ship', '1'); // found among the processes as `speck ship`
   assert.equal(shipped.status, 0, shipped.stderr);
   const t = JSON.parse(fs.readFileSync(out, 'utf8')).tickets.find(x => x.id === '0001');
   assert.equal(t.status, 'approved');

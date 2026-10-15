@@ -6,10 +6,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, env, runRepo, startRun, until, stopRun, killAll } from './run.mjs';
+import { speck as speckIn } from './cli.mjs';
 
 export const wait = ms => new Promise(res => setTimeout(res, ms));
 export const runsPath = (dir, f) => path.join(dir, 'speck', '.cache', 'runs', f);
-export const speck = (dir, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+export const speck = (dir, ...a) => speckIn(dir, env, ...a);
 export const size = f => { try { return fs.statSync(f).size; } catch { return -1; } };
 export const json = dir => JSON.parse(speck(dir, 'status', '--json').stdout);
 // A process's state letter from ps: T while it's stopped.
@@ -99,5 +100,5 @@ export function failingPs() {
   fs.writeFileSync(path.join(bin, 'ps'), `#!/bin/sh\nn=$(cat "$FAKE_PS_COUNT" 2>/dev/null || echo 0)\necho $((n + 1)) > "$FAKE_PS_COUNT"\nif [ "$n" -lt "$FAKE_PS_OK" ]; then exec ${real} "$@"; fi\necho "ps: broken" >&2\nexit 1\n`, { mode: 0o755 });
   return ok => ({ ...env, PATH: `${bin}${path.delimiter}${env.PATH}`, FAKE_PS_OK: String(ok), FAKE_PS_COUNT: path.join(bin, `count-${Math.random()}`) });
 }
-export const speckWith = (dir, e, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: e });
+export const speckWith = (dir, e, ...a) => speckIn(dir, e, ...a);
 
