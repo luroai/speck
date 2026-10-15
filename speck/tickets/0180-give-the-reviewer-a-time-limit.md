@@ -41,6 +41,7 @@ A reviewer that runs too long is ended, and the review round fails with a messag
 - `scripts/review.mjs` runs `codex` through `sh()` (spawnSync, no timeout), and `runReviewer()` in `scripts/reviewers.mjs` likewise.
 - Follows `test_stall_minutes` (0152) for the setting's checks and wording.
 - Codex rounds took 29 to 44 seconds on 2026-10-14 (0164), so 30 minutes is generous.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
