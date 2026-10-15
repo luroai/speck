@@ -38,6 +38,7 @@ speck's heavy test files run a few at a time while the light ones run as many at
 ## Notes
 - 135 of the 181 test files use a support module that starts processes, panels or a browser (`test/support/procs.mjs`, `run.mjs`, `panel.mjs`, `fake-chrome.mjs` and others); not all of them are heavy.
 - Builds on the test runner 0229 changes.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
