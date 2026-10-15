@@ -43,6 +43,7 @@ A test run that waited its turn reuses a result recorded for the same code while
 - Today `testRun()` in `scripts/results.mjs` checks `recorded()` before it calls `runTestsInTurn()` in `scripts/turns.mjs`, which waits for the turn and runs the suite with no look at the results.
 - Found 2026-10-15 while deciding 0235: a build's first whole-suite run is usually reused from the ship before it, except after a change to `main` made outside a ship.
 - 0228 changes the retry in `testRun()`. Build this after it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
