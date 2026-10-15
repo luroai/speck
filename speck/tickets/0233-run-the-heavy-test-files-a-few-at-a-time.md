@@ -1,7 +1,7 @@
 ---
 id: "0233"
 title: "Run the heavy test files a few at a time"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,12 +14,14 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0229"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:58:29.681Z"
-blocked_at: "2026-10-15T22:12:40.330Z"
+blocked_at: ""
+approved: "2026-10-15T22:54:58.414Z"
+waited_seconds: 2538
 
 ---
 # 0233 · Run the heavy test files a few at a time
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 Test files that start real processes, panels or a browser run alongside everything else, so on a small machine they slow each other down and miss their time limits. On an 8 GB MacBook Air, 26 tests failed on `main` that way, and the machine stayed fully loaded throughout the run.
@@ -62,9 +64,14 @@ Running the 88 heavy test files 2 at a time everywhere makes the whole suite mor
 I recommend C: it fixes the MacBook Air the ticket is about with the limit the ticket asks for, and costs bigger machines nothing.
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 144,424
+- Elapsed since build started: 56 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-15-also-slow-the-heavy-tests-on-machines-short-of-memory.md (a machine with more than 8 cores and little memory still starts every heavy file at once).
