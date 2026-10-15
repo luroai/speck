@@ -1,7 +1,7 @@
 ---
 id: "0204"
 title: "Show when a ship merged but couldn't push"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0204 · Show when a ship merged but couldn't push
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck ship` sets a ticket done before it pushes the base branch. If the push fails, the panel moves the ticket to Shipped as if all went well. Now that `speck run`'s queue ships with nobody watching, nobody learns that the remote is behind.
