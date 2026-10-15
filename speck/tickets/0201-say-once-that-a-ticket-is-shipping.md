@@ -40,6 +40,7 @@ A shipping ticket's card says it is shipping once, with how long the ship has be
 ## Notes
 - Asked for 2026-10-15: "when a ticket is shipping, it says it 3 times.... not needed."
 - In `templates/panel.html`: `doing()` gives "Shipping"; the step name comes from the card's step line (0168); the separate line is the `act shipping` element with `ship_counter`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
