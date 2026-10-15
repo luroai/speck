@@ -34,9 +34,10 @@ const SHOWS = {
 };
 const FLIGHT = Object.keys(SHOWS);
 
+// speck run is on, as its ship queue ships the approved tickets auto-ship covers (0203: with it off, they wait for you).
 function fake(tickets = TICKETS) {
   return fakePage([], {
-    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [] }))) }),
+    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [], run: { on: true } }))) }),
   });
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));

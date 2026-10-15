@@ -530,6 +530,7 @@ function progress(t) {
 // An approved ticket that isn't shipping waits for you, in purple, whether or not its build has exited yet. One that is
 // shipping is at work, in the normal text colour. 0196: so is one auto-ship will ship once its build has ended, and
 // one whose build is closing out says it waits to ship, in the normal text colour, unless it's waiting for you.
+// 0203: while speck run is off, one auto-ship covers waits for you to turn Auto-build on, in purple.
 function doing(t, shipping) {
   if (shipping) return { sentence: 'Shipping', tone: '', moving: true };
   if (t.ship_waiting) return { sentence: 'Approved · waiting to ship', tone: '', moving: true };
@@ -540,6 +541,7 @@ function doing(t, shipping) {
   if (t.status === 'blocked') return at('Blocked · it has a question for you');
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
+  if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
   const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
   let sentence = now === 1 ? 'Checking its own work' : 'Writing tests and code';
@@ -653,6 +655,7 @@ function panelModel(state) {
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
   const now = Date.now();
+  const runOn = !!(state && state.run && state.run.on); // whether speck run is on (0203)
   const byStart = (a, b) => { const x = time(a.started), y = time(b.started);
     return (x === null) - (y === null) || (x !== null && y !== null ? x - y : 0) || String(a.id).localeCompare(String(b.id), 'en', { numeric: true }); };
   // What a ticket's builder spent, as speck run recorded it, or null when it isn't recorded.
@@ -704,12 +707,14 @@ function panelModel(state) {
       const auto_failed = !!ship && ship.running === false && ship.auto === true && t.status === 'approved' && (approvedTime === null || (shipEnd !== null && shipEnd >= approvedTime));
       // 0196: an approved ticket auto-ship covers is on its way out once its build has ended, until its ship starts,
       // unless its last auto-ship didn't finish: since 0194 a build ends at approved, and speck run's ship queue ships it.
-      const ship_waiting = t.status === 'approved' && t.auto_ship === true && !!exited && !shipping && !auto_failed;
-      const exit_label = shipping || ship_waiting ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+      // 0203: with speck run off, nothing ships it until you turn Auto-build on, so it waits for you instead.
+      const run_waiting = t.status === 'approved' && t.auto_ship === true && !shipping && !auto_failed && !runOn;
+      const ship_waiting = t.status === 'approved' && t.auto_ship === true && !!exited && !shipping && !auto_failed && runOn;
+      const exit_label = shipping || ship_waiting || run_waiting ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
-      const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || (t.auto_ship === false && !shipping));
+      const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
       // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       const paused = pausable && t.paused === true;
@@ -720,7 +725,7 @@ function panelModel(state) {
         exit_message: auto_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
           : exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         ship_hint: auto_failed ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,
-        shipping, ship_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
+        shipping, ship_waiting, run_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight && start !== null ? start + waited(t) : null, approved_at, held_at, counter: inFlight && start !== null ? counter((held_at ?? Date.now()) - start - waited(t)) : null };
     }),
     shipped: [...finished, ...done.filter(t => t.end === null)].slice(0, 5),
