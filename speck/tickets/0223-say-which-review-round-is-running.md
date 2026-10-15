@@ -38,6 +38,7 @@ A ticket under review says whether the reviewer is running a round, and which on
 
 ## Notes
 - The card's words come from `progress()` and `doing()` in `templates/panel.html`. Nothing records today that a review round is running: speck needs to record when a round starts and ends (`reviewRound()` in `scripts/review.mjs`) and the board feed needs to pass it on (`scripts/board-feed.mjs`).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
