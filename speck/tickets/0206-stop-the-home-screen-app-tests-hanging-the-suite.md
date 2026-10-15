@@ -41,6 +41,10 @@ A call to the test browser that's never answered fails its own test within a tim
 - From 0152's build: about one full run in three hung at test 714, with a panel server and Chrome open under `test/panel-0149.test.mjs`.
 - Builds after 0198, which may change the same browser test helpers.
 - Failing before this build: none
+- Found while building: 0159 (shipped 2026-10-13, after the idea was captured) had already given every DevTools call a 15-second limit, and the test setup (`tmp.mjs`, 0175) already ends every process a test file left running once its tests are done. So a call that's never answered already failed its own test, and the suite carried on. This build keeps the 15-second limit, which is within AC1's 30 seconds and leaves answered calls exactly as they were (AC3), and adds tests that show all of it with a stand-in browser that can leave chosen calls unanswered.
+- The gap it fixes: when opening the page itself went unanswered, the 0149 browser test failed before its `try`, so its panel ran on until the whole file finished. It now stops its panel, and closes its page, as soon as the test ends, even if closing the page fails.
+- `SPECK_TEST_DEVTOOLS_MS` shortens the default limit, for 0206's own tests only; nothing else sets it.
+- Self-check: a zero, negative or non-numeric `SPECK_TEST_DEVTOOLS_MS` now falls back to 15 seconds rather than failing every call at once.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
