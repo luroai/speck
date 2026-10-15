@@ -39,6 +39,9 @@ A P0 priority tag stands out more than any other priority tag, wherever the pane
 ## Notes
 - The priority tag is drawn in one place, `fieldTags()` in `templates/panel.html`, which today gives only P1 an extra class (`tag p1`).
 - Red for P0 is an assumption: the note asked for P0 to stand out "at least as much" as P1. A high risk tag is also red since 0151.
+- Failing before this build: none
+- 0143's AC2 test expected a P0 tag in the pane to have only the plain `tag` class; it now expects `tag p0`, the behaviour this ticket asks for.
+- Self-check: no changes. A P0 tag in Plan greys on hover, as a P1 does today (`.tag.pick:hover`).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
