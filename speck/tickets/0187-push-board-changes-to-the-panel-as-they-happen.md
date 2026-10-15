@@ -1,7 +1,7 @@
 ---
 id: "0187"
 title: "Push board changes to the panel as they happen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,12 +14,12 @@ source: "speck/ideas/done/2026-10-11-update-the-panel-in-real-time.md"          
 after: ["0177"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T22:06:47.011Z"
-approved: "2026-10-14T23:02:07.828Z"
+approved: "2026-10-15T06:22:33.531Z"
 
 ---
 # 0187 · Push board changes to the panel as they happen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel page asks for the whole board every 2 seconds, whether anything has changed or not. Changes show up as much as 2 seconds late, every open page costs the panel a full reading of the board every 2 seconds, and a slow answer flashes "Disconnected" across the top (0186).
@@ -68,13 +68,15 @@ Worth keeping an eye on: if the panel can't be reached when the page asks for th
 Round 1 (codex): changes requested: F1 When all pages disconnect, file changes trigger nextReading(), which discards the refresh because feed.watched() is false.; F2 A transient /api/state fetch failure immediately shows Disconnected and never retries if the event stream stays open and the board remains unchanged.; F3 The full suite reports an additional failure outside the ticket's documented baseline: the finished-build log performance test.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): changes requested: F4 The newly disclosed worktree-update failure leaves AC1 unverified.
+Round 5 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 5, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 898,265
-- Elapsed since build started: 55 min
-- Changed lines: 232 (limit 5000)
+- Reviewer tokens: 2,299,466
+- Elapsed since build started: 496 min
+- Changed lines: 241 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Timing checks (0176 AC1, 0177 AC3) fail now and then when other builds run tests at the same time: saved as `speck/ideas/2026-10-14-keep-timing-checks-steady-while-other-builds-test.md`.
@@ -429,6 +431,100 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "The merge preserves both sets of changes and the latest suite passes. However, a newly disclosed failure may mean the first change in a new build workspace arrives up to 15 seconds late. That needs investigation before approval can be renewed."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 5 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 5,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "05d156e850780b98e607f842978b5f71bd4baaf1",
+    "merge": true,
+    "thread_id": "01a13c95-f6df-7db3-9d63-666dca07ead5",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 793402,
+      "cached_input_tokens": 629632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4928,
+      "reasoning_output_tokens": 193
+    },
+    "saved_at": "2026-10-15T06:22:15.593Z"
+  },
+  "verdict": {
+    "round": 5,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "boardWatcher.sync() now reconciles folders after installing watches, closing the identified creation gap. The controlled regression test creates tickets during parent-watch installation and verifies subsequent edits are detected. It and all existing AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests verify one event stream, announcement-driven fetches, no board polling timer and idle keep-alives."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests verify one shared reading across four pages, coalescing ten ticket changes and freshness after writes. Watch reconciliation uses the existing coalesced refresh mechanism."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "All AC4 tests pass, covering stream reconnection, the 10-second grace period, waking pages, server restarts, fresh reconnect state and failed-fetch recovery. The accepted distinction concerning ticket 0186 remains applicable."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full merged-suite run reports 1724 passes, zero failures and three skips. The one-second assertions remain unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/panel.mjs:404",
+        "issue": "The stale-board reconnect defect is fixed.",
+        "suggested_fix": "No further action required; retain the reconnect regression test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:2375",
+        "issue": "Failed board requests recover on keep-alives. Existing failed-request notice timing belongs to ticket 0186.",
+        "suggested_fix": "Address failed-request notice timing through ticket 0186.",
+        "state": "dispute_accepted"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/build-log-0176.test.mjs:145",
+        "issue": "The earlier additional performance-test failure is absent from the fresh full-suite run.",
+        "suggested_fix": "No further action required; the assertion remains unchanged.",
+        "state": "resolved"
+      },
+      {
+        "id": "F4",
+        "severity": "blocking",
+        "file": "scripts/board-feed.mjs:98",
+        "issue": "The identified gap between checking folders and installing watches is fixed by repeated reconciliation after new watches start. The regression test controls that gap while retaining real filesystem watches and verifies detection of a later ticket edit.",
+        "suggested_fix": "No further action required; retain the controlled regression test and existing end-to-end worktree coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Live updates, shared board readings and automatic reconnection meet the ticket. The new-workspace watch gap is fixed and covered by a targeted regression test. The full suite passes."
   }
 }
 ```
