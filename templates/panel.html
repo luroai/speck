@@ -278,14 +278,15 @@
   .lock { color: var(--faint); }
   .lock::before { content: ''; position: absolute; left: 3px; top: 0; width: 6px; height: 5px; border: 1.5px solid currentColor; border-bottom: 0; }
   .lock::after { content: ''; position: absolute; left: 2px; top: 4px; width: 8px; height: 6px; background: currentColor; }
-  .item.hl, .q.hl { border-color: var(--text); }
-  .item.dim, .q.dim { background: var(--raise); } /* 0161: set back by its fill, not faded */
+  /* 0185: a hovered ticket and those linked to it get a ring in the text colour inside their border, and keep their fill and
+     text colours. The rest are left exactly as they are, rather than set back with the hover's own fill. */
+  .item.hl, .q.hl { border-color: var(--text); box-shadow: inset 0 0 0 1px var(--text); }
   /* 0167: a ticket in trouble, blocked or its build stopped, is crimson; one waiting for you to ship it is purple, as
-     nothing is wrong (0138). Each keeps its border and background whether it's open, highlighted or set back. */
+     nothing is wrong (0138). Each keeps its border and background whether it's open or highlighted. */
   .q.blocked { border-color: var(--bad); background: var(--bad-bg); }
   .q.to-ship { border-color: var(--idea); background: var(--idea-bg); }
   /* 0171: a ticket an agent is at work on has a 2px border in its stage's colour, and its fill stays as it is, as only a
-     ticket that needs you is filled. It keeps it whether it's open, highlighted or set back. */
+     ticket that needs you is filled. It keeps it whether it's open or highlighted. */
   .q.at-build { border-color: var(--run); border-width: 2px; }
   .q.at-check { border-color: var(--inbox); border-width: 2px; }
   .q.at-review { border-color: var(--warn); border-width: 2px; }
@@ -2165,7 +2166,8 @@ function copyLabel(id) {
   const b = copyButtons.get(id);
   if (b) b.textContent = copied.has(id) ? copied.get(id)[1] : 'Copy';
 }
-// Hovering a ticket in Shaping or a ready one in the queue lights it and every ticket linked to it through after:, and dims the rest.
+// Hovering a ticket in Shaping or a ready one in the queue lights it and every ticket linked to it through after:, and
+// leaves the rest as they are (0185). A ticket with no links lights nothing: its own hover fill is enough.
 // The classes are set on the nodes in place, so a Shaping item keeps its node (and any text selected in it).
 let hovered = null; // the id of the ticket under the pointer, or null
 let linked = new Map(); // id → the ids linked to it, from the last render
@@ -2185,9 +2187,10 @@ function lightUp() {
   const rows = [...$('shaping').children, ...$('queue').children].filter(n => n.ticketId !== undefined);
   if (!rows.some(n => n.ticketId === hovered)) hovered = null; // it has left the page, with no mouseleave
   const group = hovered !== null && linked.get(hovered);
+  const lit = group && group.length > 1 ? group : [];
   for (const n of rows) {
-    const cls = n.className.replace(/ (hl|dim)\b/g, '');
-    n.className = !group ? cls : `${cls} ${group.includes(n.ticketId) ? 'hl' : 'dim'}`;
+    const cls = n.className.replace(/ hl\b/g, '');
+    n.className = lit.includes(n.ticketId) ? `${cls} hl` : cls;
   }
 }
 // 0154: each id in a "waiting on" or "unlocks" note is a button that scrolls its ticket into view and lights it for

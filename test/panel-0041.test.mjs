@@ -139,19 +139,18 @@ const lit = n => /\bhl\b/.test(n.className);
 const dim = n => /\bdim\b/.test(n.className);
 const look = p => Object.fromEntries([...items(p), ...queueRows(p)].map(n => [p.all(n).find(x => x.className === 'id')._text, lit(n) ? 'hl' : dim(n) ? 'dim' : '']));
 
-test('0041 AC5: hovering a ticket highlights every ticket linked to it through after:, in either direction and through others, in both places, and dims the rest', async () => {
+test('0041 AC5: hovering a ticket highlights every ticket linked to it through after:, in either direction and through others, in both places, and leaves the rest as they are (0185)', async () => {
   const p = fakePage([groups(), groups()]);
   await p.settle();
   queued(p, '0004').listeners.mouseenter();
-  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0006': 'dim', '0010': 'dim', '0002': 'hl', '0004': 'hl', '0005': 'dim' },
+  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0006': '', '0010': '', '0002': 'hl', '0004': 'hl', '0005': '' },
     '0004 → 0001 → 0002 → 0003, across Shaping and the queue');
   queued(p, '0004').listeners.mouseleave();
   assert.ok(Object.values(look(p)).every(v => v === ''), 'moving away undoes it');
   shaping(p, '0006').listeners.mouseenter();
-  assert.deepEqual(look(p), { '0001': 'dim', '0003': 'dim', '0006': 'hl', '0010': 'dim', '0002': 'dim', '0004': 'dim', '0005': 'hl' });
+  assert.deepEqual(look(p), { '0001': '', '0003': '', '0006': 'hl', '0010': '', '0002': '', '0004': '', '0005': 'hl' });
   shaping(p, '0010').listeners.mouseenter();
-  assert.deepEqual(Object.entries(look(p)).filter(([, v]) => v === 'hl').map(([k]) => k), ['0010'], 'a ticket with no links lights only itself');
-  assert.match(rule('.item.dim, .q.dim'), /background: var\(--raise\)/); // 0161: set back by its fill, not faded
+  assert.ok(Object.values(look(p)).every(v => v === ''), 'a ticket with no links lights nothing but its own hover fill (0185)');
 });
 
 test('0041 AC5: the highlight lasts through a refresh, keeps the Shaping item on the page and ends when the pointer leaves', async () => {
@@ -164,7 +163,7 @@ test('0041 AC5: the highlight lasts through a refresh, keeps the Shaping item on
   assert.equal(shaping(p, '0003'), item, 'the same node, so a selection in it survives (0040)');
   assert.equal(item.detached || 0, detached);
   assert.equal(look(p)['0004'], 'hl');
-  assert.equal(look(p)['0005'], 'dim');
+  assert.equal(look(p)['0005'], '');
   item.listeners.mouseleave();
   await refresh(p);
   assert.ok(Object.values(look(p)).every(v => v === ''));
@@ -189,11 +188,11 @@ test('0041: odd links: built-in names as ids, a ticket after itself, repeated an
   assert.deepEqual([...d('constructor').linked].sort(), ['__proto__', 'constructor']);
 });
 
-test('0041 AC5: a hovered ticket that leaves the page, such as when Shaping shows ideas, stops dimming the rest', async () => {
+test('0041 AC5: a hovered ticket that leaves the page, such as when Shaping shows ideas, stops lighting its chain', async () => {
   const p = fakePage([groups()]);
   await p.settle();
   shaping(p, '0003').listeners.mouseenter();
-  assert.equal(look(p)['0005'], 'dim');
+  assert.equal(look(p)['0004'], 'hl');
   click(toggles(p)[1]);
   assert.ok(queueRows(p).every(n => !lit(n) && !dim(n)), 'the queue is back to normal');
   click(toggles(p)[0]);
@@ -218,7 +217,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
     assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('waiting on 0001')`));
     await b.move(await centre('#shaping .item .title'));
     await b.until(`document.querySelector('#queue .q').classList.contains('hl')`, 'the chain to light up');
-    assert.match(await cls('#shaping .item:nth-child(2)'), /\bdim\b/, 'the unlinked ticket dims');
+    assert.doesNotMatch(await cls('#shaping .item:nth-child(2)'), /\b(hl|dim)\b/, 'the unlinked ticket is left as it is (0185)');
     assert.match(await cls('#shaping .item:nth-child(1)'), /\bhl\b/);
     await new Promise(res => setTimeout(res, 2500)); // through a refresh
     assert.match(await cls('#queue .q'), /\bhl\b/);
@@ -275,9 +274,9 @@ test('0041 review F2: tickets in flight are never highlighted or dimmed, but lin
   assert.equal(queued(p, '0002').listeners.mouseenter, undefined, 'no hover on a building ticket');
   assert.equal(queued(p, '0004').listeners.mouseenter, undefined, 'or a reviewing one');
   shaping(p, '0003').listeners.mouseenter();
-  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': 'dim' }, 'through 0002 to 0001, leaving 0002 and 0004 alone');
+  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': '' }, 'through 0002 to 0001, leaving 0002 and 0004 alone');
   await refresh(p);
-  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': 'dim' });
+  assert.deepEqual(look(p), { '0001': 'hl', '0003': 'hl', '0002': '', '0004': '', '0005': '' });
 });
 
 test('0041 review F1: in a real browser, text selected in an open ticket stays selected while its chain changes, and the icon updates', { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' }, async () => {

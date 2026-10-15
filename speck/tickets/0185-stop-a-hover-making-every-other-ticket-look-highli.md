@@ -41,6 +41,7 @@ Hovering a ticket makes it and its linked tickets stand out, and every other tic
 - `lightUp()` in `templates/panel.html` gives the tickets outside the group the `dim` class, styled `.item.dim, .q.dim { background: var(--raise) }` since 0161, the same as `.item:hover`. `linked` gives a ticket with no links a group of just itself.
 - Reported on 2026-10-14 from desktop: "whenever I hover over any tickets in the plan panel, they all highlight themselves", and the same in the build queue with lots of tickets.
 - Failing before this build: none
+- Self-check: no changes. Checked a hover on a ticket missing from the last render (lights nothing), an open or coloured queue ticket in the group (the ring shows over its own border and fill), and that no doc or skill describes the old dimming.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
