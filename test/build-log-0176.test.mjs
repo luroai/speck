@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { readableLog, statusData } from '../scripts/speck.mjs';
-import { CLI, env, runRepo, startRun, until, stopRun } from './support/run.mjs';
+import { CLI, env, runRepo } from './support/run.mjs';
+import { idleCpu, idleSays, CHECK_BUDGET_S } from './support/quick-run.mjs';
 import { costMs } from './support/timing.mjs';
 
 // ---------- 0176: keep the board quick to read however many tickets are built ----------
@@ -78,7 +79,7 @@ function mixedLog(seed) {
   return lines.join('\n') + pick(['', '\n', '\n\n\n', ' \n \n', '\n'.repeat(2000)]);
 }
 
-// AC3 watches an idle speck run for a minute, so the other tests run meanwhile, one at a time, so that nothing else
+// AC3 watches an idle speck run for 12 seconds, so the other tests run meanwhile, one at a time, so that nothing else
 // they do is going on while AC1 times speck status (0198). They start once AC3's speck run is watching, or AC3 has
 // failed before that: their work blocks this process, which would keep AC3 from seeing speck run start.
 let watching;
@@ -176,23 +177,14 @@ describe('0176: the board stays quick to read however many tickets are built', {
     });
   });
 
-  // The CPU time a process has used so far, in clock ticks, with that of its children that have finished.
-  const cpuTicks = pid => fs.readFileSync(`/proc/${pid}/stat`, 'utf8').replace(/^.*\) /, '').split(' ').slice(11, 15).reduce((a, b) => a + Number(b), 0);
-  const TICKS_PER_SECOND = Number(spawnSync('getconf', ['CLK_TCK'], { encoding: 'utf8' }).stdout.trim()) || 100;
-
-  test('0176 AC3: with 200 finished builds whose logs are 2 MB each, an idle speck run uses less than 5% of one core over a minute', { skip: process.platform !== 'linux' && 'reads /proc', timeout: 120000 }, async () => {
-    let run = null;
+  // A minute of the real 5-second wait is 12 checks. speck run makes them a second apart instead, which costs the same
+  // CPU for each check, and each may use what 5% of one core over the real wait allows (0232).
+  test('0176 AC3: with 200 finished builds whose logs are 2 MB each, an idle speck run uses less than 5% of one core over a minute\'s checks', { skip: process.platform !== 'linux' && 'reads /proc', timeout: 120000 }, async () => {
     try {
       const { dir } = boardRepo(Array(200).fill(streamLog(2 * 1024 * 1024)));
-      // The real wait between checks, not the tests' short one.
-      run = startRun(dir, { SPECK_RUN_POLL_MS: '' });
-      assert.ok(await until(() => run.out().includes('watching for ready tickets every 5s')), run.out());
-      watching();
-      const from = cpuTicks(run.child.pid), t = Date.now();
-      await new Promise(r => setTimeout(r, 60000));
-      const used = (cpuTicks(run.child.pid) - from) / TICKS_PER_SECOND, seconds = (Date.now() - t) / 1000;
-      assert.equal(run.child.exitCode, null, run.out());
-      assert.ok(used / seconds < 0.05, `speck run used ${used.toFixed(2)} s of CPU in ${seconds.toFixed(0)} s (${((100 * used) / seconds).toFixed(1)}%)`);
-    } finally { watching(); if (run) await stopRun(run); }
+      const m = await idleCpu(dir, { pollMs: 1000, checks: 12, watching });
+      assert.ok(m.running, m.out);
+      assert.ok(m.perCheck < CHECK_BUDGET_S, idleSays(m));
+    } finally { watching(); }
   });
 });

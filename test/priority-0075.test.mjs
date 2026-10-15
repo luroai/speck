@@ -7,7 +7,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { fakePage, items, queueRows } from './support/panel.mjs';
-import { runRepo, runOnce } from './support/run.mjs';
+import { runRepo } from './support/run.mjs';
+import { ORDER_CASES, runUntilLaunched } from './support/quick-run.mjs';
 
 // ---------- 0075: treat a ticket with no priority the same everywhere ----------
 
@@ -58,11 +59,12 @@ for (const [form, line] of Object.entries(NONE)) {
   });
 }
 
-test('0075 AC1: speck run launches a ready ticket with no priority after ready tickets with one', () => {
-  const r = runRepo({ tickets: [['0001', { priority: '""' }], ['0002', {}], ['0003', { priority: 4 }], ['0004', { priority: '' }]], max: 1 });
-  const out = runOnce(r.dir, { FAKE_MS: '0' });
-  assert.equal(out.status, 0, out.stdout + out.stderr);
-  assert.deepEqual(r.calls().map(c => c.args[0]), ['0003', '0001', '0002', '0004']);
+test('0075 AC1: speck run launches a ready ticket with no priority after ready tickets with one', async () => {
+  const { tickets, order } = ORDER_CASES['0075 AC1'];
+  const r = runRepo({ tickets, max: 1 });
+  const out = await runUntilLaunched(r, order.length, { env: { FAKE_MS: '0' } });
+  assert.equal(out.status, 0, out.out);
+  assert.deepEqual(r.calls().map(c => c.args[0]), order);
 });
 
 for (const bad of ['0', '6', '2.5', 'high', '-1', '{}', '[1]']) {

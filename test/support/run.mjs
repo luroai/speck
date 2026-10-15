@@ -70,9 +70,9 @@ function buildRunRepo(dir, { tickets, max, worktrees, cmd }) {
   g('add', '-A'); g('commit', '-qm', 'base');
 }
 
-// Starts `speck run` in the background, collecting its output.
-export function startRun(dir, extraEnv = {}) {
-  const child = spawn(process.execPath, [CLI, 'run'], { cwd: dir, env: { ...env, ...extraEnv } });
+// Starts `speck run` in the background, collecting its output. `cli` is the CLI to run it with.
+export function startRun(dir, extraEnv = {}, cli = CLI) {
+  const child = spawn(process.execPath, [cli, 'run'], { cwd: dir, env: { ...env, ...extraEnv } });
   let out = '';
   child.stdout.on('data', d => { out += d; });
   child.stderr.on('data', d => { out += d; });

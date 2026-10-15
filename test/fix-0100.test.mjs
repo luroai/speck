@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseTicket, lintTicket } from '../scripts/speck.mjs';
 import { ROOT, T, fm, good, page, fakePage, items, queueRows, shippedRows, panelRepo } from './support/panel.mjs';
-import { runRepo, runOnce } from './support/run.mjs';
+import { runRepo } from './support/run.mjs';
+import { ORDER_CASES, runUntilLaunched } from './support/quick-run.mjs';
 
 // ---------- 0100: fix tickets for a broken main, at P0 ----------
 
@@ -91,11 +92,12 @@ test('0100 AC3: fix tickets sort first in speck status and status --json', () =>
   assert.deepEqual(json, [...fix, ...rest]);
 });
 
-test('0100 AC3: speck run starts fix tickets first', () => {
-  const r = runRepo({ tickets: [['0001', { priority: 1 }], ['0002', { type: 'bug', priority: 1 }], ['0003', { type: 'fix', priority: 2 }], ['0004', { type: 'fix', priority: 0 }]], max: 1 });
-  const out = runOnce(r.dir, { FAKE_MS: '0' });
-  assert.equal(out.status, 0, out.stdout + out.stderr);
-  assert.deepEqual(r.calls().map(c => c.args[0]), ['0004', '0003', '0001', '0002']);
+test('0100 AC3: speck run starts fix tickets first', async () => {
+  const { tickets, order } = ORDER_CASES['0100 AC3'];
+  const r = runRepo({ tickets, max: 1 });
+  const out = await runUntilLaunched(r, order.length, { env: { FAKE_MS: '0' } });
+  assert.equal(out.status, 0, out.out);
+  assert.deepEqual(r.calls().map(c => c.args[0]), order);
 });
 
 test('0100 AC4: speck status shows fix after a fix ticket\'s id, and --json has type "fix"', () => {
