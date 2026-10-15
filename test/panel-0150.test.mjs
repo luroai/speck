@@ -28,6 +28,7 @@ test('0150 AC1: when the panel can\'t reach its server, the banner under the hea
   await p.settle();
   assert.equal(p.byId('offline').hidden, true);
   p.timers.shift()(); await p.settle();
+  await p.elapse(10000); // 0186: once 10 seconds pass without a board
   assert.equal(p.byId('offline').hidden, false);
   assert.match(p.byId('offline').textContent, /^Disconnected: can't reach speck panel\./);
   assert.equal(p.byId('pills').children.length, 0);

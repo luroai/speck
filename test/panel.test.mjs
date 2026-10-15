@@ -276,7 +276,9 @@ test('0031 AC4: the page shows when it is disconnected, keeps polling and recove
   assert.equal(p.byId('offline').hidden, true);
   assert.match(p.byId('queue').textContent, /0001.*Queued/);
   p.timers.shift()(); await p.settle();
-  assert.equal(p.byId('offline').hidden, false, 'says it is disconnected');
+  assert.equal(p.byId('offline').hidden, true, 'not at once (0186)');
+  await p.elapse(10000);
+  assert.equal(p.byId('offline').hidden, false, 'says it is disconnected, once 10 seconds pass without a board');
   assert.equal(p.byId('pills').children.length, 0, 'only the message says so: the header has no connection pill (0150)');
   assert.match(p.byId('queue').textContent, /0001.*Queued/, 'keeps the last state');
   p.timers.shift()(); await p.settle();
@@ -292,6 +294,8 @@ test('0031 AC4: when the server answers but cannot read the tickets, the page sh
   const p = fakePage([one, { status: 500, body: { error: 'speck/tickets/0002-x.md: Ticket has no frontmatter.' } }, one]);
   await p.settle();
   p.timers.shift()(); await p.settle();
+  assert.equal(p.byId('offline').hidden, true, 'not at once (0186)');
+  await p.elapse(10000);
   assert.equal(p.byId('offline').hidden, false);
   assert.match(p.byId('offline').textContent, /couldn't read the tickets: speck\/tickets\/0002-x\.md: Ticket has no frontmatter\./);
   p.timers.shift()(); await p.settle();
@@ -325,20 +329,28 @@ test('0031 AC1: the page header names the main checkout, even when the panel run
   } finally { await stop(p); }
 });
 
+// 0186: a request still waiting isn't dropped for the next board: it shows as disconnected after 10 seconds without a
+// board, and is given up after 15.
 test('0031 AC4: a request that never answers, or whose body never arrives, still shows as disconnected and recovers', async () => {
   const one = { tickets: [T('0001', 'ready')], ideas: [] };
   const moved = { tickets: [T('0001', 'building')], ideas: [] };
   const stalled = deferred();
   const p = fakePage([one, stalled, { pendingBody: new Promise(() => {}) }, moved]);
+  const asked = () => p.calls.filter(c => c.url === '/api/state').length;
   await p.settle();
   assert.equal(p.timers.length, 1);
   p.timers.shift()(); await p.settle(); // this request never answers
-  assert.equal(p.timers.length, 1, 'the next poll is already scheduled');
+  assert.equal(p.timers.length, 1, 'the next refresh is already scheduled');
+  p.timers.shift()(); await p.settle(); // the next board, announced while it waits
+  assert.equal(asked(), 2, 'not asked for while one waits');
   assert.equal(p.byId('offline').hidden, true, 'not yet overdue');
-  p.timers.shift()(); await p.settle(); // overdue: disconnected; this one's body never arrives
+  await p.elapse(10000);
   assert.equal(p.byId('offline').hidden, false, 'says it is disconnected');
-  assert.equal(p.timers.length, 1);
-  p.timers.shift()(); await p.settle(); // overdue again, then the server answers
+  await p.elapse(15000); // given up: the board announced meanwhile is asked for, and this one's body never arrives
+  assert.equal(asked(), 3);
+  assert.equal(p.byId('offline').hidden, false);
+  await p.elapse(15000); // given up too, then the server answers the next refresh
+  p.timers.shift()(); await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'recovered');
   assert.equal(stageOf(queueRows(p)[0]).textContent, 'Build');
   // The abandoned request answering late doesn't put the old state back.
@@ -361,6 +373,7 @@ test('0033 AC2: the page header shows the repo and base branch, with no counts (
   const run = p.byId('run');
   assert.doesNotMatch(run.textContent, /needs you|running|up next|draft|idea|shipped|\d/i);
   p.timers.shift()(); await p.settle();
+  await p.elapse(10000); // 0186: once 10 seconds pass without a board
   assert.equal(p.byId('pills').children.length, 0);
   assert.equal(p.byId('offline').hidden, false, 'the message under the header says it is disconnected');
 });

@@ -175,6 +175,12 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     addEventListener(type, fn) { this.listeners[type] = fn; }, // the page's own key handling (0054)
   };
   const timers = [];
+  // 0186: the page's waits of 10 seconds or more (how long it goes without a board before it says it's disconnected,
+  // and how long it waits for one), by id, apart from `timers`, so a test steps the board's refreshes as it always has.
+  const waits = new Map();
+  let waitIds = 0;
+  const pageTimeout = (fn, ms) => { if (ms >= 10000) { waits.set(`w${++waitIds}`, { fn, ms }); return `w${waitIds}`; } return timers.push(fn); };
+  const pageClearTimeout = id => { waits.delete(id); };
   // Repeating timers apart from `timers`, by id, so a test runs the state poll and the queue's 1-second counter (0058) apart.
   const intervals = new Map();
   let intervalIds = 0;
@@ -185,17 +191,22 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
     calls.push({ url, opts });
     const next = responses.shift();
     if (next instanceof Error) throw next;
-    if (next && next.then) return next; // a request the test settles later, or never
-    if (next && next.pendingBody) return { ok: true, status: 200, json: () => next.pendingBody };
+    // A request the page gives up fails, as a browser's does (0186), even one the test settles later or never.
+    const given = later => opts && opts.signal ? Promise.race([later, new Promise((_, reject) => opts.signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true }))]) : later;
+    if (next && next.then) return given(next); // a request the test settles later, or never
+    if (next && next.pendingBody) return { ok: true, status: 200, json: () => given(next.pendingBody) };
     if (next && next.status) return { ok: false, status: next.status, json: async () => next.body };
     return { ok: true, status: 200, json: async () => next };
   };
   const script = page().match(/<script>([\s\S]*?)<\/script>/)[1];
-  const ctx = { document, fetch, setTimeout: fn => timers.push(fn), setInterval, clearInterval, AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals };
+  const ctx = { document, fetch, setTimeout: pageTimeout, clearTimeout: pageClearTimeout, setInterval, clearInterval, AbortController, Date, Math, JSON, String, Number, Array, Set, console, ...globals };
   if (!Object.hasOwn(globals, 'EventSource')) ctx.EventSource = tickingSource(ctx); // 0187: the board's changes, as the poll's timer was
   vm.runInNewContext(script, ctx);
   const all = (n, out = []) => { out.push(n); for (const c of n.children || []) all(c, out); return out; };
   const settle = () => new Promise(r => setTimeout(r, 20));
+  // Runs the page's waits of `ms` (10000: no board for 10 seconds; 15000: a request for the board given up), as the
+  // clock does once they're up (0186).
+  const elapse = async ms => { for (const [id, w] of [...waits]) if (w.ms === ms) { waits.delete(id); w.fn(); } await settle(); };
   // A key pressed anywhere on the page, as the browser sends it to the document (0054).
   const key = k => { if (document.listeners.keydown) document.listeners.keydown({ key: k }); };
   // A click as a browser sends it (0077): the page's own listener on the document first, then the node's and those of
@@ -210,7 +221,7 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
   };
   // A pointer of a type ('mouse', 'touch' or 'pen') moving over the page, as the browser tells the document first (0154).
   const pointer = type => { if (document.listeners.pointerover) document.listeners.pointerover({ pointerType: type }); };
-  return { byId: id => document.getElementById(id), document, timers, intervals, all, settle, calls, key, press, pointer }; // document: its listeners (0187)
+  return { byId: id => document.getElementById(id), document, timers, waits, elapse, intervals, all, settle, calls, key, press, pointer }; // document: its listeners (0187)
 }
 
 export const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };

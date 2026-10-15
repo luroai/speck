@@ -267,7 +267,7 @@ test('0187 AC4: a dropped stream shows nothing at first, reconnects, and asks fo
   sources[0].fail(); // the network blips: the browser tries again by itself
   await p.settle();
   assert.equal(p.byId('offline').hidden, true, 'not "Disconnected" at once');
-  const lost = timers.findIndex(t => t.ms === 10000);
+  const lost = timers.findLastIndex(t => t.ms === 10000); // the stream's: the board's own wait came first (0186)
   assert.ok(lost >= 0, 'it waits 10 seconds');
   sources[0].emit('open'); sources[0].emit('message', '1'); // back
   await p.settle();
@@ -285,11 +285,11 @@ test('0187 AC4: a stream that stays gone for 10 seconds shows "Disconnected", an
   await p.settle();
   sources[0].fail(true); // the browser won't try again by itself
   await p.settle();
-  timers.find(t => t.ms === 10000).fn();
+  timers.findLast(t => t.ms === 10000).fn(); // the stream's: the board's own wait came first (0186)
   await p.settle();
   assert.equal(p.byId('offline').hidden, false);
   assert.match(p.byId('offline').textContent, /^Disconnected: can't reach speck panel\./);
-  const again = timers.filter(t => t.ms !== 10000);
+  const again = timers.filter(t => t.ms < 10000); // apart from the 10- and 15-second waits for the board (0186)
   assert.equal(again.length, 1, 'one try again');
   again[0].fn();
   assert.equal(sources.length, 2, 'a new stream');
@@ -392,8 +392,8 @@ test('0187 AC4: a request for the board that fails is asked again at the next ke
   const p = fakePage([new Error('blip'), state], { EventSource, setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimeout: () => {} });
   sources[0].emit('open'); sources[0].emit('message', '7');
   await p.settle();
-  assert.equal(p.byId('offline').hidden, false);
-  assert.deepEqual(timers, [], 'no timer of its own');
+  assert.equal(p.byId('offline').textContent, '', 'one failure shows nothing (0186)');
+  assert.deepEqual(timers.filter(t => t.ms < 10000), [], 'no timer of its own to ask again');
   sources[0].emit('ping', '1');
   await p.settle();
   assert.equal(p.calls.filter(c => c.url === '/api/state').length, 2, 'asked again');
@@ -410,11 +410,12 @@ test('0187 AC4: a board the panel couldn\'t read isn\'t asked for again until th
   const p = fakePage([{ status: 500, body: { error: 'Ticket 0002 has no frontmatter.' } }], { EventSource, setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimeout: () => {} });
   sources[0].emit('open'); sources[0].emit('message', '1');
   await p.settle();
+  timers.find(t => t.ms === 10000).fn(); // 0186: it shows once 10 seconds pass without a board
   assert.match(p.byId('offline').textContent, /couldn't read the tickets: Ticket 0002 has no frontmatter\./);
   sources[0].emit('ping', '1');
   await p.settle();
   assert.equal(p.calls.filter(c => c.url === '/api/state').length, 1, 'not at a keep-alive');
-  assert.deepEqual(timers, [], 'nor on a timer');
+  assert.deepEqual(timers.filter(t => t.ms < 10000), [], 'nor on a timer');
 });
 
 // ---------- merge review round (F4) ----------

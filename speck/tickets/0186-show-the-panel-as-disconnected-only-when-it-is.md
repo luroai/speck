@@ -41,6 +41,10 @@ The panel shows "Disconnected" only when it really can't reach the panel, never 
 - Reported on 2026-10-14: the notice flashes up and goes "because of the 2 second load".
 - 0187 replaces the polling this changes, so keep this small: it's the fix for now.
 - Failing before this build: none
+- Built on 0187, which shipped first: the page no longer asks every 2 seconds but when the panel announces a new board. So "sends no other request while one is waiting" means a board announced while a request waits is asked for once that request is answered or given up (only the latest one), and "the old rule" is that a request still waiting when the next board is announced was dropped and shown as disconnected.
+- The 10-second limit counts from when the page asked for the board, and is called off by the next board that arrives. The stream's own 10-second limit (0187) is unchanged.
+- The fake page in the tests now gives up a request the page aborts, as a browser does, and keeps the page's 10- and 15-second waits apart from `timers`, run with `elapse(ms)`.
+- Self-check: the page tracks whether its notice shows itself rather than reading it from the page, so a first request that fails shows nothing.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
