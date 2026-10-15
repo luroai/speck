@@ -494,7 +494,7 @@ export function buildKilled(runs, id) {
 
 // True if a running process names the session as a word of its command line, as a build resumed by hand does
 // (`claude --resume <session>`). If processes can't be listed it's taken as in use, so a session is never resumed twice.
-function sessionInUse(session) {
+export function sessionInUse(session) {
   if (typeof session !== 'string' || !session) return false;
   const r = sh('ps', ['-A', '-ww', '-o', 'args=']);
   if (r.status !== 0) return true;

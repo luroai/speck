@@ -1,7 +1,7 @@
 ---
 id: "0217"
 title: "Stop the build timer while a stopped build waits"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T23:34:36.098Z"
 ---
 # 0217 · Stop the build timer while a stopped build waits
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build stops or exits before finishing while its ticket is still building or reviewing, the Build queue says so but the ticket's timer keeps counting, and the wait ends up in its shipped minutes. Nobody is building the ticket then, so this counts time spent waiting for the user, which 0166 removed for blocked and paused tickets.
@@ -54,3 +54,82 @@ A stopped build's waiting time is left out of its build time, as blocked and pau
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ed58fecf33eaab1f8b8f98184a914eb37c3628a0",
+    "thread_id": "01a141f0-ac8a-7e63-920b-19ac1ddb2440",
+    "seconds": 45,
+    "usage": {
+      "input_tokens": 209727,
+      "cached_input_tokens": 156544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1691,
+      "reasoning_output_tokens": 382
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:41:39.262Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel holds the timer at build_exit.at. The passing AC1 tests exercise building and reviewing tickets, including timer ticks and existing waited_seconds."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/stop-wait.mjs buildStop persists the first observation in a session/pid-specific marker. Passing AC2 tests cover persistence across processes, rejection of an earlier marker and a frozen panel timer."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "countStop loses the saved stop when a killed session is already running through claude --resume, because buildStop requires buildKilled to remain true. A failed counted-marker write can also subtract the same wait repeatedly. The passing tests miss both paths."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests cover live processes, blocked and paused timer precedence, and avoiding killed-build markers for blocked or approved tickets. All 13 supplied tests passed; the changes show no separate regression in these behaviours."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/stop-wait.mjs:31",
+        "issue": "Manual resumption of a killed build fails to exclude its waiting time, even when the resumed builder runs speck start. buildStop calls buildKilled before reading the saved stop time; scripts/run.mjs buildKilled returns null when sessionInUse sees claude --resume <session>. Consequently countStop returns without adding waited_seconds. The manual-resume test never starts a process naming the session, so it misses the actual supported resume path.",
+        "suggested_fix": "Allow restart accounting to consume a matching saved stop marker after the session becomes active, independently of current killed-build detection. Add a test with an active process naming the resumed session, then run speck start and verify the saved wait is excluded exactly once.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/stop-wait.mjs:55",
+        "issue": "The ticket's waited_seconds is committed before the counted marker is saved, and marker-write failure is silently ignored. If the runs directory cannot accept that write, the stop remains uncounted while its wait has already been subtracted. Another speck start subtracts the same stretch again, corrupting the timer and eventual shipped minutes.",
+        "suggested_fix": "Make accounting durably idempotent across marker-write failures and interruptions between the ticket commit and marker save. Add a failure-path test that prevents the counted marker being saved, retries the start, and verifies waiting time is subtracted only once.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The stopped timers and saved stop times work in the tested cases. Restart accounting needs fixes: manually resuming a killed build can still count its waiting time, and a failed marker save can subtract waiting time repeatedly. All 13 tests passed, but they miss these cases."
+  }
+}
+```
+
+</details>

@@ -210,3 +210,37 @@ test('0217 AC3: a stopped time that can\'t be written to the ticket says so, cha
   r.run('start', '1');
   near(fmOf(r.file).waited_seconds, 600, 'counted once it can be written');
 });
+
+// ---------- review round 1 ----------
+
+test('0217 AC3: a killed build resumed by hand in its own session counts the stretch once, and its next stop is noticed afresh', () => {
+  const r = stoppedRepo();
+  ticketOf(r.dir);
+  backdateMark(r.dir, 300);
+  const resumed = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)', r.rec.session], { detached: true, stdio: 'ignore' });
+  resumed.unref();
+  try {
+    r.run('start', '1');
+    near(fmOf(r.file).waited_seconds, 300, 'the stopped stretch');
+    r.run('start', '1');
+    near(fmOf(r.file).waited_seconds, 300, 'added once');
+    assert.equal(r.g('status', '--porcelain', '--', 'speck/tickets'), '', 'the ticket is committed');
+  } finally { killAll([resumed.pid]); }
+  assert.ok(Math.abs(Date.parse(ticketOf(r.dir).build_stopped_at) - Date.now()) < 10000, 'the resumed session stopping is noticed now');
+});
+
+test('0217 AC3: a stop that can\'t be marked counted adds nothing, and is counted once when it can be', () => {
+  const r = stoppedRepo({ exited: realAgo(600), exit_code: 1 });
+  const runs = runsPath(r.dir, '');
+  fs.chmodSync(runs, 0o555);
+  try {
+    const s = r.run('start', '1');
+    assert.match(s.stdout, /time its stopped build waited couldn't be recorded/);
+    assert.equal(fmOf(r.file).waited_seconds, undefined, 'nothing added');
+    r.run('start', '1');
+    assert.equal(fmOf(r.file).waited_seconds, undefined, 'still nothing added');
+  } finally { fs.chmodSync(runs, 0o755); }
+  r.run('start', '1');
+  r.run('start', '1');
+  near(fmOf(r.file).waited_seconds, 600, 'counted once');
+});
