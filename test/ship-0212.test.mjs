@@ -12,12 +12,21 @@ import { shipQueue } from '../scripts/ship-queue.mjs';
 
 const noTrace = res => assert.doesNotMatch(res.stderr, /^\s+at /m, 'no stack trace');
 
+// The ticket's worktree where speck start puts it, so speck knows it's the ticket's even when the branch isn't there.
+function startWorktree(r) {
+  r.g('worktree', 'remove', '--force', r.wt);
+  const at = path.join(path.dirname(r.dir), `${path.basename(r.dir)}.worktrees`, ...BRANCH.split('/'));
+  assert.equal(gIn(r.dir, 'worktree', 'add', '-q', at, BRANCH).status, 0);
+  return fs.realpathSync(at);
+}
+
 // A ship repo whose first test run kills its own `speck ship` with SIGKILL, while the merged result is checked out;
 // every later run passes. main moves on first, so the merge has something of main's in it.
 function killedOnce({ worktree = true, auto = false } = {}) {
   const flag = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0212-')), 'killed');
   const record = '{main}/speck/.cache/runs/0001.ship.json';
   const r = shipRepo({ worktree, test: `if [ ! -f ${flag} ]; then touch ${flag}; kill -9 $(sed -n 's/.*"pid":\\([0-9]*\\).*/\\1/p' ${record}); sleep 1; fi` });
+  if (worktree) r.wt = startWorktree(r);
   const cfg = path.join(r.dir, 'speck', 'config.yml');
   if (auto) fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf8').replace(/^auto_ship:.*$/m, 'auto_ship: true'));
   if (!worktree) r.g('checkout', '-q', 'main');
@@ -78,14 +87,6 @@ test('0212 AC1: a ship refused after putting it back leaves the worktree on its 
   assert.equal(r.sha(BRANCH), r.tip, 'the branch is where it was');
 });
 
-// The ticket's worktree where speck start puts it, so speck knows it's the ticket's even when the branch isn't there.
-function startWorktree(r) {
-  r.g('worktree', 'remove', '--force', r.wt);
-  const at = path.join(path.dirname(r.dir), `${path.basename(r.dir)}.worktrees`, ...BRANCH.split('/'));
-  assert.equal(gIn(r.dir, 'worktree', 'add', '-q', at, BRANCH).status, 0);
-  return fs.realpathSync(at);
-}
-
 test('0212 AC3: a ticket worktree that isn\'t on its branch, and isn\'t a ship\'s merge, is refused naming the worktree', () => {
   const r = shipRepo();
   const wt = startWorktree(r);
@@ -112,6 +113,37 @@ test('0212 AC3: a killed ship\'s worktree that can\'t be put back is refused nam
   assert.match(res.stderr, new RegExp(`git checkout ${BRANCH}`));
   assert.equal(fs.readFileSync(path.join(r.wt, 'other.txt'), 'utf8'), 'edited there\n', 'the edit is untouched');
   assert.equal(r.sha(BRANCH), r.tip);
+});
+
+// Someone else's worktree with the same merge checked out, detached, and an untracked file of theirs in it.
+function lookalike(r) {
+  const at = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-other-'))), 'wt');
+  assert.equal(gIn(r.dir, 'worktree', 'add', '-q', '--detach', at, 'main').status, 0);
+  assert.equal(gIn(at, 'merge', '-q', '--no-ff', '-m', 'theirs', BRANCH).status, 0);
+  fs.writeFileSync(path.join(at, 'theirs.txt'), 'keep\n');
+  return at;
+}
+
+test('0212 AC1: another worktree with the same merge checked out is left alone', () => {
+  const r = killedOnce();
+  const other = lookalike(r), head = gIn(other, 'rev-parse', 'HEAD').stdout.trim();
+  const res = runIn(r.dir, 'ship', '1');
+  assert.equal(res.status, 0, res.stdout + res.stderr);
+  assert.equal(fs.readFileSync(path.join(other, 'theirs.txt'), 'utf8'), 'keep\n', 'its untracked file is still there');
+  assert.equal(gIn(other, 'rev-parse', 'HEAD').stdout.trim(), head, 'and it still has the merge checked out');
+  assert.equal(on(other), '');
+});
+
+test('0212 AC3: with the ticket\'s worktree on another commit, a lookalike merge elsewhere doesn\'t get past the refusal', () => {
+  const r = shipRepo();
+  const wt = startWorktree(r);
+  gIn(wt, 'checkout', '-q', '--detach', 'main');
+  const other = lookalike(r);
+  const res = runIn(r.dir, 'ship', '1');
+  assert.notEqual(res.status, 0);
+  assert.match(res.stderr, new RegExp(wt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.ok(fs.existsSync(path.join(other, 'theirs.txt')));
+  assert.equal(on(wt), '');
 });
 
 test('0212 AC4: a ship that isn\'t killed leaves the worktree on the ticket\'s branch, shipped or not', () => {
