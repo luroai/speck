@@ -45,7 +45,7 @@ The full board stays small however many tickets have shipped, and the panel show
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel now sends much less when a page opens or reconnects. Tickets that shipped a while ago, beyond the five shown in the Shipped list, are sent as just the few figures the Shipped stats need, rather than their whole text and build log. On this repo that takes the first load from about 1.36 MB to about 170 KB, and it barely grows as more tickets ship. The panel looks exactly the same: the queue, Plan, the Shipped list and its figures don't change, and `speck status --json` still gives every ticket in full. To see it, open the panel on a phone through the tunnel: the first load and each reconnect should be noticeably quicker.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,7 @@ The full board stays small however many tickets have shipped, and the panel show
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none new. Skipped: the unrelated 0153 AC2 test that failed once on timing in round 2's run (matches speck/ideas/2026-10-15-fix-the-race-in-the-0153-second-ship-test.md).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -122,6 +123,75 @@ The full board stays small however many tickets have shipped, and the panel show
     ],
     "escalation_question": "",
     "summary": "The change substantially reduces the board payload and preserves the panel's display and command-line output. All recorded tests pass. One fix is needed: older tickets still grow with their review history and can exceed the promised 500-byte limit."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "843df2db328a8923889462c86d810f7c604323cc",
+    "thread_id": "01a13f6a-e872-76b0-95eb-8d5c18044fba",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 284926,
+      "cached_input_tokens": 239872,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2142,
+      "reasoning_output_tokens": 109
+    },
+    "saved_at": "2026-10-15T12:02:39.246Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/board-feed.mjs panelBoard now uses fixed-size review_total fields. The passing AC1 test checks the 500-byte limit with long text, logs and 100 review rounds; the integration test verifies the panel sends compact tickets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing AC2 test verifies that compact boards containing 30 and 150 finished tickets are less than one third of their original size."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel consumes review_total while retaining support for full rounds. Passing AC3 tests compare the actual model's queue, Plan, Shipped list and figures before and after compaction, and verify full text for displayed finished tickets."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Compaction remains confined to the panel response. The passing AC4 test verifies unchanged CLI output against statusData and checks that finished tickets retain their full fields."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full log records 1808 tests with one timing failure and three skips. The runner reran the failing file: all 15 tests passed, including the original failure, satisfying the repository's documented flaky-test policy."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/board-feed.mjs",
+        "issue": "Older finished tickets previously retained an array entry for every review round, allowing their summaries to exceed 500 bytes.",
+        "suggested_fix": "Implemented: fixed-size review totals replace the array, the panel reads those totals, and the size regression test covers 100 rounds.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The size-limit issue is fixed. Older finished tickets now carry compact summaries while the panel preserves its display and figures, and command-line output stays unchanged. All acceptance criteria pass; one unrelated timing failure passed on the runner's retry."
   }
 }
 ```
