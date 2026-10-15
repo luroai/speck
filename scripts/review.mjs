@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
 import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong } from './reviewers.mjs';
-import { testOutput } from './tap.mjs';
+import { testOutput, testsMeta } from './tap.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -225,8 +225,9 @@ function reviewSetup(repo, id, opts) {
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const diff = reviewDiff(repo, sinceSha);
   const tests = testOutput(opts.tests, ticket.fm.id || id);
+  const testsSeen = testsMeta(opts.tests);
   const response = opts.response ? fs.readFileSync(opts.response, 'utf8') : '';
-  return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, diff, tests, response };
+  return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, diff, tests, testsSeen, response };
 }
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
@@ -240,7 +241,7 @@ function reviewRound(repo, id, opts, run) {
 }
 
 function runCodexReview(repo, id, s) {
-  const { cfg, ticket, prior, round, head, sinceSha, merged, merge, diff, tests, response } = s;
+  const { cfg, ticket, prior, round, head, sinceSha, merged, merge, diff, tests, testsSeen, response } = s;
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });
 
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
@@ -267,7 +268,7 @@ function runCodexReview(repo, id, s) {
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...testsSeen });
 }
 
 function printRound(rec, cfg, all) {
@@ -313,11 +314,12 @@ function parseReply(text, file) {
 
 export function cmdRecord(args) {
   const [id, file] = args;
-  if (!id || !file) throw new SpeckError('Usage: speck record <id> <verdict.json> [--reviewer=name]');
+  if (!id || !file) throw new SpeckError('Usage: speck record <id> <verdict.json> [--reviewer=name] [--tests=file]');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const reviewer = (args.find(a => a.startsWith('--reviewer=')) || '--reviewer=claude-subagent').slice(11);
   const verdict = parseReply(fs.readFileSync(file, 'utf8'), file);
+  const testsSeen = testsMeta((args.find(a => a.startsWith('--tests=')) || '').slice(8));
   requireCommitted(repo, findTicket(repo, id), 'Commit your work before recording a round: the round is saved against the latest commit.');
   // A resumed reviewer keeps the settings it started with, saved by `speck reviewer-settings`.
   const saved = path.join(cacheDir(repo, id), 'reviewer-settings.json');
@@ -325,7 +327,7 @@ export function cmdRecord(args) {
   const prior = rounds(repo, id);
   // Whether the base branch was merged in only matters after an approval, so it's only looked up then.
   const merge = isMergeRound(prior, prior.at(-1)?.verdict.verdict === 'approve' && reviewSince(repo, cfg, prior).merged);
-  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}) });
+  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...testsSeen });
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }

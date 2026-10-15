@@ -85,7 +85,7 @@ The implementation agent owns the loop. It spawns a reviewer subagent and they w
 - **Builder:** writes tests and code. It can fix a finding or dispute it with a reason. It cannot approve.
 - **Reviewer:** reads the ticket, the diff and the test output. It runs read-only and cannot edit code. It is the only party that can approve.
 
-The reviewer gets a summary of the test output rather than all of it: when the output is TAP, as `node --test` writes it, speck keeps the run's totals, every failing test with its details and every test named with the ticket's id, and says where the full output is. Other formats are sent in full.
+The reviewer gets a summary of the test output rather than all of it: when the output is TAP, as `node --test` writes it, speck keeps the run's totals, every failing test with its details and every test named with the ticket's id, and says where the full output is. When a full run passed only on its second try (its output ends with a `Flaky:` line), the summary says the run passed, keeps the full run's totals, and lists the tests that failed then passed under "Passed on a second try" rather than as failing tests. Other formats are sent in full. Each round's record keeps how many failing tests the summary listed and which passed on a second try, and the review pack shows them for the latest round under "Tests", so it agrees with what the reviewer was told. A round given output that isn't TAP, or none, records nothing, and the pack has no "Tests" part.
 
 **Protocol**
 

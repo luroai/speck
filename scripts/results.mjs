@@ -8,7 +8,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { sh } from './core.mjs';
 import { runTestsInTurn, sharedCacheDir, testStallMs, shellWord } from './turns.mjs';
-import { failingTestFiles, passingTests } from './tap.mjs';
+import { failingTestFiles, passingTests, RETRY_NOTE, FLAKY } from './tap.mjs';
 
 const MAX_OUTPUT = 1024 * 1024; // the most of a failing run's output kept, from its end
 const KEEP_MS = 30 * 24 * 60 * 60 * 1000; // results older than this are cleared when a new one is recorded
@@ -124,7 +124,7 @@ function retry(repo, cfg, text, branch) {
   const cmd = only.replaceAll('{files}', () => files.map(f => shellWord(f.startsWith('-') ? `./${f}` : f)).join(' '));
   const output = path.join(resultsDir(repo), `run.${crypto.randomUUID()}.out`);
   try {
-    const r = runTestsInTurn(repo, cfg, cmd, () => console.log(`Some tests failed: running their files once more, to tell a chance failure from a real one: ${cmd}`), output);
+    const r = runTestsInTurn(repo, cfg, cmd, () => console.log(`${RETRY_NOTE}${cmd}`), output);
     let again = '';
     try { again = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ }
     // How many times each test name passed in the second run, each failing test using up one. A passing test's TAP
@@ -134,7 +134,7 @@ function retry(repo, cfg, text, branch) {
     const all = failing.every(t => { const n = passed.get(t.name) || 0; passed.set(t.name, n - 1); return n > 0; });
     if (r.ended !== '0' || !all) return { passed: false, output: again };
     const names = [...new Set(failing.map(t => t.name))];
-    console.log(`Flaky: ${names.join('; ')}`);
+    console.log(`${FLAKY}${names.join('; ')}`);
     flakyLog(repo, names, branch);
     return { passed: true, output: again };
   } finally {
