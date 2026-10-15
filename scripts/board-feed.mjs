@@ -233,3 +233,30 @@ export function boardVersions() {
     },
   };
 }
+
+// 0178: the board as the panel sends it. A finished ticket outside the Shipped list's latest five, which the page shows
+// only in the Shipped figures, keeps only what those use: its id and status, its times, its builder's spend and a round
+// per review round, the first carrying the reviewer tokens of them all. A cancelled one, which the page doesn't show,
+// keeps its id and status. The latest five, picked as the page picks them, and a ticket whose ship is still running stay
+// whole. `speck status --json` is unchanged.
+const SHIPPED_SHOWN = 5;
+export function panelBoard(board) {
+  if (!board || !Array.isArray(board.tickets)) return board;
+  const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
+  const shipping = t => !!t.ship && typeof t.ship === 'object' && t.ship.running === true;
+  const done = board.tickets.filter(t => t && t.status === 'done' && !shipping(t)), finished = new Set(done);
+  const ended = done.filter(t => time(t.finished) !== null).sort((a, b) => time(b.finished) - time(a.finished));
+  const shown = new Set([...ended, ...done.filter(t => time(t.finished) === null)].slice(0, SHIPPED_SHOWN));
+  const at = v => (time(v) === null ? null : new Date(time(v)).toISOString());
+  const spent = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+  const slim = t => {
+    if (t && t.status === 'cancelled') return { id: t.id, status: t.status };
+    if (!finished.has(t) || shown.has(t)) return t;
+    const rounds = Array.isArray(t.rounds) ? t.rounds : [];
+    const tokens = rounds.reduce((n, r) => n + (Number(r && r.tokens) || 0), 0);
+    return { id: t.id, status: t.status, started: at(t.started), finished: at(t.finished), approved: at(t.approved),
+      waited_seconds: typeof t.waited_seconds === 'number' && Number.isFinite(t.waited_seconds) ? t.waited_seconds : null,
+      rounds: rounds.map((r, i) => (i ? {} : { tokens })), builder_tokens: spent(t.builder_tokens), builder_cost_usd: spent(t.builder_cost_usd) };
+  };
+  return { ...board, tickets: board.tickets.map(slim) };
+}

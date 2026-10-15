@@ -42,6 +42,7 @@ The full board stays small however many tickets have shipped, and the panel show
 - The panel uses `build_exit.message` only for tickets in the queue. The Shipped list shows the latest five finished tickets in full, and figures over all of them.
 - The field names of `speck status --json` are a contract (0030).
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
