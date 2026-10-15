@@ -1,7 +1,7 @@
 ---
 id: "0233"
 title: "Run the heavy test files a few at a time"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-15T21:58:29.681Z"
 blocked_at: ""
 approved: "2026-10-15T22:54:58.414Z"
 waited_seconds: 2538
+finished: "2026-10-15T22:57:07.087Z"
 
 ---
 # 0233 · Run the heavy test files a few at a time
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Test files that start real processes, panels or a browser run alongside everything else, so on a small machine they slow each other down and miss their time limits. On an 8 GB MacBook Air, 26 tests failed on `main` that way, and the machine stayed fully loaded throughout the run.
