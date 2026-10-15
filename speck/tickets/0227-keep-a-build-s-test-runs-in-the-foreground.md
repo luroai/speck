@@ -40,6 +40,7 @@ A build waits for each test run and review round it starts, so it never ends whi
 - The steps are in `skills/speck-build/SKILL.md` (sections 1 step 6, 3 step 5 and 4) and `skills/speck-review/SKILL.md`. This repo builds from its installed copies in `.claude/skills/`, so check whether those need updating too, as earlier skill changes did.
 - 0219 may also change `skills/speck-build/SKILL.md`. Build this one first.
 - Checked 2026-10-15: Claude Code 2.1.296 has an environment variable, `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS`, that turns off background tasks (checked in the installed binary). Its Bash tool also caps a foreground command at `BASH_MAX_TIMEOUT_MS`, 10 minutes by default. Both go in the Delivery log as follow-ups, not here.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
