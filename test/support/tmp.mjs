@@ -1,7 +1,7 @@
 // Keeps the tests' temporary repos and folders out of the system temporary folder.
 // Import this first in every test file. It gives the run its own folder, points
-// os.tmpdir() (and every child process) at it, empties it after each test and
-// removes it when the process exits. Once its tests are done, and when the process
+// os.tmpdir() (and every child process) at it, empties it after each test (apart
+// from any folder named speck-keep-*) and removes it when the process exits. Once its tests are done, and when the process
 // exits or is stopped with SIGINT, SIGTERM or SIGHUP, it ends every process the file
 // started (see reap.mjs). A run that is killed outright leaves at most this folder
 // with the files of the test that was running, and the test helpers that wait on a
@@ -19,7 +19,8 @@ const remove = p => { try { fs.rmSync(p, { recursive: true, force: true, maxRetr
 export const emptyRunTmp = () => {
   let entries = [];
   try { entries = fs.readdirSync(RUN_TMP); } catch { return; }
-  for (const f of entries) remove(path.join(RUN_TMP, f));
+  // A speck-keep-* folder stays until the process exits: the file's shared Chromium has its profile in one (0182).
+  for (const f of entries) if (!f.startsWith('speck-keep-')) remove(path.join(RUN_TMP, f));
 };
 
 // Every process this file starts inherits these, even one in a session or process group of its own.

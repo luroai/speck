@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { panelRepo, fm, freePort, startPanel, stop, request, post, tokenOf, cliCopy } from './support/panel.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { runRepo, alive, killAll } from './support/run.mjs';
+import { hasStopped } from './support/stopped.mjs';
 
 // ---------- 0177: the panel keeps answering while it reads the board ----------
 
@@ -156,7 +157,7 @@ test('0177 AC3: while one reading takes 5 seconds, the speck run switch turns it
     const off = await timed(() => post(s.port, '/api/run/off', { token: s.token }));
     assert.equal(off.out.status, 200, off.out.body);
     assert.ok(off.ms < 1000, `off answered in ${off.ms} ms`);
-    assert.ok(!alive(pid), 'speck run has stopped');
+    assert.ok(await hasStopped(() => !alive(pid)), 'speck run has stopped');
     assert.equal((await slow).status, 200);
   } finally { if (pid) killAll([pid]); await stop(s.p); }
 });
