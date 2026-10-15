@@ -1,7 +1,7 @@
 ---
 id: "0231"
 title: "Run the speck CLI inside the test process for output checks"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0230"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:13:32.859Z"
 approved: "2026-10-15T22:30:47.570Z"
+finished: "2026-10-15T22:33:25.533Z"
 
 ---
 # 0231 · Run the speck CLI inside the test process for output checks
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Tests check speck's commands by starting `node scripts/speck.mjs` as a new process, about 800 times across the suite. Each start takes about 0.2 s on an 8 GB MacBook Air before the command does anything, and most of these tests only check what a command prints or changes.
