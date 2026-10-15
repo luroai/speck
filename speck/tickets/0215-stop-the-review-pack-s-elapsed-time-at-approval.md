@@ -1,7 +1,7 @@
 ---
 id: "0215"
 title: "Stop the review pack's elapsed time at approval"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-12-stop-the-review-packs-elapsed-time-at-approval.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T23:12:25.775Z"
 
 ---
 # 0215 · Stop the review pack's elapsed time at approval
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The review pack's "Elapsed since build started" line counts up to the moment the pack is read. For a ticket that has waited to be shipped, it includes the wait, so it disagrees with the panel (which since 0139 stops at approval) and looks wrong to the person deciding whether to ship.
