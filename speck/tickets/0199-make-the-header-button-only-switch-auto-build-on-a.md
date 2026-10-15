@@ -1,7 +1,7 @@
 ---
 id: "0199"
 title: Make the header button just the Auto-build switch                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T13:42:58.248Z"
 ---
 # 0199 · Make the header button just the Auto-build switch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0163 the header's Auto-build button names one ticket in flight and where it has got to, or a ticket that needs you. With two builds at once and a ship queue (0193, 0194), one ticket's status there is partial and repeats what the Build list already shows, and its tooltip still says builds go one at a time.
@@ -44,7 +44,7 @@ The header button is only the Auto-build switch: it says whether Auto-build is o
 - Self-check: no changes. The old "one at a time" tooltip in the 0144 and 0150 tests changes to AC4's wording, as AC4 requires.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Auto-build button at the top of the panel is back to being a simple on/off switch. It says "Auto-build on" or "Auto-build off" and no longer names a ticket, its stage or that something needs you. That's what the Build list is for. Its little builder figure hops while any build or ship is at work, and stands still otherwise. Hovering over it says what a click will do. To see it, open the panel while a couple of builds are running: the button just says "Auto-build on", and the figure hops. Worth knowing: the figure also hops while Auto-build is off if a build that started earlier is still finishing.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,67 @@ The header button is only the Auto-build switch: it says whether Auto-build is o
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cb64f0299e1a9661b547fccf282d4d7c588996f7",
+    "thread_id": "01a13fd6-f530-7423-bef9-61e3f076cc2a",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 145941,
+      "cached_input_tokens": 102016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 854,
+      "reasoning_output_tokens": 27
+    },
+    "saved_at": "2026-10-15T13:54:06.314Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html render() uses only run.on and runSwitching for the label. Passing panel-0199 AC1 tests exercise on/off across ticket states and both switching labels."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "render() assigns only run-on/run-off classes; ticket-specific labels and colour rules are removed. Passing panel-0199 AC2 checks labels, tooltips and classes across ticket states."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "atWork() checks all in-flight tickets, excludes idle ship-queue entries and includes pending panel ships. Both panel-0199 AC3 tests pass, covering concurrent work, paused/stopped builds, waiting ships and Auto-build being off."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "render() supplies the exact tooltips and preserves the button element; switching handlers are unchanged. panel-0199 AC4 verifies POST requests and element identity. Existing passing browser tests cover keyboard operation, focus through refreshes and header placement."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Full /tmp/speck-0199-tests.txt confirms 1,875 tests: 1,872 passed, zero failed and three skipped. Changed historical assertions match the ticket's permitted label, animation and tooltip changes."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The header now consistently shows whether Auto-build is on or off, with the requested click tooltips. Its builder animates when any build or ship is working. Switching and layout remain intact, and the full test suite reports no failures. No blocking concerns found."
+  }
+}
+```
+
+</details>
