@@ -40,7 +40,8 @@ test('AC2: the principle gives the reasons: bottleneck, simplicity, users, isola
   assert.match(p, /worktrees for isolation/i, 'isolation versus parallelism');
   assert.match(p, /running builds side by side is a different thing/i, 'isolation versus parallelism');
   assert.match(p, /cost is throughput/i, 'cost');
-  assert.match(p, /only as a deliberately designed feature/, 'coming back');
+  // 0225 replaced the reason that parallel builds would come back only as a designed feature with raising max_parallel_builds being supported.
+  assert.match(p, /raising `max_parallel_builds` in `speck\/config\.yml` is supported/i, 'coming back');
 });
 
 // 0194 replaced "Each build ships its own ticket: there is no separate shipping agent" with speck run's one ship queue.

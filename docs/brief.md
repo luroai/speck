@@ -30,8 +30,8 @@ OpenSpec showed the value of keeping specs in the repo. speck keeps that idea bu
    - **It keeps things simple.** Each build starts from the latest base branch, so order, `after:` dependencies, conflicts and a broken base branch stay simple.
    - **It fits speck's users.** They shape product rather than debug races.
    - **Isolation isn't parallelism.** speck keeps worktrees for isolation, so a build never touches your checkout. Running builds side by side is a different thing.
-   - **The cost is throughput.** Tickets are built and shipped one after another.
-   - **Parallel builds would come back only as a deliberately designed feature,** not as machinery added ticket by ticket.
+   - **The cost is throughput.** At the default, tickets are built one after another.
+   - **One build at a time is the default, not a limit.** Raising `max_parallel_builds` in `speck/config.yml` is supported: `speck run` then keeps that many going at once, while its ship queue still ships tickets one at a time.
 
 ## The workflow
 
@@ -43,7 +43,7 @@ idea / conversation
                             filed in speck/tickets/done/)
   → you edit and approve  → speck set 0007 status ready,     [GATE 1]
                             or Set ready in the panel: commits the ticket
-  → speck run             → starts /speck-build for the next ready ticket, one at a time,
+  → speck run             → starts /speck-build for the next ready ticket, one at a time by default,
                             highest priority first, once its after: tickets have shipped
   → /speck-build 0007     → speck start: branch speck/0007-<slug> in its own worktree
        tests from acceptance criteria → implementation → tests pass
