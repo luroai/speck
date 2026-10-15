@@ -40,6 +40,7 @@ speck run's log says plainly when a ship merged but wasn't pushed, and how to pu
 ## Notes
 - The message comes from `ended()` in `scripts/ship-queue.mjs`. The ship record already says whether the ship merged but wasn't pushed (`unpushed`, from 0204 in `scripts/ship.mjs`), and its message already names the push command.
 - Failing before this build: none
+- Self-check: no changes. A record left by an earlier ship (started before this one) is never read as this ship's, so a refusal of an already merged ticket is still logged as "didn't ship". No test logged an unpushed ship as "didn't ship", so no existing test changed (AC4).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
