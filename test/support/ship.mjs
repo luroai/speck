@@ -5,6 +5,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { copied } from './copy.mjs';
 
 export const CLI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'scripts', 'speck.mjs');
 export const env = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
@@ -17,27 +18,12 @@ export const runIn = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { c
 
 // An approved ticket on its branch, which changes shared.txt. Tracked files notes.txt and other.txt are on both branches.
 // `test` is the test command, with {main} standing for the main checkout's path. With `worktree`, the branch is checked
-// out in its own worktree and main in the main checkout; without it, the main checkout stays on the branch.
+// out in its own worktree and main in the main checkout; without it, the main checkout stays on the branch. Each kind
+// is built once per test file and copied (copy.mjs).
 export function shipRepo({ test = 'true', worktree = true } = {}) {
-  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-ship-')));
+  const dir = fs.realpathSync(copied('ship', [test], 'speck-ship-', d => buildShipRepo(d, test)));
   const g = (...a) => gIn(dir, ...a).stdout.trim();
   const run = (...a) => runIn(dir, ...a);
-  g('init', '-q', '-b', 'main');
-  assert.equal(run('init', '--skip-checks').status, 0);
-  const cfgFile = path.join(dir, 'speck', 'config.yml');
-  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8').replace(/^  test: .*$/m, `  test: ${JSON.stringify(test.replaceAll('{main}', dir))}`));
-  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
-  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').split('## Problem')[0] + body);
-  for (const f of ['shared.txt', 'notes.txt', 'other.txt']) fs.writeFileSync(path.join(dir, f), 'base\n');
-  g('add', '-A'); g('commit', '-qm', 'base');
-  g('checkout', '-qb', BRANCH);
-  fs.writeFileSync(path.join(dir, 'shared.txt'), 'feature\n');
-  g('add', '-A'); g('commit', '-qm', 'work');
-  const v = path.join(os.tmpdir(), `verdict-${path.basename(dir)}.json`);
-  fs.writeFileSync(v, JSON.stringify(approveVerdict));
-  assert.equal(run('record', '1', v).status, 0);
-  assert.equal(run('set', '1', 'status', 'approved').status, 0);
-  g('add', '-A'); g('commit', '-qm', 'approved');
   let wt = dir;
   if (worktree) {
     g('checkout', '-q', 'main');
@@ -66,6 +52,30 @@ export function shipRepo({ test = 'true', worktree = true } = {}) {
     fs.writeFileSync(path.join(hooks, name), `#!/bin/sh\nunset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE\n${script.replaceAll('{main}', dir).replaceAll('{wt}', wt)}\n`, { mode: 0o755 });
   };
   return { dir, wt, g, run, sha, statusIn, snapshot, folder, hook };
+}
+
+// {main} in the test command, as the shell works it out from whichever of the repo's worktrees the tests run in, so
+// that every copy of the repo names its own main checkout (0230).
+const MAIN = '"$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"';
+function buildShipRepo(dir, test) {
+  const g = (...a) => gIn(dir, ...a).stdout.trim();
+  const run = (...a) => runIn(dir, ...a);
+  g('init', '-q', '-b', 'main');
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8').replace(/^  test: .*$/m, `  test: ${JSON.stringify(test.replaceAll('{main}', MAIN))}`));
+  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').split('## Problem')[0] + body);
+  for (const f of ['shared.txt', 'notes.txt', 'other.txt']) fs.writeFileSync(path.join(dir, f), 'base\n');
+  g('add', '-A'); g('commit', '-qm', 'base');
+  g('checkout', '-qb', BRANCH);
+  fs.writeFileSync(path.join(dir, 'shared.txt'), 'feature\n');
+  g('add', '-A'); g('commit', '-qm', 'work');
+  const v = path.join(os.tmpdir(), `verdict-${path.basename(dir)}.json`);
+  fs.writeFileSync(v, JSON.stringify(approveVerdict));
+  assert.equal(run('record', '1', v).status, 0);
+  assert.equal(run('set', '1', 'status', 'approved').status, 0);
+  g('add', '-A'); g('commit', '-qm', 'approved');
 }
 
 // Gives main a bare remote, then pushes a commit to it from elsewhere that writes `file`.
