@@ -40,6 +40,7 @@ The panel shows "Disconnected" only when it really can't reach the panel, never 
 - `poll()` in `templates/panel.html` aborts a request still waiting when the next is due and calls `setConnected(false)`, which shows the notice.
 - Reported on 2026-10-14: the notice flashes up and goes "because of the 2 second load".
 - 0187 replaces the polling this changes, so keep this small: it's the fix for now.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
