@@ -1,12 +1,15 @@
 // Runs a test command and ends it if it stalls (0152): `node stall.mjs <cmd> <stall ms> <ended file> [<output file>]`.
-// The command runs in its own process group, so ending it ends every process it started. If this process goes, or
-// whoever started it does, the group is ended too (0174). Its output goes on to this process's own, and to the output
+// The command runs in its own process group, with SPECK_TEST_RUN set to a value of its own in its environment. Ending
+// it ends its group, every process descended from it and every process whose environment holds that SPECK_TEST_RUN,
+// found as the reviewer time limit finds them (procs.mjs), so every process it started, even one in a group of its own
+// or one whose parent has gone (0202). If this process goes, or whoever started it does, it's ended too (0174). Its output goes on to this process's own, and to the output
 // file too when one is given. If it writes nothing for the stall time, this says so, with the last line it wrote, and
 // ends the whole group. The ended file gets how the run ended: the exit code, `signal <name>` if a signal stopped it,
 // `parent gone` if whoever started this process went first, or `stalled` and the last line on the next line.
 
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
+import { markRun, marked, runProcesses } from './procs.mjs';
 
 const [cmd, ms, endedFile, outputFile] = process.argv.slice(2);
 const stallMs = Number(ms);
@@ -15,7 +18,8 @@ const out = outputFile ? fs.openSync(outputFile, 'w') : null;
 // A watch in the tests' group ends the whole group once this process has gone, even if it was killed with SIGKILL
 // and had no chance to end them itself (0174). It checks every half second, writes nothing and holds no output.
 const WATCH = `(while kill -0 ${process.pid} 2>/dev/null; do sleep 0.5; done; kill -KILL 0) </dev/null >/dev/null 2>&1 &`;
-const child = spawn('sh', ['-c', `${WATCH} exec sh -c "$1"`, 'sh', cmd], { stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+const { run, env } = markRun('SPECK_TEST_RUN');
+const child = spawn('sh', ['-c', `${WATCH} exec sh -c "$1"`, 'sh', cmd], { stdio: ['ignore', 'pipe', 'pipe'], detached: true, env });
 
 // If whoever reads this process's output stops reading, the output is dropped rather than leaving the tests unwatched.
 for (const stream of [process.stdout, process.stderr]) stream.on('error', () => {});
@@ -36,6 +40,10 @@ for (const name of ['stdout', 'stderr']) {
 }
 
 const group = signal => { try { process.kill(-child.pid, signal); } catch { /* already gone */ } };
+const signalAll = (pids, signal) => {
+  group(signal);
+  for (const p of pids) { try { process.kill(p, signal); } catch { /* already gone */ } }
+};
 const finish = (ended, code) => {
   if (done) return;
   done = true;
@@ -44,9 +52,14 @@ const finish = (ended, code) => {
   if (out !== null) fs.closeSync(out);
   process.exit(code);
 };
-// Asks the tests and everything they started to end, then kills whatever is left. How the run ended is then `then`'s to
-// say, not the command's own exit.
-const end = (signal, then) => { ending = true; group(signal); setTimeout(() => { group('SIGKILL'); then(); }, GRACE_MS); };
+// Asks the tests and everything they started to end, then kills whatever is left, including any marked process started
+// in the meantime. How the run ended is then `then`'s to say, not the command's own exit.
+const end = (signal, then) => {
+  ending = true;
+  const pids = runProcesses(child.pid, 'SPECK_TEST_RUN', run);
+  signalAll(pids, signal);
+  setTimeout(() => { signalAll([...new Set([...pids, ...marked('SPECK_TEST_RUN', run)])], 'SIGKILL'); then(); }, GRACE_MS);
+};
 
 const duration = n => {
   const unit = (v, word) => `${v} ${word}${v === 1 ? '' : 's'}`;
