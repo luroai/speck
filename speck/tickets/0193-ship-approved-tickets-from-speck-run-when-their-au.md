@@ -43,6 +43,7 @@ While `speck run` is on, it ships each approved ticket that `auto_ship` covers, 
 - This revives part of the ship queue cancelled on 11 October (0102 to 0105) when speck moved to one build at a time (0111). The causes given then (leaked processes running the machine out of memory, builds inheriting a broken `main`) have since been fixed by 0175 and 0192. The brief's section 7 is updated in 0194, once builds no longer ship themselves.
 - `speck ship` already keeps a record of a ship in progress (`takeShip` in `scripts/ship.mjs`), which the panel reads; "any ship running" in AC1 can use it.
 - The builder decides how `speck run` remembers its last try per ticket; it must survive a restart of `speck run` only as far as AC2 needs (a restart may try each waiting ticket once more).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
