@@ -85,8 +85,9 @@ test('0197 AC3: a round\'s run that fails because of the change is fixed and run
 
 test('0197 AC4: the starting check and the handed-back steps are unchanged', () => {
   const pre = step(section('skills/speck-build/SKILL.md', '## 1. Pre-flight', '## 2. Tests first'), 6);
-  assert.match(pre, /before you change anything, run the test command/);
-  assert.ok(pre.includes(FULL));
+  // 0238: the starting check reads the recorded result rather than running the whole suite.
+  assert.match(pre, /before you change anything, find which tests already fail/);
+  assert.ok(pre.includes('`speck test --recorded 2>&1 | tee /tmp/speck-<id>-tests.txt`'));
   const back = section('skills/speck-build/SKILL.md', '### Conflict', '### Asking the user');
   // 0235: after a hand-back, test files rather than the whole suite.
   assert.match(back, /3\. Run the tests: [^\n]*`speck test --files <file>… 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`[^\n]*Fix anything the merge broke/);
