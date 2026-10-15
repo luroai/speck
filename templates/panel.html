@@ -651,6 +651,8 @@ function panelModel(state) {
   const rounds = t => (Array.isArray(t.rounds) ? t.rounds : []);
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
   const now = Date.now();
+  const byStart = (a, b) => { const x = time(a.started), y = time(b.started);
+    return (x === null) - (y === null) || (x !== null && y !== null ? x - y : 0) || String(a.id).localeCompare(String(b.id), 'en', { numeric: true }); };
   // What a ticket's builder spent, as speck run recorded it, or null when it isn't recorded.
   const spent = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
   // When a build ended: its approval (0139), or none when that's missing, unreadable or before it started.
@@ -681,8 +683,9 @@ function panelModel(state) {
     ideas: ideas.filter(i => !['inbox', 'dropped'].includes(statusOf(i)) && !String(i.status || '').startsWith('ticketed')),
     // Follow-ups waiting in the inbox, in JSON order.
     inbox: ideas.filter(i => statusOf(i) === 'inbox').map(i => ({ ...i, from: fromTicket(i.body) })),
-    // One list: in-flight tickets, then ready ones, each group in JSON order.
-    queue: [...tickets.filter(t => IN_FLIGHT.includes(t.status) || (t.status === 'done' && beingShipped(t))), ...tickets.filter(is('ready'))].map(chain).map(t => {
+    // One list: in-flight tickets, then ready ones in JSON order, the order speck run starts them. 0200: in-flight ones
+    // go in the order their builds started, so each keeps its place until it ships; one with no start time goes after, by id.
+    queue: [...tickets.filter(t => IN_FLIGHT.includes(t.status) || (t.status === 'done' && beingShipped(t))).sort(byStart), ...tickets.filter(is('ready'))].map(chain).map(t => {
       const inFlight = t.status !== 'ready', start = time(t.started);
       // An approved ticket's timer stops at its approval (0139); every other in-flight one counts on.
       const approved_at = t.status === 'approved' ? approvedAt(t) : null;
