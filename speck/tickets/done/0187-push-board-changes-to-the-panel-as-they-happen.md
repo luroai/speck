@@ -1,7 +1,7 @@
 ---
 id: "0187"
 title: "Push board changes to the panel as they happen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0177"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-14T22:06:47.011Z"
 approved: "2026-10-15T06:22:33.531Z"
+finished: "2026-10-15T06:22:38.952Z"
 
 ---
 # 0187 · Push board changes to the panel as they happen
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel page asks for the whole board every 2 seconds, whether anything has changed or not. Changes show up as much as 2 seconds late, every open page costs the panel a full reading of the board every 2 seconds, and a slow answer flashes "Disconnected" across the top (0186).
