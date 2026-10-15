@@ -1,7 +1,7 @@
 ---
 id: "0203"
 title: "Say when an approved ticket waits for Auto-build to ship it"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-15-say-an-auto-ship-ticket-waits-for-speck-run-when-it-s-off.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0201"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T14:44:29.016Z"
 
 ---
 # 0203 · Say when an approved ticket waits for Auto-build to ship it
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0194 only `speck run`'s ship queue ships approved tickets that `auto_ship` covers. When `speck run` is off, nothing will ship them, yet the panel says "Approved · waiting to ship" with the builder badge at work, so the user waits for a ship that never starts.
