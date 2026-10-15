@@ -41,6 +41,7 @@ When the ticket skill makes tickets, any that would change the same files as ano
 - Asked for 2026-10-15, for release 0.4.0. Agreed with the user after 0199 to 0201 were drafted without `after:`, though they all change `templates/panel.html`.
 - The skill is `skills/speck-ticket/SKILL.md`; step 3 mentions `after:` only for splitting one idea. `.claude/skills/` holds this repo's installed copies.
 - Failing before this build: none
+- Self-check: said where to read open tickets' real statuses (`speck status --json`, which shows tickets under way in other worktrees), and that only the new ticket is edited, matching the rule against editing tickets being built.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
