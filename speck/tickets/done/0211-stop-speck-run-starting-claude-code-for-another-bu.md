@@ -1,7 +1,7 @@
 ---
 id: "0211"
 title: "Stop speck run starting Claude Code for another builder"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T13:54:45.172Z"
 approved: "2026-10-15T14:16:24.208Z"
+finished: "2026-10-15T14:29:01.634Z"
 
 ---
 # 0211 · Stop speck run starting Claude Code for another builder
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the user picks Codex, Cursor or Gemini as the builder in `/speck-setup`, `build_command` still starts Claude Code, so `speck run` builds every ticket with an agent they didn't choose, or fails if Claude Code isn't installed. Nothing says so, and a non-technical user won't spot it.
