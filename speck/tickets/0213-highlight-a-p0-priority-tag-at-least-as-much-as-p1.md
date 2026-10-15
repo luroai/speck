@@ -1,7 +1,7 @@
 ---
 id: "0213"
 title: "Highlight a P0 priority tag at least as much as P1"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T23:12:28.214Z"
 ---
 # 0213 · Highlight a P0 priority tag at least as much as P1
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A fix ticket for a broken `main` is the most urgent thing on the board, but its P0 priority tag is plain grey, so it looks less important than a P1, whose tag is highlighted. Someone scanning the panel can miss what to deal with first.
@@ -41,7 +41,7 @@ A P0 priority tag stands out more than any other priority tag, wherever the pane
 - Red for P0 is an assumption: the note asked for P0 to stand out "at least as much" as P1. A high risk tag is also red since 0151.
 - Failing before this build: none
 - 0143's AC2 test expected a P0 tag in the pane to have only the plain `tag` class; it now expects `tag p0`, the behaviour this ticket asks for.
-- Self-check: no changes. A P0 tag in Plan greys on hover, as a P1 does today (`.tag.pick:hover`).
+- Self-check: no changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
@@ -54,3 +54,69 @@ A P0 priority tag stands out more than any other priority tag, wherever the pane
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f01efd247e4b9e1eb8b483a59ca04b6febc7d5dd",
+    "thread_id": "01a141da-0313-7922-8d19-132cdf70713a",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 105675,
+      "cached_input_tokens": 75264,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 694,
+      "reasoning_output_tokens": 22
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:16:30.951Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.html: fieldTags() assigns p0 in all three locations, but .tag.pick:hover (line 93) overrides .tag.p0 with --text text and a --muted border in Plan. The AC1 tests check class names and isolated declarations, missing this cascade."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Existing P1 and plain tag styling remains unchanged. The passing 0213 AC2 test checks P1 styling and P2–P5 classes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The implementation changes only the priority class and two colour declarations; picker wording, dimensions and tap area remain unchanged. The AC3 test checks wording and colour-only declarations. All 12 tests in the supplied full output passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:93",
+        "issue": "Hovering a P0 tag in Plan removes its red text and border because .tag.pick:hover has greater specificity than .tag.p0. This violates AC1 and makes the most urgent tag lose its distinguishing colour during interaction. The ticket's self-check acknowledges this behaviour but does not exempt it from AC1.",
+        "suggested_fix": "Keep P0 text and border in --bad when hovered, without changing other priorities' existing hover behaviour. Add a regression check that accounts for the hover rule's cascade, preferably checking computed colours in both themes.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "P0 tags are red in all three panel locations at rest, and the existing priority styles and accessibility wording are preserved. However, hovering a P0 tag in Plan removes its red highlight. Fix that interaction and cover it with a regression test before approval."
+  }
+}
+```
+
+</details>
