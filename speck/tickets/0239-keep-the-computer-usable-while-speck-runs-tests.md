@@ -1,7 +1,7 @@
 ---
 id: "0239"
 title: "Keep the computer usable while speck runs tests"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0239 · Keep the computer usable while speck runs tests
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck test --files` takes no turn, so with several builds going each can run test files at once, alongside a whole run, and every run gets the same share of the computer as the user's own programs. On an 8 GB MacBook Air that leaves the machine unusable while speck builds.
