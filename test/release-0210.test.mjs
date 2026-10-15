@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, CLI } from './support/panel.mjs';
-import { changelogSection, releaseMismatches, builtWithSpeckFigures, readmeFigures } from './support/release.mjs';
+import { changelogSection, releaseMismatches, builtWithSpeckFigures, readmeFigures, doneTicketsAt } from './support/release.mjs';
 import { commitBySubject } from './support/commits.mjs';
 
 // ---------- 0210: prepare release 0.4.0 ----------
@@ -17,28 +17,21 @@ const principle7 = () => read('docs/brief.md').match(/^7\. [\s\S]*?(?=^\d+\. |^#
 const notes = () => read('docs/releases/v0.4.0.md');
 const notesSection = heading => notes().match(new RegExp(`^## ${heading}\\s*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] || '';
 
-// The done tickets as they were in a commit, read with git.
-function doneTicketsAt(commit) {
-  assert.ok(commit, 'found the commit');
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
-  const archive = spawnSync('git', ['archive', '--format=tar', commit, 'speck/tickets/done'], { cwd: ROOT, maxBuffer: 1 << 28 });
-  assert.equal(archive.status, 0, String(archive.stderr));
-  const tar = spawnSync('tar', ['-x', '-C', dir], { input: archive.stdout });
-  assert.equal(tar.status, 0, String(tar.stderr));
-  const done = path.join(dir, 'speck', 'tickets', 'done');
-  return fs.readdirSync(done).filter(f => f.endsWith('.md')).map(f => fs.readFileSync(path.join(done, f), 'utf8'));
-}
+// 0236 (release 0.5.0) made the checks below that named 0.4.0 as the current version check the current version instead.
+const version = () => JSON.parse(read('package.json')).version;
+const esc = v => v.replace(/\./g, '\\.');
 
-test('0210 AC1: package.json is version 0.4.0', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '0.4.0');
+test('0210 AC1: package.json has the current release version', () => {
+  assert.match(version(), /^\d+\.\d+\.\d+$/);
+  assert.ok(changelogSection(read('CHANGELOG.md'), version()), 'with a changelog section of its own');
 });
 
-test('0210 AC1: speck init prints speck 0.4.0', () => {
+test('0210 AC1: speck init prints speck and the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 0\.4\.0: /m);
+  assert.match(r.stdout, new RegExp(`^speck ${esc(version())}: `, 'm'));
 });
 
 test('0210 AC2: CHANGELOG.md has a 0.4.0 section above 0.3.0, under a few headings', () => {
@@ -46,7 +39,6 @@ test('0210 AC2: CHANGELOG.md has a 0.4.0 section above 0.3.0, under a few headin
   const s = changelogSection(log, '0.4.0');
   assert.ok(s, 'CHANGELOG.md has a 0.4.0 section');
   assert.ok(log.indexOf(s) < log.indexOf(changelogSection(log, '0.3.0')), '0.4.0 comes above 0.3.0');
-  assert.ok(log.match(/^## .*$/m)[0].startsWith('## 0.4.0'), '0.4.0 is the newest section');
   const groups = [...s.matchAll(/^### .+$/gm)];
   assert.ok(groups.length >= 2 && groups.length <= 8, `a few headings, not ${groups.length}`);
   assert.ok([...s.matchAll(/^- /gm)].length >= groups.length, 'each heading lists what changed');
@@ -60,16 +52,16 @@ test('0210 AC2: the 0.3.0 section is unchanged', () => {
   assert.equal(crypto.createHash('sha256').update(s).digest('hex'), '39fc8660025776499f2578cd43a4d58b5a7c7bc4b94df0016d47e8611bf41d5d');
 });
 
-test('0210 AC3: the README setup prompt names v0.4.0', () => {
-  assert.match(read('README.md'), /npx github:luroai\/speck#v0\.4\.0 init/);
+test('0210 AC3: the README setup prompt names the current version', () => {
+  assert.ok(read('README.md').includes(`npx github:luroai/speck#v${version()} init`));
   assert.doesNotMatch(read('README.md'), /#v0\.3\.0/);
 });
 
-test('0210 AC3: the README and brief status lines say 0.4.0, a public preview', () => {
+test('0210 AC3: the README and brief status lines say the current version, a public preview', () => {
   const readme = read('README.md').match(/^> Status:.*$/m)?.[0] || '';
   const brief = read('docs/brief.md').match(/^Status:.*$/m)?.[0] || '';
   for (const line of [readme, brief]) {
-    assert.match(line, /\b0\.4\.0, a public preview/);
+    assert.match(line, new RegExp(`\\b${esc(version())}, a public preview`));
     assert.doesNotMatch(line, /0\.3\.0/);
   }
 });
@@ -81,9 +73,8 @@ test('0210 AC4: the brief\'s principle 7 says builds end at approved, one ship q
   assert.match(p, /one build at a time \(WIP 1\) unless you change it/);
 });
 
-test('0210 AC5: package.json, the newest changelog section and the setup prompt all name 0.4.0', () => {
+test('0210 AC5: package.json, the newest changelog section and the setup prompt name the same version', () => {
   assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md'), readme: read('README.md') }), []);
-  assert.equal(JSON.parse(read('package.json')).version, '0.4.0');
 });
 
 test('0210 AC6: the release notes say what speck is, the main changes, how to install and how to upgrade', () => {
@@ -119,9 +110,13 @@ test('0210 AC6: the release notes use none of the private words', () => {
 // The commit this release was built from, found by its message. Its done tickets are what the figures were worked out from.
 const builtFrom = () => commitBySubject('speck(0212): Recover a ship that was stopped partway');
 
+// 0236 (release 0.5.0) set the figures again, so this checks the README as this release shipped it.
 test('0210 AC7: the README\'s Built with speck figures match the done tickets this release was built from', () => {
   const figures = builtWithSpeckFigures(doneTicketsAt(builtFrom()));
-  assert.deepEqual(readmeFigures(read('README.md')), figures);
+  const shipped = commitBySubject('speck(0210): Prepare release 0.4.0');
+  assert.ok(shipped, 'found the commit');
+  const readmeThen = spawnSync('git', ['show', `${shipped}:README.md`], { cwd: ROOT, encoding: 'utf8' }).stdout;
+  assert.deepEqual(readmeFigures(readmeThen), figures);
   assert.deepEqual(figures, { shipped: 195, cancelled: 16, medianMinutes: 14, medianRounds: 1, firstRound: 100 });
 });
 

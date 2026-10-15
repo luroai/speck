@@ -1,6 +1,6 @@
 {
   "name": "speck-dev",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Your judgement, at agent speed. A repo-native workflow for building software with AI coding agents.",
   "repository": "github:luroai/speck",
   "private": true,
