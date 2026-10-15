@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0227"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:41:27.429Z"
-approved: "2026-10-15T22:25:31.403Z"
+approved: "2026-10-15T22:32:27.620Z"
 
 ---
 # 0235 · Run only the ticket's own tests during a build
@@ -63,12 +63,13 @@ Worth keeping an eye on: a ticket that breaks a test elsewhere is now caught at 
 ## Review log
 Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2, 1 of them a merge round
+- Review rounds: 3, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 416,496
-- Elapsed since build started: 44 min
+- Reviewer tokens: 900,565
+- Elapsed since build started: 51 min
 - Changed lines: 76 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -203,6 +204,71 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "The merge preserves both the newer retry rules and this ticket's shorter test runs before review. Shipping still checks the whole suite. The reported post-merge tests pass, and no blocking issues were found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d2d7f29ec474cc3d648eaf2d7350d075239d290f",
+    "merge": true,
+    "thread_id": "01a1419e-f8f7-7f70-ae75-c4154d087b67",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 482568,
+      "cached_input_tokens": 380672,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1501,
+      "reasoning_output_tokens": 60
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:32:18.263Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both skills retain --files instructions covering all three required file categories before initial, later and merge rounds, plus response files listing tests run. The 0235 AC1 instruction and response-delivery tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/reviewer-prompt.md retains the limited-coverage explanation and ship's whole-suite regression gate. The 0235 AC2 test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The build skill's 'Tests fail together' steps run the named failing files plus the ticket's own. Those steps and handBackMessage() explain both possible failure causes. Both 0235 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md preserves main's new cached-result wording alongside this ticket's selected-file workflow. The build skill still reserves whole-suite runs after implementation for ship. The 0235 AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Supplied post-merge output reports 2043 passed, zero failed and three skipped; the selected files reportedly passed all 75 tests. No changes to ship's test execution appear in the diff."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The latest merge preserves main's cached-result improvement and the approved instructions for shorter test runs before review. The reported tests pass, and no blocking issues were found."
   }
 }
 ```
