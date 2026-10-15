@@ -45,6 +45,7 @@ A build runs only the ticket's own tests, and the whole suite runs once per tick
 - Lines that say otherwise today: `skills/speck-review/SKILL.md` ("from the whole suite… never `speck test --files`", and "This holds for every round"), `skills/speck-build/SKILL.md` section 1 step 1 ("Every build runs the whole suite at least once per review round"), section 3 step 5, section 4 and "Tests fail together" step 2, `templates/reviewer-prompt.md`, `handBackMessage()` in `scripts/hand-back.mjs`, and the `speck test` and `/speck-build` rows in `docs/brief.md`. `test/build-0197.test.mjs` and `test/brief-0111.test.mjs` pin some of this wording; change those tests only where they pin what this ticket changes.
 - This repo builds from its installed copies in `.claude/skills/`, which here link to `skills/`.
 - 0227 changes the same skills and comes first.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
