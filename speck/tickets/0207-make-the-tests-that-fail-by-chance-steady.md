@@ -1,7 +1,7 @@
 ---
 id: "0207"
 title: "Make the tests that fail by chance steady"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-fix-the-race-in-the-0153-second-ship-test.m
 after: ["0206"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T15:06:38.152Z"
+approved: "2026-10-15T15:51:47.478Z"
 
 ---
 # 0207 · Make the tests that fail by chance steady
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Several tests fail now and then in full runs and pass when run again. Since 0195 a chance failure is run again rather than failing the run, but each one still costs a second run of its file, shows in the flaky log and can hide a real failure. Seen on 2026-10-14 and 15: 0153 AC2, 0128 AC4, 0176 AC1 and 0177 AC3.
@@ -52,9 +53,15 @@ Four checks in speck's own test suite that sometimes failed when the computer wa
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new check can miss the slowdown it must guard against.; F2 The required three consecutive file runs are not recorded for the changed speed-0198.test.mjs file.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 397,588
+- Elapsed since build started: 45 min
+- Changed lines: 8 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - 0128 AC4's cause (AC2): the panel showed speck run as on as soon as it held its lock, but speck run writes its first line ("speck run: watching for ready tickets…") to the shared run.log a moment later. On a busy machine that line landed after the second Turn on click had started reading the log, so the second speck run's refusal began with the first one's line, and the test's anchored match failed. Reproduced 3 times in 15 runs of that test with every core busy. Fixed in the panel: it shows speck run as on only once it holds the lock and has written its first line. 0 failures in 15 runs under the same load afterwards; 0207 AC2 pauses a copy of speck run between the two to check it every time.
 - Three runs in a row of each changed file, on 2026-10-15 (AC4): ship-0153 15/15 passed each time; panel-0128 13/13; build-log-0176 4/4; panel-0177 8/8; flaky-0207 5/5. Under every core kept busy as well: flaky-0207 3 runs, panel-0177 and ship-0153 2 runs, all passing; 0176 AC1 measured 440 ms against 440 ms of CPU, where wall-clock time had missed by 13%.
