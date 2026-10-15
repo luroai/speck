@@ -44,7 +44,7 @@ A P0 priority tag stands out more than any other priority tag, wherever the pane
 - Self-check: no changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The P0 priority tag, which marks the urgent fix for a broken main, is now red wherever the panel shows it: in Plan, in the Build queue and in the full ticket view, in both the light and dark looks. It stays red when you point at it. A P1 tag looks as before, and P2 to P5 stay grey. To see it, open the panel when there's a fix ticket on the board. Its tip, its size and where you can tap it are unchanged.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,7 @@ A P0 priority tag stands out more than any other priority tag, wherever the pane
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -115,6 +116,69 @@ A P0 priority tag stands out more than any other priority tag, wherever the pane
     ],
     "escalation_question": "",
     "summary": "P0 tags are red in all three panel locations at rest, and the existing priority styles and accessibility wording are preserved. However, hovering a P0 tag in Plan removes its red highlight. Fix that interaction and cover it with a regression test before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a3b7f55db396a427230362dc33de57ce51ceb1b7",
+    "thread_id": "01a141da-0313-7922-8d19-132cdf70713a",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 173556,
+      "cached_input_tokens": 137600,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1119,
+      "reasoning_output_tokens": 22
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:20:05.865Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html fieldTags() assigns p0 in Plan, the Build queue and the full ticket pane. .tag.p0 and .tag.p0.pick:hover keep text and border in --bad. Passing AC1 tests cover all three locations and computed browser colours at rest and hovered in both themes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Existing P1 and P2–P5 rules remain unchanged. The passing AC2 test checks their styling and classes; the browser test also verifies existing P1 and P2 hover colours."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Changes affect classes and colour declarations only, preserving wording, size and tap area. The passing AC3 test checks accessibility wording and colour-only declarations. All 13 tests passed, with none skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:94",
+        "issue": "P0 tags previously lost their red text and border when hovered in Plan.",
+        "suggested_fix": "The added .tag.p0.pick:hover rule fixes the cascade; the passing browser regression test verifies both themes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "P0 priority tags now stay red across the panel, including when hovered, in light and dark mode. Other priorities and accessibility behaviour are preserved. All 13 tests passed; no blocking concerns remain."
   }
 }
 ```
