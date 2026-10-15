@@ -41,6 +41,7 @@ The badge has a shipping loop of its own: the builder pushes the finished block 
 - Asked for 2026-10-14. Changed 2026-10-15: "Can we just have the builder pushing the box with a green tick on it off the screen? Maybe with the box being on what looks like a little paper boat?"
 - The design reference is `mockups/builder-badge/index.html` in the main checkout (local only: `mockups/` isn't in git, so it isn't in a build's worktree; `git worktree list` shows the main checkout first). It has no shipping state yet: reuse its builder, block and tick drawing code.
 - Today shipping shows the `type` pose (`badgeOf` in `templates/panel.html`); the still frames are in `STILL_AT`.
+- Failing before this build: none
 - Builds after 0196, which makes the panel show a ticket as shipping from its approval until it ships, whether or not its build is running.
 
 ## In plain words
