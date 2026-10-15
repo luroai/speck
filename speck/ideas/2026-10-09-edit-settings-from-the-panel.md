@@ -16,3 +16,4 @@ Changing a setting today means opening `speck/config.yml` in an editor. Doing it
 - Should a change be committed, or left uncommitted for the user?
 - How should the popup be opened (for example a settings button in the header)?
 - The panel has no login, so anything that can reach `127.0.0.1` could change config. Is that acceptable?
+- Added 2026-10-15: let some settings be set for this machine only, not in the committed `speck/config.yml`. `max_parallel_builds` is the case that prompted it: 4 suits a 16-core Linux box, but an 8 GB MacBook Air needs 1 or 2, and today whatever is committed applies to both. The popup could say which settings are this machine's and which are the repo's, and keep this machine's somewhere git ignores (for example under `speck/.cache/`), read over the committed value.
