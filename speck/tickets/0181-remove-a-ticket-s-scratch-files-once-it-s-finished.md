@@ -1,7 +1,7 @@
 ---
 id: "0181"
 title: "Remove a ticket's scratch files once it's finished"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T12:38:23.416Z"
+approved: "2026-10-15T12:50:59.523Z"
 
 ---
 # 0181 · Remove a ticket's scratch files once it's finished
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build writes scratch files for its ticket in `/tmp` (`/tmp/speck-<id>-tests.txt`, `-prompt.md`, `-response.md`, `-verdict.json` and others), and nothing removes them. About 19 MB had built up by 2026-10-14. On machines where `/tmp` is held in memory, as on this one, they use memory until the next restart.
@@ -51,9 +52,14 @@ To see it, look in `/tmp` for files named after a ticket before and after it shi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 131,633
+- Elapsed since build started: 13 min
+- Changed lines: 35 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: the clean-up looks in the folder Node reports as temporary (`/tmp` unless `TMPDIR` names another), while the skills write to `/tmp` by name. With `TMPDIR` set elsewhere, the files aren't found.
