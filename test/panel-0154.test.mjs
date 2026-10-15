@@ -54,7 +54,7 @@ test('0154 AC1: a touch on a ticket, as on a phone, never highlights or dims oth
   }
 });
 
-test('0154 AC1: with a mouse, hovering still highlights linked tickets and dims the rest, also after a touch', async () => {
+test('0154 AC1: with a mouse, hovering still highlights linked tickets and leaves the rest as they are, also after a touch', async () => {
   const p = fakePage([board()]);
   await p.settle();
   p.pointer('touch');
@@ -62,7 +62,7 @@ test('0154 AC1: with a mouse, hovering still highlights linked tickets and dims 
   p.pointer('mouse'); // a touch laptop's mouse, used after its screen
   queued(p, '0002').listeners.mouseenter();
   assert.ok(lit(queued(p, '0002')) && lit(shaping(p, '0001')) && lit(shaping(p, '0003')) && lit(queued(p, '0004')), 'the chain lights up');
-  assert.ok(dim(shaping(p, '0010')) && dim(queued(p, '0006')), 'the rest dims');
+  assert.ok(!lit(shaping(p, '0010')) && !dim(shaping(p, '0010')) && !lit(queued(p, '0006')) && !dim(queued(p, '0006')), 'the rest are left as they are (0185)');
   queued(p, '0002').listeners.mouseleave();
   assert.ok(rows(p).every(n => !lit(n) && !dim(n)), 'and it ends when the pointer leaves');
 });
