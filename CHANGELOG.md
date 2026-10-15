@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.4.0 · 15 October 2026
+
+What's new since 0.3.0. Builds now stop at approved and `speck run` ships what's left in one queue, every ship tests exactly what will land, and the panel has become somewhere you can steer speck from, on your phone as well as your computer.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.4.0 init`.
+- `speck run` only starts Claude Code for builds when Claude Code is your builder, and setup leaves a build command that matches the builder you chose.
+
+### Tickets and review packs
+
+- Every ticket the builder takes to approval has an "In plain words" section: what's different for someone using the product, how to see it and what to keep an eye on.
+- `speck pack <id> --plain` prints a short review pack in plain English, for deciding whether to ship without reading code.
+- The review pack counts a ticket's changed lines correctly wherever you run it from.
+- When your agent makes tickets that would change the same files as another open ticket, it makes them wait for that ticket with `after:`.
+
+### Building and reviewing
+
+- A reviewer that runs longer than `review_timeout_minutes` (30 by default) is stopped, and the round fails with a message saying so, leaving the ticket as it was.
+- A test run that prints nothing for `test_stall_minutes` (5 by default) is stopped, with everything it started, and fails as stalled, so a build or ship never waits for ever.
+- When a full test run fails and `commands.test_files` is set, speck runs the failing tests' files once more. Tests that pass the second time don't fail the run: they're listed on a "Flaky:" line, and the reviewer's test summary says which ones they were.
+- A build runs the whole suite once before each review round, and only the ticket's own tests the rest of the time. Builders are asked to write each new test the quickest way that still really checks its criterion.
+- Stopping a build, ship or test run ends the tests it started too, and a ticket's scratch files are removed once it has shipped or been cancelled.
+
+### Shipping
+
+- Builds end at approved. While `speck run` is on, its ship queue ships each approved ticket that `auto_ship` covers, one at a time, and tries again by itself once whatever stopped a ship has changed.
+- When a ship needs work on the ticket, because it clashes with newer work on the base branch or the tests only fail together with it, `speck run` hands the ticket back to its build to sort out and have reviewed again.
+- `speck ship` tests the ticket merged with the latest base branch, and lands exactly what it tested. A ticket that merges cleanly and passes ships without another review.
+- A ship that was stopped partway no longer gets the ticket stuck: the next ship tidies up and carries on.
+
+### The panel
+
+- An Auto-build switch in the header shows whether `speck run` is on and turns it on or off. While a build runs, it names the ticket and the stage it's at.
+- Read the review pack of any approved or shipped ticket, and ship an approved one with the Ship button in its review pack.
+- Each ticket being built is a card showing its stage, with speck's builder acting out what the build is doing. A ticket keeps its place in the list until it has shipped, and its card says when it's shipping, when its ship merged but couldn't push, and when it's waiting for Auto-build to be turned on.
+- Move a queued ticket back to Plan, open a shipped ticket by tapping its title, tap a tag to see what it means, and tap a linked ticket's id to go to it.
+- A new look, in light and dark, that follows your computer's setting until you choose, and is easy to read for people with low vision.
+- Use it on your phone: it fits the screen, can be added to your home screen as an app, and `speck panel --url <https address>` serves it at a private address through a tunnel that makes you log in.
+- Changes reach every open page as they happen, an open build log shows new lines as they're written, and the panel stays quick however many tickets you have.
+- A build's time counts only the time an agent was working on it: from the start of its build to its approval, leaving out time spent blocked or paused.
+
 ## 0.3.0 · 11 October 2026
 
 What's new since 0.2.0. Most of it makes builds that run while you work safer and quicker, and makes shipping cope on its own when something gets in the way.
