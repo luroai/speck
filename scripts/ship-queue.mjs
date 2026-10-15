@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { sh, ticketBranches } from './core.mjs';
-import { shipState } from './ship.mjs';
+import { shipState, otherShipRunning } from './ship.mjs';
 import { sharedCacheDir } from './turns.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
@@ -17,13 +17,6 @@ export function shipOrder(tickets) {
   const at = t => { const ms = Date.parse(t.approved); return Number.isFinite(ms) ? ms : Infinity; };
   return tickets.filter(t => t.status === 'approved' && t.auto_ship === true && !t.build_running)
     .sort((a, b) => (b.type === 'fix') - (a.type === 'fix') || (at(a) - at(b) || 0) || String(a.id).localeCompare(String(b.id)));
-}
-
-// True while a ship of any ticket runs in the repo, whoever started it, from the ship records in `runs`.
-function anyShipRunning(runs) {
-  let names = [];
-  try { names = fs.readdirSync(runs); } catch { return false; }
-  return names.some(f => { const m = f.match(/^(\d+)\.ship\.json$/); return !!m && shipState(runs, m[1])?.running === true; });
 }
 
 // The commit a local branch is at, or '' if it isn't there.
@@ -53,14 +46,14 @@ function lastLine(log) {
 }
 
 // Starts `speck ship <id> --auto` from the repo in its own process group, so stopping speck run leaves it running,
-// writing to `log`. done(code, error) is called once as it ends: its exit code (null if a signal ended it), or the error
+// writing to `log`. SPECK_SHIP_ALONE has it exit 15, changing nothing, if another ship is running as it starts. done(code, error) is called once as it ends: its exit code (null if a signal ended it), or the error
 // that stopped it starting.
 export function launchShip(repo, id, log, done) {
   let fd = null, over = false;
   const end = (code, error = null) => { if (!over) { over = true; done(code, error); } };
   try {
     fd = fs.openSync(log, 'w');
-    const child = spawn(process.execPath, [CLI, 'ship', id, '--auto'], { cwd: repo, detached: true, stdio: ['ignore', fd, fd] });
+    const child = spawn(process.execPath, [CLI, 'ship', id, '--auto'], { cwd: repo, detached: true, stdio: ['ignore', fd, fd], env: { ...process.env, SPECK_SHIP_ALONE: '1' } });
     child.on('error', e => end(null, e.message));
     child.on('exit', code => end(code));
     child.unref();
@@ -77,15 +70,17 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip } 
   let current = null; // the ship this speck run has going
   let hold = null; // the base branch's commit a ship found failing (exit 14): no ship starts while it's still there
 
-  const ended = (id, refs, log, since, code, error) => {
+  const ended = (id, prev, log, since, code, error) => {
     current = null;
     if (code === 0) return say(`Shipped ${id}.`);
+    // Another ship started just before it: not a try, so it's tried again once that one has ended.
+    if (code === 15) return prev ? last.set(id, prev) : last.delete(id);
     // The record's message is this ship's only if the ship took the record after it started.
     const rec = shipState(runs, id);
     const why = error || (rec?.started >= since && rec.message) || lastLine(log) || (code === null ? 'it was stopped' : `it exited with ${code}`);
     say(`${id} didn't ship: ${why}\nspeck run will try it again once ${base} or its branch has a new commit.`);
     if (code === 14) {
-      hold = refs.base;
+      hold = headOf(repo, base); // as the ship ended: it may have tested commits made while it ran
       say(`Shipping is on hold until ${base} passes: speck run won't start another ship until ${base} has a new commit.`);
     }
   };
@@ -108,12 +103,12 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip } 
       }
       const prev = last.get(t.id);
       if (prev && prev.base === refs.base && prev.head === refs.head) continue;
-      if (anyShipRunning(runs)) return; // another ship: wait for it to end
+      if (otherShipRunning(runs)) return; // another ship: wait for it to end
       const log = path.join(runs, `${t.id}.ship.log`), since = new Date().toISOString();
       current = t.id;
       last.set(t.id, refs);
       say(`Shipping ${t.id}: speck ship ${t.id} --auto. Log: ${path.relative(repo, log)}`);
-      launch(repo, t.id, log, (code, error) => ended(t.id, refs, log, since, code, error));
+      launch(repo, t.id, log, (code, error) => ended(t.id, prev, log, since, code, error));
       return;
     }
   };

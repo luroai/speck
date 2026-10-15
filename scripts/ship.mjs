@@ -434,6 +434,13 @@ export function shipState(runs, id) {
   return { running: false, auto, started: rec.started, ended: text(rec.ended), message: text(rec.message) };
 }
 
+// True while a ship of any ticket but `pad` runs in the repo, whoever started it, from the ship records in `runs`.
+export function otherShipRunning(runs, pad = null) {
+  let names = [];
+  try { names = fs.readdirSync(runs); } catch { return false; }
+  return names.some(f => { const m = f.match(/^(\d+)\.ship\.json$/); return !!m && m[1] !== pad && shipState(runs, m[1])?.running === true; });
+}
+
 // Takes the ticket's ship record for this process, or refuses, changing nothing, while another ship of it runs. The
 // record is written whole and then linked into place, which is atomic, so two ships starting at once can't both take
 // it. A record left by a ship that has ended or gone is replaced, only while holding a short-lived recovery lock.
@@ -489,6 +496,9 @@ export function cmdShip(args) {
   if (!id) throw new SpeckError('Usage: speck ship <id> [--auto]');
   const repo = findRepoRoot();
   const auto = args.includes('--auto');
+  // Read once and removed, so nothing the ship runs, such as the tests, inherits it.
+  const alone = !!process.env.SPECK_SHIP_ALONE;
+  delete process.env.SPECK_SHIP_ALONE;
   // --auto is how the builder ships straight after approval. It only goes ahead when config allows it for this ticket.
   if (auto) {
     // Read the ticket where its branch is checked out, so the checks see the approved copy, not the base branch's.
@@ -500,6 +510,12 @@ export function cmdShip(args) {
   }
   // Only a ticket id gets a record: anything else is refused by shipTicket, naming it.
   const took = /^\d{1,4}$/.test(id) ? takeShip(repo, id.padStart(4, '0'), auto) : null;
+  // speck run's ships go ahead only while no other ship runs (0193). Each takes its record before it looks, so of two
+  // ships starting at once, at least one sees the other.
+  if (took && alone && otherShipRunning(path.dirname(took.file), id.padStart(4, '0'))) {
+    endShip(took, false, null);
+    throw new SpeckError(`Another ship is running in this repo, so ${id.padStart(4, '0')} wasn't shipped. Nothing was changed.`, 15);
+  }
   try { shipTicket(repo, id); }
   catch (e) { if (took) endShip(took, auto, e); throw e; }
   if (took) endShip(took, auto, null);

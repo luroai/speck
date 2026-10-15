@@ -1,7 +1,7 @@
 ---
 id: "0193"
 title: "Ship approved tickets from speck run when their auto-ship didn't finish"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T09:41:50.165Z"
 ---
 # 0193 · Ship approved tickets from speck run when their auto-ship didn't finish
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build's auto-ship can't finish (the base branch's tests were failing, the tests stalled, or staged files were in the way), its ticket stays approved until the user runs `/speck-ship`, even after the cause has gone. On 14 October approved tickets sat waiting after `main` was fixed, until they were shipped by hand.
@@ -59,3 +59,83 @@ While `speck run` is on, it ships each approved ticket that `auto_ship` covers, 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "eddcb584bec0f73d4de55c2cfb9883c0dd01cd5a",
+    "thread_id": "01a13efa-e744-7920-8d8e-aa419c4b2462",
+    "seconds": 53,
+    "usage": {
+      "input_tokens": 190601,
+      "cached_input_tokens": 141952,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1588,
+      "reasoning_output_tokens": 261
+    },
+    "saved_at": "2026-10-15T09:54:05.722Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "shipOrder and the passing AC1 tests cover eligibility, ordering and waiting for an existing record. However, shipQueue.check checks records before spawning without an atomic repository-wide reservation. ship.mjs takeShip locks only the individual ticket, so simultaneous ships of different tickets can overlap."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipQueue.check remembers base and ticket branch hashes in last and suppresses unchanged retries. The passing AC2 tests exercise both branch changes, repeated checks, refusal reporting and earlier failed auto-ship records."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "shipQueue.ended sets hold to the base hash captured before launch. shipTicket can observe and test a newer base during shipping. The AC3 test passes but never changes the base before the ship exits 14, missing premature release of the hold."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "shipOrder filters approved status and statusData's auto_ship eligibility. launchShip uses detached processes. Passing AC4 tests cover excluded risks, disabled auto-ship, other statuses and a real ship completing after speck run stops."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0193-tests.txt confirms 1735 tests, 1732 passed, zero failures and three skipped. No pre-existing failures were listed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship-queue.mjs:111",
+        "issue": "Checking ship records and launching are separate operations. Another manually started or build-started ship can begin between them. Since takeShip in ship.mjs reserves only a ticket, ships of different tickets can both proceed, violating AC1's single-ship guarantee. The test creates the other ship's record before checking and does not exercise concurrent starts.",
+        "suggested_fix": "Coordinate ship starts through an atomic repository-wide reservation shared by queue, manual and build-started ships. Add a concurrent-start test with different ticket ids proving that only one ship proceeds.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/ship-queue.mjs:88",
+        "issue": "The exit-14 hold uses the base hash from before shipping began. For example, shipping starts at A, a user commits B while tests run, shipTicket reruns tests against B and finds B's own tests failing. The queue stores A as the hold, immediately sees B as a change and starts another ship without any commit after the failure. This violates AC3.",
+        "suggested_fix": "Record a base reference appropriate to the failure rather than the pre-launch snapshot, and require a subsequent change before releasing the hold. Add a test where the base advances before the ship reports exit 14 and verify repeated checks launch nothing until another base commit.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The queue handles normal retries, ordering and shutdown correctly, and the full suite passes. Two gaps need fixing: simultaneous starts can allow overlapping ships, and a failing-base hold can clear immediately when the base changed during shipping."
+  }
+}
+```
+
+</details>

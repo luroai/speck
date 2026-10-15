@@ -2,9 +2,10 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import { shipRepo, BRANCH } from './support/ship.mjs';
+import { spawn, spawnSync } from 'node:child_process';
+import { shipRepo, BRANCH, CLI, env } from './support/ship.mjs';
 import { startRun, until, stopRun, killAll } from './support/run.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { shipQueue, shipOrder } from '../scripts/ship-queue.mjs';
@@ -36,6 +37,16 @@ const T = (id, o = {}) => ({ id, status: 'approved', auto_ship: true, type: '', 
 const commitTo = (r, cwd, file) => { fs.writeFileSync(path.join(cwd, file), `${Math.random()}\n`); r.g('-C', cwd, 'add', file); r.g('-C', cwd, 'commit', '-qm', file); };
 const count = (said, re) => said.filter(s => re.test(s)).length;
 
+// A ship of ticket `id` started outside speck run: a live `speck ship <id>` process, and its ship record naming it.
+function otherShip(r, id) {
+  const p = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)', 'speck', 'ship', id], { detached: true, stdio: 'ignore' });
+  p.unref();
+  const runs = path.join(r.dir, 'speck', '.cache', 'runs');
+  fs.mkdirSync(runs, { recursive: true });
+  fs.writeFileSync(path.join(runs, `${id}.ship.json`), JSON.stringify({ pid: p.pid, started: new Date().toISOString(), auto: false }));
+  return p.pid;
+}
+
 test('0193 AC1: speck run\'s queue ships an approved ticket that auto_ship covers, once', () => {
   const r = repo(), k = queue(r);
   k.check();
@@ -47,17 +58,42 @@ test('0193 AC1: speck run\'s queue ships an approved ticket that auto_ship cover
 
 test('0193 AC1: no ship starts while another ship runs in the repo, whoever started it', async () => {
   const r = repo(), k = queue(r);
-  // A ship of another ticket, started outside speck run: its record names a live `speck ship 0002` process.
-  const other = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)', 'speck', 'ship', '0002'], { detached: true, stdio: 'ignore' });
-  other.unref();
-  const runs = path.join(r.dir, 'speck', '.cache', 'runs');
-  fs.mkdirSync(runs, { recursive: true });
-  fs.writeFileSync(path.join(runs, '0002.ship.json'), JSON.stringify({ pid: other.pid, started: new Date().toISOString(), auto: false }));
+  const pid = otherShip(r, '0002');
   try {
     k.check(); k.check();
     assert.equal(k.launches.length, 0, 'waits for the other ship');
-  } finally { killAll([other.pid]); }
+  } finally { killAll([pid]); }
   assert.ok(await until(() => { k.check(); return k.launches.length === 1; }), 'starts once the other ship has ended');
+});
+
+test('0193 AC1: a ship speck run starts changes nothing and exits 15 if another ship is running as it starts', () => {
+  const r = repo();
+  const before = r.snapshot();
+  const pid = otherShip(r, '0002');
+  try {
+    const s = spawnSync(process.execPath, [CLI, 'ship', '0001', '--auto'], { cwd: r.dir, encoding: 'utf8', env: { ...env, SPECK_SHIP_ALONE: '1' } });
+    assert.equal(s.status, 15, s.stdout + s.stderr);
+    assert.match(s.stderr, /Another ship is running/);
+    assert.deepEqual(r.snapshot(), before, 'nothing changed');
+    assert.ok(!fs.existsSync(path.join(r.dir, 'speck', '.cache', 'runs', '0001.ship.json')), 'its ship record is gone, so the panel shows no ship');
+  } finally { killAll([pid]); }
+});
+
+test('0193 AC1: a ship that exited 15 is not a try: no refusal is said, and it is tried again', () => {
+  const r = repo(), k = queue(r);
+  k.check();
+  k.launches[0].done(15);
+  assert.equal(count(k.said, /didn't ship/), 0, k.said.join('\n'));
+  k.check();
+  assert.equal(k.launches.length, 2);
+});
+
+test('0193 AC1: speck run\'s ship doesn\'t pass SPECK_SHIP_ALONE on to the tests it runs', () => {
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'env-')), 'env.txt');
+  const r = repo({ test: `env > ${out}` });
+  const s = spawnSync(process.execPath, [CLI, 'ship', '0001', '--auto'], { cwd: r.dir, encoding: 'utf8', env: { ...env, SPECK_SHIP_ALONE: '1' } });
+  assert.equal(s.status, 0, s.stdout + s.stderr);
+  assert.doesNotMatch(fs.readFileSync(out, 'utf8'), /SPECK_SHIP_ALONE/);
 });
 
 test('0193 AC1: fix tickets ship first, then the one approved earliest; one at a time', () => {
@@ -122,6 +158,18 @@ test('0193 AC3: after exit 14, no ship starts until the base branch has a new co
   commitTo(r, r.dir, 'notes.txt');
   k.check(two());
   assert.equal(k.launches.length, 2, 'shipping again after a new commit on main');
+});
+
+test('0193 AC3: the hold is on the base branch as the ship ended, so commits made while it ran don\'t lift it', () => {
+  const r = repo(), k = queue(r);
+  k.check([T('0002')]);
+  commitTo(r, r.dir, 'notes.txt'); // made while the ship ran, which tested it and found it failing
+  k.launches[0].done(14);
+  for (let i = 0; i < 3; i++) k.check([T('0002'), T('0003')]);
+  assert.equal(k.launches.length, 1, 'still on hold');
+  commitTo(r, r.dir, 'notes.txt');
+  k.check([T('0002'), T('0003')]);
+  assert.equal(k.launches.length, 2);
 });
 
 test('0193 AC4: never ships a ticket auto_ship doesn\'t cover, nor one in any other status', () => {
