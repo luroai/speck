@@ -1,7 +1,7 @@
 ---
 id: "0189"
 title: "Stream an open build log as it's written"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T11:50:15.421Z"
 ---
 # 0189 · Stream an open build log as it's written
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 An open build log is asked for every second, and each time the panel reads and converts the whole log again, up to 2.5 MB, even when nothing has been added, and even after the build has ended.
@@ -56,3 +56,75 @@ An open build log shows new lines as they're written, without the page asking on
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bb82f92d1d4ef24e2143a4d6517d58fcdf88d612",
+    "thread_id": "01a13f7b-9027-7163-9c06-4ca028885d64",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 185124,
+      "cached_input_tokens": 134016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1230,
+      "reasoning_output_tokens": 258
+    },
+    "saved_at": "2026-10-15T12:14:28.966Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The 0189 AC1 tests cover complete entries and removal of the page timer. However, logFeed.catchUp suppresses further changes to a plain unfinished line when its line count stays unchanged; a read-only reproduction confirmed the displayed text remains stale."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The 0189 AC2 tests compare logFeed.answer with readableLog's last 200 lines, including timestamps, and check the page's rolling limit."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The 0189 AC3 tests measure bytes read from a 2.5 MB log, inspect incremental payloads, and exercise JSON events split across writes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The 0189 AC4 unit and panel integration tests cover silence for unchanged ended logs and replacement when a new build starts."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full output at /tmp/speck-0189-tests.txt records 1810 passes, zero failures and three skips. Changes to the 0052 tests replace polling expectations with stream behaviour as permitted."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/log-feed.mjs",
+        "issue": "catchUp's 'nothing new to show' check compares line positions without comparing the unfinished line's text. After sending 'npm ER', appending 'R! failed' without a newline sends no update, even across subsequent keep-alives. The page remains stale until a newline arrives, potentially forever if the process exits without one. The existing partial-line test completes the line with a newline and misses this case.",
+        "suggested_fix": "Track changes to the displayed partial text and emit a drop-and-replacement update when it changes, even if line positions are unchanged. Add a regression test with multiple writes to the same plain line before any newline.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The stream replaces repeated log requests and the full suite passes. One bug still leaves an unfinished plain log line stale as more text arrives. Fix that update case before merge."
+  }
+}
+```
+
+</details>

@@ -207,6 +207,16 @@ test('0189 AC3: an entry written in two parts is sent once it\'s whole, and a pl
   assert.deepEqual(sent.slice(1).map(s => [s.data.drop, s.data.lines]), [[0, ['npm ER']], [1, ['npm ERR! failed']]]);
 });
 
+test('0189 AC1: a plain line still being written is sent again each time it grows, before it ends (review round 1, F1)', () => {
+  const { feed, sent, add, write } = feedOf();
+  write('0001', 'Building\n');
+  feed.answer(on('s1'), '0001');
+  for (const part of ['npm ER', 'R! fai', 'led']) { add('0001', part); feed.ping(); }
+  assert.deepEqual(sent.map(s => [s.data.drop, s.data.lines]), [[0, ['npm ER']], [1, ['npm ERR! fai']], [1, ['npm ERR! failed']]]);
+  feed.ping();
+  assert.equal(sent.length, 3, 'unchanged: nothing more');
+});
+
 test('0189 AC3: a stream that closes, or closes the log, is sent nothing more, and a log no stream has open isn\'t followed', () => {
   const { feed, sent, add, write } = feedOf();
   write('0001', said('Hello.'));

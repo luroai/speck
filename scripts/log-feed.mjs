@@ -52,8 +52,10 @@ export function logFeed(runs, send, fallback) {
     const end = f.whole - f.lines.length + lines.length;
     return { lines: lines.slice(-LOG_LINES), end, truncated: end > LOG_LINES };
   };
-  // What the streams have been shown: up to which line, and up to which line that was whole lines, which don't change.
-  const shown = (f, v) => { f.shownEnd = v.end; f.stable = Math.min(v.end, f.whole); return v; };
+  // What the streams have been shown: up to which line, up to which line that was whole lines, which don't change, and
+  // the lines after those, which can.
+  const after = (f, v) => v.lines.slice(Math.max(0, f.stable - (v.end - v.lines.length))).join('\n');
+  const shown = (f, v) => { f.shownEnd = v.end; f.stable = Math.min(v.end, f.whole); f.unstable = after(f, v); return v; };
   // Reads the log from the start.
   const start = (f, fd) => {
     Object.assign(f, { build: ++builds, at: 0, pos: 0, size: 0, head: Buffer.alloc(0), last: null, whole: 0, lines: [], partial: [] });
@@ -76,7 +78,7 @@ export function logFeed(runs, send, fallback) {
       take(f, fd === null ? Buffer.alloc(0) : readAll(fd, f.pos, size - f.pos));
     } finally { if (fd !== null) fs.closeSync(fd); }
     const from = f.stable, drop = f.shownEnd - from, v = view(f);
-    if (v.end === f.shownEnd && f.stable === Math.min(v.end, f.whole)) return; // nothing new to show, or not yet
+    if (v.end === f.shownEnd && f.stable === Math.min(v.end, f.whole) && after(f, v) === f.unstable) return; // nothing new to show, or not yet
     f.at++;
     const first = v.end - v.lines.length;
     if (from < first || v.end < from) return reset(f, shown(f, v));
