@@ -49,7 +49,11 @@ While `speck run` is on, it ships each approved ticket that `auto_ship` covers, 
 - Self-check: the integration test waited only for the ticket to be done, not for its branch to be deleted, which ship does last; it now waits for both.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+While `speck run` is on, an approved ticket that was meant to ship on its own but didn't (because the main branch's tests were failing, the tests stalled, or something was in the way) now ships by itself once something has changed, instead of waiting for you. It ships one ticket at a time, fixes first, then the one approved earliest. If main's own tests are failing, it says once that shipping is on hold and waits for a new commit on main. It doesn't keep retrying a ticket when nothing has changed, and it says why a ticket didn't ship only once.
+
+Only one ship runs at a time now, whoever starts it: a ship you start while another is running waits for it to finish and says so.
+
+To see it: with `speck run` on, an approved low-risk ticket whose own ship didn't finish ships within a few seconds of a new commit on main or on its branch, and `speck run`'s output says "Shipping …" then "Shipped …". Worth watching: a ship waiting for another one waits as long as that one takes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +63,11 @@ While `speck run` is on, it ships each approved ticket that `auto_ship` covers, 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- The 0153 test "a second speck ship for the same ticket refuses…" takes its snapshot before the first ship reaches its tests, so it can fail under load: speck/ideas/2026-10-15-fix-the-race-in-the-0153-second-ship-test.md.
+- Skipped (covered by 0194): a build run outside `speck run` can find `speck run` already shipping its freshly approved ticket, so its own `speck ship --auto` refuses with "A ship is already running"; the ticket still ships.
+- Known limit: a ship waiting for the repo's ship lock waits as long as the other ship runs, with no time limit; a ship whose process has gone frees the lock.
+- Known limit: `speck run` keeps each ticket's last try in memory. After a restart it relies on the ship record of the last auto-ship, so a ticket may be tried once more when a commit landed in the same second the earlier ship started.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -211,6 +220,83 @@ While `speck run` is on, it ships each approved ticket that `auto_ship` covers, 
     ],
     "escalation_question": "",
     "summary": "The failing-base hold is fixed, and all tests pass. Concurrent shipping still needs fixing: a manual or build-started ship can bypass the queue ship's check and run alongside it."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5f3b2578c22ea8e9609dd8287ea33cfe6a0ec5c1",
+    "thread_id": "01a13efa-e744-7920-8d8e-aa419c4b2462",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 439078,
+      "cached_input_tokens": 368512,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3275,
+      "reasoning_output_tokens": 437
+    },
+    "saved_at": "2026-10-15T10:07:36.219Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "shipOrder selects eligible approved tickets, fixes first and then earliest approval. Every cmdShip now takes the atomic shared takeShipLock before entering shipTicket. Passing AC1 tests cover waiting, queue refusal, stale-lock recovery, ordering and actual shipping."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipQueue.check compares remembered base and ticket branch hashes and reports refusals once. Passing AC2 tests cover unchanged checks, commits on either branch and earlier failed attempts. Exit 15 restores the previous retry state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipQueue.ended captures the base hash on exit 14 and check blocks shipping until it changes. Both passing AC3 tests cover the hold, including commits made during shipping, and subsequent release."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "shipOrder uses approved status and statusData's shared auto-ship eligibility decision. Passing AC4 tests cover excluded risks, disabled auto-ship and other statuses. The integration test confirms a detached ship completes after speck run stops."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0193-tests.txt confirms 1741 tests: 1738 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship.mjs",
+        "issue": "Resolved: all ship entry points now acquire the same atomic repository-wide lock before shipping, preventing the concurrent-start overlap.",
+        "suggested_fix": "No further change required. Tests cover competing ships waiting or refusing, lock release and stale-lock recovery.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/ship-queue.mjs",
+        "issue": "Resolved: the failing-base hold records the base commit when shipping ends, so commits made during shipping do not immediately lift it.",
+        "suggested_fix": "No further change required; the AC3 regression covers this case.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. Eligible tickets ship in order, unchanged failures are not repeatedly retried, and a failing base pauses shipping. Both earlier issues are fixed, and the full test suite passes."
   }
 }
 ```
