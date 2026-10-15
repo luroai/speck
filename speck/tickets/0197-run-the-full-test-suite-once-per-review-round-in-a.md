@@ -1,7 +1,7 @@
 ---
 id: "0197"
 title: "Run the full test suite once per review round in a build"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T13:17:42.890Z"
 ---
 # 0197 · Run the full test suite once per review round in a build
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A build runs the full test suite after implementing, again after each fix in its self-check, and again before each review round. With two builds at once each full run took 3 to 5 minutes on 2026-10-15, and full runs were 40 to 65% of every build's time (0180: 15 of 23 minutes). This slows every project that uses speck, more so the bigger its suite.
@@ -47,7 +47,7 @@ Between its starting check and its ship, a build runs the full suite only once b
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Builds now run the whole set of tests less often. While building and fixing, the builder checks its work with just the ticket's own tests, and runs everything once just before each review. If that full run turns up a problem the change caused, the builder fixes it and runs everything again before the review starts, so reviewers still always see a clean, complete run. You should notice builds finishing sooner, most of all when there are several review rounds. Worth watching: problems in other parts of the product now show up a little later in a build, at the full run before review rather than straight after the first fix.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,67 @@ Between its starting check and its ship, a build runs the full suite only once b
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none sent to the inbox. Known limit: the first full run here failed on three timing-sensitive tests as well as the old-wording checks (0176 AC1, 0177 AC3, 0153 AC2), which passed on speck test's own rerun; speck already logs flaky tests, so no new note.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bf6c4669e4f06c4146a4d8191f82be3f5651c9b9",
+    "thread_id": "01a13fc0-a366-7f01-951a-5f5999cff53a",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 146679,
+      "cached_input_tokens": 100992,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 694,
+      "reasoning_output_tokens": 13
+    },
+    "saved_at": "2026-10-15T13:29:40.802Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md §3 steps 2, 4 and 5 use ticket files during implementation and self-check, then one full run before review. All three 0197 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Build skill §4 and review skill 'Your turn' require one full run after fixes before each later round, including merge rounds, and prohibit other runs between rounds. Both 0197 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both skills require change-caused failures to be fixed using failing test files, followed by another full run before review. The 0197 AC3 test checks all three instruction locations and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Git diff confirms pre-flight and handed-back ship steps are unchanged. Installed skills resolve to the source skills; installTooling copies both skills into both supported directories. Both 0197 AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0197-tests.txt: 1862 tests, 1859 passed, 3 skipped, zero failures. Changes to test/files-0113.test.mjs replace assertions about the superseded timing with checks of the new timing."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The instructions now reserve full-suite checks for review rounds and use focused tests during implementation and fixes. They require another full check after fixing a failure. Starting and shipping checks remain unchanged, installed skills match, and the suite has no failures."
+  }
+}
+```
+
+</details>
