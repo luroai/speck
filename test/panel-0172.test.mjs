@@ -15,9 +15,10 @@ const TICKETS = [
   T('0704', 'building', { title: 'Writing its code', started: ago(65), build_running: true }),
   T('0705', 'approved', approved({ ...exitOf('Approved.'), ship: { running: true, started: ago(5) } })), // by hand, its build ended
 ];
+// speck run is on, as its ship queue ships the approved tickets auto-ship covers (0203: with it off, they wait for you).
 function fake(tickets = TICKETS) {
   return fakePage([], {
-    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [] }))) }),
+    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [], run: { on: true } }))) }),
   });
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));

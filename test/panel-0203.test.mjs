@@ -1,0 +1,98 @@
+import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { T, fakePage, queueRows, round, panelModel } from './support/panel.mjs';
+
+// ---------- 0203: say when an approved ticket waits for Auto-build to ship it ----------
+
+const ago = s => new Date(Date.now() - s * 1000).toISOString();
+const approved = o => ({ started: ago(900), approved: ago(60), self_check: 'no changes', rounds: [round(1, 10)], ...o });
+const RUN = { on: true, pid: 4242, started: ago(600) };
+const TICKETS = [
+  T('0701', 'approved', approved({ auto_ship: true, build_exit: { at: ago(30), code: 0, message: 'Approved.' } })), // build ended, ship not started
+  T('0702', 'approved', approved({ auto_ship: true, build_running: true })), // build still closing out
+  T('0703', 'approved', approved({ auto_ship: true, build_exit: { at: ago(30), code: 0 }, ship: { running: true, auto: true, started: ago(5) } })), // auto-shipping
+  T('0704', 'approved', approved({ auto_ship: true, ship: { running: true, started: ago(5) } })), // shipped from the panel
+  T('0705', 'approved', approved({ auto_ship: false, build_exit: { at: ago(30), code: 0 } })), // auto-ship doesn't cover it, build ended
+  T('0706', 'approved', approved({ auto_ship: false })), // auto-ship doesn't cover it, no build from speck run
+  T('0707', 'approved', approved({ build_exit: { at: ago(30), code: 0 } })), // from an older speck status, with no auto_ship field
+];
+const state = (run, tickets = TICKETS) => ({ tickets, ideas: [], resume_command: '', ...(run ? { run } : {}) });
+const fake = async (run, tickets) => { const p = fakePage([state(run, tickets)]); await p.settle(); return p; };
+
+const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
+const topOf = row => row.children.find(n => n.className === 'top');
+const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
+// What a card shows: its classes, its sentence and the sentence's classes, its badge's pose and name, and its labels.
+function shows(p, id) {
+  const row = rowOf(p, id), [badge, text] = topOf(row).children.find(n => n.className === 'badgerow').children;
+  const say = text.children.find(n => /\bsay\b/.test(n.className));
+  return { card: classes(row), say: say.textContent, sayClass: classes(say), pose: classes(badge)[1], label: badge.attrs['aria-label'],
+    acts: p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent) };
+}
+
+test('0203 AC1: with speck run off, an approved ticket auto-ship covers says to turn on Auto-build, in purple, with its badge still', async () => {
+  const p = await fake(null);
+  for (const id of ['0701', '0702']) {
+    const s = shows(p, id);
+    assert.equal(s.say, 'Approved · turn on Auto-build to ship it', id);
+    assert.deepEqual(s.sayClass, ['say', 'to-ship'], `${id}: purple`);
+    assert.ok(s.card.includes('to-ship'), `${id}: a purple card: ${s.card}`);
+    assert.ok(!s.card.some(c => c.startsWith('at-')), `${id}: no stage border: ${s.card}`);
+    assert.equal(s.pose, 'wait', `${id}: the badge waits for you rather than moving`);
+    assert.deepEqual(s.acts, [], `${id}: no "Build finished without shipping"`);
+  }
+  const m = panelModel()(state(null)).queue.find(t => t.id === '0701');
+  assert.deepEqual([m.to_ship, m.red, m.ship_waiting, m.exit_label], [true, false, false, null]);
+});
+
+test('0203 AC1: the Auto-build button\'s builder isn\'t at work for it', async () => {
+  const p = await fake(null, TICKETS.slice(0, 2));
+  const builder = p.all(p.byId('run')).find(n => n.tagName === 'canvas');
+  assert.deepEqual(classes(builder), ['mini', 'still']);
+});
+
+test('0203 AC2: with speck run on, the same ticket waits to ship in the normal colour with its badge moving', async () => {
+  const p = await fake(RUN);
+  const s = shows(p, '0701');
+  assert.equal(s.say, 'Approved · waiting to ship');
+  assert.deepEqual(s.sayClass, ['say'], 'the normal text colour');
+  assert.ok(!s.card.includes('to-ship') && !s.card.includes('blocked'), s.card.join(' '));
+  assert.equal(s.pose, 'ship', 'the badge moves as 0196 set out');
+  assert.ok(s.card.includes('at-ship'));
+  const closing = shows(p, '0702');
+  assert.equal(closing.say, 'Approved · waiting to ship');
+  assert.deepEqual(closing.sayClass, ['say']);
+});
+
+test('0203 AC2: turning speck run on again changes the card back', async () => {
+  const p = fakePage([state(null), state(RUN)]);
+  await p.settle();
+  assert.equal(shows(p, '0701').say, 'Approved · turn on Auto-build to ship it');
+  p.timers.shift()(); await p.settle();
+  const s = shows(p, '0701');
+  assert.equal(s.say, 'Approved · waiting to ship');
+  assert.equal(s.pose, 'ship');
+});
+
+test('0203 AC3: a ticket that\'s shipping, by anyone, shows as shipping whether speck run is on or off', async () => {
+  for (const run of [null, RUN]) {
+    const p = await fake(run);
+    for (const id of ['0703', '0704']) {
+      const s = shows(p, id), where = `${id}, ${run ? 'on' : 'off'}`;
+      assert.equal(s.say, 'Shipping', where);
+      assert.deepEqual(s.sayClass, ['say'], where);
+      assert.equal(s.pose, 'ship', where);
+      assert.ok(s.card.includes('at-ship'), where);
+    }
+  }
+});
+
+test('0203 AC4: an approved ticket auto-ship doesn\'t cover looks the same whether speck run is on or off', async () => {
+  const off = await fake(null), on = await fake(RUN);
+  for (const id of ['0705', '0706', '0707']) {
+    assert.deepEqual(shows(off, id), shows(on, id), id);
+    assert.equal(shows(off, id).say, 'Approved · waiting for you to ship it', id);
+  }
+  assert.deepEqual(shows(off, '0705').acts, ['Build finished without shipping']);
+});

@@ -74,7 +74,7 @@ test('0167 AC2: an approved ticket is waiting for you when auto-ship doesn\'t co
     T('0003', 'approved', { auto_ship: false, ship: { running: true, auto: false, started: new Date().toISOString() } }), // shipping now
     T('0004', 'approved', { auto_ship: true, build_exit: { code: 0 } }), // its build has ended: since 0194 speck run ships it (0196)
     T('0005', 'approved', {}), // from an older speck status, with no auto_ship field
-  ], ideas: [] });
+  ], ideas: [], run: { on: true } }); // speck run is on, as its ship queue ships 0002 and 0004 (0203)
   const by = Object.fromEntries(m.queue.map(t => [t.id, [t.to_ship, t.red]]));
   assert.deepEqual(by, { '0001': [true, false], '0002': [false, false], '0003': [false, false], '0004': [false, false], '0005': [false, false] });
 });

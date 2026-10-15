@@ -33,9 +33,10 @@ const TICKETS = [
 const EXPECT = { '0501': 'at-build', '0502': 'at-check', '0503': 'at-review', '0504': 'at-review', '0505': 'at-ship', '0506': 'at-ship',
   '0507': 'blocked', '0508': 'blocked', '0509': 'to-ship', '0510': null, '0511': null, '0512': null };
 
+// speck run is on, as its ship queue ships the approved tickets auto-ship covers (0203: with it off, they wait for you).
 function fake(state) {
   return fakePage([], {
-    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets: state.tickets, ideas: [] }))) }),
+    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets: state.tickets, ideas: [], run: { on: true } }))) }),
   });
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));

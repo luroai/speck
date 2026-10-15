@@ -16,9 +16,10 @@ const TICKETS = [
   T('0605', 'approved', approved({ build_exit: { at: ago(30), code: 0 } })), // from an older speck status, with no auto_ship field
 ];
 
+// speck run is on, as its ship queue ships these (0203: with it off, an approved ticket auto-ship covers waits for you).
 function fake(tickets = TICKETS) {
   return fakePage([], {
-    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [] }))) }),
+    fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets, ideas: [], run: { on: true } }))) }),
   });
 }
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
@@ -44,7 +45,7 @@ test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, wait
   assert.equal(s.pose, shipping.pose, 'the badge moves as it does while shipping');
   assert.equal(s.pose, 'ship'); // the shipping loop since 0172
   assert.ok(s.card.includes('at-ship'), 'its border shows the ship stage');
-  const m = panelModel()({ tickets: TICKETS, ideas: [] }).queue.find(t => t.id === '0601');
+  const m = panelModel()({ tickets: TICKETS, ideas: [], run: { on: true } }).queue.find(t => t.id === '0601');
   assert.deepEqual([m.to_ship, m.red, m.exit_label], [false, false, null]);
 });
 
