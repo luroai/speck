@@ -1,7 +1,7 @@
 ---
 id: "0228"
 title: "Skip the retry for tests that already fail on the base branch"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:23:50.976Z"
+approved: "2026-10-15T22:01:13.539Z"
 
 ---
 # 0228 · Skip the retry for tests that already fail on the base branch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a full test run fails, speck runs the failing tests' files once more to catch tests that fail by chance. Tests that already fail on the base branch aren't failing by chance, so retrying them only costs time, and with them in the run the retry can never pass it. On an 8 GB MacBook Air, the 26 tests already failing on `main` cost 316 s of test time per full run, half of it on the retry.
@@ -54,9 +55,15 @@ Worth keeping an eye on: this only works once the main branch's tests have been 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Suffix matching confuses different files.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 363,008
+- Elapsed since build started: 37 min
+- Changed lines: 56 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: `speck/ideas/2026-10-15-log-flaky-tests-when-base-failures-are-left-out.md` (a new failure that passes on the second try isn't logged as flaky when base branch failures were left out).
