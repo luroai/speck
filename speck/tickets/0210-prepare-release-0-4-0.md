@@ -45,6 +45,7 @@ speck is ready to be released as 0.4.0.
 - Waits for every ticket planned for this release, so they're in it.
 - The tag goes on straight after this ships, since until then the README points at a tag that doesn't exist yet. Then the GitHub release: `gh release create v0.4.0 --verify-tag --title "speck 0.4.0" --notes-file docs/releases/v0.4.0.md`.
 - Checked 2026-10-15: the repo has tags `v0.2.0` and `v0.3.0` but no GitHub releases yet (`gh release list`), so this is the first release page.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
