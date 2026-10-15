@@ -1,7 +1,7 @@
 ---
 id: "0193"
 title: "Ship approved tickets from speck run when their auto-ship didn't finish"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T09:41:50.165Z"
+approved: "2026-10-15T10:07:58.732Z"
 
 ---
 # 0193 · Ship approved tickets from speck run when their auto-ship didn't finish
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build's auto-ship can't finish (the base branch's tests were failing, the tests stalled, or staged files were in the way), its ticket stays approved until the user runs `/speck-ship`, even after the cause has gone. On 14 October approved tickets sat waiting after `main` was fixed, until they were shipped by hand.
@@ -59,9 +60,16 @@ To see it: with `speck run` on, an approved low-risk ticket whose own ship didn'
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Checking ship records and launching are separate operations.; F2 The exit-14 hold uses the base hash from before shipping began.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 941,956
+- Elapsed since build started: 26 min
+- Changed lines: 183 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - The 0153 test "a second speck ship for the same ticket refuses…" takes its snapshot before the first ship reaches its tests, so it can fail under load: speck/ideas/2026-10-15-fix-the-race-in-the-0153-second-ship-test.md.
