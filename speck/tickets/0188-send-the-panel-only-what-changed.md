@@ -43,7 +43,11 @@ Each update to an open page carries only what changed, however many tickets ther
 - Self-check: the page builds the board it applies an update to with Object.fromEntries, so no part's name can set its prototype, and refuses an update missing its parts; added a test for a malformed update and for one from a board the panel no longer keeps.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+An open panel page still gets the whole board when it first connects, but after that each change sends only what changed: the ticket, idea or Auto-build state that moved, not all of them. On a phone over a data connection, a ticket changing now costs a few hundred bytes instead of about a megabyte, however many tickets there are.
+
+To see it, open the panel, then change one ticket (its priority, say): the page updates as before, and your browser's network tab shows a small answer rather than the whole board.
+
+Worth keeping an eye on: after the page wakes up, reconnects or flips the Auto-build switch, it fetches the whole board once, on purpose, so it can't drift from what's really there.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,6 +57,10 @@ Each update to an open page carries only what changed, however many tickets ther
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Known limit: flipping the Auto-build switch makes the next update the whole board, because the page changes its own copy of speck run's state.
+  - Known limit: /api/state now answers with speck run's state as of the board's last reading, not as of the request; the keep-alive's reading every 15 seconds and the watch on speck run's records keep it current.
+  - Skipped (already captured): the flaky 0128 AC4 test (speck/ideas/2026-10-15-fix-the-0128-ac4-test-that-fails-by-chance.md) and the flaky 0153 AC2 test (speck/ideas/2026-10-15-fix-the-race-in-the-0153-second-ship-test.md), each of which failed once and passed on retry during this build.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -120,6 +128,75 @@ Each update to an open page carries only what changed, however many tickets ther
     ],
     "escalation_question": "",
     "summary": "The panel correctly applies incremental updates and reloads the full board after reconnecting. However, changing one ticket's priority still sends the order of every ticket, so updates grow with the board and fail the ticket's size requirement. The suite passed under its automatic retry policy."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "750d384420df3410bcf95cf10277c72cff0e0d2d",
+    "thread_id": "01a13f5e-8ff5-7560-aab2-c8469633c038",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 339893,
+      "cached_input_tokens": 287872,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2324,
+      "reasoning_output_tokens": 108
+    },
+    "saved_at": "2026-10-15T11:46:45.522Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "boardDelta now encodes compact moves. Both AC1 size tests pass, including a priority change that moves a ticket. Independent reproduction produced identical 164-byte updates with 150 and 300 other tickets. Tests also cover changed ideas and run state."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 sequence test compares updated pages with fresh loads across additions, removals, changes and reversals. Independently verified the actual applyDelta function against all 5,040 permutations of seven tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "connect clears the board identifier on reconnect. boardVersions.answer supplies full boards for unknown or expired identifiers. Passing AC3 tests exercise reconnects, mismatched and malformed updates, and expired snapshots."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The status command and statusData remain unchanged. The passing AC4 test verifies CLI output and full-board serialisation."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full log records 1,778 tests with one initial failure and three skips. The failing file passed all 15 tests on the permitted automatic retry; the result is recorded as flaky."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/board-feed.mjs",
+        "issue": "Priority changes previously sent the entire ticket order, making update size grow with the board.",
+        "suggested_fix": "Encode ordering changes compactly and cover priority-driven reordering with a size regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Updates now send only changed items and compact ordering changes. The priority-change size problem is fixed, updated pages match fresh loads, and reconnects restore the full board. All criteria pass, with one unrelated test passing on automatic retry."
   }
 }
 ```
