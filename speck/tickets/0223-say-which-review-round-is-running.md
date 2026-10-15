@@ -39,6 +39,8 @@ A ticket under review says whether the reviewer is running a round, and which on
 ## Notes
 - The card's words come from `progress()` and `doing()` in `templates/panel.html`. Nothing records today that a review round is running: speck needs to record when a round starts and ends (`reviewRound()` in `scripts/review.mjs`) and the board feed needs to pass it on (`scripts/board-feed.mjs`).
 - Failing before this build: none
+- Self-check: a records folder that can't be written no longer stops a review round; the round runs without being recorded as running.
+- A board that doesn't say whether a round is running (no `review_running` field, as in older fixtures) keeps the old wording, so the existing card tests still hold (AC4).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -552,10 +552,14 @@ function doing(t, shipping) {
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
   const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
   let sentence = now === 1 ? 'Checking its own work' : 'Writing tests and code';
+  // 0223: while a round is running (review_running), the round being run; otherwise the builder is fixing the last
+  // recorded round's findings. A board that doesn't say whether one is running names the last recorded round, as before.
   if (t.status === 'reviewing') {
-    const who = typeof t.reviewer === 'string' && t.reviewer.trim() ? t.reviewer.trim() : 'the reviewer';
+    const name = (v, none) => { const w = typeof v === 'string' && v.trim() ? v.trim() : none; return `${w[0].toUpperCase()}${w.slice(1)}`; };
     const n = (steps[2] && /(\d+)$/.exec(steps[2].label)) || [null, '1'];
-    sentence = `${who[0].toUpperCase()}${who.slice(1)} is reviewing · round ${n[1]}`;
+    const running = Number.isInteger(t.review_running) && t.review_running > 0 ? t.review_running : null;
+    if (running === null && t.review_running === null && n[0] !== null) sentence = `${name(t.builder, 'the builder')} is fixing round ${n[1]}'s findings`;
+    else sentence = `${name(t.reviewer, 'the reviewer')} is reviewing · round ${running ?? n[1]}`;
   }
   return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };
 }

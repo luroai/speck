@@ -6,6 +6,7 @@ import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
 import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong } from './reviewers.mjs';
 import { testOutput, testsMeta } from './tap.mjs';
+import { markRoundRunning } from './review-running.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -245,12 +246,16 @@ function reviewSetup(repo, id, opts) {
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
 // reviewer starts, and puts the ticket back exactly as it was if the round fails, so only a recorded round leaves the status changed.
+// 0223: the round counts as running from then until it's recorded, fails or times out.
 function reviewRound(repo, id, opts, run) {
   const s = reviewSetup(repo, id, opts);
   const marked = startReviewing(s.ticket.raw, s.round);
-  if (marked === s.ticket.raw) return run(s);
-  fs.writeFileSync(s.ticket.file, marked);
-  try { return run(s); } catch (e) { fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
+  const ended = markRoundRunning(repo, s.ticket.fm.id || id, s.round);
+  try {
+    if (marked === s.ticket.raw) return run(s);
+    fs.writeFileSync(s.ticket.file, marked);
+    try { return run(s); } catch (e) { fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
+  } finally { ended(); }
 }
 
 function runCodexReview(repo, id, s) {

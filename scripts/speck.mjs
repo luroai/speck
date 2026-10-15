@@ -20,6 +20,7 @@ import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, p
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
+import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
@@ -447,6 +448,8 @@ export function statusData(repo) {
         seconds: num(r?.meta?.seconds),
         tokens: (num(r?.meta?.usage?.input_tokens) || 0) + (num(r?.meta?.usage?.output_tokens) || 0),
       })),
+      // 0223: the review round being run now, or null: whether the reviewer or the builder is at work on a reviewing ticket.
+      review_running: inHand(t) ? roundRunning(runs, t.fm.id, ticketRounds(t.raw).rounds.length) : null,
       waiting_on: after.filter(id => !done.has(padId(id))),
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
       build_exit: stop?.counted ? null : buildExit(runs, t.fm.id),
