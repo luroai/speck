@@ -1,7 +1,7 @@
 ---
 id: "0194"
 title: "Hand every auto-ship to speck run's ship queue"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0193"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T10:10:54.829Z"
+approved: "2026-10-15T10:31:14.441Z"
 
 ---
 # 0194 · Hand every auto-ship to speck run's ship queue
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Each build still ships its own ticket, holding its build slot while it merges, tests and sorts out conflicts, and ships started by different builds aren't in one ordered queue. Moving every auto-ship to one queue in `speck run` is what lets builds and shipping run separately, and later side by side, without racing for `main`.
@@ -60,9 +61,15 @@ To see it: with `speck run` on, approve a low-risk ticket that clashes with a ch
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Pending hand-backs do not prevent shipping.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 532,011
+- Elapsed since build started: 20 min
+- Changed lines: 217 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: the count of hand-backs stays in the build's run record until the next build of the ticket. If you answer a blocked question and carry the same build on, the next conflict for that ticket goes straight to the block question again.
