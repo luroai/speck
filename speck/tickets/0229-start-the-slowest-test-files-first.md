@@ -39,7 +39,8 @@ speck's own test suite starts its slowest test files first.
 ## Notes
 - The times need keeping somewhere git ignores, such as under `speck/.cache/`.
 - Checked 2026-10-15: Node 25.9's test runner has `--test-reporter` and `--test-reporter-destination` (`node --help`), so a second reporter could record each file's time.
-- Unverified: that `node --test` starts files in the order it's given them when running several at once (not checked against Node's documentation).
+- Checked 2026-10-15 by this ticket's first build: `node --test` sorts the files it's given, so the order can't be set on the command line.
+- Decided 2026-10-15: `npm test` runs a small runner script that orders the files by their last recorded times and starts them with `run()` from `node:test`, recording each file's time under `speck/.cache/`. Criterion 3 then rests on that script: its output must be what speck's test summary and retry read from `npm test` today, and it must fail when any test fails.
 - Measured 2026-10-15 on an 8 GB MacBook Air, from 0215's full run.
 
 ## In plain words
