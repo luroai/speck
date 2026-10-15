@@ -1,7 +1,7 @@
 ---
 id: "0215"
 title: "Stop the review pack's elapsed time at approval"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-12-stop-the-review-packs-elapsed-time-at-appro
 after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:12:25.775Z"
+approved: "2026-10-15T23:16:50.106Z"
 
 ---
 # 0215 · Stop the review pack's elapsed time at approval
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The review pack's "Elapsed since build started" line counts up to the moment the pack is read. For a ticket that has waited to be shipped, it includes the wait, so it disagrees with the panel (which since 0139 stops at approval) and looks wrong to the person deciding whether to ship.
@@ -51,9 +52,14 @@ The review pack's build time now stops when the reviewer approves the ticket, so
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 123,470
+- Elapsed since build started: 4 min
+- Changed lines: 12 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
