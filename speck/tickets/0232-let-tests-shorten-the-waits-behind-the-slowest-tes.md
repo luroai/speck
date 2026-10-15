@@ -1,7 +1,7 @@
 ---
 id: "0232"
 title: "Let tests shorten the waits behind the slowest tests"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0231"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:33:37.045Z"
+approved: "2026-10-15T22:52:44.386Z"
 
 ---
 # 0232 · Let tests shorten the waits behind the slowest tests
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's slowest passing tests spend most of their time waiting for real limits to run out, such as `speck stop`'s 5-second wait or speck run's polling. On an 8 GB MacBook Air, 25 tests took 10 s or more each, 372 s in total.
@@ -51,9 +52,15 @@ speck itself works exactly as before: it still checks for ready tickets every 5 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Only targeted test results were supplied.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 407,320
+- Elapsed since build started: 19 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Changed, measured on this box before and after: 0176 AC3 (61 s, the file 61 s to 18 s) and 0075 AC1 and 0100 AC3 (10 s each, now under 1.5 s).
 - Left as they are, slow for another reason than a speck limit:
