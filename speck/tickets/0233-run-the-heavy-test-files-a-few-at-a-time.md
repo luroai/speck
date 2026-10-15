@@ -1,7 +1,7 @@
 ---
 id: "0233"
 title: "Run the heavy test files a few at a time"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0229"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T21:58:29.681Z"
 
 ---
 # 0233 · Run the heavy test files a few at a time
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Test files that start real processes, panels or a browser run alongside everything else, so on a small machine they slow each other down and miss their time limits. On an 8 GB MacBook Air, 26 tests failed on `main` that way, and the machine stayed fully loaded throughout the run.
