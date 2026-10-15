@@ -1,7 +1,7 @@
 ---
 id: "0237"
 title: "Reuse a result recorded while a test run waited its turn"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0228"]          # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:06:24.452Z"
 approved: "2026-10-15T22:16:10.919Z"
+finished: "2026-10-15T22:21:36.340Z"
 
 ---
 # 0237 · Reuse a result recorded while a test run waited its turn
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck test` looks for a recorded result for its code before it waits for a turn, and not again once it gets one. When several builds start together on code with no recorded result, for example after a commit to `main` outside a ship, each waits its turn and then runs the whole suite on the same code, one after another. With 4 builds and an 8-minute suite, the last one waits about half an hour for a result the first one recorded long before.
