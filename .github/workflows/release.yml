@@ -1,0 +1,27 @@
+# Publishes speck's GitHub release when a push to main brings a version with no tag yet (0240).
+# The version comes from package.json and the notes from docs/releases/v<version>.md.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tag and publish the release
+        run: node .github/scripts/release.mjs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

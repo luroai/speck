@@ -46,6 +46,7 @@ When a release ticket ships, its tag and GitHub release are published straight a
 - Checked 2026-10-15: `gh release create` has `--verify-tag`, `--title`, `--notes-file` and `--target` (`gh release create --help`, gh 2.101.0). The repo has tags `v0.2.0`, `v0.3.0` and `v0.4.0` and no `.github/` folder.
 - Checked 2026-10-15: `gh` is preinstalled on all GitHub-hosted runners and reads its token from `GH_TOKEN` (GitHub Docs, "Using GitHub CLI in workflows").
 - Failing before this build: none
+- Self-check: no changes (checked odd versions in package.json, a missing GITHUB_SHA, a failed tag lookup and two pushes racing, which the workflow's concurrency group runs one after the other).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
