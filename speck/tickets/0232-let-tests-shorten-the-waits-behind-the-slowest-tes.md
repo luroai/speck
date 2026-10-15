@@ -45,7 +45,7 @@ The slowest tests run against limits they set shorter, while speck itself waits 
 - Self-check: the AC1 tests checked how long speck run took against a fixed 5 seconds, which a busy machine could break; they now check it was stopped because every build had launched, and that it checked once for each shorter wait.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck itself works exactly as before: it still checks for ready tickets every 5 seconds. What's changed is speck's own test suite. Three of its slowest tests no longer sit waiting for real time limits to run out. One used to watch speck run for a whole minute and now takes about 18 seconds. Two others used to take 10 seconds each and now take under 2. The whole suite finished about 14 seconds sooner on the build machine. To see it, run the tests and compare how long they take. The other slow tests on the list are slow because of the work they do, not because they wait, so they're unchanged. The ticket's notes say why for each one.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,7 +62,7 @@ The slowest tests run against limits they set shorter, while speck itself waits 
   - 0148 AC3, 0099 AC4 and the cancel reason AC1/AC4 test: many CLI and git starts, one for each value or case they check.
   - 0176 AC1 and AC2: they time and compare `speck status` on 200 builds' logs, which is the work itself.
 - Follow-ups:
-  - 0230 AC2 (10.4 s) still waits for runOnce's 10-second time limit and could stop once its builds have launched, as 0075 AC1 and 0100 AC3 now do. It wasn't in this ticket's list.
+  - 0230 AC2 (10.4 s) still waits for runOnce's 10-second time limit and could stop once its builds have launched, as 0075 AC1 and 0100 AC3 now do. It wasn't in this ticket's list. Inbox: speck/ideas/2026-10-15-stop-0230-ac2-once-its-builds-have-launched.md
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +137,82 @@ The slowest tests run against limits they set shorter, while speck itself waits 
     ],
     "escalation_question": "",
     "summary": "Three tests now finish sooner while preserving their ordering and CPU checks. Production waits are unchanged. The targeted tests pass, but approval needs a whole-suite result to confirm that other tests still work."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c1c58d0d3106390e5a8ea1bfb5f629704c00dffa",
+    "thread_id": "01a141bc-cb48-7082-b332-002f48a414c0",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 256124,
+      "cached_input_tokens": 199680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1565,
+      "reasoning_output_tokens": 49
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:52:25.474Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "0176 AC3 uses a 1000 ms poll; 0075 AC1 and 0100 AC3 stop through runUntilLaunched. Passing 0232 AC1 tests exercise these changes. The Delivery log explains why the other listed tests remain unchanged."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Production timing code is unchanged. Passing 0232 AC2 tests verify default polling configuration and stall/review timeout values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The changed tests retain CPU-budget and launch-order assertions. All three 0232 AC3 mutation tests pass, showing those assertions reject excessive CPU consumption and incorrect ordering."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0232-tests.txt: whole-suite totals are 2053 passed, zero failed and three skipped; all nine 0232 tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "/tmp/speck-0232-tests.txt",
+        "issue": "The previous round supplied only targeted test results.",
+        "suggested_fix": "Supply fresh whole-suite results.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "speck/tickets/0232-let-tests-shorten-the-waits-behind-the-slowest-tes.md",
+        "issue": "The previous Delivery log omitted reasons for leaving other listed slow tests unchanged.",
+        "suggested_fix": "Document those reasons in the Delivery log.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Three tests now finish sooner while retaining checks for launch order and excessive CPU use. Production waits remain unchanged. The full suite passed with no failures, and both earlier findings are resolved."
   }
 }
 ```
