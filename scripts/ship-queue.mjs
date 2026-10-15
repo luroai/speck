@@ -94,6 +94,8 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       return say(`${id}'s ship was stopped partway, so speck run will try it again.`);
     }
     const why = error || (rec?.started >= since && rec.message) || lastLine(log) || (code === null ? 'it was stopped' : `it exited with ${code}`);
+    // 0216: merged but not pushed, so the ticket is done and won't be tried again: its message says how to push it.
+    if (!error && rec?.unpushed && rec.started >= since) return say(`${id} merged into ${base} but wasn't pushed: ${why}`);
     say(`${id} didn't ship: ${why}\nspeck run will try it again once ${base} or its branch has a new commit.`);
     if (code === 14) {
       hold = headOf(repo, base); // as the ship ended: it may have tested commits made while it ran
