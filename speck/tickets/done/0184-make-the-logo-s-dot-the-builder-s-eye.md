@@ -1,7 +1,7 @@
 ---
 id: "0184"
 title: "Make the logo's dot the builder's eye"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T12:51:28.852Z"
 approved: "2026-10-15T13:12:57.324Z"
+finished: "2026-10-15T13:17:15.335Z"
 
 ---
 # 0184 · Make the logo's dot the builder's eye
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck's logo has a small red dot below the circle's centre, which reads as a nose. The builder badge (0168) uses the same character with the red dot as a larger eye above the centre, so the logo and the character don't match.
