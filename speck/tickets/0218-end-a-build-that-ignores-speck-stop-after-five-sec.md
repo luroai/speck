@@ -1,7 +1,7 @@
 ---
 id: "0218"
 title: "End a build that ignores speck stop after five seconds"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-keep-speck-stop-s-five-second-wait-to-five-
 after: ["0217"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:48:31.383Z"
+blocked_at: "2026-10-15T23:56:25.602Z"
 
 ---
 # 0218 · End a build that ignores speck stop after five seconds
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 `speck stop` asks each of a build's processes to end, then checks 50 times, 100 ms apart, before forcing them. Each check lists every process on the machine, which is slow on a busy one, so a process that ignores the request is forced after about 11 seconds rather than 5. Someone pressing Stop build waits twice as long as meant.
@@ -46,6 +47,7 @@ started: "2026-10-15T23:48:31.383Z"
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+The reviewer approved the five-second limit and its tests, but hit the 3-round limit on one case: when every check of the running processes takes over 5 seconds (a very busy machine), a build process that ends as soon as it's asked can't be seen to have ended, so speck stop still waits the full 5 seconds and sends it a force-end it no longer needs. Should I (a) accept this as it is, since it's never slower than today (today such a stop waits for each slow check, longer than 5 seconds) and a force-end sent to a process that has gone does nothing, or (b) add a quick check of just the build's known processes alongside the slow full check, so stop returns as soon as they've ended (about 20 more lines)? I recommend (a), with (b) saved as a follow-up idea.
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -184,6 +186,77 @@ started: "2026-10-15T23:48:31.383Z"
     ],
     "escalation_question": "",
     "summary": "All 16 recorded tests pass, but the revised approach still misses the deadline when checks become slower. It also introduces a full five-second wait for some processes that exit immediately when asked. Both behaviours need fixing before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "78aaef8b0d6eb78134fe4f4fbe2422c7878ee638",
+    "thread_id": "01a141f9-5629-7f80-a4d0-ae84ba7034a9",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 296722,
+      "cached_input_tokens": 246528,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2587,
+      "reasoning_output_tokens": 317
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:56:10.869Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs:checkBuild bounds discovery with spawnSync's timeout and SIGKILL. endBuild passes the remaining deadline to each check. Passing tests cover constant and varying slow checks, and a real check's timeout."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "If the first check exceeds five seconds, endBuild retains the held PID list and sends SIGKILL at the deadline even when those processes exited on SIGTERM. The AC2 tests cover 200 ms and 2,000 ms checks, but omit the previously identified 6,500 ms case."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The recorded targeted run reports 120 tests passing with no failures, including the stop integration tests and affected panel tests. Whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "Previously, synchronous discovery could overrun the forced-shutdown deadline. Discovery now runs in a separate process with a timeout covering the whole check.",
+        "suggested_fix": "No further change required for F1.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "Graceful completion is still mishandled when discovery cannot finish before the deadline. A process that exits immediately on SIGTERM incurs the five-second wait and a SIGKILL attempt against its stale PID. Moving discovery into a timed subprocess fixes F1 but does not resolve this AC2 regression.",
+        "suggested_fix": "Provide a bounded way to detect completion of known processes while discovery is slow, and avoid forcing processes already gone. Restore the missing AC2 regression with a 6,500 ms initial discovery check, asserting prompt completion and no SIGKILL attempt.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The forced-shutdown deadline is now protected from slow process checks, and all 120 recorded tests pass. One issue remains: a process that exits normally can still cause a five-second wait and an unnecessary forced-shutdown attempt when discovery is slow."
   }
 }
 ```
