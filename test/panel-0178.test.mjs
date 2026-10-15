@@ -31,7 +31,7 @@ const latestFive = b => b.tickets.filter(t => t.status === 'done').sort((x, y) =
 test('0178 AC1: each finished ticket outside the latest five is no more than 500 bytes, however long its text and log', () => {
   for (const repeat of [1, 50]) {
     const b = board(30);
-    for (const t of b.tickets) if (t.status === 'done') { t.notes = t.notes.repeat(repeat); t.build_exit.message = t.build_exit.message.repeat(repeat); t.title = words('a title', 20 * repeat); }
+    for (const t of b.tickets) if (t.status === 'done') { t.rounds = Array.from({ length: 2 * repeat }, (_, i) => round(i + 1, 123456789)); t.notes = t.notes.repeat(repeat); t.build_exit.message = t.build_exit.message.repeat(repeat); t.title = words('a title', 20 * repeat); }
     const out = panelBoard(b), keep = latestFive(b);
     for (const t of out.tickets.filter(t => t.status === 'done' && !keep.includes(t.id))) assert.ok(size(t) <= 500, `${t.id} is ${size(t)} bytes`);
     assert.deepEqual(out.tickets.filter(t => keep.includes(t.id)), b.tickets.filter(t => keep.includes(t.id)), 'the latest five whole');

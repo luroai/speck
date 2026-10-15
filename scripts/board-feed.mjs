@@ -235,8 +235,8 @@ export function boardVersions() {
 }
 
 // 0178: the board as the panel sends it. A finished ticket outside the Shipped list's latest five, which the page shows
-// only in the Shipped figures, keeps only what those use: its id and status, its times, its builder's spend and a round
-// per review round, the first carrying the reviewer tokens of them all. A cancelled one, which the page doesn't show,
+// only in the Shipped figures, keeps only what those use: its id and status, its times, its builder's spend and, in place
+// of its review rounds, how many there were and the reviewer tokens of them all (review_total). A cancelled one, which the page doesn't show,
 // keeps its id and status. The latest five, picked as the page picks them, and a ticket whose ship is still running stay
 // whole. `speck status --json` is unchanged.
 const SHIPPED_SHOWN = 5;
@@ -256,7 +256,7 @@ export function panelBoard(board) {
     const tokens = rounds.reduce((n, r) => n + (Number(r && r.tokens) || 0), 0);
     return { id: t.id, status: t.status, started: at(t.started), finished: at(t.finished), approved: at(t.approved),
       waited_seconds: typeof t.waited_seconds === 'number' && Number.isFinite(t.waited_seconds) ? t.waited_seconds : null,
-      rounds: rounds.map((r, i) => (i ? {} : { tokens })), builder_tokens: spent(t.builder_tokens), builder_cost_usd: spent(t.builder_cost_usd) };
+      review_total: { rounds: rounds.length, tokens }, builder_tokens: spent(t.builder_tokens), builder_cost_usd: spent(t.builder_cost_usd) };
   };
   return { ...board, tickets: board.tickets.map(slim) };
 }

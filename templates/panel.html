@@ -667,7 +667,10 @@ function panelModel(state) {
   const done = tickets.filter(t => t.status === 'done' && !beingShipped(t)).map(t => {
     const start = time(t.started), end = time(t.finished), until = approvedAt(t) ?? end;
     const took = start !== null && until !== null ? Math.max(0, until - start - waited(t)) : null;
-    return { ...t, end, when: shippedAt(end, now), roundCount: rounds(t).length, tokens: rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
+    // 0178: one the server cut down to the Shipped figures gives its rounds' count and tokens in review_total.
+    const total = t.review_total && typeof t.review_total === 'object' ? t.review_total : null;
+    return { ...t, end, when: shippedAt(end, now), roundCount: total ? Number(total.rounds) || 0 : rounds(t).length,
+      tokens: total ? Number(total.tokens) || 0 : rounds(t).reduce((n, r) => n + (Number(r && r.tokens) || 0), 0),
       builderTokens: spent(t.builder_tokens), builderCost: spent(t.builder_cost_usd),
       exactMinutes: took !== null ? took / 60000 : null,
       minutes: took !== null ? Math.round(took / 60000) : null };
