@@ -1,7 +1,7 @@
 ---
 id: "0227"
 title: "Keep a build's test runs in the foreground"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:25:21.332Z"
+approved: "2026-10-15T21:37:44.142Z"
 
 ---
 # 0227 · Keep a build's test runs in the foreground
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck runs a build as `claude -p "/speck-build <id>"`, which ends when the builder ends its turn. On a slow machine the full suite takes long enough that the builder ran it in the background and ended its turn to wait. That ended the build and killed the suite, leaving the ticket `building` with nothing to carry it on (0213, 15 October, on an 8 GB MacBook Air).
@@ -50,9 +51,14 @@ Builds that speck starts on its own now wait for each test run and review to fin
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 124,667
+- Elapsed since build started: 12 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Turn off background commands in builds `speck run` starts, with `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` (found while checking the Unverified fact). Inbox: `speck/ideas/2026-10-15-turn-off-background-commands-in-speck-run-builds.md`.
