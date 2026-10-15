@@ -1,7 +1,7 @@
 ---
 id: "0208"
 title: "Catch a new build worktree's first ticket change at once"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -11,13 +11,13 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: "speck/ideas/done/2026-10-15-catch-a-new-build-worktree-s-first-ticket-change-at-once.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0198"]                # ticket ids that must be done first
+after: ["0206"]                # ticket ids that must be done first
 created: 2026-10-15
 
 ---
 # 0208 · Catch a new build worktree's first ticket change at once
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A ticket changed in a build's worktree straight after the worktree is made doesn't always reach the panel within a second: under load it can take up to 15 seconds. `speck start` writes a build's first status just after making its worktree, so the panel can show a new build late.
@@ -38,7 +38,7 @@ A ticket change in a new build's worktree reaches open pages within a second eve
 ## Notes
 - Asked for 2026-10-15, for release 0.4.0.
 - Likely cause (from 0187's ship, unconfirmed): the panel watches a folder that doesn't exist yet through its parent. If it appears between the panel's check and the watch starting, its creation is missed until the next look, every 5 seconds, and an edit in that gap shows only at the 15-second re-read.
-- `scripts/board-feed.mjs`. Builds after 0198, which may change `test/panel-0187.test.mjs`.
+- `scripts/board-feed.mjs`. Builds after 0206, which builds after 0198: both may change the test helpers in `test/support/panel.mjs` or `test/panel-0187.test.mjs`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
