@@ -63,6 +63,41 @@ for (const first of [true, false]) {
   });
 }
 
+test('0208 AC1: a worktree whose gitdir file is written after the panel listed the worktrees but before it looked for that file is seen within 1 second', async () => {
+  const r = panelRepo();
+  fs.mkdirSync(path.join(r.dir, '.git', 'worktrees')); // already watched, as once a build has run, so its look starts no watch
+  const calls = [], files = watcher(r, calls);
+  const wt = `${r.dir}-wt-gap`, name = path.basename(wt), meta = path.join(r.dir, '.git', 'worktrees', name), branch = 'speck/0001-gap';
+  r.g('branch', branch);
+  // git writes the file that lists the worktree just as the panel looks for it, after the panel listed the worktrees.
+  const real = fs.existsSync, tied = {};
+  fs.existsSync = p => {
+    if (!tied.done && p === path.join(fs.realpathSync(meta), 'gitdir')) {
+      tied.done = true;
+      fs.writeFileSync(path.join(meta, 'gitdir'), `${fs.realpathSync(wt)}/.git\n`);
+      fs.writeFileSync(path.join(wt, '.git'), `gitdir: ${fs.realpathSync(meta)}\n`);
+      fs.writeFileSync(path.join(meta, 'commondir'), '../..\n');
+      fs.writeFileSync(path.join(meta, 'HEAD'), `ref: refs/heads/${branch}\n`);
+    }
+    return real(p);
+  };
+  try {
+    try {
+      fs.mkdirSync(meta, { recursive: true });
+      fs.writeFileSync(path.join(meta, 'locked'), 'initializing\n');
+      fs.mkdirSync(wt);
+      await wait(200); // the panel looks, on its record's folder appearing
+    } finally { fs.existsSync = real; }
+    assert.ok(tied.done, 'the panel looked for the file');
+    assert.equal(spawnSync('git', ['reset', '-q', '--hard'], { cwd: wt, env }).status, 0);
+    fs.unlinkSync(path.join(meta, 'locked'));
+    await wait(150);
+    const from = calls.length;
+    setStatus(ticketIn(r, wt), 'building');
+    await called(calls, from, 1000, 'the status in the new worktree');
+  } finally { files.close(); fs.rmSync(wt, { recursive: true, force: true }); }
+});
+
 // A watch on the files the board is read from that, as the watch on `wt`'s speck/ folder starts, makes its tickets
 // folder with a ticket in it: after the watcher checked for that folder, so that folder's watch can't see it appear.
 function raceWatch(wt) {

@@ -85,6 +85,16 @@ export function boardWatcher(repo, runs, changed, log = () => {}) {
   try { const r = sh('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo }); if (r.status === 0) common = r.stdout.trim() || null; } catch { /* not a git checkout */ }
   // Each folder to watch → { recursive, again: whether a change in it can change what to watch }.
   const wanted = () => {
+    // 0208: git makes a worktree's folder in its list before the file that names where the worktree is (gitdir), and
+    // only that file puts it in worktreeList, so a folder without one is watched for it. They're found before the
+    // worktrees are listed, so one whose file is written in between is listed.
+    const pending = [];
+    if (common) {
+      const list = path.join(common, 'worktrees');
+      let names = [];
+      try { names = fs.readdirSync(list); } catch { /* no worktrees yet */ }
+      for (const name of names) if (!fs.existsSync(path.join(list, name, 'gitdir'))) pending.push(path.join(list, name));
+    }
     let trees = [];
     try { trees = worktreeList(repo).map(w => w.path).filter(Boolean); } catch { /* not a git checkout: this one */ }
     if (!trees.includes(repo)) trees.push(repo);
@@ -104,18 +114,8 @@ export function boardWatcher(repo, runs, changed, log = () => {}) {
       add(path.join(t, 'speck', 'ideas'), t, true, false);
     }
     add(runs, repo, false, false);
-    if (common) {
-      const list = path.join(common, 'worktrees');
-      add(list, common, false, true);
-      // 0208: git makes a worktree's folder in its list before the file that names where the worktree is (gitdir), and
-      // only that file puts it in worktreeList, so a folder without one is watched for it.
-      let names = [];
-      try { names = fs.readdirSync(list); } catch { /* no worktrees yet */ }
-      for (const name of names) {
-        const dir = path.join(list, name);
-        if (!fs.existsSync(path.join(dir, 'gitdir')) && !want.has(dir)) want.set(dir, { recursive: false, again: true, only: 'gitdir' });
-      }
-    }
+    if (common) add(path.join(common, 'worktrees'), common, false, true);
+    for (const dir of pending) if (!want.has(dir)) want.set(dir, { recursive: false, again: true, only: 'gitdir' });
     return want;
   };
   // Once new watches have started, it looks again: a folder made after it looked but before a watch on its parent

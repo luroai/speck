@@ -1,7 +1,7 @@
 ---
 id: "0208"
 title: "Catch a new build worktree's first ticket change at once"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T15:06:31.257Z"
 ---
 # 0208 · Catch a new build worktree's first ticket change at once
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A ticket changed in a build's worktree straight after the worktree is made doesn't always reach the panel within a second: under load it can take up to 15 seconds. `speck start` writes a build's first status just after making its worktree, so the panel can show a new build late.
@@ -55,3 +55,74 @@ A ticket change in a new build's worktree reaches open pages within a second eve
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e74e0325f863e20c335a6643df51be8eec2e7c05",
+    "thread_id": "01a14020-354a-74e1-a150-837f70564645",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 167080,
+      "cached_input_tokens": 126720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 997,
+      "reasoning_output_tokens": 192
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T15:14:12.514Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/board-feed.mjs: boardWatcher.wanted() still has a discovery race between worktreeList() and checking gitdir. The passing AC1 tests do not force this interleaving."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "boardWatcher.sync() calls changed() once after starting watches; the passing 0208 AC2 test checks both new-watch and no-new-watch cases."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0208 AC3 test exercises changes in an existing worktree and the main checkout; the stream broadcast mechanism remains unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "/tmp/speck-0208-tests.txt confirms 1,938 passed, zero failed and three skipped. Existing tests were not modified."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/board-feed.mjs",
+        "issue": "wanted() lists worktrees before scanning their metadata directories. If gitdir appears after Git's listing has omitted the new worktree but before existsSync checks it, the worktree is absent from trees and its metadata directory is excluded from watching because gitdir now exists. When the parent directory's creation event triggered this sync, there need be no further parent event, leaving discovery until the five-second poll. The first status change can therefore still miss the one-second deadline.",
+        "suggested_fix": "Watch metadata directories for worktrees not discovered in the listing even when gitdir already exists, and ensure discovery is retried after establishing those watches. Add a deterministic regression test that creates gitdir between worktreeList() and the metadata scan, then changes the ticket and verifies prompt delivery.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change fixes the tested startup gaps and the full suite passes. One timing gap remains: a worktree can become discoverable between two checks and receive neither kind of watch, so its first update can still arrive late. Add coverage and close that gap before merging."
+  }
+}
+```
+
+</details>
