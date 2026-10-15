@@ -92,3 +92,27 @@ test('0221 AC4: a run with no second try is summarised as before', () => {
   assert.match(s, /error: 'first try'/);
   assert.deepEqual(part(s, 'Totals'), ['Totals:', '# tests 3', '# suites 0', '# pass 1', '# fail 2', '# duration_ms 90.5']);
 });
+
+test('0221 AC1 AC3 (F1): two tests with the same name, each failing on a different try, are both listed and counted', () => {
+  const at = (ok, line, error) => `# Subtest: repeated\n${ok ? 'ok' : 'not ok'} 1 - repeated\n  ---\n  location: '/tmp/r/test/b.test.mjs:${line}:1'\n${ok ? '' : `  error: '${error}'\n`}  ...\n`;
+  const text = `TAP version 13\n${at(false, 1, 'one first try')}${at(true, 10)}1..2\n# tests 2\n# fail 1\n`
+    + "Some tests failed: running their files once more, to tell a chance failure from a real one: node --test 'test/b.test.mjs'\n"
+    + `TAP version 13\n${at(true, 1)}${at(false, 10, 'ten second try')}1..2\n# tests 2\n# fail 1\n`;
+  const s = summariseTap(text, '0221', '/t.txt');
+  assert.equal(part(s, 'Failing tests')[0], 'Failing tests (2):', s);
+  assert.match(s, /error: 'one first try'/);
+  assert.match(s, /error: 'ten second try'/);
+  assert.deepEqual(tapCounts(text), { failing: 2, second_try: [] });
+});
+
+test('0221 AC1 (F1): two tests with the same name that both failed on both tries are each listed once, with their own second-try details', () => {
+  const at = (line, error) => `# Subtest: repeated\nnot ok 1 - repeated\n  ---\n  location: '/tmp/r/test/b.test.mjs:${line}:1'\n  error: '${error}'\n  ...\n`;
+  const text = `TAP version 13\n${at(1, 'one first')}${at(10, 'ten first')}1..2\n# tests 2\n# fail 2\n`
+    + "Some tests failed: running their files once more, to tell a chance failure from a real one: node --test 'test/b.test.mjs'\n"
+    + `TAP version 13\n${at(10, 'ten second')}${at(1, 'one second')}1..2\n# tests 2\n# fail 2\n`;
+  const s = summariseTap(text, '0221', '/t.txt');
+  const failing = part(s, 'Failing tests');
+  assert.equal(failing[0], 'Failing tests (2):', s);
+  assert.ok(failing.indexOf("  error: 'one second'") < failing.indexOf("  error: 'ten second'"), s);
+  assert.doesNotMatch(s, /first'/);
+});

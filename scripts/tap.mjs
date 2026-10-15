@@ -52,13 +52,26 @@ const outcome = t => t.directive === 'SKIP' ? 'skipped' : t.directive === 'TODO'
 export const RETRY_NOTE = 'Some tests failed: running their files once more, to tell a chance failure from a real one: ';
 export const FLAKY = 'Flaky: ';
 
+// Where a test's `location:` says it is, in its YAML block, or null when it has none.
+function location(lines, t) {
+  for (let i = t.at + 1; i <= t.end; i++) {
+    const m = /^\s*location: (?:'((?:[^']|'')*)'|"((?:[^"\\]|\\.)*)"|(\S.*?))\s*$/.exec(lines[i]);
+    if (m) return m[1] !== undefined ? m[1].replaceAll("''", "'") : m[2] !== undefined ? m[2].replace(/\\(.)/g, '$1') : m[3];
+  }
+  return null;
+}
+
+// The file a test's `location:` names, in its YAML block, or null when it has none.
+const locationFile = (lines, t) => /^(.+):\d+:\d+$/.exec(location(lines, t) ?? '')?.[1] ?? null;
+
 // Failing tests without those whose failure is only that one of their subtests failed.
 const leaves = failing => failing.filter(t => !failing.some(o => o !== t && o.start >= t.start && o.end <= t.end && o.indent > t.indent));
 
 // TAP output read for a summary, or null when it isn't TAP. Only the full run's lines are read when its failing tests'
 // files were run once more. When the run passed on that second try (0195), its failing tests are counted as passed on a
 // second try instead (secondTry: their paths). When it didn't, each failing test is listed once, with the second try's
-// details when it failed there too, and any test that failed only there after them (0221). failing: each failing test
+// details when it failed there too, and any test that failed only there after them (0221): a test that failed in both
+// is told apart from another of the same name by its location. failing: each failing test
 // with its details.
 function readTap(text) {
   let lines = String(text).replace(/\r\n/g, '\n').split('\n');
@@ -70,12 +83,14 @@ function readTap(text) {
   if (note > 0) lines = lines.slice(0, note);
   const all = results(lines, header + 1);
   const failed = all.filter(t => !t.ok && t.directive !== 'TODO');
-  const failing = retried ? [] : failed.map(t => ({ ...t, details: details(lines, t, all) }));
+  const failing = retried ? [] : failed.map(t => ({ ...t, where: location(lines, t), details: details(lines, t, all) }));
   const again = after.findIndex(l => HEADER.test(l));
   if (!retried && again >= 0) {
     const second = results(after, again + 1);
     for (const t of second.filter(o => !o.ok && o.directive !== 'TODO')) {
-      const first = failing.find(f => f.path === t.path && !f.again);
+      // The same test when it has the same path of names and, where both say, the same location: tests can share names.
+      const where = location(after, t);
+      const first = failing.find(f => f.path === t.path && !f.again && (!f.where || !where || f.where === where));
       const entry = { ...t, again: true, details: details(after, t, second) };
       if (first) Object.assign(first, { details: entry.details, again: true }); else failing.push(entry);
     }
@@ -140,17 +155,6 @@ export function testOutput(file, id) {
 export function testsMeta(file) {
   const counts = file ? tapCounts(readTests(file)) : null;
   return counts ? { tests: counts } : {};
-}
-
-// The file a test's `location:` names, in its YAML block, or null when it has none.
-function locationFile(lines, t) {
-  for (let i = t.at + 1; i <= t.end; i++) {
-    const m = /^\s*location: (?:'((?:[^']|'')*)'|"((?:[^"\\]|\\.)*)"|(\S.*?))\s*$/.exec(lines[i]);
-    if (!m) continue;
-    const where = m[1] !== undefined ? m[1].replaceAll("''", "'") : m[2] !== undefined ? m[2].replace(/\\(.)/g, '$1') : m[3];
-    return /^(.+):\d+:\d+$/.exec(where)?.[1] ?? null;
-  }
-  return null;
 }
 
 // Every failing test in TAP output, leaving out one whose failure is only that one of its subtests failed, each as its
