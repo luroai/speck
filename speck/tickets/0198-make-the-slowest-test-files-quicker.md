@@ -51,6 +51,9 @@ The five slowest test files run quicker and still check everything they did.
   5. `test/stop-0072.test.mjs`: 46.1 s (23.3, 46.1)
   Next: `test/stall-0152.test.mjs` 41.3 s. `test/panel-0155.test.mjs` (61.3, 24.6, 24.2) and `test/panel-0160.test.mjs` (48.5, 23.4, 23.2) aren't among the five by their middle times.
 
+- Self-check: no changes. Checked that the temporary folder is still emptied after skipped, todo, failing and timed-out tests and subtests; that no test file using shipRepo changes the environment in a way that would change the repo it builds; and that the AC3 check catches a weakened assertion.
+- How AC3 is checked: `test/speed-0198.test.mjs` compares each of the five files with its version in the commit the build started from (the parent of `speck(0198): start`): the same test names, every assertion line still there, and no more uses of skip, todo or only.
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 

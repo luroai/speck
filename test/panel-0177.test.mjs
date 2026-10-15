@@ -1,5 +1,5 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
-import { test } from 'node:test';
+import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -97,84 +97,88 @@ test('0177 AC2: a request whose connection closed before its reading started cau
   } finally { await stop(s.p); }
 });
 
-test('0177 AC3: while one reading takes 5 seconds, the page, its icons, a build log, Set ready, Back to Plan and priority answer within 1 second', async () => {
-  const s = await slowPanel(5000);
-  try {
-    const slow = timed(() => state(s.port));
-    await wait(300);
-    const asks = [
-      ['the page', () => request(s.port), 200],
-      ['an icon', () => request(s.port, { pathName: '/icon.svg' }), 200],
-      ['a build log', () => request(s.port, { pathName: '/api/tickets/1/log' }), 200],
-      ['priority', () => post(s.port, '/api/tickets/2/priority/4', { token: s.token }), 200],
-      ['Set ready', () => post(s.port, '/api/tickets/2/ready', { token: s.token }), 200],
-      ['Back to Plan', () => post(s.port, '/api/tickets/2/draft', { token: s.token }), 200],
-    ];
-    for (const [name, ask, status] of asks) {
-      const { ms, out } = await timed(ask);
-      assert.equal(out.status, status, `${name}: ${out.body}`);
-      assert.ok(ms < 1000, `${name} answered in ${ms} ms`);
-    }
-    assert.match(fs.readFileSync(path.join(s.r.dir, 'speck', 'tickets', '0002-two.md'), 'utf8'), /^status: draft$/m, 'set ready, then back to Plan');
-    const read = await slow;
-    assert.equal(read.out.status, 200);
-    assert.ok(read.ms >= 4500, `the reading took ${read.ms} ms`);
-  } finally { await stop(s.p); }
-});
+// Each AC3 test waits about 10 seconds for its slow reading and the one after its write, on a panel of its own, so they
+// run at the same time (0198).
+describe('0177 AC3: answers within 1 second while a reading takes 5 seconds', { concurrency: true }, () => {
+  test('0177 AC3: while one reading takes 5 seconds, the page, its icons, a build log, Set ready, Back to Plan and priority answer within 1 second', async () => {
+    const s = await slowPanel(5000);
+    try {
+      const slow = timed(() => state(s.port));
+      await wait(300);
+      const asks = [
+        ['the page', () => request(s.port), 200],
+        ['an icon', () => request(s.port, { pathName: '/icon.svg' }), 200],
+        ['a build log', () => request(s.port, { pathName: '/api/tickets/1/log' }), 200],
+        ['priority', () => post(s.port, '/api/tickets/2/priority/4', { token: s.token }), 200],
+        ['Set ready', () => post(s.port, '/api/tickets/2/ready', { token: s.token }), 200],
+        ['Back to Plan', () => post(s.port, '/api/tickets/2/draft', { token: s.token }), 200],
+      ];
+      for (const [name, ask, status] of asks) {
+        const { ms, out } = await timed(ask);
+        assert.equal(out.status, status, `${name}: ${out.body}`);
+        assert.ok(ms < 1000, `${name} answered in ${ms} ms`);
+      }
+      assert.match(fs.readFileSync(path.join(s.r.dir, 'speck', 'tickets', '0002-two.md'), 'utf8'), /^status: draft$/m, 'set ready, then back to Plan');
+      const read = await slow;
+      assert.equal(read.out.status, 200);
+      assert.ok(read.ms >= 4500, `the reading took ${read.ms} ms`);
+    } finally { await stop(s.p); }
+  });
 
-test('0177 AC3: while one reading takes 5 seconds, Stop build stops a running build within 1 second', async () => {
-  const r = panelRepo();
-  fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^status: .*$/m, 'status: building'));
-  r.g('add', '-A'); r.g('commit', '-qm', 'building');
-  // A stand-in build launched as speck run does, leading its own process group, with its run record.
-  const build = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
-  build.unref();
-  fs.mkdirSync(path.join(r.dir, 'speck', '.cache', 'runs'), { recursive: true });
-  fs.writeFileSync(path.join(r.dir, 'speck', '.cache', 'runs', '0001.json'), JSON.stringify({ session: 's-0177', pid: build.pid, cwd: r.dir }));
-  const s = await slowServe(r.dir, 5000);
-  try {
-    const slow = state(s.port);
-    await wait(300);
-    const { ms, out } = await timed(() => post(s.port, '/api/tickets/1/stop', { token: s.token }));
-    assert.equal(out.status, 200, out.body);
-    assert.match(JSON.parse(out.body).message, /0001[^\n]*stopped/);
-    assert.ok(ms < 1000, `Stop build answered in ${ms} ms`);
-    assert.equal((await slow).status, 200);
-  } finally { killAll([build.pid]); await stop(s.p); }
-});
+  test('0177 AC3: while one reading takes 5 seconds, Stop build stops a running build within 1 second', async () => {
+    const r = panelRepo();
+    fs.writeFileSync(r.file, fs.readFileSync(r.file, 'utf8').replace(/^status: .*$/m, 'status: building'));
+    r.g('add', '-A'); r.g('commit', '-qm', 'building');
+    // A stand-in build launched as speck run does, leading its own process group, with its run record.
+    const build = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
+    build.unref();
+    fs.mkdirSync(path.join(r.dir, 'speck', '.cache', 'runs'), { recursive: true });
+    fs.writeFileSync(path.join(r.dir, 'speck', '.cache', 'runs', '0001.json'), JSON.stringify({ session: 's-0177', pid: build.pid, cwd: r.dir }));
+    const s = await slowServe(r.dir, 5000);
+    try {
+      const slow = state(s.port);
+      await wait(300);
+      const { ms, out } = await timed(() => post(s.port, '/api/tickets/1/stop', { token: s.token }));
+      assert.equal(out.status, 200, out.body);
+      assert.match(JSON.parse(out.body).message, /0001[^\n]*stopped/);
+      assert.ok(ms < 1000, `Stop build answered in ${ms} ms`);
+      assert.equal((await slow).status, 200);
+    } finally { killAll([build.pid]); await stop(s.p); }
+  });
 
-test('0177 AC3: while one reading takes 5 seconds, the speck run switch turns it on and off within 1 second each', async () => {
-  const r = runRepo({ tickets: [] });
-  const s = await slowServe(r.dir, 5000);
-  let pid = null;
-  try {
-    const slow = state(s.port);
-    await wait(300);
-    const on = await timed(() => post(s.port, '/api/run/on', { token: s.token }));
-    assert.equal(on.out.status, 200, on.out.body);
-    pid = JSON.parse(on.out.body).run.pid;
-    assert.ok(on.ms < 1000, `on answered in ${on.ms} ms`);
-    const off = await timed(() => post(s.port, '/api/run/off', { token: s.token }));
-    assert.equal(off.out.status, 200, off.out.body);
-    assert.ok(off.ms < 1000, `off answered in ${off.ms} ms`);
-    assert.ok(await hasStopped(() => !alive(pid)), 'speck run has stopped');
-    assert.equal((await slow).status, 200);
-  } finally { if (pid) killAll([pid]); await stop(s.p); }
-});
+  test('0177 AC3: while one reading takes 5 seconds, the speck run switch turns it on and off within 1 second each', async () => {
+    const r = runRepo({ tickets: [] });
+    const s = await slowServe(r.dir, 5000);
+    let pid = null;
+    try {
+      const slow = state(s.port);
+      await wait(300);
+      const on = await timed(() => post(s.port, '/api/run/on', { token: s.token }));
+      assert.equal(on.out.status, 200, on.out.body);
+      pid = JSON.parse(on.out.body).run.pid;
+      assert.ok(on.ms < 1000, `on answered in ${on.ms} ms`);
+      const off = await timed(() => post(s.port, '/api/run/off', { token: s.token }));
+      assert.equal(off.out.status, 200, off.out.body);
+      assert.ok(off.ms < 1000, `off answered in ${off.ms} ms`);
+      assert.ok(await hasStopped(() => !alive(pid)), 'speck run has stopped');
+      assert.equal((await slow).status, 200);
+    } finally { if (pid) killAll([pid]); await stop(s.p); }
+  });
 
-test('0177 AC3: while one reading takes 5 seconds, Ship ships an approved ticket, answering within 1 second', async () => {
-  const r = shipRepo();
-  const s = await slowServe(r.dir, 5000);
-  try {
-    const slow = state(s.port);
-    await wait(300);
-    const { ms, out } = await timed(() => post(s.port, '/api/tickets/1/ship', { token: s.token }));
-    assert.equal(out.status, 200, out.body);
-    assert.match(JSON.parse(out.body).message, /Shipped 0001/);
-    assert.equal(r.statusIn(r.dir), 'done');
-    assert.ok(ms < 1000, `Ship answered in ${ms} ms`);
-    assert.equal((await slow).status, 200);
-  } finally { await stop(s.p); }
+  test('0177 AC3: while one reading takes 5 seconds, Ship ships an approved ticket, answering within 1 second', async () => {
+    const r = shipRepo();
+    const s = await slowServe(r.dir, 5000);
+    try {
+      const slow = state(s.port);
+      await wait(300);
+      const { ms, out } = await timed(() => post(s.port, '/api/tickets/1/ship', { token: s.token }));
+      assert.equal(out.status, 200, out.body);
+      assert.match(JSON.parse(out.body).message, /Shipped 0001/);
+      assert.equal(r.statusIn(r.dir), 'done');
+      assert.ok(ms < 1000, `Ship answered in ${ms} ms`);
+      assert.equal((await slow).status, 200);
+    } finally { await stop(s.p); }
+  });
 });
 
 test('0177 AC4: after a write, every /api/state answer shows its result, even one asked for before the write', async () => {

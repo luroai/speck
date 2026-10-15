@@ -49,8 +49,9 @@ test('leaves processes running', mode === 'timeout' ? { timeout: 300 } : {}, asy
   while (saved() < 7 || !gone(quitter.pid) || !gone(late.pid)) await new Promise(r => setTimeout(r, 20));
   fs.writeFileSync(process.env.PIDS + '.ready', '');
   if (mode === 'fail') throw new Error('failed on purpose');
-  // Waits until the test's timeout ends it, then lets the file finish.
-  if (mode === 'timeout') await new Promise(r => { const h = setTimeout(r, 60000); t.signal.addEventListener('abort', () => { clearTimeout(h); r(); }); });
+  // Waits until the test's timeout ends it, then lets the file finish. Starting the processes above takes over a second,
+  // so the timeout has usually ended it already, and an abort that has happened fires no listener (0198).
+  if (mode === 'timeout') await new Promise(r => { if (t.signal.aborted) return r(); const h = setTimeout(r, 60000); t.signal.addEventListener('abort', () => { clearTimeout(h); r(); }); });
   if (mode === 'hang') await new Promise(r => setTimeout(r, 60000));
 });
 `;
@@ -102,7 +103,10 @@ const endsWhenRemoved = async (dir, child, ready) => {
     assert.ok(await until(ready, 15000), 'the helper to start');
     assert.equal(child.exitCode, null, 'still waiting while its folder is there');
     fs.rmSync(dir, { recursive: true, force: true });
-    const code = await Promise.race([exited, wait(10000).then(() => 'still running')]);
+    // The time limit's timer is cleared once the helper has ended, so it doesn't keep the file running for 10 seconds (0198).
+    let limit;
+    const code = await Promise.race([exited, new Promise(res => { limit = setTimeout(() => res('still running'), 10000); })]);
+    clearTimeout(limit);
     assert.notEqual(code, 'still running');
     return code;
   } finally { killAll([child.pid]); }

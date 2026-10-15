@@ -61,9 +61,26 @@ if (process.env.FAKE_CODEX_EVENT) console.log(process.env.FAKE_CODEX_EVENT);
 export const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
 export const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 's', escalation_question: '' };
 
-// A repo with one ticket built on its branch, approved by the reviewer and set to `approved`.
+// A repo with one ticket built on its branch, approved by the reviewer and set to `approved`. Building one takes about a
+// second, so each kind is built once per test file, in a folder that stays until the file's process exits, and each
+// call gets a copy of it of its own (0198).
+const shipTemplates = new Map();
 export function shipRepo({ test = 'true', approve = true } = {}) {
+  const key = JSON.stringify([test, approve]);
+  if (!shipTemplates.has(key)) shipTemplates.set(key, buildShipRepo(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-keep-ship-')), { test, approve }));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-ship-'));
+  fs.cpSync(shipTemplates.get(key), dir, { recursive: true, preserveTimestamps: true });
+  const env = { ...process.env, ...gitEnv };
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
+  // A shipped ticket moves into speck/tickets/done/, so look in both places.
+  const ticketAt = () => ['speck/tickets/0001-export-bookings.md', 'speck/tickets/done/0001-export-bookings.md']
+    .map(p => path.join(dir, p)).find(p => fs.existsSync(p));
+  const status = () => parseTicket(fs.readFileSync(ticketAt(), 'utf8')).fm.status;
+  const state = () => ({ branch: g('branch', '--show-current'), main: g('rev-parse', 'main'), feature: g('rev-parse', '--verify', '-q', 'speck/0001-export-bookings') });
+  return { dir, run, g, status, state };
+}
+function buildShipRepo(dir, { test, approve }) {
   const env = { ...process.env, ...gitEnv };
   const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
@@ -85,12 +102,7 @@ export function shipRepo({ test = 'true', approve = true } = {}) {
     run('set', '1', 'status', 'approved');
     g('add', '-A'); g('commit', '-qm', 'approved');
   }
-  // A shipped ticket moves into speck/tickets/done/, so look in both places.
-  const ticketAt = () => ['speck/tickets/0001-export-bookings.md', 'speck/tickets/done/0001-export-bookings.md']
-    .map(p => path.join(dir, p)).find(p => fs.existsSync(p));
-  const status = () => parseTicket(fs.readFileSync(ticketAt(), 'utf8')).fm.status;
-  const state = () => ({ branch: g('branch', '--show-current'), main: g('rev-parse', 'main'), feature: g('rev-parse', '--verify', '-q', 'speck/0001-export-bookings') });
-  return { dir, run, g, status, state };
+  return dir;
 }
 
 export function doneRepo() {
