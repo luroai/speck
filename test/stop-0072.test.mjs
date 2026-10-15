@@ -34,7 +34,7 @@ const speckAsync = (dir, ...a) => new Promise(res => {
 });
 
 // The stubborn process's test waits about 10 seconds for speck stop to give up asking it to end, so the other tests run
-// meanwhile, one at a time as before (0198).
+// meanwhile, two at a time, each with a repo and speck run of its own (0198).
 describe('0072: stop a running build from the CLI', { concurrency: true }, () => {
   test('0072 AC1 (round 1 F1): a process that ignores SIGTERM and leaves the build\'s tree when its parent ends is still ended', async () => {
     const { t, run } = await started({ STUBBORN: '1' });
