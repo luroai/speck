@@ -1,7 +1,7 @@
 ---
 id: "0212"
 title: "Recover a ship that was stopped partway"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0204"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T15:17:36.380Z"
+approved: "2026-10-15T15:54:57.825Z"
 
 ---
 # 0212 · Recover a ship that was stopped partway
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 To test a ticket merged with the base branch, `speck ship` moves the ticket's worktree onto the merged result and moves it back afterwards (0192). If the ship is killed in between, the worktree is left there, off the ticket's branch. The next ship then can't find the branch in any worktree, checks the main checkout instead and refuses with "You have uncommitted or untracked changes", and `speck run`'s queue waits for a new commit before trying again. On 2026-10-15 this held 0205 until it was put right by hand.
@@ -51,9 +52,15 @@ If a ship is cut off halfway, for example because the machine stopped it, the ti
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 shipFolders treats any detached merge whose second parent equals the ticket branch tip as the ticket's worktree, preferring it even over the known ticket worktree.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 317,750
+- Elapsed since build started: 37 min
+- Changed lines: 84 (limit 5000)
 Follow-ups:
 - Known limit: only a ticket worktree at the path `speck start` gives it is recovered. A worktree added by hand somewhere else, left on a killed ship's merge, isn't recognised, and the ship falls back to the main checkout as before.
 - No ideas sent to the inbox.
