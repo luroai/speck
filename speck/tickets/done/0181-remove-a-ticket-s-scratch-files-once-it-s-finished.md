@@ -1,7 +1,7 @@
 ---
 id: "0181"
 title: "Remove a ticket's scratch files once it's finished"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T12:38:23.416Z"
 approved: "2026-10-15T12:50:59.523Z"
+finished: "2026-10-15T13:02:36.443Z"
 
 ---
 # 0181 · Remove a ticket's scratch files once it's finished
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build writes scratch files for its ticket in `/tmp` (`/tmp/speck-<id>-tests.txt`, `-prompt.md`, `-response.md`, `-verdict.json` and others), and nothing removes them. About 19 MB had built up by 2026-10-14. On machines where `/tmp` is held in memory, as on this one, they use memory until the next restart.
