@@ -1,7 +1,7 @@
 ---
 id: "0211"
 title: "Stop speck run starting Claude Code for another builder"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T13:54:45.172Z"
 ---
 # 0211 · Stop speck run starting Claude Code for another builder
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When the user picks Codex, Cursor or Gemini as the builder in `/speck-setup`, `build_command` still starts Claude Code, so `speck run` builds every ticket with an agent they didn't choose, or fails if Claude Code isn't installed. Nothing says so, and a non-technical user won't spot it.
@@ -48,7 +48,9 @@ When the user picks Codex, Cursor or Gemini as the builder in `/speck-setup`, `b
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If you choose Codex, Cursor or Gemini to build your tickets but speck is still set to start Claude Code for automatic builds, speck now notices. Turning automatic building on refuses to start and says what's wrong and how to fix it, and the setup check reports the same thing. Setup also no longer leaves Claude Code's command in place when you pick another builder: it asks you for your builder's command, or offers to leave automatic builds off so you start each build yourself.
+
+To see it, set the builder to Codex in the settings file while keeping the default build command, then try turning automatic building on or run the setup check. Nothing changes for anyone using Claude Code as their builder.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,4 +59,69 @@ When the user picks Codex, Cursor or Gemini as the builder in `/speck-setup`, `b
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- To the inbox: `speck/ideas/2026-10-15-fix-the-0178-ac3-test-that-fails-by-chance.md`. 0178 AC3 failed by chance in this build's full run and passed on its re-run (not covered by 0207).
+- Known limit: only a first word that is `claude` or a path ending in `claude` counts. A command started through a wrapper such as `env FOO=1 claude …`, or `claude.exe`, isn't flagged.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0b0244a9665553f1fbcc511a35d497b9f1909f7f",
+    "thread_id": "01a13fea-d45d-7230-b97a-3503e8ca651a",
+    "seconds": 45,
+    "usage": {
+      "input_tokens": 460597,
+      "cached_input_tokens": 362624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1026,
+      "reasoning_output_tokens": 52
+    },
+    "saved_at": "2026-10-15T14:16:01.309Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs cmdRun calls builderMismatch before locks or writes. AC1 tests cover all three builders, unchanged repository state and executable paths; independent read-only checks also passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/install.mjs doctorChecks uses the shared builderMismatch advice. AC2 tests cover mismatches for all three builders and silence for matching or blank commands."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md section 6 requires an unattended command for the chosen builder or a blank command. AC3 tests check these instructions and verify both installed skill copies match the source."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The AC4 test exercises cmdRun with Claude and non-Claude commands and verifies they reach the subsequent branch check. The guard leaves these cases unchanged."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0211-tests.txt records 1,876 passes, three skips and one timing-sensitive panel failure; all seven tests in that file passed on rerun. The failure compares live elapsed-time counters and is unrelated to this diff. The existing doctor test retains its assertions with appropriately updated configuration."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change prevents automated builds from starting Claude Code when Codex, Cursor or Gemini is selected, and explains how to correct the configuration. Setup now asks for a suitable command or offers manual builds. Tests cover the requested behaviour. One unrelated timing-sensitive test passed on rerun; no blocking concerns remain."
+  }
+}
+```
+
+</details>
