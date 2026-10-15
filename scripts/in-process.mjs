@@ -15,7 +15,8 @@ export function runInProcess(fn, { cwd = process.cwd(), env = process.env } = {}
   const saved = { cwd: process.cwd(), env: { ...process.env }, exitCode: process.exitCode, exit: process.exit, out: process.stdout.write, err: process.stderr.write };
   const text = chunk => (typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'));
   const setEnv = to => {
-    for (const k of Object.keys(process.env)) if (!Object.hasOwn(to, k)) delete process.env[k];
+    // A variable given as undefined is left out, as spawnSync leaves it out.
+    for (const k of Object.keys(process.env)) if (to[k] === undefined || !Object.hasOwn(to, k)) delete process.env[k];
     for (const [k, v] of Object.entries(to)) if (v !== undefined) process.env[k] = v;
   };
   try { process.chdir(cwd); } catch (error) { return { status: null, signal: null, stdout: '', stderr: '', output: [null, '', ''], error }; }

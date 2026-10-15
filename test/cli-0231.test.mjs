@@ -50,6 +50,19 @@ test('0231 AC1: the environment given is the one the command and its child proce
   assert.equal(process.env.SPECK_0231_MARK, undefined);
 });
 
+test('0231 AC1: a variable given as undefined is left out of the command\'s environment, as spawnSync leaves it out', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0231-'));
+  process.env.SPECK_0231_INHERITED = 'inherited';
+  try {
+    const given = { ...process.env, SPECK_0231_INHERITED: undefined };
+    const r = runInProcess(() => console.log(JSON.stringify([Object.hasOwn(process.env, 'SPECK_0231_INHERITED'), spawnSync('sh', ['-c', 'echo "${SPECK_0231_INHERITED-unset}"'], { encoding: 'utf8' }).stdout.trim()])), { cwd: dir, env: given });
+    assert.deepEqual(JSON.parse(r.stdout), [false, 'unset']);
+    const p = spawnSync('sh', ['-c', 'echo "${SPECK_0231_INHERITED-unset}"'], { encoding: 'utf8', env: given });
+    assert.equal(p.stdout.trim(), 'unset', 'as spawnSync does');
+    assert.equal(process.env.SPECK_0231_INHERITED, 'inherited', 'and it\'s back afterwards');
+  } finally { delete process.env.SPECK_0231_INHERITED; }
+});
+
 test('0231 AC1: output a child process writes straight to the terminal is returned too, from each stream', () => {
   const dir = repo();
   const files = runCommand(['test', '--files', 'a.test.mjs'], { cwd: dir, env });
