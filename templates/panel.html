@@ -84,12 +84,14 @@
   .id { font-size: 12px; color: var(--muted); }
   .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 27px; display: inline-block; }
   .tag.p1 { color: var(--text); border-color: var(--text); }
+  .tag.p0 { color: var(--bad); border-color: var(--bad); } /* 0213: a fix ticket's P0 stands out more than a P1 */
   .tag.high { color: var(--bad); border-color: var(--bad); }
   .tag.bug { color: var(--bug); border-color: var(--bug); }
   .tag.fix { color: var(--fix); border-color: var(--fix); }
   .prio { position: relative; display: inline-block; }
   .tag.pick { cursor: pointer; }
   .tag.pick:hover { color: var(--text); border-color: var(--muted); }
+  .tag.p0.pick:hover { color: var(--bad); border-color: var(--bad); } /* 0213: P0 stays red on hover */
   /* 0165: a tag's tip, which says what it means, next to the tag */
   #tag-tip { position: fixed; top: 0; left: 0; z-index: 11; max-width: min(300px, calc(100vw - 16px)); padding: 6px 10px; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--panel); border: .5px solid var(--line); box-shadow: 0 4px 12px rgba(20, 20, 19, .12); }
   #tag-tip[hidden] { display: none; }
@@ -1024,7 +1026,7 @@ const typeTag = t => (t.type === 'bug' || t.type === 'fix'
 function fieldTags(t, pick) {
   const out = [];
   if (t.priority !== undefined && t.priority !== null && t.priority !== '') {
-    const tag = el('span', t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`);
+    const tag = el('span', t.priority === 0 ? 'tag p0' : t.priority === 1 ? 'tag p1' : 'tag', `P${t.priority}`);
     out.push(pick ? priorityPicker(t, tag) : explained(tag, priorityMeaning(t.priority)));
   }
   if (t.size) {
