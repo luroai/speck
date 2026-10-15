@@ -14,7 +14,7 @@
     "skills/"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node test/support/suite.mjs"
   },
   "engines": {
     "node": ">=20"
