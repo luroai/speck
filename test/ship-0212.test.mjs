@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { shipRepo, BRANCH, CLI, env, gIn, runIn } from './support/ship.mjs';
+import { speckProcess } from './support/cli.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
 
@@ -36,7 +37,7 @@ function killedOnce({ worktree = true, auto = false } = {}) {
   // Like a real main checkout, it has an untracked file, so a ship that falls back to it refuses.
   if (worktree) fs.writeFileSync(path.join(r.dir, 'scratch.txt'), 'mine\n');
   const tip = r.sha(BRANCH);
-  const first = runIn(r.dir, 'ship', '1', ...(auto ? ['--auto'] : []));
+  const first = speckProcess(r.dir, env, 'ship', '1', ...(auto ? ['--auto'] : [])); // killed, so a process of its own
   assert.equal(first.signal ?? 'SIGKILL', 'SIGKILL', first.stdout + first.stderr);
   assert.notEqual(first.status, 0, 'the first ship was killed');
   return { ...r, tip, folder: worktree ? r.wt : r.dir };

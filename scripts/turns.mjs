@@ -6,7 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.mjs';
-import { testRun } from './results.mjs';
+import { testRun, showRecordedRun } from './results.mjs';
 
 const POLL_MS = 500;
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -125,8 +125,10 @@ function holders(dir, max) {
 // already going, and frees the turn afterwards. A turn left by a run that was killed is freed when someone next needs
 // it. onStart runs once the turn is ours. A run that writes nothing for test_stall_minutes is ended (0152). With
 // `output` (a file path), the output, stdout and stderr together, is copied to it. Returns { status, signal, ended },
-// where ended is how the run ended: the exit code as text, `signal <name>`, `stalled`, or '' if it never said.
-export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '') {
+// where ended is how the run ended: the exit code as text, `signal <name>`, `stalled`, or '' if it never said. Once the
+// turn is ours, `reuse` gives a recorded result to use instead, if there is one now: then the tests don't run, the turn
+// is freed straight away and this returns { reused }, with that result (0237).
+export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', reuse = () => null) {
   const max = maxParallelTests(cfg);
   const stallMs = testStallMs(cfg);
   const dir = turnsDir(repo);
@@ -156,6 +158,8 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '') 
   } finally { fs.rmSync(mine, { force: true }); }
   const files = runFiles(dir, run);
   try {
+    const reused = reuse();
+    if (reused) return { reused };
     onStart();
     const r = sh('sh', ['-c', TEST_SHELL, 'sh', files.pid, files.started, cmd, process.execPath, STALL_SCRIPT, String(stallMs), files.ended, output], { cwd: repo, stdio: 'inherit' });
     const ended = (read(files.ended) || '').split('\n')[0].trim();
@@ -182,12 +186,14 @@ export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
-// those files (0113), from the repo root, without a turn or a recorded result, as it isn't a full run.
+// those files (0113), from the repo root, without a turn or a recorded result, as it isn't a full run. `speck test
+// --recorded` runs no tests: it prints the result recorded for the same code, if any, and exits with its exit code (0238).
 export function cmdTest(args) {
   const files = args[0] === '--files' ? args.slice(1) : null;
   const fresh = args.length === 1 && args[0] === '--fresh';
+  const recordedOnly = args.length === 1 && args[0] === '--recorded';
   if (files && !files.length) throw new SpeckError('Usage: speck test --files <file>… (name at least one test file)');
-  if (args.length && !fresh && !files) throw new SpeckError('Usage: speck test [--fresh], or speck test --files <file>…');
+  if (args.length && !fresh && !recordedOnly && !files) throw new SpeckError('Usage: speck test [--fresh], speck test --recorded, or speck test --files <file>…');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const only = files && String(cfg.commands?.test_files || '').trim();
@@ -202,6 +208,12 @@ export function cmdTest(args) {
   if (files) console.log('commands.test_files is blank in speck/config.yml, so this runs the whole suite (commands.test) instead.');
   const cmd = (cfg.commands?.test || '').trim();
   if (!cmd) throw new SpeckError('No test command is set. Set commands.test in speck/config.yml (for example `speck config set commands.test "npm test"`), then run this again.');
+  if (recordedOnly) {
+    const kept = showRecordedRun(repo, cmd);
+    if (!kept) { console.log('No test result is recorded for this code and test command, so no tests are listed as failing. Nothing was run.'); return; }
+    if (kept.status !== 0) throw new SpeckError('', kept.status);
+    return;
+  }
   const r = testRun(repo, cfg, cmd, { reuse: fresh ? 'none' : 'any', hint: ' Run `speck test --fresh` to run the suite anyway.' });
   if (r.status !== 0) throw new SpeckError(r.signal ? `The tests were stopped by ${r.signal}.` : '', r.status ?? 1);
 }

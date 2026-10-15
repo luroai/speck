@@ -98,7 +98,8 @@ test('0109 AC1: with a run already going in another worktree, speck test waits, 
   const { dir, wt } = testRepo({ cmd: logged(log) });
   const first = speckAsync(dir, 'test');
   await until(() => readLog(log).length, 'the first run started');
-  const second = speckAsync(wt, 'test');
+  // --fresh: on the same code, a plain run would reuse the result the first records while it waits (0237).
+  const second = speckAsync(wt, 'test', '--fresh');
   const [a, b] = await Promise.all([first.done, second.done]);
   assert.equal(a.status, 0, a.stderr);
   assert.equal(b.status, 0, b.stderr);
@@ -117,7 +118,7 @@ test('0109 AC1: max_parallel_tests defaults to 1 when the setting is missing', a
   fs.copyFileSync(file, path.join(wt, 'speck', 'config.yml'));
   const first = speckAsync(dir, 'test');
   await until(() => readLog(log).length, 'the first run started');
-  const b = await speckAsync(wt, 'test').done;
+  const b = await speckAsync(wt, 'test', '--fresh').done; // --fresh: see above
   await first.done;
   assert.equal(b.status, 0, b.stderr);
   assert.deepEqual(readLog(log), ['start', 'end', 'start', 'end']);
@@ -163,7 +164,7 @@ test('0109 AC2: the test run in speck ship waits for a turn too', async () => {
 test('0109 AC3: the build and review skills run the tests with speck test', () => {
   for (const skill of ['speck-build', 'speck-review']) {
     const text = fs.readFileSync(path.join(ROOT, 'skills', skill, 'SKILL.md'), 'utf8');
-    assert.match(text, /speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt/, `${skill} runs speck test`);
+    assert.match(text, /speck test (--files <file>… )?2>&1 \| tee \/tmp\/speck-<id>-tests\.txt/, `${skill} runs speck test`); // with --files before a round since 0235
     assert.doesNotMatch(text, /<test command>/, `${skill} no longer runs the test command directly`);
     assert.doesNotMatch(text, /run the test command from/i, `${skill} no longer runs the test command directly`);
   }

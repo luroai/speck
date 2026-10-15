@@ -14,7 +14,7 @@ const flat = s => s.replace(/\s+/g, ' ');
 
 test('AC1: pre-flight runs the tests in the new worktree before changing anything and records what already fails', () => {
   const preflight = flat(build().split('## 1. Pre-flight')[1].split('## 2.')[0]);
-  assert.match(preflight, /before (you change|changing) anything, run the test command/i);
+  assert.match(preflight, /before (you change|changing) anything, find which tests already fail/i); // 0238: from the recorded result
   assert.match(preflight, /in that folder/i);
   assert.match(preflight, /`Failing before this build: <tests>`/);
   assert.match(preflight, /`Failing before this build: none`/);

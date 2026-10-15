@@ -20,9 +20,17 @@ export class SpeckError extends Error {
   constructor(message, code = 1) { super(message); this.code = code; this.name = 'SpeckError'; }
 }
 
+// True while runInProcess (speck.mjs) runs a command in this process (0231): output a child would write straight to
+// this process's stdout and stderr is collected and written through process.stdout and process.stderr instead, so it's
+// returned with the command's own.
+let collecting = false;
+export const collectChildOutput = on => { collecting = on; };
+
 export function sh(cmd, args, opts = {}) {
-  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, ...opts });
+  const collect = collecting && opts.stdio === 'inherit';
+  const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, ...opts, ...(collect ? { stdio: 'pipe' } : {}) });
   if (r.error) throw new SpeckError(`${cmd} failed: ${r.error.message}`);
+  if (collect) { if (r.stdout) process.stdout.write(r.stdout); if (r.stderr) process.stderr.write(r.stderr); }
   return r;
 }
 
