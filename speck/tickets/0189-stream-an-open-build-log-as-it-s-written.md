@@ -46,7 +46,11 @@ An open build log shows new lines as they're written, without the page asking on
 - Self-check: closing and opening a log quickly could leave it closed when the close arrived last, so each open and close is numbered (`X-Speck-Order`) and a late one is ignored.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+An open build log in the panel now updates by itself the moment the build writes something, usually well within a second, instead of the page asking for the whole log every second. Opening a log still shows its last 200 lines with their times straight away. Once a build has finished, its log gets nothing more until that ticket is built again.
+
+To see it, open a ticket that's being built in the panel's Build list and watch its log: new lines appear as they're written, with no reload.
+
+Worth keeping an eye on: if a log can't be loaded, the page tries again every few seconds rather than every second, and the message in the log box says so.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,8 @@ An open build log shows new lines as they're written, without the page asking on
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, no inbox notes):
+- `scripts/panel.mjs` is at exactly 600 lines, the limit `test/split-0018.test.mjs` sets, so the next change to it will need to move something out first.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +129,75 @@ An open build log shows new lines as they're written, without the page asking on
     ],
     "escalation_question": "",
     "summary": "The stream replaces repeated log requests and the full suite passes. One bug still leaves an unfinished plain log line stale as more text arrives. Fix that update case before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "35a06a4b489ef6522f656bfb67928496b14ea137",
+    "thread_id": "01a13f7b-9027-7163-9c06-4ca028885d64",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 353234,
+      "cached_input_tokens": 294784,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2260,
+      "reasoning_output_tokens": 273
+    },
+    "saved_at": "2026-10-15T12:18:04.015Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "boardWatcher forwards log writes to logFeed, which gathers writes for 50 ms and sends stream updates. The page has no log polling timer. Passing AC1 tests cover delivery within one second, page updates and reconnection. The new F1 regression exercises successive unfinished-line writes; an independent in-memory reproduction also passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "logFeed.answer returns the last 200 displayed lines with times. Passing AC2 tests compare the initial response against readableLog and verify the page maintains the 200-line limit."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "logFeed.catchUp reads from the saved position, plus a bounded header check, and sends incremental lines. Passing AC3 tests measure bytes read from a 2.5 MB log and exercise split JSON events, partial plain lines and subscription closure."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 unit and panel integration tests verify unchanged ended logs send nothing and a new build resets the displayed log before incremental updates resume."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The current full-suite output in /tmp/speck-0189-tests.txt records 1811 passes, zero failures and three skips. The polling-test changes remain within the ticket's stated exception."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/log-feed.mjs",
+        "issue": "Successive writes to an unfinished plain line previously left its displayed text stale. shown() now records the unstable text, and catchUp compares it before suppressing an update. The regression test and independent reproduction confirm each extension sends a replacement.",
+        "suggested_fix": "Completed; retain the regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Open build logs now receive new entries through the existing stream without repeated page requests. The unfinished-line bug is fixed, all criteria pass, and the full suite reports no failures. Ready for the product owner's merge decision."
   }
 }
 ```
