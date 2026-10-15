@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0231","0235","0237"] # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:35:17.058Z"
-approved: "2026-10-15T22:39:37.868Z"
+approved: "2026-10-15T22:43:16.015Z"
 
 ---
 # 0238 · Start a build without running the whole suite
@@ -55,12 +55,13 @@ A build no longer runs every test before it starts. It looks up the last test re
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 113,480
-- Elapsed since build started: 4 min
+- Reviewer tokens: 328,936
+- Elapsed since build started: 8 min
 - Changed lines: 49 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
@@ -126,6 +127,70 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Builds now read previously recorded test results instead of running the whole suite before starting. Missing results are clearly marked as not checked. The implementation and instructions agree, all 35 reviewed tests pass, and no blocking issues were found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "317ee30f52453f62f9560a70d818903c6d2d1047",
+    "thread_id": "01a141b8-34be-7662-acad-ed5eefb2cb87",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 214402,
+      "cached_input_tokens": 160512,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1054,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:43:13.123Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs cmdTest() returns the result from scripts/results.mjs showRecordedRun() without running tests. Passing test/recorded-0238.test.mjs integration tests cover recorded success and failure, exit codes, missing results, code and command changes, and invalid arguments."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 1 step 6 requires --recorded before changes and specifies failing tests, none or not checked. Both AC2 tests pass; the foreground instruction is restored."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/reviewer-prompt.md explicitly treats not checked as an empty list while retaining the prohibition on unrelated changes. The AC3 test passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md describes --recorded and states that builds do not run the whole suite before starting. The AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The latest test log records 57 passes and no failures across all six requested files, including both tests that failed during shipping. Their assertions remain unchanged; the implementation and instructions now satisfy them. Whole-suite verification remains the ship gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Builds read saved test results without running the suite before starting. Both regressions found during shipping have been corrected without weakening their tests. All 57 tests in this review run pass, and no blocking issues remain."
   }
 }
 ```
