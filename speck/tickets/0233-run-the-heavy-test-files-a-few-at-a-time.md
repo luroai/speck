@@ -41,6 +41,7 @@ speck's heavy test files run a few at a time while the light ones run as many at
 - Builds on the test runner 0229 changes.
 - Failing before this build: none
 - Measured 2026-10-15 on the build box (16 cores, 14 GB): 88 test files start a real panel, browser or `speck run` (48 of them a browser). The whole suite takes 2 min 47 s today; those 88 files alone, run 2 at a time, take 9 min 21 s, using 7 min of CPU in that time, so they mostly wait rather than work. Built as written, the suite would take over 9 minutes here, every review round of every build.
+- Answered 2026-10-15 (blocked question): C. Heavy files run at most 2 at a time only on machines with 8 cores or fewer (as `os.availableParallelism()` counts them); on bigger machines every file runs as many at a time as today.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
