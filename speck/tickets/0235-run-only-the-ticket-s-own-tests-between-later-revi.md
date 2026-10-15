@@ -1,7 +1,7 @@
 ---
 id: "0235"
 title: "Run only the ticket's own tests during a build"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T21:41:27.429Z"
 ---
 # 0235 · Run only the ticket's own tests during a build
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A build runs the whole test suite before review round 1, before every later round and after each merge, and `speck ship` runs it again on the merged result before anything lands. On a laptop where the suite takes 8 minutes, that's several whole runs per ticket, and with builds side by side the machine is loaded for hours. The run at ship is the one that decides whether a ticket lands, so the others mostly repeat it.
@@ -50,7 +50,11 @@ A build runs only the ticket's own tests, and the whole suite runs once per tick
 - Self-check: a round-1 response is now inserted as written (no `$&` or `{{…}}` substitution), and an unreadable `--response` file gives a plain error instead of a stack trace; tests added for both.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A build no longer runs every test in the project before each review. It runs only the tests that belong to the ticket, the existing tests it changed and any that failed last time, and the reviewer is told that's all it saw. The full set of tests now runs once per ticket, when it ships, on the ticket as it would land. On a slow machine with several builds going, that saves several long test runs per ticket.
+
+To see it, watch a build: before each review it runs a handful of test files rather than the whole suite, and the note it hands the reviewer lists which ones it ran.
+
+Worth keeping an eye on: a ticket that breaks a test elsewhere is now caught at ship rather than during its build. Ship then hands it back to its build to fix, and after two such hand-backs it stops and asks you. The one full run a build still does before it changes anything is unchanged; ticket 0238 covers that.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,3 +64,75 @@ A build runs only the ticket's own tests, and the whole suite runs once per tick
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- `speck ship`'s own message for exit 16 still says the ticket and the base branch's newer changes "fail together": saved as speck/ideas/2026-10-15-say-a-ship-s-failing-tests-may-be-the-ticket-s-own.md.
+- Tidy-up: the review skill's "Wait for every command you start" bullet still says test runs between rounds are "`speck test`, with or without `--files`"; between rounds they're now only `--files` runs.
+- Known limit: a `claude-subagent` reviewer's round-1 response reaches it through `speck prompt --response`, but `speck record` doesn't keep it in the round's record.
+- This build ran the whole suite before round 1, following the skill as it was before this change. With other builds' tests running, it took over 10 minutes, so it ran detached and was waited on.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cf85918ad8fe3e98f6056183d5f416c72865a653",
+    "thread_id": "01a1419e-f8f7-7f70-ae75-c4154d087b67",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 132400,
+      "cached_input_tokens": 81792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 602,
+      "reasoning_output_tokens": 60
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T22:12:01.456Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both skills require --files with all three categories before initial, later and merge rounds, and a fresh response listing files. Passing 0235 AC1 tests check these instructions and exercise response delivery through prompt and review commands."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/reviewer-prompt.md explicitly explains the limited test coverage and ship's whole-suite gate. The passing 0235 AC2 test checks this wording."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The build skill's 'Tests fail together' steps select the named failing files plus the ticket's own. handBackMessage() and the steps describe both possible causes. Both 0235 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md and skills/speck-build/SKILL.md reserve whole-suite runs after implementation for ship, retaining the explicitly out-of-scope initial baseline run. The 0235 AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Provided test output reports 1993 passed, zero failed and three skipped. Changes to existing tests match the revised workflow; ship's test execution is unchanged."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Build instructions now require selected test files before every review round, while shipping retains the whole-suite check. Reviewers receive the test-file list from round one, and failed shipping checks give clearer recovery instructions. The reported tests pass, and no blocking issues were found."
+  }
+}
+```
+
+</details>
