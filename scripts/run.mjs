@@ -523,7 +523,8 @@ export function runningPids() {
 
 // Ends a build and everything it started, already held with SIGSTOP (`held`) so none can start anything more: asks each
 // to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there five seconds after first asking with
-// SIGKILL. The wait is timed rather than counted in checks, as each check lists every process and can be slow (0218).
+// SIGKILL. The wait is timed rather than counted in checks, as each check lists every process and can be slow (0218):
+// one that wouldn't end by the deadline isn't started, and those still running at the last check are ended then.
 // Every process it has found stays on its list, so one that leaves the build's tree when its parent ends is still ended.
 // Returns the processes still running at the end. `opts` stands in for the clock, pauses, listing and signals in tests.
 export function endBuild(b, held, { now: clock = () => performance.now(), pause = sleep, running: listRunning = runningPids, kill = process.kill.bind(process) } = {}) {
@@ -536,10 +537,17 @@ export function endBuild(b, held, { now: clock = () => performance.now(), pause 
   const each = (pids, signal) => { for (const p of pids) try { kill(p, signal); } catch { /* gone */ } };
   const asked = new Set();
   const ask = pids => { const fresh = pids.filter(p => !asked.has(p)); for (const p of fresh) asked.add(p); each(fresh, 'SIGTERM'); each(fresh, 'SIGCONT'); };
-  let now = left();
+  // How long the last check took: once the next one wouldn't end by the deadline, it waits for the deadline instead.
+  let took = 0;
+  const check = () => { const at = clock(); const pids = left(); took = clock() - at; return pids; };
+  let now = check();
   const until = clock() + 5000;
   ask(now);
-  while (now.length && clock() < until) { pause(Math.min(100, Math.max(0, until - clock()))); now = left(); ask(now); }
+  while (now.length && clock() < until) {
+    const wait = Math.min(100, until - clock());
+    if (clock() + wait + took > until) { pause(Math.max(0, until - clock())); break; }
+    pause(wait); now = check(); ask(now);
+  }
   for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); pause(100); now = left(); }
   return now;
 }

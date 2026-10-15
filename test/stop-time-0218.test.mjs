@@ -54,6 +54,17 @@ test('0218 AC1: with 450 ms listings it is still forced within 6 seconds of firs
   } finally { try { c.kill('SIGKILL'); } catch {} }
 });
 
+for (const ms of [2000, 6500]) test(`0218 AC1: with ${ms} ms listings it is still forced within 6 seconds of first asking`, async () => {
+  const c = await child(true);
+  try {
+    const k = slowClock(ms, c.pid);
+    assert.deepEqual(endBuild({ pid: c.pid, rec: {} }, [c.pid], k.opts), []);
+    assert.ok(await until(() => gone(c.pid)), 'the process has ended');
+    const after = k.killed - k.asked;
+    assert.ok(after >= 4900 && after <= 6000, `forced ${after} ms after asking`);
+  } finally { try { c.kill('SIGKILL'); } catch {} }
+});
+
 test('0218 AC2: a process that ends when asked is not forced, and stop returns as soon as it has ended', async () => {
   const c = await child(false);
   try {

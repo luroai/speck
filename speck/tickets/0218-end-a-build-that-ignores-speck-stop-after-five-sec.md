@@ -1,7 +1,7 @@
 ---
 id: "0218"
 title: "End a build that ignores speck stop after five seconds"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T23:48:31.383Z"
 ---
 # 0218 · End a build that ignores speck stop after five seconds
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck stop` asks each of a build's processes to end, then checks 50 times, 100 ms apart, before forcing them. Each check lists every process on the machine, which is slow on a busy one, so a process that ignores the request is forced after about 11 seconds rather than 5. Someone pressing Stop build waits twice as long as meant.
@@ -52,3 +52,69 @@ started: "2026-10-15T23:48:31.383Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ba33441ff3a3b646e9530d634fa603bb572cccc9",
+    "thread_id": "01a141f9-5629-7f80-a4d0-ae84ba7034a9",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 121113,
+      "cached_input_tokens": 83712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1081,
+      "reasoning_output_tokens": 188
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:50:51.334Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/run.mjs:endBuild checks the deadline before pausing and calling left(), whose synchronous process listings can overrun it. With 2,000 ms listings, the loop sends SIGKILL 6,300 ms after SIGTERM, even ignoring buildProcesses() overhead. Tests cover only 200 and 450 ms listings."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing '0218 AC2' test exercises a real child that exits on SIGTERM, checks that SIGKILL was never sent, and checks prompt return. endBuild exits its wait when no processes remain."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The full recorded output confirms all 14 tests passed across stop-time-0218.test.mjs and stop-0072.test.mjs. The change is confined to the stop loop and its test seams; the whole-suite check remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "The six-second limit still depends on how long the synchronous process checks take. A check started just before the five-second deadline must finish before SIGKILL can be sent. For example, 2,000 ms listings produce checks ending 2,100, 4,200 and 6,300 ms after the initial request, exceeding AC1. Additional process discovery in buildProcesses() can extend this further.",
+        "suggested_fix": "Make deadline enforcement independent of blocking process discovery, so known surviving processes can be forced within six seconds even while a listing is slow. Add a regression test with 2,000 ms listings and account for the process discovery work as well as runningPids().",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change improves the usual stop time and preserves graceful shutdown, with all 14 recorded tests passing. However, sufficiently slow process checks can still push forced shutdown beyond the promised six seconds. That timing gap needs fixing before approval. Independent execution was limited by the sandbox denying ps."
+  }
+}
+```
+
+</details>
