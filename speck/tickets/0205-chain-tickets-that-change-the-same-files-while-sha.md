@@ -1,7 +1,7 @@
 ---
 id: "0205"
 title: "Chain tickets that change the same files while shaping them"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0205 · Chain tickets that change the same files while shaping them
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The ticket skill sets `after:` only between the tickets one idea is split into. It doesn't check a new ticket against other open tickets that change the same files. With builds running side by side, two such tickets clash when the second ships and cost a merge round, as 0188 and 0189 did on 2026-10-15.
