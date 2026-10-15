@@ -41,6 +41,7 @@ The slowest tests run against limits they set shorter, while speck itself waits 
 - The passing tests at 10 s or more, measured 2026-10-15 on an 8 GB MacBook Air: 0084 private words AC2 and AC3 (13.6 to 18.9 s), 0177 AC3 (17.0 s), 0148 AC3 (15.9 s), 0176 (15.6 s), 0099 AC4 (12.6 s), the cancel reason AC1/AC4 test (11.4 s), 0075 AC1 (10.4 s) and 0100 AC3 (10.3 s). `test/stop-0072.test.mjs` (22.8 s) failed in that run.
 - Some of these may be slow for another reason (for example many CLI starts); leave those and say so in the Delivery log.
 - 0218 changes `speck stop`'s wait to go by the clock and is planned after this.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
