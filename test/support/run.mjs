@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { copied, keptFile } from './copy.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -17,9 +18,13 @@ export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 
 // A fake builder: records its arguments, folder and pid in <out>/<id>.<n>.json, prints a line to stdout and one to
 // stderr, then stays alive for FAKE_MS (default 0) and exits with FAKE_EXIT (default 0), or is stopped by the signal FAKE_SIGNAL.
+// An <out> of @repo is the fake-out folder in the .git folder of the repo it's building in, so that every copy of a repo
+// whose config names the fake records its builds apart (0230).
 export const FAKE = `
 const fs = require('fs'), path = require('path');
-const [out, ...args] = process.argv.slice(2);
+const [outArg, ...args] = process.argv.slice(2);
+const out = outArg !== '@repo' ? outArg
+  : path.join(require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim(), 'fake-out');
 const id = args[0];
 let n = 0; while (fs.existsSync(path.join(out, id + '.' + n + '.json'))) n++;
 fs.writeFileSync(path.join(out, id + '.' + n + '.json'), JSON.stringify({ at: Date.now(), args, cwd: process.cwd(), pid: process.pid, stdin: (() => { try { return fs.readFileSync(0, 'utf8'); } catch (e) { return 'ERR ' + e.code; } })() }));
@@ -36,18 +41,24 @@ if (process.env.FAKE_BLOCK) {
 setTimeout(() => process.env.FAKE_SIGNAL ? process.kill(process.pid, process.env.FAKE_SIGNAL) : process.exit(+(process.env.FAKE_EXIT || 0)), +(process.env.FAKE_MS || 0));
 `;
 
-// A repo with speck installed, the given tickets committed and build_command pointing at the fake builder.
+// A repo with speck installed, the given tickets committed and build_command pointing at the fake builder, unless
+// `command` is given. Each kind is built once per test file and copied (copy.mjs).
 export function runRepo({ tickets = [['0001', {}]], max, command, worktrees = 'false' } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-out-'));
-  const fake = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fake-')), 'fake-build.cjs');
-  fs.writeFileSync(fake, FAKE);
+  const cmd = command !== undefined ? command : `"${process.execPath}" "${keptFile('fake-build.cjs', FAKE)}" @repo {id} {session}`;
+  const dir = copied('run', [tickets, max, worktrees, cmd], 'speck-', d => buildRunRepo(d, { tickets, max, worktrees, cmd }));
+  const out = path.join(dir, '.git', 'fake-out');
+  fs.mkdirSync(out);
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  const calls = () => fs.readdirSync(out).filter(f => f.endsWith('.json')).map(f => ({ file: f, ...JSON.parse(fs.readFileSync(path.join(out, f), 'utf8')) })).sort((a, b) => a.at - b.at || (a.file < b.file ? -1 : 1)); // in launch order (builds launched together, by id)
+  return { dir, out, g, calls, cfgFile };
+}
+function buildRunRepo(dir, { tickets, max, worktrees, cmd }) {
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   g('init', '-q', '-b', 'main');
   assert.equal(spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8', env }).status, 0);
   const cfgFile = path.join(dir, 'speck', 'config.yml');
   let cfg = fs.readFileSync(cfgFile, 'utf8').replace(/^worktrees:.*$/m, `worktrees: ${worktrees}`);
-  const cmd = command !== undefined ? command : `"${process.execPath}" "${fake}" "${out}" {id} {session}`;
   cfg = cfg.replace(/^build_command:.*$/m, '');
   if (cmd !== null) cfg += `\nbuild_command: ${JSON.stringify(cmd)}\n`;
   cfg = cfg.replace(/^max_parallel_builds:.*$/m, '');
@@ -56,8 +67,6 @@ export function runRepo({ tickets = [['0001', {}]], max, command, worktrees = 'f
   fs.mkdirSync(path.join(dir, 'speck', 'tickets'), { recursive: true });
   for (const [id, o] of tickets) fs.writeFileSync(path.join(dir, 'speck', 'tickets', `${id}-t.md`), `---\n${fm({ id: `"${id}"`, ...o })}\n---\n${good}`);
   g('add', '-A'); g('commit', '-qm', 'base');
-  const calls = () => fs.readdirSync(out).filter(f => f.endsWith('.json')).map(f => ({ file: f, ...JSON.parse(fs.readFileSync(path.join(out, f), 'utf8')) })).sort((a, b) => a.at - b.at || (a.file < b.file ? -1 : 1)); // in launch order (builds launched together, by id)
-  return { dir, out, g, calls, cfgFile };
 }
 
 // Starts `speck run` in the background, collecting its output.

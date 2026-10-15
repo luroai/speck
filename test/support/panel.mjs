@@ -11,6 +11,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { after } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { tickingSource } from './stream.mjs';
+import { copied } from './copy.mjs';
 
 // ---------- 0031: a read-only control panel in the browser ----------
 
@@ -23,8 +24,19 @@ export const good = `## Problem\nUsers cannot export.\n## Outcome\nUsers can exp
 export const fm = (o = {}) => Object.entries({ id: '"0001"', title: 'Export bookings as CSV', status: 'draft', size: 'S', risk: 'low', builder: 'claude', reviewer: 'codex', ...o }).map(([k, v]) => `${k}: ${v}`).join('\n');
 
 // A repo with speck installed and one ready ticket, committed.
+// Each kind is built once per test file and copied (copy.mjs).
 export function panelRepo({ worktrees = 'false' } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const dir = copied('panel', [worktrees], 'speck-', d => buildPanelRepo(d, worktrees));
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
+  const file = path.join(dir, 'speck', 'tickets', '0001-export-bookings.md');
+  const write = (name, fmText, body = good, where = 'speck/tickets') => {
+    fs.mkdirSync(path.join(dir, where), { recursive: true });
+    fs.writeFileSync(path.join(dir, where, name), `---\n${fmText}\n---\n${body}`);
+  };
+  return { dir, run, g, file, write };
+}
+function buildPanelRepo(dir, worktrees) {
   const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
   g('init', '-q', '-b', 'main');
@@ -35,11 +47,6 @@ export function panelRepo({ worktrees = 'false' } = {}) {
   fs.writeFileSync(file, fs.readFileSync(file, 'utf8').split('## Problem')[0] + good);
   assert.equal(run('set', '1', 'status', 'ready').status, 0);
   g('add', '-A'); g('commit', '-qm', 'base');
-  const write = (name, fmText, body = good, where = 'speck/tickets') => {
-    fs.mkdirSync(path.join(dir, where), { recursive: true });
-    fs.writeFileSync(path.join(dir, where, name), `---\n${fmText}\n---\n${body}`);
-  };
-  return { dir, run, g, file, write };
 }
 
 export const freePort = () => new Promise(resolve => {

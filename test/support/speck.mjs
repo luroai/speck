@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseTicket, setField, ticketRounds } from '../../scripts/speck.mjs';
+import { copied, keptFile } from './copy.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const CLI = path.join(ROOT, 'scripts', 'speck.mjs');
@@ -20,7 +21,24 @@ export const gitIn = (dir, ...a) => spawnSync('git', ['-c', 'user.name=t', '-c',
 
 // A repo with speck installed, one ready ticket on a branch, and a fake `codex` on PATH that logs its arguments.
 export function reviewRepo({ config = '', ticketFields = '', extraEnv = {} } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  return reviewRepoIn(copied('review', [config, ticketFields], 'speck-', dir => buildReviewRepo(dir, { config, ticketFields })), extraEnv);
+}
+function buildReviewRepo(dir, { config, ticketFields }) {
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8' });
+  gitIn(dir, 'init', '-q', '-b', 'main');
+  assert.equal(run('init', '--skip-checks').status, 0);
+  const cfgFile = path.join(dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8') + config);
+  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
+  let text = fs.readFileSync(file, 'utf8').split('## Problem')[0] + good;
+  for (const line of ticketFields.split('\n').filter(Boolean)) { const [k, ...v] = line.split(': '); text = setField(text, k, v.join(': ')); }
+  fs.writeFileSync(file, text);
+  gitIn(dir, 'add', '-A'); gitIn(dir, 'commit', '-qm', 'base');
+  gitIn(dir, 'checkout', '-qb', 'speck/0001-x');
+  fs.writeFileSync(path.join(dir, 'a.txt'), 'change\n');
+  gitIn(dir, 'add', '-A'); gitIn(dir, 'commit', '-qm', 'work');
+}
+function reviewRepoIn(dir, extraEnv) {
   const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-bin-'));
   const log = path.join(bin, 'calls.log');
   fs.writeFileSync(path.join(bin, 'codex'), `#!${process.execPath}
@@ -38,18 +56,7 @@ if (process.env.FAKE_CODEX_EVENT) console.log(process.env.FAKE_CODEX_EVENT);
 `, { mode: 0o755 });
   const env = { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}` };
   const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...env, ...extraEnv } });
-  gitIn(dir, 'init', '-q', '-b', 'main');
-  assert.equal(run('init', '--skip-checks').status, 0);
-  const cfgFile = path.join(dir, 'speck', 'config.yml');
-  fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8') + config);
-  const file = path.join(dir, run('new', 'Export bookings').stdout.trim());
-  let text = fs.readFileSync(file, 'utf8').split('## Problem')[0] + good;
-  for (const line of ticketFields.split('\n').filter(Boolean)) { const [k, ...v] = line.split(': '); text = setField(text, k, v.join(': ')); }
-  fs.writeFileSync(file, text);
-  gitIn(dir, 'add', '-A'); gitIn(dir, 'commit', '-qm', 'base');
-  gitIn(dir, 'checkout', '-qb', 'speck/0001-x');
-  fs.writeFileSync(path.join(dir, 'a.txt'), 'change\n');
-  gitIn(dir, 'add', '-A'); gitIn(dir, 'commit', '-qm', 'work');
+  const file = path.join(dir, 'speck', 'tickets', '0001-export-bookings.md');
   const calls = () => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
   const prompts = () => fs.existsSync(log + '.prompts') ? fs.readFileSync(log + '.prompts', 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
   // Rounds are kept in the ticket file (0011).
@@ -61,15 +68,10 @@ if (process.env.FAKE_CODEX_EVENT) console.log(process.env.FAKE_CODEX_EVENT);
 export const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
 export const approveVerdict = { verdict: 'approve', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 's', escalation_question: '' };
 
-// A repo with one ticket built on its branch, approved by the reviewer and set to `approved`. Building one takes about a
-// second, so each kind is built once per test file, in a folder that stays until the file's process exits, and each
-// call gets a copy of it of its own (0198).
-const shipTemplates = new Map();
+// A repo with one ticket built on its branch, approved by the reviewer and set to `approved`. Each kind is built once
+// per test file, and each call gets a copy of it of its own (copy.mjs).
 export function shipRepo({ test = 'true', approve = true } = {}) {
-  const key = JSON.stringify([test, approve]);
-  if (!shipTemplates.has(key)) shipTemplates.set(key, buildShipRepo(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-keep-ship-')), { test, approve }));
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-ship-'));
-  fs.cpSync(shipTemplates.get(key), dir, { recursive: true, preserveTimestamps: true });
+  const dir = copied('ship', [test, approve], 'speck-ship-', d => buildShipRepo(d, { test, approve }));
   const env = { ...process.env, ...gitEnv };
   const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
@@ -102,18 +104,18 @@ function buildShipRepo(dir, { test, approve }) {
     run('set', '1', 'status', 'approved');
     g('add', '-A'); g('commit', '-qm', 'approved');
   }
-  return dir;
 }
 
 export function doneRepo() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-done-'));
   const env = { ...process.env, ...gitEnv };
+  const dir = copied('done', [], 'speck-done-', d => {
+    spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: d, encoding: 'utf8', env });
+    assert.equal(spawnSync(process.execPath, [CLI, 'init', '--skip-checks'], { cwd: d, encoding: 'utf8', env }).status, 0);
+  });
   const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
   const at = p => fs.existsSync(path.join(dir, p));
   const read = p => fs.readFileSync(path.join(dir, p), 'utf8');
   const fm = p => parseTicket(read(p)).fm;
-  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir, encoding: 'utf8', env });
-  assert.equal(run('init', '--skip-checks').status, 0);
   const add = title => {
     const p = run('new', ...title.split(' ')).stdout.trim();
     fs.writeFileSync(path.join(dir, p), read(p).split('## Problem')[0] + good);
@@ -134,16 +136,15 @@ export const subagentRepo = () => reviewRepo({ config: 'allow_same_model_review:
 export const changesVerdict = { verdict: 'changes_requested', criteria: [{ id: 1, status: 'fail', evidence: 'a.txt' }], findings: [{ id: 'F1', severity: 'blocking', file: 'a.txt', issue: 'First problem.', suggested_fix: 'Fix it.', state: 'open' }], summary: 'Round one summary.', escalation_question: '' };
 
 // A repo whose ticket uses reviewer "fake", run by a command in config. The fake logs its arguments,
-// working folder and stdin, then answers in the format FAKE_MODE asks for.
+// working folder and stdin to fake-reviewer.log in the .git folder of the repo it reviews, then answers in the format
+// FAKE_MODE asks for. Every copy of the repo names the same fake, and each copy keeps its own log (0230).
 export function commandRepo({ command = '{bin} --model {model} --effort {effort} --flag "two words"', ticketFields = '', limits = '', options = {} } = {}) {
-  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-fake-'));
-  const fake = path.join(bin, 'fake-reviewer');
-  const log = path.join(bin, 'calls.log');
-  fs.writeFileSync(fake, `#!${process.execPath}
+  const fake = keptFile('fake-reviewer', `#!${process.execPath}
 const fs = require('fs');
 const stdin = fs.readFileSync(0, 'utf8');
 const ticketStatus = (fs.readFileSync('speck/tickets/' + fs.readdirSync('speck/tickets').find(n => n.startsWith('0001-')), 'utf8').match(/^status: (\\S+)/m) || [])[1]; // reads a temporary repo
-fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin, ticketStatus }) + '\\n');
+const log = require('path').join(require('child_process').execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim(), 'fake-reviewer.log');
+fs.appendFileSync(log, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin, ticketStatus }) + '\\n');
 const v = process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(changesVerdict))};
 // FAKE_HANG_PID (0180): starts a process that outlives it, writes that one's pid there, and never ends.
 if (process.env.FAKE_HANG_PID) { const c = require('child_process').spawn('sleep', ['300'], { stdio: 'ignore' }); fs.writeFileSync(process.env.FAKE_HANG_PID, String(c.pid)); setInterval(() => {}, 1e6); }
@@ -155,14 +156,18 @@ if (mode === 'envelope') console.log(JSON.stringify({ type: 'result', is_error: 
 if (mode === 'garbage') { console.log('I looked at it and it seems fine.'); console.error('note one\\nnote two'); }
 if (mode === 'fail') { for (let i = 1; i <= 7; i++) console.error('err line ' + i); process.exit(3); }
 if (mode === 'badshape') { console.log(JSON.stringify({ verdict: 'approve' })); for (let i = 1; i <= 7; i++) console.error('warn line ' + i); }
-`, { mode: 0o755 });
-  const r = reviewRepo({ ticketFields: `reviewer: fake\n${ticketFields}` });
-  const cfgFile = path.join(r.dir, 'speck', 'config.yml');
-  const extra = Object.entries(options).map(([k, v]) => `    ${k}: ${JSON.stringify(String(v).replace('{bin}', fake))}\n`).join('');
-  let c = fs.readFileSync(cfgFile, 'utf8').replace('reviewer_options:\n', `reviewer_options:\n  fake:\n    command: ${JSON.stringify(command.replace('{bin}', fake))}\n${extra}`);
-  if (limits) c = c.replace('limits:\n', `limits:\n${limits}`);
-  fs.writeFileSync(cfgFile, c);
-  r.git('add', '-A'); r.git('commit', '-qm', 'reviewer command');
+`, 0o755);
+  const dir = copied('command', [command, ticketFields, limits, options], 'speck-', d => {
+    buildReviewRepo(d, { config: '', ticketFields: `reviewer: fake\n${ticketFields}` });
+    const cfgFile = path.join(d, 'speck', 'config.yml');
+    const extra = Object.entries(options).map(([k, v]) => `    ${k}: ${JSON.stringify(String(v).replace('{bin}', fake))}\n`).join('');
+    let c = fs.readFileSync(cfgFile, 'utf8').replace('reviewer_options:\n', `reviewer_options:\n  fake:\n    command: ${JSON.stringify(command.replace('{bin}', fake))}\n${extra}`);
+    if (limits) c = c.replace('limits:\n', `limits:\n${limits}`);
+    fs.writeFileSync(cfgFile, c);
+    gitIn(d, 'add', '-A'); gitIn(d, 'commit', '-qm', 'reviewer command');
+  });
+  const r = reviewRepoIn(dir, {});
+  const log = path.join(dir, '.git', 'fake-reviewer.log');
   const calls = () => fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
   const runEnv = (env, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: r.dir, encoding: 'utf8', env: { ...process.env, ...env } });
   return { ...r, fake, calls, runEnv };
@@ -170,7 +175,17 @@ if (mode === 'badshape') { console.log(JSON.stringify({ verdict: 'approve' })); 
 
 export const buildSkill = () => fs.readFileSync(path.join(ROOT, 'skills', 'speck-build', 'SKILL.md'), 'utf8');
 export function startRepo({ config = {}, ready = true, commitTooling = true } = {}) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
+  const env = { ...process.env, ...gitEnv };
+  const dir = copied('start', [config, ready, commitTooling], 'speck-', d => buildStartRepo(d, { config, ready, commitTooling }));
+  const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
+  const file = path.join(dir, 'speck', 'tickets', '0001-export-bookings.md');
+  const branch = 'speck/0001-export-bookings';
+  const worktrees = () => g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).map(l => fs.realpathSync(l.slice(9)));
+  const statusIn = cwd => parseTicket(fs.readFileSync(path.join(cwd, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8')).fm.status;
+  return { dir, run, g, branch, worktrees, statusIn, file };
+}
+function buildStartRepo(dir, { config, ready, commitTooling }) {
   const env = { ...process.env, ...gitEnv };
   const run = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env });
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8', env }).stdout.trim();
@@ -185,8 +200,4 @@ export function startRepo({ config = {}, ready = true, commitTooling = true } = 
   if (ready) assert.equal(run('set', '1', 'status', 'ready').status, 0);
   g('add', ...(commitTooling ? ['-A'] : ['speck', 'AGENTS.md', 'CLAUDE.md']));
   g('commit', '-qm', 'base');
-  const branch = 'speck/0001-export-bookings';
-  const worktrees = () => g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).map(l => fs.realpathSync(l.slice(9)));
-  const statusIn = cwd => parseTicket(fs.readFileSync(path.join(cwd, 'speck', 'tickets', '0001-export-bookings.md'), 'utf8')).fm.status;
-  return { dir, run, g, branch, worktrees, statusIn, file };
 }
