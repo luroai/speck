@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0188"]                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T11:50:15.421Z"
-approved: "2026-10-15T12:18:12.661Z"
+approved: "2026-10-15T12:33:44.496Z"
 
 ---
 # 0189 · Stream an open build log as it's written
@@ -59,13 +59,14 @@ Worth keeping an eye on: if a log can't be loaded, the page tries again every fe
 ## Review log
 Round 1 (codex): changes requested: F1 catchUp's 'nothing new to show' check compares line positions without comparing the unfinished line's text.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 541,848
-- Elapsed since build started: 28 min
-- Changed lines: 291 (limit 5000)
+- Reviewer tokens: 1,059,140
+- Elapsed since build started: 43 min
+- Changed lines: 290 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, no inbox notes):
 - `scripts/panel.mjs` is at exactly 600 lines, the limit `test/split-0018.test.mjs` sets, so the next change to it will need to move something out first.
@@ -205,6 +206,76 @@ Follow-ups (Delivery log only, no inbox notes):
     ],
     "escalation_question": "",
     "summary": "Open build logs now receive new entries through the existing stream without repeated page requests. The unfinished-line bug is fixed, all criteria pass, and the full suite reports no failures. Ready for the product owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d16f6ab5c3c5e51e4e2c2f0814975fdbe88e0f96",
+    "merge": true,
+    "thread_id": "01a13f7b-9027-7163-9c06-4ca028885d64",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 514443,
+      "cached_input_tokens": 430336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2849,
+      "reasoning_output_tokens": 273
+    },
+    "saved_at": "2026-10-15T12:33:42.172Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The merged boardFeed retains log-write notifications and stream delivery; the page retains logUpdate without a polling timer. All AC1 tests pass, including delivery within one second and the unfinished-line regression."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "logFeed.answer and the page retain the 200-line limit and timestamps. Both AC2 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "logFeed.catchUp retains incremental reads and update payloads. Passing AC3 tests check bytes read, split events, partial lines and subscription closure."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The AC4 unit and panel integration tests pass: unchanged ended logs send nothing, and a new build resets the log and resumes updates."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The merged suite output records 1826 passes, zero failures and three skips. The merge preserves main's panelBoard import and use, its shipping display changes, and this ticket's logFeed integration."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/log-feed.mjs",
+        "issue": "The unfinished-line fix remains intact after merging main: shown() records unstable text and catchUp checks it before suppressing updates. Its regression test passes.",
+        "suggested_fix": "Completed; retain the regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both main's board and shipping changes and the live log updates. The earlier bug remains fixed, all criteria pass, and the merged suite has no failures. Ready for merge."
   }
 }
 ```
