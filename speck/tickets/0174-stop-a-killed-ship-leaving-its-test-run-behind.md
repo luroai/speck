@@ -41,6 +41,7 @@ Killing a ship, test run or build ends its test command too.
 - `scripts/stall.mjs` starts the test command with `detached: true`, so it gets its own process group. The 0153 tests spawn `speck ship` detached and kill its group with SIGKILL, which doesn't reach the test command's group.
 - The leftover loops came from `gated()` in `test/ship-0153.test.mjs`: `sh -c 'touch reached; while [ ! -f go ]; do sleep 0.05; done'`. The "killed" tests never write `go`, and the temporary folder is then deleted.
 - Two other leftovers were found on the same day: a `speck run` and a `speck panel` started by 0171's tests in `/tmp/speck-test-…` folders. If the same cause doesn't explain them, record what does in Follow-ups instead of fixing them here.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
