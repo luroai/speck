@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0227","0228","0229","0230","0231","0232","0233","0234","0235","0237"]                # ticket ids that must be done first
+after: ["0227","0228","0229","0230","0231","0232","0233","0234","0235","0237","0238","0239"]                # ticket ids that must be done first
 created: 2026-10-15
 
 ---
@@ -39,7 +39,7 @@ speck is ready to be released as 0.4.1.
 
 ## Notes
 - Asked for 2026-10-15, for patch release 0.4.1. Follows 0210 (0.4.0) and 0106 (0.3.0).
-- Waits for every ticket planned for this release (0227 to 0235, and 0237), so they're in it. Changes for speck's own test suite only (0229 to 0234) belong under a short heading for people working on speck, or are left out of the release notes.
+- Waits for every ticket planned for this release (0227 to 0235, and 0237 to 0239), so they're in it. Changes for speck's own test suite only (0229 to 0234) belong under a short heading for people working on speck, or are left out of the release notes.
 - After it ships: tag `v0.4.1`, then `gh release create v0.4.1 --verify-tag --title "speck 0.4.1" --notes-file docs/releases/v0.4.1.md`.
 
 ## In plain words
