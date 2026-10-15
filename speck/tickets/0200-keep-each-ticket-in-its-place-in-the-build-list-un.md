@@ -1,7 +1,7 @@
 ---
 id: "0200"
 title: "Keep each ticket in its place in the Build list until it ships"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0199"]              # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T14:09:54.836Z"
 
 ---
 # 0200 · Keep each ticket in its place in the Build list until it ships
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Build list orders in-flight tickets by priority, so tickets move about as others start, are handed back or ship. On 2026-10-15 the user saw a ticket drop to the bottom of the list when it started shipping, which makes the list hard to follow.
