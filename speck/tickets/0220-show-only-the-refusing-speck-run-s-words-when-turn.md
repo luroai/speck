@@ -1,7 +1,7 @@
 ---
 id: "0220"
 title: "Show only the refusing speck run's words when Turn on fails"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0220 · Show only the refusing speck run's words when Turn on fails
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When the panel turns speck run on and speck run refuses to start, the panel shows everything written to the shared `run.log` since the click. If another speck run writes a line in that moment (for example "Launched 0012"), that line shows up in the refusal, which mixes another run's news with the reason this one didn't start.
