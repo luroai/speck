@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T10:34:23.148Z"
-approved: "2026-10-15T10:57:28.569Z"
+approved: "2026-10-15T11:09:27.048Z"
 
 ---
 # 0195 · Retry failing tests once before they fail a run
@@ -58,12 +58,13 @@ A test that fails once by chance no longer fails a whole test run or stops a shi
 Round 1 (codex): changes requested: F1 failingTestFiles keys failures only by their name path, discarding distinct failures with identical names.
 Round 2 (codex): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex): approve.
 
 ## Delivery log
-- Review rounds: 3, 1 of them a merge round
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 773,841
-- Elapsed since build started: 23 min
+- Reviewer tokens: 1,287,695
+- Elapsed since build started: 35 min
 - Changed lines: 121 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -279,6 +280,75 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "The merge preserves both the test-retry feature and the ship queue's failure handling. All acceptance criteria remain satisfied, and the full suite passes. No blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1fe3baba4e6b870919f7facbdbb22d87a3132499",
+    "thread_id": "01a13f2a-acf8-7932-a3e5-ce021ca8ff97",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 510883,
+      "cached_input_tokens": 453120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2971,
+      "reasoning_output_tokens": 155
+    },
+    "saved_at": "2026-10-15T11:09:24.909Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Implementation unchanged since approval. Passing AC1 tests verify selective retries, duplicate names across files and shipping after a successful retry."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "testRun preserves failure and both outputs when retry fails. Passing AC2 tests verify persistent failures, missing tests and occurrence counting."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The AC3 test passes, checking the final Flaky line and shared worktree log with time and branch."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "All AC4 tests pass, covering blank commands, missing or invalid locations, duplicate names with missing locations and stalled runs."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified fresh /tmp/speck-0195-tests.txt: 1770 tests, 1767 passed, 3 skipped, no failures. Only the ticket record changed since the previous approval; no tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/tap.mjs",
+        "issue": "The duplicate-name bug remains fixed. Every failing occurrence and location is preserved, and retry requires sufficient passing occurrences. All regression tests pass.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approval stands. The implementation is unchanged, all retry regression tests pass, and the fresh full suite has no failures. The reported intermittent shipping failures do not establish a regression in this change."
   }
 }
 ```
