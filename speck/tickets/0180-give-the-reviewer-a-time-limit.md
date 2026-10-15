@@ -135,3 +135,80 @@ A reviewer that runs too long is ended, and the review round fails with a messag
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5e7e7d44ce9edf022bdddbf70e41fa61d97ddd64",
+    "thread_id": "01a13f4d-3d0a-7a10-afc5-732a9055c923",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 279204,
+      "cached_input_tokens": 228864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2257,
+      "reasoning_output_tokens": 242
+    },
+    "saved_at": "2026-10-15T11:29:00.072Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/limit.mjs now kills descendants in separate groups, covered by the new detached-process test. However, descendants() takes its first ancestry snapshot only at timeout, so detached descendants whose intermediate parent has already exited escape cleanup."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewRound restores the ticket on failure and runCodexReview removes timed-out verdict files. Both AC2 tests verify no recorded round and a successful retry."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewTimeoutMs and config.mjs enforce positive whole numbers. AC3 tests verify invalid values, corrective wording and that no reviewer runs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "AC4 tests cover successful reviews, command failures and missing commands. The new long-limit test verifies that a quick command finishes normally above Node's single-timer range."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0180-tests.txt reports 1782 tests: 1779 passed, three skipped and zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/limit.mjs",
+        "issue": "Cleanup remains incomplete for detached descendants that become orphaned before timeout. For example, a hanging reviewer starts a helper which starts a detached background process and exits. At timeout, that background process has been reparented, so descendants(child.pid) cannot find it and the reviewer's process-group signal cannot reach it. Matching the existing test-stall implementation does not satisfy this ticket's explicit requirement.",
+        "suggested_fix": "Track or contain subprocesses throughout the attempt so cleanup retains responsibility after intermediate parents exit. Add a regression test where a helper starts a detached process and exits while the reviewer continues hanging.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/limit.mjs",
+        "issue": "The timer overflow is fixed: wait() caps each timer and recalculates the remaining deadline. The new regression test exercises the previously failing large-limit case.",
+        "suggested_fix": "",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The large-timeout bug is fixed, and all tests pass. Cleanup now reaches detached children whose ancestry remains intact, but background processes can still survive if their intermediate parent exits before timeout. The promise to end every process started by the reviewer remains incomplete."
+  }
+}
+```
+
+</details>

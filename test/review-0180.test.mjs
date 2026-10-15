@@ -144,3 +144,21 @@ test('0180 AC4: a limit longer than one timer can wait still lets a quick review
   assert.equal(res.stdout, 'the prompt');
   assert.equal(res.output[3], '', 'not ended for taking too long');
 });
+
+test('0180 AC1: a process the reviewer started whose parent has already gone is ended too', async () => {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-orphan-'));
+  const pids = path.join(bin, 'pid');
+  const script = path.join(bin, 'reviewer');
+  // A helper starts a background process in a group of its own and exits, leaving it with no parent from the reviewer.
+  const helper = `const c = require('child_process').spawn('sleep', ['300'], { stdio: 'ignore', detached: true }); require('fs').writeFileSync(${JSON.stringify(pids)}, String(c.pid)); c.unref();`;
+  fs.writeFileSync(script, `#!${process.execPath}
+require('child_process').spawnSync(process.execPath, ['-e', ${JSON.stringify(helper)}], { stdio: 'ignore' });
+setInterval(() => {}, 1e6);
+`, { mode: 0o755 });
+  const r = commandRepo({ command: script });
+  const res = r.runEnv(fast, 'review', '1');
+  assert.equal(res.status, 1, res.stderr);
+  assert.match(res.stderr, /took longer than 0\.7 seconds/);
+  const pid = Number(fs.readFileSync(pids, 'utf8'));
+  assert.ok(await hasStopped(() => !alive(pid)), 'the orphaned process was ended too');
+});
