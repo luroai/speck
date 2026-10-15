@@ -39,6 +39,7 @@ When Auto-build is off, an approved ticket that only `speck run` would ship says
 
 ## Notes
 - Asked for 2026-10-15, for release 0.4.0.
+- Failing before this build: none
 - Decided 2026-10-15: purple, because the user needs to act (turn Auto-build on). This settles the note's open question.
 - `doing()` and `ship_waiting` in `templates/panel.html` (0196); `state.run.on` says whether `speck run` is on.
 - Builds after 0201: all three change the Build list's cards in `templates/panel.html`.
