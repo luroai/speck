@@ -270,6 +270,7 @@ export function cmdRun() {
     for (const t of tickets) {
       if (running.size >= max) break;
       if (t.status !== 'ready' || (t.waiting_on || []).length || launched.has(t.id)) continue;
+      if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (heldByStop(repo, t)) {
         if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
         held.add(t.id);
