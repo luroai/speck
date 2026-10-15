@@ -1,7 +1,7 @@
 ---
 id: "0210"
 title: "Prepare release 0.4.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0198", "0199", "0200", "0201", "0202", "0203", "0204", "0205", "0206", 
 created: 2026-10-15
 started: "2026-10-15T15:58:43.144Z"
 approved: "2026-10-15T16:09:28.696Z"
+finished: "2026-10-15T16:11:48.090Z"
 
 ---
 # 0210 · Prepare release 0.4.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Over 70 tickets have shipped since the `v0.3.0` tag on 11 October, including speck run's ship queue, testing the merged result before a ship, retrying chance test failures and the fixes for leaked processes. Anyone following the README's setup prompt still gets 0.3.0.
