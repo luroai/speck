@@ -1,7 +1,7 @@
 ---
 id: "0197"
 title: "Run the full test suite once per review round in a build"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T13:17:42.890Z"
+approved: "2026-10-15T13:29:49.753Z"
 
 ---
 # 0197 · Run the full test suite once per review round in a build
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build runs the full test suite after implementing, again after each fix in its self-check, and again before each review round. With two builds at once each full run took 3 to 5 minutes on 2026-10-15, and full runs were 40 to 65% of every build's time (0180: 15 of 23 minutes). This slows every project that uses speck, more so the bigger its suite.
@@ -53,9 +54,14 @@ Builds now run the whole set of tests less often. While building and fixing, the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 147,373
+- Elapsed since build started: 12 min
+- Changed lines: 15 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none sent to the inbox. Known limit: the first full run here failed on three timing-sensitive tests as well as the old-wording checks (0176 AC1, 0177 AC3, 0153 AC2), which passed on speck test's own rerun; speck already logs flaky tests, so no new note.
 
