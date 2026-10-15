@@ -4,7 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
-import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly } from './speck.mjs';
+import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -67,8 +67,8 @@ function takeRunLock(repo) {
   } finally { fs.rmSync(mine, { force: true }); }
 }
 
-// Watches the board and starts a build for each ready ticket that isn't waiting on another, up to
-// max_parallel_builds at once. Builds run in their own process group, so stopping speck run leaves them running.
+// Watches the board: starts a build for each ready ticket that isn't waiting on another, up to max_parallel_builds at
+// once, and ships approved ones (shipQueue). Each runs in its own process group, so stopping speck run leaves it running.
 export function cmdRun() {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
@@ -86,16 +86,15 @@ export function cmdRun() {
   const release = () => { try { if (fs.readFileSync(lock, 'utf8').trim() === String(process.pid)) fs.rmSync(lock, { force: true }); } catch { /* already gone */ } };
   process.on('exit', release);
   const stop = () => {
-    console.log(`speck run stopped.${running.size ? ` ${running.size} build${running.size === 1 ? ' is' : 's are'} still running: ${[...running].join(', ')}.` : ''}`);
+    console.log(`speck run stopped.${running.size ? ` ${running.size} build${running.size === 1 ? ' is' : 's are'} still running: ${[...running].join(', ')}.` : ''}${ships.note()}`);
     process.exit(0);
   };
-  process.on('SIGINT', stop);
-  process.on('SIGTERM', stop);
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, stop);
 
   const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
   const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
-  const running = new Set();
+  const running = new Set(), ships = shipQueue(repo, cfg); // the builds running, and the approved tickets to ship (0193)
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
@@ -253,6 +252,7 @@ export function cmdRun() {
       lastError = msg;
       return;
     }
+    ships.check(tickets);
     // Builds that were killed with their ticket in hand: each resumed once.
     const runs = runsDir(repo);
     for (const t of tickets) {

@@ -434,6 +434,13 @@ export function shipState(runs, id) {
   return { running: false, auto, started: rec.started, ended: text(rec.ended), message: text(rec.message) };
 }
 
+// True while a ship of any ticket but `pad` runs in the repo, whoever started it, from the ship records in `runs`.
+export function otherShipRunning(runs, pad = null) {
+  let names = [];
+  try { names = fs.readdirSync(runs); } catch { return false; }
+  return names.some(f => { const m = f.match(/^(\d+)\.ship\.json$/); return !!m && m[1] !== pad && shipState(runs, m[1])?.running === true; });
+}
+
 // Takes the ticket's ship record for this process, or refuses, changing nothing, while another ship of it runs. The
 // record is written whole and then linked into place, which is atomic, so two ships starting at once can't both take
 // it. A record left by a ship that has ended or gone is replaced, only while holding a short-lived recovery lock.
@@ -471,6 +478,38 @@ function takeShip(repo, pad, auto) {
   finally { fs.rmSync(mine, { force: true }); }
 }
 
+// One ship at a time in the repo (0193): ship.lock in the runs folder names the ship that has it. It's written whole and
+// linked into place, which is atomic. A lock whose ship has gone is taken over, only while holding a short-lived
+// recovery lock. A ship speck run started gives up at once (null) if another ship has it; any other ship waits its turn,
+// saying so once. Returns what release() needs.
+function takeShipLock(runs, pad, alone) {
+  const file = path.join(runs, 'ship.lock'), recover = `${file}.recover`, mine = path.join(runs, `ship.lock.${process.pid}.tmp`);
+  const text = JSON.stringify({ pid: process.pid, started: new Date().toISOString(), id: pad });
+  fs.writeFileSync(mine, text);
+  const link = to => { try { fs.linkSync(mine, to); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
+  const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
+  const holder = held => { try { const rec = JSON.parse(held); return shipRunning(rec, String(rec.id)) ? rec : null; } catch { return null; } };
+  let told = false;
+  try {
+    for (;;) {
+      if (link(file)) return { file, text };
+      const held = read(file);
+      if (held === null) continue; // removed just now: try again
+      const rec = holder(held);
+      if (!rec) { // its ship has gone: take it over, unless another ship is doing that now
+        if (!link(recover)) { if (!holder(read(recover) ?? '')) fs.rmSync(recover, { force: true }); else sleep(50); continue; }
+        try { if (read(file) === held) fs.rmSync(file, { force: true }); } finally { fs.rmSync(recover, { force: true }); }
+        continue;
+      }
+      if (alone) return null;
+      if (!told) console.log(`Ticket ${rec.id}'s ship is running in this repo, so this ship is waiting for it to finish.`);
+      told = true;
+      sleep(envMs('SPECK_SHIP_POLL_MS', POLL_MS));
+    }
+  } finally { fs.rmSync(mine, { force: true }); }
+}
+const releaseShipLock = lock => { try { if (fs.readFileSync(lock.file, 'utf8') === lock.text) fs.rmSync(lock.file, { force: true }); } catch { /* already gone */ } };
+
 // Ends the record this process took: removes it, or for an auto-ship that didn't ship, keeps it with when it ended and
 // speck ship's message. A record another ship has since replaced is left alone.
 function endShip(took, auto, error) {
@@ -489,6 +528,9 @@ export function cmdShip(args) {
   if (!id) throw new SpeckError('Usage: speck ship <id> [--auto]');
   const repo = findRepoRoot();
   const auto = args.includes('--auto');
+  // Read once and removed, so nothing the ship runs, such as the tests, inherits it.
+  const alone = !!process.env.SPECK_SHIP_ALONE;
+  delete process.env.SPECK_SHIP_ALONE;
   // --auto is how the builder ships straight after approval. It only goes ahead when config allows it for this ticket.
   if (auto) {
     // Read the ticket where its branch is checked out, so the checks see the approved copy, not the base branch's.
@@ -500,7 +542,14 @@ export function cmdShip(args) {
   }
   // Only a ticket id gets a record: anything else is refused by shipTicket, naming it.
   const took = /^\d{1,4}$/.test(id) ? takeShip(repo, id.padStart(4, '0'), auto) : null;
+  let lock = null;
+  try { lock = took && takeShipLock(path.dirname(took.file), id.padStart(4, '0'), alone); } catch (e) { endShip(took, false, null); throw new SpeckError(`speck ship couldn't take the repo's ship lock (${e.message}), so nothing was shipped. Try again.`); }
+  if (took && !lock) {
+    endShip(took, false, null);
+    throw new SpeckError(`Another ship is running in this repo, so ${id.padStart(4, '0')} wasn't shipped. Nothing was changed.`, 15);
+  }
   try { shipTicket(repo, id); }
   catch (e) { if (took) endShip(took, auto, e); throw e; }
+  finally { if (lock) releaseShipLock(lock); }
   if (took) endShip(took, auto, null);
 }
