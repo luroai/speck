@@ -7,6 +7,7 @@ import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeArgv, handBackQueue } from './hand-back.mjs';
+import { countStop } from './stop-wait.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -204,6 +205,9 @@ export function cmdRun() {
     if (!argv)
       return reportStopped(id, rec, `speck run can't resume it: ${typeof rec.session === 'string' && rec.session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session'}`);
     const recordFile = path.join(runsDir(repo), `${id}.json`);
+    // 0217: the time it waited, stopped, is left out of its build time, counted while it can't be writing the ticket.
+    const note = countStop(repo, id);
+    if (note) console.log(`${id}:${note}`);
     const resumed = { ...rec, resumed: new Date().toISOString(), resume_command: argv };
     // Saved before the build carries on, so a record that can't be saved stops it being resumed at all.
     try { saveRecord(recordFile, resumed); } catch (e) { return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
@@ -539,7 +543,7 @@ function endBuild(b, held) {
 }
 
 // Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
-function buildTicket(repo, cfg, id) {
+export function buildTicket(repo, cfg, id) {
   const list = worktreeList(repo);
   const branch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${id}-`);
   const at = list.find(w => w.branch && branch.test(w.branch) && fs.existsSync(w.path))?.path || list[0].path;

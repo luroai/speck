@@ -40,6 +40,7 @@ A stopped build's waiting time is left out of its build time, as blocked and pau
 - The panel's timer stops at `held_at` (`templates/panel.html`), which today covers approved, blocked and paused tickets. Waiting time is added up in `waited_seconds` (0166, `waitFields()` in `scripts/core.mjs`).
 - An exited build's run record has its exit time (`exited`, shown as `build_exit.at`). A killed build has no time recorded today, only a dead process (`buildKilled()` in `scripts/run.mjs`), so speck needs to record when it noticed.
 - Failing before this build: none
+- Self-check: no changes (added a test that a stopped time which can't be written to the ticket says so, changes nothing and is counted by the next start).
 - Resumes happen in `resumeKilled()` in `scripts/run.mjs` (which writes `resumed`), on hand-back, and by hand.
 
 ## In plain words
