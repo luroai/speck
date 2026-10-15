@@ -85,7 +85,7 @@ test('0238 AC1: --recorded with anything else is a usage error that runs nothing
   for (const args of [['--recorded', '--fresh'], ['--recorded', 'x'], ['--fresh', '--recorded']]) {
     const res = runIn(r.dir, 'test', ...args);
     assert.equal(res.status, 1, args.join(' '));
-    assert.match(res.stderr, /Usage: speck test \[--fresh \| --recorded\]/);
+    assert.match(res.stderr, /Usage: speck test \[--fresh\], speck test --recorded, or speck test --files/);
     noTrace(res);
   }
   assert.equal(r.runs(), 0);

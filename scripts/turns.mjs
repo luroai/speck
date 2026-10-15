@@ -193,7 +193,7 @@ export function cmdTest(args) {
   const fresh = args.length === 1 && args[0] === '--fresh';
   const recordedOnly = args.length === 1 && args[0] === '--recorded';
   if (files && !files.length) throw new SpeckError('Usage: speck test --files <file>… (name at least one test file)');
-  if (args.length && !fresh && !recordedOnly && !files) throw new SpeckError('Usage: speck test [--fresh | --recorded], or speck test --files <file>…');
+  if (args.length && !fresh && !recordedOnly && !files) throw new SpeckError('Usage: speck test [--fresh], speck test --recorded, or speck test --files <file>…');
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const only = files && String(cfg.commands?.test_files || '').trim();
