@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
-import { fullPrompt, runCommandReview } from './reviewers.mjs';
+import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong } from './reviewers.mjs';
 import { testOutput } from './tap.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
@@ -254,8 +254,13 @@ function runCodexReview(repo, id, s) {
   const args = round === 1 || !lastThread
     ? ['exec', '--sandbox', sandbox, ...common, '-']
     : ['exec', 'resume', ...common, lastThread, '-'];
+  const ms = reviewTimeoutMs(cfg);
   const started = Date.now();
-  const r = sh('codex', args, { cwd: repo, input: prompt });
+  // A verdict file left by an earlier attempt that was ended must never be read as this one's (0180).
+  fs.rmSync(out, { force: true });
+  const r = runLimited('codex', args, { cwd: repo, input: prompt, ms });
+  if (r.timedOut) { fs.rmSync(out, { force: true }); throw new SpeckError(tookTooLong('codex', ms)); }
+  if (r.error) throw new SpeckError(`codex failed: ${r.error.message}`);
   if (r.status !== 0) throw new SpeckError(`codex exited ${r.status}: ${r.stderr.trim().split('\n').slice(-5).join('\n')}`);
   const events = r.stdout.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return {}; } });
   const thread = events.find(e => e.type === 'thread.started')?.thread_id || (round > 1 ? lastThread : undefined);
@@ -287,6 +292,8 @@ export function cmdReview(args) {
   const reviewer = t.fm.reviewer || cfg.reviewer;
   const command = cfg.reviewer_options?.[reviewer]?.command;
   const opts = { tests: opt('tests'), response: opt('response') };
+  // A bad review_timeout_minutes is refused before the ticket changes or any reviewer runs (0180).
+  if ((typeof command === 'string' && command.trim()) || reviewer === 'codex') reviewTimeoutMs(cfg);
   let rec;
   if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
   else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));

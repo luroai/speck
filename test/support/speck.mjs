@@ -29,6 +29,8 @@ const args = process.argv.slice(2);
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify(args) + '\\n');
 fs.appendFileSync(${JSON.stringify(log + '.prompts')}, JSON.stringify(fs.readFileSync(0, 'utf8')) + '\\n');
 if (process.env.FAKE_CODEX_FAIL) { console.error('codex broke'); process.exit(2); }
+// FAKE_HANG_PID (0180): starts a process that outlives it, writes that one's pid there, and never ends.
+if (process.env.FAKE_HANG_PID) { const c = require('child_process').spawn('sleep', ['300'], { stdio: 'ignore' }); fs.writeFileSync(process.env.FAKE_HANG_PID, String(c.pid)); setInterval(() => {}, 1e6); }
 const out = args[args.indexOf('-o') + 1];
 fs.writeFileSync(out, JSON.stringify({ verdict: 'changes_requested', criteria: [{ id: 1, status: 'pass', evidence: 'ok' }], findings: [], summary: 'fine', escalation_question: '' }));
 console.log(JSON.stringify({ type: 'thread.started', thread_id: 'T1' }));
@@ -52,7 +54,8 @@ if (process.env.FAKE_CODEX_EVENT) console.log(process.env.FAKE_CODEX_EVENT);
   const prompts = () => fs.existsSync(log + '.prompts') ? fs.readFileSync(log + '.prompts', 'utf8').trim().split('\n').map(l => JSON.parse(l)) : [];
   // Rounds are kept in the ticket file (0011).
   const roundFile = n => ticketRounds(fs.readFileSync(file, 'utf8')).rounds[n - 1];
-  return { dir, run, calls, prompts, roundFile, ticketFile: file, git: (...a) => gitIn(dir, ...a) };
+  const runEnv = (more, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: dir, encoding: 'utf8', env: { ...env, ...extraEnv, ...more } });
+  return { dir, run, runEnv, calls, prompts, roundFile, ticketFile: file, git: (...a) => gitIn(dir, ...a) };
 }
 
 export const gitEnv = { GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
@@ -130,6 +133,8 @@ const stdin = fs.readFileSync(0, 'utf8');
 const ticketStatus = (fs.readFileSync('speck/tickets/' + fs.readdirSync('speck/tickets').find(n => n.startsWith('0001-')), 'utf8').match(/^status: (\\S+)/m) || [])[1]; // reads a temporary repo
 fs.appendFileSync(${JSON.stringify(log)}, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), stdin, ticketStatus }) + '\\n');
 const v = process.env.FAKE_VERDICT || ${JSON.stringify(JSON.stringify(changesVerdict))};
+// FAKE_HANG_PID (0180): starts a process that outlives it, writes that one's pid there, and never ends.
+if (process.env.FAKE_HANG_PID) { const c = require('child_process').spawn('sleep', ['300'], { stdio: 'ignore' }); fs.writeFileSync(process.env.FAKE_HANG_PID, String(c.pid)); setInterval(() => {}, 1e6); }
 const mode = process.env.FAKE_MODE || 'raw';
 if (mode === 'raw') console.log(v);
 if (mode === 'fenced') console.log('Here is my review.\\n\\n\`\`\`json\\n' + v + '\\n\`\`\`\\nThanks.');

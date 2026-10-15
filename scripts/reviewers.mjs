@@ -2,9 +2,38 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { TEMPLATES, SpeckError, sh, git, reviewerSettings, settingsMeta, posix } from './core.mjs';
 import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt } from './review.mjs';
+
+const LIMIT_SCRIPT = fileURLToPath(new URL('./limit.mjs', import.meta.url));
+
+// How long a reviewer speck runs may take before it's ended (0180), in ms. SPECK_REVIEW_TIMEOUT_MS sets it directly,
+// for speck's own tests, which can't wait minutes.
+export function reviewTimeoutMs(cfg) {
+  const minutes = cfg.review_timeout_minutes ?? 30;
+  if (!Number.isSafeInteger(minutes) || minutes < 1)
+    throw new SpeckError(`review_timeout_minutes in speck/config.yml must be a whole number of 1 or more (got ${JSON.stringify(minutes)}). Fix it with \`speck config set review_timeout_minutes 30\`, then run this again.`);
+  const ms = Number(process.env.SPECK_REVIEW_TIMEOUT_MS);
+  return Number.isSafeInteger(ms) && ms > 0 ? ms : minutes * 60 * 1000;
+}
+
+// The message for a reviewer ended for taking too long.
+export function tookTooLong(name, ms) {
+  const unit = (v, word) => `${v} ${word}${v === 1 ? '' : 's'}`;
+  const limit = ms % 60000 === 0 ? unit(ms / 60000, 'minute') : unit(Math.round(ms / 100) / 10, 'second');
+  return `The ${name} reviewer took longer than ${limit}, so speck ended it and every process it started. No round was recorded. Run the round again, or raise review_timeout_minutes in speck/config.yml if your reviewer needs longer.`;
+}
+
+// Runs a reviewer with the prompt on stdin, ending it and every process it started after `ms`. Returns the process
+// result, with `timedOut` set if it was ended for that, or `error` ({ code, message }) if it couldn't start.
+export function runLimited(cmd, args, { cwd, input, ms }) {
+  const r = sh(process.execPath, [LIMIT_SCRIPT, String(ms), cmd, ...args], { cwd, input, stdio: ['pipe', 'pipe', 'pipe', 'pipe'] });
+  const said = r.output[3] || '';
+  if (said === 'timeout') return { ...r, timedOut: true };
+  const m = said.match(/^error (\S*) ([\s\S]*)$/);
+  return m ? { ...r, error: { code: m[1], message: m[2] } } : r;
+}
 
 // The round-1 prompt with the verdict schema: what `speck prompt` prints, and what a command reviewer gets on stdin.
 export function fullPrompt(repo, ticket, cfg, diff, tests) {
@@ -92,10 +121,12 @@ function historyPrompt(repo, s, id) {
 }
 
 // Runs one reviewer command with the prompt on stdin. Returns the process result, or { error } if it couldn't start.
-function runReviewer(repo, command, values, prompt) {
+// One that runs past `ms` fails the round (0180).
+function runReviewer(repo, name, command, values, prompt, ms) {
   const [cmd, ...args] = commandArgs(command, values);
   if (!cmd) return { cmd: '', error: 'the command is empty' };
-  const r = spawnSync(cmd, args, { cwd: repo, input: prompt, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const r = runLimited(cmd, args, { cwd: repo, input: prompt, ms });
+  if (r.timedOut) throw new SpeckError(tookTooLong(name, ms));
   if (r.error) return { cmd, error: r.error.code === 'ENOENT' ? `\`${cmd}\` isn't installed or isn't on your PATH` : `\`${cmd}\` failed (${r.error.message})` };
   return { ...r, cmd };
 }
@@ -116,6 +147,7 @@ export function runCommandReview(repo, id, name, command, s) {
   // Only the latest round's session has seen every round so far. An older one would miss the rounds since.
   const lastThread = s.prior[s.prior.length - 1]?.meta?.thread_id;
   const resume = typeof options.resume_command === 'string' && options.resume_command.includes('{session}') ? options.resume_command : '';
+  const ms = reviewTimeoutMs(s.cfg);
   const started = Date.now();
   let r = null, session = 'fresh';
   if (s.round > 1) {
@@ -123,7 +155,7 @@ export function runCommandReview(repo, id, name, command, s) {
     if (!resume) why = 'no resume_command with {session} is set for it';
     else if (!lastThread) why = `no session id was saved from round ${s.round - 1}`;
     else {
-      const tried = runReviewer(repo, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }));
+      const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }), ms);
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
       else if (tried.status !== 0) why = `resuming session ${lastThread} exited ${tried.status}`;
       else { r = tried; session = 'continued'; }
@@ -133,7 +165,7 @@ export function runCommandReview(repo, id, name, command, s) {
   if (!r) {
     const prompt = s.round === 1 ? fullPrompt(repo, s.ticket, s.cfg, s.diff, s.tests) : historyPrompt(repo, s, id);
     if (s.round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
-    r = runReviewer(repo, command, values, prompt);
+    r = runReviewer(repo, name, command, values, prompt, ms);
   }
   if (r.error) throw new SpeckError(`Couldn't run the ${name} reviewer: ${r.error}. Check reviewer_options.${name} in speck/config.yml.`);
   const tail = r.stderr.trim().split('\n').slice(-5).join('\n');

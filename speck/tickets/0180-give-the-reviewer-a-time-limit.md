@@ -42,6 +42,7 @@ A reviewer that runs too long is ended, and the review round fails with a messag
 - Follows `test_stall_minutes` (0152) for the setting's checks and wording.
 - Codex rounds took 29 to 44 seconds on 2026-10-14 (0164), so 30 minutes is generous.
 - Failing before this build: none
+- Self-check: no changes to the code; the bad-value test now reuses one repo per reviewer, to keep it quick.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
