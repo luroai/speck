@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-14-give-idea-and-inbox-cards-the-larger-title.
 after: ["0213"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:27:49.181Z"
-approved: "2026-10-15T23:30:07.419Z"
+approved: "2026-10-15T23:32:55.887Z"
 
 ---
 # 0214 · Give Plan's note cards a ticket card's larger title
@@ -52,12 +52,13 @@ In Plan, the idea and inbox cards now have the same larger title as the ticket c
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 92,801
-- Elapsed since build started: 2 min
+- Reviewer tokens: 269,249
+- Elapsed since build started: 5 min
 - Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
@@ -117,6 +118,65 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Idea and inbox cards now use the same larger label and title sizes as ticket cards. Labels stay beside titles, wrapped text aligns correctly at all requested widths, and opening, closing and supporting details remain intact. The five relevant tests passed, and no blocking concerns were found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "98d3f7c1bad8effc8ef625689c2dfcf2c7ed6578",
+    "thread_id": "01a141e6-5aa5-7de1-a4cc-8f9fa6e0bb9e",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 175344,
+      "cached_input_tokens": 107136,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1104,
+      "reasoning_output_tokens": 19
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:32:53.817Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains 14px labels and 17px titles through .item .line rules. The passing browser test in test/panel-0214.test.mjs checks computed sizes against ticket cards at all requested widths."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ideaItem() and inboxItem() retain label-before-title order in a flex line. Passing AC2 tests check structure, and the browser test checks that both appear on the same first line."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC1/AC3 browser test measures text rectangles and overflow at 375, 700 and 1,280px, checking that long titles wrap without clipping and subsequent lines align under the title."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests exercise opening and closing both card types and verify status/from-ticket and path contents. Their supporting markup and styles remain unchanged. test/support/heavy.mjs now registers the new browser test; the previously failing 0233 list-completeness test passes. All 12 tests in the round passed without skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The larger idea and inbox headings still meet all four requirements. The new browser test is now correctly registered with the test runner, resolving the failure found during shipping. All 12 relevant tests passed, with no blocking concerns."
   }
 }
 ```
