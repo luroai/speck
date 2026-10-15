@@ -1,7 +1,7 @@
 ---
 id: "0231"
 title: "Run the speck CLI inside the test process for output checks"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0230"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T22:13:32.859Z"
+approved: "2026-10-15T22:30:47.570Z"
 
 ---
 # 0231 · Run the speck CLI inside the test process for output checks
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Tests check speck's commands by starting `node scripts/speck.mjs` as a new process, about 800 times across the suite. Each start takes about 0.2 s on an 8 GB MacBook Air before the command does anything, and most of these tests only check what a command prints or changes.
@@ -49,9 +50,15 @@ Nothing changes for someone using speck: every command prints, changes and exits
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 setEnv deletes only keys absent from the supplied object, then skips undefined values.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 593,556
+- Elapsed since build started: 17 min
+- Changed lines: 75 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Suite time, on the same machine (16 cores, shared with other builds' test runs), from `speck test`'s TAP totals: 113.9 s before (2,015 tests), 108.5 s after (2,024 tests). Summed over every test, 1,433 s before and 1,259 s after, about 12% less. The suite's length is set mostly by the panel, run and browser tests, which still start real processes, so the wall time moved less.
 - Follow-ups:
