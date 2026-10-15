@@ -42,6 +42,9 @@ The badge has a shipping loop of its own: the builder pushes the finished block 
 - The design reference is `mockups/builder-badge/index.html` in the main checkout (local only: `mockups/` isn't in git, so it isn't in a build's worktree; `git worktree list` shows the main checkout first). It has no shipping state yet: reuse its builder, block and tick drawing code.
 - Today shipping shows the `type` pose (`badgeOf` in `templates/panel.html`); the still frames are in `STILL_AT`.
 - Failing before this build: none
+- Build: the mockup now has two shipping styles ("Push it off" and "Set sail"); this follows the sail style's boat on the water, with the boat redrawn as a folded-paper shape and short straight arms added to the builder, as in the mockup.
+- Build: shipping and waiting to ship had the laptop pose, so the tests from 0156, 0168, 0169 and 0196 that said so now expect the shipping pose. 0168's in-browser edge test leaves out the shipping pose, whose boat leaves past the edge on purpose; 0172's own tests check its edge instead.
+- Self-check: the comment above `badgeOf` now names the shipping loop; no other changes.
 - Builds after 0196, which makes the panel show a ticket as shipping from its approval until it ships, whether or not its build is running.
 
 ## In plain words

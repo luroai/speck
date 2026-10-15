@@ -42,7 +42,7 @@ test('0196 AC1: an approved ticket auto-ship covers, whose build has ended, wait
   assert.deepEqual(s.acts, [], 'no "Build finished without shipping"');
   const shipping = shows(p, '0602');
   assert.equal(s.pose, shipping.pose, 'the badge moves as it does while shipping');
-  assert.equal(s.pose, 'type');
+  assert.equal(s.pose, 'ship'); // the shipping loop since 0172
   assert.ok(s.card.includes('at-ship'), 'its border shows the ship stage');
   const m = panelModel()({ tickets: TICKETS, ideas: [] }).queue.find(t => t.id === '0601');
   assert.deepEqual([m.to_ship, m.red, m.exit_label], [false, false, null]);

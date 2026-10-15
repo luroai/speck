@@ -30,7 +30,7 @@ const SHOWS = {
   '0405': ['wait', 'The builder is waiting for you', 'Approved · waiting for you to ship it', 'Ship'],
   '0406': ['bad', 'The builder needs you', 'Blocked · it has a question for you', 'Build'],
   '0407': ['bad', 'The builder needs you', 'The build stopped', 'Build'],
-  '0408': ['type', 'The builder is shipping', 'Shipping', 'Ship'],
+  '0408': ['ship', 'The builder is shipping', 'Shipping', 'Ship'], // its own loop since 0172
 };
 const FLIGHT = Object.keys(SHOWS);
 
@@ -66,7 +66,7 @@ test('0168 AC2: the badge plays the laptop loop while an agent is at work, from 
   const p = fake();
   await p.settle();
   const at = FLIGHT.filter(id => SHOWS[id][0] === 'type');
-  assert.deepEqual(at, ['0401', '0408'], 'building and shipping (self-check and review too until 0169)');
+  assert.deepEqual(at, ['0401'], 'building (self-check and review too until 0169, shipping until 0172)');
   const js = script();
   const loop = js.match(/ {4}type\(g, t\) \{([\s\S]*?)\n {4}\},/)[1];
   assert.match(loop, /const CY = 2800/, 'a 2.8 second loop');
@@ -250,7 +250,8 @@ test('0168 AC5: in a real browser, no pose reaches past the tile\'s rounded edge
       badgeColours();
       const c = document.createElement('canvas'); c.width = c.height = 224; const g = c.getContext('2d'), out = {};
       const edge = new Path2D(); edge.roundRect(56 - 1.4, 56 - 1.4, 112 + 2.8, 112 + 2.8, 25.4); // the tile's edge and its line, at twice the size
-      for (const pose of Object.keys(BADGE.POSES).filter(k => k !== 'review')) { // the reviewer slides in past it: test/panel-0169.test.mjs
+      // The reviewer slides in past it (test/panel-0169.test.mjs), and the boat sails out past it (test/panel-0172.test.mjs).
+      for (const pose of Object.keys(BADGE.POSES).filter(k => k !== 'review' && k !== 'ship')) {
         out[pose] = 0;
         for (let t = 0; t < 8400; t += 23) {
           g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 224, 224); g.setTransform(2, 0, 0, 2, 56, 56);
