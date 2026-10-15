@@ -1,7 +1,8 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, full, fakePage, page, findChrome, browserPage } from './support/panel.mjs';
+import { sharedPanel } from './support/shared-panel.mjs';
 
 // ---------- 0160: keep the panel header on screen ----------
 
@@ -26,8 +27,7 @@ const board = () => ({
 // The panel in a real headless browser, with a board of tickets, at a width and with the screen's safe-area insets
 // (the status bar's height above, the home indicator's below), as on an iPhone in the home-screen app.
 async function withPanel(fn, { width = 375, height = 640, insets = null, theme = null, reducedMotion = false } = {}) {
-  const r = panelRepo();
-  const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
+  const panel = await sharedPanel(); // one for the whole file: the page stub below answers every request (0234)
   const b = await browserPage('about:blank');
   const STATE = board();
   try {
@@ -47,7 +47,7 @@ async function withPanel(fn, { width = 375, height = 640, insets = null, theme =
       await new Promise(res => setTimeout(res, 100));
     }
     await fn(b);
-  } finally { await b.close(); await stop(panel); }
+  } finally { await b.close(); }
 }
 // Scrolls the page and waits for the header to settle (a scroll event, then any fade).
 const scrollTo = async (b, y) => { await b.js(`scrollTo(0, ${y})`); await new Promise(r => setTimeout(r, 350)); };

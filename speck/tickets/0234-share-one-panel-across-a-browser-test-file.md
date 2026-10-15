@@ -38,6 +38,7 @@ The real-browser test files whose page stub answers every request start one repo
 ## Notes
 - The shared panel's repo needs a `speck-keep-*` folder, which `test/support/tmp.mjs` leaves alone between tests.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
