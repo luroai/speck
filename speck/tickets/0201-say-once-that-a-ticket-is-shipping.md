@@ -1,7 +1,7 @@
 ---
 id: "0201"
 title: "Say once that a ticket is shipping"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0201 · Say once that a ticket is shipping
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 While a ticket ships, its card in the Build list says so three times: "Shipping" beside the builder badge, the step name "Ship" under it, and a separate "Shipping… · 00:04" line below. Seen on 0197 on 2026-10-15.
