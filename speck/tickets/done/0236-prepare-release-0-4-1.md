@@ -1,7 +1,7 @@
 ---
 id: "0236"
 title: Prepare release 0.5.0                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0227","0228","0229","0230","0231","0232","0233","0234","0235","0237","0
 created: 2026-10-15
 started: "2026-10-15T23:00:22.014Z"
 approved: "2026-10-15T23:04:00.196Z"
+finished: "2026-10-15T23:05:49.141Z"
 
 ---
 # 0236 · Prepare release 0.5.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Builds spend most of their time running speck's test suite: about 8 minutes on an 8 GB MacBook Air, several times per ticket, with test runs from builds side by side taking over the computer. A build could also end itself while its suite ran in the background. The 0.5.0 tickets run the whole suite once per ticket, when it ships, make test runs take turns at a low priority, make the suite faster and keep test runs in the foreground, and anyone following the README's setup prompt still gets 0.4.0.
