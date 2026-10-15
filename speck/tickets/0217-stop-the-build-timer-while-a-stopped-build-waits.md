@@ -44,7 +44,11 @@ A stopped build's waiting time is left out of its build time, as blocked and pau
 - Resumes happen in `resumeKilled()` in `scripts/run.mjs` (which writes `resumed`), on hand-back, and by hand.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build stops before it finishes, its ticket's timer in the Build queue now stops too, instead of counting the time it sits waiting for you. For a build that ended on its own, the timer stops at the moment it ended. For one that was killed, it stops at the moment speck first noticed, and stays there after you reload the page or restart the panel. When the ticket's build starts again, whether Auto-build resumes it or you run `/speck-build` for it, the timer carries on from where it stopped, and the time spent waiting is left out of its shipped minutes.
+
+To see it, stop a build part way through (for example by closing the terminal it runs in). Its row says it stopped, and its timer no longer counts up.
+
+Worth keeping an eye on: if you resume a stopped build's session yourself and it never goes through the build steps again, speck doesn't know it has started again, so its row stays shown as stopped.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +58,10 @@ A stopped build's waiting time is left out of its build time, as blocked and pau
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Know when a stopped build starts again: a session resumed by hand that never runs `speck start` isn't counted as a new start. `speck status` text still says a killed build stopped after `/speck-build` has started it again in a new session, and `speck run` may resume the old session too. Saved to `speck/ideas/2026-10-15-know-when-a-stopped-build-starts-again.md`.
+  - Known limit: between a hand-resumed session starting and it running `speck start`, the panel's timer counts on without that stretch left out. It drops back once `speck start` counts it.
+  - 0219 also changes `speck start` (`cmdStart`), so the two may clash when merged.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -128,6 +136,82 @@ A stopped build's waiting time is left out of its build time, as blocked and pau
     ],
     "escalation_question": "",
     "summary": "The stopped timers and saved stop times work in the tested cases. Restart accounting needs fixes: manually resuming a killed build can still count its waiting time, and a failed marker save can subtract waiting time repeatedly. All 13 tests passed, but they miss these cases."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "04a803d224dc2f467cabb239273f0625a0d6b445",
+    "thread_id": "01a141f0-ac8a-7e63-920b-19ac1ddb2440",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 330286,
+      "cached_input_tokens": 267008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2700,
+      "reasoning_output_tokens": 667
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:43:23.504Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html panelModel holds the timer at build_exit.at. Passing AC1 tests cover building and reviewing tickets, subtract existing waiting time and verify that timer ticks leave the displayed time unchanged."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/stop-wait.mjs buildStop persists the first observation in a session/pid-specific marker. Passing AC2 tests cover persistence across processes, rejection of an earlier build's marker and a frozen panel timer."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "countStop consumes saved waiting time through speck start and speck run's resumeKilled. The new passing test exercises an active manually resumed session, repeated starts and detection of its next stop. Other passing tests cover automatic resumption, approval and shipped-time calculations, and write-failure retries without duplicate subtraction."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests cover running builds, blocked and paused timer precedence, and avoiding stop markers for blocked or approved tickets. All 15 reported tests passed; inspection found no additional regression in these behaviours."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/stop-wait.mjs",
+        "issue": "Manual resumption previously prevented countStop from recovering the saved stop time because the session was already active.",
+        "suggested_fix": "Implemented: restart accounting can consume a matching saved stop while the resumed session is active. The regression test exercises this path and verifies subsequent stop detection.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/stop-wait.mjs",
+        "issue": "Failure to save the counted marker previously allowed retries to subtract the same waiting interval repeatedly.",
+        "suggested_fix": "Implemented: update the marker before committing waiting time, add nothing when that update fails, and restore the marker after a ticket-write failure. Passing tests cover both failure paths and retries.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Stopped builds now freeze their timers, retain their stop times and exclude waiting time when resumed. Both previous issues are fixed, with regression tests covering them. All 15 reported tests passed, and no blocking findings remain."
   }
 }
 ```
