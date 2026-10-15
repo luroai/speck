@@ -12,7 +12,8 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 // The landing page's mark, <symbol id="mark"> in speck-site's site/index.html: the open circle, the two ears and the dot.
 const SITE = {
   paths: ['M14.5 22.5 A21.5 21.5 0 1 0 22 16.2', 'M12.6 19.8 a5.2 5.2 0 0 1 8.2 -5.6', 'M43.2 14.2 a5.2 5.2 0 0 1 8.2 5.6'],
-  dot: { cx: '32', cy: '38', r: '2.3' },
+  // 0184: the dot is the builder's eye, larger and just above the circle's centre, in place of the site's nose.
+  dot: { cx: '31.7', cy: '33.2', r: '4.8' },
 };
 const LIGHT_DOT = '#b0412e', DARK_DOT = '#d4664e';
 const SVG = () => fs.readFileSync(path.join(ICONS, 'icon.svg'), 'utf8');
@@ -54,7 +55,7 @@ test('0170 AC1: each PNG is the new mark, centred, on a solid background, with s
     // A point given in the mark's own units, moved by the icon's translate.
     const at = (u, v) => hex(img.at(Math.floor((u + dx) * size / 64), Math.floor((v + dy) * size / 64)));
     for (const [u, v] of [[1, 4], [62, 4], [1, 62], [62, 62], [32, 9], [32, 26]]) assert.equal(at(u, v), '#faf9f5', `${name} background at ${u},${v}`);
-    assert.equal(at(32, 38), LIGHT_DOT, `${name} has the red dot`);
+    assert.equal(at(31.7, 33.2), LIGHT_DOT, `${name} has the red dot`);
     const c = L.arcs[0];
     for (const t of [Math.PI / 2, 0, Math.PI]) assert.equal(at(c.cx + c.r * Math.cos(t), c.cy + c.r * Math.sin(t)), '#141413', `${name} has the circle at ${t.toFixed(2)} rad`);
     for (const e of L.arcs.slice(1)) assert.equal(at(e.cx, e.cy - e.r), '#141413', `${name} has the ear at ${e.cx.toFixed(1)}`);

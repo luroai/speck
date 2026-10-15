@@ -75,12 +75,13 @@ const chunk = (type, data) => {
   len.writeUInt32BE(data.length); sum.writeUInt32BE(crc(t));
   return Buffer.concat([len, t, sum]);
 };
-// An 8-bit RGB PNG, with no alpha channel, so it has no transparency.
+// An 8-bit RGB PNG, with no alpha channel, so it has no transparency. It's compressed at zlib's default level: at
+// level 9 the eye's PNGs (0184) held bytes such as "O6" that the "no model name is hard-coded" scan of templates/ flags.
 export function png(size, px = draw(size)) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 2;
   const rows = Buffer.concat(Array.from({ length: size }, (_, y) => Buffer.concat([Buffer.from([0]), px.subarray(y * size * 3, (y + 1) * size * 3)])));
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(rows, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
 }
 
 export function writeIcons() {
