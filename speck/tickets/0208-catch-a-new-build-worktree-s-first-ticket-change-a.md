@@ -1,7 +1,7 @@
 ---
 id: "0208"
 title: "Catch a new build worktree's first ticket change at once"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-catch-a-new-build-worktree-s-first-ticket-c
 after: ["0206"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T15:06:31.257Z"
+approved: "2026-10-15T15:23:47.293Z"
 
 ---
 # 0208 · Catch a new build worktree's first ticket change at once
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket changed in a build's worktree straight after the worktree is made doesn't always reach the panel within a second: under load it can take up to 15 seconds. `speck start` writes a build's first status just after making its worktree, so the panel can show a new build late.
@@ -51,9 +52,15 @@ When a build starts, its ticket's first change now shows on the panel within a s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 wanted() lists worktrees before scanning their metadata directories.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 478,368
+- Elapsed since build started: 17 min
+- Changed lines: 20 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none to the inbox):
 - Known limit: a folder in git's list of worktrees that never gets its `gitdir` file (a broken worktree) stays watched for it. It costs one watch and nothing else.
