@@ -40,6 +40,7 @@ Tests get their temporary repos by copying one made earlier in the same test fil
 - The helpers are in `test/support/speck.mjs`; `test/support/tmp.mjs` cleans up temporary folders and leaves `speck-keep-*` ones alone between tests.
 - Write the suite's total test time before and after, on the same machine, in the Delivery log.
 - Failing before this build: none
+- Self-check: no changes. The first whole-suite run found that the fake reviewer's log can't come from an environment variable, as one test runs speck review itself, so each copy's fake reviewer and fake builder log into that repo's own .git folder.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
