@@ -8,6 +8,7 @@ import { rounds, nextAction } from './review.mjs';
 import { testRun } from './results.mjs';
 import { failingTests } from './tap.mjs';
 import { sharedCacheDir } from './turns.mjs';
+import { removeScratch } from './scratch.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -363,6 +364,8 @@ export function shipTicket(repo, id) {
       ? `You ran this from that folder, which is gone now. ${base} is checked out at ${mergeAt}.`
       : `You ran this from that folder, which is gone now. ${base} isn't checked out anywhere; your main checkout is at ${main}.`);
   }
+  // Shipped, so the build's scratch files aren't needed any more, even if the push below fails.
+  removeScratch(pad);
   if (!remote) { console.log(`No remote set for ${base}, so nothing was pushed.`); return; }
   const push = sh('git', ['push', remote, base], { cwd: main });
   if (push.status !== 0) {
