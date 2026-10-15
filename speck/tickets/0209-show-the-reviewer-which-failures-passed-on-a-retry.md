@@ -39,6 +39,7 @@ The reviewer's test summary says which tests failed and then passed on the secon
 ## Notes
 - Asked for 2026-10-15, for release 0.4.0.
 - The summary comes from `summariseTap` in `scripts/tap.mjs` (0119); the `Flaky:` line is written by `scripts/results.mjs` (0195) at the end of the output.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
