@@ -1,6 +1,6 @@
 # Show a panel ship in progress after a reload
 
-Captured: 2026-10-12 · Status: inbox
+Captured: 2026-10-12 · Status: dropped
 From ticket: 0133
 
 ## What

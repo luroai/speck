@@ -1,6 +1,6 @@
 # Stop the home-screen app test hanging the suite
 
-Captured: 2026-10-13 · Status: inbox
+Captured: 2026-10-13 · Status: ticketed (0206)
 From ticket: 0152
 
 ## What

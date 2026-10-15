@@ -1,6 +1,6 @@
 # Fix the race in the 0153 second-ship test
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0207)
 From ticket: 0193
 
 ## What

@@ -1,6 +1,6 @@
 # Keep an auto-shipping ticket's sentence out of purple
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 From ticket: 0168
 
 ## What

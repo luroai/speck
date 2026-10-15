@@ -1,6 +1,6 @@
 # Say an auto-ship ticket waits for speck run when it's off
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0203)
 From ticket: 0196
 
 ## What

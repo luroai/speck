@@ -1,6 +1,6 @@
 # Fix the 0173 check failing on main
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 From ticket: 0182
 
 ## What

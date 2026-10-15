@@ -1,6 +1,6 @@
 # End a stalled test run's detached processes too
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0202)
 From ticket: 0180
 
 ## What

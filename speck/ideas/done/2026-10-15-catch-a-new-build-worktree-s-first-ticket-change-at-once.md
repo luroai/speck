@@ -1,6 +1,6 @@
 # Catch a new build worktree's first ticket change at once
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0208)
 From ticket: 0187
 
 ## What

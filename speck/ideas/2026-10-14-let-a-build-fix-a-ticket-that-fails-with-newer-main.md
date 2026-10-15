@@ -1,6 +1,6 @@
 # Let a build fix a ticket that fails with newer main
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 From ticket: 0192
 
 ## What

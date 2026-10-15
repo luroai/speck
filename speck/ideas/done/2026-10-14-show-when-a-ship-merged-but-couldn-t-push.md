@@ -1,6 +1,6 @@
 # Show when a ship merged but couldn't push
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: ticketed (0204)
 From ticket: 0153
 
 ## What

@@ -1,6 +1,6 @@
 # Show the reviewer which failures passed on a retry
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0209)
 From ticket: 0195
 
 ## What

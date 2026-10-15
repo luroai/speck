@@ -1,6 +1,6 @@
 # Fix the 0177 test that breaks the 0173 rule
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 From ticket: 0183
 
 ## What
