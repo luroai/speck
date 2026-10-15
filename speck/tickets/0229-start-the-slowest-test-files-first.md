@@ -47,7 +47,7 @@ speck's own test suite starts its slowest test files first.
 - Self-check: a times file that can't be written (speck/.cache/ not a folder, a read-only disk) no longer ends the run in a stack trace with the wrong exit code: it says so on stderr and the run keeps its tests' result. Added a test for it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's own test suite now remembers how long each test file took last time and starts the slowest ones first, so the long files no longer finish alone at the end while the other workers sit idle. A fresh copy with nothing remembered yet runs the files in alphabetical order, as before. The results, the summary the reviewer gets and the second try at failing tests are unchanged. To see it, run the tests twice: the second run starts with the files that took longest the first time, and on this machine it took about 119 seconds against 134. This only changes how speck's own tests run, not anyone else's project.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,9 @@ speck's own test suite starts its slowest test files first.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: the times come from each file's own end-of-run event, which Node 20.20 and 22 send. On an older Node 20 release without it, nothing is recorded and the files start alphabetically, as before this change.
+- Known limit: the remembered times are kept per checkout, so each new worktree's first full run starts alphabetically.
+- No follow-ups went to the inbox.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +126,74 @@ speck's own test suite starts its slowest test files first.
     ],
     "escalation_question": "",
     "summary": "The runner orders files by their previous durations, and the reported full suite passes. One compatibility bug blocks approval: on supported Node 20, even a passing suite reports failure. Fix the exit-result handling and check it on Node 20."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b07671ed934670981a3878bca417766846de9645",
+    "thread_id": "01a14189-2c8d-7de1-bed2-972f6a2ac105",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 417443,
+      "cached_input_tokens": 359040,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1972,
+      "reasoning_output_tokens": 151
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T21:54:10.261Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/suite.mjs orders recorded files longest first, records file durations and alphabetises unrecorded files. Passing AC1 integration tests verify consecutive runs and cached timings."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 integration test verifies alphabetical starts without recorded times. readTimes() also handles missing and invalid cache files."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "runSuite() now determines failure from non-todo test:fail events, removing the Node 20 incompatibility. Passing AC3 tests exercise every file once, successful and failing exits, loading errors, todo semantics, and TAP summary/retry parsing. Builder reports all 11 targeted tests passing on Node 20.20.2 and Node 22.23.3."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified the full output in /tmp/speck-0229-tests.txt: 1,990 passed, zero failed, zero cancelled and three skipped. Existing tests were not weakened or removed by this change."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/support/suite.mjs",
+        "issue": "The previous implementation relied on test:summary, causing passing runs to report failure on Node 20.",
+        "suggested_fix": "Implemented: determine failure from non-todo test:fail events and use absolute file paths without the unsupported cwd option.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The suite now starts files by their previous durations, with alphabetical ordering when timings are unavailable. The Node 20 compatibility issue is fixed, and the full suite passes. No blocking concerns remain."
   }
 }
 ```
