@@ -1,7 +1,7 @@
 ---
 id: "0196"
 title: "Show an auto-shipping ticket as shipping from approval until it ships"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T12:18:36.741Z"
+approved: "2026-10-15T12:30:04.732Z"
 
 ---
 # 0196 · Show an auto-shipping ticket as shipping from approval until it ships
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0194 a build ends at approved, and `speck run`'s ship queue ships the ticket a few seconds later. In between, the panel says "Approved · waiting for you to ship it" and the builder badge stands still, although nothing is waiting for the user. Then, while the ship tests the ticket merged with the base branch, the panel shows the ticket as Queued until the ship ends. Seen on 0178 on 2026-10-15.
@@ -53,9 +54,14 @@ Once an approved ticket that ships by itself has finished building, its card in 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 138,672
+- Elapsed since build started: 11 min
+- Changed lines: 41 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - With `speck run` off, an approved ticket `auto_ship` covers still shows as waiting to ship, with its badge at work, though nothing will ship it. Inbox: `speck/ideas/2026-10-15-say-an-auto-ship-ticket-waits-for-speck-run-when-it-s-off.md`.
