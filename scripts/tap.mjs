@@ -83,33 +83,33 @@ export function testOutput(file, id) {
   return summariseTap(text, id, path.resolve(file)) ?? text;
 }
 
-// The failing tests in TAP output, as failingTests gives them, each with the file named by its `location:` (null when
-// it has none): [{ name, file }]. A test listed twice keeps the first file found for it.
+// The file a test's `location:` names, in its YAML block, or null when it has none.
+function locationFile(lines, t) {
+  for (let i = t.at + 1; i <= t.end; i++) {
+    const m = /^\s*location: (?:'((?:[^']|'')*)'|"((?:[^"\\]|\\.)*)"|(\S.*?))\s*$/.exec(lines[i]);
+    if (!m) continue;
+    const where = m[1] !== undefined ? m[1].replaceAll("''", "'") : m[2] !== undefined ? m[2].replace(/\\(.)/g, '$1') : m[3];
+    return /^(.+):\d+:\d+$/.exec(where)?.[1] ?? null;
+  }
+  return null;
+}
+
+// Every failing test in TAP output, leaving out one whose failure is only that one of its subtests failed, each as its
+// path of names and the file its `location:` names (null when it has none): [{ name, file }]. Tests with the same name
+// are each listed.
 export function failingTestFiles(text) {
   const lines = String(text).replace(/\r\n/g, '\n').split('\n');
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return [];
   const failing = results(lines, header + 1).filter(t => !t.ok && t.directive !== 'TODO');
   const leaves = failing.filter(t => !failing.some(o => o !== t && o.start >= t.start && o.end <= t.end && o.indent > t.indent));
-  const found = new Map();
-  for (const t of leaves) {
-    if (!t.path) continue;
-    let file = null;
-    for (let i = t.at + 1; i <= t.end && file === null; i++) {
-      const m = /^\s*location: (?:'((?:[^']|'')*)'|"((?:[^"\\]|\\.)*)"|(\S.*?))\s*$/.exec(lines[i]);
-      if (!m) continue;
-      const where = m[1] !== undefined ? m[1].replaceAll("''", "'") : m[2] !== undefined ? m[2].replace(/\\(.)/g, '$1') : m[3];
-      file = /^(.+):\d+:\d+$/.exec(where)?.[1] ?? null;
-    }
-    if (!found.has(t.path) || (found.get(t.path) === null && file !== null)) found.set(t.path, file);
-  }
-  return [...found].map(([name, file]) => ({ name, file }));
+  return leaves.map(t => ({ name: t.path, file: locationFile(lines, t) }));
 }
 
-// The tests in TAP output that passed, not skipped or todo, each as its path of names.
+// Every test in TAP output that passed, not skipped or todo, as its path of names, once for each time it passed.
 export function passingTests(text) {
   const lines = String(text).replace(/\r\n/g, '\n').split('\n');
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return [];
-  return [...new Set(results(lines, header + 1).filter(t => t.ok && !t.directive).map(t => t.path).filter(Boolean))];
+  return results(lines, header + 1).filter(t => t.ok && !t.directive).map(t => t.path).filter(Boolean);
 }

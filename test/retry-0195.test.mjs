@@ -199,3 +199,47 @@ test('0195 AC1: failing tests\' files are read from their location lines', () =>
   assert.deepEqual(failingTestFiles(tap), [{ name: 'outer > inner', file: "/repo/test/it's.test.mjs" }, { name: 'bare', file: null }]);
   assert.deepEqual(failingTestFiles('no tap here'), []);
 });
+
+test('0195 AC1 AC2: failing tests with the same name in two files each need to pass the second time', () => {
+  const c = counters();
+  const r = testRepo({
+    'a.test.mjs': testFile(path.join(c, 'a'), [1], 'same name'),
+    'b.test.mjs': testFile(path.join(c, 'b'), [1, 2], 'same name'),
+  });
+  const res = speck(r.dir, ['test']);
+  assert.equal(res.status, 1, res.stdout);
+  assert.equal(runs(c, 'a'), 2);
+  assert.equal(runs(c, 'b'), 2, 'both files ran again');
+  assert.doesNotMatch(res.stdout, /^Flaky:/m);
+});
+
+test('0195 AC4: a failing test with no location is kept even when another failing test has its name', () => {
+  const tap = [
+    'TAP version 13',
+    'not ok 1 - same name',
+    '  ---',
+    "  location: '/repo/test/a.test.mjs:2:1'",
+    '  ...',
+    'not ok 2 - same name',
+    '1..2',
+  ].join('\n');
+  assert.deepEqual(failingTestFiles(tap), [{ name: 'same name', file: '/repo/test/a.test.mjs' }, { name: 'same name', file: null }]);
+});
+
+test('0195 AC2: two failing tests with one name need two passes the second time', () => {
+  // One file has two tests named alike that fail by chance; on the second run only one of them is defined.
+  const c = counters();
+  const counter = path.join(c, 'twice');
+  const src = `import { test } from 'node:test';
+import fs from 'node:fs';
+fs.appendFileSync(${JSON.stringify(counter)}, 'x');
+const run = fs.readFileSync(${JSON.stringify(counter)}, 'utf8').length;
+test('twin', () => { if (run === 1) throw new Error('chance'); });
+if (run === 1) test('twin', () => { throw new Error('chance'); });
+`;
+  const r = testRepo({ 'twice.test.mjs': src });
+  const res = speck(r.dir, ['test']);
+  assert.equal(res.status, 1, res.stdout);
+  assert.equal(runs(c, 'twice'), 2);
+  assert.doesNotMatch(res.stdout, /^Flaky:/m);
+});

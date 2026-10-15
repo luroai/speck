@@ -104,31 +104,36 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
 
 // Runs commands.test_files once more, with just the files of the tests that failed in `text`, a full run's output
 // (0195). Null when it can't: commands.test_files is blank or has no {files}, or a failing test has no location in a
-// file in `repo`. Otherwise { passed, output }: passed when the second run passed and every test that failed passed in
-// it, which it then says with a line naming them and adds to the shared flaky log, with the time and `branch` (blank:
-// the branch checked out).
+// file in `repo`. Otherwise { passed, output }: passed when the second run passed and each test that failed passed in
+// it (a name that failed twice, twice), which it then says with a line naming them and adds to the
+// shared flaky log, with the time and `branch` (blank: the branch checked out).
 function retry(repo, cfg, text, branch) {
   const only = String(cfg.commands?.test_files || '').trim();
   const failing = failingTestFiles(text);
   if (!only.includes('{files}') || !failing.length) return null;
-  const files = [];
-  for (const t of failing) {
-    if (!t.file) return null;
-    const rel = path.relative(repo, path.resolve(repo, t.file));
+  const inRepo = file => {
+    if (!file) return null;
+    const rel = path.relative(repo, path.resolve(repo, file));
     let isFile = false;
     try { isFile = fs.statSync(path.join(repo, rel)).isFile(); } catch { /* not there */ }
-    if (!rel || rel.startsWith('..') || path.isAbsolute(rel) || !isFile) return null;
-    if (!files.includes(rel)) files.push(rel);
-  }
+    return rel && !rel.startsWith('..') && !path.isAbsolute(rel) && isFile ? rel : null;
+  };
+  const rels = failing.map(t => inRepo(t.file));
+  if (rels.includes(null)) return null;
+  const files = [...new Set(rels)];
   const cmd = only.replaceAll('{files}', () => files.map(f => shellWord(f.startsWith('-') ? `./${f}` : f)).join(' '));
   const output = path.join(resultsDir(repo), `run.${crypto.randomUUID()}.out`);
   try {
     const r = runTestsInTurn(repo, cfg, cmd, () => console.log(`Some tests failed: running their files once more, to tell a chance failure from a real one: ${cmd}`), output);
     let again = '';
     try { again = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ }
-    const passing = new Set(passingTests(again));
-    const names = failing.map(t => t.name);
-    if (r.ended !== '0' || !names.every(n => passing.has(n))) return { passed: false, output: again };
+    // How many times each test name passed in the second run, each failing test using up one. A passing test's TAP
+    // has no location, so tests are told apart by name and counted: two failing tests with one name need two passes.
+    const passed = new Map();
+    for (const name of passingTests(again)) passed.set(name, (passed.get(name) || 0) + 1);
+    const all = failing.every(t => { const n = passed.get(t.name) || 0; passed.set(t.name, n - 1); return n > 0; });
+    if (r.ended !== '0' || !all) return { passed: false, output: again };
+    const names = [...new Set(failing.map(t => t.name))];
     console.log(`Flaky: ${names.join('; ')}`);
     flakyLog(repo, names, branch);
     return { passed: true, output: again };
