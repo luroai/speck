@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { T, panelRepo, freePort, startPanel, stop, page, fakePage, queueRows, click, findChrome, browserPage } from './support/panel.mjs';
+import { tickingSource } from './support/stream.mjs';
 
 // ---------- 0052: show a build's log growing as it runs ----------
 
@@ -16,26 +17,58 @@ const lines = (n, from = 1) => Array.from({ length: n }, (_, i) => `line ${i + f
 
 // A fake page whose fetch answers /api/state with each state in turn (the last one again once they run out) and
 // /api/tickets/<id>/log from `logs`, a map from id to the answer, a function giving it, or an Error for a request that
-// fails. Every timer the page sets is kept with its delay, so the state poll (2 seconds) and the log timer (1 second) can
-// be run apart.
+// fails. Every timer the page sets is kept with its delay, so the board's updates (every 2 seconds) can be run apart.
+// 0189: the page's stream is named NAME, and a log asked for on it is opened there: tick() then sends each open log's
+// change since it was last sent, as the server does when the build writes to it (added lines, or a new build's log),
+// and ping() sends a keep-alive.
+const NAME = 'ab'.repeat(16);
 function livePage(states, logs = {}) {
-  const calls = [], timers = [];
-  const fetch = async url => {
+  const calls = [], timers = [], opened = new Map(), sources = []; // opened: id → what the stream last gave it
+  let builds = 0;
+  const answer = id => { const ans = typeof logs[id] === 'function' ? logs[id]() : logs[id]; return ans instanceof Error ? ans : ans ?? { text: '', truncated: false }; };
+  const fetch = async (url, opts = {}) => {
     calls.push(url);
-    const m = String(url).match(/^\/api\/tickets\/([^/]+)\/log$/);
+    const m = String(url).match(/^\/api\/tickets\/([^/]+)\/log(\/close)?$/);
     if (m) {
-      const id = decodeURIComponent(m[1]);
-      const ans = typeof logs[id] === 'function' ? logs[id]() : logs[id];
+      const id = decodeURIComponent(m[1]), on = (opts.headers || {})['X-Speck-Stream'] === NAME;
+      if (m[2]) { if (on) opened.delete(id); return { ok: true, status: 200, json: async () => ({ ok: true }) }; }
+      const ans = answer(id);
       if (ans instanceof Error) throw ans;
-      return { ok: true, status: 200, json: async () => ans ?? { text: '', truncated: false } };
+      if (!on) return { ok: true, status: 200, json: async () => ans };
+      const o = { text: ans.text, build: ++builds, at: 0 };
+      opened.set(id, o);
+      return { ok: true, status: 200, json: async () => ({ ...ans, build: o.build, at: 0 }) };
     }
     const s = states.length > 1 ? states.shift() : states[0];
     return { ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(s)) };
   };
-  const p = fakePage([], { fetch, setTimeout: (fn, ms) => timers.push({ fn, ms }), getSelection: () => ({ isCollapsed: true, rangeCount: 0 }) },
+  const setTimeout = (fn, ms) => timers.push({ fn, ms });
+  const Ticking = tickingSource({ setTimeout });
+  class EventSource extends Ticking {
+    constructor(url) { super(url); sources.push(this); Promise.resolve().then(() => this.emit('stream', NAME)); }
+  }
+  const p = fakePage([], { fetch, setTimeout, EventSource, getSelection: () => ({ isCollapsed: true, rangeCount: 0 }) },
     { made: n => { if (n.tagName === 'pre') sized(n); } });
   p.logCalls = () => calls.filter(u => /\/log$/.test(u));
+  p.closeCalls = () => calls.filter(u => /\/log\/close$/.test(u));
+  p.opened = opened;
+  p.source = () => sources[sources.length - 1];
   p.pending = ms => timers.filter(t => t.ms === ms).length;
+  p.send = async update => { p.source().emit('log', JSON.stringify(update)); await p.settle(); };
+  p.tick = async () => {
+    for (const [id, o] of opened) {
+      const ans = answer(id);
+      if (ans instanceof Error || ans.text === o.text) continue;
+      const was = o.text ? o.text.split('\n') : [], now = ans.text ? ans.text.split('\n') : [];
+      const grown = !ans.truncated && was.every((l, i) => now[i] === l);
+      o.at++;
+      if (grown) p.source().emit('log', JSON.stringify({ id, build: o.build, at: o.at, drop: 0, lines: now.slice(was.length) }));
+      else { o.build = ++builds; o.at = 0; p.source().emit('log', JSON.stringify({ id, build: o.build, at: 0, reset: true, text: ans.text, truncated: ans.truncated })); }
+      o.text = ans.text;
+    }
+    await p.settle();
+  };
+  p.ping = async () => { p.source().emit('ping', '1'); await p.settle(); };
   p.run = async ms => {
     const i = timers.findIndex(t => t.ms === ms);
     assert.ok(i >= 0, `a ${ms} ms timer is set`);
@@ -45,7 +78,7 @@ function livePage(states, logs = {}) {
   return p;
 }
 const poll = p => p.run(2000);
-const tick = p => p.run(1000);
+const tick = p => p.tick();
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const logOf = (p, id) => p.all(rowOf(p, id)).find(n => /(^| )log( |$)/.test(n.className || ''));
@@ -70,61 +103,60 @@ const sized = box => {
 };
 const bottomOf = box => box.scrollHeight - box.clientHeight;
 
-test('0052 AC1: an open queue ticket\'s log is asked for once a second, on its own timer, and never for a ticket never opened', async () => {
-  const p = livePage([state()], { '0001': { text: 'one', truncated: false } });
+// 0189 changed these four from asking every second to the stream sending each change (0189 AC1).
+test('0052 AC1: an open queue ticket\'s log is asked for once, on the page\'s stream, which then sends its changes, and never for a ticket never opened', async () => {
+  let text = 'one';
+  const p = livePage([state()], { '0001': () => ({ text, truncated: false }) });
   await p.settle();
-  assert.equal(p.pending(1000), 0, 'nothing open: no log timer');
   await poll(p);
   await poll(p);
   assert.deepEqual(p.logCalls(), [], 'nothing open: no log request');
   await open(p, '0001');
   assert.deepEqual(p.logCalls(), ['/api/tickets/0001/log'], 'asked for at once when opened');
-  assert.equal(p.pending(1000), 1, 'a 1-second timer');
-  for (let i = 0; i < 3; i++) await tick(p);
-  assert.equal(p.logCalls().length, 4, 'once more each second');
-  assert.equal(p.pending(1000), 1, 'one timer, set again each time');
+  assert.ok(p.opened.has('0001'), 'opened on the stream');
+  assert.equal(p.pending(1000), 0, 'no log timer');
+  for (const more of ['one\ntwo', 'one\ntwo\nthree', 'one\ntwo\nthree\nfour']) { text = more; await tick(p); }
+  assert.equal(logOf(p, '0001').textContent, 'one\ntwo\nthree\nfour', 'each change shows');
   await poll(p);
   await poll(p);
-  assert.equal(p.logCalls().length, 4, 'the state poll asks for no log');
-  assert.equal(p.pending(1000), 1, 'and sets no log timer');
-  assert.ok(p.logCalls().every(u => u === '/api/tickets/0001/log'), 'tickets never opened are never asked for');
+  assert.equal(p.logCalls().length, 1, 'never asked for again');
+  assert.equal(p.pending(1000), 0, 'and no log timer');
 });
 
-test('0052 AC1: every open ticket is asked for on each tick, and a closed one at once stops being asked for', async () => {
-  const p = livePage([state()]);
+test('0052 AC1: every open ticket gets its own changes, and a closed one is closed on the stream at once', async () => {
+  const texts = { '0001': 'a', '0003': 'x' };
+  const p = livePage([state()], { '0001': () => ({ text: texts['0001'], truncated: false }), '0003': () => ({ text: texts['0003'], truncated: false }) });
   await p.settle();
   await open(p, '0001');
   await open(p, '0003');
-  assert.equal(p.pending(1000), 1, 'one timer for all the open tickets');
-  const before = p.logCalls().length;
+  texts['0001'] = 'a\nb'; texts['0003'] = 'x\ny';
   await tick(p);
-  assert.deepEqual(p.logCalls().slice(before).sort(), ['/api/tickets/0001/log', '/api/tickets/0003/log']);
+  assert.equal(logOf(p, '0001').textContent, 'a\nb');
+  assert.equal(logOf(p, '0003').textContent, 'x\ny');
   await open(p, '0001'); // closes it
-  const after = p.logCalls().length;
-  await tick(p);
-  assert.deepEqual(p.logCalls().slice(after), ['/api/tickets/0003/log'], 'the closed one is no longer asked for');
+  assert.deepEqual(p.closeCalls(), ['/api/tickets/0001/log/close'], 'closed on the stream');
+  assert.deepEqual([...p.opened.keys()], ['0003']);
   await open(p, '0003'); // closes the last one
-  const last = p.logCalls().length;
-  await tick(p);
-  assert.equal(p.logCalls().length, last, 'nothing open: nothing asked for');
-  assert.equal(p.pending(1000), 0, 'and the timer stops');
+  assert.equal(p.opened.size, 0, 'nothing open: nothing sent');
+  assert.equal(p.logCalls().length, 2, 'each asked for once');
 });
 
-test('0052 AC1: closing and opening again quickly, or refreshes that rebuild the row, never start a second timer', async () => {
+test('0052 AC1: closing and opening again quickly, or refreshes that rebuild the row, ask for nothing more and show each change once', async () => {
   const s = state(), changed = JSON.parse(JSON.stringify(s));
   changed.tickets[0].title = 'Renamed'; // the open ticket's own data changes, so its row is rebuilt
-  const p = livePage([s, changed]);
+  let text = 'one';
+  const p = livePage([s, changed], { '0001': () => ({ text, truncated: false }) });
   await p.settle();
   await open(p, '0001');
   await open(p, '0001');
   await open(p, '0001');
-  assert.equal(p.pending(1000), 1, 'still one timer');
+  assert.equal(p.logCalls().length, 2, 'asked for on each opening');
   await poll(p);
   await poll(p);
-  assert.equal(p.pending(1000), 1, 'refreshes leave it alone');
-  const before = p.logCalls().length;
+  assert.equal(p.logCalls().length, 2, 'refreshes ask for nothing');
+  text = 'one\ntwo';
   await tick(p);
-  assert.equal(p.logCalls().length, before + 1, 'one request a second, not two');
+  assert.equal(logOf(p, '0001').textContent, 'one\ntwo', 'the change shows once');
 });
 
 test('0052 AC1: an open ticket that has left the queue is no longer asked for', async () => {
@@ -136,7 +168,8 @@ test('0052 AC1: an open ticket that has left the queue is no longer asked for', 
   await poll(p);
   assert.ok(!rowOf(p, '0001'), 'no longer in the queue');
   const before = p.logCalls().length;
-  await tick(p);
+  p.source().emit('stream', NAME); // the stream reconnected, which opens the open logs on it again
+  await p.settle();
   assert.equal(p.logCalls().length, before, 'not asked for');
 });
 
@@ -159,9 +192,9 @@ test('0052 AC2: new text goes into the same box, in place, with only the newest 
   assert.equal(logOf(p, '0001'), box, 'the same box');
   assert.equal(box.detached || 0, detached, 'never taken out of the page');
   assert.equal(box.textContent, lines(5).join('\n'), 'with the new lines at the bottom');
-  text = lines(200, 101).join('\n'); truncated = true;
-  await tick(p);
-  assert.equal(box.textContent.split('\n').slice(1).join('\n'), lines(200, 101).join('\n'), 'only the tail the server sends');
+  const o = p.opened.get('0001');
+  await p.send({ id: '0001', build: o.build, at: ++o.at, drop: 0, lines: lines(295, 6) }); // 0189: the stream adds lines 6 to 300
+  assert.equal(box.textContent.split('\n').slice(1).join('\n'), lines(200, 101).join('\n'), 'only the newest 200 lines');
   assert.match(box.textContent, /^Earlier lines aren't shown/);
 });
 
@@ -221,15 +254,16 @@ test('0052 AC4: a failed request leaves the log as it was, and the next good one
   box.clientHeight = 10; // a box scrolled up, so nothing moves it but a new log
   const queue = p.byId('queue'), rows = [...queue.children];
   fail = true;
-  await tick(p);
-  await tick(p);
+  p.source().emit('stream', NAME); // 0189: the stream reconnected, so the log is asked for again, and that fails
+  await p.settle();
+  await p.ping();
+  assert.equal(p.logCalls().length, 3, 'asked for again, and again at the next keep-alive');
   assert.equal(logOf(p, '0001'), box);
   assert.equal(box.textContent, 'first', 'the log as it was');
   assert.equal(box.scrollTop, 0, 'not scrolled');
   assert.deepEqual(queue.children, rows, 'nothing else changed');
-  assert.equal(p.pending(1000), 1, 'still asking');
   fail = false; text = 'first\nsecond';
-  await tick(p);
+  await p.ping();
   assert.equal(box.textContent, 'first\nsecond', 'the next good answer shows');
 });
 
@@ -242,7 +276,7 @@ test('0052 AC4: before any log has arrived, a failure says it is trying again, a
   assert.match(box.textContent, /^Couldn't load the log/);
   assert.doesNotMatch(box.textContent, /Close and open/, 'it tries again by itself');
   fail = false;
-  await tick(p);
+  await p.ping(); // 0189: at the stream's next keep-alive
   assert.equal(logOf(p, '0001'), box);
   assert.equal(box.textContent, 'at last');
 });
@@ -340,9 +374,10 @@ test('0052 AC3: in a real browser, a selection in repeated lines stays through u
     await b.js(`(() => { const t = ${box}.firstChild, r = document.createRange(); r.setStart(t, 0); r.setEnd(t, 7);
       getSelection().removeAllRanges(); getSelection().addRange(r); window.mark = t; })()`);
     const selected = `getSelection().toString() === 'working' && getSelection().anchorNode === window.mark && getSelection().anchorOffset === 0`;
+    // 0189: an unchanged log isn't asked for again or sent.
     await b.js(`window.asks = 0; const f = window.fetch; window.fetch = (...a) => { if (/\\/log$/.test(a[0])) window.asks++; return f(...a); }`);
-    await b.until('window.asks >= 2', 'two more log requests, with the same answer');
-    await new Promise(res => setTimeout(res, 200));
+    await new Promise(res => setTimeout(res, 1200));
+    assert.equal(await b.js('window.asks'), 0, 'not asked for again');
     assert.ok(await b.js(selected), 'unchanged: the selection in the first line stays');
     writeLog(r.dir, '0001', 'working\nworking\nworking\n');
     await b.until(`${box}.textContent === 'working\\nworking\\nworking'`, 'a repeated line added');

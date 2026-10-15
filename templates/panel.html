@@ -988,7 +988,7 @@ function linkTarget(s, from) {
 // ---- view: builds every node with createElement and textContent, so ticket text is never read as HTML ----
 const LOST_MS = 10000; // how long the board's stream can be gone before the page says it's disconnected (0187)
 const RETRY_MS = 1000; // how soon the page starts again a stream the browser has given up on
-const LOG_MS = 1000; // how often an open queue ticket's log is asked for
+const LOG_LINES = 200; // how many of a log's last lines are shown, as the server first sends them (0189)
 const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship and the speck run switch
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
@@ -1089,13 +1089,16 @@ const openInbox = new Set(); // paths of the open inbox notes
 const openQueue = new Set(); // ids of the open queue tickets
 const openShipped = new Set(); // ids of the shipped cards whose Details are open (0162)
 let moreStats = false; // whether Shipped shows all six stats (0162)
-const logs = new Map(); // id → the last log received for an open queue ticket, or { failed: true } before any arrived
+const logs = new Map(); // id → the log shown for an open queue ticket ({ text, truncated, build, at }), or { failed: true } before any arrived
+const logEarly = new Map(); // id → the updates its stream sent while its log was still being asked for (0189)
+const logRetry = new Set(); // ids whose log couldn't be loaded, asked for again at the stream's next keep-alive (0189)
+let streamName = null; // the name the server gave the board's stream, on which an opened log is sent as it's written (0189)
+let logOrder = 0; // numbers each request opening or closing a log on the stream, so the server can tell which came last
 const logAsks = new Map(); // id → the number of its latest log request, so only the latest answer is used
 const logPending = new Map(); // id → the AbortController of its log request still waiting for an answer
 const logBoxes = new Map(); // id → the log box last built for an open queue ticket, which each new log updates in place
 const logScroll = new Map(); // a log box built by this render → where to scroll it once it's on the page (null: the bottom)
 let queueIds = new Set(); // ids in the queue at the last render, so a ticket that has left it isn't asked for
-let logTimer = false; // whether the log timer is set
 const settingReady = new Set(); // ids whose Set ready request hasn't been answered yet
 const refused = new Map(); // id → why the server refused to set it ready
 let priorityMenu = null; // the id of the draft whose priority menu is open, or null
@@ -1979,7 +1982,7 @@ async function backToPlan(id) {
   render();
 }
 // An open queue ticket's log, as text in a box with its own scrollbar.
-const logShown = log => (!log ? 'Loading the log…' : log.failed ? "Couldn't load the log yet. Trying again every second…" : logText(log));
+const logShown = log => (!log ? 'Loading the log…' : log.failed ? "Couldn't load the log yet. Trying again in a few seconds…" : logText(log));
 // A box built afresh, when the ticket opens or its row is rebuilt, goes to the bottom once it's on the page, or where
 // the reader had scrolled the box it replaces.
 function logBox(id) {
@@ -1990,46 +1993,67 @@ function logBox(id) {
 }
 // Within a few pixels of the bottom, as scrollTop rarely lands exactly on it.
 const atBottom = box => !(box.scrollHeight - box.clientHeight - box.scrollTop > 8);
-// Opens or closes a queue ticket. Opening it asks for its log at once and then every second; a closed ticket's log is
-// never asked for.
+// Opens or closes a queue ticket. Opening it asks for its log once, opened on the board's stream (0189), which then
+// sends each entry as it's written; closing it closes it there. A closed ticket's log is never asked for.
 function toggleLog(id) {
   flip(openQueue, id);
-  if (openQueue.has(id)) { loadLog(id); startLogTimer(); return; }
+  if (openQueue.has(id)) { loadLog(id); return; }
   logBoxes.delete(id);
+  logEarly.delete(id);
+  logRetry.delete(id);
   if (logPending.has(id)) { logPending.get(id).abort(); logPending.delete(id); }
+  if (streamName) fetch(`/api/tickets/${encodeURIComponent(id)}/log/close`, { cache: 'no-store', headers: { 'X-Speck-Stream': streamName, 'X-Speck-Order': String(++logOrder) } }).catch(() => {});
 }
-// The log timer runs apart from the state updates and render(), so a refresh never restarts or doubles it. It stops once
-// nothing is open.
-function startLogTimer() {
-  if (logTimer || !openQueue.size) return;
-  logTimer = true;
-  setTimeout(logTick, LOG_MS);
-}
-function logTick() {
-  logTimer = false;
-  for (const id of openQueue) if (queueIds.has(id)) loadLog(id);
-  startLogTimer();
-}
-// A request that fails leaves the last log on screen. A request still waiting when the next is due is aborted, so slow
-// answers can't pile up.
+// A request that fails leaves the last log on screen, and it's asked for again at the stream's next keep-alive. A
+// request still waiting when the next is made is aborted, so slow answers can't pile up.
 async function loadLog(id) {
   const mine = (logAsks.get(id) || 0) + 1, ctl = new AbortController();
   logAsks.set(id, mine);
   if (logPending.has(id)) logPending.get(id).abort();
   logPending.set(id, ctl);
+  logEarly.delete(id);
+  logRetry.delete(id);
   let log = null;
   try {
-    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/log`, { cache: 'no-store', signal: ctl.signal });
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/log`, { cache: 'no-store', signal: ctl.signal, ...(streamName ? { headers: { 'X-Speck-Stream': streamName, 'X-Speck-Order': String(++logOrder) } } : {}) });
     const body = res.ok ? await res.json() : null;
-    if (body && typeof body.text === 'string') log = { text: body.text, truncated: body.truncated === true };
+    if (body && typeof body.text === 'string')
+      log = { text: body.text, truncated: body.truncated === true, build: Number.isInteger(body.build) ? body.build : null, at: Number.isInteger(body.at) ? body.at : null };
   } catch { /* the server is down: keep what's shown */ }
   if (logPending.get(id) === ctl) logPending.delete(id);
   if (logAsks.get(id) !== mine || !openQueue.has(id)) return; // a newer request has taken over, or it's closed
+  const early = logEarly.get(id) || [];
+  logEarly.delete(id);
+  if (!log) logRetry.add(id);
   const old = logs.get(id);
   if (log) logs.set(id, log);
   else if (!old) logs.set(id, { failed: true });
   else return;
   showLog(id, !!log && replaced(old, log));
+  for (const u of early) logUpdate(u);
+}
+// 0189: an update from the stream to an open log: the lines to take off its end (drop: a last line written further
+// since) and the new lines to add at the bottom, or a new build's log, which replaces it. One that arrives before the log it follows is kept until that has. One already shown is left out, and
+// after a missed one the log is asked for again.
+function logUpdate(u) {
+  if (!u || typeof u !== 'object' || !Number.isInteger(u.build) || !Number.isInteger(u.at)) return;
+  if (u.reset === true ? typeof u.text !== 'string' : !Number.isInteger(u.drop) || u.drop < 0 || !Array.isArray(u.lines) || !u.lines.every(l => typeof l === 'string')) return;
+  const id = String(u.id);
+  if (!openQueue.has(id)) return;
+  if (logPending.has(id)) { if (!logEarly.has(id)) logEarly.set(id, []); logEarly.get(id).push(u); return; }
+  const old = logs.get(id);
+  if (!old || old.failed || old.build === null) return;
+  if (u.build < old.build || (u.build === old.build && u.at <= old.at)) return;
+  if (u.reset === true) {
+    logs.set(id, { text: u.text, truncated: u.truncated === true, build: u.build, at: u.at });
+    return showLog(id, true);
+  }
+  if (u.build !== old.build || u.at !== old.at + 1) return loadLog(id);
+  const kept = old.text ? old.text.split('\n') : [];
+  if (u.drop > kept.length) return loadLog(id);
+  const lines = [...kept.slice(0, kept.length - u.drop), ...u.lines];
+  logs.set(id, { text: lines.slice(-LOG_LINES).join('\n'), truncated: old.truncated || lines.length > LOG_LINES, build: u.build, at: u.at });
+  showLog(id, false);
 }
 // A new build of the ticket starts its log afresh: the new one isn't cut short, and the old one was, or doesn't run on
 // into it.
@@ -2438,12 +2462,26 @@ function heard() {
 function connect() {
   if (source) source.close();
   have = null; // it may have missed boards while it had no stream, so the next one comes whole
+  streamName = null;
   const s = source = new EventSource('/api/events');
   s.addEventListener('open', () => { if (source === s) have = null; }); // and so may one the browser has reconnected
   s.addEventListener('message', e => { if (source === s) { heard(); load(e.data); } });
-  s.addEventListener('ping', () => { if (source === s) { heard(); if (retry !== null) load(retry); else if (state) render(); } });
+  // 0189: each stream, the browser's reconnections included, is named first, and the open logs are opened on it.
+  s.addEventListener('stream', e => {
+    if (source !== s) return;
+    streamName = /^[0-9a-f]{32}$/.test(e.data) ? e.data : null;
+    for (const id of openQueue) if (queueIds.has(id)) loadLog(id);
+  });
+  s.addEventListener('log', e => { if (source !== s) return; let u = null; try { u = JSON.parse(e.data); } catch { /* not an update */ } logUpdate(u); });
+  s.addEventListener('ping', () => {
+    if (source !== s) return;
+    heard();
+    if (retry !== null) load(retry); else if (state) render();
+    for (const id of logRetry) if (openQueue.has(id) && queueIds.has(id)) loadLog(id);
+  });
   s.addEventListener('error', () => {
     if (source !== s) return;
+    streamName = null; // its logs closed with it
     if (lost === null) lost = setTimeout(() => { lost = null; setConnected(false); }, LOST_MS);
     // A stream the browser won't try again by itself, such as one answered with an error, the page starts again.
     if (s.readyState === 2) setTimeout(() => { if (source === s) connect(); }, RETRY_MS);

@@ -11,6 +11,7 @@ import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkS
 import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
+import { logFeed } from './log-feed.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship and the speck run switch) ----------
 
@@ -145,13 +146,11 @@ function sameToken(given, token) {
 }
 
 // The tail of a build's log from `speck run`, for the panel: its last 200 lines, each entry with its time, from the main
-// checkout, with trailing blank lines dropped, and whether it has more. A ticket with no log gets empty text. Reads only, writing nothing.
+// checkout, with trailing blank lines dropped, and whether it has more. A ticket with no log gets empty text. Reads only, writing nothing. A page's stream follows it from there (0189).
 const PANEL_LOG_LINES = 200;
 function panelLog(repo, id) {
-  let main = repo;
-  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   let text;
-  try { text = readableLog(fs.readFileSync(path.join(main, 'speck', '.cache', 'runs', `${padId(id)}.log`), 'utf8'), { times: true }); }
+  try { text = readableLog(fs.readFileSync(path.join(runsOf(repo), `${padId(id)}.log`), 'utf8'), { times: true }); }
   catch (e) { if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return { text: '', truncated: false }; throw e; }
   const lines = text.split('\n');
   while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
@@ -333,7 +332,7 @@ function boardReader(repo) {
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
 // POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
-// included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188). It also watches the code, and when it changes, hands over to a
+// included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
   const env = process.env;
@@ -401,7 +400,8 @@ export async function panelServer() {
   // 0187: each board that differs from the last is announced to every open page's event stream (see boardFeed), and
   // latest is that reading, which each page then asks for, so a change is read once however many pages are open.
   let latest = null, refresh = false;
-  const feed = boardFeed(repo, runs, () => { refresh = true; if (!reading) nextReading(); });
+  const logs = logFeed(runs, (...a) => feed.send(...a), id => panelLog(repo, id)); // 0189: each log a page opens, as it's written
+  const feed = boardFeed(repo, runs, () => { refresh = true; if (!reading) nextReading(); }, logs);
   const announce = out => { const state = stateOf(out), version = feed.announce(state.body); if (state.snap) boards.keep(version, state.snap); latest = { state, at: writes, version }; };
   const nextReading = () => {
     const these = waiting.filter(w => !closed(w.res));
@@ -515,9 +515,9 @@ export async function panelServer() {
       const told = String(req.headers['x-speck-board'] ?? '');
       return askState(res, /^\d{1,15}$/.test(told) ? Number(told) : null, String(req.headers['x-speck-have'] ?? ''));
     }
-    const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log$/);
+    const log = where.match(/^\/api\/tickets\/(\d{1,4})\/log(\/close)?$/);
     if (log) {
-      try { return send(res, 200, 'application/json', JSON.stringify(panelLog(repo, log[1]))); }
+      try { return send(res, 200, 'application/json', JSON.stringify(logs.answer(req.headers, padId(log[1]), !!log[2]))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
     }
     const pack = where.match(/^\/api\/tickets\/(\d{1,4})\/pack$/);
