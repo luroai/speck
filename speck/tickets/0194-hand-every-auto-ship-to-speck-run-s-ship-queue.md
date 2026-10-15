@@ -42,6 +42,7 @@ Builds end at approved, `speck run`'s ship queue (0193) does every auto-ship, an
 - Asked for 2026-10-15: "those two tickets are essentially creating a separate single shipping process which handles the shipping of all things in its own queue? This was an idea we discussed a few days ago but opted to go with a single WIP limit instead. If this is correct, then start those 2 tickets."
 - `speck run` already resumes a killed build's session from `build_command` (`resumeArgv` in `scripts/run.mjs`); a hand-back can resume the same way with its own message.
 - "Fail together" refusals have no exit code of their own today (`testFailure` in `scripts/ship.mjs`); the builder can give them one.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
