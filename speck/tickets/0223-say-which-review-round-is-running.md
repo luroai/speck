@@ -1,7 +1,7 @@
 ---
 id: "0223"
 title: "Say which review round is running"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-14-say-which-review-round-is-running.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0217"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T23:48:31.710Z"
 
 ---
 # 0223 · Say which review round is running
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A ticket stays `reviewing` between review rounds, and its card says "<reviewer> is reviewing · round <n>" with the last recorded round. After round 1 asks for changes, the card still says "round 1" while the builder fixes the findings and while the reviewer runs round 2, so someone watching can't tell who is at work.
