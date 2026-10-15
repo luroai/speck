@@ -1,7 +1,7 @@
 ---
 id: "0212"
 title: "Recover a ship that was stopped partway"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0204"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T15:17:36.380Z"
 approved: "2026-10-15T15:54:57.825Z"
+finished: "2026-10-15T15:58:34.187Z"
 
 ---
 # 0212 · Recover a ship that was stopped partway
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 To test a ticket merged with the base branch, `speck ship` moves the ticket's worktree onto the merged result and moves it back afterwards (0192). If the ship is killed in between, the worktree is left there, off the ticket's branch. The next ship then can't find the branch in any worktree, checks the main checkout instead and refuses with "You have uncommitted or untracked changes", and `speck run`'s queue waits for a new commit before trying again. On 2026-10-15 this held 0205 until it was put right by hand.
