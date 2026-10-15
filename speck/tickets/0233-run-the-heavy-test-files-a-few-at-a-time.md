@@ -42,6 +42,9 @@ speck's heavy test files run a few at a time while the light ones run as many at
 - Failing before this build: none
 - Measured 2026-10-15 on the build box (16 cores, 14 GB): 88 test files start a real panel, browser or `speck run` (48 of them a browser). The whole suite takes 2 min 47 s today; those 88 files alone, run 2 at a time, take 9 min 21 s, using 7 min of CPU in that time, so they mostly wait rather than work. Built as written, the suite would take over 9 minutes here, every review round of every build.
 - Answered 2026-10-15 (blocked question): C. Heavy files run at most 2 at a time only on machines with 8 cores or fewer (as `os.availableParallelism()` counts them); on bigger machines every file runs as many at a time as today.
+- The heavy list is `test/support/heavy.mjs`: the 86 test files that call a support helper starting a real panel, browser or `speck run` (`startPanel`, `browserPage`, `startRun`, `buildPanel`, `slowPanel`, `readyPanel`, `launched`). A test fails if a test file calls one of them and isn't listed.
+- With the limit on, the other files keep today's concurrency (cores − 1) and the heavy ones run in a second `run()` of their own, 2 at a time, beside them. The two runs' reports are merged into one: each top-level test's lines kept together, numbered in turn, with one plan and one set of totals.
+- Self-check: no changes. Checked an empty heavy list, every file heavy, listed files that don't exist, a heavy file that can't load, a todo failure, the terminal (spec) report as well as TAP, and that every file's time is still recorded.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
