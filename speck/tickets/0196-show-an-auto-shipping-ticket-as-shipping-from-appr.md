@@ -42,6 +42,7 @@ An approved ticket that `auto_ship` covers shows as on its way out from its appr
 - Cause of AC2: to test the merged result (0192), `speck ship` checks out the merged commit detached in the ticket's own worktree (`scripts/ship.mjs`, around line 108). `ticketsElsewhere()` in `scripts/core.mjs` finds a ticket's worktree by its branch, so it misses it, and the board falls back to the base branch's copy of the ticket, which says `ready`.
 - Cause of AC1: `doing()` and `to_ship` in `templates/panel.html` were written when a build shipped its own ticket, so an approved ticket whose build had ended was waiting for the user.
 - The ship record (`takeShip` in `scripts/ship.mjs`) says whether a ticket's ship is running.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
