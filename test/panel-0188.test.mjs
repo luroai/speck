@@ -44,6 +44,17 @@ test('0188 AC1: an update for one changed ticket is the same size with 150 and w
   assert.equal(d.lists.ideas, undefined, 'no ideas, as none changed');
 });
 
+test('0188 AC1: a ticket moving to the top of a list sorted by priority costs the same with 150 and with 300 others', () => {
+  const sizes = [151, 301].map(n => {
+    const a = board(n), t = { ...a.tickets[n - 1], priority: 0 };
+    const b = { ...a, tickets: [t, ...a.tickets.slice(0, n - 1)] };
+    const text = deltaOf(a, b), d = JSON.parse(text).delta;
+    assert.deepEqual(d.lists.tickets.moves, [[t.id, null]], 'one move');
+    return text.length;
+  });
+  assert.ok(Math.abs(sizes[0] - sizes[1]) < 1024, `${sizes[0]} and ${sizes[1]} bytes`);
+});
+
 test('0188 AC1: an update carries the ideas and speck run state that changed, and what went', () => {
   const a = board(3);
   const b = { ...a, ideas: [a.ideas[0], idea('three', 'inbox')], run: { ...a.run, since: '2026-10-14T11:00:00.000Z' }, restart_error: 'boom' };

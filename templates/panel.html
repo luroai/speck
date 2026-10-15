@@ -2386,8 +2386,10 @@ function applyDelta(old, d) {
     const keyOf = x => String(x[l.by]), items = new Map(old[name].map(x => [keyOf(x), x])), added = [];
     for (const k of l.drop) items.delete(k);
     for (const x of l.put) { if (!items.has(keyOf(x))) added.push(keyOf(x)); items.set(keyOf(x), x); }
-    const order = l.order || [...old[name].map(keyOf).filter(k => items.has(k)), ...added];
-    if (order.length !== items.size || order.some(k => !items.has(k))) return null;
+    if (!Array.isArray(l.moves) || !l.moves.every(m => Array.isArray(m) && m.length === 2)) return null;
+    const moving = new Set(l.moves.map(m => m[0])), order = [...old[name].map(keyOf).filter(k => items.has(k)), ...added].filter(k => !moving.has(k));
+    for (const [k, after] of l.moves) { const i = after === null ? 0 : order.indexOf(after) + 1; if (after !== null && !i) return null; order.splice(i, 0, k); }
+    if (order.length !== items.size || new Set(order).size !== order.length || order.some(k => !items.has(k))) return null;
     next.push([name, order.map(k => items.get(k))]);
   }
   return Object.fromEntries(next);

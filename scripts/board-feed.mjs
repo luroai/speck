@@ -171,8 +171,9 @@ function keyedPart(list, by, was) {
 // 0188: the update that turns board `from` (a snapshot, numbered `fromVersion`) into board `to`, as /api/state's
 // answer: { delta: { from, to, keys, set, lists } }. keys names every part of `to` in order (a part not named is gone),
 // set has each whole part that changed, and lists, for each list kept item by item on both sides, the items added or
-// changed (put), the keys of those gone (drop) and, only when it isn't the old order without those gone and with those
-// added at the end, the new order.
+// changed (put), the keys of those gone (drop) and the moves that turn the old order, without those gone and with those
+// added at the end, into the new one: each [key, the key it now follows, or null when it's first], in the new order.
+// Only the fewest items that must move are named, so a ticket moving up the list costs one move however long it is.
 export function boardDelta(from, to, fromVersion, toVersion) {
   const set = [], lists = [];
   for (const name of to.keys) {
@@ -181,15 +182,30 @@ export function boardDelta(from, to, fromVersion, toVersion) {
       const drop = was.order.filter(k => !now.items.has(k));
       const added = now.order.filter(k => !was.items.has(k));
       const put = now.order.filter(k => was.items.get(k) !== now.items.get(k)).map(k => now.items.get(k));
-      const same = [...was.order.filter(k => now.items.has(k)), ...added];
-      const moved = same.length !== now.order.length || same.some((k, i) => k !== now.order[i]);
-      if (put.length || drop.length || moved) lists.push(`${JSON.stringify(name)}:{"by":${JSON.stringify(now.by)},"put":[${put.join(',')}],"drop":${JSON.stringify(drop)}${moved ? `,"order":${JSON.stringify(now.order)}` : ''}}`);
+      const moves = movesFor([...was.order.filter(k => now.items.has(k)), ...added], now.order);
+      if (put.length || drop.length || moves.length) lists.push(`${JSON.stringify(name)}:{"by":${JSON.stringify(now.by)},"put":[${put.join(',')}],"drop":${JSON.stringify(drop)},"moves":${JSON.stringify(moves)}}`);
     } else {
       const text = now.by ? `[${now.order.map(k => now.items.get(k)).join(',')}]` : now.json;
       if (!was || was.by || was.json !== text) set.push(`${JSON.stringify(name)}:${text}`);
     }
   }
   return `{"delta":{"from":${JSON.stringify(fromVersion)},"to":${JSON.stringify(toVersion)},"keys":${JSON.stringify(to.keys)},"set":{${set.join(',')}},"lists":{${lists.join(',')}}}}`;
+}
+
+// The moves that turn order `from` into `to` (the same keys): every key outside the longest run of keys that keep their
+// order, each with the key before it in `to`.
+function movesFor(from, to) {
+  const at = new Map(from.map((k, i) => [k, i])), tails = [], back = new Array(to.length).fill(-1);
+  to.forEach((k, i) => {
+    const p = at.get(k);
+    let lo = 0, hi = tails.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (at.get(to[tails[mid]]) < p) lo = mid + 1; else hi = mid; }
+    if (lo > 0) back[i] = tails[lo - 1];
+    tails[lo] = i;
+  });
+  const stay = new Set();
+  for (let i = tails.length ? tails[tails.length - 1] : -1; i >= 0; i = back[i]) stay.add(i);
+  return to.flatMap((k, i) => (stay.has(i) ? [] : [[k, i ? to[i - 1] : null]]));
 }
 
 // 0188: the server's recent boards, by the number boardFeed gave each. snapshot() keeps a board in parts after the last
