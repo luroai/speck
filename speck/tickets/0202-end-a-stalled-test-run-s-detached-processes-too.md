@@ -1,7 +1,7 @@
 ---
 id: "0202"
 title: "End a stalled test run's detached processes too"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-end-a-stalled-test-run-s-detached-processes
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T13:43:05.079Z"
+approved: "2026-10-15T13:51:53.936Z"
 
 ---
 # 0202 · End a stalled test run's detached processes too
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a test run stalls, speck ends the test command's process group, but not processes the tests started in a group of their own, or whose parent has already exited. Those can run for good, using memory and slowing every later run and build on the machine: the same kind of leak that pushed this machine's load above 100 on 2026-10-14.
@@ -50,9 +51,14 @@ When a test run goes quiet for too long and speck stops it, speck now also stops
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 176,150
+- Elapsed since build started: 9 min
+- Changed lines: 99 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - A run that finishes on its own, or whose speck process is killed outright (0174's watch), still ends only its process group: `speck/ideas/2026-10-15-end-a-test-run-s-detached-processes-however-it-ends.md`.
