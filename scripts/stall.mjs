@@ -1,8 +1,9 @@
 // Runs a test command and ends it if it stalls (0152): `node stall.mjs <cmd> <stall ms> <ended file> [<output file>]`.
-// The command runs in its own process group, so ending it ends every process it started. Its output goes on to this
-// process's own, and to the output file too when one is given. If it writes nothing for the stall time, this says so,
-// with the last line it wrote, and ends the whole group. The ended file gets how the run ended: the exit code,
-// `signal <name>` if a signal stopped it, or `stalled` and the last line on the next line.
+// The command runs in its own process group, so ending it ends every process it started. If this process goes, or
+// whoever started it does, the group is ended too (0174). Its output goes on to this process's own, and to the output
+// file too when one is given. If it writes nothing for the stall time, this says so, with the last line it wrote, and
+// ends the whole group. The ended file gets how the run ended: the exit code, `signal <name>` if a signal stopped it,
+// `parent gone` if whoever started this process went first, or `stalled` and the last line on the next line.
 
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
@@ -11,7 +12,10 @@ const [cmd, ms, endedFile, outputFile] = process.argv.slice(2);
 const stallMs = Number(ms);
 const GRACE_MS = 2000; // how long the tests get to end after being asked, before they're killed
 const out = outputFile ? fs.openSync(outputFile, 'w') : null;
-const child = spawn('sh', ['-c', cmd], { stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+// A watch in the tests' group ends the whole group once this process has gone, even if it was killed with SIGKILL
+// and had no chance to end them itself (0174). It checks every half second, writes nothing and holds no output.
+const WATCH = `(while kill -0 ${process.pid} 2>/dev/null; do sleep 0.5; done; kill -KILL 0) </dev/null >/dev/null 2>&1 &`;
+const child = spawn('sh', ['-c', `${WATCH} exec sh -c "$1"`, 'sh', cmd], { stdio: ['ignore', 'pipe', 'pipe'], detached: true });
 
 // If whoever reads this process's output stops reading, the output is dropped rather than leaving the tests unwatched.
 for (const stream of [process.stdout, process.stderr]) stream.on('error', () => {});
@@ -48,7 +52,11 @@ const duration = n => {
   const unit = (v, word) => `${v} ${word}${v === 1 ? '' : 's'}`;
   return n % 60000 === 0 ? unit(n / 60000, 'minute') : unit(Math.round(n / 100) / 10, 'second');
 };
+// The process that started this one, so this one can tell when that has gone.
+const parent = process.ppid;
 const timer = setInterval(() => {
+  // Whoever started the tests has gone, perhaps killed with SIGKILL, so nobody is waiting for them: end them (0174).
+  if (!done && !ending && process.ppid !== parent) { clearInterval(timer); end('SIGTERM', () => finish('parent gone', 1)); return; }
   if (done || Date.now() - lastAt < stallMs) return;
   clearInterval(timer);
   const said = last.length > 300 ? `${last.slice(0, 300)}…` : last;

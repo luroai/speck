@@ -204,11 +204,14 @@ test('0109 AC4: a turn whose process dies while another waits is handed on', asy
 
 test('0109 AC4: a speck test killed outright keeps its turn while the tests it started are still running', async () => {
   const log = path.join(fs.realpathSync(os.tmpdir()), 'log.txt');
-  const { dir, wt } = testRepo({ cmd: `echo start >> ${log}; sleep 2; echo end >> ${log}` });
+  const once = path.join(fs.realpathSync(os.tmpdir()), 'first');
+  // The first run's tests take a second to end when asked to (0174 ends them once their speck test has gone). The
+  // second run's just take a moment.
+  const { dir, wt } = testRepo({ cmd: `echo start >> ${log}; if mkdir ${once} 2>/dev/null; then trap 'sleep 1; echo end >> ${log}; exit 0' TERM; while :; do sleep 0.05; done; else sleep 0.5; echo end >> ${log}; fi` });
   const first = speckAsync(dir, 'test');
   await until(() => readLog(log).length, 'the first run started');
   const exited = new Promise(r => first.child.once('exit', r));
-  first.child.kill('SIGKILL'); // the tests it started carry on without it
+  first.child.kill('SIGKILL'); // the tests it started are ended without it, but take a second to end
   await exited; // not first.done: the orphaned tests hold its output open until they end
   const b = await speckAsync(wt, 'test').done;
   assert.equal(b.status, 0, b.stderr);

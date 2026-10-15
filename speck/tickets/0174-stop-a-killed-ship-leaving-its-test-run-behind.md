@@ -42,6 +42,9 @@ Killing a ship, test run or build ends its test command too.
 - The leftover loops came from `gated()` in `test/ship-0153.test.mjs`: `sh -c 'touch reached; while [ ! -f go ]; do sleep 0.05; done'`. The "killed" tests never write `go`, and the temporary folder is then deleted.
 - Two other leftovers were found on the same day: a `speck run` and a `speck panel` started by 0171's tests in `/tmp/speck-test-…` folders. If the same cause doesn't explain them, record what does in Follow-ups instead of fixing them here.
 - Failing before this build: none
+- AC2 already held before this build: `speck stop` and the panel's Stop build find a build's processes by its session in their environment and by its process tree, which reaches the test command. Its tests pass before and after the change.
+- `0109 AC4: a speck test killed outright keeps its turn while the tests it started are still running` relied on a killed `speck test` leaving its tests running, which AC1 reverses. Its test command now takes a second to end when asked to, so it still checks that the next run waits for those tests to end and never overlaps them.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
