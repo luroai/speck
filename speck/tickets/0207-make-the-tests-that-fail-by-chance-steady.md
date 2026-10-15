@@ -46,7 +46,7 @@ Those four tests give the same result however busy the machine is.
 - Whole-suite run: "0198 AC3: test/panel-0177.test.mjs keeps every test and every assertion it had" compared the file as it is now with 0198's start, so it fails on any later change to those assertions, including AC3's removal of the 1-second limits. It now compares 0198's start with 0198's approved commit, which is the change it guards. panel.mjs also went one line over the 600-line limit (0078 AC2), so its comment was shortened.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Four checks in speck's own test suite that sometimes failed when the computer was busy now give the same answer every time, so builds and ships aren't held up or sent to a second run for no reason. One of them uncovered a small real problem in the panel: if you clicked Auto-build on and then quickly clicked it again, the refusal could start with a stray line from the first run ("speck run: watching for ready tickets…"). The panel now waits for that line before showing Auto-build as on, so the second click shows only its own message. You can see it by clicking Auto-build on twice in quick succession. Keep an eye on the flaky-test log: these four names shouldn't appear in it any more.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,10 @@ Those four tests give the same result however busy the machine is.
 - 0128 AC4's cause (AC2): the panel showed speck run as on as soon as it held its lock, but speck run writes its first line ("speck run: watching for ready tickets…") to the shared run.log a moment later. On a busy machine that line landed after the second Turn on click had started reading the log, so the second speck run's refusal began with the first one's line, and the test's anchored match failed. Reproduced 3 times in 15 runs of that test with every core busy. Fixed in the panel: it shows speck run as on only once it holds the lock and has written its first line. 0 failures in 15 runs under the same load afterwards; 0207 AC2 pauses a copy of speck run between the two to check it every time.
 - Three runs in a row of each changed file, on 2026-10-15 (AC4): ship-0153 15/15 passed each time; panel-0128 13/13; build-log-0176 4/4; panel-0177 8/8; flaky-0207 5/5. Under every core kept busy as well: flaky-0207 3 runs, panel-0177 and ship-0153 2 runs, all passing; 0176 AC1 measured 440 ms against 440 ms of CPU, where wall-clock time had missed by 13%.
 - After review round 1's fixes, three more runs in a row (AC4): speed-0198 9/9 passed each time; panel-0177 8/8; flaky-0207 6/6. With every core kept busy, flaky-0207 and panel-0177 together passed 14/14 three times.
+- Follow-ups:
+  - A speck run that is already on can still write a line to run.log (for example a build launch) while a second Turn on click collects its refusal, so that line would show in the refusal. Inbox: speck/ideas/2026-10-15-keep-another-speck-run-s-lines-out-of-a-turn-on-refusal.md.
+  - Tidy-up: the 0177 AC3 tests' names still say "within 1 second", 0177's own criterion, though they now compare with the same ask made with nothing reading. Renaming them would also mean changing 0191's test, which names one of them.
+  - Known limit: 0176 AC1 measures CPU time from /proc on Linux only, and falls back to wall-clock time elsewhere.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +142,87 @@ Those four tests give the same result however busy the machine is.
     ],
     "escalation_question": "",
     "summary": "The ship synchronisation and run-switch race fixes are supported by passing tests, and the full suite passes. However, the revised responsiveness checks can overlook a real delay, and one changed test file lacks the required repeat-run record."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f3c8b1b0e8697ac9d40d16907c995126072784ac",
+    "thread_id": "01a14038-f7af-71d0-8302-46541680e69e",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 247396,
+      "cached_input_tokens": 195072,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2178,
+      "reasoning_output_tokens": 275
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T15:51:27.325Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "0153 AC2 in test/ship-0153.test.mjs waits for the gate's reached file before taking its snapshot. The test passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelRunOn waits for the child's lock and first output. The passing 0207 AC2 test deliberately delays that output and verifies the second refusal contains only its own message. The Delivery log records the cause and reproduction."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "0176 AC1 compares measured child CPU costs for both log sizes. Every 0177 AC3 comparison now uses its measured baseline and s.readingMs(), which measures one reading independently of request retries. The new passing integration test verifies that waiting for a real slowed reading is detected while an independent log response passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The Delivery log records three consecutive passing runs for all changed test files, including speed-0198, and fresh repeats of panel-0177 and flaky-0207 after the review fixes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the latest /tmp/speck-0207-tests.txt totals: 1941 tests, 1938 passed, zero failures, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0177.test.mjs",
+        "issue": "The comparison previously included multiple board readings, allowing a response blocked by the first reading to pass.",
+        "suggested_fix": "Use one independently measured reading and verify detection against a real waiting response.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "speck/tickets/0207-make-the-tests-that-fail-by-chance-steady.md",
+        "issue": "The repeat-run record previously omitted speed-0198.test.mjs.",
+        "suggested_fix": "Record three consecutive passing runs for that file.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The race fixes and revised timing checks meet the ticket's requirements. The timing checks now detect waiting without counting repeated board readings twice. Both previous findings are resolved, the required repeat runs are recorded, and the full suite passes."
   }
 }
 ```
