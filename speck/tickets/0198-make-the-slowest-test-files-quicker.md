@@ -1,7 +1,7 @@
 ---
 id: "0198"
 title: "Make the slowest test files quicker"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T13:17:42.080Z"
+approved: "2026-10-15T14:43:20.598Z"
 
 ---
 # 0198 · Make the slowest test files quicker
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's full suite takes about 2.5 minutes, and longer when two builds share the machine, and a build runs it 2 to 5 times plus once more at ship. A few test files take about a minute each on their own, and a full run can't end before its slowest file does. On 2026-10-15 the tests of 0176, 0175 and 0177 took 79, 67 and 59 seconds in all.
@@ -65,9 +66,14 @@ Worth keeping an eye on: running tests side by side is new in speck's test suite
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 448,583
+- Elapsed since build started: 86 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 ### Times before and after (AC2)
 Each file timed on its own with `node --test <file>`, three times, middle time. "At the start" is the AC1 timing in the Notes. "Paired" times the commit the build started from and this build's version one after the other in each of three rounds, so both met the same load from other builds on the machine.
