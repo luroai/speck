@@ -1,7 +1,7 @@
 ---
 id: "0178"
 title: "Keep the panel's full board small as tickets ship"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0188"]                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-15T11:50:15.782Z"
 
 ---
 # 0178 · Keep the panel's full board small as tickets ship
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Each full board the panel sends a page is 1.19 MB (measured 2026-10-14), sent each time a page opens or reconnects (0187). 154 finished tickets make up 1.08 MB of it, including 515 KB of each finished build's log ending, which the panel never shows for a finished ticket. Through a tunnel to a phone that's a slow first load and reconnect, and it grows with every ticket shipped.
