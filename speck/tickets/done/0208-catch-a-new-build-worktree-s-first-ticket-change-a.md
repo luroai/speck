@@ -1,7 +1,7 @@
 ---
 id: "0208"
 title: "Catch a new build worktree's first ticket change at once"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0206"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T15:06:31.257Z"
 approved: "2026-10-15T15:23:47.293Z"
+finished: "2026-10-15T15:32:19.085Z"
 
 ---
 # 0208 · Catch a new build worktree's first ticket change at once
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket changed in a build's worktree straight after the worktree is made doesn't always reach the panel within a second: under load it can take up to 15 seconds. `speck start` writes a build's first status just after making its worktree, so the panel can show a new build late.
