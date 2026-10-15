@@ -23,13 +23,30 @@ export function markRoundRunning(repo, id, round) {
   };
 }
 
+// 0223: a reviewer subagent runs in the builder's own session, so no speck process lasts the round. `speck
+// review-started` records the round with the pid of the build speck run started for the ticket, if there is one, and
+// `speck record` ends it.
+export function markSubagentRound(repo, id, round) {
+  const runs = runsOf(repo), file = fileOf(runs, id);
+  let build = null;
+  try { const rec = JSON.parse(fs.readFileSync(path.join(runs, `${padId(id)}.json`), 'utf8')); if (!Object.hasOwn(rec, 'exited') && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid)) build = rec.pid; } catch { /* not started by speck run */ }
+  fs.mkdirSync(runs, { recursive: true });
+  fs.writeFileSync(file, JSON.stringify({ id: padId(id), round, pid: null, build_pid: build, started: new Date().toISOString() }) + '\n');
+}
+export function endRound(repo, id) { fs.rmSync(fileOf(runsOf(repo), id), { force: true }); }
+
 // The round of ticket `id` being run now, or null. A record left by a `speck review` that was killed, or one for a
-// round already recorded (`recorded` rounds so far), doesn't count.
-export function roundRunning(runs, id, recorded) {
+// round already recorded (`recorded` rounds so far), doesn't count. Nor does a subagent's round once the build it was
+// started in has gone, or once it has run for longer than `ms`, the review time limit, without being recorded.
+export function roundRunning(runs, id, recorded, ms) {
   if (!safeId(id)) return null;
   let rec;
   try { rec = JSON.parse(fs.readFileSync(fileOf(runs, id), 'utf8')); } catch { return null; }
   if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return null;
-  const { round, pid } = rec;
-  return Number.isInteger(round) && round > recorded && Number.isInteger(pid) && pid > 0 && pidAlive(pid) ? round : null;
+  const { round, pid, build_pid: build } = rec;
+  if (!Number.isInteger(round) || round <= recorded) return null;
+  if (Number.isInteger(pid) && pid > 0) return pidAlive(pid) ? round : null;
+  if (pid !== null || (build !== null && !(Number.isInteger(build) && build > 0 && pidAlive(build)))) return null;
+  const since = Date.parse(rec.started);
+  return Number.isFinite(since) && Date.now() - since < ms ? round : null;
 }

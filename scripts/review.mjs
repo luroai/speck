@@ -1,4 +1,4 @@
-// speck review, record, prompt, diff, next and reviewer-settings: review rounds, kept in each ticket, and the codex reviewer.
+// speck review, record, prompt, diff, next, review-started and reviewer-settings: review rounds, kept in each ticket, and the codex reviewer.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -6,7 +6,7 @@ import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
 import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong } from './reviewers.mjs';
 import { testOutput, testsMeta } from './tap.mjs';
-import { markRoundRunning } from './review-running.mjs';
+import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -346,6 +346,7 @@ export function cmdRecord(args) {
   // Whether the base branch was merged in only matters after an approval, so it's only looked up then.
   const merge = isMergeRound(prior, prior.at(-1)?.verdict.verdict === 'approve' && reviewSince(repo, cfg, prior).merged);
   const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...testsSeen });
+  endRound(repo, findTicket(repo, id).fm.id || id);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
@@ -355,6 +356,16 @@ export function cmdNext(args) {
   const cfg = loadConfig(repo);
   const next = nextAction(rounds(repo, args[0]), cfg);
   console.log(`${next.action}${next.reason ? `: ${next.reason}` : ''}`);
+}
+
+// 0223: records that a reviewer subagent is running the next round, for the panel, until `speck record` records it.
+export function cmdReviewStarted(args) {
+  if (!args[0]) throw new SpeckError('Usage: speck review-started <id>');
+  const repo = findRepoRoot();
+  const t = findTicket(repo, args[0]);
+  const round = rounds(repo, args[0]).length + 1;
+  markSubagentRound(repo, t.fm.id || args[0], round);
+  console.log(`Round ${round} of ${t.fm.id || args[0]} is shown as running until \`speck record\` records it.`);
 }
 
 export function cmdReviewerSettings(args) {
