@@ -1,7 +1,7 @@
 ---
 id: "0235"
 title: "Run only the ticket's own tests during a build"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0227"]                # ticket ids that must be done first
 created: 2026-10-15
+started: "2026-10-15T21:41:27.429Z"
 
 ---
 # 0235 · Run only the ticket's own tests during a build
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A build runs the whole test suite before review round 1, before every later round and after each merge, and `speck ship` runs it again on the merged result before anything lands. On a laptop where the suite takes 8 minutes, that's several whole runs per ticket, and with builds side by side the machine is loaded for hours. The run at ship is the one that decides whether a ticket lands, so the others mostly repeat it.
