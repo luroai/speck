@@ -2,7 +2,7 @@
 id: "0229"
 title: "Start the slowest test files first"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
-priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
+priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)

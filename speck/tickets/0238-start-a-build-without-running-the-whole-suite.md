@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0235","0237"]   # ticket ids that must be done first
+after: ["0231","0235","0237"] # ticket ids that must be done first
 created: 2026-10-15
 
 ---
@@ -40,7 +40,7 @@ A build lists the tests already failing from a result speck has recorded, and ne
 ## Notes
 - Results are recorded per code in `scripts/results.mjs` (`testedCode()`, `recorded()`); `speck test` is `cmdTest()` in `scripts/turns.mjs`. A ship records the result for the code it lands, so a build started after it usually finds one.
 - The builder's step is `skills/speck-build/SKILL.md` section 1 step 6; the reviewer's scope rule is item 4 in `templates/reviewer-prompt.md`.
-- 0235 changes the same skill and reviewer prompt, and 0237 the same `testRun()` and `cmdTest()` code; both come first.
+- 0235 changes the same skill and reviewer prompt, 0237 the same `testRun()` and `cmdTest()` code, and 0231 `scripts/speck.mjs`, where `speck test`'s usage lines are; all three come first.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
