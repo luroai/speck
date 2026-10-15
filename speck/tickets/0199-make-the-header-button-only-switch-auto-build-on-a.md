@@ -1,7 +1,7 @@
 ---
 id: "0199"
 title: Make the header button just the Auto-build switch                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T13:42:58.248Z"
+approved: "2026-10-15T13:54:15.291Z"
 
 ---
 # 0199 · Make the header button just the Auto-build switch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0163 the header's Auto-build button names one ticket in flight and where it has got to, or a ticket that needs you. With two builds at once and a ship queue (0193, 0194), one ticket's status there is partial and repeats what the Build list already shows, and its tooltip still says builds go one at a time.
@@ -50,9 +51,14 @@ The Auto-build button at the top of the panel is back to being a simple on/off s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 146,795
+- Elapsed since build started: 11 min
+- Changed lines: 37 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
