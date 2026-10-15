@@ -1,7 +1,7 @@
 ---
 id: "0240"
 title: "Publish a GitHub release when a new version lands on main"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:24:37.941Z"
 approved: "2026-10-15T21:39:32.370Z"
+finished: "2026-10-15T21:49:52.151Z"
 
 ---
 # 0240 · Publish a GitHub release when a new version lands on main
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Each release ticket ends with the maintainer tagging the release and publishing its GitHub release page by hand once it has shipped. Until then the README's setup prompt names a tag that doesn't exist, so anyone following it gets an error, and with `auto_ship` on nobody is watching for the moment a release ticket ships.
