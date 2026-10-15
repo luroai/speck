@@ -1,7 +1,7 @@
 ---
 id: "0229"
 title: "Start the slowest test files first"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:38:12.714Z"
 approved: "2026-10-15T21:54:20.784Z"
+finished: "2026-10-15T21:58:13.575Z"
 
 ---
 # 0229 · Start the slowest test files first
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `npm test` hands Node the test files in alphabetical order, so a slow file near the end can run on its own while the other workers sit idle. On an 8 GB MacBook Air the suite took 483 s of wall time for 2,132 s of test time across about 7 workers, so roughly three minutes went on uneven packing and contention.
