@@ -40,6 +40,7 @@ A test that failed on both tries appears once in the reviewer's test summary, wi
 - The two runs' output is joined in `scripts/results.mjs` and summarised by `readTap()` and `summariseTap()` in `scripts/tap.mjs`, which only cut the text at the retry note when a `Flaky:` line follows.
 - The note's open question is settled as the second try's details only (AC1).
 - Failing before this build: none
+- Self-check: added a test that a test failing in the full run but passing on the second try, while another fails again, is still listed once (with the full run's details).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

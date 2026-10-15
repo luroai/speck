@@ -55,18 +55,32 @@ export const FLAKY = 'Flaky: ';
 // Failing tests without those whose failure is only that one of their subtests failed.
 const leaves = failing => failing.filter(t => !failing.some(o => o !== t && o.start >= t.start && o.end <= t.end && o.indent > t.indent));
 
-// TAP output read for a summary, or null when it isn't TAP. When the run passed on a second try (0195), only the full
-// run's lines are read, and its failing tests are counted as passed on a second try instead (secondTry: their paths).
+// TAP output read for a summary, or null when it isn't TAP. Only the full run's lines are read when its failing tests'
+// files were run once more. When the run passed on that second try (0195), its failing tests are counted as passed on a
+// second try instead (secondTry: their paths). When it didn't, each failing test is listed once, with the second try's
+// details when it failed there too, and any test that failed only there after them (0221). failing: each failing test
+// with its details.
 function readTap(text) {
   let lines = String(text).replace(/\r\n/g, '\n').split('\n');
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return null;
   const note = lines.findIndex((l, i) => i > header && l.startsWith(RETRY_NOTE));
-  const retried = note > 0 && lines.slice(note + 1).some(l => l.startsWith(FLAKY));
-  if (retried) lines = lines.slice(0, note);
+  const after = note > 0 ? lines.slice(note + 1) : [];
+  const retried = after.some(l => l.startsWith(FLAKY));
+  if (note > 0) lines = lines.slice(0, note);
   const all = results(lines, header + 1);
   const failed = all.filter(t => !t.ok && t.directive !== 'TODO');
-  return { lines, header, all, retried, failing: retried ? [] : failed,
+  const failing = retried ? [] : failed.map(t => ({ ...t, details: details(lines, t, all) }));
+  const again = after.findIndex(l => HEADER.test(l));
+  if (!retried && again >= 0) {
+    const second = results(after, again + 1);
+    for (const t of second.filter(o => !o.ok && o.directive !== 'TODO')) {
+      const first = failing.find(f => f.path === t.path && !f.again);
+      const entry = { ...t, again: true, details: details(after, t, second) };
+      if (first) Object.assign(first, { details: entry.details, again: true }); else failing.push(entry);
+    }
+  }
+  return { lines, header, all, retried, failing,
     secondTry: retried ? [...new Set(leaves(failed).map(t => t.path).filter(Boolean))] : [] };
 }
 
@@ -84,7 +98,7 @@ export function summariseTap(text, id, file) {
     `Test output summarised for the reviewer: the run's totals, every failing test with its details, and every test named with ${id}. The full output is in ${file}.`,
     ...(retried ? ['', 'Result: passed. The tests under "Passed on a second try" failed in the full run, then passed when their files were run once more, so they count as chance failures, not failing tests.'] : []),
     '', retried ? 'Totals (the full run):' : 'Totals:', ...(totals.length ? totals : ['(none given: the run may have stopped early)']),
-    '', `Failing tests (${failing.length}):`, ...(failing.length ? failing.map(t => details(lines, t, all)) : ['(none)']),
+    '', `Failing tests (${failing.length}):`, ...(failing.length ? failing.map(t => t.details) : ['(none)']),
     ...(retried ? ['', `Passed on a second try (${secondTry.length}):`, ...secondTry] : []),
     '', `Tests named with ${id} (${own.length}):`, ...(own.length ? own.map(t => `${said(t)}: ${t.path}`) : ['(none)']),
   ].join('\n');
