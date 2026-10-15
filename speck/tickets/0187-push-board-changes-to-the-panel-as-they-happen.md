@@ -80,6 +80,7 @@ Follow-ups:
 - Timing checks (0176 AC1, 0177 AC3) fail now and then when other builds run tests at the same time: saved as `speck/ideas/2026-10-14-keep-timing-checks-steady-while-other-builds-test.md`.
 - Skipped, already covered: the 0173 AC2 failure on main matches ticket 0191. A failed request for the board showing "Disconnected" at once (review round 2, F2) matches ticket 0186.
 - Tidy-up: the page's static banner text still says "Retrying every 2 seconds…". The page always replaces it before showing it, but `test/panel-0134.test.mjs` (AC4) pins that exact static text, so it stays until a ticket changes both.
+- 0187 AC1's worktree check now and then misses its 1-second limit under full-suite load: saved as `speck/ideas/2026-10-15-catch-a-new-build-worktree-s-first-ticket-change-at-once.md`.
 - For 0189: an open build log's updates can share the board's event stream (`/api/events`, `scripts/board-feed.mjs`), as the Notes suggest, rather than opening another stream.
 
 ## Review rounds
