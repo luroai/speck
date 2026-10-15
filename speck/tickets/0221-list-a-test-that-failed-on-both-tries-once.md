@@ -43,7 +43,7 @@ A test that failed on both tries appears once in the reviewer's test summary, wi
 - Self-check: added a test that a test failing in the full run but passing on the second try, while another fails again, is still listed once (with the full run's details).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a full test run fails and the failing tests fail again on their second try, the reviewer now sees each failing test once, with the error from the second try, and the totals of the whole run rather than of the few files run again. The count of failing tests in the review pack matches. To see it, look at the Tests part of a review pack for a round whose tests failed twice: the number of failing tests is no longer doubled. Worth knowing: a test that failed first and then passed, while another failed again, is still listed as failing, with its first error.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,6 +53,8 @@ A test that failed on both tries appears once in the reviewer's test summary, wi
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: after a run that failed on both tries, the "Tests named with" list gives each test's result from the full run only, so one that failed first and passed on the second try still shows as failed.
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -119,6 +121,74 @@ A test that failed on both tries appears once in the reviewer's test summary, wi
     ],
     "escalation_question": "",
     "summary": "The change preserves full-run totals and handles the tested retry cases. However, distinct tests with identical names can be merged, hiding a failure and understating the review pack’s count. Fix this before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "386fd840fed4c81a6910ee26f39fb044a284b816",
+    "thread_id": "01a141d8-2244-7e92-9239-8da8b357089a",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 266128,
+      "cached_input_tokens": 217856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2012,
+      "reasoning_output_tokens": 257
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:16:13.148Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/tap.mjs readTap() now matches failures by name path and location, retaining second-try details. Passing tests in test/tap-0221.test.mjs cover repeated failures, nested failures, mixed outcomes and same-named tests, including reversed retry order."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "readTap() separates the full run at RETRY_NOTE. The passing 0221 AC2 test asserts the full run's tests, passes, failures and duration."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "tapCounts() uses the merged failure list. Passing AC3 tests cover counts, recording and review-pack display; the F1 regression confirms distinct same-named failures count as two."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "All 48 tests in the supplied five-file run passed. Coverage includes existing Flaky-line behaviour, unchanged first-time summaries, no-retry failures and retry location parsing. No unrelated implementation changes appear in the round's diff."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/tap.mjs:91",
+        "issue": "Retry matching previously merged distinct tests sharing a name path, hiding failure details and understating the count.",
+        "suggested_fix": "Completed: matching now considers full failure locations, with regressions for same-named tests failing on different tries and on both tries.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The summary now lists repeated failures once, keeps their second-try details and preserves full-run totals. The duplicate-name bug is fixed, and all 48 reported tests pass. Ready for the product owner's merge decision."
   }
 }
 ```
