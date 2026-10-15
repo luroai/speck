@@ -1,7 +1,7 @@
 ---
 id: "0210"
 title: "Prepare release 0.4.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T15:58:43.144Z"
 ---
 # 0210 · Prepare release 0.4.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Over 70 tickets have shipped since the `v0.3.0` tag on 11 October, including speck run's ship queue, testing the merged result before a ship, retrying chance test failures and the fixes for leaked processes. Anyone following the README's setup prompt still gets 0.3.0.
@@ -51,7 +51,8 @@ speck is ready to be released as 0.4.0.
 - Self-check: the changelog and release notes claimed every failing run gets a second try; narrowed to when `commands.test_files` is set, and added an upgrade note saying so. Principle 7's wording avoids phrases the 0111 check treats as parallel builds. The full suite then caught the new tests naming commits by id (0085 AC3); they now find them by message.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.4.0. Its version number, the setup instructions in the README and the design notes all say 0.4.0, and the changelog has a new section describing, in plain words, everything someone using speck will notice since 0.3.0. There's also a ready-written page of release notes for the GitHub release, covering what speck is, the five changes that matter most, how to install it and what to know when upgrading, chiefly that auto-shipped tickets now only ship while speck run is on. The "Built with speck" figures in the README are up to date: 195 tickets shipped, 16 cancelled, a median of 14 minutes from a build starting to shipping, and 100 approved in the first review round.
+To see it, read the top of the changelog and the new release notes page. Nothing changes until the 0.4.0 tag is created and pushed, which should happen straight after this ships, since until then the README points at a version that doesn't exist yet.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,3 +62,95 @@ speck is ready to be released as 0.4.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The brief's principle 7 reasons and the README's "One build at a time" point still say builds never run side by side, while `max_parallel_builds` can raise it (reviewer's minor F1). Inbox: speck/ideas/2026-10-15-say-how-many-builds-run-at-once-the-same-way-everywhere.md.
+  - Tidy-up: the brief's Success measures still quote the figures as of 11 October (104 tickets), and its Releases section uses `v0.3.0` as its example tag.
+  - After shipping: create and push the `v0.4.0` tag, then `gh release create v0.4.0 --verify-tag --title "speck 0.4.0" --notes-file docs/releases/v0.4.0.md`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ec4709694e5af0d52098c7e297e410323ae372a8",
+    "thread_id": "01a14052-65c4-7890-af84-cc64a5e6e818",
+    "seconds": 47,
+    "usage": {
+      "input_tokens": 234039,
+      "cached_input_tokens": 186624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1558,
+      "reasoning_output_tokens": 113
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": [
+        "0176: the board stays quick to read however many tickets are built > 0176 AC1 and AC2 > 0176 AC1: with 200 finished builds, logs 10 times bigger add less than 10% to how long speck status --json takes"
+      ]
+    },
+    "saved_at": "2026-10-15T16:09:10.846Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json specifies 0.4.0. Both 0210 AC1 tests passed, including running init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds a grouped, plain-English 0.4.0 section matching shipped tickets. Both AC2 tests passed, including the hash check preserving the 0.3.0 section."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md names v0.4.0 in the setup prompt; README.md and docs/brief.md identify 0.4.0 as a public preview. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Principle 7 states that builds end at approved, one speck run queue ships serially, and max_parallel_builds controls concurrent builds with a default of 1. AC4 passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0210-tests.txt confirms all 13 release tests passed. The full suite passed under the existing retry policy: its sole failing performance test passed on retry."
+      },
+      {
+        "id": 6,
+        "status": "pass",
+        "evidence": "docs/releases/v0.4.0.md contains the introduction, five main changes, installation command, upgrade guidance and changelog link, without personal names. Claims align with shipped tickets including 0148, 0192–0195 and 0212. All three AC6 tests passed."
+      },
+      {
+        "id": 7,
+        "status": "pass",
+        "evidence": "Independent recalculation from current done tickets matches README.md: 195 shipped, 16 cancelled, 14 median minutes, 1 median round and 100 first-round approvals. AC7 tests also validate the historical calculation method."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "docs/brief.md",
+        "issue": "Principle 7's retained bullets say tickets build one after another and parallel builds would return only as a future feature, contradicting its updated description of configurable concurrent builds.",
+        "suggested_fix": "Adjust those bullets to describe the default of one build while acknowledging that max_parallel_builds can increase it.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release preparation meets all seven criteria. Versions agree, release notes explain the changes and upgrade requirements, and the refreshed figures match the ticket records. Tests pass under the existing retry policy. One minor wording inconsistency remains in the brief."
+  }
+}
+```
+
+</details>
