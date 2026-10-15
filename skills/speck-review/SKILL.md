@@ -13,7 +13,8 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 - All work is committed. The reviewer reviews commits, not uncommitted changes. The new round that speck has just added to the ticket can stay uncommitted until your next commit, and so can the status change from `building` to `reviewing` that round 1 makes (or from `approved` to `reviewing`, in a re-review after merging the base branch).
 - You stage only the files you created or changed, by name (`git add <path> …`). Never use `git add -A`, `git add .` or `git commit -a`: other sessions may have files in the same checkout, and those commands would sweep them into your commit. If files you didn't create or change appear, leave them alone (don't commit, move or delete them) and mention them to the user when you report back. Untracked files don't stop `speck review` or `speck record`; modified or staged tracked files that aren't committed do.
-- The test output is fresh and from the whole suite: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`, never `speck test --files`. When it's TAP, as `node --test` writes it, the reviewer gets a summary instead of the full output: the run's totals, every failing test with its details, and every test whose name contains the ticket's id, with the path of the full output file. `speck test` runs `commands.test` from `speck/config.yml`, waiting its turn if `max_parallel_tests` test runs are already going in this repo.
+- The test output is fresh and from the round's test files only: `speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`. The files are the ticket's own test files, any existing test files it changed and the files of any test that failed in its last test run. Never run the whole suite (`speck test` without `--files`) for a round: `speck ship` runs it on the ticket as it would land, before anything ships. This holds for round 1, later rounds and merge rounds alike. `speck test --files` runs `commands.test_files` from `speck/config.yml` with those files, or the whole suite when that's blank. When the output is TAP, as `node --test` writes it, the reviewer gets a summary instead of the full output: the run's totals, every failing test with its details, and every test whose name contains the ticket's id, with the path of the full output file.
+- Each round has a response file, `/tmp/speck-<id>-response.md`, written fresh for the round, round 1 included, that says which test files you ran (a `- Tests run: <file> …` line). In later rounds it also answers the findings (see "Your turn").
 - Wait for every command you start. Run each review round (`speck review`, or a reviewer subagent) and each test run between rounds (`speck test`, with or without `--files`) in the foreground, and wait for it to finish, however long it takes: give it the longest time limit your shell tool allows, and never spawn the reviewer subagent to run in the background. Never end your turn while a command you started is still running in the background. A build that `speck run` started ends when your turn ends, and whatever is still running is stopped with it.
 
 ## Reviewer model and effort
@@ -27,22 +28,22 @@ Check the ticket's `reviewer:` field.
 **`codex` (default)**
 
 ```
-speck review <id> --tests=/tmp/speck-<id>-tests.txt
+speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md
 ```
 
-This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, the diff and the test output. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
+This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, the diff, the test output and your response file. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
 
 **Any reviewer with a `command`** under `reviewer_options` in `speck/config.yml`
 
 ```
-speck review <id> --tests=/tmp/speck-<id>-tests.txt
+speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md
 ```
 
 speck runs the command, sends it the prompt, reads the verdict from its output and records the round, just as for Codex. You never handle the verdict. Exit codes are the same. If it fails, it says why and records nothing: fix the command or the reviewer's setup, then run it again.
 
 **`claude-subagent`** (only if config allows it, because it's the same model family)
 
-1. Run `speck prompt <id> --tests=/tmp/speck-<id>-tests.txt > /tmp/speck-<id>-prompt.md`.
+1. Run `speck prompt <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md > /tmp/speck-<id>-prompt.md`.
 2. Run `speck reviewer-settings <id>`. It prints `model: …` and `effort: …`, and saves them so that later rounds are recorded with the settings this reviewer was started with. Run it only when you start a new reviewer.
 3. Spawn a fresh subagent with the Agent tool. If the model isn't `default`, pass it as written as the Agent tool's `model`. If the effort isn't `default`, pass it as `effort`. If a value is `default`, leave that parameter out so the subagent runs on your own model in a fresh session. Its prompt should say: "Read /tmp/speck-<id>-prompt.md and follow it. You are read-only: do not edit files. Return only the JSON verdict." Keep the agent's id: you'll send round 2 to it with SendMessage.
 4. Save its reply to `/tmp/speck-<id>-verdict.json` as it came back. A subagent often puts the JSON inside a ```` ```json ```` fence, and `speck record` accepts that, so don't edit the reply. Then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent --tests=/tmp/speck-<id>-tests.txt`, so the review pack says what the reviewer was told about the tests.
@@ -52,6 +53,7 @@ speck runs the command, sends it the prompt, reads the verdict from its output a
 Respond to **every blocking finding** in a response file, `/tmp/speck-<id>-response.md`:
 
 ```markdown
+- Tests run: test/<area>-<id>.test.mjs …
 - F1: fixed. <what you changed, file/function>
 - F2: disputed. <concrete reason, with evidence from the code or ticket>
 - F3: needs_pm. <the product question>
@@ -62,7 +64,7 @@ Respond to **every blocking finding** in a response file, `/tmp/speck-<id>-respo
 - **needs_pm** if the finding depends on a product decision. Then stop the loop and block the ticket using the build skill's section 6.
 - Minor findings don't block. Fix them if they're trivial; otherwise handle them as follow-up ideas in `/speck-build` section 5 step 1: they go in the ticket's Delivery log, and any that would need its own ticket also goes to the inbox in `speck/ideas/`.
 
-Check each fix with the ticket's own test files (`speck test --files <file>…`). Then, once your fixes for this round are done, run the whole suite once (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`), commit (`speck(<id>): review round N fixes`), and run the next round. This holds for every round, merge rounds included. Don't run the whole suite at any other point between rounds. If it fails because of your change, fix it, checking the fix with the failing tests' own files, then run the whole suite again: never start a round on a whole-suite run that failed because of your change.
+Check each fix with the ticket's own test files (`speck test --files <file>…`). Then, once your fixes for this round are done, run the round's test files once (see "Before every round"), keeping the output (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`), commit (`speck(<id>): review round N fixes`), and run the next round. This holds for every round, merge rounds included. Never run the whole suite (`speck test` without `--files`). If a test fails because of your change, fix it and run the files again: never start a round on a run that failed because of your change.
 
 ## Round 2 onwards
 

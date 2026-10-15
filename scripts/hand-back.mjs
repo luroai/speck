@@ -17,7 +17,7 @@ const HAND_BACK_STEPS = { conflict: 'Conflict', tests: 'Tests fail together', ba
 export function handBackMessage({ id, kind, why, base, count }) {
   const what = {
     conflict: `merging it into ${base} hit a conflict`,
-    tests: `the tests failed on it merged with ${base} as it is now, while ${base}'s own tests pass`,
+    tests: `the tests failed on it as it would land, merged with ${base} as it is now, while ${base}'s own tests pass: its own change broke them, or it doesn't work with ${base}'s newer changes`,
     base: `${base}'s own tests are failing`,
   }[kind];
   const head = `speck run's ship queue tried to ship ticket ${id}, and ${what}, so nothing was shipped. speck ship said: ${why}`;

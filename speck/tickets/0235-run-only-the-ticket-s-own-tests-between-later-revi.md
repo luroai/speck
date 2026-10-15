@@ -46,6 +46,8 @@ A build runs only the ticket's own tests, and the whole suite runs once per tick
 - This repo builds from its installed copies in `.claude/skills/`, which here link to `skills/`.
 - 0227 changes the same skills and comes first.
 - Failing before this build: none
+- Round 1 had no response file, so AC1's "each round's response file" needed `speck review` and `speck prompt` to pass `--response` to round 1: it goes in the prompt under `## Builder response`, before the test output, so a saved round-1 prompt still gives its test output back.
+- Self-check: a round-1 response is now inserted as written (no `$&` or `{{…}}` substitution), and an unreadable `--response` file gives a plain error instead of a stack trace; tests added for both.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

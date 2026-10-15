@@ -163,7 +163,7 @@ test('0109 AC2: the test run in speck ship waits for a turn too', async () => {
 test('0109 AC3: the build and review skills run the tests with speck test', () => {
   for (const skill of ['speck-build', 'speck-review']) {
     const text = fs.readFileSync(path.join(ROOT, 'skills', skill, 'SKILL.md'), 'utf8');
-    assert.match(text, /speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt/, `${skill} runs speck test`);
+    assert.match(text, /speck test (--files <file>… )?2>&1 \| tee \/tmp\/speck-<id>-tests\.txt/, `${skill} runs speck test`); // with --files before a round since 0235
     assert.doesNotMatch(text, /<test command>/, `${skill} no longer runs the test command directly`);
     assert.doesNotMatch(text, /run the test command from/i, `${skill} no longer runs the test command directly`);
   }

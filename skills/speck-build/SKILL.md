@@ -20,14 +20,14 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## 2. Tests first
 
-1. For each acceptance criterion, write at least one test that checks it. Start each test's name with the ticket's id and its criterion number (for example `<id> AC2: …`), so the reviewer's summary of the test output lists the ticket's own tests. Put this ticket's new tests in a new test file of their own (for example `test/<area>-<id>.test.mjs`) rather than adding to the end of a shared one, and move any helpers they share into a support module, so tickets don't clash when they're merged. Check each criterion the quickest way that really checks it: calling the code directly, or using a lightweight stand-in, rather than starting a real browser, server or long-running process, unless the criterion is about that real behaviour (for example, selecting text in a browser). Every build runs the whole suite at least once per review round, so each slow test costs every ticket after it. When a test has to wait for something to happen, wait for it with a time limit rather than pausing for a fixed time, and keep any pause that shows something doesn't happen as short as the check allows.
+1. For each acceptance criterion, write at least one test that checks it. Start each test's name with the ticket's id and its criterion number (for example `<id> AC2: …`), so the reviewer's summary of the test output lists the ticket's own tests. Put this ticket's new tests in a new test file of their own (for example `test/<area>-<id>.test.mjs`) rather than adding to the end of a shared one, and move any helpers they share into a support module, so tickets don't clash when they're merged. Check each criterion the quickest way that really checks it: calling the code directly, or using a lightweight stand-in, rather than starting a real browser, server or long-running process, unless the criterion is about that real behaviour (for example, selecting text in a browser). `speck ship` runs the whole suite for every ticket, so each slow test costs every ticket after it. When a test has to wait for something to happen, wait for it with a time limit rather than pausing for a fixed time, and keep any pause that shows something doesn't happen as short as the check allows.
 2. Run only this ticket's own test files: `speck test --files <file>…`. It runs `commands.test_files` from `speck/config.yml` with those files, or the whole suite when that's blank. The new tests should fail. If a test passes before you've written any code, either the criterion is already met or the test is wrong, so look into it.
 3. If the project has no test setup, add the lightest standard one for its stack. If nothing can be tested automatically (for example, a pure copy change), say so in the ticket's Notes and describe how a reviewer can check it by reading the code.
 
 ## 3. Implement
 
 1. Write the simplest change that makes the tests pass, within the ticket's scope. Don't touch anything listed as out of scope, and don't make unrelated changes.
-2. Run the ticket's own test files (`speck test --files <file>…`) until they pass. Don't run the whole suite yet: it runs once, in step 5.
+2. Run the ticket's own test files (`speck test --files <file>…`) until they pass. Don't run the whole suite: `speck ship` runs it (see step 5).
 3. **Size guard:** run `speck diffstat`. If it exits 2 (over the limit), stop. Don't push on. Block the ticket (see section 6) and give a proposed split as the question.
 4. **Self-check.** Before the first review round, go over your change the way an adversarial reviewer would. This is not a review or an approval: it catches what you can, and the reviewer still decides. Check:
    - **Unusual input:** empty, missing, malformed or repeated values, and names that are built in rather than missing (for example `constructor` or `__proto__` used as a key).
@@ -37,7 +37,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Scope:** nothing outside the ticket changed, and nothing it puts out of scope was touched.
 
    For each problem you find, add a test that fails, fix it, and re-run the tests: the ticket's own test files with `speck test --files`. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
-5. Run the whole suite once, after the self-check and before the first review round, and keep the full output: `speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`, in the foreground (see Rules). The first round sends it to the reviewer. If it fails because of your change, fix it, checking the fix with the failing tests' own files (`speck test --files <file>…`), then run the whole suite again. Never start a review round on a whole-suite run that failed because of your change. A test listed as failing before this build stays as it is.
+5. After the self-check and before the first review round, run the round's test files once and keep the full output: `speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`, in the foreground (see Rules). The files are the ticket's own test files, any existing test files it changed and the files of any test that failed in its last test run. Never run the whole suite (`speck test` without `--files`) for a review round. Apart from the run before you change anything (section 1 step 6), the whole suite runs in `speck ship`, not during a build: ship runs it on the ticket as it would land, and hands the ticket back if it fails there. The first round sends this output to the reviewer, and its response file says which test files you ran (see the `speck-review` skill). If a test fails because of your change, fix it and run the files again. Never start a review round on a run that failed because of your change. A test listed as failing before this build stays as it is.
 6. Commit (`speck(<id>): <summary>`), staging each file you changed by name (see Rules). There's no separate status step: the first review round sets the ticket to `reviewing`.
 
 ## 4. Review loop
@@ -45,7 +45,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 Follow the `speck-review` skill (in the folder next to this one) exactly. In short:
 - Spawn the reviewer configured on the ticket (`reviewer:`).
 - Take turns with it until `speck next <id>` returns `ship` or `block`.
-- Fix or dispute each blocking finding, checking each fix with the ticket's own test files (`speck test --files`). Then run the whole suite once (`speck test`, not `--files`) and commit before the next review round, merge rounds included. Don't run the whole suite at any other point between rounds. If it fails because of your change, fix it, checking the fix with the failing tests' own files, then run the whole suite again: never start a round on a whole-suite run that failed because of your change.
+- Fix or dispute each blocking finding, checking each fix with the ticket's own test files (`speck test --files`). Then, before the next review round, merge rounds included, run once the ticket's own test files, any existing test files it changed and the files of any test that failed in its last test run (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`), and commit. Never run the whole suite (`speck test` without `--files`): `speck ship` runs it. Say in the round's response file which test files you ran. If a test fails because of your change, fix it and run the files again: never start a round on a run that failed because of your change.
 
 ## 5. Approved
 
@@ -84,7 +84,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 When a ship that `speck run`'s queue started is refused in a way this ticket's build has steps for, `speck run` resumes this session with a message saying what happened, with `speck ship`'s own message, and which steps to follow. The ticket is still `approved`, and nothing was shipped or changed. Work in the ticket's worktree, without asking the user:
 
 - A conflict merging it into the base branch (`speck ship` exited 13): follow "Conflict".
-- The tests failed on the ticket merged with the base branch, while the base branch's own tests pass (exited 16): follow "Tests fail together".
+- The tests failed on the ticket as it would land, merged with the base branch, while the base branch's own tests pass (exited 16): follow "Tests fail together".
 - The base branch's own tests are failing (exited 14): follow "Base branch failing".
 - The message says `speck run` has handed it back twice already without it shipping: follow "Handed back again".
 
@@ -98,20 +98,20 @@ When a ship that `speck run`'s queue started is refused in a way this ticket's b
    - `lockfile`: don't edit it by hand. Take the base branch's version (`git checkout --theirs -- <file>`), then rebuild it with the project's own install command (the one in `worktree_setup`, or the package manager's install for that lockfile, such as `npm install` for `package-lock.json`), so it has both sides' dependencies.
    - `ticket`: a file under `speck/`. In this ticket's own file, keep the branch's status and `## Review rounds` exactly as they are, and add anything the base branch added elsewhere in it. In any other file under `speck/`, keep both sides.
    - `logic`: anything else. Make the smallest change that keeps the intent of both sides. If both can't hold at once, the two tickets contradict each other: stop and ask (see "Asking the user").
-3. Run the tests (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`) and fix anything the merge broke, changing only what the merge needs.
+3. Run the tests: the ticket's own test files, any existing test files it changed and the files of any test that failed in its last test run (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`), not the whole suite. Fix anything the merge broke, changing only what the merge needs.
 4. Commit the merge (`speck(<id>): merge <base_branch>`).
-5. Get it reviewed. Every conflict merge gets a merge round, whatever its class: `speck ship` refuses a ticket whose files changed after the reviewer approved, and the merge changed them. Run a review round as in section 4: `speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md` accepts the `approved` ticket and sets it to `reviewing`. Write the response file fresh, replacing any left from the build: it lists each file you resolved and how, with its class. The reviewer sees the branch's whole change against the base branch as merged. This merge round, and any rounds after it until the reviewer approves, don't count towards `max_review_rounds`. They have their own limit, `max_merge_rounds`.
+5. Get it reviewed. Every conflict merge gets a merge round, whatever its class: `speck ship` refuses a ticket whose files changed after the reviewer approved, and the merge changed them. Run a review round as in section 4: `speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md` accepts the `approved` ticket and sets it to `reviewing`. Write the response file fresh, replacing any left from the build: it lists each file you resolved and how, with its class, and the test files you ran. The reviewer sees the branch's whole change against the base branch as merged. This merge round, and any rounds after it until the reviewer approves, don't count towards `max_review_rounds`. They have their own limit, `max_merge_rounds`.
 6. Take turns as usual until `speck next <id>` says `ship` or `block`. Fix each blocking finding, re-run the tests and commit before every round.
    - On `ship`: run `speck close <id>`, then stop and tell the user it's approved again: `speck run`'s ship queue ships it.
    - On `block`: ask the user (see "Asking the user").
 
 ### Tests fail together
 
-The tests failed on the ticket merged with the base branch as it is now, and pass on the base branch alone: this ticket and the base branch's newer changes don't work together. `speck ship`'s message names the failing tests.
+The tests failed on the ticket as it would land, merged with the base branch as it is now, and pass on the base branch alone: either its own change broke them, or it doesn't work with the base branch's newer changes. `speck ship`'s message names the failing tests.
 
 1. Merge the base branch into the ticket branch: `git merge <base_branch>` (no rebase or squash). If it conflicts, resolve each file as in "Conflict" steps 1 and 2.
-2. Run the tests (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`), and fix the failing tests by changing this ticket's code so it works with the base branch's newer changes, keeping the intent of both. Never weaken or delete a test to get past it.
-3. Commit (`speck(<id>): merge <base_branch>`), then get it reviewed and closed as in "Conflict" steps 5 and 6. In the response file, say which tests failed together, why, and what you changed.
+2. Run the files of the failing tests `speck ship` named, plus the ticket's own test files (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`), not the whole suite. Fix the failing tests by changing this ticket's code, so it passes them as it would land, keeping the intent of both the ticket and the base branch's newer changes. Never weaken or delete a test to get past it.
+3. Commit (`speck(<id>): merge <base_branch>`), then get it reviewed and closed as in "Conflict" steps 5 and 6. In the response file, say which tests failed, why, what you changed and which test files you ran.
 
 ### Handed back again
 
