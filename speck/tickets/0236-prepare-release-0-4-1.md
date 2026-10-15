@@ -42,6 +42,7 @@ speck is ready to be released as 0.5.0.
 - Asked for 2026-10-15, for minor release 0.5.0, renamed from patch release 0.4.1 once 0235, 0238 and 0239 changed how builds run tests. Follows 0210 (0.4.0) and 0106 (0.3.0).
 - Waits for every ticket planned for this release (0227 to 0235, and 0237 to 0239), so they're in it. Changes for speck's own test suite only (0229 to 0234) belong under a short heading for people working on speck, or are left out of the release notes.
 - After it ships, check that the `v0.5.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.0 --target main --title "speck 0.5.0" --notes-file docs/releases/v0.5.0.md`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
