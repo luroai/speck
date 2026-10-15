@@ -41,6 +41,7 @@ Those four tests give the same result however busy the machine is.
 - Asked for 2026-10-15, for release 0.4.0. Covers four inbox notes: this one, `2026-10-15-fix-the-0128-ac4-test-that-fails-by-chance.md`, `2026-10-14-keep-timing-checks-steady-while-other-builds-test.md` and `2026-10-14-keep-the-0177-one-second-tests-passing-on-a-busy-machine.md`.
 - From 0187's build: 0176 AC1 failed at 333 vs 377 ms against a 10% limit, and passed alone. From 0191's: the 0177 AC3 checks failed at 1306 and 1106 ms against 1 second while another suite ran.
 - Builds after 0206, which runs after 0198: 0198 may change these same test files.
+- Failing before this build: none (speck test reused the passing result of commit 315f9e6, with nothing outside speck/ changed since).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
