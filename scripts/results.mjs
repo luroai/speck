@@ -21,7 +21,12 @@ const resultsDir = repo => sharedCacheDir(repo, 'results');
 export function testedCode(repo, cmd) {
   const status = sh('git', ['status', '--porcelain', '--', ':(top)', ':(top,exclude)speck'], { cwd: repo });
   if (status.status !== 0 || status.stdout.trim()) return null;
-  const head = sh('git', ['rev-parse', '--verify', '-q', 'HEAD'], { cwd: repo });
+  return codeAt(repo, cmd, 'HEAD');
+}
+
+// The code `rev` (a commit) holds, as testedCode gives it, or null when there's no such commit.
+function codeAt(repo, cmd, rev) {
+  const head = sh('git', ['rev-parse', '--verify', '-q', `${rev}^{commit}`], { cwd: repo });
   if (head.status !== 0) return null;
   const commit = head.stdout.trim();
   const tree = sh('git', ['ls-tree', '-z', commit], { cwd: repo });
@@ -85,7 +90,7 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
     // A run that failed with an exit code gets one more try at its failing tests (0195). One that passes it counts as
     // passed, and one that doesn't keeps the first run's result, with both runs' output.
     if (/^\d+$/.test(r.ended) && r.ended !== '0') {
-      const again = retry(repo, cfg, text, branch);
+      const again = retry(repo, cfg, cmd, text, branch);
       if (again?.passed) { Object.assign(r, { status: 0, ended: '0' }); text = ''; } else if (again) text += again.output;
     }
     if (!code) return failed(result(r), text);
@@ -102,12 +107,23 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
   }
 }
 
+// The tests that failed in the result recorded for the base branch's latest commit and the test command `cmd`, as
+// failingTestFiles gives them (0228). Empty when there's no such result, it passed, or its output kept names none.
+function failingOnBase(repo, cfg, cmd) {
+  const base = String(cfg.base_branch || '').trim();
+  const code = base ? codeAt(repo, cmd, `refs/heads/${base}`) : null;
+  const kept = code ? recorded(repo, code, cmd) : null;
+  return kept && kept.status !== 0 ? failingTestFiles(kept.output).filter(t => t.file) : [];
+}
+
 // Runs commands.test_files once more, with just the files of the tests that failed in `text`, a full run's output
 // (0195). Null when it can't: commands.test_files is blank or has no {files}, or a failing test has no location in a
-// file in `repo`. Otherwise { passed, output }: passed when the second run passed and each test that failed passed in
-// it (a name that failed twice, twice), which it then says with a line naming them and adds to the
-// shared flaky log, with the time and `branch` (blank: the branch checked out).
-function retry(repo, cfg, text, branch) {
+// file in `repo`. Tests that already fail on the base branch (see failingOnBase) are left out, along with their files
+// unless a test that didn't fail there failed in them too, and said so in a line naming them: null too when that leaves
+// nothing to run (0228). Otherwise { passed, output }: passed when nothing was left out, the second run passed and each
+// test that failed passed in it (a name that failed twice, twice), which it then says with a line naming them and adds
+// to the shared flaky log, with the time and `branch` (blank: the branch checked out).
+function retry(repo, cfg, cmd, text, branch) {
   const only = String(cfg.commands?.test_files || '').trim();
   const failing = failingTestFiles(text);
   if (!only.includes('{files}') || !failing.length) return null;
@@ -120,11 +136,20 @@ function retry(repo, cfg, text, branch) {
   };
   const rels = failing.map(t => inRepo(t.file));
   if (rels.includes(null)) return null;
-  const files = [...new Set(rels)];
-  const cmd = only.replaceAll('{files}', () => files.map(f => shellWord(f.startsWith('-') ? `./${f}` : f)).join(' '));
+  // A test fails on the base branch too when one of the same name failed there in a file at the same path: the base
+  // branch's run may have been in another worktree, so its file is matched by the end of its path.
+  const onBase = failingOnBase(repo, cfg, cmd);
+  const old = failing.map((t, i) => onBase.some(b => b.name === t.name && `/${b.file.replaceAll('\\', '/')}`.endsWith(`/${rels[i].split(path.sep).join('/')}`)));
+  const files = [...new Set(rels.filter((f, i) => !old[i]))];
+  const left = [...new Set(failing.filter((t, i) => old[i]).map(t => t.name))];
+  const base = cfg.base_branch;
+  if (left.length && !files.length) console.log(`The failing tests already fail on ${base}, so they aren't run again: ${left.join('; ')}`);
+  else if (left.length) console.log(`Leaving out of the second run the tests that already fail on ${base}: ${left.join('; ')}`);
+  if (!files.length) return null;
+  const rerun = only.replaceAll('{files}', () => files.map(f => shellWord(f.startsWith('-') ? `./${f}` : f)).join(' '));
   const output = path.join(resultsDir(repo), `run.${crypto.randomUUID()}.out`);
   try {
-    const r = runTestsInTurn(repo, cfg, cmd, () => console.log(`${RETRY_NOTE}${cmd}`), output);
+    const r = runTestsInTurn(repo, cfg, rerun, () => console.log(`${RETRY_NOTE}${rerun}`), output);
     let again = '';
     try { again = fs.readFileSync(output, 'utf8'); } catch { /* it wrote nothing */ }
     // How many times each test name passed in the second run, each failing test using up one. A passing test's TAP
@@ -132,7 +157,7 @@ function retry(repo, cfg, text, branch) {
     const passed = new Map();
     for (const name of passingTests(again)) passed.set(name, (passed.get(name) || 0) + 1);
     const all = failing.every(t => { const n = passed.get(t.name) || 0; passed.set(t.name, n - 1); return n > 0; });
-    if (r.ended !== '0' || !all) return { passed: false, output: again };
+    if (r.ended !== '0' || !all || left.length) return { passed: false, output: again };
     const names = [...new Set(failing.map(t => t.name))];
     console.log(`${FLAKY}${names.join('; ')}`);
     flakyLog(repo, names, branch);
