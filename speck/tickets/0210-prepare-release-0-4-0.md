@@ -1,7 +1,7 @@
 ---
 id: "0210"
 title: "Prepare release 0.4.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0198", "0199", "0200", "0201", "0202", "0203", "0204", "0205", "0206", "0207", "0208", "0209", "0211", "0212"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T15:58:43.144Z"
+approved: "2026-10-15T16:09:28.696Z"
 
 ---
 # 0210 · Prepare release 0.4.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Over 70 tickets have shipped since the `v0.3.0` tag on 11 October, including speck run's ship queue, testing the merged result before a ship, retrying chance test failures and the fixes for leaked processes. Anyone following the README's setup prompt still gets 0.3.0.
@@ -58,9 +59,14 @@ To see it, read the top of the changelog and the new release notes page. Nothing
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 235,597
+- Elapsed since build started: 11 min
+- Changed lines: 87 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The brief's principle 7 reasons and the README's "One build at a time" point still say builds never run side by side, while `max_parallel_builds` can raise it (reviewer's minor F1). Inbox: speck/ideas/2026-10-15-say-how-many-builds-run-at-once-the-same-way-everywhere.md.
