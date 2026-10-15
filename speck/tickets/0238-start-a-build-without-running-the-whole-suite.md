@@ -48,7 +48,7 @@ A build lists the tests already failing from a result speck has recorded, and ne
 - The older tests that asserted the full-suite starting run (baseline-0095 AC1, files-0113 AC4, build-0197 AC4) now assert `speck test --recorded`, as this ticket replaces that step.
 
 ## In plain words
-A build no longer runs every test before it starts. It looks up the last test result speck already has for the same code, usually from the previous ship, and notes which tests were already failing from that. When there's no saved result, it writes "not checked" and carries on, and the reviewer treats that as no tests already failing. Every test still runs before anything ships. You can see the saved result yourself with `speck test --recorded`, which shows it without running anything. Worth watching: right after a change made to the main code outside a ship, builds will say "not checked" until the next full run.
+A build no longer runs every test before it starts. It looks up the last test result speck already has for the same code, usually from the previous ship, and notes which tests were already failing from that. When there's no saved result, it writes "not checked" and carries on, and the reviewer treats that as no tests already failing. Every test still runs before anything ships. You can ask speck for the saved result yourself; it shows it without running any tests. Worth watching: right after a change made to the main code outside a ship, builds will say "not checked" until the next full run.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
