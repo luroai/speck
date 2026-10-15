@@ -1,7 +1,7 @@
 ---
 id: "0229"
 title: "Start the slowest test files first"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:38:12.714Z"
+approved: "2026-10-15T21:54:20.784Z"
 
 ---
 # 0229 · Start the slowest test files first
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `npm test` hands Node the test files in alphabetical order, so a slow file near the end can run on its own while the other workers sit idle. On an 8 GB MacBook Air the suite took 483 s of wall time for 2,132 s of test time across about 7 workers, so roughly three minutes went on uneven packing and contention.
@@ -53,9 +54,15 @@ speck's own test suite now remembers how long each test file took last time and 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 success starts false and becomes true only through test:summary.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 727,859
+- Elapsed since build started: 16 min
+- Changed lines: 2 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: the times come from each file's own end-of-run event, which Node 20.20 and 22 send. On an older Node 20 release without it, nothing is recorded and the files start alphabetically, as before this change.
 - Known limit: the remembered times are kept per checkout, so each new worktree's first full run starts alphabetically.
