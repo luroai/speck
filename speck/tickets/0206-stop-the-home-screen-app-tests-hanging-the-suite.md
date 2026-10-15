@@ -1,7 +1,7 @@
 ---
 id: "0206"
 title: "Stop the home-screen app tests hanging the suite"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-15
 ---
 # 0206 · Stop the home-screen app tests hanging the suite
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel's home-screen app tests (0149) drive headless Chrome, and each call to it waits for an answer with no time limit. When Chrome doesn't answer, the whole suite hangs until speck's stall limit ends it after 5 minutes, and the run fails, so a build or ship fails at random and loses those minutes.
