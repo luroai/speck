@@ -118,3 +118,74 @@ started: "2026-10-15T23:48:31.383Z"
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7c6fb0b9c57d640765992bcda8682750c3439310",
+    "thread_id": "01a141f9-5629-7f80-a4d0-ae84ba7034a9",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 201145,
+      "cached_input_tokens": 159744,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1802,
+      "reasoning_output_tokens": 188
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:51:51.517Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/run.mjs:endBuild predicts the next check's duration from the previous check. A 200 ms initial check followed by a 6,500 ms check delays SIGKILL until at least 6,600 ms after SIGTERM. The five passing timing tests use constant listing durations and do not exercise this case."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "endBuild now sleeps until the deadline without checking again when the previous check was slow. With a 6,500 ms initial check, a process that exits immediately on SIGTERM still causes the full five-second wait and a SIGKILL attempt against its stale PID. The passing AC2 test covers only 200 ms listings."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The recorded run reports all 16 tests passing across stop-time-0218.test.mjs and stop-0072.test.mjs. Whole-suite regression verification remains the ship gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "The fix handles constant slow checks but still cannot enforce the deadline when a check becomes slower. The builder acknowledges this limitation, which remains within AC1: checks taking 200 ms or more need not take identical amounts of time. Making checks faster is separate from preventing them from blocking deadline enforcement.",
+        "suggested_fix": "Make deadline enforcement independent of synchronous process discovery. Add a regression with a 200 ms initial check followed by a 6,500 ms check, asserting forced shutdown within six seconds of SIGTERM.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "The new prediction branch stops checking for graceful completion and sleeps until the deadline. After a sufficiently slow initial check, even a process that exits immediately when asked incurs the full five-second wait and receives a SIGKILL attempt using the stale running-process list. This regresses AC2.",
+        "suggested_fix": "Continue detecting graceful completion while enforcing the deadline independently. Add an AC2 regression with a slow initial listing that verifies prompt return and no SIGKILL attempt after the child exits on SIGTERM.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All 16 recorded tests pass, but the revised approach still misses the deadline when checks become slower. It also introduces a full five-second wait for some processes that exit immediately when asked. Both behaviours need fixing before approval."
+  }
+}
+```
+
+</details>

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
@@ -352,10 +352,10 @@ function processesWithEnv(entry) {
 // BUILD_ENV, and everything descended from those. Claude Code runs each Bash command in a session of its own, and a
 // background process whose parent has exited is no longer in the build's tree, so neither the group nor the tree
 // alone would reach them all. This process and its own children are left out, so a build that pauses itself still
-// finishes saying so.
-function buildProcesses(pid, session) {
+// finishes saying so. `me` is the process left out with its children: this one, or the one that asked for the list.
+export function buildProcesses(pid, session, me = process.pid) {
   const rows = processRows();
-  const self = p => p === process.pid || rows.some(([q, pp]) => q === p && pp === process.pid);
+  const self = p => p === me || rows.some(([q, pp]) => q === p && pp === me);
   const found = new Set(rows.filter(([p, , g]) => p === pid || g === pid).map(([p]) => p));
   if (typeof session === 'string' && session) for (const p of processesWithEnv(`${BUILD_ENV}=${session}`)) found.add(p);
   for (let grew = true; grew;) {
@@ -521,34 +521,48 @@ export function runningPids() {
   return new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([p, s]) => /^\d+$/.test(p) && !/^Z/.test(s || '')).map(([p]) => Number(p)));
 }
 
+// Run by checkBuild in a process of its own: prints the build's processes still running, among those known and any
+// found now, leaving out the process that asked and its children.
+const CHECK = `try {
+  const { run, pid, session, known } = JSON.parse(process.env.SPECK_CHECK);
+  const m = await import(run);
+  const found = new Set(known);
+  for (const p of m.buildProcesses(pid, session, process.ppid)) found.add(p);
+  const running = m.runningPids();
+  console.log(JSON.stringify([...found].filter(p => running.has(p))));
+} catch (e) { console.error(e?.message || String(e)); process.exit(1); }`;
+
+// The build's processes still running, among `known` and any found now. Listing every process can be slow on a busy
+// machine and can't be cut short in this process, so it runs in one of its own, ended after `ms`: null if it was (0218).
+export function checkBuild(b, known, ms) {
+  const env = { ...process.env, SPECK_CHECK: JSON.stringify({ run: import.meta.url, pid: b.pid, session: b.rec.session ?? '', known }) };
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', CHECK], { env, encoding: 'utf8', timeout: Math.max(1, Math.ceil(ms)), killSignal: 'SIGKILL', maxBuffer: 64 * 1024 * 1024 });
+  if (r.error?.code === 'ETIMEDOUT') return null;
+  if (r.error || r.status !== 0) throw new SpeckError(`Couldn't list ${b.id ?? 'the build'}'s processes (${(r.stderr || '').trim() || r.error?.message || `it exited with ${r.status}`}).`);
+  try { return JSON.parse(r.stdout).filter(Number.isInteger); } catch { throw new SpeckError(`Couldn't list ${b.id ?? 'the build'}'s processes: its list couldn't be read.`); }
+}
+
 // Ends a build and everything it started, already held with SIGSTOP (`held`) so none can start anything more: asks each
 // to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there five seconds after first asking with
-// SIGKILL. The wait is timed rather than counted in checks, as each check lists every process and can be slow (0218):
-// one that wouldn't end by the deadline isn't started, and those still running at the last check are ended then.
+// SIGKILL. The wait is timed, and each check of what's still running is cut short at the deadline, so a slow check
+// can't stretch it (0218): a check cut short leaves the processes still running at the last one to be ended.
 // Every process it has found stays on its list, so one that leaves the build's tree when its parent ends is still ended.
-// Returns the processes still running at the end. `opts` stands in for the clock, pauses, listing and signals in tests.
-export function endBuild(b, held, { now: clock = () => performance.now(), pause = sleep, running: listRunning = runningPids, kill = process.kill.bind(process) } = {}) {
+// Returns the processes still running at the end. `opts` stands in for the clock, pauses, checks and signals in tests.
+export function endBuild(b, held, { now: clock = () => performance.now(), pause = sleep, check = (known, ms) => checkBuild(b, known, ms), kill = process.kill.bind(process) } = {}) {
   const known = new Set(held);
-  const left = () => {
-    for (const p of buildProcesses(b.pid, b.rec.session)) known.add(p);
-    const running = listRunning();
-    return [...known].filter(p => running.has(p));
-  };
+  const left = ms => { const pids = check([...known], ms); for (const p of pids ?? []) known.add(p); return pids; };
   const each = (pids, signal) => { for (const p of pids) try { kill(p, signal); } catch { /* gone */ } };
   const asked = new Set();
   const ask = pids => { const fresh = pids.filter(p => !asked.has(p)); for (const p of fresh) asked.add(p); each(fresh, 'SIGTERM'); each(fresh, 'SIGCONT'); };
-  // How long the last check took: once the next one wouldn't end by the deadline, it waits for the deadline instead.
-  let took = 0;
-  const check = () => { const at = clock(); const pids = left(); took = clock() - at; return pids; };
-  let now = check();
-  const until = clock() + 5000;
+  let now = [...known];
   ask(now);
+  const until = clock() + 5000;
   while (now.length && clock() < until) {
-    const wait = Math.min(100, until - clock());
-    if (clock() + wait + took > until) { pause(Math.max(0, until - clock())); break; }
-    pause(wait); now = check(); ask(now);
+    const found = left(until - clock());
+    if (found) { now = found; ask(now); }
+    if (now.length && clock() < until) pause(Math.min(100, until - clock()));
   }
-  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); pause(100); now = left(); }
+  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); pause(100); now = left(5000) ?? now; }
   return now;
 }
 
