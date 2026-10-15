@@ -1,7 +1,7 @@
 ---
 id: "0202"
 title: "End a stalled test run's detached processes too"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T13:43:05.079Z"
 approved: "2026-10-15T13:51:53.936Z"
+finished: "2026-10-15T14:01:32.910Z"
 
 ---
 # 0202 · End a stalled test run's detached processes too
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a test run stalls, speck ends the test command's process group, but not processes the tests started in a group of their own, or whose parent has already exited. Those can run for good, using memory and slowing every later run and build on the machine: the same kind of leak that pushed this machine's load above 100 on 2026-10-14.
