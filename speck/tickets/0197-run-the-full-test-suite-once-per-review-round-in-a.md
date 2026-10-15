@@ -43,6 +43,7 @@ Between its starting check and its ship, a build runs the full suite only once b
 - The full-suite instructions are in `skills/speck-build/SKILL.md` section 3 steps 2 and 4 and section 4, and `skills/speck-review/SKILL.md` ("Your turn"). `.claude/skills/` holds this repo's installed copies.
 - The starting check already reuses the saved result for the base branch (0112), so it costs nothing when the last ship tested the same code.
 - Expected saving: about one full run per build, more with several review rounds. Not a target.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
