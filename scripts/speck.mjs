@@ -18,6 +18,7 @@ import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
 import { logTail } from './build-log.mjs';
+import { removeScratch } from './scratch.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -181,6 +182,7 @@ function cmdCancel(args) {
   fs.writeFileSync(t.file, syncHeader(waitFields(setField(text, 'status', 'cancelled'), t.fm.status, 'cancelled')));
   placeTicket(repo, t, 'cancelled');
   console.log(`${t.fm.id} cancelled → ${path.relative(repo, t.file)}`);
+  removeScratch(t.fm.id);
 }
 
 // ---------- start a build ----------

@@ -39,6 +39,8 @@ A ticket's scratch files are removed once the ticket is shipped or cancelled.
 ## Notes
 - The paths come from `skills/speck-build/SKILL.md` and `skills/speck-review/SKILL.md`. Builders also write others under the same prefix, for example `/tmp/speck-0164-main-tests.txt`.
 - Failing before this build: none
+- The clean-up looks in the temporary folder Node reports (`/tmp` unless `TMPDIR` names another), so the test runner's own `TMPDIR` keeps the tests away from the real `/tmp`.
+- Self-check: added a test that a `speck-<id>-` link is removed without touching what it links to, and documented the clean-up in docs/brief.md.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
