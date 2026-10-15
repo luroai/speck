@@ -40,6 +40,7 @@ A ticket change in a new build's worktree reaches open pages within a second eve
 - Asked for 2026-10-15, for release 0.4.0.
 - Likely cause (from 0187's ship, unconfirmed): the panel watches a folder that doesn't exist yet through its parent. If it appears between the panel's check and the watch starting, its creation is missed until the next look, every 5 seconds, and an edit in that gap shows only at the 15-second re-read.
 - `scripts/board-feed.mjs`. Builds after 0206, which builds after 0198: both may change the test helpers in `test/support/panel.mjs` or `test/panel-0187.test.mjs`.
+- Failing before this build: none (speck test reused the passing run from commit 315f9e6).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
