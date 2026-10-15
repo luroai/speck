@@ -76,9 +76,13 @@ function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {})
       const r = sh('sh', ['-c', setup], { cwd: at });
       if (r.status !== 0) return new SpeckError(`${failed} Couldn't check ${base}'s own tests: worktree_setup (${setup}) failed with exit ${r.status} there.`);
     }
-    if (runTests(at, cfg).ok) return new SpeckError(moved
-      ? `${failed} ${base}'s own tests pass, so this ticket and ${base}'s newer changes fail together.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
-      : `${failed} ${base}'s tests pass, so the failure comes from this ticket's change.${named(failing)}`);
+    if (runTests(at, cfg).ok) {
+      const e = new SpeckError(moved
+        ? `${failed} ${base}'s own tests pass, so this ticket and ${base}'s newer changes fail together.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
+        : `${failed} ${base}'s tests pass, so the failure comes from this ticket's change.${named(failing)}`);
+      e.together = true; // an auto-ship exits 16 with it, so speck run hands the ticket back to its build (0194)
+      return e;
+    }
     return new SpeckError(`Tests failed on the approved branch${moved ? ` merged with ${base} as it is now` : ''}, and ${base}'s own tests are failing too, so this isn't the ticket's fault. Nothing was shipped. Fix ${base}, then ship again.`, 14);
   } finally {
     // Only this worktree's record goes: a repo-wide prune would also drop other worktrees whose folders are missing.
@@ -549,7 +553,7 @@ export function cmdShip(args) {
     throw new SpeckError(`Another ship is running in this repo, so ${id.padStart(4, '0')} wasn't shipped. Nothing was changed.`, 15);
   }
   try { shipTicket(repo, id); }
-  catch (e) { if (took) endShip(took, auto, e); throw e; }
+  catch (e) { if (auto && e?.together) e.code = 16; if (took) endShip(took, auto, e); throw e; }
   finally { if (lock) releaseShipLock(lock); }
   if (took) endShip(took, auto, null);
 }

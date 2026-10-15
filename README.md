@@ -43,7 +43,7 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 1. **Capture and shape.** Talk an idea through with your agent, then `/speck-capture` it, or go straight to `/speck-ticket` to turn it into small draft tickets. Your agent checks each one against the size rules, for overlap with what's already there and for criteria that could be read two ways.
 2. **Set tickets ready (Gate 1).** Read a draft, then set it ready in `speck panel` or with `node .speck/scripts/speck.mjs set <id> status ready`. A ticket can wait on others with `after:`, and starts only once they've shipped.
 3. **Leave it running.** `node .speck/scripts/speck.mjs run` builds each ready ticket in turn, highest priority first. A build writes tests from the acceptance criteria, makes them pass, and goes through the review loop.
-4. **Ship (Gate 2).** An approved ticket waits for you to run `/speck-ship <id>`, or click the Ship button in its review pack in `speck panel`, after reading the pack. With `auto_ship` on, it ships as soon as the reviewer approves.
+4. **Ship (Gate 2).** An approved ticket waits for you to run `/speck-ship <id>`, or click the Ship button in its review pack in `speck panel`, after reading the pack. With `auto_ship` on, `speck run` ships it as soon as the reviewer approves, while it's on.
 5. **Answer questions.** When a build can't decide something for you, it blocks its ticket with one plain question, and `speck run` moves on to the next ticket. Answer it, then run `/speck-build <id>` to carry on.
 
 ## The panel
@@ -91,7 +91,7 @@ In your agent:
 | `/speck-setup` | Takes you through setting speck up in a conversation: checks what's there, explains each choice (base branch, test command, builder and reviewer, whether `speck run` builds skip permission prompts), asks before changing anything, and finishes once `speck doctor` passes. It's hidden from the `/` menu: the setup prompt above starts it |
 | `/speck-capture` | Saves an idea or the current conversation to `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into small, numbered draft tickets that pass the size rules, or triages the inbox down to at most three decisions |
-| `/speck-build <id>` | Builds one ready ticket: tests from the acceptance criteria, then code, then the review loop. Ends with the ticket `approved`, or shipped if `auto_ship` allows it |
+| `/speck-build <id>` | Builds one ready ticket: tests from the acceptance criteria, then code, then the review loop. Ends with the ticket `approved`, for `speck run` to ship if `auto_ship` allows it |
 | `/speck-ship <id>` | Ships an approved ticket (Gate 2): final checks and tests, then merges into `main`, pushes and deletes the branch. Only you run this, or click the Ship button in the ticket's review pack in the panel |
 | `/speck-status` | Tickets by status: approved (waiting for you) first, then blocked questions |
 | `/speck-review <id>` | Re-runs the review loop on its own |
