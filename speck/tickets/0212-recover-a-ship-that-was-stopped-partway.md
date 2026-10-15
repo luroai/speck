@@ -45,7 +45,7 @@ A ship that was stopped partway leaves nothing that stops the ticket's next ship
 - Self-check: no changes (checked a worktree whose folder is missing, a worktree on another branch or commit, a killed ship's merge git won't switch away from, and a ship killed again with nothing new; each has a test or keeps the old message).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If a ship is cut off halfway, for example because the machine stopped it, the ticket no longer gets stuck. The next ship of that ticket tidies up what the stopped one left behind and carries on, and `speck run` tries it again by itself straight away instead of waiting for someone to make a new change. If something it doesn't recognise is in the ticket's folder, the ship stops and says which folder, and what to type there to fix it, rather than complaining about the main folder. To see it, stop a ship partway while its tests run, then ship the ticket again: it ships as normal. Worth knowing: if a ship is stopped twice in a row with nothing new, `speck run` waits for a new change before trying again, so a ship that is always stopped doesn't loop forever.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,7 +54,9 @@ A ship that was stopped partway leaves nothing that stops the ticket's next ship
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: only a ticket worktree at the path `speck start` gives it is recovered. A worktree added by hand somewhere else, left on a killed ship's merge, isn't recognised, and the ship falls back to the main checkout as before.
+- No ideas sent to the inbox.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -130,6 +132,79 @@ A ship that was stopped partway leaves nothing that stops the ticket's next ship
     ],
     "escalation_question": "",
     "summary": "The tests cover recovery after a killed ship and automatic retries. However, recovery can mistake an unrelated worktree for the ticket's and forcibly delete it, including untracked files. Worktree ownership must be verified before this is ready to merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "746aaf85b5719a50f98b17ef26e36826e028b8b5",
+    "thread_id": "01a14041-3eba-7cc3-8786-4af998e135ea",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 209156,
+      "cached_input_tokens": 154624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1732,
+      "reasoning_output_tokens": 301
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T15:54:41.686Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "shipFolders identifies the ticket's standard worktree; shipTicket calls putBranchBack before cleanliness checks. Passing AC1 tests exercise actual SIGKILL recovery, manual and automatic shipping, branch ancestry preservation and recovery followed by refusal."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ship-queue.mjs restores retry eligibility for an unfinished ship record and bounds immediate retries by branch refs. Passing AC2 tests cover the next check, repeated killing, new commits and ordinary refusal."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "putBranchBack refuses an unexpected checkout or failed checkout with the worktree path and repair command. Passing AC3 tests cover both cases and confirm that a lookalike merge elsewhere cannot bypass refusal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "testMerged retains its finally block restoring the branch. Passing AC4 coverage checks normal success and test failure; the new lookalike test verifies that an unrelated detached worktree and its untracked file survive shipping."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the whole-suite output in /tmp/speck-0212-tests.txt: 1956 tests, 1953 passed, 3 skipped and zero failures."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship-folders.mjs",
+        "issue": "Recovery previously inferred worktree ownership from merge parents, allowing an unrelated worktree to be switched and forcibly removed.",
+        "suggested_fix": "Restrict recovery to the ticket's known worktree and test that unrelated detached merge worktrees remain untouched.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Interrupted ships now recover the ticket's worktree and receive a bounded automatic retry. The fix also protects unrelated worktrees. All criteria are covered by passing tests, and the full suite has no failures."
   }
 }
 ```
