@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
@@ -202,11 +202,6 @@ function inCommit(repo, rev, p, hops = 0) {
     }
   }
   return true;
-}
-
-// Where a ticket's worktree goes: beside the main checkout, never inside it, and at the same path each time.
-function worktreePath(main, branch) {
-  return path.join(path.dirname(main), `${path.basename(main)}.worktrees`, ...branch.split('/'));
 }
 
 // Starts building a ready ticket: makes its branch from the local base branch, in its own worktree when worktrees

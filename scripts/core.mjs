@@ -505,6 +505,11 @@ export function worktreeList(repo) {
   });
 }
 
+// Where a ticket's worktree goes: beside the main checkout, never inside it, and at the same path each time.
+export function worktreePath(main, branch) {
+  return path.join(path.dirname(main), `${path.basename(main)}.worktrees`, ...branch.split('/'));
+}
+
 // 0196: while speck ship tests a ticket merged with the base branch, its worktree has that merge checked out detached
 // (0192). A detached worktree whose commit is a merge of a ticket branch's tip is taken as that branch's, so the ticket
 // shows as it is there, approved, rather than as the base branch's copy has it.

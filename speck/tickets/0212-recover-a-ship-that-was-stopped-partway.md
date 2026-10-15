@@ -42,6 +42,7 @@ A ship that was stopped partway leaves nothing that stops the ticket's next ship
 - In `scripts/ship.mjs` the merged result is checked out detached in the ticket's worktree (around `git checkout -q --detach`), and `shipFolders()` falls back to the main checkout when no worktree has the branch. The queue's retry rule is in `scripts/ship-queue.mjs` (0193).
 - Builds after 0204, which also changes `scripts/ship.mjs`.
 - Failing before this build: none
+- Self-check: no changes (checked a worktree whose folder is missing, a worktree on another branch or commit, a killed ship's merge git won't switch away from, and a ship killed again with nothing new; each has a test or keeps the old message).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
