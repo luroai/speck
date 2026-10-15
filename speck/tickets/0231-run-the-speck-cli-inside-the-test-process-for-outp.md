@@ -39,6 +39,7 @@ Tests that only check a command's output or changes run it inside the test proce
 ## Notes
 - Commands end today by throwing a `SpeckError` with a code, caught at the bottom of `scripts/speck.mjs`, but some may call `process.exit` or change `process.cwd()` or `process.env` themselves; the function must leave those as they were.
 - Write the suite's total test time before and after, on the same machine, in the Delivery log.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
