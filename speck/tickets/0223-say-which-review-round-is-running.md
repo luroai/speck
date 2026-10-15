@@ -43,7 +43,7 @@ A ticket under review says whether the reviewer is running a round, and which on
 - A board that doesn't say whether a round is running (no `review_running` field, as in older fixtures) keeps the old wording, so the existing card tests still hold (AC4).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket under review in the Build queue now says who is at work. While the reviewer is running a round, its card says "Codex is reviewing · round 2" (with the round actually being run), and between rounds it says "Claude is fixing round 1's findings". To see it, watch a ticket's card during a build that gets changes requested: it switches to the fixing wording as soon as the reviewer's round ends, and back to reviewing when the next round starts. It stays right after a page reload or a panel restart. Worth keeping an eye on: a review run by a Claude helper inside the builder's own session relies on the builder saying when it starts and gives up, so if such a session is closed by hand mid-round, the card can keep saying the reviewer is at work until the next round.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,6 +53,11 @@ A ticket under review says whether the reviewer is running a round, and which on
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The builder badge still shows the review pose while the builder fixes findings: speck/ideas/2026-10-15-show-the-builder-at-work-while-it-fixes-findings.md
+- Known limits:
+  - A subagent round in a session not started by `speck run` counts as running until `speck record` or `speck review-running <id> --ended`; a session closed by hand mid-round leaves it showing until the ticket leaves building or reviewing, or the next round is recorded.
+  - Like `build_running`, a record whose process has gone counts again if the system reuses its pid for another process.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -187,6 +192,74 @@ A ticket under review says whether the reviewer is running a round, and which on
     ],
     "escalation_question": "",
     "summary": "The new command records subagent activity, but the first review still shows builder work. Failed reviews can remain shown as running, and long reviews can disappear while still active. The command-review path and existing stage labels remain covered by passing tests."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cf4a40c2ad639ae60d54fbd617eb9d184725e985",
+    "thread_id": "01a141fb-bcb2-7592-9106-6de0a79104b9",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 370026,
+      "cached_input_tokens": 304000,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1999,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T23:57:24.929Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html reviewRunning() and doing() display the active round for building and reviewing tickets. Passing AC1 tests cover successive rounds and the first subagent round using statusData from the real command workflow."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doing() displays the builder fixing the last recorded round when review_running is null. The passing AC2 test checks round numbers, builder names and fallback wording."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Disk records survive fresh reads; reviewRound() clears command-review records in finally. Subagent records end through record or review-running --ended, with failure cleanup required by the skill. Passing AC3 tests cover persistence, failures, timeouts, dead processes, explicit subagent cleanup and long-running subagents."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "progress() retains the last recorded stage number, verified by the passing AC4 test. The supplied test run reports 305 passed, three skipped and no failures; existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review.mjs",
+        "issue": "The previously incomplete subagent lifecycle is now covered: first-round cards show review activity, failed rounds have explicit cleanup, and active long reviews no longer expire.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The card now shows which review round is running and when the builder is fixing findings, including subagent reviews. Persistence and cleanup are covered by passing tests, and stage labels remain unchanged. The previous blocking issue is resolved."
   }
 }
 ```
