@@ -1,7 +1,7 @@
 ---
 id: "0228"
 title: "Skip the retry for tests that already fail on the base branch"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T21:23:50.976Z"
 approved: "2026-10-15T22:01:13.539Z"
+finished: "2026-10-15T22:06:11.104Z"
 
 ---
 # 0228 · Skip the retry for tests that already fail on the base branch
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a full test run fails, speck runs the failing tests' files once more to catch tests that fail by chance. Tests that already fail on the base branch aren't failing by chance, so retrying them only costs time, and with them in the run the retry can never pass it. On an 8 GB MacBook Air, the 26 tests already failing on `main` cost 316 s of test time per full run, half of it on the retry.
