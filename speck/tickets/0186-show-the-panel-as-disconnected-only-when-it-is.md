@@ -1,7 +1,7 @@
 ---
 id: "0186"
 title: "Show the panel as disconnected only when it is"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-14
 started: "2026-10-15T12:11:30.695Z"
+approved: "2026-10-15T12:37:57.380Z"
 
 ---
 # 0186 · Show the panel as disconnected only when it is
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every now and then the panel shows "Disconnected: can't reach speck panel" across the top, and it goes again a moment later. The page treats any answer to its 2-second request for the board that hasn't come back in time as a lost connection, but the panel is only slow: on 2026-10-14 each answer took 0.5 to 0.9 seconds with one build running, and longer during test runs or with a phone and a laptop both open.
@@ -53,9 +54,14 @@ The panel no longer flashes "Disconnected" when it's only slow to answer. It now
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 185,772
+- Elapsed since build started: 26 min
+- Changed lines: 52 (limit 5000)
 Follow-ups:
 - Tidy-up: the notice's starting text in the page still says "Retrying every 2 seconds…". It's never seen, because the page sets the text before it shows the notice, but it's out of date.
 - Skipped, already in the inbox: the 0128 AC4 test failed once by chance in this build's full run and passed on the retry (speck/ideas/2026-10-15-fix-the-0128-ac4-test-that-fails-by-chance.md).
