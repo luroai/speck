@@ -1,7 +1,7 @@
 ---
 id: "0213"
 title: "Highlight a P0 priority tag at least as much as P1"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:12:28.214Z"
 approved: "2026-10-15T23:24:31.600Z"
+finished: "2026-10-15T23:27:40.439Z"
 
 ---
 # 0213 · Highlight a P0 priority tag at least as much as P1
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A fix ticket for a broken `main` is the most urgent thing on the board, but its P0 priority tag is plain grey, so it looks less important than a P1, whose tag is highlighted. Someone scanning the panel can miss what to deal with first.
