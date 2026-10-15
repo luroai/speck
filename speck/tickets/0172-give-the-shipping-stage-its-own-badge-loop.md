@@ -1,7 +1,7 @@
 ---
 id: "0172"
 title: "Give the shipping stage its own badge loop"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0196"]                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-15T12:34:06.153Z"
 
 ---
 # 0172 · Give the shipping stage its own badge loop
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 While a ticket ships, the builder badge plays the same laptop loop as writing code, or stands still once the build has ended (builds end at approved since 0194), so the user can't tell from the badge that the work is finished and on its way out.
