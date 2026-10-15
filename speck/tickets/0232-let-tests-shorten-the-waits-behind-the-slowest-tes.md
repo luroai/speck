@@ -42,6 +42,7 @@ The slowest tests run against limits they set shorter, while speck itself waits 
 - Some of these may be slow for another reason (for example many CLI starts); leave those and say so in the Delivery log.
 - 0218 changes `speck stop`'s wait to go by the clock and is planned after this.
 - Failing before this build: none
+- Self-check: the AC1 tests checked how long speck run took against a fixed 5 seconds, which a busy machine could break; they now check it was stopped because every build had launched, and that it checked once for each shorter wait.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
