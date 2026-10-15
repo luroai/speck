@@ -44,6 +44,7 @@ Between its starting check and its ship, a build runs the full suite only once b
 - The starting check already reuses the saved result for the base branch (0112), so it costs nothing when the last ship tested the same code.
 - Expected saving: about one full run per build, more with several review rounds. Not a target.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

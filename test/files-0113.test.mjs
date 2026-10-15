@@ -153,19 +153,19 @@ test('0113 AC3: the build skill runs only the ticket\'s own test files while che
   assert.match(fix, /until they pass/);
 });
 
-test('0113 AC4: the build skill runs the whole suite before changing anything, once its own tests pass, and after a merge', () => {
+test('0113 AC4: the build skill runs the whole suite before changing anything, after the self-check (0197), and after a merge', () => {
   const before = step(BUILD, '6. In that folder, before you change anything');
   assert.match(before, /`speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/);
   assert.doesNotMatch(before, /--files/);
-  const fix = step(BUILD.slice(BUILD.indexOf('## 3. Implement')), '2. Run ');
-  assert.match(fix, /once (?:they|the ticket's own tests) pass[^.]*`speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/i, 'whole suite once its own tests pass');
+  const full = step(BUILD.slice(BUILD.indexOf('## 3. Implement')), '5. Run the whole suite once');
+  assert.match(full, /after the self-check and before the first review round[^.]*`speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/i, 'whole suite once, after the self-check');
   const merge = step(BUILD, '3. Run the tests (');
   assert.match(merge, /`speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/);
   assert.doesNotMatch(merge, /--files/);
 });
 
 test('0113 AC4: the whole suite runs before every review round', () => {
-  assert.match(BUILD, /whole suite[^.]*before every review round/i);
+  assert.match(BUILD, /whole suite once[^.]*before the next review round, merge rounds included/i, 'once before each later round (0197)');
   const fresh = REVIEW.split('\n').find(l => l.includes('The test output is fresh'));
   assert.ok(fresh);
   assert.match(fresh, /`speck test 2>&1 \| tee \/tmp\/speck-<id>-tests\.txt`/);

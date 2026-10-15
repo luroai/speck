@@ -61,7 +61,7 @@ Respond to **every blocking finding** in a response file, `/tmp/speck-<id>-respo
 - **needs_pm** if the finding depends on a product decision. Then stop the loop and block the ticket using the build skill's section 6.
 - Minor findings don't block. Fix them if they're trivial; otherwise handle them as follow-up ideas in `/speck-build` section 5 step 1: they go in the ticket's Delivery log, and any that would need its own ticket also goes to the inbox in `speck/ideas/`.
 
-Then re-run the whole suite (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`), commit (`speck(<id>): review round N fixes`), and run the next round.
+Check each fix with the ticket's own test files (`speck test --files <file>…`). Then, once your fixes for this round are done, run the whole suite once (`speck test 2>&1 | tee /tmp/speck-<id>-tests.txt`), commit (`speck(<id>): review round N fixes`), and run the next round. This holds for every round, merge rounds included. Don't run the whole suite at any other point between rounds. If it fails because of your change, fix it, checking the fix with the failing tests' own files, then run the whole suite again: never start a round on a whole-suite run that failed because of your change.
 
 ## Round 2 onwards
 
