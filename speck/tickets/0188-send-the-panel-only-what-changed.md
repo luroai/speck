@@ -1,7 +1,7 @@
 ---
 id: "0188"
 title: "Send the panel only what changed"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0187"]                # ticket ids that must be done first
 created: 2026-10-14
+started: "2026-10-15T11:27:10.204Z"
 
 ---
 # 0188 · Send the panel only what changed
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since 0187, each change pushed to the panel sends the whole board, 1.19 MB on 2026-10-14, to every open page, including a phone over its data connection, even when one ticket changed.
