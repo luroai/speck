@@ -1,7 +1,7 @@
 ---
 id: "0172"
 title: "Give the shipping stage its own badge loop"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T12:34:06.153Z"
 ---
 # 0172 · Give the shipping stage its own badge loop
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 While a ticket ships, the builder badge plays the same laptop loop as writing code, or stands still once the build has ended (builds end at approved since 0194), so the user can't tell from the badge that the work is finished and on its way out.
@@ -48,7 +48,7 @@ The badge has a shipping loop of its own: the builder pushes the finished block 
 - Builds after 0196, which makes the panel show a ticket as shipping from its approval until it ships, whether or not its build is running.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+While a ticket is shipping, or approved and waiting for auto-ship to ship it, the little builder on its card no longer types at a laptop. Instead it pushes a paper boat carrying a finished block with a green tick off to the right, and a new boat pops up every few seconds. Writing code still shows the laptop. To see it, open the panel while a ticket ships. With reduced motion turned on, the badge holds still, with the builder's hands on the boat. Worth a look: the boat is small at this size, so check that it reads as a boat in both light and dark mode.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +58,69 @@ The badge has a shipping loop of its own: the builder pushes the finished block 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Skipped: the 0128 AC4 test failed once by chance in this build's full run and passed on its retry; it duplicates `speck/ideas/2026-10-15-fix-the-0128-ac4-test-that-fails-by-chance.md`.
+- No new ideas went to the inbox.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0f32d4590a7ca04819062332d076a2bbea8c32ed",
+    "thread_id": "01a13fa4-d3e5-7d30-85b5-d096fca5c924",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 157556,
+      "cached_input_tokens": 110080,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 741,
+      "reasoning_output_tokens": 44
+    },
+    "saved_at": "2026-10-15T12:59:20.367Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: badgeOf selects ship for shipping and type for writing code. The passing 0172 AC1 test covers manual shipping with a running or ended build, the ship queue and auto-ship waiting; active shipping retains the required accessible name."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: POSES.ship implements a repeating 3.2-second push and glide. Both passing 0172 AC2 tests exercise the water, boat, ticked block, two hands, rightward departure and replacement boat."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "POSES.ship reuses box and tick, with C.ok, C.paper and C.ink supplied by panel theme tokens. Passing 0172 AC3 tests check drawing style and bounds, including real-browser clipping. The existing light/dark layout tests include the shipping badge."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "STILL_AT.ship selects 1100 ms; paintBadge uses that fixed time with reduced motion. The passing 0172 AC4 test checks both hands and the ticked block; the existing 0168 browser motion test includes shipping and verifies unchanged frames under reduced motion."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0172-tests.txt: 1823 tests, 1820 passed, zero failed and three skipped. Existing test changes update shipping expectations and replace its general clipping check with dedicated coverage."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Shipping now has its own paper-boat animation, while coding keeps the laptop loop. Reduced motion shows the builder holding the ticked block on the boat. The tests pass, and I found no blocking issues or unrelated changes."
+  }
+}
+```
+
+</details>
