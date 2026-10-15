@@ -1,7 +1,7 @@
 ---
 id: "0236"
 title: Prepare release 0.5.0                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0227","0228","0229","0230","0231","0232","0233","0234","0235","0237","0238","0239","0240"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:00:22.014Z"
+approved: "2026-10-15T23:04:00.196Z"
 
 ---
 # 0236 · Prepare release 0.5.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Builds spend most of their time running speck's test suite: about 8 minutes on an 8 GB MacBook Air, several times per ticket, with test runs from builds side by side taking over the computer. A build could also end itself while its suite ran in the background. The 0.5.0 tickets run the whole suite once per ticket, when it ships, make test runs take turns at a low priority, make the suite faster and keep test runs in the foreground, and anyone following the README's setup prompt still gets 0.4.0.
@@ -54,9 +55,14 @@ speck is ready to be released as version 0.5.0. Once this lands, the setup instr
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 220,514
+- Elapsed since build started: 4 min
+- Changed lines: 70 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The brief's "Releases" section still says the maintainer tags each release by hand, which 0240 automated. Saved to the inbox: `speck/ideas/2026-10-15-say-in-the-brief-that-releases-publish-themselves.md`.
