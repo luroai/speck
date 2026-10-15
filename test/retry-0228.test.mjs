@@ -28,15 +28,18 @@ ${tests.map(([name, fails]) => `test(${JSON.stringify(name)}, () => { if (${fail
 `;
 
 // A committed repo on main with speck set up and `tests` (a test file's name to its source) in test/.
-function testRepo(tests) {
+function testRepo(tests, cmd = "node --test 'test/*.test.mjs'") {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0228-')));
   const g = (...a) => gIn(dir, ...a);
   g('init', '-q', '-b', 'main');
   assert.equal(speck(dir, ['init', '--skip-checks']).status, 0);
-  assert.equal(speck(dir, ['config', 'set', 'commands.test', "node --test 'test/*.test.mjs'"]).status, 0);
+  assert.equal(speck(dir, ['config', 'set', 'commands.test', cmd]).status, 0);
   assert.equal(speck(dir, ['config', 'set', 'commands.test_files', 'node --test {files}']).status, 0);
-  fs.mkdirSync(path.join(dir, 'test'));
-  for (const [name, src] of Object.entries(tests)) fs.writeFileSync(path.join(dir, 'test', name), src);
+  for (const [name, src] of Object.entries(tests)) {
+    const f = path.join(dir, name.includes('/') ? name : path.join('test', name));
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, src);
+  }
   g('add', '-A'); g('commit', '-qm', 'base');
   return { dir, g };
 }
@@ -45,7 +48,7 @@ function testRepo(tests) {
 function branch(r, files) {
   const wt = path.join(fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'wt-'))), 'wt');
   assert.equal(r.g('worktree', 'add', '-q', '-b', 'speck/0009-thing', wt).status, 0);
-  for (const [f, src] of Object.entries(files)) fs.writeFileSync(path.join(wt, f), src);
+  for (const [f, src] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(wt, f)), { recursive: true }); fs.writeFileSync(path.join(wt, f), src); }
   gIn(wt, 'add', '-A'); gIn(wt, 'commit', '-qm', 'change');
   return wt;
 }
@@ -132,4 +135,31 @@ test('0228 AC3 AC4: a passing result recorded for the base branch leaves nothing
   assert.equal(res.status, 0, res.stdout);
   assert.equal(runs(c, 'new'), 2);
   assert.equal(res.stdout.trimEnd().split('\n').at(-1), 'Flaky: new flaky');
+});
+
+test('0228 AC1: a test of the same name failing in a file whose path ends the same way still runs again', () => {
+  const c = counters();
+  const r = testRepo({ 'packages/widget/test/check.test.mjs': testFile(path.join(c, 'deep'), [['check', 'always']]) },
+    "node --test 'test/*.test.mjs' 'packages/widget/test/*.test.mjs'");
+  assert.equal(speck(r.dir, ['test']).status, 1);
+  const wt = branch(r, { 'test/check.test.mjs': testFile(path.join(c, 'top'), [['check', 'first']]) });
+  const res = speck(wt, ['test']);
+  assert.equal(res.status, 1, res.stdout);
+  assert.equal(runs(c, 'top'), 2, 'the new failing file ran again');
+  assert.equal(runs(c, 'deep'), 3, 'the base branch\'s failing file didn\'t');
+  assert.ok(res.stdout.includes(`${RETRY_NOTE}node --test 'test/check.test.mjs'`), res.stdout);
+});
+
+test('0228 AC3: a result recorded for the base branch without the checkout that ran it leaves nothing out', () => {
+  const { c, r } = brokenOnMain();
+  const dir = path.join(r.dir, 'speck', '.cache', 'results');
+  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+    const { root, ...rest } = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); // eslint-disable-line no-unused-vars
+    fs.writeFileSync(path.join(dir, f), JSON.stringify(rest));
+  }
+  const wt = branch(r, { 'README.md': 'changed\n' });
+  const res = speck(wt, ['test']);
+  assert.equal(res.status, 1);
+  assert.equal(runs(c, 'old'), 4, 'retried as today');
+  assert.doesNotMatch(res.stdout, /already fail on main/);
 });

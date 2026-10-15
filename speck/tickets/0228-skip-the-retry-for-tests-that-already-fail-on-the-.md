@@ -1,7 +1,7 @@
 ---
 id: "0228"
 title: "Skip the retry for tests that already fail on the base branch"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T21:23:50.976Z"
 ---
 # 0228 · Skip the retry for tests that already fail on the base branch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a full test run fails, speck runs the failing tests' files once more to catch tests that fail by chance. Tests that already fail on the base branch aren't failing by chance, so retrying them only costs time, and with them in the run the retry can never pass it. On an 8 GB MacBook Air, the 26 tests already failing on `main` cost 316 s of test time per full run, half of it on the retry.
@@ -54,3 +54,74 @@ The retry after a failing run leaves out tests that already fail on the base bra
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "11b7bb2b1882252efda76e3c85956eb76dda67da",
+    "thread_id": "01a1418b-4858-7032-b6b5-c9f3e3b6d667",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 134590,
+      "cached_input_tokens": 96128,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 749,
+      "reasoning_output_tokens": 71
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-15T21:50:39.178Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/results.mjs:142 matches base files by suffix rather than repository-relative path. Different files with a shared suffix and test name are incorrectly excluded. The AC1 tests cover different filenames but miss this case."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The AC2 test verifies no retry, a failing exit status and exactly one explanatory line when all failures match the base result."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The AC3 tests exercise absent and passing base results, verifying that failing files still run twice."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The AC4 tests verify retained failure status, cached failure and accurate Flaky output. /tmp/speck-0228-tests.txt confirms 1,985 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/results.mjs:142",
+        "issue": "Suffix matching confuses different files. A base failure in packages/widget/test/check.test.mjs matches a current failure with the same name in test/check.test.mjs. This incorrectly skips a newly failing file and reports its test as already broken on the base branch. The matching expression was independently checked and returns true for these paths.",
+        "suggested_fix": "Compare exact repository-relative paths, retaining enough information about the recorded run's repository root to handle other worktrees reliably. Add a regression test with identical test names in these two suffix-sharing paths and verify the newly failing file is retried.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change skips known failures and preserves failing results, and the full suite passed. One path-matching bug can also skip newly failing tests in a different file. Fix that before merge."
+  }
+}
+```
+
+</details>

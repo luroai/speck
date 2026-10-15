@@ -44,6 +44,9 @@ function recorded(repo, code, cmd) {
   return ok ? r : null;
 }
 
+// The checkout's root as a test's location names it: its real path, or as given when that can't be read.
+const realRoot = repo => { try { return fs.realpathSync(repo); } catch { return path.resolve(repo); } };
+
 function record(repo, code, cmd, status, output) {
   const dir = resultsDir(repo);
   const now = Date.now();
@@ -52,7 +55,7 @@ function record(repo, code, cmd, status, output) {
     try { if (now - fs.statSync(file).mtimeMs > KEEP_MS) fs.rmSync(file, { force: true }); } catch { /* gone already */ }
   }
   const kept = status === 0 ? '' : output.length > MAX_OUTPUT ? output.slice(-MAX_OUTPUT) : output;
-  const text = JSON.stringify({ cmd, status, commit: code.commit, at: new Date(now).toISOString(), output: kept });
+  const text = JSON.stringify({ cmd, status, commit: code.commit, at: new Date(now).toISOString(), output: kept, root: realRoot(repo) });
   const tmp = path.join(dir, `${code.key}.${process.pid}.${crypto.randomUUID()}.tmp`);
   fs.writeFileSync(tmp, text);
   fs.renameSync(tmp, path.join(dir, `${code.key}.json`)); // whole, so a reader never sees half a result
@@ -107,13 +110,17 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
   }
 }
 
-// The tests that failed in the result recorded for the base branch's latest commit and the test command `cmd`, as
-// failingTestFiles gives them (0228). Empty when there's no such result, it passed, or its output kept names none.
+// The tests that failed in the result recorded for the base branch's latest commit and the test command `cmd`, each
+// as its name and its file's path from the root of the checkout that ran it (0228). Empty when there's no such result,
+// it passed, it doesn't say which checkout ran it, or its output kept names none.
 function failingOnBase(repo, cfg, cmd) {
   const base = String(cfg.base_branch || '').trim();
   const code = base ? codeAt(repo, cmd, `refs/heads/${base}`) : null;
   const kept = code ? recorded(repo, code, cmd) : null;
-  return kept && kept.status !== 0 ? failingTestFiles(kept.output).filter(t => t.file) : [];
+  if (!kept || kept.status === 0 || typeof kept.root !== 'string' || !path.isAbsolute(kept.root)) return [];
+  return failingTestFiles(kept.output).filter(t => t.file)
+    .map(t => ({ name: t.name, file: path.relative(kept.root, path.resolve(kept.root, t.file)) }))
+    .filter(t => t.file && !t.file.startsWith('..') && !path.isAbsolute(t.file));
 }
 
 // Runs commands.test_files once more, with just the files of the tests that failed in `text`, a full run's output
@@ -136,10 +143,10 @@ function retry(repo, cfg, cmd, text, branch) {
   };
   const rels = failing.map(t => inRepo(t.file));
   if (rels.includes(null)) return null;
-  // A test fails on the base branch too when one of the same name failed there in a file at the same path: the base
-  // branch's run may have been in another worktree, so its file is matched by the end of its path.
+  // A test fails on the base branch too when one of the same name failed there in a file at the same path from the
+  // root of the checkout that ran it, which may be another worktree.
   const onBase = failingOnBase(repo, cfg, cmd);
-  const old = failing.map((t, i) => onBase.some(b => b.name === t.name && `/${b.file.replaceAll('\\', '/')}`.endsWith(`/${rels[i].split(path.sep).join('/')}`)));
+  const old = failing.map((t, i) => onBase.some(b => b.name === t.name && b.file === rels[i]));
   const files = [...new Set(rels.filter((f, i) => !old[i]))];
   const left = [...new Set(failing.filter((t, i) => old[i]).map(t => t.name))];
   const base = cfg.base_branch;
