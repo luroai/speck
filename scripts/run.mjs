@@ -96,7 +96,7 @@ export function cmdRun() {
   const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
   // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
-  const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h) });
+  const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id) });
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 

@@ -69,7 +69,8 @@ const HAND_BACK = { 13: 'conflict', 16: 'tests', 14: 'base' };
 // speck run's queue. check(tickets), on each of speck run's checks, starts the next ship if one may start now. note()
 // is what speck run adds when it stops. `launch` starts a ship (launchShip), `say` prints a line, and `handBack` gets
 // { id, kind, why, head } for a refusal the ticket's build has steps for, head being its branch as the ship tried it.
-export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, handBack = () => {} } = {}) {
+// A ticket for which `waiting(id)` is true has a hand-back still to run, so it isn't shipped until that has run.
+export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, handBack = () => {}, waiting = () => false } = {}) {
   const runs = sharedCacheDir(repo, 'runs');
   const base = cfg.base_branch;
   const last = new Map(); // each ticket's refs at its last try
@@ -100,6 +101,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       say(`${base} has a new commit, so speck run is shipping again.`);
     }
     for (const t of shipOrder(tickets)) {
+      if (waiting(t.id)) continue;
       const refs = refsOf(repo, cfg, t.id);
       if (!last.has(t.id)) {
         const message = earlierTry(repo, runs, t.id, refs);

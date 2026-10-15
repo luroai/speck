@@ -5,12 +5,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { shipRepo, runIn } from './support/ship.mjs';
 import { ROOT, startRun, until, stopRun } from './support/run.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
-import { handBackMessage, resumeArgv } from '../scripts/hand-back.mjs';
+import { handBackMessage, resumeArgv, handBackQueue } from '../scripts/hand-back.mjs';
+import { killAll } from './support/run.mjs';
 
 // ---------- 0194: builds end at approved, and speck run's ship queue does every auto-ship ----------
 
@@ -156,6 +157,68 @@ test('0194 AC2: a hand-back resumes the build\'s own session with its message in
   const words = ['claude', '-p', '/speck-build {id}', '--session-id', '{session}', '--verbose'];
   const argv = resumeArgv(words, '0001', 'abc', 'Hand-back message');
   assert.deepEqual(argv, ['claude', '-p', 'Hand-back message', '--resume', 'abc', '--verbose']);
+});
+
+// speck run's queue and hand-backs wired together as speck run wires them, with stand-ins for `speck ship` and for
+// starting a build. `running` is speck run's set of builds, and 0001 has a run record from a build that has ended.
+function wired(r, running = new Set()) {
+  const runs = runsOf(r.dir);
+  fs.mkdirSync(runs, { recursive: true });
+  const file = path.join(runs, '0001.json');
+  if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify({ id: '0001', session: 'sess-1', cwd: r.wt, pid: deadPid(), exited: '2026-10-15T10:30:00.000Z', exit_code: 0 }));
+  const cfg = { base_branch: 'main', branch_prefix: 'speck/' };
+  const launches = [], started = [];
+  const backs = handBackQueue({ repo: r.dir, cfg, words: ['claude', '-p', '/speck-build {id}', '--session-id', '{session}'], max: 1, running,
+    startBuild: (id, argv) => { started.push({ id, argv }); running.add(id); }, resumeHint: () => '', runs: () => runs,
+    saveRecord: (f, rec) => fs.writeFileSync(f, JSON.stringify(rec)) });
+  const q = shipQueue(r.dir, cfg, { say: () => {}, launch: (repo, id, log, done) => launches.push({ id, done }), handBack: h => backs.keep(h), waiting: id => backs.waiting(id) });
+  const tick = () => { const t = statusData(r.dir).tickets; q.check(t); backs.check(t); };
+  return { launches, started, running, tick };
+}
+const mainMoves = r => { fs.writeFileSync(path.join(r.dir, 'notes.txt'), `${Math.random()}\n`); r.g('commit', '-qam', 'main moves'); };
+
+test('0194 AC2: a hand-back waiting for a build slot stops the queue shipping its ticket, even after a new commit on the base branch', () => {
+  const r = approvedRepo();
+  const k = wired(r, new Set(['0009'])); // another build has the only slot
+  k.tick();
+  k.launches[0].done(13);
+  mainMoves(r);
+  for (let i = 0; i < 3; i++) k.tick();
+  assert.equal(k.launches.length, 1, 'not shipped again while its hand-back waits');
+  assert.equal(k.started.length, 0, 'the slot is taken');
+  k.running.delete('0009');
+  k.tick();
+  assert.deepEqual(k.started.map(s => s.id), ['0001'], 'handed back once the slot is free');
+  assert.equal(k.launches.length, 1, 'and not shipped in the same check');
+});
+
+test('0194 AC2: a hand-back kept in the run record still stops the queue shipping its ticket after speck run restarts', () => {
+  const r = approvedRepo();
+  const first = wired(r, new Set(['0009']));
+  first.tick();
+  first.launches[0].done(16);
+  mainMoves(r);
+  const again = wired(r, new Set(['0009'])); // a new speck run, with nothing in memory
+  for (let i = 0; i < 3; i++) again.tick();
+  assert.equal(again.launches.length, 0, 'not shipped');
+  again.running.delete('0009');
+  again.tick();
+  assert.deepEqual(again.started.map(s => s.id), ['0001'], 'handed back');
+});
+
+test('0194 AC2: a hand-back is not started while a ship of its ticket is running', () => {
+  const r = approvedRepo();
+  const k = wired(r, new Set(['0009']));
+  k.tick();
+  k.launches[0].done(13);
+  const p = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)', 'speck', 'ship', '0001'], { detached: true, stdio: 'ignore' });
+  p.unref();
+  fs.writeFileSync(path.join(runsOf(r.dir), '0001.ship.json'), JSON.stringify({ pid: p.pid, started: new Date().toISOString(), auto: false }));
+  try {
+    k.running.delete('0009');
+    k.tick();
+    assert.equal(k.started.length, 0, 'waits for that ship to end');
+  } finally { killAll([p.pid]); }
 });
 
 // A fake build: records its arguments, folder and pid in <out>/<n>.json, prints a line, then exits after FAKE_MS.

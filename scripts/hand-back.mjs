@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { refsOf } from './ship-queue.mjs';
+import { shipState } from './ship.mjs';
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = id => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with /speck-build ${id} from where you left off.`;
@@ -35,8 +36,9 @@ export function resumeArgv(words, id, session, message = resumeMessage(id)) {
   return words.map((w, i) => (i === at ? '--resume' : i === prompts[0] ? message : w.replace(/\{session\}/g, session)));
 }
 
-// speck run's hand-backs. keep(h) takes one from the ship queue (shipQueue's handBack), and check(tickets), on each of
-// speck run's checks, resumes each waiting one while a build slot is free. `running` is speck run's set of builds,
+// speck run's hand-backs. keep(h) takes one from the ship queue (shipQueue's handBack), check(tickets), on each of
+// speck run's checks, resumes each waiting one while a build slot is free, and waiting(id) says whether one is waiting
+// for a ticket, so the queue doesn't ship it meanwhile (shipQueue's waiting). `running` is speck run's set of builds,
 // `startBuild` starts one as speck run does, and `runs()` is its runs folder.
 export function handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs }) {
   // A ship speck run started that needs work on its ticket, kept in the build's run record as hand_back, so a restart
@@ -70,21 +72,31 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`);
   };
 
-  // Approved tickets with a hand-back waiting, each handed back while there's a free slot. One whose branch has moved
-  // since its ship (worked on by hand, say) is dropped: its next ship decides afresh.
+  // A ticket's hand-back from its run record: { file, rec, h, live }, live while its branch is where the ship found it.
+  // null if it has none.
+  const pending = id => {
+    if (!/^[\w-]+$/.test(String(id))) return null;
+    const file = path.join(runs(), `${id}.json`);
+    let rec;
+    try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+    const h = rec?.hand_back;
+    if (!h || typeof h !== 'object' || !Object.hasOwn(HAND_BACK_STEPS, h.kind)) return null;
+    return { file, rec, h, live: h.head === refsOf(repo, cfg, id).head };
+  };
+
+  // Approved tickets with a hand-back waiting, each handed back while there's a free slot and no ship of it is running.
+  // One whose branch has moved since its ship (worked on by hand, say) is dropped: its next ship decides afresh.
   const check = tickets => {
     for (const t of tickets) {
-      if (t.status !== 'approved' || t.build_running || running.has(t.id) || !/^[\w-]+$/.test(t.id)) continue;
-      const file = path.join(runs(), `${t.id}.json`);
-      let rec;
-      try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
-      const h = rec?.hand_back;
-      if (!h || typeof h !== 'object' || !Object.hasOwn(HAND_BACK_STEPS, h.kind)) continue;
-      if (h.head !== refsOf(repo, cfg, t.id).head) { const { hand_back: _, ...kept } = rec; try { saveRecord(file, kept); } catch { /* tried again next check */ } continue; }
+      if (t.status !== 'approved' || t.build_running || running.has(t.id)) continue;
+      const p = pending(t.id);
+      if (!p) continue;
+      if (!p.live) { const { hand_back: _, ...kept } = p.rec; try { saveRecord(p.file, kept); } catch { /* tried again next check */ } continue; }
+      if (shipState(runs(), t.id)?.running) continue;
       if (running.size >= max) return;
-      resumeHandBack(t.id, file, rec);
+      resumeHandBack(t.id, p.file, p.rec);
     }
   };
 
-  return { keep, check };
+  return { keep, check, waiting: id => !!pending(id)?.live };
 }

@@ -1,7 +1,7 @@
 ---
 id: "0194"
 title: "Hand every auto-ship to speck run's ship queue"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-15T10:10:54.829Z"
 ---
 # 0194 · Hand every auto-ship to speck run's ship queue
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Each build still ships its own ticket, holding its build slot while it merges, tests and sorts out conflicts, and ships started by different builds aren't in one ordered queue. Moving every auto-ship to one queue in `speck run` is what lets builds and shipping run separately, and later side by side, without racing for `main`.
@@ -60,3 +60,75 @@ Builds end at approved, `speck run`'s ship queue (0193) does every auto-ship, an
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f06f76531e1c6ba8a4ead8f48174a97d7a25cbaf",
+    "thread_id": "01a13f18-f3ab-7ac3-90cb-468d51554598",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 200142,
+      "cached_input_tokens": 143360,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 995,
+      "reasoning_output_tokens": 141
+    },
+    "saved_at": "2026-10-15T10:26:39.710Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 5 ends at approved and reports queue or manual shipping. Both 0194 AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Hand-back messages, persisted counts and recovery instructions are implemented and tested, but run.mjs tick calls ships.check before handBacks.check, allowing another ship while recovery is pending (F1)."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Exit 14 messages and the queue hold have passing tests, but a new base commit can release shipping before the pending base-failure hand-back runs (F1)."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "handBackQueue uses startBuild, which tracks running builds and appends output to the build log. The passing 0194 AC2 AC4 integration test exercises session resumption, slot limits and logging."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md principle 7 describes approved builds and one ship queue. The full output in /tmp/speck-0194-tests.txt confirms 1752 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs:259; scripts/ship-queue.mjs:102",
+        "issue": "Pending hand-backs do not prevent shipping. If a refusal creates a hand_back while another build occupies the slot, a subsequent base-branch commit makes that ticket eligible for shipping again. tick starts the ship before checking hand-backs; when the slot becomes free, it can also resume the build while that ship is running. This can repeat refusals before recovery or race shipping against changes in the ticket's worktree. The existing integration test keeps the base unchanged while the hand-back waits, so it misses this case.",
+        "suggested_fix": "Exclude tickets with valid pending hand-backs from shipping until recovery has run, and ensure shipping and hand-back execution cannot overlap for the same ticket. Refresh eligibility after starting resumed builds. Add a regression test that queues a hand-back behind an occupied build slot, advances the base branch, and verifies no ship retry occurs before recovery finishes; cover persisted hand-backs after restart too.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Builds now stop at approval, and the queue can resume their sessions to resolve shipping problems. The reported suite passes, but a pending recovery does not stop another shipping attempt. Fix that race before merge."
+  }
+}
+```
+
+</details>
