@@ -1,7 +1,7 @@
 ---
 id: "0226"
 title: Prepare release 0.5.1                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0213","0214","0215","0216","0217","0218","0219","0220","0221","0222","0223","0224","0225","0236"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-16T03:10:56.254Z"
+approved: "2026-10-16T03:14:26.331Z"
 
 ---
 # 0226 · Prepare release 0.5.1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The 0.5.1 tickets fix problems in what 0.4.0 shipped: the ship queue's messages, stopping and restarting builds, build timers, the reviewer's test summary, review packs and the panel. Anyone following the README's setup prompt still gets 0.5.0 without them.
@@ -55,9 +56,14 @@ speck is ready to go out as version 0.5.1, a release of fixes to what came befor
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 210,784
+- Elapsed since build started: 4 min
+- Changed lines: 76 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. The inbox idea `speck/ideas/2026-10-15-say-in-the-readme-s-run-row-that-more-builds-can-run.md` is now done by this ticket's README `run` row change, so it can be filed as done when the inbox is next triaged.
 - After it ships: check the `v0.5.1` tag and GitHub release appeared (0240's workflow).
