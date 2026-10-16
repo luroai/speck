@@ -167,11 +167,14 @@ test('0097 AC4: repeated disputes still block across merge rounds', () => {
 });
 
 test('0097 AC4: ordinary rounds work as before', () => {
-  const three = [1, 2, 3].map(n => round(n, 'changes_requested'));
+  // 0242: a round at the limit with no more than one blocking finding open gets an extra round, so two are open here.
+  const two = ['F1', 'F2'].map(id => ({ id, severity: 'blocking', state: 'open', file: 'a', issue: 'x' }));
+  const three = [1, 2, 3].map(n => round(n, 'changes_requested', {}, two));
   assert.deepEqual(nextAction(three, cfg()), { action: 'block', reason: 'No approval after 3 review rounds.' });
   assert.equal(nextAction(three.slice(0, 2), cfg()).action, 'fix');
+  assert.equal(nextAction([1, 2, 3].map(n => round(n, 'changes_requested')), cfg()).action, 'fix', '0242 AC1: the extra round');
   // Merge rounds earlier in the history don't use up ordinary rounds.
   const mixed = [round(1, 'approve'), round(2, 'approve', { merge: true }), round(3, 'changes_requested')];
   assert.equal(nextAction(mixed, cfg()).action, 'fix');
-  assert.deepEqual(nextAction([...mixed, round(4, 'changes_requested')], cfg()), { action: 'block', reason: 'No approval after 3 review rounds.' });
+  assert.deepEqual(nextAction([...mixed, round(4, 'changes_requested', {}, two)], cfg()), { action: 'block', reason: 'No approval after 3 review rounds.' });
 });

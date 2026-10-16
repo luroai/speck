@@ -12,10 +12,12 @@ function sessionLabel(r, earlier) {
   return 'session not recorded';
 }
 
-// How many rounds there were, and how many of them re-reviewed a merge of the base branch, for the pack and the delivery log.
+// How many rounds there were, how many of them re-reviewed a merge of the base branch and which was an extra round
+// past max_review_rounds (0242), for the pack and the delivery log.
 export function roundsLine(all) {
   const merges = all.length - ordinaryRounds(all);
-  return `Review rounds: ${all.length}${merges ? `, ${merges} of them ${merges === 1 ? 'a merge round' : 'merge rounds'}` : ''}`;
+  const extra = all.find(r => r.meta.extra);
+  return `Review rounds: ${all.length}${merges ? `, ${merges} of them ${merges === 1 ? 'a merge round' : 'merge rounds'}` : ''}${extra ? `, round ${extra.meta.round} an extra round` : ''}`;
 }
 
 export const who = m => `${m.reviewer}, model ${m.reviewer_model || 'default'}, effort ${m.reviewer_effort || 'default'}`;
@@ -93,7 +95,7 @@ export function reviewPack(repo, id) {
   const blind = all.filter(r => r.meta.sandbox_ok === false);
   const lines = [
     `## ${t.fm.id} · ${t.fm.title}`,
-    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}`})`,
+    `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}`})`,
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
     '', `**Summary:** ${v.summary}`, '',
     '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
@@ -106,7 +108,7 @@ export function reviewPack(repo, id) {
       const f = r.verdict.findings;
       const open = f.filter(x => x.severity === 'blocking' && ['open', 'dispute_rejected'].includes(x.state)).length;
       const closed = f.filter(x => x.severity === 'blocking').length - open;
-      return `- Round ${r.meta.round}${r.meta.merge ? ', merge round' : ''} (${who(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor; ${sessionLabel(r, all.slice(0, i))}`;
+      return `- Round ${r.meta.round}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''} (${who(r.meta)}): **${r.verdict.verdict}**, ${open} open blocking, ${closed} resolved, ${f.filter(x => x.severity === 'minor').length} minor; ${sessionLabel(r, all.slice(0, i))}`;
     }),
     ...(latest.size ? ['', '<details><summary>Findings</summary>', '',
       ...[...latest.values()].map(f => `- **${f.id}** (${f.severity}, ${f.state}) \`${f.file}\`: ${f.issue}`), '', '</details>'] : []),

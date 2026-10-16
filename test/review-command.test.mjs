@@ -108,7 +108,7 @@ test('0012 AC4: later rounds resend the round-1 prompt, then every earlier verdi
   const sha2 = r.git('rev-parse', 'HEAD').stdout.trim();
   fs.writeFileSync(path.join(r.dir, 'a.txt'), 'third-line-marker\n');
   r.git('add', '-A'); r.git('commit', '-qm', 'fix 2');
-  assert.equal(r.run('review', '1', `--response=${resp(3)}`, `--tests=${testsFile(3)}`).status, 11, 'third round hits the default limit and blocks');
+  assert.equal(r.run('review', '1', `--response=${resp(3)}`, `--tests=${testsFile(3)}`).status, 10, 'third round hits the default limit with one finding open, so an extra round follows (0242)');
   const third = r.calls()[2].stdin;
   const round1Now = r.calls()[0].stdin.trimEnd();
   assert.ok(third.startsWith(round1Now), 'starts with the round-1 prompt exactly as it was sent (round 1 F2)');
@@ -247,7 +247,7 @@ test('0013 AC2/AC3 (F1): a session is only resumed from the latest round, never 
   assert.equal(r.roundFile(2).meta.thread_id, undefined);
   commit(2);
   const three = r.runEnv({ FAKE_MODE: 'envelope' }, 'review', '1', `--response=${resp(3)}`);
-  assert.equal(three.status, 11, three.stderr);
+  assert.equal(three.status, 10, `the limit with one finding open gets an extra round (0242)\n${three.stderr}`);
   const calls = r.calls();
   assert.ok(!calls[calls.length - 1].args.includes('--resume'), 'S1 never saw round 2, so it is not resumed');
   assert.match(calls[calls.length - 1].stdin, /# Earlier review rounds/);

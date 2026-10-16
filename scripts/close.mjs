@@ -27,7 +27,7 @@ function reviewLogLines(all) {
   return all.map(r => {
     const fresh = r.verdict.findings.filter(f => f.severity === 'blocking' && !seen.has(f.id));
     for (const f of r.verdict.findings) seen.add(f.id);
-    return `Round ${r.meta.round} (${r.meta.reviewer}${r.meta.merge ? ', merge round' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
+    return `Round ${r.meta.round} (${r.meta.reviewer}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
       .replace(/\.\.$/, '.');
   });
 }

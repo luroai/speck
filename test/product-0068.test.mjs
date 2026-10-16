@@ -118,7 +118,7 @@ test('0068 AC2: later rounds, including a rebuilt round-1 prompt, have no produc
   // Without the saved round-1 prompt, it's rebuilt from the round-1 commit, which has speck/product.md.
   fs.rmSync(r.at('speck/.cache'), { recursive: true, force: true });
   r.fix('third\n');
-  assert.equal(r.review(verdict).status, 11);
+  assert.equal(r.review(verdict).status, 10, 'no blocking finding open at the limit, so an extra round follows (0242)');
   const sent = r.prompts();
   assert.equal(sent.length, 3);
   for (const [i, p] of sent.entries()) {
@@ -154,7 +154,7 @@ test('0068 AC2 (F1): a round-1 prompt saved before this change is rebuilt for la
   // A saved copy from this version is still resent exactly as it was.
   fs.writeFileSync(file, `${now.trimEnd()}\nCURRENT-COPY-MARKER\n`);
   r.fix('third\n');
-  assert.equal(r.review(verdict).status, 11);
+  assert.equal(r.review(verdict).status, 10, 'no blocking finding open at the limit, so an extra round follows (0242)');
   assert.ok(r.prompts()[2].startsWith(`${now.trimEnd()}\nCURRENT-COPY-MARKER`));
 });
 

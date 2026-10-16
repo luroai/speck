@@ -44,6 +44,7 @@ A ticket that's one finding from approval at the round limit gets one more revie
 - 0218 would have qualified: its round 3 left one blocking finding (F2) open.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
