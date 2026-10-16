@@ -1,7 +1,7 @@
 ---
 id: "0224"
 title: "Keep a queued ticket's tags tappable above a linked id"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-14-keep-a-queued-ticket-s-tags-tappable-above-
 after: ["0223"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-16T02:50:06.323Z"
+approved: "2026-10-16T03:02:39.618Z"
 
 ---
 # 0224 · Keep a queued ticket's tags tappable above a linked id
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 On a phone, when a queued ticket's line reads "Queued · unlocks 0205" or "Queued · waiting on 0204", the linked id's tap area reaches about 14 px up into the tap areas of the tags above it. A tap on the bottom edge of a tag such as "low" goes to the other ticket instead of showing what the tag means.
@@ -50,9 +51,14 @@ On a phone, a queued ticket's tags now answer a tap anywhere around them, even w
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 133,908
+- Elapsed since build started: 13 min
+- Changed lines: 3 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Note for later tap tests: Chrome taps at whole pixels, so a tap meant for a tap area's edge should use a whole pixel inside it.
 
