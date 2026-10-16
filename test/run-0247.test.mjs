@@ -153,32 +153,35 @@ test('0247 AC1, AC2: it waits for the ship it started, naming it once, then swit
   } finally { await stop(run); }
 });
 
-// A copy of the CLI whose speck run, on new code, fails as it starts watching, after its code has loaded.
-const failsStarting = src => src.replace('const start = () => { started = true;', 'const start = () => { started = true; throw new Error(\'broken start\');');
+// speck run's code broken so that, on new code, it fails getting ready after its code has loaded, adopting earlier
+// builds, so not as it imports.
+const failsPreparing = src => src.replace('const adoptEarlierBuilds = () => {', 'const adoptEarlierBuilds = () => { if (process.connected) throw new Error(\'broken start\');');
 
-test('0247 AC4: new code that fails as it starts watching leaves the old one running, the first time and after a switch', async () => {
+test('0247 AC4: new code that fails getting ready leaves the old one running, the first time and after a switch, launching each ticket once', async () => {
   const r = runRepo({ tickets: [['0001', { status: 'draft' }], ['0002', { status: 'draft' }]], max: 2 });
   const { cli } = cliCopy();
-  assert.notEqual(failsStarting(fs.readFileSync(path.join(path.dirname(cli), 'run.mjs'), 'utf8')), fs.readFileSync(path.join(path.dirname(cli), 'run.mjs'), 'utf8'));
+  const runFile = path.join(path.dirname(cli), 'run.mjs');
+  assert.notEqual(failsPreparing(fs.readFileSync(runFile, 'utf8')), fs.readFileSync(runFile, 'utf8'));
   const run = startRun(r.dir, cli);
+  const fails = () => count(run.out(), 'couldn\'t switch to the new code: Error: broken start');
   try {
     assert.ok(await watching(run), run.out());
-    // The process you started, still running its own code.
-    edit(cli, 'run.mjs', failsStarting);
-    assert.ok(await until(() => run.out().includes('couldn\'t switch to the new code: Error: broken start')), run.out());
+    // From the process you started, still running its own code, with a ticket ready to launch as it switches.
     setReady(r, '0001');
-    assert.ok(await until(() => r.calls().length === 1), run.out());
-    // A speck run on new code, after a switch.
-    edit(cli, 'run.mjs', src => src.replace('throw new Error(\'broken start\');', ''));
+    edit(cli, 'run.mjs', failsPreparing);
+    assert.ok(await until(() => fails() === 1 && r.calls().length >= 1), run.out());
+    // From a speck run on new code, after a switch.
+    edit(cli, 'run.mjs', src => src.replace(' if (process.connected) throw new Error(\'broken start\');', ''));
     edit(cli, 'run-switch.mjs', mark('v2'));
     assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
-    edit(cli, 'run.mjs', failsStarting);
-    assert.ok(await until(() => count(run.out(), 'couldn\'t switch to the new code: Error: broken start') === 2), run.out());
     setReady(r, '0002');
-    assert.ok(await until(() => r.calls().length === 2), run.out());
+    edit(cli, 'run.mjs', failsPreparing);
+    assert.ok(await until(() => fails() === 2 && r.calls().length >= 2), run.out());
+    await new Promise(res => setTimeout(res, 600));
+    assert.deepEqual(r.calls().map(c => c.args[0]), ['0001', '0002'], `each ticket launched once:\n${run.out()}`);
+    assert.equal(fails(), 2, run.out());
     assert.equal(run.child.exitCode, null);
     assert.equal(childrenOf(run.child.pid).length, 1, 'only the speck run that carried on');
-    assert.ok(!run.out().includes(`${SWITCHED} v3`));
   } finally { await stop(run); }
 });
 

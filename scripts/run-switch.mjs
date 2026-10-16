@@ -69,26 +69,25 @@ export const failedSays = reason => `speck run couldn't switch to the new code: 
 const whyFailed = e => (e && e.name === 'SpeckError' ? e.message : `${(e && e.name) || 'Error'}: ${String((e && e.message) || e).split('\n')[0]}`);
 
 // Starts speck run on the code as it is now (`hash`), writing where this one does, with the tickets launched so far, so
-// it doesn't launch them again. It loads and checks its settings ('ready'), then on 'go' starts watching, saying
-// 'started' once its first check has run. The one it replaces, idle, starts nothing meanwhile. Calls ready(child)
-// once it has started, or failed(reason) if it couldn't, having stopped it.
+// it doesn't launch them again. It loads, checks its settings and adopts earlier builds, launching nothing, says
+// 'ready' and waits for 'go' to start watching. Calls ready(child) once, or failed(reason) if it can't start, having
+// stopped it.
 export function startSuccessor(hash, launched, { ready, failed }) {
   const loader = `try { const m = await import(process.env.SPECK_RUN_CODE_URL); m.runWorker(); }
 catch (e) { process.send({ type: 'failed', reason: e && e.name === 'SpeckError' ? e.message : (e && e.name || 'Error') + ': ' + String(e && e.message || e).split('\\n')[0] }, () => process.exit(1)); }`;
   let child, settled = false;
   const settle = (fn, arg) => { if (settled) return; settled = true; clearTimeout(timer); fn(arg); };
   const fail = reason => { if (settled) return; child?.kill('SIGKILL'); settle(failed, reason); };
-  const timer = setTimeout(() => fail(`it hadn't started within ${SWITCH_START_MS / 1000} seconds.`), SWITCH_START_MS);
+  const timer = setTimeout(() => fail(`it wasn't ready within ${SWITCH_START_MS / 1000} seconds.`), SWITCH_START_MS);
   try {
     child = spawn(process.execPath, ['--input-type=module', '-e', loader], { stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
       env: { ...process.env, SPECK_RUN_CODE: hash, SPECK_RUN_LAUNCHED: JSON.stringify(launched), SPECK_RUN_CODE_URL: pathToFileURL(path.join(DIR, 'speck.mjs')).href } });
   } catch (e) { fail(`${e.message}.`); return null; }
   child.on('error', e => fail(`${e.message}.`));
-  child.on('exit', code => fail(`it stopped with exit code ${code} before it had started.`));
+  child.on('exit', code => fail(`it stopped with exit code ${code} before it was ready.`));
   child.on('message', m => {
     if (m?.type === 'failed') fail(m.reason);
-    else if (m === 'ready') child.send('go');
-    else if (m === 'started') { child.removeAllListeners('exit'); child.removeAllListeners('error'); settle(ready, child); }
+    else if (m === 'ready') { child.removeAllListeners('exit'); child.removeAllListeners('error'); settle(ready, child); }
   });
   return child;
 }
@@ -118,22 +117,20 @@ export function codeSwitch({ worker, code, busy, launched, stopLoop }) {
   };
 }
 
-// speck run on new code, once it has checked its settings: says it's ready, and on 'go' starts watching, saying
-// 'started' once its first check has run, or why it failed. It exits on 'exit' (the one replacing it has started), and
-// stops if the process you started has gone.
-export function awaitGo(start, stop) {
+// speck run on new code, once it has checked its settings: runs prepare(), which launches nothing, then says it's
+// ready, or why it failed, and on 'go' starts watching (start). It exits on 'exit' (the one replacing it is ready),
+// and stops if the process you started has gone.
+export function awaitGo(prepare, start, stop) {
+  try { prepare(); } catch (e) { process.send({ type: 'failed', reason: whyFailed(e) }, () => process.exit(1)); return; }
   process.on('disconnect', stop);
   process.on('message', m => {
-    if (m === 'go') {
-      try { start(); } catch (e) { process.send({ type: 'failed', reason: whyFailed(e) }, () => process.exit(1)); return; }
-      console.log('speck run switched to the new code.');
-      process.send('started');
-    } else if (m === 'exit') process.exit(0);
+    if (m === 'go') { console.log('speck run switched to the new code.'); start(); }
+    else if (m === 'exit') process.exit(0);
   });
   process.send('ready');
 }
 
-// The process you started, once it has handed over to `worker`, which has started: it passes Ctrl+C and the panel's
+// The process you started, once it has handed over to `worker`: it starts the worker, passes Ctrl+C and the panel's
 // off switch on to it, starts its successor when it asks to switch, and exits as the last one does.
 export function hostRuns(worker, stopSignals) {
   let starting = null, stopping = false;
@@ -146,18 +143,17 @@ export function hostRuns(worker, stopSignals) {
     w.on('message', m => {
       if (m?.type !== 'switch' || starting || stopping) return;
       starting = startSuccessor(m.code, Array.isArray(m.launched) ? m.launched : [], {
-        // The new one has started while the old one, idle, waited: the old one goes.
+        // The old one exits before the new one starts watching, so only one is ever watching.
         ready: next => {
           starting = null;
-          w.removeAllListeners();
-          worker = next;
-          watch(next);
+          w.removeAllListeners('exit');
+          w.once('exit', code => { if (stopping) { next.kill('SIGKILL'); process.exit(code ?? 0); } worker = next; watch(next); next.send('go'); });
           w.send('exit');
-          if (stopping) next.kill('SIGINT');
         },
         failed: reason => { starting = null; if (!stopping) w.send({ type: 'stay', reason }); },
       });
     });
   };
   watch(worker);
+  worker.send('go');
 }

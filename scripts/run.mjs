@@ -314,10 +314,11 @@ function runOn(worker) {
     }
   }
 
-  const start = () => { started = true; adoptEarlierBuilds(); tick(); loop = setInterval(tick, pollMs); };
-  if (worker) return awaitGo(start, stop);
+  const watchBoard = () => { started = true; tick(); loop = setInterval(tick, pollMs); };
+  if (worker) return awaitGo(adoptEarlierBuilds, watchBoard, stop);
   console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
-  start();
+  adoptEarlierBuilds();
+  watchBoard();
 }
 
 // A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
