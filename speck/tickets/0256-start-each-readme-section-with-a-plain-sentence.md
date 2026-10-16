@@ -40,6 +40,7 @@ Every section of the README starts with one plain sentence saying what it tells 
 - Split from 0251 on 2026-10-16. Plain over clever: short sentences that state the obvious. British English.
 - `/no-ai-slop` is installed globally for Claude Code (`~/.claude/skills/no-ai-slop/`); see how 0250's Notes recorded its passes.
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
