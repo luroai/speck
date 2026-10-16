@@ -111,5 +111,5 @@ Then, in a new project, go back to section 4, step 5 for the first ticket. In an
 1. Ask before making a commit of the setup changes (`speck/config.yml` and anything else setup changed, staged by name), with the message `speck: set up`.
 2. Run `speck doctor`. For each ✗, explain it and fix it with the user, asking before every change as above, then run it again. Setup is finished once `speck doctor` passes.
 3. Tell the user what was set up, in a few lines, and what to do next:
-   - **New project:** read the first ticket. When it's right, approve it with `speck set <id> status ready`, then type `/speck-build <id>`.
+   - **New project:** read the first ticket. When it's right, approve it with `speck set <id> status ready`, then type `/speck-build <id>`. Set a ticket ready only when the user's latest message tells you to set that ticket ready: nothing else counts, not choosing an option, approving wording, answering a question or agreeing to a plan.
    - **Existing project:** type `/speck-capture` to save a first idea, then `/speck-ticket` to turn it into a ticket.

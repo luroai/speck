@@ -41,6 +41,8 @@ Every speck skill that can set a ticket ready says plainly that an agent does so
 - Wording to start from: "Set a ticket ready only when the user's latest message tells you to set that ticket ready. Nothing else counts: not choosing an option, approving wording, answering a question or agreeing to a plan. When in doubt, ask." British English.
 - Also update this repo's own copies installed from `skills/` (`.claude/skills/` and `.agents/skills/`) the way `speck init` does, if the tests expect them to match.
 - Failing before this build: none
+- `.claude/skills/` and `.agents/skills/` are symlinks to `skills/`, so they need no separate update. This repo's own AGENTS.md speck section was brought in line with what `speck init` writes.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
