@@ -1,7 +1,7 @@
 ---
 id: "0251"
 title: "Open the README with a plain description of what speck does"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0255"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:48:40.175Z"
+approved: "2026-10-16T13:50:56.937Z"
 
 ---
 # 0251 · Open the README with a plain description of what speck does
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README doesn't say plainly what speck is, who it's for or why you'd trust it. A reader, the maintainer included, has to work it out from abstract lines about decisions, when a non-technical builder or a hiring team should get it from the first few lines.
@@ -64,9 +65,14 @@ The top of speck's README now says in plain sentences who speck is for (product 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 95,658
+- Elapsed since build started: 2 min
+- Changed lines: 10 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
