@@ -1,7 +1,7 @@
 ---
 id: "0242"
 title: "Give a ticket one extra review round when it's one finding from approval"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-allow-one-more-review-round-without-editing
 after: ["0241"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:17:30.815Z"
+approved: "2026-10-16T08:26:46.663Z"
 
 ---
 # 0242 · Give a ticket one extra review round when it's one finding from approval
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build that reaches the review round limit blocks, even when the reviewer has only one finding left. The user then has to step in just to allow one more round, which means raising `limits.max_review_rounds` in `speck/config.yml` for every ticket and putting it back. It happened on 0218 on 2026-10-16, and on 0008, 0011 and 0061 before.
@@ -57,9 +58,15 @@ Worth keeping an eye on: tickets with two or more open problems at the limit, or
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 speck record accepts unlimited extra rounds.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 409,864
+- Elapsed since build started: 9 min
+- Changed lines: 63 (limit 5000)
 - Follow-ups:
   - `speck record` doesn't check `max_merge_rounds`, so a subagent reviewer can record merge rounds past it: saved to the inbox as speck/ideas/2026-10-16-make-speck-record-respect-max-merge-rounds.md.
 
