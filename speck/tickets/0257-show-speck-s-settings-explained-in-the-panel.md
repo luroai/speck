@@ -42,6 +42,8 @@ The panel has a Settings view that shows the settings people tune, grouped, each
 - Panel files: `scripts/panel.mjs` (server, a GET for the settings or settings in the board state) and `templates/panel.html` (header and view). Read values with `loadConfig` in `scripts/core.mjs`, which supplies the defaults.
 - Explanations live in one place so 0258–0261 can reuse them. Write them in British English, at a product-minded rather than technical level.
 - Failing before this build: none
+- Self-check: a value that's an object now reads as JSON rather than "[object Object]", and a test checks that an answer for a view closed and opened again since is dropped.
+- Header: the Settings button made the header too tight at 700 px for the project's name. Rather than add a media query (0140 allows only the phone one), the header's gaps and sides narrow with the screen below 900 px and are unchanged from 900 px up. The header, layout, contrast and dark-look tests (0136, 0140, 0147, 0150, 0160, 0161, 0163) pass.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -12,6 +12,7 @@ import { stopBuild, runState, runsDir, pidAlive, refusalFile, takeRefusal } from
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
+import { panelSettings } from './settings.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship and the speck run switch) ----------
 
@@ -519,6 +520,11 @@ export async function panelServer() {
     if (log) {
       try { return send(res, 200, 'application/json', JSON.stringify(logs.answer(req.headers, padId(log[1]), !!log[2]))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
+    }
+    // 0257: the settings people tune, read afresh from speck/config.yml each time the Settings view opens.
+    if (where === '/api/settings') {
+      try { return send(res, 200, 'application/json', JSON.stringify(panelSettings(repo))); }
+      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })); }
     }
     const pack = where.match(/^\/api\/tickets\/(\d{1,4})\/pack$/);
     if (pack) {
