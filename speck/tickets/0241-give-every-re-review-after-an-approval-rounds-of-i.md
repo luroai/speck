@@ -1,7 +1,7 @@
 ---
 id: "0241"
 title: "Give every re-review after an approval rounds of its own"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-16
 ---
 # 0241 · Give every re-review after an approval rounds of its own
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a ticket's ship is refused after approval and the builder fixes it without merging anything new from the base branch (for example a test its own change broke), its re-review counts towards `max_review_rounds`. A ticket approved in its last allowed round then blocks on a tiny fix, as 0223 did on a three-line rename, and only the user can unblock it.
