@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-15-keep-another-speck-run-s-lines-out-of-a-tur
 after: ["0219"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-16T03:01:39.573Z"
-approved: "2026-10-16T03:06:05.482Z"
+approved: "2026-10-16T03:09:11.356Z"
 
 ---
 # 0220 · Show only the refusing speck run's words when Turn on fails
@@ -51,13 +51,14 @@ When you turn auto-build on from the panel and it can't start, the message you s
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 126,710
-- Elapsed since build started: 4 min
-- Changed lines: 25 (limit 5000)
+- Reviewer tokens: 339,311
+- Elapsed since build started: 8 min
+- Changed lines: 31 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limits (no inbox note): a speck run that crashes rather than refusing shows only its exit code and where its output is; and if the panel itself stops before a refusing speck run exits, that run's refusal file is left in speck/.cache/runs/, which git ignores.
 
@@ -117,6 +118,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The panel now shows only the refusing run’s own message, preserving its wording and excluding other runs’ log lines. Successful startup and continued logging remain covered by passing tests. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6475438176f7979e52cdc644abb733f9fe8e0c59",
+    "merge": true,
+    "thread_id": "01a142ac-022b-77c0-a2a5-5808aabe6c50",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 211543,
+      "cached_input_tokens": 166912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1058,
+      "reasoning_output_tokens": 28
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T03:09:08.048Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelRunOn() reads the attempt-specific file through takeRefusal(); both 0220 refusal tests passed with unrelated run.log output written during startup."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "cmdRun() writes the unchanged SpeckError.message. The passing 0220 AC1 AC2 test checks the exact existing refusal wording."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "0220 AC3 passed, exercising successful startup, continued run.log output and environment-variable removal before builds. The helper move preserves the startup check and detached output handling."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified the recorded results: 38 passed, 3 skipped, no failures. The previously failing 0078 AC2 now passes; panel.mjs has 600 lines and run.mjs 598. No tests were weakened."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still isolates each refusal and preserves its wording, successful startup and logging. Moving the helpers fixes the file-size regression without changing behaviour. No blocking concerns remain."
   }
 }
 ```
