@@ -39,6 +39,8 @@ A ticket stopped before its build started can be built again with `/speck-build 
 ## Notes
 - The refusal is in `cmdStart` in `scripts/speck.mjs`; the stop message is in `stopBuild()` in `scripts/run.mjs`. `skills/speck-build/SKILL.md` already tells the builder to run `speck start` on a blocked ticket.
 - The note's open question is settled as blocked, as 0072 AC2 and `test/stop-0072.test.mjs` require.
+- Failing before this build: none
+- Self-check: no changes. A blocked ticket with no branch starts whatever blocked it, so a draft someone set blocked by hand would start too; no speck flow blocks a draft, so it's left as a known limit.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
