@@ -1,7 +1,7 @@
 ---
 id: "0223"
 title: "Say which review round is running"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,13 +14,14 @@ source: "speck/ideas/done/2026-10-14-say-which-review-round-is-running.md"      
 after: ["0217"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:48:31.710Z"
-approved: "2026-10-15T23:57:46.058Z"
-blocked_at: "2026-10-16T00:00:40.705Z"
+approved: "2026-10-16T02:48:25.584Z"
+blocked_at: ""
+waited_seconds: 10065
 
 ---
 # 0223 · Say which review round is running
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 A ticket stays `reviewing` between review rounds, and its card says "<reviewer> is reviewing · round <n>" with the last recorded round. After round 1 asks for changes, the card still says "round 1" while the builder fixes the findings and while the reviewer runs round 2, so someone watching can't tell who is at work.
@@ -55,12 +56,13 @@ When speck run tried to ship this, one older panel test failed. That test checks
 Round 1 (codex): changes requested: F1 Claude subagent reviews are never marked as running.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 756,966
-- Elapsed since build started: 9 min
+- Reviewer tokens: 1,288,237
+- Elapsed since build started: 180 min
 - Changed lines: 107 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
