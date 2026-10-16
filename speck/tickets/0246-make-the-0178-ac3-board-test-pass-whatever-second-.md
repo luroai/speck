@@ -1,7 +1,7 @@
 ---
 id: "0246"
 title: "Make the 0178 AC3 board test pass whatever second it runs in"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-16
 ---
 # 0246 · Make the 0178 AC3 board test pass whatever second it runs in
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 "0178 AC3: the panel works out the same queue, Plan, Shipped list and figures from the cut-down board" sometimes fails by chance: it works out the panel's model from two boards one after the other, and a live elapsed-time counter can tick over a second between them (`6013:28` against `6013:29`). Each such failure costs a second test run, shows in the flaky log and can hand an approved ticket back.
