@@ -1,7 +1,7 @@
 ---
 id: "0219"
 title: "Restart a build that was stopped before it started its ticket"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-resume-a-build-stopped-before-it-started.md
 after: ["0218","0227"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-16T02:56:06.257Z"
+approved: "2026-10-16T02:59:35.427Z"
 
 ---
 # 0219 · Restart a build that was stopped before it started its ticket
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When `speck stop` ends a build before it has run `speck start`, the ticket is left blocked in the main checkout with no branch. `/speck-build <id>` can't pick it up, because `speck start` refuses a ticket that isn't ready, and the stop message wrongly says the branch and work were kept.
@@ -49,9 +50,14 @@ If you stop a build before it has really got going, its ticket is still put on h
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 100,676
+- Elapsed since build started: 3 min
+- Changed lines: 14 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes): a ticket someone set blocked by hand while still a draft would also start, as speck start can't tell it from one speck stop blocked; no speck flow blocks a draft. A restarted ticket keeps its "Stopped by you on …" blocked question text, as a resumed blocked ticket with a branch does today.
 
