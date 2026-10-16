@@ -47,7 +47,11 @@ A ticket that's one finding from approval at the round limit gets one more revie
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a ticket reaches its review round limit with only one problem (or none) left for the reviewer, it now gets one more review round by itself instead of stopping to wait for you. If that extra round doesn't approve it, the ticket stops and asks you as before, and a ticket gets only one extra round. You no longer need to raise the round limit for everyone just to let one ticket finish.
+
+To see it, look at a ticket's review pack: an extra round shows as, for example, "round 4 of 3, an extra round", and the ticket's delivery log says which round it was.
+
+Worth keeping an eye on: tickets with two or more open problems at the limit, or where the reviewer escalates or the builder and reviewer keep disagreeing, still stop at the limit as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,7 +60,8 @@ A ticket that's one finding from approval at the round limit gets one more revie
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - `speck record` doesn't check `max_merge_rounds`, so a subagent reviewer can record merge rounds past it: saved to the inbox as speck/ideas/2026-10-16-make-speck-record-respect-max-merge-rounds.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -128,6 +133,79 @@ A ticket that's one finding from approval at the round limit gets one more revie
     ],
     "escalation_question": "",
     "summary": "The automatic extra round and its reporting work in the normal review flow. However, manually recorded reviews can bypass the limit and keep going until approval. That path needs the same eligibility check before this is ready to merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fcff82600fa4c18164aca3a1faf19a7712b341d5",
+    "thread_id": "01a143cf-b5f7-7fc3-8228-223fe89ab299",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 254179,
+      "cached_input_tokens": 200960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1327,
+      "reasoning_output_tokens": 32
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T08:26:09.283Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "extraRoundDue() and nextAction() allow a qualifying extra round. Both reviewSetup() and cmdRecord() use extraRound() to admit it. Passing AC1 tests exercise next, review and record."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The shared extraRound() guard refuses further ordinary rounds before recording. Passing AC2 tests cover an unsuccessful extra round, two open blocking findings, escalation, repeated disputes and unchanged merge-round limits. The new record test verifies refusal leaves the ticket unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "pack.mjs displays meta.extra in the verdict and history; roundsLine() and close.mjs include it in delivery and review logs. Passing AC3 tests exercise the pack and close output."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both build and review skills require taking the extra round without asking the user and prohibit changing limits.max_review_rounds to bypass a block. The AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The saved test output confirms all 64 selected tests passed. Existing test changes remain within AC5's permitted expectation changes; no unrelated fixes found."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review.mjs",
+        "issue": "speck record previously accepted unlimited extra rounds without checking eligibility.",
+        "suggested_fix": "Implemented: cmdRecord() and reviewSetup() now share the extraRound() guard, with regression tests verifying refused recordings leave history unchanged.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Qualifying tickets now automatically receive one extra review round, clearly marked in their reports. Both review paths enforce the limit, including manually recorded reviews. The earlier bypass is fixed, all selected tests pass, and no blocking concerns remain."
   }
 }
 ```
