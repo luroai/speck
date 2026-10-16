@@ -28,8 +28,8 @@ test('0250 AC1: the README opens with the tagline, the opening paragraph, the im
   assert.equal(lines[0], '# speck');
   assert.equal(lines[1], `**${TAGLINE}**`);
   assert.equal(lines[2], PLAIN);
-  assert.equal(lines[3], OPENING);
-  assert.equal(lines[4], '<picture>');
+  // 0251 put a plain description of speck between the plain line and this paragraph, which still comes just before the image.
+  assert.equal(lines[lines.indexOf('<picture>') - 1], OPENING);
   assert.equal(headings()[0], 'Get started');
   // Between the image and Get started there's only the status line.
   const between = r.slice(r.indexOf('</picture>') + '</picture>'.length, r.indexOf('## Get started')).trim();
