@@ -42,6 +42,8 @@ Near the top, the README shows a demo image of an agent app with a conversation 
 - The images are public: check them for anything private (names, accounts, client or project names other than speck) before committing.
 - Checked 2026-10-16: GitHub renders `<picture>` with a `prefers-color-scheme` `<source>` in a README: `gh api markdown` (gfm) keeps the `<source media="(prefers-color-scheme: dark)">` and wraps the element in GitHub's `<themed-picture>`, which switches the image with the reader's GitHub theme.
 - Failing before this build: none
+- AC4 is checked by looking at the two images: they show a mock agent app (no product branding, no account or user name), a made-up "shop" project and the panel at `127.0.0.1:4777` with no "Disconnected" banner and no speck version. The supplied files were used unchanged: 3000×1880, about 310 KB each, with no text or EXIF metadata chunks, which the AC4 test checks.
+- Self-check: no changes (ran the README, release, private-words and licence test files as well: all pass).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
