@@ -1,7 +1,7 @@
 ---
 id: "0257"
 title: "Show speck's settings, explained, in the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T20:29:54.810Z"
 ---
 # 0257 · Show speck's settings, explained, in the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Someone who has just set speck up can't tell which of the 30 or so lines in `speck/config.yml` matter, what each one does or what changing it would mean, so they leave settings as they are or change them blind. Some settings matter a lot: `auto_ship` decides whether approved tickets merge and push without them.
@@ -46,7 +46,11 @@ The panel has a Settings view that shows the settings people tune, grouped, each
 - Header: the Settings button made the header too tight at 700 px for the project's name. Rather than add a media query (0140 allows only the phone one), the header's gaps and sides narrow with the screen below 900 px and are unchanged from 900 px up. The header, layout, contrast and dark-look tests (0136, 0140, 0147, 0150, 0160, 0161, 0163) pass.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's header has a new Settings button, just before the light/dark button. It opens a side pane listing the twelve settings people usually tune, in four groups: shipping, building and reviewing, how much runs at once, and ticket size limits. Each one shows its current value, marked "default" when your settings file doesn't set it, and a sentence or two on what it does and what changing it would mean. The two shipping settings say plainly that a ticket they cover is merged and pushed without waiting for you.
+
+To see it, open the panel and press Settings. Close it with its Close button or Escape. Change a value in the settings file, then open the view again: it shows the new value without reloading the page. Nothing in the view changes a setting: you still edit the file to do that.
+
+Worth a look: the header's spacing now narrows a little on screens between phone width and 900 px wide, to make room for the new button.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +60,73 @@ The panel has a Settings view that shows the settings people tune, grouped, each
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none went to the inbox):
+- The auto_ship explanation doesn't mention auto-ship's third condition, that the reviewer could inspect the repo in every round. It's left out to keep the explanation short. Revisit it if people are surprised that a covered ticket waits.
+- The Settings pane copies the full-ticket pane's styles rather than sharing them. A tidy-up could give both panes one shared class.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6a860ed0f98d92b7296e6a78b095a87e1f24557e",
+    "thread_id": "01a1466f-41ca-7770-a945-245c3838071a",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 113058,
+      "cached_input_tokens": 70144,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 649,
+      "reasoning_output_tokens": 44
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T20:38:01.704Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html adds the header button, openSettings(), closeSettings() and Escape handling. The two AC1 tests passed and exercise opening, both closing methods and focus restoration."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs panelSettings() reads the checkout through loadConfig(), supplying the required groups, keys, values and default labels. Three passing AC2 tests cover server values, missing settings and page rendering."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "SETTING_GROUPS provides reusable explanations for all 12 settings, including the required merge-and-push warning for both shipping settings. Both AC3 tests passed; the explanations also satisfy manual inspection."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "openSettings() fetches /api/settings with cache disabled on every opening; panelSettings() rereads the file. Passing tests cover changed config, reopening, request failures and rejection of stale responses."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "renderSettings() provides only a Close control and fetches through GET. The server rejects other methods before routing /api/settings. Passing AC5 tests exercise page controls, request methods and server rejection of POST."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now shows the requested settings in four explained groups, refreshes their values each time it opens, and offers no editing controls. The tests exercise all five criteria and passed. I found no blocking correctness or scope issues."
+  }
+}
+```
+
+</details>
