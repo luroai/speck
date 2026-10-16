@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { shipRepo, runIn, gIn, env, CLI } from './ship.mjs';
+import { shipRepo, runIn, gIn, env } from './ship.mjs';
+import { speck } from './cli.mjs';
 import { ticketRounds } from '../../scripts/core.mjs';
 
 export const TICKET = 'speck/tickets/0001-export-bookings.md';
@@ -46,5 +46,5 @@ export function mergeRepo() {
 
 // Runs `speck review` with the fake reviewer answering `v`. `extra` adds to its environment.
 export function spawnReview(wt, v, extra = {}) {
-  return spawnSync(process.execPath, [CLI, 'review', '1'], { cwd: wt, encoding: 'utf8', env: { ...env, FAKE_VERDICT: JSON.stringify(verdict(v)), ...extra } });
+  return speck(wt, { ...env, FAKE_VERDICT: JSON.stringify(verdict(v)), ...extra }, 'review', '1');
 }
