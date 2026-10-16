@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { ROOT, env, runRepo, until, alive } from './support/run.mjs';
+import { ROOT, env, runRepo, until, alive, leftRunning } from './support/run.mjs';
+import { shipRepo } from './support/ship.mjs';
 import { cliCopy } from './support/panel.mjs';
 import { waitingSays, failedSays } from '../scripts/run-switch.mjs';
 
@@ -99,8 +100,85 @@ test('0247 AC2: it waits for the running build, saying so once, starts nothing n
     const out = run.out();
     assert.equal(count(out, 'will switch to the new code'), 1, out);
     assert.ok(out.indexOf('0001 build exited with code 0.') < out.indexOf(`${SWITCHED} v2`), out);
-    assert.ok(out.indexOf(`${SWITCHED} v2`) < out.indexOf('Launched 0002'), `0002 is launched only by the new code:\n${out}`);
+    assert.ok(out.indexOf('0001 build exited with code 0.') < out.indexOf('Launched 0002'), `0002 is launched only once 0001 has ended:\n${out}`);
+    assert.ok(!out.includes('couldn\'t switch'), `so by the new code:\n${out}`);
     assert.equal(count(out, 'Launched 0001'), 1, `the new code doesn't launch 0001 again:\n${out}`);
+  } finally { await stop(run); }
+});
+
+// Sets a draft ticket ready and commits it, for speck run to launch.
+const setReady = (r, id) => {
+  const t = path.join(r.dir, 'speck', 'tickets', `${id}-t.md`);
+  fs.writeFileSync(t, fs.readFileSync(t, 'utf8').replace('status: draft', 'status: ready'));
+  r.g('commit', '-qam', `ready ${id}`);
+};
+
+test('0247 AC1, AC2: it waits for a build it adopted, naming it once, launches nothing meanwhile, then switches', async () => {
+  const r = runRepo({ tickets: [['0002', { status: 'draft' }]], max: 2 });
+  const left = leftRunning(r.dir, '0001');
+  const { cli } = cliCopy();
+  const run = startRun(r.dir, cli);
+  try {
+    assert.ok(await until(() => run.out().includes('0001 is already being built')), run.out());
+    edit(cli, 'run-switch.mjs', mark('v2'));
+    assert.ok(await until(() => run.out().includes(waitingSays(['0001'], null))), run.out());
+    setReady(r, '0002');
+    await new Promise(res => setTimeout(res, 600));
+    assert.equal(r.calls().length, 0, `nothing is launched while it waits:\n${run.out()}`);
+    process.kill(left.pid, 'SIGKILL');
+    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    assert.ok(await until(() => r.calls().length === 1), run.out());
+    const out = run.out();
+    assert.equal(count(out, 'will switch to the new code'), 1, out);
+    assert.ok(out.indexOf('0001 build (session old-0001') < out.indexOf(`${SWITCHED} v2`), out);
+  } finally { try { process.kill(left.pid, 'SIGKILL'); } catch { /* gone */ } await stop(run); }
+});
+
+test('0247 AC1, AC2: it waits for the ship it started, naming it once, then switches', async () => {
+  const r = shipRepo({ test: 'sleep 1.5' });
+  const cfg = path.join(r.dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf8').replace(/^auto_ship:.*$/m, 'auto_ship: true'));
+  r.g('commit', '-qam', 'config');
+  const { cli } = cliCopy();
+  const run = startRun(r.dir, cli);
+  try {
+    assert.ok(await until(() => run.out().includes('Shipping 0001')), run.out());
+    edit(cli, 'run-switch.mjs', mark('v2'));
+    assert.ok(await until(() => run.out().includes(waitingSays([], '0001'))), run.out());
+    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`), 20000), run.out());
+    const out = run.out();
+    assert.equal(count(out, 'will switch to the new code'), 1, out);
+    assert.ok(out.indexOf('Shipped 0001.') > 0 && out.indexOf('Shipped 0001.') < out.indexOf(`${SWITCHED} v2`), out);
+    assert.equal(count(out, 'Shipping 0001'), 1, `no ship starts again:\n${out}`);
+  } finally { await stop(run); }
+});
+
+// A copy of the CLI whose speck run, on new code, fails as it starts watching, after its code has loaded.
+const failsStarting = src => src.replace('const start = () => { started = true;', 'const start = () => { started = true; throw new Error(\'broken start\');');
+
+test('0247 AC4: new code that fails as it starts watching leaves the old one running, the first time and after a switch', async () => {
+  const r = runRepo({ tickets: [['0001', { status: 'draft' }], ['0002', { status: 'draft' }]], max: 2 });
+  const { cli } = cliCopy();
+  assert.notEqual(failsStarting(fs.readFileSync(path.join(path.dirname(cli), 'run.mjs'), 'utf8')), fs.readFileSync(path.join(path.dirname(cli), 'run.mjs'), 'utf8'));
+  const run = startRun(r.dir, cli);
+  try {
+    assert.ok(await watching(run), run.out());
+    // The process you started, still running its own code.
+    edit(cli, 'run.mjs', failsStarting);
+    assert.ok(await until(() => run.out().includes('couldn\'t switch to the new code: Error: broken start')), run.out());
+    setReady(r, '0001');
+    assert.ok(await until(() => r.calls().length === 1), run.out());
+    // A speck run on new code, after a switch.
+    edit(cli, 'run.mjs', src => src.replace('throw new Error(\'broken start\');', ''));
+    edit(cli, 'run-switch.mjs', mark('v2'));
+    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
+    edit(cli, 'run.mjs', failsStarting);
+    assert.ok(await until(() => count(run.out(), 'couldn\'t switch to the new code: Error: broken start') === 2), run.out());
+    setReady(r, '0002');
+    assert.ok(await until(() => r.calls().length === 2), run.out());
+    assert.equal(run.child.exitCode, null);
+    assert.equal(childrenOf(run.child.pid).length, 1, 'only the speck run that carried on');
+    assert.ok(!run.out().includes(`${SWITCHED} v3`));
   } finally { await stop(run); }
 });
 
