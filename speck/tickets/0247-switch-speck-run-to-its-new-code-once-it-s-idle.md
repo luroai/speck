@@ -1,7 +1,7 @@
 ---
 id: "0247"
 title: "Switch speck run to its new code once it's idle"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T09:30:55.502Z"
+approved: "2026-10-16T10:02:27.364Z"
 
 ---
 # 0247 · Switch speck run to its new code once it's idle
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck run` keeps running the code it started with. When a ticket that changes `speck run` ships, the change isn't live until someone turns `speck run` off and on, and nothing says so. On 2026-10-16 one `speck run` had been on since the evening before, so parts of seven shipped tickets (0216 to 0220, 0235 and 0245) weren't running.
@@ -57,9 +58,16 @@ Worth keeping an eye on: if the new version can't start, `speck run` says why on
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The successor announces readiness before its startup work runs.; F2 The tests do not exercise two explicitly required draining paths: adopted builds and running ships.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 692,548
+- Elapsed since build started: 32 min
+- Changed lines: 213 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - A paused build counts as running, so `speck run` keeps its old code until the build is played or stopped.
