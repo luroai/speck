@@ -1,7 +1,7 @@
 ---
 id: "0247"
 title: "Switch speck run to its new code once it's idle"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T09:30:55.502Z"
 ---
 # 0247 · Switch speck run to its new code once it's idle
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck run` keeps running the code it started with. When a ticket that changes `speck run` ships, the change isn't live until someone turns `speck run` off and on, and nothing says so. On 2026-10-16 one `speck run` had been on since the evening before, so parts of seven shipped tickets (0216 to 0220, 0235 and 0245) weren't running.
@@ -57,3 +57,87 @@ started: "2026-10-16T09:30:55.502Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f29e6db246e74e53846ae3935f44dd017b30c588",
+    "thread_id": "01a14424-678e-7f32-87b2-21eeb6dadfa3",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 113976,
+      "cached_input_tokens": 66432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1140,
+      "reasoning_output_tokens": 355
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T09:57:16.249Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "unclear",
+        "evidence": "run-0247 tests demonstrate content changes, unchanged saves and repeated switches. No test exercises switching while an adopted build or a ship is running."
+      },
+      {
+        "id": 2,
+        "status": "unclear",
+        "evidence": "The running-build test verifies draining and launch suppression. Ship coverage only tests waitingSays text; it does not exercise shipQueue.running(), ship completion or suppression of another ship."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The AC3 process tests cover a stable live lock through repeated switches, inherited output, terminal Ctrl-C and the panel's SIGINT stopping the successor."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "run-switch.mjs awaitGo sends ready before start() executes. run.mjs start() then performs adoptEarlierBuilds() and the initial tick. A failure there occurs after the previous runner has relinquished control, so the old code cannot carry on. The test covers only an import syntax error."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md describes idle switching, and the documentation test verifies it. All seven reported ticket tests passed; the diff provides no identified regression in previously passing tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run-switch.mjs",
+        "issue": "The successor announces readiness before its startup work runs. If adoptEarlierBuilds() or the initial tick throws, the original runner has already stopped its loop (or the previous worker has exited). The successor dies and the host exits, contrary to the promised fallback when new code cannot start.",
+        "suggested_fix": "Include fallible startup initialisation in the readiness handshake while keeping launches disabled until ownership transfers. Preserve the old runner on failure, and add a process test for a startup failure after successful module import, including after an earlier successful switch.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/run-0247.test.mjs",
+        "issue": "The tests do not exercise two explicitly required draining paths: adopted builds and running ships. Checking the wording with a ship id does not establish that a real ship delays switching or that another ship cannot start during draining.",
+        "suggested_fix": "Add behavioural tests for an adopted build and a running ship. Verify they finish before handover, are named once, and no further build or ship starts before the successor takes over.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The main switching flow works in the supplied tests, including repeated updates and stopping from the terminal or panel. However, a successor can report itself ready before startup finishes; a failure then stops auto-build instead of keeping the old version running. Adopted-build and ship draining also need behavioural tests before approval."
+  }
+}
+```
+
+</details>
