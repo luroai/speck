@@ -1,7 +1,7 @@
 ---
 id: "0250"
 title: "Bring the README's wording in line with the landing page"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0249"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T11:42:20.136Z"
 approved: "2026-10-16T11:47:30.498Z"
+finished: "2026-10-16T13:11:35.017Z"
 
 ---
 # 0250 · Bring the README's wording in line with the landing page
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README and the landing page describe speck differently: the landing page is built around two decisions and the things speck does for you, while the README is a long list. A technical reader, such as a hiring team at a coding-tools company, comes to the README for the same story with the detail of how it works, and finds the install prompt only after several sections.
