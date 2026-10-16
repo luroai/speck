@@ -1,7 +1,7 @@
 ---
 id: "0252"
 title: "Set a ticket ready only when the user's latest message says to"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:40:42.427Z"
+approved: "2026-10-16T13:42:47.940Z"
 
 ---
 # 0252 · Set a ticket ready only when the user's latest message says to
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Setting a ticket ready is the user's gate (Gate 1), but `/speck-ticket` only says to set it ready "if the user explicitly approves", without saying what counts. On 2026-10-16 an agent read the user's choice of a tagline as a yes to its own offer to "update 0251 and set it ready", and set it ready. `speck run` started building it at once, and auto-ship covered its risk, so it could have shipped without the user seeing it. Nothing breaks a user's trust in speck faster.
@@ -51,9 +52,14 @@ Agents working with speck now set a ticket ready only when your latest message t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 88,384
+- Elapsed since build started: 2 min
+- Changed lines: 8 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
