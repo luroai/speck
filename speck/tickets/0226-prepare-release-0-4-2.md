@@ -43,6 +43,8 @@ speck is ready to be released as 0.5.1.
 - Waits for every ticket planned for this release (0213 to 0225), so they're in it.
 - After it ships, check that the `v0.5.1` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.1 --target main --title "speck 0.5.1" --notes-file docs/releases/v0.5.1.md`.
 
+- Failing before this build: none
+
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
