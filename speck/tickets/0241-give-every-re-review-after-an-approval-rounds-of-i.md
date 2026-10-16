@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-16-give-a-handed-back-ticket-s-re-review-round
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:07:24.979Z"
-approved: "2026-10-16T08:10:32.000Z"
+approved: "2026-10-16T08:15:37.736Z"
 
 ---
 # 0241 · Give every re-review after an approval rounds of its own
@@ -53,12 +53,13 @@ When a ticket has been approved but can't ship straight away and needs a small c
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 99,968
-- Elapsed since build started: 3 min
+- Reviewer tokens: 304,461
+- Elapsed since build started: 8 min
 - Changed lines: 17 (limit 5000)
 - Follow-ups:
   - Inbox: speck/ideas/2026-10-16-say-what-a-merge-round-run-re-reviewed-when-it-blocks.md (the block reason after max_merge_rounds still says the run re-reviewed a merge).
@@ -120,6 +121,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Fixes after approval now get their own review allowance even when no base-branch merge occurred. The separate cap still applies, and reviewers receive the appropriate changes without misleading merge wording. All 20 targeted tests passed; no blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "08462dcbd4b21ca3d0e208ccfc78944c9cc19a54",
+    "merge": true,
+    "thread_id": "01a143c2-a0c8-7f33-9fdb-638b06bfbe7c",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 203481,
+      "cached_input_tokens": 148864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1012,
+      "reasoning_output_tokens": 0
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T08:15:32.107Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/review.mjs: isMergeRound(), reviewSetup() and cmdRecord() consistently classify post-approval rounds. Passing 0241 AC1 tests cover both command paths, continuation and max_merge_rounds."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0241 AC2 test verifies approval in round 3, a code change without a merge, approval in round 4 and next returning ship."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewSince() and reviewerPrompt() retain independent merge detection. Passing AC3 tests inspect captured prompts for the incremental changes without merge wording and the whole change after an actual merge."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The brief states the required rule. Updated pack-0131 expectations correctly reflect its post-approval fixture. The shared helper calls the real command through speck()/runCommand(), preserving behavioural coverage. Saved test output confirms all 50 tests passed, including the previously failing test files."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change still meets all criteria after merging main. The test helper preserves real review coverage, and the pack expectations correctly reflect the new rule. All 50 targeted tests passed. No blocking concerns."
   }
 }
 ```
