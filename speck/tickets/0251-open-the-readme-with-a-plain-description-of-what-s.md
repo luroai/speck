@@ -1,7 +1,7 @@
 ---
 id: "0251"
 title: "Open the README with a plain description of what speck does"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-16
 ---
 # 0251 · Open the README with a plain description of what speck does
 
-**Status:** 📋 ready
+**Status:** 📝 draft
 
 ## Problem
 The README still doesn't say plainly what speck is. It opens with a slogan that needs context to make sense ("Your judgement, at agent speed.") and abstract lines about decisions, so a reader, the maintainer included, has to work out what it does and who it's for. A non-technical builder or a hiring team should get it from the first few lines.
