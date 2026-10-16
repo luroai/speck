@@ -6,56 +6,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { shipRepo, runIn, gIn, env, CLI } from './support/ship.mjs';
+import { runIn, gIn } from './support/ship.mjs';
+import { TICKET, read, verdict, mergeRepo, spawnReview } from './support/merge-rounds.mjs';
 import { nextAction, isMergeRound, appendRounds } from '../scripts/review.mjs';
 import { loadConfig, ticketRounds } from '../scripts/core.mjs';
 import { checkConfigValue } from '../scripts/config.mjs';
 import { reviewPack } from '../scripts/pack.mjs';
 
-const TICKET = 'speck/tickets/0001-export-bookings.md';
-const read = (dir, f) => fs.readFileSync(path.join(dir, f), 'utf8');
 const noTrace = res => assert.doesNotMatch(res.stderr, /^\s+at /m, 'no stack trace');
-const verdict = (v, findings = []) => ({ verdict: v, criteria: [{ id: 1, status: v === 'approve' ? 'pass' : 'fail', evidence: 'e' }], findings, summary: 's', escalation_question: '' });
 const cfg = (o = {}) => ({ limits: { max_review_rounds: 3, max_merge_rounds: 2, escalate_after_repeat_disputes: 2, ...o } });
 const round = (n, v, meta = {}, findings = []) => ({ meta: { round: n, reviewer: 'codex', ...meta }, verdict: verdict(v, findings) });
-
-// An approved ticket (one ordinary round) in its own worktree, with max_review_rounds set to 1 there, and a fake
-// command reviewer "fake" that answers with FAKE_VERDICT. main then changes shared.txt, as the ticket does.
-function mergeRepo() {
-  const r = shipRepo();
-  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-fake-'));
-  const fake = path.join(bin, 'fake-reviewer');
-  fs.writeFileSync(fake, `#!${process.execPath}\nrequire('fs').readFileSync(0, 'utf8');\nconsole.log(process.env.FAKE_VERDICT);\n`, { mode: 0o755 });
-  const cfgFile = path.join(r.wt, 'speck', 'config.yml');
-  fs.writeFileSync(cfgFile, read(r.wt, 'speck/config.yml').replace('reviewer_options:\n', `reviewer_options:\n  fake:\n    command: ${JSON.stringify(fake)}\n`));
-  assert.equal(runIn(r.wt, 'config', 'set', 'limits.max_review_rounds', '1').status, 0);
-  fs.writeFileSync(path.join(r.wt, TICKET), read(r.wt, TICKET).replace(/^reviewer: .*$/m, 'reviewer: fake')
-    .replace(/^## Review rounds$/m, '## Review log\n\n## Delivery log\n\n## Review rounds'));
-  gIn(r.wt, 'commit', '-qam', 'one round only, fake reviewer');
-  fs.writeFileSync(path.join(r.dir, 'shared.txt'), 'main side\n');
-  r.g('commit', '-qam', 'main moves on');
-  const mergeMain = () => {
-    gIn(r.wt, 'merge', '-q', 'main');
-    fs.writeFileSync(path.join(r.wt, 'shared.txt'), 'feature\nmain side\n');
-    gIn(r.wt, 'add', 'shared.txt');
-    assert.equal(gIn(r.wt, 'commit', '-q', '--no-edit').status, 0);
-  };
-  const work = (text = 'more\n') => {
-    fs.appendFileSync(path.join(r.wt, 'notes.txt'), text);
-    gIn(r.wt, 'commit', '-qam', 'work');
-  };
-  const vfile = path.join(bin, 'verdict.json');
-  const record = v => { fs.writeFileSync(vfile, JSON.stringify(verdict(v))); return runIn(r.wt, 'record', '1', vfile); };
-  const next = () => runIn(r.wt, 'next', '1').stdout.trim();
-  const saved = () => ticketRounds(read(r.wt, TICKET)).rounds;
-  return { ...r, mergeMain, work, record, next, saved };
-}
-
-// Runs `speck review` with the fake reviewer answering `v`.
-function spawnReview(wt, v) {
-  return spawnSync(process.execPath, [CLI, 'review', '1'], { cwd: wt, encoding: 'utf8', env: { ...env, FAKE_VERDICT: JSON.stringify(verdict(v)) } });
-}
 
 test('0097 AC1: a round after an approval and a merge of the base branch is a merge round, and next doesn\'t count it towards max_review_rounds', () => {
   const r = mergeRepo();
@@ -77,29 +37,27 @@ test('0097 AC1: speck review runs a merge round when max_review_rounds is used u
   assert.equal(r.next(), 'ship');
 });
 
-test('0097 AC1: a round after an approval with no merge is an ordinary round and still counts', () => {
+test('0097 AC1: a round after an approval with no merge is a merge round too (0241)', () => {
   const r = mergeRepo();
   r.work();
   const res = spawnReview(r.wt, 'approve');
-  assert.equal(res.status, 3, res.stderr + res.stdout);
+  assert.equal(res.status, 0, res.stderr + res.stdout);
   noTrace(res);
-  assert.match(res.stderr, /Max review rounds \(1\) reached/);
-  assert.equal(r.saved().length, 1);
-  assert.equal(r.record('changes_requested').status, 11);
-  assert.equal(r.saved()[1].meta.merge, undefined);
+  assert.equal(r.saved()[1].meta.merge, true);
+  assert.equal(r.next(), 'ship');
 });
 
 test('0097 AC1: a merge after a round that didn\'t approve isn\'t a merge round', () => {
   assert.equal(isMergeRound([round(1, 'changes_requested')], true), false);
   assert.equal(isMergeRound([round(1, 'approve')], true), true);
-  assert.equal(isMergeRound([round(1, 'approve')], false), false);
+  assert.equal(isMergeRound([round(1, 'approve')], false), true, 'with or without a merge (0241)');
   assert.equal(isMergeRound([], true), false, 'round 1 is never a merge round');
 });
 
 test('0097 AC1: the rounds that re-review a merge until it is approved are merge rounds too', () => {
   // The fix for a merge round's findings is re-reviewed in the same merge's next round, not an ordinary one.
   assert.equal(isMergeRound([round(1, 'approve'), round(2, 'changes_requested', { merge: true })], false), true);
-  assert.equal(isMergeRound([round(1, 'approve'), round(2, 'approve', { merge: true })], false), false, 'an approved merge ends the run');
+  assert.equal(isMergeRound([round(1, 'approve'), round(2, 'approve', { merge: true })], false), true, 'an approved merge ends the run, and the round after it starts a new one (0241)');
   const r = mergeRepo();
   r.mergeMain();
   assert.equal(r.record('changes_requested').status, 10);
