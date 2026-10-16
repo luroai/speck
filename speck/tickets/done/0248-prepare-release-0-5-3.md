@@ -1,7 +1,7 @@
 ---
 id: "0248"
 title: "Prepare release 0.5.3"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0247"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T10:07:12.997Z"
 approved: "2026-10-16T10:10:10.131Z"
+finished: "2026-10-16T10:12:08.181Z"
 
 ---
 # 0248 · Prepare release 0.5.3
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0247 makes `speck run` switch to its new code by itself once it's idle, so shipped changes to `speck run` go live without anyone turning it off and on. Anyone following the README's setup prompt still gets 0.5.2 without it.
