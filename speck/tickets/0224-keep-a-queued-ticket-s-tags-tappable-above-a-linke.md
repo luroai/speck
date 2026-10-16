@@ -39,6 +39,9 @@ On a phone, every part of a queued ticket's tag tap areas works for the tag, eve
 - The tags' tap areas come from 0165 and the linked id's from 0164, in the under-700 px rules in `templates/panel.html`. The id is later in the page, so today it wins where they overlap.
 - The note's open question is settled as the tag winning where they overlap, without moving the layout (AC2), as 0190 did.
 - Failing before this build: none
+- AC3 is checked by the whole suite, which `speck ship` runs. 0190's phone set-up moved into `test/support/queue-phone.mjs` so 0224's tests share it; its tests are unchanged.
+- Chrome taps at whole pixels, so 0224's tap test taps the last whole pixel inside each tag's tap area: a tap at y + 21.5 px from a tag's centre lands on the pixel just past it.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
