@@ -44,6 +44,7 @@ speck is ready to be released as 0.5.4.
 - After 0253, the setup prompt names no version, so this release doesn't change it. In the release notes, "how to install it" can give the fixed command for this release (`npx 'github:luroai/speck#v0.5.4' init`) as earlier notes did, or the latest one: either is fine.
 - After it ships, check that the `v0.5.4` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.4 --target main --title "speck 0.5.4" --notes-file docs/releases/v0.5.4.md`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
