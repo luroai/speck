@@ -43,6 +43,7 @@ The README tells the landing page's story in the same order and words, with the 
 - Source for the story and wording: the landing page, `site/index.html` in the speck-site repo, beside this one on the build machine. Use its words where they fit, and British English.
 - Public text: keep private names and paths out, as the existing private-words and Luro checks require.
 - `/no-ai-slop` is installed globally for Claude Code (`~/.claude/skills/no-ai-slop/`), so a `speck run` build can use it. Detect mode names patterns and doesn't rewrite: the builder makes the fixes itself, keeping the landing page's voice.
+- Failing before this build: none
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
 
 ## In plain words
