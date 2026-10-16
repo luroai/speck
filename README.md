@@ -1,6 +1,8 @@
 # speck
 
-**Your judgement, at agent speed.**
+**Ship code you can't read, and still trust it.**
+
+speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time, so you can set them going, walk away and trust what you come back to.
 
 You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you.
 

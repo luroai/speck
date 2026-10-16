@@ -17,7 +17,9 @@ const subsections = s => [...s.matchAll(/^### (.+)\n([\s\S]*?)(?=^### |(?![\s\S]
 const setting = key => read('templates/config.yml').match(new RegExp(`^\\s*${key}: (\\S+)`, 'm'))?.[1];
 
 // The landing page's words, from site/index.html in the speck-site repo.
-const TAGLINE = 'Your judgement, at agent speed.';
+const TAGLINE = "Ship code you can't read, and still trust it.";
+// 0255 put this plain line between the tagline and the opening paragraph.
+const PLAIN = 'speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time, so you can set them going, walk away and trust what you come back to.';
 const OPENING = 'You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you.';
 
 test('0250 AC1: the README opens with the tagline, the opening paragraph, the image, then Get started', () => {
@@ -25,8 +27,9 @@ test('0250 AC1: the README opens with the tagline, the opening paragraph, the im
   const lines = r.split('\n').filter(l => l.trim());
   assert.equal(lines[0], '# speck');
   assert.equal(lines[1], `**${TAGLINE}**`);
-  assert.equal(lines[2], OPENING);
-  assert.equal(lines[3], '<picture>');
+  assert.equal(lines[2], PLAIN);
+  assert.equal(lines[3], OPENING);
+  assert.equal(lines[4], '<picture>');
   assert.equal(headings()[0], 'Get started');
   // Between the image and Get started there's only the status line.
   const between = r.slice(r.indexOf('</picture>') + '</picture>'.length, r.indexOf('## Get started')).trim();
