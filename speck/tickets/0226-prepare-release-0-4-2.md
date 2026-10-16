@@ -44,6 +44,9 @@ speck is ready to be released as 0.5.1.
 - After it ships, check that the `v0.5.1` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.1 --target main --title "speck 0.5.1" --notes-file docs/releases/v0.5.1.md`.
 
 - Failing before this build: none
+- Changed 0236's tests that named 0.5.0 as the current version to check the current version instead, and its figures test to read the README as 0236 shipped it, as 0236 did for 0210, so they keep passing with 0.5.1.
+- Also fixed two README command rows the tickets since v0.5.0 made untrue: `run` now says one at a time unless you raise `max_parallel_builds` (0225; this covers the inbox idea `speck/ideas/2026-10-15-say-in-the-readme-s-run-row-that-more-builds-can-run.md`), and `stop` keeps a branch only once the build had started (0219).
+- Self-check: reworded the changelog's review-round line to say "the last round's findings" rather than a fixed round number.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
