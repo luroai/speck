@@ -100,7 +100,7 @@ test('0106 AC5: the brief has a short Releases section saying how releases work'
   assert.match(s, /`main` moves with every ship/);
   assert.match(s, /tagged version/);
   assert.match(s, /README always points at the latest release/);
-  assert.match(s, /maintainer creates and pushes the tag/);
-  assert.match(s, /once the release ticket has shipped/i);
+  // 0243 (release 0.5.2): a workflow now tags and publishes each release, so the maintainer no longer does it by hand.
+  assert.match(s, /a workflow tags the version and publishes its GitHub release/);
   assert.match(s, /shipping is theirs/);
 });

@@ -1,6 +1,6 @@
 # speck — product brief
 
-Status: 0.5.1, a public preview · 16 October 2026
+Status: 0.5.2, a public preview · 16 October 2026
 
 ## Thesis
 
@@ -196,7 +196,7 @@ Agents never merge or ship unless the user runs `/speck-ship` or clicks the pane
 
 `main` moves with every ship, so it's whatever shipped last. Releases are tagged versions (`v0.3.0`), and the README always points at the latest release, so anyone following its setup prompt gets a fixed version rather than `main`.
 
-A release is an ordinary ticket. It sets the version in `package.json`, adds the release's section at the top of `CHANGELOG.md` and points the README's setup prompt at the new tag. A test fails if those three don't name the same version. Once the release ticket has shipped, the maintainer creates and pushes the tag straight away, as shipping is theirs: until then, the README's prompt points at a tag that doesn't exist yet.
+A release is an ordinary ticket. It sets the version in `package.json`, adds the release's section at the top of `CHANGELOG.md` and points the README's setup prompt at the new tag. A test fails if those three don't name the same version. The maintainer ships the release ticket, as shipping is theirs. When a release ticket lands on `main`, a workflow tags the version and publishes its GitHub release from `docs/releases/v<version>.md`, so a release ticket must add that file. Until the workflow has run, the README's prompt points at a tag that doesn't exist yet.
 
 ## Where it's heading
 

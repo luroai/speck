@@ -46,6 +46,9 @@ speck is ready to be released as 0.5.2.
 - After it ships, check that the `v0.5.2` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.2 --target main --title "speck 0.5.2" --notes-file docs/releases/v0.5.2.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Built from main at `speck(0245): Stop speck run's Claude Code builds running commands in the background`: 229 shipped, 16 cancelled, 14 minutes median, 1 round median, 115 approved in the first round.
+- 0106's Releases check named the old "maintainer creates and pushes the tag" wording, which AC5 removes, so it now checks the workflow wording. 0226's checks that named 0.5.1 as the current version now check the current version, as 0226 did for 0236.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
