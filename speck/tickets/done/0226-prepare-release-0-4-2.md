@@ -1,7 +1,7 @@
 ---
 id: "0226"
 title: Prepare release 0.5.1                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0213","0214","0215","0216","0217","0218","0219","0220","0221","0222","0
 created: 2026-10-15
 started: "2026-10-16T03:10:56.254Z"
 approved: "2026-10-16T03:14:26.331Z"
+finished: "2026-10-16T03:16:17.201Z"
 
 ---
 # 0226 · Prepare release 0.5.1
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The 0.5.1 tickets fix problems in what 0.4.0 shipped: the ship queue's messages, stopping and restarting builds, build timers, the reviewer's test summary, review packs and the panel. Anyone following the README's setup prompt still gets 0.5.0 without them.
