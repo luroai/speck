@@ -1,7 +1,7 @@
 ---
 id: "0254"
 title: "Prepare release 0.5.4"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0249", "0250", "0255", "0251", "0256", "0252", "0253"]                #
 created: 2026-10-16
 started: "2026-10-16T14:05:31.389Z"
 approved: "2026-10-16T14:08:10.391Z"
+finished: "2026-10-16T14:10:03.494Z"
 
 ---
 # 0254 · Prepare release 0.5.4
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since `v0.5.3`, the README has gained a picture of speck at work (0249), the landing page's story (0250) and a new tagline (0255), a plain opening (0251) and a plain first sentence for each section (0256); agents set tickets ready only when told to (0252); and every install command installs the latest release (0253). Anyone following the setup prompt today gets 0.5.3 without them.
