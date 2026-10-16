@@ -1,7 +1,7 @@
 ---
 id: "0251"
 title: "Open the README with a plain description of what speck does"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0255"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:48:40.175Z"
 approved: "2026-10-16T13:50:56.937Z"
+finished: "2026-10-16T13:52:51.203Z"
 
 ---
 # 0251 · Open the README with a plain description of what speck does
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README doesn't say plainly what speck is, who it's for or why you'd trust it. A reader, the maintainer included, has to work it out from abstract lines about decisions, when a non-technical builder or a hiring team should get it from the first few lines.
