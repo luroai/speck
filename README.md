@@ -26,7 +26,7 @@ It's also for engineers who want a light, auditable loop: ticket, build, indepen
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
 
-> Status: 0.5.0, a public preview. It works end to end on a local machine. Expect rough edges.
+> Status: 0.5.1, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -34,7 +34,7 @@ Paste this prompt into your coding agent, opened in the folder of the project yo
 
 ```text
 Set up speck in this folder. If Node.js 20 or newer isn't installed, offer to
-install it first. Then run `npx github:luroai/speck#v0.5.0 init` and follow
+install it first. Then run `npx github:luroai/speck#v0.5.1 init` and follow
 the speck-setup skill it installs. Ask me before changing anything on my
 machine or in git.
 ```
@@ -106,9 +106,9 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | Command | What it does |
 |---|---|
 | `set <id> status ready` | Approves a ticket for building: `node .speck/scripts/speck.mjs set <id> status ready` (Gate 1). Run it on the base branch: it commits the ticket, and only that file. `set` also changes a ticket's priority, size, title and other fields |
-| `run` | Starts `/speck-build` in a non-interactive session for each ticket once it's committed as ready on the base branch, one at a time, using `build_command` in `speck/config.yml`. The default skips all permission prompts. A build that was killed before it finished is resumed once |
+| `run` | Starts `/speck-build` in a non-interactive session for each ticket once it's committed as ready on the base branch, one at a time unless you raise `max_parallel_builds`, using `build_command` in `speck/config.yml`. The default skips all permission prompts. A build that was killed before it finished is resumed once |
 | `panel` | The control panel in your browser |
-| `pause <id>` / `play <id>` / `stop <id>` | Hold a running build where it is, carry it on, or end it and block its ticket, keeping its branch and work |
+| `pause <id>` / `play <id>` / `stop <id>` | Hold a running build where it is, carry it on, or end it and block its ticket, keeping its branch and work if it had started. A ticket stopped before its build started is built again with `/speck-build <id>` |
 | `status` | Tickets by status, blocked first (`--json` for programs) |
 | `pack <id>` | The review pack for a ticket |
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
@@ -154,9 +154,9 @@ speck/
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **209 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
-- **15 minutes** median from a build starting to its ticket shipping.
-- **1 review round** median. 105 tickets were approved in the first round.
+- **223 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **14 minutes** median from a build starting to its ticket shipping.
+- **1 review round** median. 112 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 

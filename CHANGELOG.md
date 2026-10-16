@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.5.1 · 16 October 2026
+
+What's changed since 0.5.0. A patch release of fixes to what 0.4.0 shipped: the ship queue's messages, stopping and restarting builds, build timers, the reviewer's test summary, review packs and the panel.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.5.1 init`.
+
+### Stopping and restarting builds
+
+- Stopping a build ends it within about five seconds, even on a busy machine, instead of waiting twice as long for a build that ignores the request.
+- A build stopped before it started its ticket can be built again with `/speck-build <id>`, with no tidying up by hand. The message you see when you stop it says it was stopped before it started, instead of wrongly saying its branch and work were kept.
+- When a build stops before it finishes, its ticket's timer stops too, and the time it waits for you is left out of its shipped minutes, as blocked and paused time already were.
+
+### Shipping and reviewing
+
+- When `speck run` ships a ticket that merged but couldn't be pushed, its log says it was merged but not pushed and how to push it, instead of saying it didn't ship and would be tried again.
+- When a test fails on both tries of a full run, the reviewer's test summary lists it once, with the whole run's totals rather than those of the few files run again.
+- The plain review pack (`speck pack <id> --plain`) says when the reviewer could see only the change, not the rest of the code, in any round.
+- The review pack's build time stops when the reviewer approves, so it agrees with the panel however long the ticket waits to be shipped.
+
+### The panel
+
+- A ticket under review says which round the reviewer is running, or, between rounds, that the builder is fixing the last round's findings.
+- When you turn `speck run` on and it refuses to start, the panel shows only the reason it gave, without lines another `speck run` wrote at the same moment.
+- A P0 priority tag, which marks the urgent fix for a broken base branch, is red wherever the panel shows it.
+- In Plan, idea and inbox cards have the same larger title as ticket cards.
+- On a phone, a queued ticket's tags answer a tap anywhere on them, even with a linked ticket id just below.
+
+### Docs
+
+- The brief says plainly that one build at a time is the default, and that raising `max_parallel_builds` is supported, with approved tickets still shipped one at a time. The README's `run` command says the same.
+
 ## 0.5.0 · 15 October 2026
 
 What's changed since 0.4.0. A ticket now gets one run of the whole test suite, when it ships, instead of several while it's built, and test runs take turns and give way to your own programs, so the computer stays usable while builds run.
