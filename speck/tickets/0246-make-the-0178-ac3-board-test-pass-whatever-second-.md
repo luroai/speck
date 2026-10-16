@@ -40,6 +40,8 @@ The test gives the same result whichever second it runs in.
 - Seen in 0211's whole-suite run on 2026-10-15, passing when run again.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- AC3 has no test of its own: the diff touches only `test/` (and this ticket), and `speck ship` runs the whole suite.
+- Self-check: the 0246 tests use the support module's stopped clock instead of a copy of it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -140,13 +140,23 @@ export function paletteProblems(html) {
   const vars = new Map([...root.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
   return PALETTE.split('; ').map(d => d.split(': ')).filter(([k, v]) => vars.get(k) !== v).map(([k, v]) => `${k} should be ${v}`);
 }
-export function panelModel() {
+// `globals` replaces what the model sees, for example a `Date` whose clock is stopped (0246).
+export function panelModel(globals = {}) {
   const m = page().match(/\/\/ ---- model[^\n]*\n([\s\S]*?)\/\/ ---- end model/);
   assert.ok(m, 'the page has a marked model section');
-  const fn = vm.runInNewContext(`${m[1]}\npanelModel`, {});
+  const fn = vm.runInNewContext(`${m[1]}\npanelModel`, { ...globals });
   // Back through JSON, so the result's arrays and objects belong to this realm and compare strictly.
   return state => JSON.parse(JSON.stringify(fn(state)));
 }
+
+// 0246: the panel's model of each board, with the page's clock stopped at one moment, read once from `clock`, so a
+// second passing between them can't change a live counter and make the same board look different.
+export function modelsAtOneMoment(boards, clock = Date.now) {
+  const model = panelModel({ Date: stoppedClock(clock()) });
+  return boards.map(model);
+}
+// A `Date` whose clock stays at `at`.
+export const stoppedClock = at => class extends Date { constructor(...a) { super(...(a.length ? a : [at])); } static now() { return at; } };
 
 // A state with one ticket in every status, as speck status --json gives it.
 export const T = (id, status, o = {}) => ({ id, title: `Ticket ${id}`, status, priority: 2, size: 'S', risk: 'low', path: `speck/tickets/${id}-x.md`, worktree: null,
