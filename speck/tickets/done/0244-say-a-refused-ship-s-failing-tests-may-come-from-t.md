@@ -1,7 +1,7 @@
 ---
 id: "0244"
 title: "Say a refused ship's failing tests may come from the ticket's own change"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0241","0242"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:28:55.934Z"
 approved: "2026-10-16T08:31:02.417Z"
+finished: "2026-10-16T08:32:51.608Z"
 
 ---
 # 0244 · Say a refused ship's failing tests may come from the ticket's own change
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the tests fail on a ticket merged with a base branch that has moved on, while the base branch's own tests pass, `speck ship` says the ticket and the base branch's newer changes "fail together". Since builds run only their own tests, the ticket's own change breaking another test is just as likely, so the message, and the review pack it reaches, can point at the wrong cause.
