@@ -1,6 +1,6 @@
 # Give a handed-back ticket's re-review rounds of its own
 
-Captured: 2026-10-16 · Status: inbox
+Captured: 2026-10-16 · Status: ticketed (0241)
 From ticket: 0223
 
 ## What
