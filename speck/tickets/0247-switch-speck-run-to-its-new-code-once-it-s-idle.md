@@ -47,7 +47,11 @@ started: "2026-10-16T09:30:55.502Z"
 - Self-check: carried the tickets already launched over to the new code, so a build that never started its ticket isn't launched again after a switch; the new code now runs only when started as speck run's successor, not from an environment variable a user could set; kept `takeRunLock` in run.mjs, where two tests expect it, moving `runState` out instead to stay under 600 lines.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a ticket that changes speck itself ships, `speck run` now picks up the change on its own. It waits until nothing it's building or shipping is still running, starting nothing new in the meantime, and says once what it's waiting for. Then it carries on with the new version, in the same terminal or panel log. The panel's Auto-build switch stays on throughout, and Ctrl+C still stops it.
+
+To see it, leave `speck run` on while a speck change ships. Its output says the code has changed, then "speck run switched to the new code."
+
+Worth keeping an eye on: if the new version can't start, `speck run` says why once and keeps going on the old version until the next change. A paused build counts as running, so it holds up the switch until it's played or stopped.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,11 @@ started: "2026-10-16T09:30:55.502Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- A paused build counts as running, so `speck run` keeps its old code until the build is played or stopped.
+- Builds and ships that this `speck run` didn't start or adopt (a ship from the panel, say) aren't waited for.
+- Once the new code has started watching, an error it hits later stops `speck run`, as any error in a running `speck run` does today. Only failures while it gets ready fall back to the old code.
+- `scripts/run.mjs` is at the 600-line limit again: the next change to it will need to move something out first.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -217,6 +226,87 @@ started: "2026-10-16T09:30:55.502Z"
     ],
     "escalation_question": "",
     "summary": "The new tests confirm that adopted builds and running ships delay the switch correctly. Startup failures now preserve the old runner, but the replacement can launch work before failing. That work survives without being tracked by the old runner, creating a risk of duplicate builds. This remaining fallback issue needs fixing."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9acf2a7e35013ebd9d00cf6bb524fce2e73ab7ac",
+    "thread_id": "01a14424-678e-7f32-87b2-21eeb6dadfa3",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 349194,
+      "cached_input_tokens": 284288,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2435,
+      "reasoning_output_tokens": 449
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T10:02:15.036Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "codeWatch detects content changes across scripts/*.mjs and ignores unchanged saves. Passing process tests cover repeated switches and waiting for started builds, adopted builds and a real ship."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "codeSwitch blocks tick scheduling while draining and names the running work once. The successor retains launched ticket ids. Passing tests cover draining, launch suppression and continuation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The original process retains the lock and inherited output throughout handovers. Passing process tests verify repeated switches, lock continuity, terminal Ctrl-C and the panel's SIGINT."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "awaitGo now completes preparation before reporting ready and waits for go before scheduling work. startSuccessor handles preparation failure, premature exit and timeout. Passing tests cover import and preparation failures, fallback before and after a successful switch, exactly-once launches and retry after another change."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md documents idle switching, verified by the documentation test. All ten reported ticket tests passed; no regression was identified in the reviewed changes. The whole-suite check remains the shipping gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run-switch.mjs",
+        "issue": "Resolved: preparation completes before readiness, and the successor cannot schedule builds or ships until ownership transfers.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/run-0247.test.mjs",
+        "issue": "Resolved: behavioural tests exercise adopted-build and real ship draining.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change is ready for the owner's merge decision. It switches to updated code after running work finishes, preserves output and stop controls, and keeps the old runner active if preparation fails. Both earlier findings are resolved, and all ten ticket tests passed."
   }
 }
 ```
