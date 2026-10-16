@@ -1,7 +1,7 @@
 ---
 id: "0249"
 title: "Show speck's panel beside an agent conversation at the top of the README"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T11:09:08.751Z"
+approved: "2026-10-16T11:10:55.235Z"
 
 ---
 # 0249 · Show speck's panel beside an agent conversation at the top of the README
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 People landing on speck's GitHub page, such as someone reading a job application, see only text. What speck is like to use, your agent's conversation on one side and speck's panel open beside it in the agent app, isn't shown anywhere in the README.
@@ -52,9 +53,14 @@ speck's GitHub page now opens with a picture of what it's like to use: a chat wi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 87,815
+- Elapsed since build started: 2 min
+- Changed lines: 5 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
