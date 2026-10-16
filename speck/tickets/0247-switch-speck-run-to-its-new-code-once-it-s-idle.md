@@ -1,7 +1,7 @@
 ---
 id: "0247"
 title: "Switch speck run to its new code once it's idle"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-16
+started: "2026-10-16T09:30:55.502Z"
 
 ---
 # 0247 · Switch speck run to its new code once it's idle
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `speck run` keeps running the code it started with. When a ticket that changes `speck run` ships, the change isn't live until someone turns `speck run` off and on, and nothing says so. On 2026-10-16 one `speck run` had been on since the evening before, so parts of seven shipped tickets (0216 to 0220, 0235 and 0245) weren't running.
