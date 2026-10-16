@@ -1,7 +1,7 @@
 ---
 id: "0224"
 title: "Keep a queued ticket's tags tappable above a linked id"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0223"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-16T02:50:06.323Z"
 approved: "2026-10-16T03:02:39.618Z"
+finished: "2026-10-16T03:04:28.648Z"
 
 ---
 # 0224 · Keep a queued ticket's tags tappable above a linked id
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On a phone, when a queued ticket's line reads "Queued · unlocks 0205" or "Queued · waiting on 0204", the linked id's tap area reaches about 14 px up into the tap areas of the tags above it. A tap on the bottom edge of a tag such as "low" goes to the other ticket instead of showing what the tag means.
