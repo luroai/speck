@@ -1,7 +1,7 @@
 ---
 id: "0242"
 title: "Give a ticket one extra review round when it's one finding from approval"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-allow-one-more-review-round-without-editing-config.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0241"]                # ticket ids that must be done first
 created: 2026-10-16
+started: "2026-10-16T08:17:30.815Z"
 
 ---
 # 0242 · Give a ticket one extra review round when it's one finding from approval
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A build that reaches the review round limit blocks, even when the reviewer has only one finding left. The user then has to step in just to allow one more round, which means raising `limits.max_review_rounds` in `speck/config.yml` for every ticket and putting it back. It happened on 0218 on 2026-10-16, and on 0008, 0011 and 0061 before.
