@@ -8,6 +8,7 @@ import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeArgv, handBackQueue } from './hand-back.mjs';
 import { countStop } from './stop-wait.mjs';
+import { endBuild } from './stop-end.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -352,10 +353,10 @@ function processesWithEnv(entry) {
 // BUILD_ENV, and everything descended from those. Claude Code runs each Bash command in a session of its own, and a
 // background process whose parent has exited is no longer in the build's tree, so neither the group nor the tree
 // alone would reach them all. This process and its own children are left out, so a build that pauses itself still
-// finishes saying so.
-function buildProcesses(pid, session) {
+// finishes saying so. `me` is the process left out with its children: this one, or the one that asked for the list.
+export function buildProcesses(pid, session, me = process.pid) {
   const rows = processRows();
-  const self = p => p === process.pid || rows.some(([q, pp]) => q === p && pp === process.pid);
+  const self = p => p === me || rows.some(([q, pp]) => q === p && pp === me);
   const found = new Set(rows.filter(([p, , g]) => p === pid || g === pid).map(([p]) => p));
   if (typeof session === 'string' && session) for (const p of processesWithEnv(`${BUILD_ENV}=${session}`)) found.add(p);
   for (let grew = true; grew;) {
@@ -459,8 +460,6 @@ export function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
 
 // ---------- stop (end a build speck run launched for good, and block its ticket) ----------
 
-const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-
 // True if `speck stop` ended the build in this run record: a <id>.stopped file beside it names its session and pid.
 function stoppedBySpeck(recordFile) {
   try {
@@ -515,31 +514,10 @@ function heldByStop(repo, t) {
 }
 
 // Every process still running, as a set of pids. One that has exited and waits only for its parent to collect it is over.
-function runningPids() {
+export function runningPids() {
   const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
   if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
   return new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([p, s]) => /^\d+$/.test(p) && !/^Z/.test(s || '')).map(([p]) => Number(p)));
-}
-
-// Ends a build and everything it started, already held with SIGSTOP (`held`) so none can start anything more: asks each
-// to end (SIGTERM, and SIGCONT so a held one hears it), and ends any still there after a few seconds with SIGKILL.
-// Every process it has found stays on its list, so one that leaves the build's tree when its parent ends is still ended.
-// Returns the processes still running at the end.
-function endBuild(b, held) {
-  const known = new Set(held);
-  const left = () => {
-    for (const p of buildProcesses(b.pid, b.rec.session)) known.add(p);
-    const running = runningPids();
-    return [...known].filter(p => running.has(p));
-  };
-  const each = (pids, signal) => { for (const p of pids) try { process.kill(p, signal); } catch { /* gone */ } };
-  const asked = new Set();
-  const ask = pids => { const fresh = pids.filter(p => !asked.has(p)); for (const p of fresh) asked.add(p); each(fresh, 'SIGTERM'); each(fresh, 'SIGCONT'); };
-  let now = left();
-  ask(now);
-  for (let i = 0; i < 50 && now.length; i++) { sleep(100); now = left(); ask(now); }
-  for (let i = 0; i < 20 && now.length; i++) { each(now, 'SIGKILL'); sleep(100); now = left(); }
-  return now;
 }
 
 // Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
