@@ -1,7 +1,7 @@
 ---
 id: "0257"
 title: "Show speck's settings, explained, in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T20:29:54.810Z"
+approved: "2026-10-16T20:38:12.798Z"
 
 ---
 # 0257 · Show speck's settings, explained, in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Someone who has just set speck up can't tell which of the 30 or so lines in `speck/config.yml` matter, what each one does or what changing it would mean, so they leave settings as they are or change them blind. Some settings matter a lot: `auto_ship` decides whether approved tickets merge and push without them.
@@ -56,9 +57,14 @@ Worth a look: the header's spacing now narrows a little on screens between phone
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 113,707
+- Elapsed since build started: 8 min
+- Changed lines: 164 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none went to the inbox):
 - The auto_ship explanation doesn't mention auto-ship's third condition, that the reviewer could inspect the repo in every round. It's left out to keep the explanation short. Revisit it if people are surprised that a covered ticket waits.
