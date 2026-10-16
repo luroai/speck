@@ -66,9 +66,10 @@ export function launchShip(repo, id, log, done) {
 // base branch's own tests failing.
 const HAND_BACK = { 13: 'conflict', 16: 'tests', 14: 'base' };
 
-// speck run's queue. check(tickets), on each of speck run's checks, starts the next ship if one may start now. note()
-// is what speck run adds when it stops. `launch` starts a ship (launchShip), `say` prints a line, and `handBack` gets
-// { id, kind, why, head } for a refusal the ticket's build has steps for, head being its branch as the ship tried it.
+// speck run's queue. check(tickets), on each of speck run's checks, starts the next ship if one may start now. running()
+// is the ticket whose ship it has going, or null (0247). note() is what speck run adds when it stops. `launch` starts
+// a ship (launchShip), `say` prints a line, and `handBack` gets { id, kind, why, head } for a refusal the ticket's
+// build has steps for, head being its branch as the ship tried it.
 // A ticket for which `waiting(id)` is true has a hand-back still to run, so it isn't shipped until that has run.
 export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, handBack = () => {}, waiting = () => false } = {}) {
   const runs = sharedCacheDir(repo, 'runs');
@@ -133,5 +134,5 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
     }
   };
 
-  return { check, note: () => (current ? ` The ship of ${current} is still running, and carries on to its end.` : '') };
+  return { check, running: () => current, note: () => (current ? ` The ship of ${current} is still running, and carries on to its end.` : '') };
 }

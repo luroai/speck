@@ -83,6 +83,7 @@ export const HEAVY = [
   'test/run-0193.test.mjs',
   'test/run-0194.test.mjs',
   'test/run-0245.test.mjs',
+  'test/run-0247.test.mjs',
   'test/run.test.mjs',
   'test/ship-0153.test.mjs',
   'test/ship-0196.test.mjs',
