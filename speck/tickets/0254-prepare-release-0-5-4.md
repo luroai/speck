@@ -1,7 +1,7 @@
 ---
 id: "0254"
 title: "Prepare release 0.5.4"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T14:05:31.389Z"
 ---
 # 0254 · Prepare release 0.5.4
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since `v0.5.3`, the README has gained a picture of speck at work (0249), the landing page's story (0250) and a new tagline (0255), a plain opening (0251) and a plain first sentence for each section (0256); agents set tickets ready only when told to (0252); and every install command installs the latest release (0253). Anyone following the setup prompt today gets 0.5.3 without them.
@@ -50,7 +50,9 @@ speck is ready to be released as 0.5.4.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.5.4. It gathers everything shipped since 0.5.3: every install command now gets the newest release, agents set a ticket ready only when your latest message tells them to, and the README has a new tagline, a plain opening, a picture of speck at work and a plain first sentence for each section. The changelog, the release notes and the README's figures (239 tickets shipped) are up to date.
+
+To see it, read the new 0.5.4 section at the top of the changelog. Nothing needs changing for someone upgrading beyond running the install command again, which also brings the new rule about setting tickets ready into their project's agent guide. After it ships, check that the v0.5.4 release page appeared on GitHub; if it didn't, the ticket's Notes say how to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,3 +62,71 @@ speck is ready to be released as 0.5.4.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8d7529b26f3aaec6c7464dc48d801ae001a2669f",
+    "thread_id": "01a1450a-2334-7c70-9502-7ba28d25812d",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 159322,
+      "cached_input_tokens": 107904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1030,
+      "reasoning_output_tokens": 30
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T14:08:03.901Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.5.4; scripts/install.mjs reads that version and prints it during init. Both AC1 tests passed, including an actual CLI invocation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 0.5.4 above 0.5.3 and accurately covers shipped tickets 0249–0253, 0255 and 0256. Passing AC2 tests check coverage and preservation of the 0.5.3 and 0.5.2 sections."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md name 0.5.4 as a public preview. The setup prompt retains the quoted latest-release command. README workflow claims remain consistent with the shipped changes; corresponding AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.5.4.md supplies the purpose, changes and benefits, installation, upgrade guidance and correct changelog link, without personal names. Claims match the shipped tickets. All AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recalculated figures from the current done directory: 239 shipped, 16 cancelled, 14 minutes median, 1 review round median, 123 first-round approvals; README matches. Version/changelog checks passed. All 124 reported targeted tests passed; historical test updates preserve relevant checks. Whole-suite verification remains the shipping gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change prepares 0.5.4 with accurate release notes, updated status lines and independently verified delivery figures. All 124 targeted tests passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
