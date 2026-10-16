@@ -1,7 +1,7 @@
 ---
 id: "0252"
 title: "Set a ticket ready only when the user's latest message says to"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T13:40:42.427Z"
 ---
 # 0252 · Set a ticket ready only when the user's latest message says to
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Setting a ticket ready is the user's gate (Gate 1), but `/speck-ticket` only says to set it ready "if the user explicitly approves", without saying what counts. On 2026-10-16 an agent read the user's choice of a tagline as a yes to its own offer to "update 0251 and set it ready", and set it ready. `speck run` started building it at once, and auto-ship covered its risk, so it could have shipped without the user seeing it. Nothing breaks a user's trust in speck faster.
@@ -45,7 +45,7 @@ Every speck skill that can set a ticket ready says plainly that an agent does so
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Agents working with speck now set a ticket ready only when your latest message tells them to set that ticket ready. Picking an option, approving wording, answering a question or agreeing to a plan that includes it no longer counts, and an agent asks "Shall I set this ticket ready?" on its own, after any other change is done. Projects get the same rule in their agent guide the next time speck is installed or updated there, and the setup guide repeats it. Fix tickets for a broken main branch are still set ready automatically, as before. Worth watching: this is guidance to the agent, not a hard lock, so the panel and the command line still let anyone set a ticket ready.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,71 @@ Every speck skill that can set a ticket ready says plainly that an agent does so
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ec7ff0afaa9d060c868cb50b6640019194e15719",
+    "thread_id": "01a144f2-f72f-7ae2-a722-1210e44e36af",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 87700,
+      "cached_input_tokens": 52352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 684,
+      "reasoning_output_tokens": 9
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T13:42:39.771Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md step 9 requires an explicit instruction in the user's latest message, gives the example and lists all five exclusions. Passing test '0252 AC1' checks this wording."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Step 9 prohibits bundled proposals and requires the standalone question after other changes are done. Passing test '0252 AC2' checks each requirement."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/install.mjs AGENTS_SECTION and skills/speck-setup/SKILL.md's first-ticket approval step contain the same one-sentence rule. Both '0252 AC3' tests passed; the installer test exercises syncAgentsSection. The repository's AGENTS.md also matches."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "git diff main shows no change to skills/speck-build/SKILL.md. Passing test '0252 AC4' verifies the existing instruction to set a priority-0 fix ticket ready without asking."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded output in /tmp/speck-0252-tests.txt confirms 191 tests passed with no failures. Existing tests were not modified. The diff is limited to the requested instructions, installer wording, ticket records and new wording tests."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The instructions now require the user's latest message to explicitly request setting a ticket ready and prohibit bundling that request with other changes. Setup and generated project guidance carry the same rule. The fix-ticket exception remains unchanged. All 191 reported tests passed, and no blocking issues were found."
+  }
+}
+```
+
+</details>
