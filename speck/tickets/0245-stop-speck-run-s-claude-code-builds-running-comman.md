@@ -40,6 +40,7 @@ A Claude Code build that `speck run` starts can't run commands in the background
 - Every build `speck run` starts goes through `startBuild()` in `scripts/run.mjs`, which already adds `SPECK_BUILD_SESSION` to the environment. The brief's `speck run` row is in `docs/brief.md`.
 - Checked 2026-10-16: `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` is in Claude Code 2.1.296, the installed version (`claude --version`). With it set to `1`, a `claude -p` session's Bash tool has no `run_in_background` parameter; without it, it has one (asked of `claude -p` both ways).
 - The open question in the idea is settled as any command that starts Claude Code, not only the default `build_command`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
