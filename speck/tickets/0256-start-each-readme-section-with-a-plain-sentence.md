@@ -1,7 +1,7 @@
 ---
 id: "0256"
 title: "Start each README section with a plain sentence"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T13:53:00.173Z"
 ---
 # 0256 · Start each README section with a plain sentence
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The README's sections open with slogans or straight into detail, so a reader skimming it, the maintainer included, can't tell what each section is for without reading all of it.
@@ -52,7 +52,7 @@ Every section of the README starts with one plain sentence saying what it tells 
 - Self-check: no changes. Checked each new sentence against the section below it (the panel's Ship button, the Requirements list, the Under the hood subsections) and the MIT licence's terms.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each section of the README now opens with one plain sentence saying what it covers or what you do with it, so you can skim the page and know where to stop. Nothing the README said before has gone: the old openings sit just below the new ones, except two short fragments that the new sentences replace. To see it, open the README and read the first line under each heading. Keep an eye on new sections added later: they should open the same way, and a test now checks that they do.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,3 +62,60 @@ Every section of the README starts with one plain sentence saying what it tells 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c88ba2b1dfa0c1f4edb0530d0dcc407272f517bd",
+    "thread_id": "01a144fe-fce1-7c53-906a-01314907e57c",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 138221,
+      "cached_input_tokens": 94080,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 527,
+      "reasoning_output_tokens": 40
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T13:55:44.269Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Reviewed every README.md ## section: each starts with a plain sentence describing its purpose or action before structured content. All three AC1 tests in test/readme-0256.test.mjs passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Ticket Notes record two manual detect passes against the no-ai-slop skill, with line references, fixes and reasons for retained patterns. The AC2 test verifies the recorded passes and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The README.md diff preserves existing facts, section order and excluded text. The AC3 preservation test passed; /tmp/speck-0256-tests.txt confirms 305 tests passed with no failures. No existing tests were changed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Every README section now opens with a plain sentence that helps readers understand its purpose. Existing information is preserved, the editorial checks are recorded, and all 305 tests run passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
