@@ -444,6 +444,9 @@
     /* 0190: the line under a queue row's top, such as a ready ticket's Queued line, starts below the 7.5 px its tags'
        tap areas reach past them, as that line sits above those tap areas */
     .q .top + .act { margin-top: 8px; }
+    /* 0224: a linked id's tap area in that line reaches 14 px up, past those 8 px, so the tags are above it: a tap
+       anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
+    .q .top .tag:not(.pick) { z-index: 1; }
     .q .full-open { min-height: 44px; }
     .q .stop-build, .q .back-to-plan { min-width: 44px; min-height: 44px; }
     .resume { flex-wrap: wrap; }
