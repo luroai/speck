@@ -1,7 +1,7 @@
 ---
 id: "0256"
 title: "Start each README section with a plain sentence"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0251"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:53:00.173Z"
 approved: "2026-10-16T13:55:50.471Z"
+finished: "2026-10-16T13:57:41.928Z"
 
 ---
 # 0256 · Start each README section with a plain sentence
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README's sections open with slogans or straight into detail, so a reader skimming it, the maintainer included, can't tell what each section is for without reading all of it.
