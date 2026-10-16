@@ -1,7 +1,7 @@
 ---
 id: "0243"
 title: "Prepare release 0.5.2"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-say-in-the-brief-that-releases-publish-them
 after: ["0241","0242","0244","0245","0246"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:40:19.936Z"
+approved: "2026-10-16T08:43:31.143Z"
 
 ---
 # 0243 · Prepare release 0.5.2
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The 0.5.2 tickets cut needless stops: a re-review after an approval gets rounds of its own (0241), a ticket one finding from approval at the round limit gets one extra round by itself (0242), a refused ship names both possible causes of its failing tests (0244), `speck run`'s Claude Code builds can't run commands in the background (0245), and a test that fails by chance no longer does (0246). Anyone following the README's setup prompt still gets 0.5.1 without them.
@@ -59,9 +60,14 @@ To see it, read the new 0.5.2 section at the top of the changelog. After it ship
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 155,920
+- Elapsed since build started: 3 min
+- Changed lines: 61 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
