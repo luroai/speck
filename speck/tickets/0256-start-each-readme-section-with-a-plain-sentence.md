@@ -41,6 +41,15 @@ Every section of the README starts with one plain sentence saying what it tells 
 - `/no-ai-slop` is installed globally for Claude Code (`~/.claude/skills/no-ai-slop/`); see how 0250's Notes recorded its passes.
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
 - Failing before this build: none
+- Sections that already opened with a plain sentence keep it: Get started, Using another reviewer, Built with speck and Design. Every other section gets a new first sentence, and its old opening stays below it, apart from two that were not facts: "Things you won't have to do." (Clever bits) and "MIT." (Licence), each replaced by a sentence that says the same. Without an agent's opening ended in a colon before the code, so it now starts with a sentence of its own.
+- No-ai-slop detect, first pass: on the README's new and changed lines (41, 79, 90, 108, 132, 144, 156, 168, 188, 231, 260), checked by hand against the skill's patterns.
+  - L90 "speck does these jobs for you, so you won't have to.": fails the portability test, it fits any product. Rewritten to name the jobs' range: "from raising its own fix tickets to keeping the receipts".
+  - L144 "…ship them with a click.": overclaims, the Ship button asks first. Changed to "ship them from there".
+  - L43 "If you can write a good ticket, you can ship.": possible kicker. Kept: the landing page's subtitle, as 0250 kept it, now after the plain sentence.
+  - L134 "Most AI coding tools sell speed or autonomy.": possible weasel attribution. Kept: existing text, out of this ticket's scope, and 0250's tests keep it.
+  - L108, L188 "These sections…", "These tables…": repeated sentence shape. Kept: two sections far apart, and each goes on to name different things.
+- No-ai-slop detect, second pass: no pattern left unaddressed. The new lines are plain statements with no banned words, em dashes, colon reveals or kickers, and the patterns kept are listed above with their reasons.
+- Self-check: no changes. Checked each new sentence against the section below it (the panel's Ship button, the Requirements list, the Under the hood subsections) and the MIT licence's terms.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

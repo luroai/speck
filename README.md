@@ -38,6 +38,8 @@ Your agent checks what's there, explains each choice in plain words and waits fo
 
 ## How it works
 
+speck takes every change from an idea to shipped code in the same steps, and waits for you at two of them.
+
 If you can write a good ticket, you can ship.
 
 ```
@@ -74,6 +76,8 @@ Shipping runs `speck ship <id>`. It refuses, changing nothing, unless the review
 
 ## What a review pack looks like
 
+A review pack is the one page you read before you decide whether to ship a ticket.
+
 Every approved ticket has a **review pack** written for someone who doesn't read code:
 - each acceptance criterion with ✅/❌ and the reviewer's evidence;
 - a plain-English summary;
@@ -83,7 +87,7 @@ Every approved ticket has a **review pack** written for someone who doesn't read
 
 ## The clever bits
 
-Things you won't have to do.
+These are the jobs speck takes off your hands, from raising its own fix tickets to keeping the receipts.
 
 **It raises its own fix tickets.** If `main` breaks, the build that finds it writes a priority-0 fix ticket and sends it to the front of the queue, instead of patching it inside someone else's work. When `speck ship` finds the base branch's own tests failing, the build creates the ticket with `speck new "<title>" --type=fix`, which sets priority 0, and runs `speck set <fix-id> status ready`, unless an open fix ticket already covers the failure. Its own ticket stays `approved`, and the ship queue tries it again once the fix has shipped.
 
@@ -100,6 +104,8 @@ Things you won't have to do.
 **It keeps the receipts.** Every ticket keeps how long it took and how many review rounds it needed, and the panel shows what builds cost. Each round's full record is saved in the ticket's `## Review rounds`, and approval adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to its `## Delivery log`. Builds that `speck run` starts also record the builder's tokens and cost. The code, the tickets and the tests say what the product does, so there's no separate spec to keep up to date.
 
 ## Under the hood
+
+These sections explain how speck works inside: the review loop, where it keeps its state, which tests run when, and how builds and ships are queued.
 
 [`docs/brief.md`](docs/brief.md) has the full design.
 
@@ -123,6 +129,8 @@ A build never runs the whole suite. Before it changes anything, it reads the res
 
 ## Who it's for
 
+speck is for people who decide what gets built and don't want to read every line of code, and for engineers who want a light review loop.
+
 Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship.
 
 You think in outcomes, not diffs. You're a PM, a founder, or the person on the team who always has the spec. You have more ideas than evenings, a coding agent you already trust with real work, and no wish to read every line it writes. You set speck up by talking to your agent, write tickets, set them ready and walk away.
@@ -132,6 +140,8 @@ It's also for engineers who want a light, auditable loop: ticket, build, indepen
 Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
 ## The panel
+
+The panel shows your tickets, builds and shipped work in your browser, and lets you set tickets ready and ship them from there.
 
 `node .speck/scripts/speck.mjs panel` opens a control panel in your browser, at `http://127.0.0.1:4777`. It runs on your machine and reads the files in your repo.
 
@@ -143,6 +153,8 @@ To use the panel from your phone, put it behind a private tunnel that makes you 
 
 ## Requirements
 
+speck needs the following on your machine.
+
 - macOS or Linux
 - [Claude Code](https://claude.com/claude-code), or another builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Set it as `builder:` in `speck/config.yml`, so `speck doctor` checks the right tool. Claude Code is the default and the one most tested.
 - git
@@ -153,7 +165,9 @@ Not yet: Windows (speck says so and suggests WSL), Jira or GitHub Issues sync, p
 
 ## Without an agent
 
-To install speck yourself, run this in the folder of the project you want to build:
+You can install speck yourself, without an agent, with one command.
+
+Run this in the folder of the project you want to build:
 
 ```bash
 npx github:luroai/speck init
@@ -170,6 +184,8 @@ Commit the new files, and everyone working on the repo gets speck too. To update
 To re-check your setup at any time: `node .speck/scripts/speck.mjs doctor`.
 
 ## Commands
+
+These tables list speck's commands: the skills you run in your agent, and the commands you run in your terminal.
 
 In your agent:
 
@@ -212,6 +228,8 @@ For Claude Code, use `"claude -p --output-format json --permission-mode plan --m
 
 ## Repo layout
 
+This is where speck keeps its files in your repo.
+
 ```
 .claude/skills/speck-*/      # the skills, for Claude Code (installed by init)
 .agents/skills/speck-*/      # the same skills, for Codex, cptr and other agents
@@ -239,4 +257,4 @@ See [`docs/brief.md`](docs/brief.md) for the principles, the workflow, the size 
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+speck is free to use, change and share under the MIT licence. See [LICENSE](LICENSE).
