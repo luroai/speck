@@ -131,6 +131,15 @@ export function extraRoundDue(all, cfg) {
     && last.verdict.verdict === 'changes_requested' && openBlocking(last.verdict).length <= 1;
 }
 
+// Whether the next ordinary round is the extra one, refusing it when max_review_rounds is used up and no extra round is
+// due. `speck review` and `speck record` both check this before a reviewer runs or a round is saved.
+function extraRound(prior, cfg, merge) {
+  const extra = !merge && ordinaryRounds(prior) >= cfg.limits.max_review_rounds;
+  if (extra && nextAction(prior, cfg).action !== 'fix')
+    throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached${prior.at(-1)?.meta?.extra ? ', and the extra round too' : ''}. Block the ticket.`, 3);
+  return extra;
+}
+
 // Decide what the builder must do next, given all rounds so far.
 export function nextAction(all, cfg) {
   const last = all[all.length - 1];
@@ -245,9 +254,7 @@ function reviewSetup(repo, id, opts) {
   // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
   const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
   if (merge && used >= cfg.limits.max_merge_rounds) throw new SpeckError(`Max merge rounds (${cfg.limits.max_merge_rounds}) reached. Block the ticket.`, 3);
-  const extra = !merge && ordinaryRounds(prior) >= cfg.limits.max_review_rounds;
-  if (extra && nextAction(prior, cfg).action !== 'fix')
-    throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached${prior.at(-1)?.meta?.extra ? ', and the extra round too' : ''}. Block the ticket.`, 3);
+  const extra = extraRound(prior, cfg, merge);
   requireCommitted(repo, ticket, 'Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const diff = reviewDiff(repo, sinceSha);
@@ -357,7 +364,7 @@ export function cmdRecord(args) {
   const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));
   const prior = rounds(repo, id);
   const merge = isMergeRound(prior);
-  const extra = !merge && ordinaryRounds(prior) >= cfg.limits.max_review_rounds;
+  const extra = extraRound(prior, cfg, merge);
   const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), ...testsSeen });
   endRound(repo, findTicket(repo, id).fm.id || id);
   const next = printRound(rec, cfg, rounds(repo, id));

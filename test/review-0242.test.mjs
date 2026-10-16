@@ -79,6 +79,27 @@ test('0242 AC2: a ticket gets at most one extra round', () => {
   assert.equal(r.saved().length, 2, 'nothing recorded');
 });
 
+test('0242 AC2: speck record refuses a round after the extra round, or after a round at the limit that has no extra round', () => {
+  const cases = [
+    [['changes_requested', [finding('F1')]], ['changes_requested', [finding('F1')]]],
+    [['changes_requested', [finding('F1'), finding('F2')]]],
+    [['escalate', [finding('F1')]]],
+  ];
+  for (const steps of cases) {
+    const r = freshRepo();
+    for (const [i, [v, f]] of steps.entries()) { r.work(`round ${i + 1}\n`); assert.notEqual(r.record(v, f).status, 3); }
+    gIn(r.wt, 'add', TICKET); gIn(r.wt, 'commit', '-qm', 'rounds');
+    const before = read(r.wt, TICKET);
+    r.work('one more\n');
+    const over = r.record('approve');
+    assert.equal(over.status, 3, over.stderr + over.stdout);
+    noTrace(over);
+    assert.match(over.stderr, /Max review rounds \(1\) reached(, and the extra round too)?\. Block the ticket\./);
+    assert.equal(read(r.wt, TICKET), before, 'nothing recorded');
+    assert.match(r.next(), /^block/);
+  }
+});
+
 test('0242 AC2: two or more open blocking findings at the limit block as today, and speck review refuses another round', () => {
   assert.deepEqual(nextAction(upTo(round(3, 'changes_requested', [finding('F1'), finding('F2', 'dispute_rejected')])), cfg),
     { action: 'block', reason: 'No approval after 3 review rounds.' });

@@ -1,7 +1,7 @@
 ---
 id: "0242"
 title: "Give a ticket one extra review round when it's one finding from approval"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T08:17:30.815Z"
 ---
 # 0242 · Give a ticket one extra review round when it's one finding from approval
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A build that reaches the review round limit blocks, even when the reviewer has only one finding left. The user then has to step in just to allow one more round, which means raising `limits.max_review_rounds` in `speck/config.yml` for every ticket and putting it back. It happened on 0218 on 2026-10-16, and on 0008, 0011 and 0061 before.
@@ -57,3 +57,79 @@ A ticket that's one finding from approval at the round limit gets one more revie
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b3d6f29c805961ebca8bae012009decbb770c38a",
+    "thread_id": "01a143cf-b5f7-7fc3-8228-223fe89ab299",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 153592,
+      "cached_input_tokens": 108672,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 766,
+      "reasoning_output_tokens": 32
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T08:24:39.690Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "extraRoundDue(), nextAction() and reviewSetup() allow the qualifying extra round. Reported passing AC1 tests exercise next, review and record."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "cmdRecord() in scripts/review.mjs:346–364 saves further rounds without checking eligibility. Tests cover refusal by review, but not record."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "pack.mjs and close.mjs display meta.extra; passing AC3 tests check the review pack and Delivery log written by close."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both skills explicitly require taking the extra round without asking and prohibit changing max_review_rounds. Covered by the passing AC4 test."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "All 63 selected tests reportedly passed. Existing expectation changes match the exception permitted by AC5; no unrelated changes found."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review.mjs:358",
+        "issue": "speck record accepts unlimited extra rounds. With max_review_rounds set to 1, record a changes_requested round, then an unsuccessful extra round, then an approval: cmdRecord saves all three and nextAction returns ship. It also accepts an extra round after two open blocking findings or an escalation because it never checks eligibility.",
+        "suggested_fix": "Check ordinary-round eligibility before saving in cmdRecord, sharing the guard used by reviewSetup. Add record tests that refuse another round after an unsuccessful extra round and after a non-qualifying limit round, leaving the recorded history unchanged.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The automatic extra round and its reporting work in the normal review flow. However, manually recorded reviews can bypass the limit and keep going until approval. That path needs the same eligibility check before this is ready to merge."
+  }
+}
+```
+
+</details>
