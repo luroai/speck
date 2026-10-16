@@ -1,7 +1,7 @@
 ---
 id: "0245"
 title: "Stop speck run's Claude Code builds running commands in the background"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-turn-off-background-commands-in-speck-run-b
 after: ["0241","0242","0244"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:33:01.977Z"
+approved: "2026-10-16T08:35:29.577Z"
 
 ---
 # 0245 · Stop speck run's Claude Code builds running commands in the background
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The build skill tells a builder to wait for every command, but a builder that puts a test run or review round in the background anyway and ends its turn ends a build that `speck run` started, partway, with the ticket left `building` or `reviewing`. It's only an instruction, so nothing stops it.
@@ -50,9 +51,14 @@ Builds that speck run starts with Claude Code can no longer leave a test run or 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 94,046
+- Elapsed since build started: 2 min
+- Changed lines: 16 (limit 5000)
 - Follow-ups: none. Known limit: a value already set in speck run's environment is kept as it is, including an empty one, which Claude Code may treat as off.
 
 ## Review rounds
