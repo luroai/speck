@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { CLI, env, runRepo, until, stopRun, ROOT } from './support/run.mjs';
 import { runsPath } from './support/ticker.mjs';
-import { buildEnv } from '../scripts/run.mjs';
+import { buildEnv } from '../scripts/build-env.mjs';
 
 // ---------- 0245: speck run's Claude Code builds can't run commands in the background ----------
 
