@@ -44,6 +44,7 @@ speck is ready to be released as 0.5.3.
 - Upgrading from 0.5.2: a `speck run` that's already on is still running 0.5.2's code, which can't switch, so it has to be turned off and on once after upgrading. Say so in the release notes.
 - After it ships, check that the `v0.5.3` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.3 --target main --title "speck 0.5.3" --notes-file docs/releases/v0.5.3.md`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
