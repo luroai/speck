@@ -1,7 +1,7 @@
 ---
 id: "0253"
 title: "Make every speck install command use the latest release"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0256", "0252"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:58:08.923Z"
 approved: "2026-10-16T14:03:22.540Z"
+finished: "2026-10-16T14:05:16.811Z"
 
 ---
 # 0253 · Make every speck install command use the latest release
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The README's setup prompt installs a fixed release (`#v0.5.3`) that each release ticket has to bump by hand, so it falls behind whenever that step is missed. Other install commands (the README's "Without an agent" section, the brief, `speck init`'s own message and `/speck-setup`) name no release at all, so they install whatever is on `main` at that moment rather than a release. The landing page already installs the latest release with `#semver:*` (speck-site 0005).
