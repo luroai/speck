@@ -1,7 +1,7 @@
 ---
 id: "0251"
 title: "Open the README with a plain description of what speck does"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T13:48:40.175Z"
 ---
 # 0251 · Open the README with a plain description of what speck does
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The README doesn't say plainly what speck is, who it's for or why you'd trust it. A reader, the maintainer included, has to work it out from abstract lines about decisions, when a non-technical builder or a hiring team should get it from the first few lines.
@@ -58,7 +58,7 @@ Between the tagline and the image, the README says in plain, obvious sentences w
 - AC5: `test/readme-0250.test.mjs` checked that the two-decisions paragraph was the fourth line, straight after the plain line; it now checks it still comes just before the image, with the new opening above it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The top of speck's README now says in plain sentences who speck is for (product managers, founders, programme managers, designers and engineers), how you use it (plan tickets with your agent, follow builds in the panel, both in one app) and that you can set tickets ready and walk away while it builds, tests, reviews and, with auto-ship on, ships them. A short paragraph says why it exists: it was built by a product manager for people who have to ship code they can't read. Another says why you can trust the result. To see it, open the README on GitHub and read the paragraphs between the tagline and the picture. Worth keeping an eye on: the opening is now longer, so the picture sits further down the page.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -68,3 +68,70 @@ Between the tagline and the image, the README says in plain, obvious sentences w
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a6a7bbd3e478ec4cf9f397678e2077c94b5524fd",
+    "thread_id": "01a144fa-7085-7622-9dfb-14f42633e2f9",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 94991,
+      "cached_input_tokens": 52480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 667,
+      "reasoning_output_tokens": 26
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T13:50:50.279Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md:7–11 names every requested audience, explains conversation and panel use in the same app, and describes unattended builds and auto-shipping. The corresponding 0251 AC1 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md:13 gives the product-manager origin and reason for speck in its own paragraph, including agreed criteria, independent checks and plain-English evidence. The 0251 AC2 test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md:15 describes tests first, self-check, independent review, whole-suite shipping checks and risk-based shipping permission. Shipping claims agree with scripts/ship.mjs and the build skill; no project releases are promised. The 0251 AC3 test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The ticket's Notes record both detect passes, each identified pattern, its line and the fix or retention reason. The second pass reports no unaddressed patterns. The 0251 AC4 test checking these records passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The README diff only adds opening paragraphs, preserving all existing text. The changed 0250 assertion accommodates the deliberately changed placement while retaining the paragraph-before-image check. All 14 tests in the supplied run passed; whole-suite verification remains the shipping gate."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The README now explains who speck is for, how people use it and why they can trust its process. It preserves the existing content and accurately describes shipping. All 14 selected tests passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
