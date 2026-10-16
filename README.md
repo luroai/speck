@@ -4,6 +4,11 @@
 
 You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you. The tickets, the reviews and every decision stay in your repo.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.png">
+  <img alt="An agent conversation on the left, with speck's panel open beside it on the right, showing tickets being planned, built and waiting to ship." src="docs/images/demo-light.png">
+</picture>
+
 Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship. The agents do the typing; you do the steering.
 
 ```
