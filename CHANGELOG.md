@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.2 · 16 October 2026
+
+What's changed since 0.5.1. A patch release that cuts needless stops in builds and ships, so tickets that are nearly done no longer wait for you.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.5.2 init`.
+
+### Building and reviewing
+
+- Any re-review after a ticket was approved, for example after a small fix to its own code when its ship was refused, gets rounds of its own instead of using up the ticket's ordinary review rounds, as a re-review after a merge already did. Such rounds show as a merge round in the ticket's review history and review pack, even when nothing was merged.
+- A ticket that reaches the review round limit with no more than one blocking finding left gets one extra round by itself, instead of stopping to ask you. If the extra round doesn't approve it, it stops as before. The review pack names it (for example "round 4 of 3, an extra round"), and the ticket's delivery log says when it had one.
+- Builds that `speck run` starts with Claude Code can't run commands in the background, so a build can no longer end partway, with its ticket left building or reviewing, by leaving a test run or review round running when its turn ends.
+
+### Shipping
+
+- When a ship is refused because the tests fail on the ticket as it would land, while the base branch's own tests pass, the message says the failure may come from the ticket's own change or from it together with the base branch's newer changes, instead of blaming only the base branch's newer changes.
+
+### Working on speck
+
+- A check in speck's own test suite that sometimes failed by chance, when the clock ticked over a second while it ran, now gives the same result every time.
+
 ## 0.5.1 · 16 October 2026
 
 What's changed since 0.5.0. A patch release of fixes to what 0.4.0 shipped: the ship queue's messages, stopping and restarting builds, build timers, the reviewer's test summary, review packs and the panel.
