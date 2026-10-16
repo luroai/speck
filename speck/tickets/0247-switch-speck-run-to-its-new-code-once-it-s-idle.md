@@ -141,3 +141,84 @@ started: "2026-10-16T09:30:55.502Z"
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "618f468267349fedd5c151cc70b056985bf749ea",
+    "thread_id": "01a14424-678e-7f32-87b2-21eeb6dadfa3",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 223909,
+      "cached_input_tokens": 166016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1894,
+      "reasoning_output_tokens": 449
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T10:00:18.606Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The passing process tests now cover content changes, unchanged saves, repeated switches, adopted builds and a real running ship. codeSwitch waits on running builds and ships.running()."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "tick returns before scheduling work while codeSwitch is pending. Passing tests exercise build and ship draining, adopted-build launch suppression and the once-only waiting message."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The existing passing process tests retain coverage of lock continuity, inherited output, repeated switches, terminal Ctrl-C and panel SIGINT."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "awaitGo now catches start() failures, but start() runs an unrestricted tick before reporting started. That tick can launch detached builds or ships before a later startup failure. The fallback runner neither adopts that work nor receives its launched-ticket state."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief documents idle switching. All ten reported ticket tests passed, with no identified unrelated regression; the whole-suite check remains the shipping gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run-switch.mjs",
+        "issue": "The revised handshake preserves the old runner, but startup can now create work before it is accepted. run.mjs start() calls tick(), which can launch detached builds and ships. If startup then throws or exceeds the handshake timeout, startSuccessor kills the successor and resumes the old runner without transferring those launches. Detached work survives, and the old runner can launch the same ready ticket again or exceed its build limit. The new failure test throws before any startup work, so it misses this case.",
+        "suggested_fix": "Keep build and ship launches disabled during fallible successor preparation, then enable scheduling after a successful handover. Alternatively, safely reconcile all successor-created work before resuming the old runner. Add a failure test after the initial tick has launched work and verify that fallback neither duplicates nor loses track of it.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/run-0247.test.mjs",
+        "issue": "The missing adopted-build and running-ship behavioural coverage has been added.",
+        "suggested_fix": "No further change required for this finding.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new tests confirm that adopted builds and running ships delay the switch correctly. Startup failures now preserve the old runner, but the replacement can launch work before failing. That work survives without being tracked by the old runner, creating a risk of duplicate builds. This remaining fallback issue needs fixing."
+  }
+}
+```
+
+</details>
