@@ -41,6 +41,7 @@ A ticket under review says whether the reviewer is running a round, and which on
 ## Notes
 - The card's words come from `progress()` and `doing()` in `templates/panel.html`. Nothing records today that a review round is running: speck needs to record when a round starts and ends (`reviewRound()` in `scripts/review.mjs`) and the board feed needs to pass it on (`scripts/board-feed.mjs`).
 - Failing before this build: none
+- Answered 2026-10-16 (blocked question): raise `max_review_rounds` to 4 for one re-review of the rename, then set it back to 3. Round 4 approved it.
 - Self-check: a records folder that can't be written no longer stops a review round; the round runs without being recorded as running.
 - A board that doesn't say whether a round is running (no `review_running` field, as in older fixtures) keeps the old wording, so the existing card tests still hold (AC4).
 
@@ -269,6 +270,75 @@ Round 3 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The card now shows which review round is running and when the builder is fixing findings, including subagent reviews. Persistence and cleanup are covered by passing tests, and stage labels remain unchanged. The previous blocking issue is resolved."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b27fd7806a715265c925d3e360fe4beeeb645a3f",
+    "merge": true,
+    "thread_id": "01a141fb-bcb2-7592-9106-6de0a79104b9",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 528726,
+      "cached_input_tokens": 382592,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2545,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T02:48:15.483Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html roundUnderReview() and doing() show the active round for building and reviewing tickets. Passing AC1 tests cover first and successive rounds, including the subagent command workflow."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "doing() shows the builder fixing the last recorded round when review_running is null. The passing AC2 test verifies names, round numbers and fallback wording."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Persisted records support fresh reads. reviewRound() clears command-review activity in finally; subagent activity ends through record or explicit --ended cleanup. Passing AC3 tests cover persistence, completion, failure, timeout, dead processes and subagent cleanup."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "progress() remains unchanged and its AC4 test passes. The helper rename changes no behaviour and fixes the older source-text assertion without weakening it. All 59 tests in the supplied run passed. The merged configuration matches main."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review.mjs",
+        "issue": "The subagent lifecycle fixes remain intact: first-round cards show review activity, abandoned rounds have explicit cleanup, and long reviews do not expire prematurely.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The helper rename fixes the shipping test failure without changing behaviour or weakening tests. The merge preserves main's configuration and the previously approved review activity tracking. All criteria pass."
   }
 }
 ```
