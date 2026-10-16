@@ -1,7 +1,7 @@
 ---
 id: "0255"
 title: "Replace speck's tagline with one that says what's different"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:40:42.823Z"
+approved: "2026-10-16T13:42:33.365Z"
 
 ---
 # 0255 · Replace speck's tagline with one that says what's different
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's tagline, "Your judgement, at agent speed.", only makes sense once you know there are agents doing the work and that you keep two decisions. Someone with no context, such as a reader of the README or a hiring team, can't tell what speck is or why it's different from a plain coding agent.
@@ -48,9 +49,14 @@ speck has a new tagline: "Ship code you can't read, and still trust it." The REA
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 86,996
+- Elapsed since build started: 2 min
+- Changed lines: 10 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. The landing page (speck-site repo) still has the old tagline, as the ticket puts out of scope.
 
