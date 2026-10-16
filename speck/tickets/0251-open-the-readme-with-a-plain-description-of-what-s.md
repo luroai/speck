@@ -46,6 +46,7 @@ Between the tagline and the image, the README says in plain, obvious sentences w
 - GitHub releases: only speck's own repo publishes them, from a workflow in this repo (`docs/brief.md`, "Releases"), so the README mustn't promise them for the reader's project.
 - `/no-ai-slop` is installed globally for Claude Code (`~/.claude/skills/no-ai-slop/`); see how 0250's Notes recorded its passes.
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
