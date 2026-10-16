@@ -104,7 +104,7 @@ test('0192 AC2: when the ticket and main\'s newer changes fail together, nothing
     assert.equal(res.status, 1, res.stderr + res.stdout);
     noTrace(res);
     assert.match(res.stderr, /Nothing was shipped|nothing was shipped/);
-    assert.match(res.stderr, /fail together/);
+    assert.match(res.stderr, /because of its own change or because of it with main's newer changes/);
     assert.match(res.stderr, /widget adds up/);
     assert.doesNotMatch(res.stderr, /other thing/, 'only the failing tests are named');
     assert.match(res.stderr, /main's own tests pass/);
@@ -126,7 +126,7 @@ test('0192 AC2: when the ticket alone fails, it still says the failure comes fro
   assert.equal(res.status, 1, res.stderr + res.stdout);
   assert.match(res.stderr, /comes from this ticket's change/);
   assert.match(res.stderr, /lonely test/);
-  assert.doesNotMatch(res.stderr, /fail together/);
+  assert.doesNotMatch(res.stderr, /because of its own change or because of it with main's newer changes/);
 });
 
 test('0192 AC3: when main has moved on and the merge is clean, it ships without another review round', () => {
@@ -211,6 +211,6 @@ test('0192 AC2 (review F2): failing tests are named even when the output is over
   mainMoves(r);
   const res = spawnSync(process.execPath, [CLI, 'ship', '1'], { cwd: r.dir, encoding: 'utf8', env, maxBuffer: 64 * 1024 * 1024 });
   assert.equal(res.status, 1, res.stderr.slice(0, 2000));
-  assert.match(res.stderr, /fail together/);
+  assert.match(res.stderr, /because of its own change or because of it with main's newer changes/);
   assert.match(res.stderr, /Failing tests: early failure\./);
 });

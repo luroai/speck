@@ -72,7 +72,7 @@ test('0194 AC2: a ship started with --auto exits 16 when the ticket and the base
   const before = r.snapshot();
   const auto = runIn(r.dir, 'ship', '1', '--auto');
   assert.equal(auto.status, 16, auto.stderr + auto.stdout);
-  assert.match(auto.stderr, /fail together/);
+  assert.match(auto.stderr, /because of its own change or because of it with main's newer changes/);
   assert.deepEqual(r.snapshot(), before, 'nothing changed');
   const own = runIn(r.dir, 'ship', '1');
   assert.equal(own.status, 1, 'your own ship exits 1 as before');

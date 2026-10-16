@@ -40,6 +40,7 @@ A ship refused this way names both possible causes.
 - Seen on 0223 (2026-10-16), whose own change broke an older panel test.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes. The build skill's "Tests fail together" step name and the changelog still use the old words, both out of scope.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
