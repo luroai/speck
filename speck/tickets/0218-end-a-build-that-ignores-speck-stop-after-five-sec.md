@@ -15,7 +15,7 @@ after: ["0217"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:48:31.383Z"
 blocked_at: ""
-approved: "2026-10-16T02:50:51.508Z"
+approved: "2026-10-16T02:54:22.320Z"
 waited_seconds: 10466
 
 ---
@@ -61,13 +61,14 @@ Round 1 (codex): changes requested: F1 The six-second limit still depends on how
 Round 2 (codex): changes requested: F2 The new prediction branch stops checking for graceful completion and sleeps until the deadline.
 Round 3 (codex): changes requested.
 Round 4 (codex): approve.
+Round 5 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 4
+- Review rounds: 5, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 979,631
-- Elapsed since build started: 182 min
-- Changed lines: 58 (limit 5000)
+- Reviewer tokens: 1,461,878
+- Elapsed since build started: 186 min
+- Changed lines: 84 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-16-let-speck-stop-see-a-build-end-while-its-process-check-is-slow.md (F2, accepted by the user as a known limit).
@@ -346,6 +347,78 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Approved with the owner's accepted limitation. Slow process checks can no longer stretch the five-second deadline before forced shutdown. All 19 current tests pass. If discovery takes longer than the entire wait, an already-ended process can still incur the full wait and an unnecessary force-end attempt; that improvement is recorded for follow-up."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 5 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 5,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2c3f09075d2edfce1b7c4780c8dcec15a68aa5ad",
+    "merge": true,
+    "thread_id": "01a141f9-5629-7f80-a4d0-ae84ba7034a9",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 478595,
+      "cached_input_tokens": 412800,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3652,
+      "reasoning_output_tokens": 317
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T02:54:19.899Z"
+  },
+  "verdict": {
+    "round": 5,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/stop-end.mjs preserves the reviewed monotonic deadline and timeout for the discovery subprocess. All five slow-check timing tests and the real checkBuild timeout test pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Both graceful-exit tests pass without SIGKILL. The product owner's previously accepted exception for discovery exceeding the entire five-second wait remains unchanged and documented."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The current run reports 123 passed, zero failed and three expected skips. It includes the previously failing module-size and cleanup-helper checks. Both script modules are below 600 lines, and the test imports the cleanup helper first."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/stop-end.mjs",
+        "issue": "Slow discovery previously overran the forced-shutdown deadline. The extracted module retains the timeout covering the whole discovery check.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/stop-end.mjs",
+        "issue": "Discovery exceeding five seconds can still delay graceful completion and cause an unnecessary SIGKILL attempt against a stale PID. The product owner accepted this limitation; it remains recorded as a follow-up.",
+        "suggested_fix": "Address direct liveness checks in the recorded follow-up.",
+        "state": "dispute_accepted"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved with the previously accepted limitation. Moving the stop logic into its own module preserves its behaviour and satisfies main's file-size and test-cleanup requirements. The current checks report 123 passing tests and no failures."
   }
 }
 ```
