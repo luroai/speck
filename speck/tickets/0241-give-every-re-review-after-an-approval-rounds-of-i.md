@@ -32,7 +32,7 @@ Every review round that follows an approved round has rounds of its own, whether
 4. The brief's "Merge rounds" paragraph says a round is a merge round whenever the round before it approved. No test that passed before this change fails, except checks that a round after an approval without a merge counts towards `max_review_rounds`, which are changed to check AC1.
 
 ## Out of scope
-- Allowing one more review round for a single ticket (0242).
+- One extra review round for a ticket that reaches the round limit one finding from approval (0242).
 - Renaming merge rounds, or changing how they're marked in the Review rounds, the review log or the review pack.
 - Any change to rounds that don't follow an approval.
 

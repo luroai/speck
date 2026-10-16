@@ -20,7 +20,7 @@ created: 2026-10-16
 **Status:** 📝 draft
 
 ## Problem
-The 0.5.2 tickets stop review round limits blocking builds that only need one more round: a re-review after an approval gets rounds of its own (0241), and the user can allow more rounds for one ticket (0242). Anyone following the README's setup prompt still gets 0.5.1 without them.
+The 0.5.2 tickets stop review round limits blocking builds that only need one more round: a re-review after an approval gets rounds of its own (0241), and a ticket one finding from approval at the round limit gets one extra round by itself (0242). Anyone following the README's setup prompt still gets 0.5.1 without them.
 
 ## Outcome
 speck is ready to be released as 0.5.2.

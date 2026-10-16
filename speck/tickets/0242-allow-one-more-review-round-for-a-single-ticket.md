@@ -1,6 +1,6 @@
 ---
 id: "0242"
-title: "Allow one more review round for a single ticket"                # one outcome, no "and"
+title: "Give a ticket one extra review round when it's one finding from approval"                # one outcome, no "and"
 status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
@@ -15,31 +15,32 @@ after: ["0241"]                # ticket ids that must be done first
 created: 2026-10-16
 
 ---
-# 0242 · Allow one more review round for a single ticket
+# 0242 · Give a ticket one extra review round when it's one finding from approval
 
 **Status:** 📝 draft
 
 ## Problem
-When a build blocks at the review round limit and the user answers "give it one more round", the builder has to raise `limits.max_review_rounds` in `speck/config.yml` for every ticket and remember to put it back. It happened on 0218 on 2026-10-16, and on 0008, 0011 and 0061 before.
+A build that reaches the review round limit blocks, even when the reviewer has only one finding left. The user then has to step in just to allow one more round, which means raising `limits.max_review_rounds` in `speck/config.yml` for every ticket and putting it back. It happened on 0218 on 2026-10-16, and on 0008, 0011 and 0061 before.
 
 ## Outcome
-The user can allow more review rounds for one ticket, without changing the limit for any other.
+A ticket that's one finding from approval at the round limit gets one more review round by itself, and blocks only if that round doesn't approve.
 
 ## Acceptance criteria
-1. A ticket's `max_review_rounds` field, when it's a whole number of 1 or more, is that ticket's limit on review rounds in place of `limits.max_review_rounds` in `speck/config.yml`: `speck review` and `speck record` accept rounds up to it, `speck next` says `block` only after it, and the review pack's "round N of M" names it. A ticket with no such field, or a blank one, uses the config limit as today.
-2. `speck set <id> max_review_rounds <n>` sets it, and refuses anything but a whole number of 1 or more with a plain message. `speck lint` reports an error for any other value already in a ticket. Other tickets and `speck/config.yml` are unchanged.
-3. The ticket's Delivery log, written by `speck close`, says when the ticket's own limit was used and what it was.
-4. The build skill says: when a build blocks because it reached the round limit, the question offers more review rounds as one of the options; when the user's answer allows them, the builder runs `speck set <id> max_review_rounds <n>` (the review rounds so far that count towards the limit, plus the rounds allowed: one unless the user says otherwise) and records the answer in the ticket's Notes. It never raises the limit otherwise, and never changes `limits.max_review_rounds` in `speck/config.yml` to get past a block.
-5. No test that passed before this change fails.
+1. When a ticket's review rounds that count towards `max_review_rounds` reach it, and the last of them didn't approve but left no more than one blocking finding open, `speck next` says `fix` instead of `block`, and `speck review` and `speck record` accept one more round: the extra round.
+2. A ticket gets at most one extra round. If the extra round doesn't approve, `speck next` says `block`. A round at the limit that left two or more blocking findings open blocks as today, and so does an escalation or a repeated dispute, whether or not it's in the extra round.
+3. The review pack names the extra round (for example "round 4 of 3, an extra round"), and the ticket's Delivery log, written by `speck close`, says when the ticket had one.
+4. The build and review skills say the builder takes the extra round like any other, without asking the user, and never changes `limits.max_review_rounds` in `speck/config.yml` to get past a block.
+5. No test that passed before this change fails, except checks that a ticket blocks at `max_review_rounds` with no more than one blocking finding open, which are changed to check AC1.
 
 ## Out of scope
-- A panel button or field for it.
-- A per-ticket limit on merge rounds (`max_merge_rounds`).
+- A panel button, a setting or a ticket field for extra rounds.
+- Extra merge rounds (`max_merge_rounds`).
 - How re-reviews after an approval are counted (0241).
 
 ## Notes
-- The limit is read in `reviewSetup()` and `nextAction()` in `scripts/review.mjs`, and shown in `scripts/pack.mjs`. `speck set`'s checks are `checkSetValue()` and `checkSetTicket()` in `scripts/speck.mjs`; the ticket field checks `speck lint` runs are in `scripts/core.mjs` (as for `reviewer_effort`).
-- The field follows `reviewer_model` and `reviewer_effort`: a ticket value in place of the config one.
+- Asked for 2026-10-16: "if it warrants an extra round it should be done automatically, then if we need another after that, then the ticket stops." "Warrants" is read as the round at the limit leaving no more than one blocking finding open.
+- The limit is applied in `reviewSetup()` and `nextAction()` in `scripts/review.mjs`, and shown in `scripts/pack.mjs`; the Delivery log's rounds line is `reviewTotals()` in `scripts/pack.mjs`, written by `scripts/close.mjs`.
+- 0218 would have qualified: its round 3 left one blocking finding (F2) open.
 - Relies on nothing outside this repo.
 
 ## In plain words
