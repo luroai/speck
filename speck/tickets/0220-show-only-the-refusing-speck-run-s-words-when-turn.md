@@ -40,6 +40,7 @@ A refusal to turn speck run on shows only what the refusing speck run said.
 - `panelRunOn()` in `scripts/panel.mjs` reads `run.log` from where it ended at the click.
 - speck run must keep running after the panel exits, so its output can't simply be piped to the panel: the pipe would break when the panel exits.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -71,9 +71,20 @@ function takeRunLock(repo) {
   } finally { fs.rmSync(mine, { force: true }); }
 }
 
+// Writes a refusal to start to the file the panel named in SPECK_RUN_REFUSAL as well (0220), so the panel shows only this
+// speck run's words. The variable is dropped first, so no build or ship this speck run starts inherits it.
+export function cmdRun() {
+  const refusal = process.env.SPECK_RUN_REFUSAL;
+  delete process.env.SPECK_RUN_REFUSAL;
+  try { runOn(); } catch (e) {
+    if (refusal && e instanceof SpeckError) try { fs.writeFileSync(refusal, e.message); } catch { /* the panel shows the exit code */ }
+    throw e;
+  }
+}
+
 // Watches the board: starts a build for each ready ticket that isn't waiting on another, up to max_parallel_builds at
 // once, and ships approved ones (shipQueue). Each runs in its own process group, so stopping speck run leaves it running.
-export function cmdRun() {
+function runOn() {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
