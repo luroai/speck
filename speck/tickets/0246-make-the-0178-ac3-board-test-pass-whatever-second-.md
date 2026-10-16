@@ -39,6 +39,7 @@ The test gives the same result whichever second it runs in.
 - The test is in `test/panel-0178.test.mjs`; `panelModel()` is in `test/support/panel.mjs`.
 - Seen in 0211's whole-suite run on 2026-10-15, passing when run again.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
