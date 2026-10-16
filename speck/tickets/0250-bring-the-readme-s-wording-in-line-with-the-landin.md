@@ -1,7 +1,7 @@
 ---
 id: "0250"
 title: "Bring the README's wording in line with the landing page"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T11:42:20.136Z"
 ---
 # 0250 · Bring the README's wording in line with the landing page
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The README and the landing page describe speck differently: the landing page is built around two decisions and the things speck does for you, while the README is a long list. A technical reader, such as a hiring team at a coding-tools company, comes to the README for the same story with the detail of how it works, and finds the install prompt only after several sections.
@@ -60,7 +60,9 @@ The README tells the landing page's story in the same order and words, with the 
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The README now tells the same story as the landing page, in the same order and mostly the same words: the tagline, the opening paragraph and the picture, then the setup prompt straight away. After that come your two decisions and what speck does in between, the review pack, the "clever bits" and a new "Under the hood" section for technical readers, with the commands and settings behind each part. Nothing the README said before was dropped: the panel, requirements, commands and the rest follow as before.
+
+To see it, open the README on GitHub and compare it with the landing page. Keep an eye on the two drifting apart: when the landing page's wording changes, the README needs the same change by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -70,3 +72,76 @@ The README tells the landing page's story in the same order and words, with the 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "73c7064879cabac0da428ddf9db12e2ae1d53d8e",
+    "thread_id": "01a14489-62e8-7471-b5ea-85a34c8d4910",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 166202,
+      "cached_input_tokens": 112512,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 802,
+      "reasoning_output_tokens": 50
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T11:47:21.287Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md opens with the supplied tagline and paragraph, retains the 0249 picture, and puts Get started first. Passing 0250 AC1 tests check order and the version-pinned prompt; 0249 tests check image references."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md's How it works follows the three required parts and names the relevant skills, commands and settings. The passing 0250 AC2 test checks their order and content."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The clever bits covers all seven parts in order with their mechanisms. The passing 0250 AC3 test checks these; merge handling agrees with scripts/hand-back.mjs and the build skill."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Under the hood covers review turns, escalation, state, test selection and the serial ship queue consistently with docs/brief.md and scripts/review.mjs. Both 0250 AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The diff preserves the existing factual sections and relocates the introductory facts. Both 0250 AC5 tests passed. The recorded run has 293 passes and no failures; release-0236 retains its assertions under the renamed heading."
+      },
+      {
+        "id": 6,
+        "status": "pass",
+        "evidence": "The ticket's Notes record two detect passes, each first-pass pattern with its original line and fix or retention reason, and no unaddressed patterns after the second pass. The 0250 AC6 test passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The README now follows the landing page's story, brings setup near the top and explains the technical mechanisms behind each part. Existing information is preserved, and all 293 tests in the recorded run passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
