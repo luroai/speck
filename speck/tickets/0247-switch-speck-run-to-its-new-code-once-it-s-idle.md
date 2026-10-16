@@ -43,6 +43,7 @@ started: "2026-10-16T09:30:55.502Z"
 - `speck run` is `runOn()` in `scripts/run.mjs`. A `speck run` that starts adopts builds an earlier one launched (`adoptEarlierBuilds()`), and its lock is `takeRunLock()`. The ship queue is `scripts/ship-queue.mjs`; hand-backs wait in the run record, so a new `speck run` carries them out (0194).
 - `scripts/run.mjs` is close to the 600-line limit for scripts, which a test checks.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
