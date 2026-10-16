@@ -1,7 +1,7 @@
 ---
 id: "0244"
 title: "Say a refused ship's failing tests may come from the ticket's own change"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-say-a-ship-s-failing-tests-may-be-the-ticke
 after: ["0241","0242"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:28:55.934Z"
+approved: "2026-10-16T08:31:02.417Z"
 
 ---
 # 0244 · Say a refused ship's failing tests may come from the ticket's own change
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the tests fail on a ticket merged with a base branch that has moved on, while the base branch's own tests pass, `speck ship` says the ticket and the base branch's newer changes "fail together". Since builds run only their own tests, the ticket's own change breaking another test is just as likely, so the message, and the review pack it reaches, can point at the wrong cause.
@@ -49,9 +50,14 @@ When a ship is refused because the tests fail once the ticket is combined with n
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 96,308
+- Elapsed since build started: 2 min
+- Changed lines: 4 (limit 5000)
 Follow-ups: none. The build skill's "Tests fail together" steps keep their name, as the ticket puts renaming them out of scope.
 
 ## Review rounds
