@@ -41,6 +41,7 @@ Every review round that follows an approved round has rounds of its own, whether
 - The rule is `isMergeRound()` in `scripts/review.mjs`, which today also needs `merged` from `reviewSince()`; `speck record` works it out on its own path in the same file. 0097 set today's rule.
 - Seen on 0223 (2026-10-16): its ship failed on a test its own change broke while main hadn't moved, so there was nothing to merge.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
