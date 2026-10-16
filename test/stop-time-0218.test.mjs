@@ -1,9 +1,11 @@
 // 0218: speck stop forces a build's process that ignores it to end about five seconds after first asking, timing the
 // wait rather than counting checks and cutting a slow check short at the deadline, so a slow process listing can't stretch it.
+import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { endBuild, checkBuild, runningPids } from '../scripts/run.mjs';
+import { endBuild, checkBuild } from '../scripts/stop-end.mjs';
+import { runningPids } from '../scripts/run.mjs';
 
 const gone = pid => { try { process.kill(pid, 0); return false; } catch (e) { return e.code === 'ESRCH'; } };
 const until = async (fn, ms = 5000) => { const end = Date.now() + ms; while (Date.now() < end) { if (fn()) return true; await new Promise(r => setTimeout(r, 20)); } return fn(); };
