@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import { panelRepo, startPanel, stop, freePort, panelModel, full, idea, round, CLI, env } from './support/panel.mjs';
+import { panelRepo, startPanel, stop, freePort, panelModel, modelsAtOneMoment, full, idea, round, CLI, env } from './support/panel.mjs';
 import { panelBoard } from '../scripts/board-feed.mjs';
 import { statusData } from '../scripts/speck.mjs';
 import { spawnSync } from 'node:child_process';
@@ -87,7 +87,6 @@ test('0178 AC2: for the same tickets, the full board is less than a third of the
 // ---------- AC3: the panel shows the same as before ----------
 
 test('0178 AC3: the panel works out the same queue, Plan, Shipped list and figures from the cut-down board', () => {
-  const model = panelModel();
   const b = board(30);
   // Ones the page picks with care: finished at the same time, with no finished time, with a time it can't read, shipping
   // now, cancelled, and an open ticket waiting on a finished one.
@@ -98,7 +97,9 @@ test('0178 AC3: the panel works out the same queue, Plan, Shipped list and figur
   b.tickets.push(shipped(37, { id: '0937', rounds: [], builder_tokens: null, builder_cost_usd: -1, waited_seconds: 'x' }));
   for (const tickets of [b.tickets, [...b.tickets].reverse()]) {
     const whole = { ...b, tickets }, cut = panelBoard(whole);
-    assert.deepEqual(model(cut), model(whole));
+    // At one moment, so a live counter can't tick over between the two (0246).
+    const [fromCut, fromWhole] = modelsAtOneMoment([cut, whole]);
+    assert.deepEqual(fromCut, fromWhole);
     assert.ok(size(cut) * 3 < size(whole));
   }
   // With fewer than five finished, nothing is cut.
