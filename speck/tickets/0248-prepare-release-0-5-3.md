@@ -1,7 +1,7 @@
 ---
 id: "0248"
 title: "Prepare release 0.5.3"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T10:07:12.997Z"
 ---
 # 0248 · Prepare release 0.5.3
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 0247 makes `speck run` switch to its new code by itself once it's idle, so shipped changes to `speck run` go live without anyone turning it off and on. Anyone following the README's setup prompt still gets 0.5.2 without it.
@@ -50,7 +50,9 @@ speck is ready to be released as 0.5.3.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.5.3. Anyone who follows the README's setup prompt once it ships gets the one change made since 0.5.2: `speck run` now picks up new versions of speck by itself once nothing it's building or shipping is still running, instead of needing to be turned off and on. The changelog, the release notes and the README's figures (231 tickets shipped) are up to date.
+
+To see it, read the new 0.5.3 section at the top of the changelog. Worth keeping an eye on: a `speck run` already on when you upgrade is still on the old version, so it needs turning off and on once; the release notes say so. After it ships, check that the v0.5.3 release page appeared on GitHub; if it didn't, the ticket's Notes say how to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,3 +62,71 @@ speck is ready to be released as 0.5.3.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5929c0347c710d9ce0de96b2470e190b40dce9b3",
+    "thread_id": "01a14430-1148-7a00-b777-4bcfcbf48727",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 185469,
+      "cached_input_tokens": 141184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1243,
+      "reasoning_output_tokens": 21
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T10:10:02.099Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.5.3. The passing test '0248 AC1: speck init prints speck 0.5.3' runs the actual CLI and checks its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md puts 0.5.3 first and describes shipped ticket 0247, the only implementation ticket shipped since v0.5.2. Passing AC2 tests check ordering, coverage and unchanged hashes for 0.5.2 and 0.5.1."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md name 0.5.3 as a public preview; the setup prompt uses v0.5.3. Passing AC3 tests cover these changes. Reading the README against ticket 0247 revealed no newly false workflow claims."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.5.3.md covers the patch's purpose, idle switching, fallback, paused builds, installation and the required one-time restart when upgrading. Claims match shipped ticket 0247; no person's name appears. Passing AC4 tests check structure, commands, upgrade guidance and changelog link."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent calculation from the current done tickets confirms 231 shipped, 16 cancelled, 14 minutes median, 1 review round median and 116 first-round approvals. The recorded run passed all 50 tests across the four reported files, including release consistency. Historical 0243 checks remain meaningful for that release."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Ready for the owner's merge decision. The version, setup prompt and release notes consistently describe 0.5.3 and explain the one-time restart needed when upgrading. The published figures match the ticket records, and all 50 reported tests passed. No blocking issues found."
+  }
+}
+```
+
+</details>
