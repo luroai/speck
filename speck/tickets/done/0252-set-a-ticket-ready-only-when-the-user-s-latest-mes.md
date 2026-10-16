@@ -1,7 +1,7 @@
 ---
 id: "0252"
 title: "Set a ticket ready only when the user's latest message says to"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:40:42.427Z"
 approved: "2026-10-16T13:42:47.940Z"
+finished: "2026-10-16T13:46:13.854Z"
 
 ---
 # 0252 · Set a ticket ready only when the user's latest message says to
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Setting a ticket ready is the user's gate (Gate 1), but `/speck-ticket` only says to set it ready "if the user explicitly approves", without saying what counts. On 2026-10-16 an agent read the user's choice of a tagline as a yes to its own offer to "update 0251 and set it ready", and set it ready. `speck run` started building it at once, and auto-ship covered its risk, so it could have shipped without the user seeing it. Nothing breaks a user's trust in speck faster.
