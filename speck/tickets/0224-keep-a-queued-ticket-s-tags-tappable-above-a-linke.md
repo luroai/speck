@@ -38,6 +38,7 @@ On a phone, every part of a queued ticket's tag tap areas works for the tag, eve
 ## Notes
 - The tags' tap areas come from 0165 and the linked id's from 0164, in the under-700 px rules in `templates/panel.html`. The id is later in the page, so today it wins where they overlap.
 - The note's open question is settled as the tag winning where they overlap, without moving the layout (AC2), as 0190 did.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
