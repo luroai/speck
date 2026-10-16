@@ -1,7 +1,7 @@
 ---
 id: "0218"
 title: "End a build that ignores speck stop after five seconds"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-15T23:48:31.383Z"
 blocked_at: ""
 approved: "2026-10-16T02:54:22.320Z"
 waited_seconds: 10466
+finished: "2026-10-16T02:55:53.684Z"
 
 ---
 # 0218 · End a build that ignores speck stop after five seconds
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck stop` asks each of a build's processes to end, then checks 50 times, 100 ms apart, before forcing them. Each check lists every process on the machine, which is slow on a busy one, so a process that ignores the request is forced after about 11 seconds rather than 5. Someone pressing Stop build waits twice as long as meant.
