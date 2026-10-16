@@ -1,7 +1,7 @@
 ---
 id: "0220"
 title: "Show only the refusing speck run's words when Turn on fails"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-keep-another-speck-run-s-lines-out-of-a-tur
 after: ["0219"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-16T03:01:39.573Z"
+approved: "2026-10-16T03:06:05.482Z"
 
 ---
 # 0220 · Show only the refusing speck run's words when Turn on fails
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the panel turns speck run on and speck run refuses to start, the panel shows everything written to the shared `run.log` since the click. If another speck run writes a line in that moment (for example "Launched 0012"), that line shows up in the refusal, which mixes another run's news with the reason this one didn't start.
@@ -49,9 +50,14 @@ When you turn auto-build on from the panel and it can't start, the message you s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 126,710
+- Elapsed since build started: 4 min
+- Changed lines: 25 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limits (no inbox note): a speck run that crashes rather than refusing shows only its exit code and where its output is; and if the panel itself stops before a refusing speck run exits, that run's refusal file is left in speck/.cache/runs/, which git ignores.
 
