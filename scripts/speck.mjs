@@ -207,7 +207,7 @@ function inCommit(repo, rev, p, hops = 0) {
   return true;
 }
 
-// Starts building a ready ticket: makes its branch from the local base branch, in its own worktree when worktrees
+// Starts building a ready ticket, or a blocked one with no branch: makes its branch from the local base branch, in its own worktree when worktrees
 // are on, sets it to building and commits that there. Anything that goes wrong before the start commit is undone.
 function cmdStart(args) {
   const id = args[0];
@@ -228,7 +228,8 @@ function cmdStart(args) {
       ? `Ticket ${pad} has already started: ${at.branch} is checked out at\n${at.path}\nCarry on the build there.`
       : `Ticket ${pad} already has a branch, ${existing.join(', ')}. Check it out to carry on the build, or delete it to start again.`);
   }
-  if (t.fm.status !== 'ready') throw new SpeckError(`Ticket ${pad} is "${t.fm.status}", not "ready". Only a ready ticket can be started.`);
+  // 0219: a blocked ticket with no branch was stopped before its build started it, so it starts as a ready one does.
+  if (t.fm.status !== 'ready' && t.fm.status !== 'blocked') throw new SpeckError(`Ticket ${pad} is "${t.fm.status}", not "ready". Only a ready ticket can be started.`);
   const waits = startWaits(repo, cfg, t);
   if (waits) throw new SpeckError(waits);
   const rel = posix(path.relative(repo, t.file));
