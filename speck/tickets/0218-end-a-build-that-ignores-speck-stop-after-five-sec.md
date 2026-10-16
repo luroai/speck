@@ -1,7 +1,7 @@
 ---
 id: "0218"
 title: "End a build that ignores speck stop after five seconds"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,12 +14,14 @@ source: "speck/ideas/done/2026-10-15-keep-speck-stop-s-five-second-wait-to-five-
 after: ["0217"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:48:31.383Z"
-blocked_at: "2026-10-15T23:56:25.602Z"
+blocked_at: ""
+approved: "2026-10-16T02:50:51.508Z"
+waited_seconds: 10466
 
 ---
 # 0218 · End a build that ignores speck stop after five seconds
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 `speck stop` asks each of a build's processes to end, then checks 50 times, 100 ms apart, before forcing them. Each check lists every process on the machine, which is slow on a busy one, so a process that ignores the request is forced after about 11 seconds rather than 5. Someone pressing Stop build waits twice as long as meant.
@@ -55,9 +57,17 @@ Worth keeping an eye on: on a machine so busy that checking what's running takes
 The reviewer approved the five-second limit and its tests, but hit the 3-round limit on one case: when every check of the running processes takes over 5 seconds (a very busy machine), a build process that ends as soon as it's asked can't be seen to have ended, so speck stop still waits the full 5 seconds and sends it a force-end it no longer needs. Should I (a) accept this as it is, since it's never slower than today (today such a stop waits for each slow check, longer than 5 seconds) and a force-end sent to a process that has gone does nothing, or (b) add a quick check of just the build's known processes alongside the slow full check, so stop returns as soon as they've ended (about 20 more lines)? I recommend (a), with (b) saved as a follow-up idea.
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The six-second limit still depends on how long the synchronous process checks take.
+Round 2 (codex): changes requested: F2 The new prediction branch stops checking for graceful completion and sleeps until the deadline.
+Round 3 (codex): changes requested.
+Round 4 (codex): approve.
 
 ## Delivery log
+- Review rounds: 4
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 979,631
+- Elapsed since build started: 182 min
+- Changed lines: 58 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-16-let-speck-stop-see-a-build-end-while-its-process-check-is-slow.md (F2, accepted by the user as a known limit).
