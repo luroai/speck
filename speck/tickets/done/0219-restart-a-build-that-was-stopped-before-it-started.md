@@ -1,7 +1,7 @@
 ---
 id: "0219"
 title: "Restart a build that was stopped before it started its ticket"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0218","0227"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-16T02:56:06.257Z"
 approved: "2026-10-16T02:59:35.427Z"
+finished: "2026-10-16T03:01:24.506Z"
 
 ---
 # 0219 · Restart a build that was stopped before it started its ticket
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When `speck stop` ends a build before it has run `speck start`, the ticket is left blocked in the main checkout with no branch. `/speck-build <id>` can't pick it up, because `speck start` refuses a ticket that isn't ready, and the stop message wrongly says the branch and work were kept.
