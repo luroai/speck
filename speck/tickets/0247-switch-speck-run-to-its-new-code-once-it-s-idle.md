@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T09:30:55.502Z"
-approved: "2026-10-16T10:02:27.364Z"
+approved: "2026-10-16T10:05:19.569Z"
 
 ---
 # 0247 · Switch speck run to its new code once it's idle
@@ -61,12 +61,13 @@ Worth keeping an eye on: if the new version can't start, `speck run` says why on
 Round 1 (codex): changes requested: F1 The successor announces readiness before its startup work runs.; F2 The tests do not exercise two explicitly required draining paths: adopted builds and running ships.
 Round 2 (codex): changes requested.
 Round 3 (codex): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3
+- Review rounds: 4, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 692,548
-- Elapsed since build started: 32 min
+- Reviewer tokens: 1,110,751
+- Elapsed since build started: 34 min
 - Changed lines: 213 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
@@ -315,6 +316,88 @@ Follow-ups (known limits, no inbox notes):
     ],
     "escalation_question": "",
     "summary": "The change is ready for the owner's merge decision. It switches to updated code after running work finishes, preserves output and stop controls, and keeps the old runner active if preparation fails. Both earlier findings are resolved, and all ten ticket tests passed."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "43a65114981437918fc62b8c1070f2140d79caee",
+    "merge": true,
+    "thread_id": "01a14424-678e-7f32-87b2-21eeb6dadfa3",
+    "seconds": 11,
+    "usage": {
+      "input_tokens": 415385,
+      "cached_input_tokens": 347904,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2818,
+      "reasoning_output_tokens": 449
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T10:05:17.004Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Unchanged implementation and ten passing ticket tests cover content detection, unchanged saves, repeated switches and draining started or adopted work."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "codeSwitch suppresses scheduling during draining. Passing behavioural tests cover waiting messages, build and ship completion, launch suppression and continuation."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing process tests verify lock continuity, inherited output, repeated handovers, terminal Ctrl-C and panel SIGINT."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Preparation completes before readiness; scheduling waits for handover. Passing tests verify import and preparation failures, continued operation on old code and retry after another change."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief documents idle switching. Adding run-0247.test.mjs to HEAVY addresses the suite failure introduced by this ticket. All 17 reported tests passed, including suite-0233 and the ten ticket tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run-switch.mjs",
+        "issue": "Resolved: successor preparation finishes before readiness, and scheduling begins only after handover.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/run-0247.test.mjs",
+        "issue": "Resolved: behavioural tests cover adopted-build and real ship draining.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved. The change switches to updated code once running work finishes and preserves the old runner if preparation fails. The additional test-list entry fixes the regression caused by introducing this ticket’s process tests. All 17 reported tests passed."
   }
 }
 ```
