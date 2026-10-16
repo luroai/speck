@@ -1,7 +1,7 @@
 ---
 id: "0249"
 title: "Show speck's panel beside an agent conversation at the top of the README"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T11:09:08.751Z"
 ---
 # 0249 · Show speck's panel beside an agent conversation at the top of the README
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 People landing on speck's GitHub page, such as someone reading a job application, see only text. What speck is like to use, your agent's conversation on one side and speck's panel open beside it in the agent app, isn't shown anywhere in the README.
@@ -46,7 +46,7 @@ Near the top, the README shows a demo image of an agent app with a conversation 
 - Self-check: no changes (ran the README, release, private-words and licence test files as well: all pass).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's GitHub page now opens with a picture of what it's like to use: a chat with your coding agent on the left and speck's panel beside it on the right, showing tickets for a made-up shop being planned, built and waiting to ship. People who use GitHub's dark theme see a dark version of the picture, and everyone else sees the light one. To see it, open the README on GitHub after this ships and switch GitHub between light and dark. Worth keeping an eye on: the picture shows the panel as it looks today, so it will need a fresh one if the panel's look changes a lot.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,4 +55,71 @@ Near the top, the README shows a demo image of an agent app with a conversation 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6217e2b622136ba6db6b80a441bbb3b80e2791fc",
+    "thread_id": "01a14467-df2b-7251-926c-add82638bea6",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 87182,
+      "cached_input_tokens": 50048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 633,
+      "reasoning_output_tokens": 0
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T11:10:47.074Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md places the picture after the opening paragraph and before the first ## heading. Visual inspection confirms a conversation on the left and speck's panel on the right. Covered by the passing AC1 test."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md uses the required dark-theme source, light img fallback and descriptive alt text. The AC2 test exercises these attributes and passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both PNGs are tracked under docs/images/. Each is 3000 pixels wide; dark is 310,439 bytes and light is 321,029 bytes. The AC3 dimension and size checks pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Inspected both images visually: neither shows personal names, accounts, email addresses, a Disconnected banner or a speck version. Only the fictional shop project appears. The passing AC4 test additionally checks for text and EXIF metadata."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied ticket test run passes all four tests; the independent rerun also passes. Existing tests are unchanged, and the diff contains only the README image insertion, image assets, ticket records and focused tests. The whole-suite check remains part of shipping."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The README now shows the supplied conversation and panel demo near the top, with light and dark versions. Both images meet the size requirements and contain no visible private details. Tests pass, existing wording is unchanged, and there are no blocking concerns."
+  }
+}
+```
+
+</details>
