@@ -1,7 +1,7 @@
 ---
 id: "0243"
 title: "Prepare release 0.5.2"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-16T08:40:19.936Z"
 ---
 # 0243 · Prepare release 0.5.2
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The 0.5.2 tickets cut needless stops: a re-review after an approval gets rounds of its own (0241), a ticket one finding from approval at the round limit gets one extra round by itself (0242), a refused ship names both possible causes of its failing tests (0244), `speck run`'s Claude Code builds can't run commands in the background (0245), and a test that fails by chance no longer does (0246). Anyone following the README's setup prompt still gets 0.5.1 without them.
@@ -51,7 +51,9 @@ speck is ready to be released as 0.5.2.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.5.2. Anyone who follows the README's setup prompt once it ships gets the five fixes made since 0.5.1: re-reviews after an approval get their own rounds, a ticket one problem from approval gets one extra round by itself, a refused ship names both possible causes of its failing tests, builds started by speck run can't leave commands running in the background, and a test that failed by chance no longer does. The changelog, the release notes and the README's figures (229 tickets shipped) are up to date, and the brief now says releases tag and publish themselves.
+
+To see it, read the new 0.5.2 section at the top of the changelog. After it ships, check that the v0.5.2 release page appeared on GitHub; if it didn't, the ticket's Notes say how to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,3 +63,76 @@ speck is ready to be released as 0.5.2.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ffb115560dd8120a78a9fb9e1a6d750d00fa3ca0",
+    "thread_id": "01a143e0-dd0d-7eb1-bf8e-b3528794da59",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 154966,
+      "cached_input_tokens": 106880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 954,
+      "reasoning_output_tokens": 20
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T08:43:22.774Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.5.2. Passing 0243 AC1 tests check the version and exercise speck init's printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 0.5.2 first and describes the five shipped fixes. Passing AC2 tests check coverage, ordering and unchanged hashes for 0.5.1 and 0.5.0."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md name 0.5.2 as a public preview; the setup prompt uses v0.5.2. Passing AC3 tests cover these changes, and inspection found no README claim invalidated by the shipped tickets."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.5.2.md includes the short introduction, five fixes and their benefits, installation command, upgrade guidance and changelog link. Claims match shipped tickets and implementation, including preservation of existing environment settings. Passing AC4 tests cover structure and link; the notes contain no person's name."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The brief's Releases section describes automatic tagging and publishing from the required release notes file, consistent with .github/workflows/release.yml. Passing AC5 and updated 0106 tests check this wording."
+      },
+      {
+        "id": 6,
+        "status": "pass",
+        "evidence": "Independently recalculated figures from the current done tickets: 229 shipped, 16 cancelled, 14 minutes median, one round median and 115 first-round approvals, matching README.md. All 37 targeted tests passed, including version consistency. Existing test updates preserve historical release checks while accommodating the new release."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release preparation meets all six criteria. The version, setup prompt, changelog and release notes agree, the notes accurately describe the shipped fixes, and the README figures match the tickets. All 37 targeted tests passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
