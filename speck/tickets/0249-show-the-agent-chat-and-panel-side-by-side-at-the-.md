@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T11:09:08.751Z"
-approved: "2026-10-16T11:10:55.235Z"
+approved: "2026-10-16T11:38:48.133Z"
 
 ---
 # 0249 · Show speck's panel beside an agent conversation at the top of the README
@@ -54,12 +54,13 @@ speck's GitHub page now opens with a picture of what it's like to use: a chat wi
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 87,815
-- Elapsed since build started: 2 min
+- Reviewer tokens: 256,680
+- Elapsed since build started: 30 min
 - Changed lines: 5 (limit 5000)
 - Follow-ups: none.
 
@@ -124,6 +125,71 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The README now shows the supplied conversation and panel demo near the top, with light and dark versions. Both images meet the size requirements and contain no visible private details. Tests pass, existing wording is unchanged, and there are no blocking concerns."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ff9123f32a432b18577158b43e405d28e4b8334d",
+    "merge": true,
+    "thread_id": "01a14467-df2b-7251-926c-add82638bea6",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 167784,
+      "cached_input_tokens": 125056,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1081,
+      "reasoning_output_tokens": 0
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T11:38:45.497Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md and both images are unchanged since round 1: the visually verified conversation-and-panel picture remains after the opening paragraph and before the first ## heading. The supplied AC1 test passes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The unchanged README picture retains the required dark-theme source, light fallback and descriptive alt text. The supplied AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both tracked images remain unchanged under docs/images/: 3000 pixels wide, with sizes of 310,439 and 321,029 bytes. The supplied AC3 test passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both images are unchanged from the visual inspection in round 1, which found no personal details, Disconnected banner or speck version. The supplied metadata test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The new first-line import satisfies the existing tmp-cleanup test without weakening it. The supplied run passes all eight tests across both files. An independent rerun was prevented by the read-only sandbox rejecting the helper's temporary-directory creation; this is an environment limitation, not a regression."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The README demo remains correct. The added import fixes the test convention failure found during shipping, and all eight relevant tests pass in the builder's run. No blocking concerns remain."
   }
 }
 ```
