@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { Worker } from 'node:worker_threads';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
-import { stopBuild, runState, runsDir, pidAlive } from './run.mjs';
+import { stopBuild, runState, runsDir, pidAlive, refusalFile, takeRefusal } from './run.mjs';
 import { reviewPack, NO_ROUNDS } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
@@ -189,16 +189,16 @@ async function panelShip(repo, id) {
 // 0128: the panel's speck run switch. Turning it on starts `speck run` for this repo in its own process group, with its
 // output going to speck/.cache/runs/run.log, so it keeps running after the page is closed and after `speck panel` stops,
 // Ctrl+C included. Resolves with { status, body }: 200 and the run once it holds the lock and has said so (0207, so its first
-// line isn't read as part of a refusal from the next one), or 409 and speck run's own message when it refused.
+// line isn't read as part of a refusal from the next one), or 409 and its refusal, from a file of its own (0220), not run.log.
 const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50;
-function panelRunOn(repo) {
+export function panelRunOn(repo) {
   const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
-  const log = path.join(runsDir(repo), 'run.log');
+  const log = path.join(runsDir(repo), 'run.log'), refusal = refusalFile(repo);
   let from = 0, fd, child;
   try { from = fs.statSync(log).size; } catch { /* no output yet */ }
   try {
     fd = fs.openSync(log, 'a');
-    child = spawn(process.execPath, [cli, 'run'], { cwd: repo, detached: true, stdio: ['ignore', fd, fd] });
+    child = spawn(process.execPath, [cli, 'run'], { cwd: repo, detached: true, stdio: ['ignore', fd, fd], env: { ...process.env, SPECK_RUN_REFUSAL: refusal } });
   } catch (e) { return Promise.resolve({ status: 500, body: { error: `Couldn't start speck run: ${e.message}` } }); }
   finally { if (fd !== undefined) fs.closeSync(fd); }
   child.unref();
@@ -208,7 +208,7 @@ function panelRunOn(repo) {
     let check, timer;
     const finish = out => { clearInterval(check); clearTimeout(timer); resolve(out); };
     child.on('error', e => finish({ status: 500, body: { error: `Couldn't start speck run: ${e.message}` } }));
-    child.on('exit', code => finish({ status: 409, body: { error: said() || `speck run stopped with exit code ${code} before it was on.` } }));
+    child.on('exit', code => finish({ status: 409, body: { error: takeRefusal(refusal) || `speck run stopped with exit code ${code} before it was on. Its output is in ${path.relative(repo, log)}.` } }));
     check = setInterval(() => {
       const run = runState(runsOf(repo));
       if (run.on && run.pid === child.pid && said()) finish({ status: 200, body: { ok: true, run } });
