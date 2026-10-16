@@ -17,23 +17,27 @@ const notes = () => read('docs/releases/v0.5.2.md');
 const notesSection = heading => notes().match(new RegExp(`^## ${heading}\\s*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] || '';
 const docSection = (text, heading) => text.match(new RegExp(`^## ${heading}\\s*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'))?.[1] || '';
 
-test('0243 AC1: package.json is version 0.5.2', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '0.5.2');
+// 0248 (release 0.5.3) made the checks below that named 0.5.2 as the current version check the current version instead.
+const version = () => JSON.parse(read('package.json')).version;
+const esc = v => v.replace(/\./g, '\\.');
+
+test('0243 AC1: package.json has the current release version', () => {
+  assert.match(version(), /^\d+\.\d+\.\d+$/);
+  assert.ok(changelogSection(read('CHANGELOG.md'), version()), 'with a changelog section of its own');
 });
 
-test('0243 AC1: speck init prints speck 0.5.2', () => {
+test('0243 AC1: speck init prints speck and the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 0\.5\.2: /m);
+  assert.match(r.stdout, new RegExp(`^speck ${esc(version())}: `, 'm'));
 });
 
 test('0243 AC2: CHANGELOG.md has a 0.5.2 section above 0.5.1, under a few headings', () => {
   const log = read('CHANGELOG.md');
   const s = changelogSection(log, '0.5.2');
   assert.ok(s, 'CHANGELOG.md has a 0.5.2 section');
-  assert.ok(log.match(/^## .*$/m)[0].startsWith('## 0.5.2'), '0.5.2 is the newest section');
   assert.ok(log.indexOf(s) < log.indexOf(changelogSection(log, '0.5.1')), '0.5.2 comes above 0.5.1');
   const groups = [...s.matchAll(/^### .+$/gm)];
   assert.ok(groups.length >= 2 && groups.length <= 6, `a few headings, not ${groups.length}`);
@@ -62,16 +66,16 @@ test('0243 AC2: the 0.5.1 and 0.5.0 sections are unchanged', () => {
   assert.equal(hash(changelogSection(log, '0.5.0') || ''), 'b5bed929b197bdc7345e3a8f84fa4b8ea7a7a7a42ff67d4c6633b0b0832184a0');
 });
 
-test('0243 AC3: the README setup prompt names v0.5.2', () => {
-  assert.match(read('README.md'), /npx github:luroai\/speck#v0\.5\.2 init/);
+test('0243 AC3: the README setup prompt names the current version', () => {
+  assert.ok(read('README.md').includes(`npx github:luroai/speck#v${version()} init`));
   assert.doesNotMatch(read('README.md'), /#v0\.5\.1/);
 });
 
-test('0243 AC3: the README and brief status lines say 0.5.2, a public preview', () => {
+test('0243 AC3: the README and brief status lines say the current version, a public preview', () => {
   const readme = read('README.md').match(/^> Status:.*$/m)?.[0] || '';
   const brief = read('docs/brief.md').match(/^Status:.*$/m)?.[0] || '';
   for (const line of [readme, brief]) {
-    assert.match(line, /\b0\.5\.2, a public preview/);
+    assert.match(line, new RegExp(`\\b${esc(version())}, a public preview`));
     assert.doesNotMatch(line, /0\.5\.1/);
   }
 });
@@ -123,13 +127,16 @@ test('0243 AC5: the brief says a workflow tags and publishes each release from i
 // The commit this release was built from, found by its message. Its done tickets are what the figures were worked out from.
 const builtFrom = () => commitBySubject('speck(0245): Stop speck run\'s Claude Code builds running commands in the background');
 
+// 0248 (release 0.5.3) set the figures again, so this checks the README as this release shipped it.
 test('0243 AC6: the README\'s Built with speck figures match the done tickets this release was built from', () => {
   const figures = builtWithSpeckFigures(doneTicketsAt(builtFrom()));
-  assert.deepEqual(readmeFigures(read('README.md')), figures);
+  const shipped = commitBySubject('speck(0243): prepare release 0.5.2');
+  assert.ok(shipped, 'found the commit');
+  const readmeThen = spawnSync('git', ['show', `${shipped}:README.md`], { cwd: ROOT, encoding: 'utf8' }).stdout;
+  assert.deepEqual(readmeFigures(readmeThen), figures);
   assert.deepEqual(figures, { shipped: 229, cancelled: 16, medianMinutes: 14, medianRounds: 1, firstRound: 115 });
 });
 
-test('0243 AC6: package.json, the newest changelog section and the setup prompt all name 0.5.2', () => {
+test('0243 AC6: package.json, the newest changelog section and the setup prompt name the same version', () => {
   assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md'), readme: read('README.md') }), []);
-  assert.equal(JSON.parse(read('package.json')).version, '0.5.2');
 });

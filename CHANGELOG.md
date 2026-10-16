@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.3 · 16 October 2026
+
+What's changed since 0.5.2. A patch release so that `speck run` runs its newest code by itself.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.5.3 init`.
+
+### Building and shipping
+
+- While it's on, `speck run` notices when speck's own code changes, for example when a ticket that changes speck ships, and switches to its new code once nothing it's building or shipping is still running. Until then it starts no new build or ship, and says once which ones it's waiting for. It carries on in the same terminal or panel log, the panel's Auto-build switch stays on throughout, and Ctrl+C still stops it. Before, a change to `speck run` wasn't live until someone turned it off and on. If the new code can't start, `speck run` says why once and carries on with its old code until the next change.
+- A `speck run` that's already on when you upgrade is still running 0.5.2's code, which can't switch, so turn it off and on once after upgrading.
+
 ## 0.5.2 · 16 October 2026
 
 What's changed since 0.5.1. A patch release that cuts needless stops in builds and ships, so tickets that are nearly done no longer wait for you.
