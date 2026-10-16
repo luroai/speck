@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.4 · 16 October 2026
+
+What's changed since 0.5.3. A patch release so that every install command gets the newest release, agents set a ticket ready only when you tell them to, and the README says plainly what speck is.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.5.4 init`.
+- The README's setup prompt, its "Without an agent" section, the brief, `/speck-setup` and the message from a copy of speck that can't install itself now all install the newest release, whichever that is, instead of a fixed release that had to be updated by hand or whatever was on `main` at the time. The command is in single quotes, so it works the same in zsh, the default shell on a Mac, as in bash. Until a new release has been tagged, they install the release before it.
+
+### Planning tickets
+
+- An agent working with speck sets a ticket ready only when your latest message tells it to set that ticket ready. Picking an option, approving wording, answering a question or agreeing to a plan that includes it doesn't count, and the agent asks whether to set the ticket ready once any other change is done. Projects get the same rule in their agent guide the next time speck is installed or updated there. Fix tickets for a broken base branch are still set ready by the build that finds the failure, as before. This is guidance to the agent, not a lock: the panel and `speck set` still let you set a ticket ready.
+
+### The README
+
+- speck has a new tagline, "Ship code you can't read, and still trust it.", in the README, `speck help` and the package description.
+- The README opens by saying plainly who speck is for, what you do, where you do it, what happens while you're away, why speck exists and why you can trust the result.
+- A picture near the top shows speck at work: a conversation with your agent on one side and speck's panel beside it, in GitHub's light or dark theme.
+- The README tells the landing page's story in the same order, with the setup prompt straight after it, then adds the technical detail behind each part in a new "Under the hood" section.
+- Each section starts with one plain sentence saying what it tells you or what you do with it.
+
 ## 0.5.3 · 16 October 2026
 
 What's changed since 0.5.2. A patch release so that `speck run` runs its newest code by itself.
