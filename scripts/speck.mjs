@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
-import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdPrompt, cmdDiff } from './review.mjs';
+import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
@@ -20,6 +20,7 @@ import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, p
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
+import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
@@ -447,6 +448,8 @@ export function statusData(repo) {
         seconds: num(r?.meta?.seconds),
         tokens: (num(r?.meta?.usage?.input_tokens) || 0) + (num(r?.meta?.usage?.output_tokens) || 0),
       })),
+      // 0223: the review round being run now, or null: whether the reviewer or the builder is at work on a reviewing ticket.
+      review_running: inHand(t) ? roundRunning(runs, t.fm.id, ticketRounds(t.raw).rounds.length) : null,
       waiting_on: after.filter(id => !done.has(padId(id))),
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
       build_exit: stop?.counted ? null : buildExit(runs, t.fm.id),
@@ -538,6 +541,8 @@ const HELP = `speck: Your judgement, at agent speed.
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f] [--response=f]  print the reviewer prompt (for subagent reviewers)
   speck reviewer-settings <id>        print and save the model and effort to start a reviewer with
+  speck review-running <id> [--ended] show the next round as running in the panel until speck record
+                                      (for subagent reviewers; --ended: the round was given up on)
   speck diff <id>                     the changes since the reviewer's last round, as the reviewer sees them
   speck close <id>                    write the review and delivery logs, set approved and commit, once the reviewer approves
   speck next <id>                     what the builder should do next: review, fix, block or ship
@@ -549,7 +554,7 @@ const HELP = `speck: Your judgement, at agent speed.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, new: cmdNew, lint: cmdLint, set: cmdSet, config: cmdConfig, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, 'merge-check': cmdMergeCheck, ship: cmdShip };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, 'merge-check': cmdMergeCheck, ship: cmdShip };
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {

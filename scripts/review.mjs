@@ -1,4 +1,4 @@
-// speck review, record, prompt, diff, next and reviewer-settings: review rounds, kept in each ticket, and the codex reviewer.
+// speck review, record, prompt, diff, next, review-running and reviewer-settings: review rounds, kept in each ticket, and the codex reviewer.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -6,6 +6,7 @@ import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
 import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong } from './reviewers.mjs';
 import { testOutput, testsMeta } from './tap.mjs';
+import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -245,12 +246,16 @@ function reviewSetup(repo, id, opts) {
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
 // reviewer starts, and puts the ticket back exactly as it was if the round fails, so only a recorded round leaves the status changed.
+// 0223: the round counts as running from then until it's recorded, fails or times out.
 function reviewRound(repo, id, opts, run) {
   const s = reviewSetup(repo, id, opts);
   const marked = startReviewing(s.ticket.raw, s.round);
-  if (marked === s.ticket.raw) return run(s);
-  fs.writeFileSync(s.ticket.file, marked);
-  try { return run(s); } catch (e) { fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
+  const ended = markRoundRunning(repo, s.ticket.fm.id || id, s.round);
+  try {
+    if (marked === s.ticket.raw) return run(s);
+    fs.writeFileSync(s.ticket.file, marked);
+    try { return run(s); } catch (e) { fs.writeFileSync(s.ticket.file, s.ticket.raw); throw e; }
+  } finally { ended(); }
 }
 
 function runCodexReview(repo, id, s) {
@@ -341,6 +346,7 @@ export function cmdRecord(args) {
   // Whether the base branch was merged in only matters after an approval, so it's only looked up then.
   const merge = isMergeRound(prior, prior.at(-1)?.verdict.verdict === 'approve' && reviewSince(repo, cfg, prior).merged);
   const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...testsSeen });
+  endRound(repo, findTicket(repo, id).fm.id || id);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
@@ -350,6 +356,19 @@ export function cmdNext(args) {
   const cfg = loadConfig(repo);
   const next = nextAction(rounds(repo, args[0]), cfg);
   console.log(`${next.action}${next.reason ? `: ${next.reason}` : ''}`);
+}
+
+// 0223: records that a reviewer subagent is running the next round, for the panel, until `speck record` records it,
+// or, with --ended, that the round was given up on.
+export function cmdReviewRunning(args) {
+  const id = args.find(a => !a.startsWith('--'));
+  if (!id) throw new SpeckError('Usage: speck review-running <id> [--ended]');
+  const repo = findRepoRoot();
+  const t = findTicket(repo, id), pad = t.fm.id || id;
+  if (args.includes('--ended')) { endRound(repo, pad); console.log(`No review round of ${pad} is shown as running.`); return; }
+  const round = rounds(repo, id).length + 1;
+  markSubagentRound(repo, pad, round);
+  console.log(`Round ${round} of ${pad} is shown as running until \`speck record\` records it, or \`speck review-running ${pad} --ended\` ends it.`);
 }
 
 export function cmdReviewerSettings(args) {
