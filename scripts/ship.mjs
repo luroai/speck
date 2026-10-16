@@ -81,7 +81,7 @@ function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {})
     }
     if (runTests(at, cfg, base).ok) {
       const e = new SpeckError(moved
-        ? `${failed} ${base}'s own tests pass, so this ticket and ${base}'s newer changes fail together.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
+        ? `${failed} ${base}'s own tests pass, so the tests failed on this ticket as it would land, because of its own change or because of it with ${base}'s newer changes.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
         : `${failed} ${base}'s tests pass, so the failure comes from this ticket's change.${named(failing)}`);
       e.together = true; // an auto-ship exits 16 with it, so speck run hands the ticket back to its build (0194)
       return e;
