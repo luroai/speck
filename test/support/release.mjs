@@ -10,9 +10,20 @@ export function changelogVersion(changelog) {
   return changelog.match(/^## \[?(\d+\.\d+\.\d+)\]?/m)?.[1] || null;
 }
 
-// The version in the README's setup prompt (`npx github:<owner>/<repo>#v<version> init`).
-export function setupPromptVersion(readme) {
-  return readme.match(/npx github:[\w.-]+\/[\w.-]+#v(\d+\.\d+\.\d+) init/)?.[1] || null;
+// The command that installs or runs speck's latest release, quoted so the `*` works in zsh as well as bash (0253).
+export const LATEST = "npx 'github:luroai/speck#semver:*'";
+
+// A list of plain-English problems with the README's setup prompt; empty when it runs `<LATEST> init` and no
+// other speck install command, such as a fixed release (`#v0.5.3`), no release at all or the package unquoted.
+export function setupPromptProblems(readme) {
+  const section = readme.match(/^## Get started\n([\s\S]*?)(?=^## |(?![\s\S]))/m)?.[1] || '';
+  const prompt = section.match(/```[^\n]*\n([\s\S]*?)```/)?.[1];
+  if (!prompt) return ["The README has no setup prompt under Get started."];
+  const commands = [...prompt.matchAll(/npx (?:-y )?['"]?github:[\w.-]+\/[\w.-]+[^\s`]*/g)].map(m => m[0]);
+  if (!commands.includes(LATEST) || !prompt.includes(`${LATEST} init`)) return [`The README's setup prompt doesn't run \`${LATEST} init\`.`];
+  const others = commands.filter(c => c !== LATEST);
+  if (others.length) return [`The README's setup prompt also installs ${others.join(', ')}, not the latest release.`];
+  return [];
 }
 
 // The text of one `## <version>` section, up to the next `## ` heading or the end.
@@ -21,12 +32,12 @@ export function changelogSection(changelog, version) {
   return changelog.match(new RegExp(`^## \\[?${v}\\]?[^\\n]*\\n[\\s\\S]*?(?=^## |(?![\\s\\S]))`, 'm'))?.[0] || null;
 }
 
-// A list of plain-English mismatches between package.json, the changelog and the setup prompt; empty when they agree.
-export function releaseMismatches({ pkg, changelog, readme }) {
+// A list of plain-English mismatches between package.json and the newest changelog section; empty when they agree.
+// The setup prompt always installs the latest release (0253), so setupPromptProblems checks it instead.
+export function releaseMismatches({ pkg, changelog }) {
   const found = {
     'package.json': JSON.parse(pkg).version || null,
     'the newest section of CHANGELOG.md': changelogVersion(changelog),
-    "the README's setup prompt": setupPromptVersion(readme),
   };
   const problems = Object.entries(found).filter(([, v]) => !v).map(([where]) => `No version found in ${where}.`);
   if (problems.length) return problems;

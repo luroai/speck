@@ -36,10 +36,10 @@ test('0250 AC1: the README opens with the tagline, the opening paragraph, the im
   assert.match(between, /^> Status: [^\n]*$/);
 });
 
-test('0250 AC1: the setup prompt keeps the pinned install at the current version', () => {
-  const { version } = JSON.parse(read('package.json'));
+// 0253: the setup prompt installs the latest release rather than a fixed version.
+test('0250 AC1: the setup prompt keeps installing the latest release', () => {
   const prompt = section('Get started').match(/```[^\n]*\n([\s\S]*?)```/)?.[1] || '';
-  assert.ok(prompt.includes(`npx github:luroai/speck#v${version} init`), prompt);
+  assert.ok(prompt.includes("npx 'github:luroai/speck#semver:*' init"), prompt);
 });
 
 test('0250 AC2: How it works follows the landing page\'s three parts in order', () => {

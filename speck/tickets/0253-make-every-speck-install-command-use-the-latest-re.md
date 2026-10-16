@@ -44,6 +44,7 @@ Every command that tells someone how to install or run speck before it's install
 - Waits for 0256, the last of the README tickets (0255, 0251, 0256), and 0252 (also changes `/speck-setup`).
 - Checked 2026-10-16: unquoted, `github:luroai/speck#semver:*` fails in zsh with "no matches found" (zsh 5.9 from Ubuntu's package, `zsh -f -c` and `zsh -c`), because zsh's default NOMATCH option rejects a glob that matches no file. Single-quoted, it passes through unchanged.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

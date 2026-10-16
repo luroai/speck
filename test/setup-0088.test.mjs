@@ -55,7 +55,7 @@ test('0088 AC2: the skill starts from speck detect', () => {
   const md = skill();
   const first = section('1.');
   assert.match(first, /speck detect/);
-  assert.match(first, /npx github:luroai\/speck detect/, 'works before speck is installed');
+  assert.match(first, /npx 'github:luroai\/speck#semver:\*' detect/, 'works before speck is installed');
   assert.ok(md.indexOf('speck detect') < md.indexOf('speck config set'), 'detect comes before any setting');
 });
 

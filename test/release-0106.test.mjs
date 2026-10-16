@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, CLI } from './support/panel.mjs';
-import { changelogSection, releaseMismatches } from './support/release.mjs';
+import { changelogSection, releaseMismatches, setupPromptProblems } from './support/release.mjs';
 
 // ---------- 0106: prepare release 0.3.0 ----------
 
@@ -49,8 +49,9 @@ test('0106 AC2: the 0.2.0 section is unchanged', () => {
   assert.equal(crypto.createHash('sha256').update(s).digest('hex'), 'ea64d32025832543bbd1f26a0726978d393b7f9abd02eb92360709691afbb9f5');
 });
 
-test('0106 AC3: the README setup prompt names the current version', () => {
-  assert.ok(read('README.md').includes(`npx github:luroai/speck#v${version()} init`));
+test('0106 AC3: the README setup prompt installs the latest release', () => {
+  // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
+  assert.deepEqual(setupPromptProblems(read('README.md')), []);
   assert.doesNotMatch(read('README.md'), /#v0\.2\.0/);
 });
 
@@ -63,27 +64,28 @@ test('0106 AC3: the README and brief status lines say the current version, a pub
   }
 });
 
-test('0106 AC4: package.json, the newest changelog section and the setup prompt name the same version', () => {
-  assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md'), readme: read('README.md') }), []);
+test('0106 AC4: package.json and the newest changelog section name the same version, and the setup prompt installs the latest release', () => {
+  assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
+  // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
+  assert.deepEqual(setupPromptProblems(read('README.md')), []);
 });
 
-test('0106 AC4: the version check fails when any one of the three differs or is missing', () => {
+// 0253: the setup prompt always installs the latest release, so the version check covers only these two;
+// test/install-0253.test.mjs checks the prompt.
+test('0106 AC4: the version check fails when either of the two differs or is missing', () => {
   const pkg = v => JSON.stringify({ version: v });
   const changelog = v => `# Changelog\n\n## ${v} · 1 January 2027\n\n### A\n\n- a\n\n## 0.1.0 · 1 January 2026\n`;
-  const readme = v => `run \`npx github:luroai/speck#v${v} init\` and follow`;
-  assert.deepEqual(releaseMismatches({ pkg: pkg('1.2.3'), changelog: changelog('1.2.3'), readme: readme('1.2.3') }), []);
+  assert.deepEqual(releaseMismatches({ pkg: pkg('1.2.3'), changelog: changelog('1.2.3') }), []);
   for (const [name, input] of Object.entries({
-    'package.json': { pkg: pkg('1.2.4'), changelog: changelog('1.2.3'), readme: readme('1.2.3') },
-    changelog: { pkg: pkg('1.2.3'), changelog: changelog('1.2.4'), readme: readme('1.2.3') },
-    'setup prompt': { pkg: pkg('1.2.3'), changelog: changelog('1.2.3'), readme: readme('1.2.4') },
-    'no package version': { pkg: '{}', changelog: changelog('1.2.3'), readme: readme('1.2.3') },
-    'no changelog section': { pkg: pkg('1.2.3'), changelog: '# Changelog\n', readme: readme('1.2.3') },
-    'no setup prompt': { pkg: pkg('1.2.3'), changelog: changelog('1.2.3'), readme: 'nothing here' },
+    'package.json': { pkg: pkg('1.2.4'), changelog: changelog('1.2.3') },
+    changelog: { pkg: pkg('1.2.3'), changelog: changelog('1.2.4') },
+    'no package version': { pkg: '{}', changelog: changelog('1.2.3') },
+    'no changelog section': { pkg: pkg('1.2.3'), changelog: '# Changelog\n' },
   })) {
     assert.equal(releaseMismatches(input).length, 1, `${name}: one mismatch reported`);
   }
   // Only the newest section counts: an older matching one doesn't hide a mismatch.
-  assert.equal(releaseMismatches({ pkg: pkg('0.1.0'), changelog: changelog('1.2.3'), readme: readme('0.1.0') }).length, 1);
+  assert.equal(releaseMismatches({ pkg: pkg('0.1.0'), changelog: changelog('1.2.3') }).length, 1);
 });
 
 test('0106 AC4: the 0092 release tests check the current version, not 0.2.0', () => {

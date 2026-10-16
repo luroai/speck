@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, CLI } from './support/panel.mjs';
-import { changelogSection, releaseMismatches, builtWithSpeckFigures, readmeFigures, doneTicketsAt } from './support/release.mjs';
+import { changelogSection, releaseMismatches, setupPromptProblems, builtWithSpeckFigures, readmeFigures, doneTicketsAt } from './support/release.mjs';
 import { commitBySubject } from './support/commits.mjs';
 
 // ---------- 0248: prepare release 0.5.3 ----------
@@ -55,8 +55,9 @@ test('0248 AC2: the 0.5.2 and 0.5.1 sections are unchanged', () => {
   assert.equal(hash(changelogSection(log, '0.5.1') || ''), '7f1b4639352a11e2e9c6477f147dc48e0ebe7e8544b8166ecca163070b39c57e');
 });
 
-test('0248 AC3: the README setup prompt names v0.5.3', () => {
-  assert.match(read('README.md'), /npx github:luroai\/speck#v0\.5\.3 init/);
+test('0248 AC3: the README setup prompt installs the latest release', () => {
+  // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
+  assert.deepEqual(setupPromptProblems(read('README.md')), []);
   assert.doesNotMatch(read('README.md'), /#v0\.5\.2/);
 });
 
@@ -115,7 +116,9 @@ test('0248 AC5: the README\'s Built with speck figures match the done tickets th
   assert.deepEqual(figures, { shipped: 231, cancelled: 16, medianMinutes: 14, medianRounds: 1, firstRound: 116 });
 });
 
-test('0248 AC5: package.json, the newest changelog section and the setup prompt all name 0.5.3', () => {
-  assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md'), readme: read('README.md') }), []);
+test('0248 AC5: package.json, the newest changelog section name 0.5.3, and the setup prompt installs the latest release', () => {
+  assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
+  // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
+  assert.deepEqual(setupPromptProblems(read('README.md')), []);
   assert.equal(JSON.parse(read('package.json')).version, '0.5.3');
 });

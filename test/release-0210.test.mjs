@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, CLI } from './support/panel.mjs';
-import { changelogSection, releaseMismatches, builtWithSpeckFigures, readmeFigures, doneTicketsAt } from './support/release.mjs';
+import { changelogSection, releaseMismatches, setupPromptProblems, builtWithSpeckFigures, readmeFigures, doneTicketsAt } from './support/release.mjs';
 import { commitBySubject } from './support/commits.mjs';
 
 // ---------- 0210: prepare release 0.4.0 ----------
@@ -52,8 +52,9 @@ test('0210 AC2: the 0.3.0 section is unchanged', () => {
   assert.equal(crypto.createHash('sha256').update(s).digest('hex'), '39fc8660025776499f2578cd43a4d58b5a7c7bc4b94df0016d47e8611bf41d5d');
 });
 
-test('0210 AC3: the README setup prompt names the current version', () => {
-  assert.ok(read('README.md').includes(`npx github:luroai/speck#v${version()} init`));
+test('0210 AC3: the README setup prompt installs the latest release', () => {
+  // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
+  assert.deepEqual(setupPromptProblems(read('README.md')), []);
   assert.doesNotMatch(read('README.md'), /#v0\.3\.0/);
 });
 
@@ -73,8 +74,10 @@ test('0210 AC4: the brief\'s principle 7 says builds end at approved, one ship q
   assert.match(p, /one build at a time \(WIP 1\) unless you change it/);
 });
 
-test('0210 AC5: package.json, the newest changelog section and the setup prompt name the same version', () => {
-  assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md'), readme: read('README.md') }), []);
+test('0210 AC5: package.json, the newest changelog section name the same version, and the setup prompt installs the latest release', () => {
+  assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
+  // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
+  assert.deepEqual(setupPromptProblems(read('README.md')), []);
 });
 
 test('0210 AC6: the release notes say what speck is, the main changes, how to install and how to upgrade', () => {

@@ -29,9 +29,9 @@ Paste this prompt into your coding agent, opened in the folder of the project yo
 
 ```text
 Set up speck in this folder. If Node.js 20 or newer isn't installed, offer to
-install it first. Then run `npx github:luroai/speck#v0.5.3 init` and follow
-the speck-setup skill it installs. Ask me before changing anything on my
-machine or in git.
+install it first. Then run `npx 'github:luroai/speck#semver:*' init` and
+follow the speck-setup skill it installs. Ask me before changing anything on
+my machine or in git.
 ```
 
 Your agent checks what's there, explains each choice in plain words and waits for your answer before it installs anything, makes a commit or changes a setting. When it's done, speck is ready to build your first ticket.
@@ -170,7 +170,7 @@ You can install speck yourself, without an agent, with one command.
 Run this in the folder of the project you want to build:
 
 ```bash
-npx github:luroai/speck init
+npx 'github:luroai/speck#semver:*' init
 ```
 
 This one command:
