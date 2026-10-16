@@ -1,7 +1,7 @@
 ---
 id: "0241"
 title: "Give every re-review after an approval rounds of its own"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-16-give-a-handed-back-ticket-s-re-review-round
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:07:24.979Z"
+approved: "2026-10-16T08:10:32.000Z"
 
 ---
 # 0241 · Give every re-review after an approval rounds of its own
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ticket's ship is refused after approval and the builder fixes it without merging anything new from the base branch (for example a test its own change broke), its re-review counts towards `max_review_rounds`. A ticket approved in its last allowed round then blocks on a tiny fix, as 0223 did on a three-line rename, and only the user can unblock it.
@@ -51,9 +52,14 @@ When a ticket has been approved but can't ship straight away and needs a small c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 99,968
+- Elapsed since build started: 3 min
+- Changed lines: 17 (limit 5000)
 - Follow-ups:
   - Inbox: speck/ideas/2026-10-16-say-what-a-merge-round-run-re-reviewed-when-it-blocks.md (the block reason after max_merge_rounds still says the run re-reviewed a merge).
   - Known limit: rounds after an approval are still called "merge rounds" even with no merge; renaming them was out of scope.
