@@ -55,7 +55,7 @@ test('0226 AC2: the 0.5.1 section covers the fixes someone using speck will noti
     /turn `speck run` on/, // 0220
     /once/, // 0221
     /plain review pack/i, // 0222
-    /fixing round/, // 0223
+    /fixing the last round's findings/, // 0223
     /tap/, // 0224
     /max_parallel_builds/, // 0225
   ]) assert.match(s, re);
