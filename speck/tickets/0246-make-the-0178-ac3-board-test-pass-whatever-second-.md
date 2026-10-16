@@ -1,7 +1,7 @@
 ---
 id: "0246"
 title: "Make the 0178 AC3 board test pass whatever second it runs in"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-15-fix-the-0178-ac3-test-that-fails-by-chance.
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:07:26.319Z"
+approved: "2026-10-16T08:09:49.191Z"
 
 ---
 # 0246 · Make the 0178 AC3 board test pass whatever second it runs in
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 "0178 AC3: the panel works out the same queue, Plan, Shipped list and figures from the cut-down board" sometimes fails by chance: it works out the panel's model from two boards one after the other, and a live elapsed-time counter can tick over a second between them (`6013:28` against `6013:29`). Each such failure costs a second test run, shows in the flaky log and can hand an approved ticket back.
@@ -50,9 +51,14 @@ Nothing changes in the product. One check in speck's own tests sometimes failed 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 85,415
+- Elapsed since build started: 2 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups: none.
 
