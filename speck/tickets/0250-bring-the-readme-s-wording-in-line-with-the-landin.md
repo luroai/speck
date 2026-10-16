@@ -44,6 +44,19 @@ The README tells the landing page's story in the same order and words, with the 
 - Public text: keep private names and paths out, as the existing private-words and Luro checks require.
 - `/no-ai-slop` is installed globally for Claude Code (`~/.claude/skills/no-ai-slop/`), so a `speck run` build can use it. Detect mode names patterns and doesn't rewrite: the builder makes the fixes itself, keeping the landing page's voice.
 - Failing before this build: none
+- No-ai-slop detect, first pass: on the README's new and changed text (lines 1–120).
+  - L92 "The detail behind the steps above.": interpretive metadiscourse. Cut.
+  - L114 "The agents do the typing; you do the steering.": fake-profound kicker. Cut.
+  - L88 "…say what the product does: there's no separate spec…": colon reveal. Joined with "so".
+  - L61 "No GitHub needed: everything happens in your local repo.": colon reveal. Split into two sentences.
+  - L82 "carries on … to carry on": repeated phrase. Changed the second to "to resume it".
+  - L74 "Things you won't have to do.": fragment. Kept: it's the landing page's subtitle for the section.
+  - L29 "If you can write a good ticket, you can ship.": possible kicker. Kept: the landing page's subtitle and the section's lead.
+  - L57 "…then ship. Or let low-risk work ship itself.": fragment. Kept: the landing page's words.
+  - L76–88 every clever bit opens with a bold sentence: robotic rhythm. Kept: the landing page's structure, and each goes on with different mechanisms.
+- No-ai-slop detect, second pass: no pattern left unaddressed. The fixed lines read as plain sentences, and the patterns kept are listed above with their reasons.
+- Self-check: narrowed two claims: `speck ship` also refuses when files outside `speck/` changed after the approval, and only a full test run reuses a recorded result or retries failing tests.
+- AC5: `test/release-0236.test.mjs` checked the old "How you work with it" section; it now checks the same wording in "How it works", which replaced it.
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
 
 ## In plain words

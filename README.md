@@ -2,34 +2,12 @@
 
 **Your judgement, at agent speed.**
 
-You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you. The tickets, the reviews and every decision stay in your repo.
+You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.png">
   <img alt="An agent conversation on the left, with speck's panel open beside it on the right, showing tickets being planned, built and waiting to ship." src="docs/images/demo-light.png">
 </picture>
-
-Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship. The agents do the typing; you do the steering.
-
-```
-idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, or auto-ship]
-```
-
-- **You hold the gates.** You decide what's ready and what ships. Agents never merge or ship unless you run `/speck-ship` or click the Ship button in the panel, or you turn on `auto_ship` in `speck/config.yml` so that `speck run` ships the risks you choose once the reviewer approves them.
-- **When it's stuck, it asks, then moves on.** A build that can't decide something for you stops with one plain question, the options and its recommendation, rather than guessing. `speck run` carries on with the next ticket while it waits for you.
-- **Tickets, not specifications.** Each change is a small numbered ticket in your repo, sized for one agent in one sitting. speck checks the size rules and makes you split anything bigger.
-- **Adversarial review built in.** The building agent (Claude Code by default) starts an independent reviewer (Codex by default) and they take turns: the builder fixes or disputes each finding, and the reviewer re-checks in the same session. It ends when the reviewer approves or a question comes back to you.
-- **Out of your way.** `speck run` builds your ready tickets, each in its own git worktree, so you keep writing ideas and tickets while it works. It builds one at a time unless you raise `max_parallel_builds`, and one ship queue ships approved tickets one after another, so ships never race each other for `main`.
-- **It looks after itself.** When `main` breaks, the build that finds it raises a priority-0 fix ticket that goes to the front of the queue, rather than patching it inside someone else's work. When `main` has moved on, the build merges it in and has the merge reviewed again before it ships. A build that spots a bug or a better idea saves it to your inbox, and triage turns the inbox into at most three decisions.
-- **The code is the record.** The code, the tickets and the tests say what the product does. Each ticket keeps its review rounds and its actuals: time, review rounds and tokens.
-- **No GitHub needed.** Everything happens in your local repo. Shipping merges the approved branch into `main` and pushes it if you have a remote.
-
-**Who it's for.** You think in outcomes, not diffs. You're a PM, a founder, or the person on the team who always has the spec. You have more ideas than evenings, a coding agent you already trust with real work, and no wish to read every line it writes. You set speck up by talking to your agent, write tickets, set them ready and walk away.
-
-It's also for engineers who want a light, auditable loop: ticket, build, independent review, merge. It's not for large multi-team specs, or work that needs design documents spanning many changes.
-
-Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
-
 
 > Status: 0.5.3, a public preview. It works end to end on a local machine. Expect rough edges.
 
@@ -46,13 +24,100 @@ machine or in git.
 
 Your agent checks what's there, explains each choice in plain words and waits for your answer before it installs anything, makes a commit or changes a setting. When it's done, speck is ready to build your first ticket.
 
-## How you work with it
+## How it works
 
-1. **Capture and shape.** Talk an idea through with your agent, then `/speck-capture` it, or go straight to `/speck-ticket` to turn it into small draft tickets. Your agent checks each one against the size rules, for overlap with what's already there and for criteria that could be read two ways.
-2. **Set tickets ready (Gate 1).** Read a draft, then set it ready in `speck panel` or with `node .speck/scripts/speck.mjs set <id> status ready`. A ticket can wait on others with `after:`, and starts only once they've shipped.
-3. **Leave it running.** `node .speck/scripts/speck.mjs run` builds each ready ticket in turn, highest priority first. A build writes tests from the acceptance criteria, makes them pass, and goes through the review loop. While it works, a build runs the ticket's own tests; the whole suite runs when a ticket ships.
-4. **Ship (Gate 2).** An approved ticket waits for you to run `/speck-ship <id>`, or click the Ship button in its review pack in `speck panel`, after reading the pack. With `auto_ship` on, `speck run` ships it as soon as the reviewer approves, while it's on.
-5. **Answer questions.** When a build can't decide something for you, it blocks its ticket with one plain question, and `speck run` moves on to the next ticket. Answer it, then run `/speck-build <id>` to carry on.
+If you can write a good ticket, you can ship.
+
+```
+idea → ticket → [you: ready] → agent builds → second agent reviews, turn by turn → approved → [you: ship, or auto-ship]
+```
+
+Every change is a small numbered ticket in your repo, sized for one agent in one sitting. In the commands below, `speck` stands for `node .speck/scripts/speck.mjs`, which `init` puts in your project.
+
+### Your first decision: what gets built
+
+Talk ideas through with your agent. It writes them up as small tickets, each with a short list of what done looks like.
+
+`/speck-capture` saves an idea, or the whole conversation, to `speck/ideas/`. `/speck-ticket` turns it into numbered draft tickets in `speck/tickets/`, each with a problem, an outcome and its acceptance criteria. Your agent checks each one against the size rules in `speck/config.yml` (`limits.max_acceptance_criteria`, `limits.max_changed_lines`), for overlap with what's already there and for criteria that could be read two ways. speck makes you split anything bigger: a ticket of size `L` can never be ready.
+
+Read a draft, then set it ready with Set ready in `speck panel`, or with `speck set <id> status ready`. That's Gate 1. Setting it ready lints the ticket and commits it on the base branch, and only then can a build pick it up. A ticket can wait on others with `after:` in its frontmatter, and starts only once they've shipped.
+
+### Everything in between
+
+speck builds each ticket tests first, checks its own work, then has a second AI review it. Each ticket is built in its own git worktree, and no agent ever approves its own work.
+
+`speck run` watches for ready tickets and starts `/speck-build <id>` for each, highest priority first, using `build_command` in `speck/config.yml`. It builds one at a time unless you raise `max_parallel_builds`. You can also start a build yourself with `/speck-build <id>`.
+
+A build runs `speck start <id>`, which makes the ticket's branch in its own git worktree beside your checkout (with `worktrees: true`) and sets it to `building`. It writes a test for each acceptance criterion and checks that the tests fail, then writes the simplest code that makes them pass. A build runs the ticket's own tests; the whole suite runs when a ticket ships. If the change goes over `limits.max_changed_lines`, it stops and proposes a split rather than pushing on. Before the first review round it runs a self-check, going over its change the way an adversarial reviewer would: unusual input, stale state, error paths, claims in docs and scope.
+
+Then `/speck-review` starts the review loop. The builder (Claude Code by default, set as `builder`) hands the ticket, the diff and the test output to an independent reviewer (Codex by default, set as `reviewer`), which runs read-only. They take turns until the reviewer approves or a question comes back to you. When it approves, the ticket is `approved` and waits on its branch.
+
+### Your second decision: what ships
+
+Read a one-page review pack, then ship. Or let low-risk work ship itself.
+
+Every approved ticket has a review pack (`speck pack <id>`, or the ticket in the panel), written for someone who doesn't read code. Read it, then run `/speck-ship <id>` or click the Ship button in the review pack. That's Gate 2. Agents never merge or ship unless you do one of those, or you turn on `auto_ship` in `speck/config.yml`. With `auto_ship` on, `speck run` ships each approved ticket whose risk is listed in `auto_ship_risk` (`[low]` by default) as soon as the reviewer approves it, while it's on.
+
+Shipping runs `speck ship <id>`. It refuses, changing nothing, unless the reviewer approved the ticket, nothing outside `speck/` changed after that approval, the working tree is clean and the whole test suite passes on the ticket merged with the base branch as it is now. Then it sets the ticket to `done`, merges the branch into `main`, pushes it if you have a remote, and deletes the branch. No GitHub needed. Everything happens in your local repo.
+
+## What a review pack looks like
+
+Every approved ticket has a **review pack** written for someone who doesn't read code:
+- each acceptance criterion with ✅/❌ and the reviewer's evidence;
+- a plain-English summary;
+- risk flags (sensitive files touched, size);
+- the review history;
+- actuals: review rounds, reviewer tokens and elapsed time.
+
+## The clever bits
+
+Things you won't have to do.
+
+**It raises its own fix tickets.** If `main` breaks, the build that finds it writes a priority-0 fix ticket and sends it to the front of the queue, instead of patching it inside someone else's work. When `speck ship` finds the base branch's own tests failing, the build creates the ticket with `speck new "<title>" --type=fix`, which sets priority 0, and runs `speck set <fix-id> status ready`, unless an open fix ticket already covers the failure. Its own ticket stays `approved`, and the ship queue tries it again once the fix has shipped.
+
+**It files its own follow-ups.** A build that spots a bug or a better idea saves it to your inbox, after checking it isn't there already. Each is a note in `speck/ideas/` with `Status: inbox` and the ticket it came from, checked first against every idea and ticket, open or done. `/speck-ticket` triages the inbox down to at most three decisions.
+
+**Ideas only become tickets in conversation.** Say "capture this" and your agent saves the idea, or the whole conversation, in your repo with `/speck-capture`. It becomes tickets only when you talk it through with your agent, through `/speck-ticket`, which writes each one as a `draft`. The panel shows your ideas but has no button that turns one into a ticket.
+
+**It asks, then moves on.** When a build needs your call, it stops with one plain question, the options and its recommendation. It writes the question under `## Blocked question` in the ticket and sets it to `blocked`, and `speck run` carries on with the next ticket. Answer it, then run `/speck-build <id>` to resume it; the panel shows the command that reopens the build's own session (`resume_command`).
+
+**It sorts out its own merge conflicts.** When `main` has moved on, the build merges it in, keeps what both sides meant and has the merge reviewed again before it ships. When a ship from the queue hits a conflict, `speck run` hands the ticket back to its build's session. `speck merge-check <id>` sorts each conflicting file into a class (`added-lines`, `lockfile`, `ticket` or `logic`), the build resolves each by its class, and the reviewer checks the merge in a merge round. Merge rounds have their own limit, `max_merge_rounds`. After two hand-backs without a ship, the build blocks the ticket with a question instead.
+
+**It fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen. It opens as an app, so you can set tickets ready and ship from anywhere. Start it with `speck panel --url https://<hostname>`, the address your tunnel gives it (see [The panel](#the-panel)).
+
+**It keeps the receipts.** Every ticket keeps how long it took and how many review rounds it needed, and the panel shows what builds cost. Each round's full record is saved in the ticket's `## Review rounds`, and approval adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to its `## Delivery log`. Builds that `speck run` starts also record the builder's tokens and cost. The code, the tickets and the tests say what the product does, so there's no separate spec to keep up to date.
+
+## Under the hood
+
+[`docs/brief.md`](docs/brief.md) has the full design.
+
+### The review loop
+
+The builder owns the loop. It starts the reviewer with the ticket, the diff against the base branch and a summary of the test output. The reviewer returns a structured verdict: a `pass`, `fail` or `unclear` for each acceptance criterion with its evidence, findings marked `blocking` or `minor`, and `approve`, `changes_requested` or `escalate`. The builder answers each blocking finding as `fixed`, `disputed` with a reason, or `needs_pm` for a question only you can answer. The next round resumes the same reviewer session (for Codex, `codex exec resume`), so the reviewer remembers its earlier findings and re-checks each fix and dispute.
+
+The loop ends when the reviewer approves with no blocking findings and every criterion passing. It blocks the ticket with one question for you after `max_review_rounds`, default 3, unless the last round left no more than one blocking finding open, which earns one extra round. It escalates to you sooner when the same finding is disputed in two consecutive rounds (`escalate_after_repeat_disputes`), when the reviewer escalates, or on `needs_pm`. Minor findings never block: they go into the ticket's Delivery log, and those worth a ticket into your inbox. Builder and reviewer can't be the same agent unless you set `allow_same_model_review: true`.
+
+### Where state lives
+
+The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. A ticket's status, priority, size, risk, builder, reviewer and `after:` list are in its frontmatter. Each review round is a collapsed block in the ticket's `## Review rounds`, which only speck writes, with a one-line summary in its `## Review log`. Its `## Delivery log` keeps the actuals and follow-ups. Shipped and cancelled tickets move to `speck/tickets/done/`, keeping all of it. `speck/.cache/`, which git ignores, holds working files for reviews in progress, recorded test results, `speck run`'s logs and the record of flaky tests.
+
+### Which tests run when
+
+A build never runs the whole suite. Before it changes anything, it reads the result recorded for the same code with `speck test --recorded` and writes the tests already failing as `Failing before this build:` in the ticket's Notes. After that it runs only test files, with `speck test --files <file>…`: the ticket's own while it builds, and before every review round the ticket's own, any existing ones it changed and those of any test that failed last time. The reviewer sees a summary of that run. The whole suite runs in `speck ship`, on the ticket merged with the base branch, which is what lands. A full run on code that hasn't changed reuses the recorded result, and a test that fails in a full run then passes on a second try is logged as flaky.
+
+### Builds and the ship queue
+
+`speck run` keeps up to `max_parallel_builds` builds going, 1 unless you raise it, each on its own branch in its own worktree, so a build never touches your checkout and you keep writing ideas and tickets on the base branch. Builds end at `approved`. One ship queue in `speck run` ships approved tickets one at a time, so ships never race each other for `main`, and each ship tests the ticket as it would land on the base branch as it is then. If that fails, the queue hands the ticket back to its build: to merge `main` in, to fix tests that fail with `main`'s newer changes, or to raise a fix ticket when `main`'s own tests fail. A build that was killed before it finished is resumed once. `speck pause <id>`, `speck play <id>` and `speck stop <id>` hold, carry on or end a build.
+
+## Who it's for
+
+Most AI coding tools sell speed or autonomy. speck gives you the speed and keeps the judgement with you: what's worth building, what "done" means and whether it's good enough to ship.
+
+You think in outcomes, not diffs. You're a PM, a founder, or the person on the team who always has the spec. You have more ideas than evenings, a coding agent you already trust with real work, and no wish to read every line it writes. You set speck up by talking to your agent, write tickets, set them ready and walk away.
+
+It's also for engineers who want a light, auditable loop: ticket, build, independent review, merge. It's not for large multi-team specs, or work that needs design documents spanning many changes.
+
+Inspired by [OpenSpec](https://github.com/Fission-AI/OpenSpec), with less ceremony.
 
 ## The panel
 
@@ -119,15 +184,6 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
 | `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
-
-## What a review pack looks like
-
-Every approved ticket has a **review pack** written for someone who doesn't read code:
-- each acceptance criterion with ✅/❌ and the reviewer's evidence;
-- a plain-English summary;
-- risk flags (sensitive files touched, size);
-- the review history;
-- actuals: review rounds, reviewer tokens and elapsed time.
 
 ## Using another reviewer
 

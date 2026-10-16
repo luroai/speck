@@ -66,8 +66,9 @@ test('0236 AC3: the README and brief status lines say the current version, a pub
   }
 });
 
-test('0236 AC3: the README\'s How you work with it says a build runs the ticket\'s own tests and the whole suite runs when it ships', () => {
-  const s = read('README.md').match(/^## How you work with it\n([\s\S]*?)(?=^## )/m)?.[1] || '';
+// 0250 renamed the README's How you work with it to How it works, so this checks that section instead.
+test('0236 AC3: the README\'s How it works says a build runs the ticket\'s own tests and the whole suite runs when it ships', () => {
+  const s = read('README.md').match(/^## How it works\n([\s\S]*?)(?=^## )/m)?.[1] || '';
   assert.match(s, /runs the ticket's own tests/);
   assert.match(s, /whole suite runs when (?:a|the) ticket ships/);
 });
