@@ -1,7 +1,7 @@
 ---
 id: "0245"
 title: "Stop speck run's Claude Code builds running commands in the background"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-15-turn-off-background-commands-in-speck-run-builds.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0241","0242","0244"]                # ticket ids that must be done first
 created: 2026-10-16
+started: "2026-10-16T08:33:01.977Z"
 
 ---
 # 0245 · Stop speck run's Claude Code builds running commands in the background
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The build skill tells a builder to wait for every command, but a builder that puts a test run or review round in the background anyway and ends its turn ends a build that `speck run` started, partway, with the ticket left `building` or `reviewing`. It's only an instruction, so nothing stops it.
