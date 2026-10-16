@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// speck: Your judgement, at agent speed.
+// speck: Ship code you can't read, and still trust it.
 // Deterministic helpers used by the speck skills. No dependencies.
 
 import fs from 'node:fs';
@@ -516,7 +516,7 @@ function cmdDiffstat() {
   if (total > cfg.limits.max_changed_lines) throw new SpeckError('Over the size limit: stop and propose a split.', 2);
 }
 
-const HELP = `speck: Your judgement, at agent speed.
+const HELP = `speck: Ship code you can't read, and still trust it.
 
   speck init                          set up speck in this repo, or update it (re-run any time)
   speck doctor                        check that Node.js, git, the builder and the reviewer are ready

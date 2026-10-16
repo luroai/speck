@@ -39,6 +39,7 @@ speck's tagline says what's different about it, the same way everywhere in this 
 - Split from 0251 on 2026-10-16. Tagline and plain line chosen by the maintainer on 2026-10-16: use them word for word. The tagline's point is what a plain agent session doesn't give you: a second AI checks every change against agreed criteria, the same way every time, so a non-coder can trust work they can't read.
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
 - Failing before this build: none
+- Self-check: no changes. Ran the 39 test files that read the README, package.json or speck help as well as the ticket's own: all pass.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
