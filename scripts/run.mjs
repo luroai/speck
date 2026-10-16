@@ -9,6 +9,7 @@ import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHe
 import { resumeArgv, handBackQueue } from './hand-back.mjs';
 import { countStop } from './stop-wait.mjs';
 import { endBuild } from './stop-end.mjs';
+import { BUILD_ENV, buildEnv } from './build-env.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -255,7 +256,7 @@ function runOn() {
       // Written before the build starts, so a record that can't be written stops the build from starting at all.
       if (flags === 'w') fs.writeFileSync(recordFile, record(null));
       fd = fs.openSync(log, flags);
-      child = spawn(argv[0], argv.slice(1), { cwd, detached: true, stdio: ['ignore', fd, fd], env: { ...process.env, [BUILD_ENV]: session } });
+      child = spawn(argv[0], argv.slice(1), { cwd, detached: true, stdio: ['ignore', fd, fd], env: buildEnv(argv, session) });
     } catch (e) { if (fd !== null) fs.closeSync(fd); return finished(id, log, null, null, e.message); }
     fs.closeSync(fd);
     let done = false;
@@ -338,9 +339,6 @@ function readyOnBase(repo, base, rel) {
 }
 
 // ---------- pause and play (hold a build speck run launched, then carry it on) ----------
-
-// Set in the environment of each build speck run launches, so every process the build starts inherits it.
-const BUILD_ENV = 'SPECK_BUILD_SESSION';
 
 // Every process, as [pid, ppid, pgid].
 export function processRows() {
