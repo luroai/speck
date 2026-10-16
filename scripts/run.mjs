@@ -10,6 +10,8 @@ import { resumeArgv, handBackQueue } from './hand-back.mjs';
 import { countStop } from './stop-wait.mjs';
 import { endBuild } from './stop-end.mjs';
 import { BUILD_ENV, buildEnv } from './build-env.mjs';
+import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
+export { pidAlive, runState } from './run-switch.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -25,17 +27,6 @@ export function runsDir(repo) {
   const ignore = path.join(root, '.gitignore');
   if (!fs.existsSync(ignore)) fs.writeFileSync(ignore, '# Working files for reviews in progress. Review history is in each ticket.\n*\n');
   return dir;
-}
-
-export const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
-
-// Whether speck run is on, from its lock in the runs folder: on only while the pid the lock holds is alive. Only reads
-// the lock, so it never takes, changes or deletes it. A lock left by a run that was killed outright shows as off.
-export function runState(runs) {
-  let text = '';
-  try { text = fs.readFileSync(path.join(runs, 'run.lock'), 'utf8').trim(); } catch { /* no lock: off */ }
-  const pid = /^[1-9]\d*$/.test(text) ? Number(text) : null;
-  return pid !== null && pidAlive(pid) ? { on: true, pid } : { on: false, pid: null };
 }
 
 // One speck run per repo: a lock file holding its pid. The file is made complete and then linked into place, which
@@ -72,6 +63,12 @@ function takeRunLock(repo) {
   } finally { fs.rmSync(mine, { force: true }); }
 }
 
+// Takes the lock, and releases it as this process exits.
+function holdRunLock(repo) {
+  const lock = takeRunLock(repo);
+  process.on('exit', () => { try { if (fs.readFileSync(lock, 'utf8').trim() === String(process.pid)) fs.rmSync(lock, { force: true }); } catch { /* already gone */ } });
+}
+
 // A file for the panel to hear one speck run's refusal in, and its text once read, deleting it (0220).
 export const refusalFile = repo => path.join(runsDir(repo), `run.refusal.${crypto.randomUUID()}.tmp`);
 export function takeRefusal(file) {
@@ -83,15 +80,19 @@ export function takeRefusal(file) {
 export function cmdRun() {
   const refusal = process.env.SPECK_RUN_REFUSAL;
   delete process.env.SPECK_RUN_REFUSAL;
-  try { runOn(); } catch (e) {
+  try { runOn(false); } catch (e) {
     if (refusal && e instanceof SpeckError) try { fs.writeFileSync(refusal, e.message); } catch { /* the panel shows the exit code */ }
     throw e;
   }
 }
 
+export const runWorker = () => runOn(true); // speck run on new code, started by the one it replaces (0247)
+
 // Watches the board: starts a build for each ready ticket that isn't waiting on another, up to max_parallel_builds at
 // once, and ships approved ones (shipQueue). Each runs in its own process group, so stopping speck run leaves it running.
-function runOn() {
+// When its code changes, it switches to the new code once nothing it started or adopted is running (run-switch.mjs).
+function runOn(worker) {
+  const code = process.env.SPECK_RUN_CODE || codeHash(), before = launchedBefore();
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
@@ -106,16 +107,16 @@ function runOn() {
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
   if (branch !== cfg.base_branch)
     throw new SpeckError(`This checkout is on "${branch}", not ${cfg.base_branch}. speck run starts builds from ${cfg.base_branch}, so switch to it, then run this again.`);
-  const lock = takeRunLock(repo);
-  const release = () => { try { if (fs.readFileSync(lock, 'utf8').trim() === String(process.pid)) fs.rmSync(lock, { force: true }); } catch { /* already gone */ } };
-  process.on('exit', release);
+  if (!worker) holdRunLock(repo); // the process you started holds it throughout: speck run on new code runs under it
+  let started = false, loop = null;
   const stop = () => {
+    if (!started) process.exit(0); // new code not yet watching: the speck run it was to replace says it has stopped
     console.log(`speck run stopped.${running.size ? ` ${running.size} build${running.size === 1 ? ' is' : 's are'} still running: ${[...running].join(', ')}.` : ''}${ships.note()}`);
     process.exit(0);
   };
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, stop);
 
-  const launched = new Set(); // every ticket this speck run has launched, so none is launched twice
+  const launched = new Set(before); // every ticket this speck run, or the one it replaced, launched: none is launched twice
   const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
   // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
@@ -273,8 +274,10 @@ function runOn() {
 
   const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) });
 
+  const switchWhenIdle = codeSwitch({ worker, code, busy: () => [[...running], ships.running()], launched: () => [...launched], stopLoop: () => clearInterval(loop) });
   function tick() {
     checkAdopted();
+    if (switchWhenIdle()) return;
     let tickets;
     try { tickets = statusData(repo).tickets; lastError = null; } catch (e) {
       const msg = e instanceof SpeckError ? e.message : String(e?.message || e);
@@ -311,10 +314,10 @@ function runOn() {
     }
   }
 
+  const start = () => { started = true; adoptEarlierBuilds(); tick(); loop = setInterval(tick, pollMs); };
+  if (worker) return awaitGo(start, stop);
   console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
-  adoptEarlierBuilds();
-  tick();
-  setInterval(tick, pollMs);
+  start();
 }
 
 // A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.

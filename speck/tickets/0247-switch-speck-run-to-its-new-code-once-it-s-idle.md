@@ -44,6 +44,7 @@ started: "2026-10-16T09:30:55.502Z"
 - `scripts/run.mjs` is close to the 600-line limit for scripts, which a test checks.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: carried the tickets already launched over to the new code, so a build that never started its ticket isn't launched again after a switch; the new code now runs only when started as speck run's successor, not from an environment variable a user could set; kept `takeRunLock` in run.mjs, where two tests expect it, moving `runState` out instead to stay under 600 lines.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

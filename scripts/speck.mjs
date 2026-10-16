@@ -25,6 +25,7 @@ import { runInProcess } from './in-process.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
+export { runWorker } from './run.mjs';
 export { TEMPLATES, SpeckError, sh, findRepoRoot, parseYaml, loadConfig, parseTicket, setField, reviewerSettings, ticketHeader, syncHeader, findTicket, nextId, lintTicket, changedLines, ticketRounds, writeField, worktreeList, padId } from './core.mjs';
 export { stripRounds, validateVerdict, nextAction } from './review.mjs';
 export { splitCommand, commandArgs, verdictFromOutput } from './reviewers.mjs';
