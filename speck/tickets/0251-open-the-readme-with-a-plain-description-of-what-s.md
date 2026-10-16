@@ -47,6 +47,15 @@ Between the tagline and the image, the README says in plain, obvious sentences w
 - `/no-ai-slop` is installed globally for Claude Code (`~/.claude/skills/no-ai-slop/`); see how 0250's Notes recorded its passes.
 - About 26 test files read `README.md` (for example `readme-0089`, `wording-0125`, `release-0092`, `private-words-0084`): keep what they check unless the change is deliberate.
 - Failing before this build: none
+- No-ai-slop detect, first pass: on the README's new opening (lines 7–15).
+  - L7 "It works just as well for engineers.": often-empty adverb ("just") and a claim nothing backs. Changed to "It's for engineers too."
+  - L13 "…still trust it, which is what the tagline is about.": interpretive metadiscourse. Rewritten as a plain sentence, "The tagline names that situation.", kept because AC2 asks the opening to say so.
+  - L15 four short sentences in a row with the same shape ("Its tests…", "The builder…", "A second AI…", "The whole test suite…"): robotic rhythm. Joined into two sentences in the order the steps run.
+  - L11 "Go to a meeting, have lunch, go to bed.": possible dramatic fragmentation. Kept: one complete sentence of imperatives, in the maintainer's words.
+  - L13 and L15 both say "trust the result": possible repetition. Kept: the same words on purpose, the trust paragraph answering the one before it.
+- No-ai-slop detect, second pass: no pattern left unaddressed. The changed lines read as plain sentences; the patterns kept are listed above with their reasons.
+- Self-check: narrowed one claim: speck builds while you're away only when `speck run` is on, so the opening says to turn it on in the panel.
+- AC5: `test/readme-0250.test.mjs` checked that the two-decisions paragraph was the fourth line, straight after the plain line; it now checks it still comes just before the image, with the new opening above it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
