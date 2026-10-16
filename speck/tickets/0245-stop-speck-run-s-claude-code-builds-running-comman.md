@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-15-turn-off-background-commands-in-speck-run-b
 after: ["0241","0242","0244"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T08:33:01.977Z"
-approved: "2026-10-16T08:35:29.577Z"
+approved: "2026-10-16T08:38:34.795Z"
 
 ---
 # 0245 · Stop speck run's Claude Code builds running commands in the background
@@ -52,13 +52,14 @@ Builds that speck run starts with Claude Code can no longer leave a test run or 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 94,046
-- Elapsed since build started: 2 min
-- Changed lines: 16 (limit 5000)
+- Reviewer tokens: 280,393
+- Elapsed since build started: 6 min
+- Changed lines: 24 (limit 5000)
 - Follow-ups: none. Known limit: a value already set in speck run's environment is kept as it is, including an empty one, which Claude Code may treat as off.
 
 ## Review rounds
@@ -112,6 +113,61 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Claude Code builds launched by speck run now disable background tasks by default, including resumed builds. Existing environment settings are preserved, and other builders are unaffected. The documentation explains why. All seven ticket tests passed; no blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f6e9aac1a8b4da54a25d50e4279e9fd4bb6de670",
+    "merge": true,
+    "thread_id": "01a143d9-986a-7c01-b437-e7b672ee00b2",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 185215,
+      "cached_input_tokens": 134272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1132,
+      "reasoning_output_tokens": 24
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T08:38:32.381Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs startBuild() still applies buildEnv() from scripts/build-env.mjs to every build spawn. New builds, killed-build resumes and scripts/hand-back.mjs resumeHandBack() all use it. The seven passing ticket tests include command detection, actual new and resumed processes, and the shared hand-back launch path."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/build-env.mjs buildEnv() retains the reviewed logic: only claude or paths ending in /claude receive the default, and existing values are preserved. Passing tests cover other programs, empty and non-empty values, and an actual process inheriting '0'."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "docs/brief.md documents the restriction and its reason. The supplied full test output records 19 passes, zero failures and three historical comparison skips. The unchanged existing tests confirm the script-size limit and heavy-test registration now pass."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change still meets all acceptance criteria. Moving the environment logic into its own module preserves behaviour and respects the existing file-size limit. Registering the new process tests fixes their scheduling classification. The targeted checks passed, with no blocking concerns."
   }
 }
 ```
