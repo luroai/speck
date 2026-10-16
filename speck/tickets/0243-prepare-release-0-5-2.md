@@ -1,7 +1,7 @@
 ---
 id: "0243"
 title: "Prepare release 0.5.2"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-16
 ---
 # 0243 · Prepare release 0.5.2
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The 0.5.2 tickets cut needless stops: a re-review after an approval gets rounds of its own (0241), a ticket one finding from approval at the round limit gets one extra round by itself (0242), a refused ship names both possible causes of its failing tests (0244), `speck run`'s Claude Code builds can't run commands in the background (0245), and a test that fails by chance no longer does (0246). Anyone following the README's setup prompt still gets 0.5.1 without them.
