@@ -10,7 +10,8 @@ import { readPrivateWords, privateWordsFile, filesNaming } from './support/priva
 
 // ---------- 0082: name Luro instead of the owner throughout the repo's files ----------
 
-const INSTALL = 'npx github:luroai/speck init';
+// 0253: every install command now installs the latest release.
+const INSTALL = "npx 'github:luroai/speck#semver:*' init";
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const git = (...a) => spawnSync('git', a, { cwd: ROOT, encoding: 'utf8' });
 
@@ -24,7 +25,7 @@ test('AC1: a copy of speck that cannot install itself points to luroai/speck', (
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: repo });
   const r = spawnSync(process.execPath, [cli, 'init'], { cwd: repo, encoding: 'utf8', env });
   assert.notEqual(r.status, 0);
-  assert.match(r.stderr + r.stdout, /can't install itself\. Run `npx github:luroai\/speck init` instead\./);
+  assert.match(r.stderr + r.stdout, /can't install itself\. Run `npx 'github:luroai\/speck#semver:\*' init` instead\./);
   assert.doesNotMatch(r.stderr, /\n\s+at /, 'a plain message, not a stack trace');
 });
 

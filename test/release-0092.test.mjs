@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT, CLI } from './support/panel.mjs';
+import { setupPromptProblems } from './support/release.mjs';
 
 // ---------- 0092: mark the repo as release 0.2.0 ----------
 
@@ -46,6 +47,7 @@ test('AC3: the README and brief status lines say the current version, a public p
   }
 });
 
-test('AC4: the README setup prompt names the current version', () => {
-  assert.ok(read('README.md').includes(`npx github:luroai/speck#v${pkg().version} init`));
+test('AC4: the README setup prompt installs the latest release', () => {
+  // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
+  assert.deepEqual(setupPromptProblems(read('README.md')), []);
 });

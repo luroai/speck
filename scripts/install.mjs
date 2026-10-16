@@ -32,7 +32,7 @@ function linkDir(target, at) {
 // Puts the CLI in .speck/ and the skills where agents look for them. Safe to re-run: it refreshes both.
 // Inside speck's own source repo it links instead of copying, so edits show up straight away.
 export function installTooling(repo) {
-  if (!fs.existsSync(SKILLS)) throw new SpeckError('This copy of speck can\'t install itself. Run `npx github:luroai/speck init` instead.');
+  if (!fs.existsSync(SKILLS)) throw new SpeckError("This copy of speck can't install itself. Run `npx 'github:luroai/speck#semver:*' init` instead.");
   const dev = fs.realpathSync(repo) === fs.realpathSync(ROOT);
   const place = dev ? linkDir : copyDir;
   const skills = fs.readdirSync(SKILLS).filter(n => n.startsWith('speck-') && fs.existsSync(path.join(SKILLS, n, 'SKILL.md')));

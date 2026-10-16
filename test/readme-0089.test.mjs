@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './support/panel.mjs';
+import { setupPromptProblems } from './support/release.mjs';
 
 // ---------- 0089: lead the README with a prompt to give your agent ----------
 
@@ -25,9 +26,10 @@ test('AC1: Get started gives a prompt in a code block to paste into Claude Code'
   assert.ok(prompt().trim(), 'Get started has a code block');
 });
 
-test('AC1: the prompt runs init at this release, follows speck-setup, offers Node.js 20+ and asks before changes', () => {
+// 0253: the prompt runs init at the latest release rather than a fixed one.
+test('AC1: the prompt runs init at the latest release, follows speck-setup, offers Node.js 20+ and asks before changes', () => {
   const p = prompt();
-  assert.match(p, /npx github:luroai\/speck#v\d+\.\d+\.\d+ init/);
+  assert.ok(p.includes("npx 'github:luroai/speck#semver:*' init"), p);
   assert.match(p, /speck-setup/);
   assert.match(p, /Node\.js 20 or newer/);
   assert.match(p, /ask (me )?before/i);
@@ -35,17 +37,15 @@ test('AC1: the prompt runs init at this release, follows speck-setup, offers Nod
   assert.match(p, /git/);
 });
 
-test('AC2: the version in the prompt is the version in package.json', () => {
-  const { version } = JSON.parse(read('package.json'));
-  const m = prompt().match(/npx github:luroai\/speck#v([^\s`]+) init/);
-  assert.ok(m, 'the prompt names a version');
-  assert.equal(m[1], version);
+// 0253: the prompt installs the latest release, so it names no version to match package.json.
+test('AC2: the prompt installs the latest release, not a fixed version', () => {
+  assert.deepEqual(setupPromptProblems(readme()), []);
 });
 
 test('AC3: the terminal command without an agent is in a later "Without an agent" section', () => {
   const h = headings();
   assert.ok(h.indexOf('Without an agent') > h.indexOf('Get started'), 'Without an agent comes after Get started');
-  assert.match(section('Without an agent'), /```bash\nnpx github:luroai\/speck init\n```/);
+  assert.match(section('Without an agent'), /```bash\nnpx 'github:luroai\/speck#semver:\*' init\n```/);
   assert.doesNotMatch(section('Get started'), /```bash/);
 });
 

@@ -8,7 +8,7 @@ user-invocable: false
 
 Take the user through setting speck up in this folder. Assume they aren't technical: explain each choice in a sentence or two, recommend one option, and wait for their answer. The CLI never asks questions. It reports facts (`speck detect`) and writes settings (`speck config set`). The decisions happen here, in the conversation.
 
-CLI: `node .speck/scripts/speck.mjs`, run from the project folder (below: `speck`). Until speck is installed, use `npx github:luroai/speck` instead.
+CLI: `node .speck/scripts/speck.mjs`, run from the project folder (below: `speck`). Until speck is installed, use `npx 'github:luroai/speck#semver:*'` instead.
 
 ## Rules
 
@@ -21,7 +21,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the project folder (below: `speck
 
 ## 1. Start from the facts
 
-Run `speck detect` (`npx github:luroai/speck detect` if speck isn't installed yet). It prints one JSON object and changes nothing. Use its answers for every step below rather than guessing, and run it again after any change.
+Run `speck detect` (`npx 'github:luroai/speck#semver:*' detect` if speck isn't installed yet). It prints one JSON object and changes nothing. Use its answers for every step below rather than guessing, and run it again after any change.
 
 - **Operating system** (`os.supported`): speck supports macOS and Linux. On anything else, explain that and stop.
 - **Node** (`node.supported`): speck needs Node.js 20 or newer. If `speck detect` can't start because `node` or `npx` isn't found, or `node.supported` is false, explain that speck's commands run on Node. Ask before installing Node, then install the current LTS the usual way for their system (Homebrew on macOS if they have it, otherwise the installer from https://nodejs.org; their package manager or the Node.js website on Linux). They may need a new terminal afterwards.
@@ -55,7 +55,7 @@ If `speck.installed` is true, speck is already here. Say which version, and carr
 
 **Git name and email.** Commits need them. If `repo.git_name_set` or `repo.git_email_set` is false, explain why git wants them and ask before setting a git name and email. Ask for the name and email to use, and whether to set them for every project on this machine (`git config --global user.name "…"`, recommended) or only this one (without `--global`).
 
-**Install speck.** If `speck.installed` is false, explain that this adds the `speck/` folder (settings, ideas and tickets), the speck skills and the `speck` command to the project, and run `npx github:luroai/speck init`. It also runs `speck doctor`: don't fix its ✗ items yet, as sections 5 and 7 deal with them.
+**Install speck.** If `speck.installed` is false, explain that this adds the `speck/` folder (settings, ideas and tickets), the speck skills and the `speck` command to the project, and run `npx 'github:luroai/speck#semver:*' init`. It also runs `speck doctor`: don't fix its ✗ items yet, as sections 5 and 7 deal with them.
 
 ## 3. An existing project
 
