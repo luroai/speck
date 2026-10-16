@@ -1,7 +1,7 @@
 ---
 id: "0223"
 title: "Say which review round is running"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0217"]                # ticket ids that must be done first
 created: 2026-10-15
 started: "2026-10-15T23:48:31.710Z"
 approved: "2026-10-15T23:57:46.058Z"
+blocked_at: "2026-10-16T00:00:40.705Z"
 
 ---
 # 0223 · Say which review round is running
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 A ticket stays `reviewing` between review rounds, and its card says "<reviewer> is reviewing · round <n>" with the last recorded round. After round 1 asks for changes, the card still says "round 1" while the builder fixes the findings and while the reviewer runs round 2, so someone watching can't tell who is at work.
@@ -47,7 +48,7 @@ A ticket under review says whether the reviewer is running a round, and which on
 A ticket under review in the Build queue now says who is at work. While the reviewer is running a round, its card says "Codex is reviewing · round 2" (with the round actually being run), and between rounds it says "Claude is fixing round 1's findings". To see it, watch a ticket's card during a build that gets changes requested: it switches to the fixing wording as soon as the reviewer's round ends, and back to reviewing when the next round starts. It stays right after a page reload or a panel restart. Worth keeping an eye on: a review run by a Claude helper inside the builder's own session relies on the builder saying when it starts and gives up, so if such a session is closed by hand mid-round, the card can keep saying the reviewer is at work until the next round.
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+When speck run tried to ship this, one older panel test failed. That test checks that the page never contains the word "Running", and a name I added to the page contained it. I've renamed it, with no change in behaviour, and the test passes now. But the change needs one more review before it can ship, and this ticket has used all 3 of its review rounds, so speck won't start another. Should I raise the review round limit to 4 just for this re-review and then put it back (my recommendation, since the fix is a three-line rename), or would you rather review the rename yourself, or send the ticket back to be rebuilt?
 
 ## Review log
 Round 1 (codex): changes requested: F1 Claude subagent reviews are never marked as running.
