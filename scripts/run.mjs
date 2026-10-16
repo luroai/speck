@@ -573,6 +573,9 @@ export function stopBuild(repo, args, say) {
   const commit = commitTicketOnly(at, t.file, t.raw, `speck(${b.id}): stopped`);
   if (commit.status !== 0)
     throw new SpeckError(`${b.id}'s build is stopped, but its ticket couldn't be committed in ${at}, so it's unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}\nFix that, then run \`speck set ${b.id} status blocked\` there and commit it.`);
-  say(`${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`);
+  // No branch: the build hadn't run speck start, so there's nothing kept, and speck start starts it again (0219).
+  const branched = sh('git', ['for-each-ref', '--format=%(refname)', `refs/heads/${cfg.branch_prefix}${b.id}-*`], { cwd: repo }).stdout.trim();
+  say(branched ? `${b.id} is blocked, with its branch and work kept. Resume its session, or run /speck-build ${b.id}, to carry on.`
+    : `${b.id} is blocked. It was stopped before it started its ticket, so it has no branch or work yet. /speck-build ${b.id} starts it again.`);
 }
 export function cmdStop(args) { stopBuild(findRepoRoot(), args, line => console.log(line)); }
