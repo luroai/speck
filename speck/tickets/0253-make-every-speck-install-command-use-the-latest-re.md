@@ -1,7 +1,7 @@
 ---
 id: "0253"
 title: "Make every speck install command use the latest release"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0256", "0252"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T13:58:08.923Z"
+approved: "2026-10-16T14:03:22.540Z"
 
 ---
 # 0253 · Make every speck install command use the latest release
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README's setup prompt installs a fixed release (`#v0.5.3`) that each release ticket has to bump by hand, so it falls behind whenever that step is missed. Other install commands (the README's "Without an agent" section, the brief, `speck init`'s own message and `/speck-setup`) name no release at all, so they install whatever is on `main` at that moment rather than a release. The landing page already installs the latest release with `#semver:*` (speck-site 0005).
@@ -53,9 +54,14 @@ Every place that tells someone how to install speck, including the setup prompt 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 175,020
+- Elapsed since build started: 5 min
+- Changed lines: 24 (limit 5000)
 - Follow-ups: none for the inbox.
 - Known limit: the setup prompt check wants `npx 'github:luroai/speck#semver:*' init` on one line of the prompt, so rewrapping the prompt between the command and `init` would fail the test.
 
