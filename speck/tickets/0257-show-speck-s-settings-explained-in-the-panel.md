@@ -41,6 +41,7 @@ The panel has a Settings view that shows the settings people tune, grouped, each
 ## Notes
 - Panel files: `scripts/panel.mjs` (server, a GET for the settings or settings in the board state) and `templates/panel.html` (header and view). Read values with `loadConfig` in `scripts/core.mjs`, which supplies the defaults.
 - Explanations live in one place so 0258–0261 can reuse them. Write them in British English, at a product-minded rather than technical level.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
