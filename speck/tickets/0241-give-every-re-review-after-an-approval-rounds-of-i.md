@@ -42,6 +42,7 @@ Every review round that follows an approved round has rounds of its own, whether
 - Seen on 0223 (2026-10-16): its ship failed on a test its own change broke while main hadn't moved, so there was nothing to merge.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes. Noted that `speck next`'s block reason after max_merge_rounds still says "re-reviewing the merge of" the base branch, which reads oddly for a run with no merge (wording, left as a follow-up).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

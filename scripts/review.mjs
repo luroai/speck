@@ -103,13 +103,13 @@ export function validateVerdict(v) {
   return v;
 }
 
-// A merge round re-reviews a merge of the base branch made after an approval: the round after an approved one when the
-// branch has merged the base branch in since, and each round after that until one approves. Merge rounds don't count
-// towards max_review_rounds. `merged` says whether the branch merged the base branch in since the last round.
-export function isMergeRound(prior, merged) {
+// A merge round re-reviews a change made after an approval, such as a merge of the base branch or a fix for a refused
+// ship: the round after an approved one, whether or not the branch merged the base branch in since, and each round
+// after that until one approves. Merge rounds don't count towards max_review_rounds.
+export function isMergeRound(prior) {
   const last = prior[prior.length - 1];
   if (!last) return false;
-  return last.verdict.verdict === 'approve' ? merged : last.meta?.merge === true;
+  return last.verdict.verdict === 'approve' || last.meta?.merge === true;
 }
 
 // The merge rounds in a row at the end of `all` since the last approval before them: the ones max_merge_rounds caps.
@@ -230,7 +230,7 @@ function reviewSetup(repo, id, opts) {
   const prior = rounds(repo, id);
   const round = prior.length + 1;
   const { base, sinceSha, merged } = reviewSince(repo, cfg, prior);
-  const merge = isMergeRound(prior, merged);
+  const merge = isMergeRound(prior);
   // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
   const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
   if (merge && used >= cfg.limits.max_merge_rounds) throw new SpeckError(`Max merge rounds (${cfg.limits.max_merge_rounds}) reached. Block the ticket.`, 3);
@@ -343,8 +343,7 @@ export function cmdRecord(args) {
   const saved = path.join(cacheDir(repo, id), 'reviewer-settings.json');
   const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));
   const prior = rounds(repo, id);
-  // Whether the base branch was merged in only matters after an approval, so it's only looked up then.
-  const merge = isMergeRound(prior, prior.at(-1)?.verdict.verdict === 'approve' && reviewSince(repo, cfg, prior).merged);
+  const merge = isMergeRound(prior);
   const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...testsSeen });
   endRound(repo, findTicket(repo, id).fm.id || id);
   const next = printRound(rec, cfg, rounds(repo, id));
