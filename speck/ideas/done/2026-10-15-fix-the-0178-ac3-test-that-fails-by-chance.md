@@ -1,6 +1,6 @@
 # Fix the 0178 AC3 test that fails by chance
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0246)
 From ticket: 0211
 
 ## What

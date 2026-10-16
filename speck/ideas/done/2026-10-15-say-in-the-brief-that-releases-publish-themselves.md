@@ -1,6 +1,6 @@
 # Say in the brief that releases publish themselves
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0243)
 From ticket: 0236
 
 ## What

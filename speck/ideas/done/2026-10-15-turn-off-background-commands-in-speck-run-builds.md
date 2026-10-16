@@ -1,6 +1,6 @@
 # Turn off background commands in speck run builds
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: ticketed (0245)
 From ticket: 0227
 
 ## What
