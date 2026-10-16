@@ -13,4 +13,4 @@ Test each criterion the quickest way that really checks it. Quick: the fake page
 
 ## speck
 
-This repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship` or clicks the Ship button in an approved ticket's review pack in the panel, except for `speck run`'s ship queue, which ships an approved ticket only when `auto_ship` in `speck/config.yml` allows it.
+This repo uses speck. Work only from a `ready` ticket in `speck/tickets/` (use `/speck-build <id>`). Never approve your own work, and never merge or ship unless the user runs `/speck-ship` or clicks the Ship button in an approved ticket's review pack in the panel, except for `speck run`'s ship queue, which ships an approved ticket only when `auto_ship` in `speck/config.yml` allows it. Set a ticket ready only when the user's latest message tells you to set that ticket ready: nothing else counts, not choosing an option, approving wording, answering a question or agreeing to a plan.
