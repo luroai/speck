@@ -59,7 +59,10 @@ test('an approve with failing criteria is overridden', () => {
 test('nextAction: approve ships, max rounds and repeat disputes block', () => {
   assert.equal(nextAction([round('approve')], cfg).action, 'ship');
   assert.equal(nextAction([round('changes_requested')], cfg).action, 'fix');
-  assert.equal(nextAction([1, 2, 3].map(() => round('changes_requested')), cfg).action, 'block');
+  // 0242: a round at the limit with no more than one blocking finding open gets an extra round, so two are open here.
+  const two = [{ id: 'F1', state: 'open', severity: 'blocking' }, { id: 'F2', state: 'open', severity: 'blocking' }];
+  assert.equal(nextAction([1, 2, 3].map(() => round('changes_requested', two)), cfg).action, 'block');
+  assert.equal(nextAction([1, 2, 3].map(() => round('changes_requested')), cfg).action, 'fix', '0242 AC1: the extra round');
   const d = [{ id: 'F1', state: 'dispute_rejected', severity: 'blocking' }];
   assert.equal(nextAction([round('changes_requested', d), round('changes_requested', d)], cfg).action, 'block');
   assert.equal(nextAction([round('escalate')], cfg).action, 'block');

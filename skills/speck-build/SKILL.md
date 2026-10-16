@@ -44,7 +44,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 Follow the `speck-review` skill (in the folder next to this one) exactly. In short:
 - Spawn the reviewer configured on the ticket (`reviewer:`).
-- Take turns with it until `speck next <id>` returns `ship` or `block`.
+- Take turns with it until `speck next <id>` returns `ship` or `block`. When the round at `max_review_rounds` leaves no more than one blocking finding open, `speck next` says `fix` and you get an extra round: take it like any other, without asking the user. Never change `limits.max_review_rounds` in `speck/config.yml` to get past a block.
 - Fix or dispute each blocking finding, checking each fix with the ticket's own test files (`speck test --files`). Then, before the next review round, merge rounds included, run once the ticket's own test files, any existing test files it changed and the files of any test that failed in its last test run (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`), and commit. Never run the whole suite (`speck test` without `--files`): `speck ship` runs it. Say in the round's response file which test files you ran. If a test fails because of your change, fix it and run the files again: never start a round on a run that failed because of your change.
 
 ## 5. Approved

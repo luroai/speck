@@ -100,7 +100,7 @@ The reviewer gets a summary of the test output rather than all of it: when the o
 3. **Next round.** The builder resumes the *same* reviewer session, so the reviewer remembers its earlier findings, and sends its responses plus the new diff. The reviewer re-checks, accepts or rejects each dispute, and issues a new verdict.
 4. **Termination.** The loop ends in one of four ways:
    - **Approve:** no blocking findings and every criterion passes. The ticket waits for you to ship it, or ships straight away if `auto_ship` allows it.
-   - **Max rounds reached** (default 3): the ticket becomes `blocked`, with a summary and one specific question for you. Merge rounds don't count towards this limit (see below).
+   - **Max rounds reached** (default 3): the ticket becomes `blocked`, with a summary and one specific question for you. Merge rounds don't count towards this limit (see below). If the round at the limit asked for changes but left no more than one blocking finding open, the ticket gets one extra round by itself, without asking you, and blocks only if that round doesn't approve too. An escalation or a repeated disagreement blocks it all the same. The ticket's Review rounds, its review log, its Delivery log and the review pack ("round 4 of 3, an extra round") mark the extra round.
    - **Repeated disagreement:** the same finding is disputed in two consecutive rounds. It escalates to you rather than looping.
    - **`needs_pm`:** the ticket becomes `blocked` with that question.
 5. **Minor findings never block.** They're logged in the ticket and offered as new ideas.

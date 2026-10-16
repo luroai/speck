@@ -15,7 +15,7 @@ export function stripRounds(text) {
 }
 
 function roundBlock(rec) {
-  return `<details><summary>Round ${rec.meta.round} · ${rec.meta.reviewer} · ${rec.verdict.verdict}${rec.meta.merge ? ' · merge round' : ''}</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>`;
+  return `<details><summary>Round ${rec.meta.round} · ${rec.meta.reviewer} · ${rec.verdict.verdict}${rec.meta.merge ? ' · merge round' : ''}${rec.meta.extra ? ' · extra round' : ''}</summary>\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n\n</details>`;
 }
 
 // Adds rounds to the end of the Review rounds section, creating it at the end of the ticket if needed. Nothing else changes.
@@ -85,6 +85,8 @@ export function reviewDiff(repo, since, to = 'HEAD') {
   return out;
 }
 
+export const openBlocking = v => v.findings.filter(f => f.severity === 'blocking' && ['open', 'dispute_rejected'].includes(f.state));
+
 export function validateVerdict(v) {
   const problems = [];
   if (!['approve', 'changes_requested', 'escalate'].includes(v.verdict)) problems.push('verdict');
@@ -94,11 +96,11 @@ export function validateVerdict(v) {
   if (typeof v.summary !== 'string') problems.push('summary');
   if (problems.length) throw new SpeckError(`Reviewer output is missing or invalid: ${problems.join(', ')}.`);
   // An approval is only valid with no open blocking findings and every criterion passing.
-  const openBlocking = v.findings.filter(f => f.severity === 'blocking' && ['open', 'dispute_rejected'].includes(f.state));
+  const open = openBlocking(v);
   const notPassing = v.criteria.filter(c => c.status !== 'pass');
-  if (v.verdict === 'approve' && (openBlocking.length || notPassing.length)) {
+  if (v.verdict === 'approve' && (open.length || notPassing.length)) {
     v.verdict = 'changes_requested';
-    v.summary = `[speck: approval overridden: ${openBlocking.length} open blocking finding(s), ${notPassing.length} criterion/criteria not passing] ${v.summary}`;
+    v.summary = `[speck: approval overridden: ${open.length} open blocking finding(s), ${notPassing.length} criterion/criteria not passing] ${v.summary}`;
   }
   return v;
 }
@@ -121,6 +123,23 @@ export function mergeRun(all) {
 
 export const ordinaryRounds = all => all.filter(r => !r.meta?.merge).length;
 
+// 0242: a ticket whose ordinary round at max_review_rounds asked for changes with no more than one blocking finding
+// open gets one extra round. It's only ever the round right after that one, so a ticket gets at most one.
+export function extraRoundDue(all, cfg) {
+  const last = all[all.length - 1];
+  return !!last && !last.meta?.merge && ordinaryRounds(all) === cfg.limits.max_review_rounds
+    && last.verdict.verdict === 'changes_requested' && openBlocking(last.verdict).length <= 1;
+}
+
+// Whether the next ordinary round is the extra one, refusing it when max_review_rounds is used up and no extra round is
+// due. `speck review` and `speck record` both check this before a reviewer runs or a round is saved.
+function extraRound(prior, cfg, merge) {
+  const extra = !merge && ordinaryRounds(prior) >= cfg.limits.max_review_rounds;
+  if (extra && nextAction(prior, cfg).action !== 'fix')
+    throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached${prior.at(-1)?.meta?.extra ? ', and the extra round too' : ''}. Block the ticket.`, 3);
+  return extra;
+}
+
 // Decide what the builder must do next, given all rounds so far.
 export function nextAction(all, cfg) {
   const last = all[all.length - 1];
@@ -137,7 +156,8 @@ export function nextAction(all, cfg) {
   if (last.meta?.merge) {
     const run = mergeRun(all);
     if (run >= cfg.limits.max_merge_rounds) return { action: 'block', reason: `No approval after ${run} merge rounds in a row re-reviewing the merge of ${cfg.base_branch || 'the base branch'} (limits.max_merge_rounds).` };
-  } else if (ordinaryRounds(all) >= cfg.limits.max_review_rounds) return { action: 'block', reason: `No approval after ${ordinaryRounds(all)} review rounds.` };
+  } else if (ordinaryRounds(all) >= cfg.limits.max_review_rounds && !extraRoundDue(all, cfg))
+    return { action: 'block', reason: `No approval after ${ordinaryRounds(all)} review rounds${last.meta?.extra ? ', the last of them an extra round' : ''}.` };
   return { action: 'fix' };
 }
 
@@ -234,14 +254,14 @@ function reviewSetup(repo, id, opts) {
   // A merge round after an approval starts a new run, so only a run that hasn't approved yet can use up the limit.
   const used = prior.at(-1)?.verdict.verdict === 'approve' ? 0 : mergeRun(prior);
   if (merge && used >= cfg.limits.max_merge_rounds) throw new SpeckError(`Max merge rounds (${cfg.limits.max_merge_rounds}) reached. Block the ticket.`, 3);
-  if (!merge && ordinaryRounds(prior) >= cfg.limits.max_review_rounds) throw new SpeckError(`Max review rounds (${cfg.limits.max_review_rounds}) reached. Block the ticket.`, 3);
+  const extra = extraRound(prior, cfg, merge);
   requireCommitted(repo, ticket, 'Commit your work before review: the reviewer reviews commits, not the working tree.');
   const head = git(['rev-parse', 'HEAD'], repo).trim();
   const diff = reviewDiff(repo, sinceSha);
   const tests = testOutput(opts.tests, ticket.fm.id || id);
   const testsSeen = testsMeta(opts.tests);
   const response = readResponse(opts.response);
-  return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, diff, tests, testsSeen, response };
+  return { cfg, ticket, prior, round, head, base, sinceSha, merged, merge, extra, diff, tests, testsSeen, response };
 }
 
 // Runs a review round. Round 1 on a building ticket, or any round on an approved one, sets it to reviewing before the
@@ -259,7 +279,7 @@ function reviewRound(repo, id, opts, run) {
 }
 
 function runCodexReview(repo, id, s) {
-  const { cfg, ticket, prior, round, head, sinceSha, merged, merge, diff, tests, testsSeen, response } = s;
+  const { cfg, ticket, prior, round, head, sinceSha, merged, merge, extra, diff, tests, testsSeen, response } = s;
   const prompt = reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });
 
   const out = path.join(cacheDir(repo, id), `round-${round}.out.json`);
@@ -286,7 +306,7 @@ function runCodexReview(repo, id, s) {
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...testsSeen });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...testsSeen });
 }
 
 function printRound(rec, cfg, all) {
@@ -344,7 +364,8 @@ export function cmdRecord(args) {
   const meta = fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8')) : settingsMeta(reviewerSettings(findTicket(repo, id).fm, cfg));
   const prior = rounds(repo, id);
   const merge = isMergeRound(prior);
-  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...testsSeen });
+  const extra = extraRound(prior, cfg, merge);
+  const rec = saveRound(repo, id, verdict, { reviewer, ...meta, reviewed_sha: git(['rev-parse', 'HEAD'], repo).trim(), ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), ...testsSeen });
   endRound(repo, findTicket(repo, id).fm.id || id);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
