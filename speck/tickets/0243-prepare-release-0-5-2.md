@@ -45,6 +45,7 @@ speck is ready to be released as 0.5.2.
 - AC5 is from `speck/ideas/done/2026-10-15-say-in-the-brief-that-releases-publish-themselves.md`, folded in here since this ticket changes the brief anyway.
 - After it ships, check that the `v0.5.2` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.2 --target main --title "speck 0.5.2" --notes-file docs/releases/v0.5.2.md`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
