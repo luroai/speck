@@ -1,7 +1,7 @@
 ---
 id: "0223"
 title: "Say which review round is running"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-15T23:48:31.710Z"
 approved: "2026-10-16T02:48:25.584Z"
 blocked_at: ""
 waited_seconds: 10065
+finished: "2026-10-16T02:49:54.539Z"
 
 ---
 # 0223 · Say which review round is running
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A ticket stays `reviewing` between review rounds, and its card says "<reviewer> is reviewing · round <n>" with the last recorded round. After round 1 asks for changes, the card still says "round 1" while the builder fixes the findings and while the reviewer runs round 2, so someone watching can't tell who is at work.
