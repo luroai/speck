@@ -71,6 +71,12 @@ function takeRunLock(repo) {
   } finally { fs.rmSync(mine, { force: true }); }
 }
 
+// A file for the panel to hear one speck run's refusal in, and its text once read, deleting it (0220).
+export const refusalFile = repo => path.join(runsDir(repo), `run.refusal.${crypto.randomUUID()}.tmp`);
+export function takeRefusal(file) {
+  try { return fs.readFileSync(file, 'utf8').trim(); } catch { return ''; } finally { fs.rmSync(file, { force: true }); }
+}
+
 // Writes a refusal to start to the file the panel named in SPECK_RUN_REFUSAL as well (0220), so the panel shows only this
 // speck run's words. The variable is dropped first, so no build or ship this speck run starts inherits it.
 export function cmdRun() {
