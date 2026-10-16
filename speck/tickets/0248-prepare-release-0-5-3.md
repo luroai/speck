@@ -45,6 +45,9 @@ speck is ready to be released as 0.5.3.
 - After it ships, check that the `v0.5.3` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.5.3 --target main --title "speck 0.5.3" --notes-file docs/releases/v0.5.3.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Built from main at `speck(0247): Switch speck run to its new code once it's idle`: 231 shipped, 16 cancelled, 14 minutes median, 1 round median, 116 approved in the first round.
+- 0243's checks that named 0.5.2 as the current version now check the current version, and its figures check the README as 0.5.2 shipped it, as 0243 did for 0226.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
