@@ -40,7 +40,7 @@ Near the top, the README shows a demo image of an agent app with a conversation 
 ## Notes
 - Source: `demo-light.png` and `demo-dark.png` in `speck-assets/readme/`, beside this checkout on the build machine, outside the repo. They show the real panel page with made-up tickets for a demo shop, inside a mock agent app (no product's branding), at 3000×1880. Use them as they are, apart from any resizing or compressing the size limits need. Don't commit that path, or the demo's server and frame from `speck-assets/readme/demo/`. If the images aren't there, block and ask for them.
 - The images are public: check them for anything private (names, accounts, client or project names other than speck) before committing.
-- Unverified: GitHub renders `<picture>` with a `prefers-color-scheme` `<source>` in a README, showing the dark image in its dark theme (GitHub's formatting docs say `<picture>` is supported but no longer show the theme example). Check by rendering the README with `gh api markdown` or after pushing the branch.
+- Checked 2026-10-16: GitHub renders `<picture>` with a `prefers-color-scheme` `<source>` in a README: `gh api markdown` (gfm) keeps the `<source media="(prefers-color-scheme: dark)">` and wraps the element in GitHub's `<themed-picture>`, which switches the image with the reader's GitHub theme.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
