@@ -41,6 +41,7 @@ blocked_at: "2026-10-15T23:56:25.602Z"
 - Seen while timing `test/stop-0072.test.mjs` in 0198: its `speck stop` took about 11 s.
 - Failing before this build: none
 - Self-check: the five seconds are timed with a monotonic clock, so a change to the system clock can't shorten or stretch the wait.
+- Answered 2026-10-16 (blocked question): (a). Accept F2 as it is: when every check of the running processes takes over 5 seconds, a build that ends when asked still waits the 5 seconds and is sent a force-end it no longer needs. (b) is saved as an inbox idea. `max_review_rounds` was raised to 4 for this one more round, and goes back to 3 afterwards.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
