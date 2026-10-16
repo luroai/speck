@@ -44,7 +44,11 @@ blocked_at: "2026-10-15T23:56:25.602Z"
 - Answered 2026-10-16 (blocked question): (a). Accept F2 as it is: when every check of the running processes takes over 5 seconds, a build that ends when asked still waits the 5 seconds and is sent a force-end it no longer needs. (b) is saved as an inbox idea. `max_review_rounds` was raised to 4 for this one more round, and goes back to 3 afterwards.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Stopping a build now takes at most about five seconds before speck forces it to end, even on a busy machine. Before, a build that ignored the request to stop could keep speck waiting much longer, because each check of what was still running added to the wait. A build that stops when asked still ends straight away, as before.
+
+To see it, stop a running build from the panel or with `speck stop`: it's gone within a few seconds.
+
+Worth keeping an eye on: on a machine so busy that checking what's running takes longer than five seconds, a build that stops when asked still waits the five seconds before speck is sure. An idea to fix that is in the inbox.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +59,9 @@ The reviewer approved the five-second limit and its tests, but hit the 3-round l
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-16-let-speck-stop-see-a-build-end-while-its-process-check-is-slow.md (F2, accepted by the user as a known limit).
+- Round 4 ran with `max_review_rounds` raised to 4 at the user's request.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -258,6 +265,77 @@ The reviewer approved the five-second limit and its tests, but hit the 3-round l
     ],
     "escalation_question": "",
     "summary": "The forced-shutdown deadline is now protected from slow process checks, and all 120 recorded tests pass. One issue remains: a process that exits normally can still cause a five-second wait and an unnecessary forced-shutdown attempt when discovery is slow."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a3acf6a94fe16a70462432158ba2ce941a9cf8e3",
+    "thread_id": "01a141f9-5629-7f80-a4d0-ae84ba7034a9",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 352100,
+      "cached_input_tokens": 295424,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3081,
+      "reasoning_output_tokens": 317
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-16T02:50:39.552Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "endBuild uses a monotonic five-second deadline; checkBuild bounds the whole discovery subprocess by the remaining time. Passing tests cover constant and varying slow checks, plus a real subprocess timeout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests verify graceful completion without SIGKILL for 200 ms and 2,000 ms checks. The recorded product-owner decision explicitly accepts the remaining exception when discovery exceeds the entire five-second wait."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All 19 tests in the current targeted run passed. The previous broader run passed all 120 tests, and implementation code is unchanged since that review. The merged configuration change preserves main's requested review-round limit."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "Slow discovery previously overran the forced-shutdown deadline. The discovery subprocess now has a timeout covering the whole check.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "When discovery exceeds five seconds, graceful completion may still incur the full wait and an unnecessary SIGKILL attempt against a stale PID. The product owner explicitly accepted this limitation for this ticket, and a follow-up idea records it.",
+        "suggested_fix": "Address direct liveness checks in the recorded follow-up.",
+        "state": "dispute_accepted"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Approved with the owner's accepted limitation. Slow process checks can no longer stretch the five-second deadline before forced shutdown. All 19 current tests pass. If discovery takes longer than the entire wait, an already-ended process can still incur the full wait and an unnecessary force-end attempt; that improvement is recorded for follow-up."
   }
 }
 ```
