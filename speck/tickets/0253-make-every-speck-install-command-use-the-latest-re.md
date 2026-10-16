@@ -43,6 +43,7 @@ Every command that tells someone how to install or run speck before it's install
 - Checked 2026-10-16: `npx -y 'github:luroai/speck#semver:*' help` resolves to the newest release tag (npm 10.9.9, on the build machine; recorded in speck-site 0005): v0.5.2 at first, then v0.5.3 once it was released.
 - Waits for 0256, the last of the README tickets (0255, 0251, 0256), and 0252 (also changes `/speck-setup`).
 - Checked 2026-10-16: unquoted, `github:luroai/speck#semver:*` fails in zsh with "no matches found" (zsh 5.9 from Ubuntu's package, `zsh -f -c` and `zsh -c`), because zsh's default NOMATCH option rejects a glob that matches no file. Single-quoted, it passes through unchanged.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
