@@ -39,6 +39,7 @@ Some settings suit a machine rather than a project. `max_parallel_builds` of 4 s
 ## Notes
 - `speck/.cache/` is git-ignored. Worktrees must read the main checkout's machine file, as the flaky log in `speck/.cache/flaky/` is shared.
 - Config is read by `loadConfig` in `scripts/core.mjs`, and `speck config set` is in `scripts/config.mjs`. Update `speck config set`'s description in `docs/brief.md`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
