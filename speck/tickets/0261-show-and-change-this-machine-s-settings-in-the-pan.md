@@ -1,7 +1,7 @@
 ---
 id: "0261"
 title: "Manage this machine's settings from the panel"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-16
 ---
 # 0261 · Manage this machine's settings from the panel
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Once a setting can be set for this machine only, someone looking at the Settings view can't tell whether the value shown is theirs or the repo's, and can't choose which to change.
