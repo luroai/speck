@@ -39,6 +39,7 @@ The Settings view is laid out like the rest of the panel: each group is a box of
 
 ## Notes
 - The view is in `templates/panel.html` (search for "0257"). The panel's section boxes are the model.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
