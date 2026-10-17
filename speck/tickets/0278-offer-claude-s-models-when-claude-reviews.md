@@ -1,7 +1,7 @@
 ---
 id: "0278"
 title: "Offer Claude's models when Claude reviews"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T18:37:19.169Z"
 ---
 # 0278 · Offer Claude's models when Claude reviews
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 With `claude-subagent` as the reviewer, the Settings view offers `reviewer_model` only as a text box, so you have to know which names Claude accepts. Codex gets a list (0276), but Claude Code has no command that lists its models.
@@ -44,7 +44,7 @@ With Claude as the reviewer, the Settings view offers Claude's model names to pi
 - Self-check: the brief said every reviewer but Codex gets a box to type the model in; it now says what claude-subagent offers, with a test for the names. Also changed one 0276 assertion that expected claude-subagent to have no list.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+With Claude as the reviewer, the Settings view now lets you pick the reviewer's model from a list (fable, opus, sonnet or haiku) instead of typing a name, and each one says it means the newest model of that kind. To see it, set the reviewer to claude-subagent in Settings and open the model list. A full model name you saved before still shows, marked as not offered, and stays as it is unless you change it. The effort choices are the same as before. If Claude adds a new kind of model, this list won't show it until speck is updated.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,65 @@ With Claude as the reviewer, the Settings view offers Claude's model names to pi
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4ac9dd9315db49d19e97d1da88211c9de91a2936",
+    "thread_id": "01a14b29-be8a-7f31-9b6c-f1c763fe3919",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 147672,
+      "cached_input_tokens": 102400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 694,
+      "reasoning_output_tokens": 19
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T18:40:07.328Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs supplies the four aliases through reviewerModels and panelSettings; templates/panel.html renders them with a blank '(default)' option. Both 0278 AC1 tests passed, covering server data, selection, saving and switching reviewers."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CLAUDE_MODELS supplies 'the newest <Kind>' descriptions and settingEditor displays them. The 0278 AC2 test passed for all four names."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "settingEditor preserves an unlisted saved value as a selected option marked '(not offered)'. The passing 0278 AC3 test verifies that changing and saving effort does not submit or alter that model."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "reviewerModelList and settingChoices retain the existing default and low-through-max effort choices for Claude. The passing 0278 AC4 test covers model selection and switching from Codex."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Claude reviewers now get the requested model list, with descriptions explaining that each alias selects the newest model of its kind. Existing custom model values are preserved, and effort choices remain unchanged. The recorded test run confirms 124 passes, no failures and three skips. No blocking issues found."
+  }
+}
+```
+
+</details>
