@@ -38,6 +38,7 @@ The Settings view's info buttons line up, sit clear of the values, and match the
 
 ## Notes
 - The view is in `templates/panel.html` (search for "0257" and "0273"). Seen at 400 px wide, and on an iPhone on 2026-10-17.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
