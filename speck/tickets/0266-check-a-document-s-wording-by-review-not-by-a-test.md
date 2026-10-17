@@ -39,6 +39,7 @@ A criterion about how a document reads is checked by the reviewer reading the do
 ## Notes
 - This ticket's own criteria are about the wording of skills and docs. Check them by review. Don't add tests that pin the new wording, which would be the very thing this ticket rules out.
 - Seen on 2026-10-17: a README edit on GitHub failed 0249 AC1, 0250 AC1, 0251 AC1–AC3 and AC5, and 0255 AC1 on main, and needed fix ticket 0262.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
