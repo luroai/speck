@@ -1,7 +1,7 @@
 ---
 id: "0260"
 title: "Let a setting apply to this machine only"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0258"]                # ticket ids that must be done first
 created: 2026-10-16
+started: "2026-10-17T09:22:07.848Z"
 
 ---
 # 0260 · Let a setting apply to this machine only
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Some settings suit a machine rather than a project. `max_parallel_builds` of 4 suits a 16-core Linux box, but an 8 GB laptop needs 1 or 2, and today whatever is committed in `speck/config.yml` applies to every machine that checks the repo out.
