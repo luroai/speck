@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: ["0257"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T08:53:20.250Z"
-approved: "2026-10-17T08:58:46.479Z"
+approved: "2026-10-17T09:05:11.747Z"
 
 ---
 # 0258 · Change a setting from the panel
@@ -55,12 +55,13 @@ To see it, open the panel, press Settings, change "max_parallel_builds" to 2 and
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 260,490
-- Elapsed since build started: 5 min
+- Reviewer tokens: 650,324
+- Elapsed since build started: 12 min
 - Changed lines: 164 (limit 5000)
 - Follow-ups: none for the inbox. Known limit: the new controls' look was checked only by the existing layout tests, not in a real browser.
 
@@ -125,6 +126,71 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The eight permitted settings can be edited and saved as config-only commits. Validation, branch checks and request protection meet the ticket's requirements. All 22 tests in the supplied run passed; no blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "356a17ee83f48dff89e109fed52ba99493492b10",
+    "merge": true,
+    "thread_id": "01a14915-2e3e-7c31-9492-69984079cb19",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 388572,
+      "cached_input_tokens": 321280,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1262,
+      "reasoning_output_tokens": 67
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:05:07.172Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs restricts editing to the eight listed settings and supplies the permitted reviewer and effort choices. templates/panel.html renders controls accordingly. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSetSetting uses setConfigText and commitTicketOnly, preserves no-op saves, and refreshes the view after success. All three AC2 tests passed, covering line preservation, config-only commits and displayed values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelSetSetting validates values and same-agent review before writing. Both AC3 tests passed, verifying refusal messages, preserved input and unchanged file/git state."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelSetSetting refuses saves off the base branch or with staged or unstaged config edits. The AC4 test passed and checks unchanged file/git state."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs checks origin and token before panelSettingRequest decodes or processes the request. The editable-key restriction remains enforced. The AC5 integration test passed, including forbidden requests and malformed encoding."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all five criteria. Moving request handling preserves validation and security checks, and both test-suite failures found during shipping are fixed without weakening tests. The recorded run has 34 passes, three skips and no failures. No blocking issues found."
   }
 }
 ```
