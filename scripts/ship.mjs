@@ -79,13 +79,15 @@ function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {})
       const r = sh('sh', ['-c', setup], { cwd: at });
       if (r.status !== 0) return new SpeckError(`${failed} Couldn't check ${base}'s own tests: worktree_setup (${setup}) failed with exit ${r.status} there.`);
     }
-    if (runTests(at, cfg, base).ok) {
-      const e = new SpeckError(moved
-        ? `${failed} ${base}'s own tests pass, so the tests failed on this ticket as it would land, because of its own change or because of it with ${base}'s newer changes.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
-        : `${failed} ${base}'s tests pass, so the failure comes from this ticket's change.${named(failing)}`);
-      e.together = true; // an auto-ship exits 16 with it, so speck run hands the ticket back to its build (0194)
-      return e;
-    }
+    const there = runTests(at, cfg, base);
+    // 0264: a failing test counts as failing on the base branch only when one of the same name fails there too.
+    const onBase = new Set(there.ok ? [] : failingTests(there.output));
+    const own = failing.filter(t => !onBase.has(t));
+    const together = e => { e.together = true; return e; }; // an auto-ship exits 16 with it, so speck run hands the ticket back to its build (0194)
+    if (there.ok) return together(new SpeckError(moved
+      ? `${failed} ${base}'s own tests pass, so the tests failed on this ticket as it would land, because of its own change or because of it with ${base}'s newer changes.${named(failing)} Merge ${base}'s newer changes into the ticket, fix the failing tests, get it reviewed, then ship again.`
+      : `${failed} ${base}'s tests pass, so the failure comes from this ticket's change.${named(failing)}`));
+    if (own.length) return together(new SpeckError(`${failed} The ticket fails tests that pass on ${base}${moved ? `, because of its own change or because of it with ${base}'s newer changes` : ''}.${named(own)} ${base}'s own tests are failing as well, and the tests that fail there too aren't listed. Fix these tests on the ticket${moved ? `, merging ${base}'s newer changes into it first` : ''}, get it reviewed, then ship again.`));
     return new SpeckError(`Tests failed on the approved branch${moved ? ` merged with ${base} as it is now` : ''}, and ${base}'s own tests are failing too, so this isn't the ticket's fault. Nothing was shipped. Fix ${base}, then ship again.`, 14);
   } finally {
     // Only this worktree's record goes: a repo-wide prune would also drop other worktrees whose folders are missing.
