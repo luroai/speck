@@ -131,6 +131,10 @@ The list below names each test by its file and name, as the ticket asks, so it c
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Idea: work out the README's "Built with speck" figures with a command, now that no test checks them (`speck/ideas/2026-10-17-work-out-the-built-with-speck-figures-with-a-command.md`).
+  - Known limit: 0267's rewording test leaves out the heavy test files (`heavy.mjs`) to stay quick. Their document checks (`panel-0133`'s Ship button, `run-0194`'s old ship command, `run-0245`'s setting name) check names only, but aren't run against the reworded documents.
+  - Known limit: `release-0254`'s "0254 AC3: the README and the brief name 0.5.4" names a fixed version, so the next release ticket changes it to check the current version, as earlier release tickets did.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -218,6 +222,95 @@ The list below names each test by its file and name, as the ticket asks, so it c
     ],
     "escalation_question": "",
     "summary": "Most wording checks have been removed, and all 330 reported tests pass. Changes are still needed: the new self-check itself fails on harmless README rewording, a required setting-name check was lost, and the ticket lacks the requested test-by-test inventory."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a8f7ea6bb417fa69539d5fc2e74d4739322687fc",
+    "thread_id": "01a14912-223b-7de3-b614-f2563bfb4b06",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 475322,
+      "cached_input_tokens": 376064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2432,
+      "reasoning_output_tokens": 245
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T08:59:07.258Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Document assertions now check facts independently of prose sections. test/docs-0267.test.mjs checks reworded and reordered documents; its mutation-helper assertions now use a synthetic fixture."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "test/turns-0239.test.mjs retains commands.test_files and {files}. Additional whole-document checks restore the other identified commands, settings and file names. The 0267 negative test confirms incorrect commands, versions, links and names remain detectable."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing 0267 AC1/AC3 test runs document-reading tests against mutated documents. mutate() now changes prose independently of its vocabulary, and the synthetic fixture verifies paragraph swapping and changed section openers."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reviewed the ticket's In plain words: Removed, Changed and Kept as they were identify tests by file and distinguishable names, with their documents and retained facts."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0267-tests.txt confirms 340 tests passed with no failures. The changes reveal no regression in existing passing tests; speck ship retains the whole-suite check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/docs-0267.test.mjs",
+        "issue": "The mutation self-check previously depended on the README's vocabulary and section structure.",
+        "suggested_fix": "Implemented: use a synthetic fixture and change real prose independently of its vocabulary.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/turns-0239.test.mjs",
+        "issue": "Removing a sentence assertion also removed the required commands.test_files fact check.",
+        "suggested_fix": "Implemented: restore whole-document checks for the setting and placeholder, alongside other facts found during the audit.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "speck/tickets/0267-remove-the-tests-that-pin-documents-wording.md",
+        "issue": "The original summary did not identify individual removed, changed and retained tests.",
+        "suggested_fix": "Implemented: add the test inventory with documents and retained facts.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All three findings are resolved. Harmless document edits no longer depend on the old wording checks, factual checks remain, and the ticket records the affected tests. All 340 reported tests pass. Ready for the owner's merge decision."
   }
 }
 ```
