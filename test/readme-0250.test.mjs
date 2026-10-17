@@ -19,8 +19,10 @@ const setting = key => read('templates/config.yml').match(new RegExp(`^\\s*${key
 // The landing page's words, from site/index.html in the speck-site repo.
 const TAGLINE = "Ship code you can't read, and still trust it.";
 // 0255 put this plain line between the tagline and the opening paragraph.
-const PLAIN = 'speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time, so you can set them going, walk away and trust what you come back to.';
-const OPENING = 'You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you.';
+// 0262: the README revision made on GitHub cut it to end at "every time." and
+// reworded the two-decisions paragraph, which no longer comes last before the image: the trust paragraph does.
+const PLAIN = 'speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time.';
+const OPENING = 'You make two decisions: what gets built and what gets shipped.';
 
 test('0250 AC1: the README opens with the tagline, the opening paragraph, the image, then Get started', () => {
   const r = readme();
@@ -28,8 +30,9 @@ test('0250 AC1: the README opens with the tagline, the opening paragraph, the im
   assert.equal(lines[0], '# speck');
   assert.equal(lines[1], `**${TAGLINE}**`);
   assert.equal(lines[2], PLAIN);
-  // 0251 put a plain description of speck between the plain line and this paragraph, which still comes just before the image.
-  assert.equal(lines[lines.indexOf('<picture>') - 1], OPENING);
+  // 0251 put a plain description of speck between the plain line and the image; the two-decisions paragraph is part of it.
+  const decisions = lines.findIndex(l => l.startsWith(OPENING));
+  assert.ok(decisions > 2 && decisions < lines.indexOf('<picture>'), 'the two-decisions paragraph comes after the plain line and before the image');
   assert.equal(headings()[0], 'Get started');
   // Between the image and Get started there's only the status line.
   const between = r.slice(r.indexOf('</picture>') + '</picture>'.length, r.indexOf('## Get started')).trim();
