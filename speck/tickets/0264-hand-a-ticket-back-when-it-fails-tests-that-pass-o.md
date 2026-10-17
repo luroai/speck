@@ -40,6 +40,7 @@ When the base branch is failing, a ship refusal puts only the tests that also fa
 - The refusal is built in `testFailure` in `scripts/ship.mjs`, which already has the failing tests' names (`failingTests` from `scripts/tap.mjs`) for the merged run but only an ok/not-ok result for the base branch's run.
 - A test that failed on the merge and then passed on the second, chance-failure run doesn't count as failing (as today).
 - `scripts/ship.mjs` is at 579 lines and the limit is 600 (0078 AC2), so code added there may need to move into a module of its own.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
