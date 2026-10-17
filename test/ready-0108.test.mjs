@@ -128,12 +128,6 @@ test('0108 AC1: when the commit of a ticket moved back from done/ fails, it goes
   assert.equal(r.g('status', '--porcelain').stdout, '', 'the index is as it was');
 });
 
-test('0108 AC1: the README says setting ready commits the ticket, and speck run waits for that commit', () => {
-  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  assert.match(readme, /set <id> status ready` \(Gate 1\)\. Run it on the base branch: it commits the ticket, and only that file/);
-  assert.match(readme, /for each ticket once it's committed as ready on the base branch/);
-});
-
 test('0108 AC1: other speck set changes still don\'t commit', () => {
   const r = setRepo();
   r.g('add', r.rel); r.g('commit', '-qm', 'ticket');

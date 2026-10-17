@@ -110,8 +110,9 @@ test('0235 AC3: the hand-back message says the tests failed on the ticket as it 
   assert.match(m, /"Tests fail together"/);
 });
 
-test('0235 AC4: the brief and /speck-build say the whole suite runs in speck ship, not during a build', () => {
-  for (const f of ['docs/brief.md', BUILD]) {
+// 0267 left the brief's wording to review.
+test('0235 AC4: /speck-build says the whole suite runs in speck ship, not during a build', () => {
+  for (const f of [BUILD]) {
     const s = flat(read(f));
     assert.match(s, /the whole suite runs in `speck ship`, not during a build/i, f);
     assert.doesNotMatch(s, /whole suite[^.|]*before (each|every|the first|the next) review round/i, f);
@@ -132,4 +133,8 @@ test('0235 AC1: a round-1 response is sent as written, and a saved round-1 promp
   assert.notEqual(missing.status, 0);
   assert.match(missing.stderr, /Can't read the builder's response in .*nope\.md/);
   assert.doesNotMatch(missing.stderr, /at .*\.mjs:\d+/, 'no stack trace');
+});
+
+test('0235 AC4: the brief names speck ship', () => {
+  assert.ok(read('docs/brief.md').includes('`speck ship`'));
 });

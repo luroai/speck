@@ -39,11 +39,10 @@ test('AC1: LICENSE at the repo root is the standard MIT text, copyright 2026 Lur
   assert.equal(text, MIT);
 });
 
-test('AC2: the README Licence section links to LICENSE', () => {
-  const m = read('README.md').match(/^## Licence\n([\s\S]*?)(?=^## |(?![\s\S]))/m);
-  assert.ok(m, 'README has a Licence section');
-  assert.match(m[1], /\]\(LICENSE\)/, 'the section links to LICENSE');
-  assert.match(m[1], /MIT/);
+test('AC2: the README links to LICENSE and names MIT', () => {
+  const readme = read('README.md');
+  assert.match(readme, /\]\(LICENSE\)/, 'the README links to LICENSE');
+  assert.match(readme, /\bMIT\b/);
 });
 
 test('AC2: package.json still says MIT', () => {

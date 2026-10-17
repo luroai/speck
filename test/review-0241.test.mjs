@@ -92,10 +92,3 @@ test('0241 AC3: after a merge, the reviewer is still given the whole change as m
   assert.equal(spawnReview(r.wt, 'approve', { FAKE_PROMPT: prompt }).status, 0);
   assert.match(fs.readFileSync(prompt, 'utf8'), /This round follows a merge of main/);
 });
-
-test('0241 AC4: the brief says a round is a merge round whenever the round before it approved', () => {
-  const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  const para = brief.split('\n').find(l => l.startsWith('**Merge rounds.**'));
-  assert.match(para, /A round is a merge round whenever the round before it approved, whether or not the branch merged the base branch in since\./);
-  assert.doesNotMatch(para, /merged the base branch in since the previous round and that round approved/);
-});
