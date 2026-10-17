@@ -337,11 +337,12 @@
   #settings .setting { padding: 8px 12px; border-bottom: .5px solid var(--line-soft); }
   #settings .setting:last-child { border-bottom: 0; }
   #settings .setting .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 12px; }
-  #settings .setting .label { display: flex; align-items: center; gap: 6px; min-width: 0; }
-  #settings .setting .label .info { flex: none; } /* its full size beside a long name */
+  /* 0277: the name, then the info button at the end of the row's left half, so a group's info buttons line up in one
+     column, a row's gap clear of the values, whatever the name's length */
+  #settings .setting .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
   #settings .setting .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
   #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
-  #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+  #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
   #settings .setting .default { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
   #settings .setting p { margin: 4px 0 0; color: var(--muted); }
@@ -360,9 +361,11 @@
   #settings .save-all { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text); background: var(--raise); border: .5px solid var(--text); padding: 4px 14px; cursor: pointer; }
   #settings .save-all:disabled { color: var(--faint); border-color: var(--line); background: none; cursor: default; }
   /* 0268: the info button beside a setting's name, and its explanation under the setting's line while it's open */
-  #settings .setting .info { display: inline-grid; place-items: center; align-self: center; width: 20px; height: 20px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
+  /* 0277: no taller than the controls beside it, and its ::after makes the target bigger than the box */
+  #settings .setting .info { position: relative; display: inline-grid; place-items: center; align-self: center; width: 18px; height: 18px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
   #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
   #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
+  #settings .setting .info::after { content: ""; position: absolute; inset: -4px; } /* 0277: a 26 by 26 px target */
   #settings .setting p.explain { margin-top: 6px; padding: 6px 10px; background: var(--raise); overflow-wrap: anywhere; }
   #settings .setting p.explain[hidden] { display: none; }
   /* 0275: asked on closing the view with changes not saved, over the view and its backdrop */
@@ -469,7 +472,7 @@
     header:not(.slim) #theme { grid-column: 4; }
     .theme, .settings-open { justify-self: end; width: 44px; height: 44px; }
     .settings-open + .theme { margin-left: 0; }
-    #settings .setting .info { width: 28px; height: 28px; font-size: 12px; } /* 0268: easier to tap */
+    #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .setting .row { gap: 8px; } /* 0273: room for the names */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
