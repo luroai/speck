@@ -1,7 +1,7 @@
 ---
 id: "0279"
 title: "Choose the model that builds tickets"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0278"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T18:42:22.421Z"
 approved: "2026-10-17T18:46:50.430Z"
+finished: "2026-10-17T18:48:52.086Z"
 
 ---
 # 0279 · Choose the model that builds tickets
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 There's no setting for the builder's model: builds run on whatever model `build_command` starts the builder with, which for Claude Code is your own default. You can choose the reviewer's model in the Settings view but not the builder's.
