@@ -1,7 +1,7 @@
 ---
 id: "0281"
 title: "Draw every Settings control's border on all four sides"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T19:17:47.054Z"
 
 ---
 # 0281 · Draw every Settings control's border on all four sides
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 On an iPhone, some of the Settings view's info buttons and controls are drawn without their left border. Their borders are half a pixel wide, and they sit half a pixel off a whole pixel (at 390 px wide, every info button's left edge is at 173.5 px and every list's at 199.5 px), so the phone can drop that edge when it draws them. The view's group boxes, with their own half-pixel borders, are the likely cause of the half-pixel shift.
