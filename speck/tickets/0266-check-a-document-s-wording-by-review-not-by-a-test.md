@@ -40,6 +40,8 @@ A criterion about how a document reads is checked by the reviewer reading the do
 - This ticket's own criteria are about the wording of skills and docs. Check them by review. Don't add tests that pin the new wording, which would be the very thing this ticket rules out.
 - Seen on 2026-10-17: a README edit on GitHub failed 0249 AC1, 0250 AC1, 0251 AC1–AC3 and AC5, and 0255 AC1 on main, and needed fix ticket 0262.
 - Failing before this build: none
+- No new tests: every criterion is about the wording of a skill, the reviewer prompt or the brief, so each is checked by review, as this ticket's first note says. A reviewer checks AC1 in `skills/speck-ticket/SKILL.md` step 4 (Acceptance criteria), AC2 in `skills/speck-build/SKILL.md` section 2 step 1 and the self-check's Claims line, AC3 in `templates/reviewer-prompt.md` points 1 and 2, and AC4 under "Criteria about documents" in `docs/brief.md`'s Ticket size rules. The existing test files that read these four files were run and pass.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
