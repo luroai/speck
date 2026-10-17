@@ -1,7 +1,7 @@
 ---
 id: "0278"
 title: "Offer Claude's models when Claude reviews"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0277"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T18:37:19.169Z"
 
 ---
 # 0278 · Offer Claude's models when Claude reviews
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 With `claude-subagent` as the reviewer, the Settings view offers `reviewer_model` only as a text box, so you have to know which names Claude accepts. Codex gets a list (0276), but Claude Code has no command that lists its models.
