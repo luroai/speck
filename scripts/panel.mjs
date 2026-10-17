@@ -351,12 +351,10 @@ export async function panelServer() {
     }
     const setting = req.method === 'POST' && where.match(/^\/api\/settings\/([^/]+)\/([^/]*)$/); // 0258: one setting
     const saveAll = req.method === 'POST' && where === '/api/settings/save'; // 0274: the Settings view's one Save
-    if (saveAll && (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token)))
-      return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
-    if (saveAll) return wrote(res, panelSaveRequest(repo, req.url.split('?')[1] || ''));
-    if (setting && (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token)))
+    if ((setting || saveAll) && (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token)))
       return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
     const query = new URLSearchParams(req.url.split('?')[1] || ''); // 0259's ?confirm= and 0261's ?scope=
+    if (saveAll) return wrote(res, panelSaveRequest(repo, req.url.split('?')[1] || ''));
     if (setting) return wrote(res, panelSettingRequest(repo, setting[1], setting[2], query.get('confirm'), query.get('scope')));
     const stopPath = where.match(/^\/api\/tickets\/(\d{1,4})\/stop$/);
     if (req.method === 'POST' && stopPath) {
