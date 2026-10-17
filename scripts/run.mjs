@@ -10,14 +10,17 @@ import { resumeArgv, handBackQueue } from './hand-back.mjs';
 import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
-import { BUILD_ENV, buildEnv } from './build-env.mjs';
+import { buildEnv } from './build-env.mjs';
 import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
+import { processRows, signalBuild, carryOn } from './build-procs.mjs';
+export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
+import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket } from './build-records.mjs';
+export { DEFAULT_RESUME_COMMAND, resumeHint, buildKilled, buildTicket } from './build-records.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
 const RUN_POLL_MS = 5000;
-export const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
 const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
 
 // The folder for speck run's records and logs, inside speck/.cache/, which git ignores.
@@ -321,19 +324,6 @@ function runOn(worker) {
   watchBoard();
 }
 
-// A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
-const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);
-
-// How to resume a killed build by hand, from resume_command in speck/config.yml (the default if it isn't set).
-export function resumeHint(cfg, rec) {
-  const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
-  if (!session) return 'Run /speck-build to carry it on.';
-  const cmd = !Object.hasOwn(cfg, 'resume_command') ? DEFAULT_RESUME_COMMAND : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
-  if (!cmd) return `Resume session ${session} to carry it on.`;
-  const cwd = typeof rec.cwd === 'string' && rec.cwd ? `cd ${shellWord(rec.cwd)} && ` : '';
-  return `To carry it on, run: ${cwd}${cmd.split('{session}').join(shellWord(session))}`;
-}
-
 // Whether the ticket at `rel` is ready in the base branch's latest commit. A ticket set ready but not committed, or
 // never committed at all, isn't: `speck start` would refuse it.
 function readyOnBase(repo, base, rel) {
@@ -343,67 +333,6 @@ function readyOnBase(repo, base, rel) {
 }
 
 // ---------- pause and play (hold a build speck run launched, then carry it on) ----------
-
-// Every process, as [pid, ppid, pgid].
-export function processRows() {
-  const r = sh('ps', ['-A', '-o', 'pid=,ppid=,pgid=']);
-  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}). Try again.`);
-  return r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/).map(Number)).filter(a => a.length === 3 && a.every(Number.isInteger));
-}
-
-// The processes whose environment holds `entry` (NAME=value). Linux reads /proc; macOS asks ps for each process's
-// environment. Anywhere else, or for a process whose environment can't be read, it finds nothing.
-function processesWithEnv(entry) {
-  if (process.platform === 'linux') {
-    const found = [];
-    for (const d of fs.readdirSync('/proc').filter(d => /^\d+$/.test(d))) {
-      try { if (fs.readFileSync(`/proc/${d}/environ`, 'utf8').split('\0').includes(entry)) found.push(Number(d)); } catch { /* gone, or not ours */ }
-    }
-    return found;
-  }
-  if (process.platform !== 'darwin') return [];
-  const r = sh('ps', ['-A', '-E', '-ww', '-o', 'pid=,command=']);
-  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}). Try again.`);
-  const has = new RegExp(`(^|\\s)${entry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`);
-  return r.stdout.split('\n').filter(l => has.test(l)).map(l => Number(l.trim().split(/\s+/)[0])).filter(Number.isInteger);
-}
-
-// A build and every process it started, still running: its process group, every process holding its session in
-// BUILD_ENV, and everything descended from those. Claude Code runs each Bash command in a session of its own, and a
-// background process whose parent has exited is no longer in the build's tree, so neither the group nor the tree
-// alone would reach them all. This process and its own children are left out, so a build that pauses itself still
-// finishes saying so. `me` is the process left out with its children: this one, or the one that asked for the list.
-export function buildProcesses(pid, session, me = process.pid) {
-  const rows = processRows();
-  const self = p => p === me || rows.some(([q, pp]) => q === p && pp === me);
-  const found = new Set(rows.filter(([p, , g]) => p === pid || g === pid).map(([p]) => p));
-  if (typeof session === 'string' && session) for (const p of processesWithEnv(`${BUILD_ENV}=${session}`)) found.add(p);
-  for (let grew = true; grew;) {
-    grew = false;
-    for (const [p, pp] of rows) if (!found.has(p) && found.has(pp)) { found.add(p); grew = true; }
-  }
-  return [...found].filter(p => !self(p));
-}
-
-// Sends `signal` to a build and everything it started. Stopping goes round again for any process started meanwhile.
-// A process that has gone meanwhile is skipped. Returns the processes it signalled, and the first error that stopped
-// it (null if none), so the caller can undo what it did.
-function signalBuild(b, signal) {
-  const sent = [];
-  try {
-    for (let pass = 0; pass < 10; pass++) {
-      const fresh = buildProcesses(b.pid, b.rec.session).filter(p => !sent.includes(p));
-      if (!fresh.length) break;
-      for (const p of fresh) {
-        try { process.kill(p, signal); sent.push(p); }
-        catch (e) { if (e.code !== 'ESRCH') throw new SpeckError(`Couldn't send ${signal} to process ${p} (${e.code || e.message}).`); }
-      }
-      if (signal !== 'SIGSTOP') break;
-    }
-  } catch (e) { return { sent, error: e instanceof SpeckError ? e.message : String(e?.message || e) }; }
-  return { sent, error: null };
-}
-const carryOn = pids => { for (const p of pids) try { process.kill(p, 'SIGCONT'); } catch { /* gone */ } };
 
 // The run record of a ticket's build, from the main checkout's speck/.cache/runs/, with what pause and play need.
 function runRecord(repo, args, usage) {
@@ -422,13 +351,6 @@ function runRecord(repo, args, usage) {
   const running = !!rec && !Object.hasOwn(rec, 'exited') && Number.isInteger(pid) && pid > 0 && pidAlive(pid)
     && processRows().some(([p, , g]) => p === pid && g === pid);
   return { id, rec, pid, running, mark: path.join(path.dirname(file), `${id}.paused`), paused: running && buildPaused(path.dirname(file), id) };
-}
-
-// Written to a temporary file and renamed into place, so nothing reading it sees half of it.
-function saveRecord(file, rec) {
-  const tmp = `${file}.${process.pid}.tmp`;
-  try { fs.writeFileSync(tmp, `${JSON.stringify(rec, null, 2)}\n`); fs.renameSync(tmp, file); }
-  catch (e) { fs.rmSync(tmp, { force: true }); throw e; }
 }
 
 // Stops the build, then marks it paused. If either fails, whatever it stopped is carried on again. Returns what it
@@ -479,49 +401,6 @@ export function cmdPlay(args) { console.log(playBuild(findRepoRoot(), args)); }
 
 // ---------- stop (end a build speck run launched for good, and block its ticket) ----------
 
-// True if `speck stop` ended the build in this run record: a <id>.stopped file beside it names its session and pid.
-function stoppedBySpeck(recordFile) {
-  try {
-    const rec = JSON.parse(fs.readFileSync(recordFile, 'utf8'));
-    const mark = JSON.parse(fs.readFileSync(recordFile.replace(/\.json$/, '.stopped'), 'utf8'));
-    return !!rec && typeof rec === 'object' && !!mark && typeof mark === 'object' && Number.isInteger(mark.pid) && mark.pid === rec.pid && mark.session === rec.session;
-  } catch { return false; }
-}
-
-// True if the build's log holds the result a stream-json build writes as it ends by itself. A build that was killed
-// never writes one. A build_command without stream-json output writes none either, so each of its ends counts as a kill.
-function logEnded(log) {
-  let text;
-  try { text = fs.readFileSync(log, 'utf8'); } catch { return false; }
-  return text.split('\n').some(l => { if (!l.startsWith('{')) return false; try { return JSON.parse(l)?.type === 'result'; } catch { return false; } });
-}
-
-// The run record of a build that was killed: no exit recorded, a pid that has gone, not ended by `speck stop`, and
-// no sign in its log that it ended by itself. null for any other build, or no readable record.
-export function buildKilled(runs, id) {
-  id = String(id ?? '');
-  if (!/^[\w-]+$/.test(id)) return null;
-  const file = path.join(runs, `${id}.json`);
-  let rec;
-  try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
-  if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) return null;
-  if (!Number.isInteger(rec.pid) || rec.pid <= 0 || pidAlive(rec.pid)) return null;
-  if (stoppedBySpeck(file) || logEnded(path.join(runs, `${id}.log`)) || sessionInUse(rec.session)) return null;
-  return rec;
-}
-
-// True if a running process names the session as a word of its command line, as a build resumed by hand does
-// (`claude --resume <session>`). If processes can't be listed it's taken as in use, so a session is never resumed twice.
-export function sessionInUse(session) {
-  if (typeof session !== 'string' || !session) return false;
-  const r = sh('ps', ['-A', '-ww', '-o', 'args=']);
-  if (r.status !== 0) return true;
-  return r.stdout.split('\n').some(l => l.split(/[\s=]+/).includes(session));
-}
-
-// The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.
-const lastTicketCommit = (dir, rel) => { const r = sh('git', ['log', '-1', '--format=%H', '--', rel], { cwd: dir }); return r.status === 0 ? r.stdout.trim() : ''; };
-
 // True for a ticket whose last build `speck stop` ended, until the ticket has a commit other than the one it had when
 // it was stopped (set ready again, for example). A ticket still ready because blocking it failed isn't launched again.
 function heldByStop(repo, t) {
@@ -530,21 +409,6 @@ function heldByStop(repo, t) {
   let mark = null;
   try { mark = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')); } catch { /* unreadable: held */ }
   return typeof mark?.ticket_commit !== 'string' || mark.ticket_commit === lastTicketCommit(t.worktree || repo, t.path);
-}
-
-// Every process still running, as a set of pids. One that has exited and waits only for its parent to collect it is over.
-export function runningPids() {
-  const r = sh('ps', ['-A', '-o', 'pid=,stat=']);
-  if (r.status !== 0) throw new SpeckError(`Couldn't list processes with ps (${(r.stderr || '').trim() || `it exited with ${r.status}`}).`);
-  return new Set(r.stdout.trim().split('\n').map(l => l.trim().split(/\s+/)).filter(([p, s]) => /^\d+$/.test(p) && !/^Z/.test(s || '')).map(([p]) => Number(p)));
-}
-
-// Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
-export function buildTicket(repo, cfg, id) {
-  const list = worktreeList(repo);
-  const branch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${id}-`);
-  const at = list.find(w => w.branch && branch.test(w.branch) && fs.existsSync(w.path))?.path || list[0].path;
-  return { at, t: findTicket(at, id) };
 }
 
 // Ends the build, then blocks its ticket and commits that where the build keeps it. A <id>.stopped mark is left first,
