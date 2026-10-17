@@ -63,10 +63,10 @@
   :root[data-theme="dark"] .logo .mark .dot { fill: #d4664e; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .logo, .run-state, .theme { flex-shrink: 0; }
-  .theme { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
-  .theme:hover { border-color: var(--text); color: var(--text); }
-  .theme svg { width: 15px; height: 15px; }
+  .logo, .run-state, .theme, .settings-open { flex-shrink: 0; }
+  .theme, .settings-open { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+  .theme:hover, .settings-open:hover { border-color: var(--text); color: var(--text); }
+  .theme svg, .settings-open svg { width: 15px; height: 15px; }
   .theme .sun { display: none; }
   :root[data-theme="dark"] .theme .sun { display: block; }
   :root[data-theme="dark"] .theme .moon { display: none; }
@@ -426,7 +426,7 @@
     header:not(.slim) .run-state { grid-column: 1 / 3; }
     header:not(.slim) .settings-open { grid-column: 3; } /* 0257: Settings, just before light/dark */
     header:not(.slim) #theme { grid-column: 4; }
-    .theme { justify-self: end; width: 44px; height: 44px; }
+    .theme, .settings-open { justify-self: end; width: 44px; height: 44px; }
     .settings-open + .theme { margin-left: 0; }
     .run-error, .offline, .restart { padding: 6px 16px; }
 
@@ -508,7 +508,7 @@
   <div class="logo"><svg class="mark" viewBox="8 11 48 48" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M14.5 22.5 A21.5 21.5 0 1 0 22 16.2"/><path d="M12.6 19.8 a5.2 5.2 0 0 1 8.2 -5.6"/><path d="M43.2 14.2 a5.2 5.2 0 0 1 8.2 5.6"/><circle class="dot" cx="31.7" cy="33.2" r="4.8" stroke="none"/></svg>speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
   <button class="run-state" id="run" type="button" aria-pressed="false" hidden></button>
-  <button class="theme settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
+  <button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="5.5" cy="4.5" r="1.6" fill="var(--bg)"/><circle cx="10.5" cy="11.5" r="1.6" fill="var(--bg)"/></svg>
   </button>
   <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">
