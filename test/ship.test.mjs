@@ -315,10 +315,11 @@ test('ship catches up with new commits on the remote before merging, then pushes
   assert.equal(r.status(), 'done');
 });
 
-test('ship refuses, changing nothing, when local and remote main have both moved on', () => {
+// 0265: a clean divergence is merged in; only one that conflicts still refuses.
+test('ship refuses, changing nothing, when local and remote main have both moved on and conflict', () => {
   const r = shipWithRemoteMoved('other.txt', 'from elsewhere\n');
   r.g('checkout', '-q', 'main');
-  fs.writeFileSync(path.join(r.dir, 'local.txt'), 'local\n');
+  fs.writeFileSync(path.join(r.dir, 'other.txt'), 'local\n');
   r.g('add', '-A'); r.g('commit', '-qm', 'local only');
   const before = r.state();
   const remoteBefore = r.remoteMain();
