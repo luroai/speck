@@ -1,7 +1,7 @@
 ---
 id: "0261"
 title: "Manage this machine's settings from the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T09:38:25.559Z"
 ---
 # 0261 · Manage this machine's settings from the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once a setting can be set for this machine only, someone looking at the Settings view can't tell whether the value shown is theirs or the repo's, and can't choose which to change.
@@ -41,7 +41,7 @@ The Settings view shows which settings use this machine's value, and lets you ch
 - Self-check: moved the machine file's write into `saveMachineValue` so the panel and `speck config set --machine` share it; a machine save never calls `loadConfig`, so a bad hand-edited machine value can still be fixed from the panel; an unknown `?scope=` is refused with 400; `speck config show` keeps showing `speck/config.yml`'s values, as it did; added a test that the brief names `speck config set --machine`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's Settings view now says, for the number of builds and test runs at once, whether the value in use is this computer's own or the project's shared one, and shows the shared one too when this computer has its own. Saving either asks whether the change is for this computer only or for everyone: this computer only is saved straight away and nothing is committed, even while the project has unsaved edits or isn't on its main branch. A button clears this computer's value so the shared one applies again. To see it, open Settings, change the number of builds, pick "This machine only", and check the row now says "this machine" while the shared settings file is unchanged. Worth knowing: the terminal's settings list still shows the shared values only.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -51,3 +51,66 @@ The Settings view shows which settings use this machine's value, and lets you ch
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: `speck config show` still lists `speck/config.yml`'s values only, not this machine's (speck/ideas/2026-10-17-show-this-machine-s-values-in-speck-config-show.md).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "512757e024f0ef922c03ac25200aff9f9fa9a6fa",
+    "thread_id": "01a1493d-9151-7781-8fc9-e6465dd9ebfc",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 208006,
+      "cached_input_tokens": 159104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 691,
+      "reasoning_output_tokens": 46
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:42:34.456Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs panelSettings supplies effective values, their source and repo values; templates/panel.html renderSettings displays them. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scopeQuestion and saveSetting ask for the scope and send the chosen request. machineSetting uses saveMachineValue; repo saves retain the existing commit path. Both AC2 tests passed, checking requests, machine storage and unchanged git state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "machineLine provides Clear; machineSetting removes the override and panelSettings returns the repo value afterwards. The AC3 test passed for both storage and the view."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "machineSetting runs before repo branch and dirty-file checks. scripts/panel.mjs checks origin and token before processing settings writes. Both AC4 tests passed, including real HTTP refusals with unchanged storage."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel shows whether these settings come from this machine or the repo, lets users choose where to save changes, and can clear machine overrides. Machine saves leave the repo and commits untouched. The supplied 50-test run passed, and the code supports all four criteria. No blocking concerns found."
+  }
+}
+```
+
+</details>
