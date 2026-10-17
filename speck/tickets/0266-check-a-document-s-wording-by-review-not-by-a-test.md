@@ -1,7 +1,7 @@
 ---
 id: "0266"
 title: "Check a document's wording by review, not by a test"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T08:35:03.733Z"
+approved: "2026-10-17T08:36:39.330Z"
 
 ---
 # 0266 · Check a document's wording by review, not by a test
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck's build skill writes at least one test for every acceptance criterion, so a criterion about a document's wording ("the README opens with the tagline, then the plain line") becomes a test that pins the exact sentence and where it sits. The next edit to that document, by hand or by a later ticket, fails the suite and holds up every ship, as a README edit made on GitHub did on 2026-10-17. Once speck takes on tasks that aren't code, such as document edits, every one would leave tests like these behind.
@@ -54,9 +55,14 @@ Worth watching: the tests that already pin documents' wording are still there un
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 91,234
+- Elapsed since build started: 2 min
+- Changed lines: 12 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only): the brief's size-rules table still says each criterion is "testable", and the ticket skill still says each criterion "will become a test", each now with the exception written next to it. A later wording pass could fold the exception into those lines. Removing the existing tests that pin documents' wording is ticket 0267. No inbox notes.
 
