@@ -1,7 +1,7 @@
 ---
 id: "0280"
 title: "Allow a same-family reviewer that runs a different model"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T18:49:03.573Z"
 ---
 # 0280 · Allow a same-family reviewer that runs a different model
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `allow_same_model_review` doesn't compare models: it compares agents. A Claude builder with a Claude reviewer counts as "the same model" whatever models they run, so an Opus builder can't be reviewed by Fable without turning the setting on, while its name says it's about the same model.
@@ -43,7 +43,9 @@ A reviewer from the builder's own family is allowed when the two run different m
 - Self-check: the panel checks the settings as they'd be once saved, so saving builder_model or reviewer_model to match the other is refused too, not only reviewer; a builder_model given to a builder other than claude counts as unset, as builds don't get it; updated the README, the brief and the config template, with a test that they name builder_model.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now have a Claude build reviewed by a Claude reviewer without turning on the "same model" setting, as long as the builder's model and the reviewer's model are both chosen and are different, for example Opus building and Fable reviewing. If they're the same model, or either is left at its default, speck still refuses unless you turn the setting on, and the message now says which models it compared and what to change.
+
+To see it, pick different builder and reviewer models in the panel's Settings view, then choose the Claude subagent as the reviewer: it saves. Choosing the same model for both is refused. Worth knowing: a short name and a full model name for the same model count as different, so speck can't catch that pairing.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,4 +54,71 @@ A reviewer from the builder's own family is allowed when the two run different m
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: `speck config set` on the command line doesn't check the same-family rule when changing reviewer, builder_model or reviewer_model (as before this ticket); `speck lint` and `speck set ready` still catch it on each ticket. Noted here only, as a known limit.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "00cbdd61db1bf0ce634f3e49fea465236e84c126",
+    "thread_id": "01a14b35-55c7-7090-90f9-02f5a43a20fd",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 160163,
+      "cached_input_tokens": 110848,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 754,
+      "reasoning_output_tokens": 69
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T18:52:49.686Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/same-model.mjs permits different explicit models and resolves the ticket’s reviewer model through reviewerSettings. Passing AC1 tests cover lint, set ready and panel saves, including saving both models together."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "sameModelProblem refuses equal or unset models. lintTicket and panelSaveSettings respect allow_same_model_review. Passing AC2 tests exercise these refusals and the override."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "sameModelProblem identifies both models or the unset model and suggests different models, another reviewer family or the override. The passing AC3 test checks lint and panel messages."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "sameModelProblem returns no problem for different families before comparing models. The passing AC4 test covers matching, blank and different models through lint and panel saves."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs SETTING_GROUPS explains the same-family restriction for equal or default models. The passing AC5 test checks the explanation returned by panelSettings."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change allows reviewers from the builder’s family when both models are explicitly set and differ. Equal or unknown models remain blocked unless explicitly allowed, with clear guidance. The panel also prevents model changes from bypassing the rule. All 156 executed tests passed; three were skipped. No blocking concerns found."
+  }
+}
+```
+
+</details>
