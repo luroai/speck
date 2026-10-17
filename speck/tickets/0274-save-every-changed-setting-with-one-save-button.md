@@ -1,7 +1,7 @@
 ---
 id: "0274"
 title: "Save every changed setting with one Save button"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,13 +14,14 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0273"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T13:44:09.209Z"
-approved: "2026-10-17T13:54:16.241Z"
-blocked_at: "2026-10-17T13:57:12.278Z"
+approved: "2026-10-17T15:38:38.004Z"
+blocked_at: ""
+waited_seconds: 6086
 
 ---
 # 0274 · Save every changed setting with one Save button
 
-**Status:** ⛔ blocked
+**Status:** 👍 approved
 
 ## Problem
 Every editable setting in the Settings view has its own Save button, so the view is cluttered with them, and changing several settings means saving, and committing, each one separately.
@@ -63,12 +64,13 @@ Ticket 0270 left a check that fails whenever a ticket changes any test file that
 ## Review log
 Round 1 (codex): changes requested: F1 A mixed batch saves machine values before writing config.yml.; F2 Controls remain editable while Save awaits its response.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 562,453
-- Elapsed since build started: 10 min
+- Reviewer tokens: 1,063,682
+- Elapsed since build started: 114 min
 - Changed lines: 369 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups, no inbox note):
@@ -234,6 +236,88 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The single Save button meets all five criteria. Both previous issues are fixed and covered by passing tests. The reported run had 171 passes, no failures and three skips."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "66949ee0d57adce5267f2734b94ed40d8e460df6",
+    "merge": true,
+    "thread_id": "01a14a22-8979-7092-9f0a-a4746ae90c26",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 498843,
+      "cached_input_tokens": 433280,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2386,
+      "reasoning_output_tokens": 141
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T15:38:35.944Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "settingChanges(), refreshSettings() and the sticky .savebar provide one Save with dirty tracking. Both 0274 AC1 tests passed, including real-browser scrolling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSaveSettings() saves shared changes in one commit and machine changes locally, leaving unchanged settings alone. All AC2 tests passed. panelServer() still checks token and origin before either settings route; the real-server test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "saveSettings() and panelSaveSettings() check combined auto-shipping changes before saving. Both AC3 confirmation tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Validation precedes writes, failures trigger rollback, and setting-specific refusals preserve edits. AC4 tests passed, including mixed-batch write and commit failures."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "saveSettings() reloads current values after success and clears submitted edits while retaining later changes. AC5 and the deferred-response F2 test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "Repo write exceptions previously bypassed rollback after machine settings had been saved.",
+        "suggested_fix": "Fixed by wrapping writes and commits with rollback; the regression test remains passing.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Successful saves previously discarded edits made while awaiting the response.",
+        "suggested_fix": "Fixed by clearing only submitted values that still match; the deferred-response regression test remains passing.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All five criteria pass, and both previous fixes remain intact. The shared security check preserves behaviour. The two test removals match the user decision recorded in the ticket, and the 600-line rule remains. The reported run had 173 passes, no failures and three skips."
   }
 }
 ```
