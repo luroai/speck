@@ -28,7 +28,8 @@ test('0249 AC1: the README shows the demo picture after the opening paragraph an
   const readme = read('README.md');
   const at = readme.indexOf('<picture>');
   assert.ok(at > 0, 'the README has a <picture>');
-  const opening = readme.indexOf('You own two decisions');
+  // 0262: the README revision made on GitHub reworded the two-decisions paragraph and put the trust paragraph after it, so the picture follows that.
+  const opening = readme.indexOf('You make two decisions');
   assert.ok(opening > 0 && opening < at, 'the picture comes after the opening paragraph');
   assert.ok(at < readme.search(/^## /m), 'the picture comes before the first ## heading');
   for (const f of IMAGES) assert.ok(picture().includes(f), `the picture uses ${f}`);
