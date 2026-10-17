@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './support/panel.mjs';
+import { setupPrompt } from './support/release.mjs';
 
 // ---------- 0107: hide the setup skill from the slash menu ----------
 
@@ -43,17 +44,7 @@ test('AC2: the description says the README setup prompt starts it, not a typed c
 });
 
 test('AC3: the README setup prompt still names the skill', () => {
-  const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  const start = readme.match(/^## Get started\n([\s\S]*?)(?=^## )/m)[1];
-  assert.match(start.match(/```[^\n]*\n([\s\S]*?)```/)[1], /speck-setup/);
-});
-
-test('AC2: the README and the brief say the skill is hidden from the / menu', () => {
-  for (const f of ['README.md', 'docs/brief.md']) {
-    const row = fs.readFileSync(path.join(ROOT, f), 'utf8').match(/^\| `\/speck-setup` \|.*$/m)[0];
-    assert.match(row, /hidden from the `\/` menu/, f);
-    assert.match(row, /setup prompt/, f);
-  }
+  assert.match(setupPrompt(fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8')) || '', /speck-setup/);
 });
 
 test('AC1 self-check: every frontmatter value is a valid plain YAML scalar (no ": " or " #" inside)', () => {

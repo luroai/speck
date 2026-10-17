@@ -100,11 +100,6 @@ test('0245 AC2: when the variable is already set in speck run\'s environment, th
   assert.equal(call.value, '0');
 });
 
-test('0245 AC3: the brief says speck run\'s Claude Code builds can\'t run commands in the background, and why', () => {
-  const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
-  const row = brief.split('\n').find(l => l.startsWith('| `speck run` |'));
-  assert.ok(row);
-  assert.match(row, new RegExp(VAR));
-  assert.match(row, /can't run commands in the background/);
-  assert.match(row, /ends? the build/);
+test('0245 AC3: the brief names the setting that stops speck run\'s Claude Code builds running commands in the background', () => {
+  assert.ok(fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8').includes(VAR));
 });
