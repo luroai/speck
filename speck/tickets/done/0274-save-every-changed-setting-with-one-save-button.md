@@ -1,7 +1,7 @@
 ---
 id: "0274"
 title: "Save every changed setting with one Save button"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-17T13:44:09.209Z"
 approved: "2026-10-17T15:38:38.004Z"
 blocked_at: ""
 waited_seconds: 6086
+finished: "2026-10-17T15:40:15.360Z"
 
 ---
 # 0274 · Save every changed setting with one Save button
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every editable setting in the Settings view has its own Save button, so the view is cluttered with them, and changing several settings means saving, and committing, each one separately.
