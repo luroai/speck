@@ -1,7 +1,7 @@
 ---
 id: "0258"
 title: "Change a setting from the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T08:53:20.250Z"
 ---
 # 0258 · Change a setting from the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Changing a setting today means finding the line in `speck/config.yml`, knowing which values speck accepts, editing it and committing it so `speck run` sees it. That's a lot to ask of someone who just wants two builds at once or a more thorough reviewer.
@@ -45,7 +45,9 @@ The settings in the Settings view that are safe to change can be changed there, 
 - Self-check: a value badly written in the address is refused with 400 and a plain message, a reviewer_model with a line break or control character is refused, and the brief's panel entry no longer says the Settings view changes nothing (a test checks it names the eight settings).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Settings view in the panel now lets you change eight settings in place: which reviewer checks the work, its model and effort, how many builds and test runs go at once, and the three ticket size limits. Each has a box or a list and a Save button. Saving checks the value first, refuses anything speck wouldn't accept with a message saying what's allowed, and otherwise changes just that line of the settings file and records it for everyone using the project. The other settings, such as auto-ship and the builder, still show but can't be changed there.
+
+To see it, open the panel, press Settings, change "max_parallel_builds" to 2 and press Save: the view shows 2, and the project's history has a new entry for it. Saving is refused while the panel's folder is on another branch or the settings file has unsaved edits of your own, so those are never swept up with it. Worth a look: the controls were checked by tests rather than in a real browser, so glance at how they sit in the view.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,4 +56,71 @@ The settings in the Settings view that are safe to change can be changed there, 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Known limit: the new controls' look was checked only by the existing layout tests, not in a real browser.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "704235214d5cc72bfa83ecd0a5a26b4cecac18cf",
+    "thread_id": "01a14915-2e3e-7c31-9492-69984079cb19",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 259716,
+      "cached_input_tokens": 209280,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 774,
+      "reasoning_output_tokens": 67
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T08:58:35.481Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs defines the eight editable settings and permitted picker choices; templates/panel.html renders their controls. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSetSetting uses setConfigText and commitTicketOnly, with a no-change check. Three passing AC2 tests cover line/comment preservation, config-only commits, no-op saves and refreshed displayed values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelSetSetting validates counts, choices, same-agent review and reviewer_model control characters before writing. Both AC3 tests passed, checking unchanged file/git state and visible refusal messages."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelSetSetting checks the current branch and config's git status before writing. The passing AC4 test covers another branch and both unstaged and staged config edits."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs checks origin and token before handling settings writes; panelSetSetting rejects keys outside EDITABLE. The passing AC5 integration test verifies 403 refusals and unchanged file/git state."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The eight permitted settings can be edited and saved as config-only commits. Validation, branch checks and request protection meet the ticket's requirements. All 22 tests in the supplied run passed; no blocking issues found."
+  }
+}
+```
+
+</details>
