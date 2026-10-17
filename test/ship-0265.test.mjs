@@ -104,3 +104,16 @@ test('0265 AC4: when the ship then fails, the merge commit stays on the local ba
   assert.equal(r.g('status', '--porcelain', '--untracked-files=no'), '');
   assert.equal(r.statusIn(r.wt), 'approved');
 });
+
+test('0265 AC3: merge.autoStash doesn\'t get past the refusal over an uncommitted change', () => {
+  const r = shipRepo();
+  diverged(r, { remoteFile: 'notes.txt' });
+  r.g('config', 'merge.autoStash', 'true');
+  fs.writeFileSync(path.join(r.dir, 'notes.txt'), 'mine, unstaged\n');
+  const before = r.snapshot();
+  const out = r.run('ship', '1');
+  assert.notEqual(out.status, 0);
+  assert.match(out.stderr, /notes\.txt/);
+  assert.deepEqual(r.snapshot(), before);
+  assert.equal(r.g('stash', 'list'), '');
+});

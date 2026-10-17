@@ -1,7 +1,7 @@
 ---
 id: "0265"
 title: "Merge the remote's base branch in when it has diverged cleanly"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T09:07:33.967Z"
 ---
 # 0265 · Merge the remote's base branch in when it has diverged cleanly
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When the remote's base branch has a commit your local base branch doesn't (for example, a README edited on GitHub), and your local base branch has one the remote doesn't, `speck ship` refuses with "each have commits the other doesn't". speck run's ship queue then waits for a new local commit that may never come, so approved tickets sit unshipped with no sign why outside `run.log`. This held up 0257 overnight on 2026-10-16 and 2026-10-17.
@@ -54,3 +54,74 @@ When the remote's base branch has a commit your local base branch doesn't (for e
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6fb51d74de31f84576ed7157ab49b75db66ede0f",
+    "thread_id": "01a14920-5c6a-7040-80a3-19bbc8687380",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 138280,
+      "cached_input_tokens": 96896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 962,
+      "reasoning_output_tokens": 207
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:10:41.520Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "ship-remote.mjs remoteBaseCatchUp/mergeRemoteBase creates a two-parent merge and reports incoming commits. Both AC1 integration tests passed, including shipping and pushing."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "mergeRemoteBase checks conflicts with merge-tree before updating the branch or checkout. The AC2 snapshot test passed."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The three AC3 tests passed for default Git settings, but ship-remote.mjs:36 inherits merge.autoStash, which bypasses the required refusal over overlapping local edits."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The remote merge precedes ship's rollback boundary. The AC4 test passed, verifying both merge parents remain on main after tests fail."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship-remote.mjs:36",
+        "issue": "With merge.autoStash=true, Git can stash overlapping uncommitted edits, advance the base branch, then restore the edits with conflicts. This violates AC3's requirement to refuse with the branch, working tree and index unchanged. Git's installed merge documentation explicitly describes this behaviour; the tests only exercise default settings.",
+        "suggested_fix": "Pass --no-autostash explicitly when applying this merge. Add a regression test enabling merge.autoStash with local edits overlapping a remote change, and verify refusal names the file and preserves the branch, working tree and index.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The normal merge, conflict refusal and failed-ship behaviour are covered by seven passing tests. One protection needs fixing: users with Git automatic stashing enabled could have their base branch advanced and local edits left conflicted instead of receiving a safe refusal."
+  }
+}
+```
+
+</details>
