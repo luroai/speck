@@ -1,7 +1,7 @@
 ---
 id: "0276"
 title: "Pick the reviewer's model and effort from what it offers"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0275"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T15:48:22.489Z"
 approved: "2026-10-17T15:55:30.569Z"
+finished: "2026-10-17T15:57:33.143Z"
 
 ---
 # 0276 · Pick the reviewer's model and effort from what it offers
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `reviewer_model` is a text box, so you have to know the exact name of a model, and you won't hear when the reviewer's provider releases a new one. `reviewer_effort` offers a fixed list (low to max) that doesn't follow what the model supports: Codex's newest models also offer `ultra`, which speck refuses.
