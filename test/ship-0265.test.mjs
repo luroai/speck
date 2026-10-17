@@ -1,4 +1,5 @@
 // 0265: speck ship merges the remote's base branch into the local one when each has commits the other doesn't.
+import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
