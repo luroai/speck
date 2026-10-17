@@ -47,7 +47,11 @@ The Settings view has one Save button that saves every setting you've changed at
 - Criterion 2's single commit and criterion 4's nothing-saved need the server to take the changes together, not one request per setting.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Settings view no longer has a Save button beside each setting. Instead there's one Save button at the bottom of the view, always visible as you scroll, which lights up once you've changed something and greys out again if you put everything back. Pressing it saves all your changes together: the shared ones in a single commit, and any you chose to keep for this machine only on this machine.
+
+To see it, open Settings in the panel, change two settings and press Save once: both are saved, and the view shows the new values. If one of your changes isn't allowed, nothing is saved, the refused setting says why, and your changes stay so you can fix them. Changing a setting that lets more tickets ship by themselves still asks you to confirm first.
+
+Worth knowing: the question "this machine only or the repo?" now appears beside the setting as soon as you change it, and clearing this machine's own value also waits for Save.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,9 @@ The Settings view has one Save button that saves every setting you've changed at
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (tidy-ups, no inbox note):
+  - The page no longer uses `POST /api/settings/<key>/<value>`. It's kept, saving one change through the new combined save, because 0258's, 0259's and 0261's server tests use it. It could go, with those tests moved to `/api/settings/save`.
+  - Asking before closing the view with unsaved changes is 0275.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +143,87 @@ The Settings view has one Save button that saves every setting you've changed at
     ],
     "escalation_question": "",
     "summary": "The single Save button works in the tested flows, including confirmation and one shared commit. Two gaps need fixing: a failed save can leave machine settings partially saved, and edits made while saving can disappear."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ce7f046f7a36eee038ff94ba8ba382171031b597",
+    "thread_id": "01a14a22-8979-7092-9f0a-a4746ae90c26",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 346880,
+      "cached_input_tokens": 289536,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1697,
+      "reasoning_output_tokens": 141
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T13:54:06.032Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "settingChanges() and refreshSettings() track differences and disable the single Save when values are restored. Both 0274 AC1 tests passed, including real-browser scrolling of the sticky save bar."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSaveSettings() commits changed shared settings together and saves machine settings separately. All three AC2 tests passed; the new deferred-response F2 test also verifies that subsequent edits remain pending."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "saveSettings() asks for confirmation before sending increased auto-shipping permissions; panelSaveSettings() independently checks the combined changes. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Validation precedes writes, refusals identify settings, and the view retains edits. The new AC4 F1 test passed for a read-only config file and a refused commit, verifying unchanged repo and machine settings."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "After success, saveSettings() clears submitted values and calls loadSettings(). The AC5 test passed, verifying refreshed values and disabled Save when no further edits remain."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "Repo write exceptions previously bypassed rollback after machine settings had been saved.",
+        "suggested_fix": "Implemented: the write and commit phase now catches exceptions and restores prior values; the new failure-path test passed.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Successful saves previously discarded edits made while awaiting the response.",
+        "suggested_fix": "Implemented: success clears only submitted values that still match, preserving later edits. The deferred-response regression test passed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The single Save button meets all five criteria. Both previous issues are fixed and covered by passing tests. The reported run had 171 passes, no failures and three skips."
   }
 }
 ```
