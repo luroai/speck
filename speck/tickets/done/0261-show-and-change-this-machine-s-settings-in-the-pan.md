@@ -1,7 +1,7 @@
 ---
 id: "0261"
 title: "Manage this machine's settings from the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0259","0260"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T09:38:25.559Z"
 approved: "2026-10-17T09:46:10.309Z"
+finished: "2026-10-17T09:47:50.581Z"
 
 ---
 # 0261 · Manage this machine's settings from the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Once a setting can be set for this machine only, someone looking at the Settings view can't tell whether the value shown is theirs or the repo's, and can't choose which to change.
