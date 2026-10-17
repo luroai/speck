@@ -1,7 +1,7 @@
 ---
 id: "0276"
 title: "Pick the reviewer's model and effort from what it offers"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0275"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T15:48:22.489Z"
+approved: "2026-10-17T15:55:30.569Z"
 
 ---
 # 0276 · Pick the reviewer's model and effort from what it offers
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `reviewer_model` is a text box, so you have to know the exact name of a model, and you won't hear when the reviewer's provider releases a new one. `reviewer_effort` offers a fixed list (low to max) that doesn't follow what the model supports: Codex's newest models also offer `ultra`, which speck refuses.
@@ -51,9 +52,14 @@ When the reviewer is Codex, the panel's Settings view now lists the models Codex
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 124,781
+- Elapsed since build started: 7 min
+- Changed lines: 179 (limit 5000)
 Follow-ups:
 - To the inbox: `speck/ideas/2026-10-17-check-the-effort-against-the-ticket-s-own-reviewer.md` (a Codex-only effort such as ultra passes lint whatever the ticket's reviewer).
 - Known limit: the panel's GET /api/settings wiring (reading the models when the view opens) is tested through reviewerModels and panelSettings directly, not through a running panel.
