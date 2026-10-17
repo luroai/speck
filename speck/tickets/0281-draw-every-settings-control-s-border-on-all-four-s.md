@@ -37,6 +37,7 @@ Every info button and control in the Settings view is drawn with its border on a
 
 ## Notes
 - Seen on an iPhone on 2026-10-17, and measured in Chromium at 390 px wide: `button.info` at left 173.5, `select.edit` at left 199.5, with `.5px` borders (`templates/panel.html`, `#settings .setting` rules).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
