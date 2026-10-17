@@ -3,7 +3,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadConfig, parseYaml } from './core.mjs';
+import { SpeckError, sh, loadConfig, parseYaml, modelFamily, EFFORTS } from './core.mjs';
+import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
+import { commitTicketOnly } from './close.mjs';
 
 export const SETTING_GROUPS = [
   { title: 'Shipping', settings: [
@@ -44,13 +46,79 @@ const own = (o, k) => o !== null && typeof o === 'object' && !Array.isArray(o) &
 // A setting's place in an object read from speck/config.yml, or undefined when it isn't there.
 const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] : undefined, o);
 
+// 0258: the settings the panel can change. The rest stay read-only there: auto_ship and auto_ship_risk loosen who ships,
+// builder needs a matching build_command and allow_same_model_review weakens the independent review.
+export const EDITABLE = Object.freeze(['reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds']);
+
+// The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
+function choicesOf(key, file) {
+  if (key === 'reviewer') {
+    const options = file.reviewer_options !== null && typeof file.reviewer_options === 'object' ? Object.keys(file.reviewer_options) : [];
+    return [...new Set(['codex', 'claude-subagent', ...options])];
+  }
+  if (key === 'reviewer_effort') return ['', ...EFFORTS];
+  return undefined;
+}
+
+// A setting's value as speck reads it from the file's text: the file's own, or speck's default when it's missing.
+function valueIn(text, repo, key) {
+  const inFile = lookup(parseYaml(text), key) !== undefined, read = lookup(loadConfig(repo), key);
+  return { value: inFile && read !== undefined ? read : SETTING_GROUPS.flatMap(g => g.settings).find(s => s.key === key).default, inFile };
+}
+
 // Each group's settings, with the value speck reads from `repo`'s speck/config.yml now, and `default: true` for one
-// missing from the file, which has speck's default.
+// missing from the file, which has speck's default. One the panel can change is `editable`, with its `choices` when
+// it's picked from a list.
 export function panelSettings(repo) {
-  const file = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
-  const cfg = loadConfig(repo);
+  const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
-    const inFile = lookup(file, s.key) !== undefined, read = lookup(cfg, s.key);
-    return { key: s.key, value: inFile && read !== undefined ? read : s.default, default: !inFile, explain: s.explain };
+    const { value, inFile } = valueIn(text, repo, s.key), choices = choicesOf(s.key, file);
+    return { key: s.key, value, default: !inFile, explain: s.explain, editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}) };
   }) })) };
+}
+
+const shown = v => v === '' ? '""' : String(v);
+
+// The panel's Save on a setting: checks the value as `speck config set` does, rewrites only that setting's line in
+// speck/config.yml and commits only that file on the base branch. Every refusal comes before the first write.
+export function panelSetSetting(repo, key, value) {
+  if (!EDITABLE.includes(key))
+    return { status: 403, body: { error: `${key} can't be changed from the panel. The panel changes only ${EDITABLE.join(', ')}: change the rest in speck/config.yml.` } };
+  const file = path.join(repo, 'speck', 'config.yml');
+  const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo);
+  let want;
+  try { want = checkConfigValue(key, value); } catch (e) { if (e instanceof SpeckError) return { status: 422, body: { error: e.message } }; throw e; }
+  if (key === 'reviewer_model' && /[\x00-\x1f\x7f]/.test(value))
+    return { status: 422, body: { error: 'reviewer_model must be on one line, with no tabs or other control characters.' } };
+  const choices = choicesOf(key, parseYaml(text));
+  if (choices && !choices.includes(want))
+    return { status: 422, body: { error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` } };
+  if (key === 'reviewer' && modelFamily(String(cfg.builder)) === modelFamily(want) && cfg.allow_same_model_review !== true)
+    return { status: 422, body: { error: `reviewer "${want}" is the same agent as the builder, "${cfg.builder}", and allow_same_model_review is false. Pick a reviewer other than ${cfg.builder}.` } };
+  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
+  if (branch !== cfg.base_branch)
+    return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the setting would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
+  const dirty = sh('git', ['status', '--porcelain', '--', 'speck/config.yml'], { cwd: repo });
+  if (dirty.status !== 0 || dirty.stdout.trim())
+    return { status: 409, body: { error: 'speck/config.yml has uncommitted changes, so saving would commit them too. Commit or undo them, then try again.' } };
+  if (JSON.stringify(valueIn(text, repo, key).value) === JSON.stringify(want)) return { status: 200, body: { ok: true, changed: false } };
+  const keys = key.split('.');
+  const next = setConfigText(text, keys, yamlValue(want));
+  if (JSON.stringify(lookup(parseYaml(next), key)) !== JSON.stringify(want))
+    return { status: 422, body: { error: `Couldn't write ${key} so that speck reads it back as given. Edit speck/config.yml by hand instead.` } };
+  fs.writeFileSync(file, next);
+  const commit = commitTicketOnly(repo, file, text, `speck: config ${key} ${shown(want)}`);
+  if (commit.status !== 0)
+    return { status: 500, body: { error: `Couldn't commit speck/config.yml, so ${key} is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
+  return { status: 200, body: { ok: true, changed: true } };
+}
+
+// The panel's POST /api/settings/<key>/<value>, with both still written as in the address: every failure is an answer.
+export function panelSettingRequest(repo, rawKey, rawValue) {
+  let key, value;
+  try { key = decodeURIComponent(rawKey); value = decodeURIComponent(rawValue); }
+  catch { return { status: 400, body: { error: 'That setting or value isn\'t written properly in the address. Reload the panel, then try again.' } }; }
+  try { return panelSetSetting(repo, key, value); }
+  catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
 }

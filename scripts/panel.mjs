@@ -12,9 +12,9 @@ import { stopBuild, runState, runsDir, pidAlive, refusalFile, takeRefusal } from
 import { panelPack } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettings } from './settings.mjs';
+import { panelSettings, panelSettingRequest } from './settings.mjs';
 
-// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship and the speck run switch) ----------
+// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship, the speck run switch and a setting) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -451,6 +451,10 @@ export async function panelServer() {
         return wrote(res, out);
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
+    const setting = req.method === 'POST' && where.match(/^\/api\/settings\/([^/]+)\/([^/]*)$/); // 0258: Save in the Settings view
+    if (setting && (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token)))
+      return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+    if (setting) return wrote(res, panelSettingRequest(repo, setting[1], setting[2]));
     const stopPath = where.match(/^\/api\/tickets\/(\d{1,4})\/stop$/);
     if (req.method === 'POST' && stopPath) {
       if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
