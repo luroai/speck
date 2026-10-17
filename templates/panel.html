@@ -1718,12 +1718,14 @@ function shippingNow() {
   const of = key => (all.find(x => x.key === key) || {}).value;
   return { on: of('auto_ship') === true, risks: [].concat(of('auto_ship_risk') ?? []).map(String) };
 }
-// Which tickets would ship by themselves after this change, in words, when it lets more do so than now; otherwise null.
+// When this change lets more tickets ship by themselves than now, the risks that would then ship ("low,high"), which the
+// server checks against its own reading, and the tickets in words; otherwise null.
 function shipsMore(key, value) {
   if (key !== 'auto_ship' && key !== 'auto_ship_risk') return null;
   const was = shippingNow(), will = key === 'auto_ship' ? { ...was, on: value === 'true' } : { ...was, risks: value.split(',') };
   if (!will.on || (was.on && will.risks.every(r => was.risks.includes(r)))) return null;
-  return `approved ${['low', 'high'].filter(r => will.risks.includes(r)).map(r => `${r}-risk`).join(' and ')} tickets`;
+  const risks = ['low', 'high'].filter(r => will.risks.includes(r));
+  return { risks: risks.join(','), words: `approved ${risks.map(r => `${r}-risk`).join(' and ')} tickets` };
 }
 async function saveSetting(key, input) {
   if (settingsView === null || settingsView.saving) return;
@@ -1736,7 +1738,7 @@ async function saveSetting(key, input) {
   }
   const more = shipsMore(key, value);
   if (more !== null) {
-    const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more} and push them to the base branch without waiting for you.`;
+    const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more.words} and push them to the base branch without waiting for you.`;
     if (typeof confirm !== 'function' || !confirm(ask)) { // cancelled: the setting and the view stay as they were
       settingTyped.delete(key);
       settingRefused.delete(key);
@@ -1747,17 +1749,19 @@ async function saveSetting(key, input) {
   settingsView.saving = true;
   settingTyped.set(key, value);
   settingRefused.delete(key);
-  let why = null;
+  let why = null, ask = false;
   try {
-    const res = await fetch(`/api/settings/${encodeURIComponent(key)}/${encodeURIComponent(value)}${more !== null ? '?confirm=1' : ''}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    const res = await fetch(`/api/settings/${encodeURIComponent(key)}/${encodeURIComponent(value)}${more !== null ? `?confirm=${encodeURIComponent(more.risks)}` : ''}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
     if (!res.ok) {
       let body = null;
       try { body = await res.json(); } catch { /* no JSON: say what we know */ }
       why = body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`;
+      ask = res.status === 409 && body !== null && body.confirm === true;
     }
   } catch { why = `Couldn't reach the panel server, so ${key} wasn't changed.`; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
   settingsView.saving = false;
+  if (why !== null && ask) { settingRefused.set(key, why); settingTyped.delete(key); loadSettings(); return; } // 0259: changed since: read them again
   if (why !== null) { settingRefused.set(key, why); renderSettings(); return; }
   settingTyped.delete(key);
   loadSettings(); // the value speck now reads
