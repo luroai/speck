@@ -41,6 +41,7 @@ When the reviewer can say which models it offers, the Settings view lists them, 
 - Checked 2026-10-17: `codex debug models` works in codex-cli 0.159.0 with the shape above; whether it stays stable between releases can't be checked ahead of time (it's under `debug`), and criterion 4's fallback covers it changing or going away.
 - Checked 2026-10-17: `claude --model` takes an alias such as `fable`, `opus` or `sonnet` for the newest model of that kind, or a full model name, and Claude Code 2.1.301 has no command that lists models (`claude --help`).
 - `EFFORTS` in `scripts/core.mjs` is the fixed list today.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
