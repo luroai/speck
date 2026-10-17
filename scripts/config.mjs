@@ -49,7 +49,7 @@ export function checkConfigValue(key, value) {
 }
 
 // A value as it's written in speck/config.yml, so that it reads back exactly.
-function yamlValue(value) {
+export function yamlValue(value) {
   if (typeof value !== 'string') return Array.isArray(value) ? `[${value.join(', ')}]` : String(value);
   const readsBack = v => parseYaml(`k: ${v}   # comment`).k === value;
   if (/^[A-Za-z0-9_./@~-][^#'"]*$/.test(value) && !/:\s|\s$/.test(value) && readsBack(value)) return value;

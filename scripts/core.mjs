@@ -268,7 +268,7 @@ export function slugify(s) {
 }
 
 // A claude-subagent reviewer is Claude, so it counts as the same model as a claude builder.
-const modelFamily = agent => agent === 'claude-subagent' ? 'claude' : agent;
+export const modelFamily = agent => agent === 'claude-subagent' ? 'claude' : agent;
 
 export function lintTicket(ticket, cfg) {
   const errors = [], warnings = [];
