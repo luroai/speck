@@ -365,6 +365,16 @@
   #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
   #settings .setting p.explain { margin-top: 6px; padding: 6px 10px; background: var(--raise); overflow-wrap: anywhere; }
   #settings .setting p.explain[hidden] { display: none; }
+  /* 0275: asked on closing the view with changes not saved, over the view and its backdrop */
+  #settings-unsaved { position: fixed; inset: 0; z-index: 11; display: grid; place-items: center; padding: 16px; background: rgba(20, 20, 19, .2); }
+  #settings-unsaved[hidden] { display: none; }
+  #settings-unsaved .box { width: min(360px, 100%); padding: 16px; background: var(--panel); border: .5px solid var(--line); box-shadow: 0 8px 24px rgba(20, 20, 19, .18); }
+  #settings-unsaved h3 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; }
+  #settings-unsaved p { margin: 8px 0 0; color: var(--muted); }
+  #settings-unsaved .choices { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  #settings-unsaved button { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 4px 14px; cursor: pointer; }
+  #settings-unsaved button:hover { color: var(--text); border-color: var(--text); }
+  #settings-unsaved button.save-all { color: var(--text); background: var(--raise); border-color: var(--text); }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
@@ -431,6 +441,7 @@
   :root[data-theme="dark"] #full-backdrop { background: rgba(0, 0, 0, .45); }
   :root[data-theme="dark"] #settings-backdrop { background: rgba(0, 0, 0, .45); }
   :root[data-theme="dark"] #full-ticket { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
+  :root[data-theme="dark"] #settings-unsaved { background: rgba(0, 0, 0, .45); }
   :root[data-theme="dark"] #settings { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
 
   /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
@@ -573,6 +584,7 @@
 <aside id="full-ticket" tabindex="-1" hidden></aside>
 <div id="settings-backdrop" hidden></div>
 <aside id="settings" tabindex="-1" role="dialog" aria-label="Settings" hidden></aside>
+<div id="settings-unsaved" hidden></div>
 <div id="tag-tip" role="tooltip" hidden></div>
 
 <script>
@@ -1641,9 +1653,12 @@ let settingsBar = null, settingAsks = new Map(); // 0274: the Save button, and w
 // button or the button has focus, and a tap or click keeps it until the next tap or click on it. One shows at a time.
 let settingTip = null, settingTipKept = false, settingHover = null, settingFocus = null; // keys, or null
 let settingTips = new Map(); // key → its explanation, in the view as it's drawn
+// 0275: closing the view with changes not saved asks first. null, or the question being asked, as { saving }.
+let settingsLeaving = null;
 $('settings-open').addEventListener('click', openSettings);
-$('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) closeSettings(); });
+$('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) leaveSettings(); });
 renderSettings(); // closed
+renderLeaving(); // not asking
 function openSettings() {
   settingsView = { state: 'loading' };
   renderSettings();
@@ -1665,9 +1680,53 @@ async function loadSettings() {
   settingsView = next;
   renderSettings();
 }
+// 0275: Close, Escape and a click outside the view: at once with nothing to save, otherwise after asking.
+function leaveSettings() {
+  if (settingsLeaving !== null) return;
+  if (settingsView === null || settingsView.state !== 'ok' || !settingChanges().length) { closeSettings(); return; }
+  settingsLeaving = { saving: false };
+  renderLeaving();
+}
+function renderLeaving() {
+  const box = $('settings-unsaved'), asking = settingsLeaving !== null;
+  box.hidden = !asking;
+  $('settings').inert = asking; // Tab stays in the question
+  if (!asking) { box.replaceChildren(); return; }
+  const choice = (label, cls, fn) => { const b = el('button', cls, label); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  const keep = choice('Keep editing', null, keepEditing);
+  const title = el('h3', null, 'Unsaved changes');
+  title.id = 'settings-unsaved-title';
+  box.replaceChildren(el('div', 'box', null, title,
+    el('p', null, 'You have unsaved changes in Settings. Save them before closing, or discard them?'),
+    el('div', 'choices', null, choice(settingsLeaving.saving ? 'Saving…' : 'Save', 'save-all', saveAndLeave), choice('Discard', null, closeSettings), keep)));
+  box.setAttribute('role', 'alertdialog');
+  box.setAttribute('aria-modal', 'true');
+  box.setAttribute('aria-labelledby', title.id);
+  if (keep.focus) keep.focus();
+}
+function keepEditing() {
+  settingsLeaving = null;
+  renderLeaving();
+  const pane = $('settings');
+  if (pane.focus) pane.focus({ preventScroll: true });
+}
+// Saves as the view's Save does, then closes once saved. Refused, or waiting on 0259's confirmation, the question goes
+// so the view shows why, as it would after its own Save.
+async function saveAndLeave() {
+  const asked = settingsLeaving;
+  if (asked === null || asked.saving) return;
+  asked.saving = true;
+  renderLeaving();
+  const saved = await saveSettings();
+  if (settingsLeaving !== asked) return; // kept editing, or closed, since
+  if (saved && !settingChanges().length) closeSettings(); // nothing changed since it was sent
+  else keepEditing();
+}
 function closeSettings() {
   settingsView = null;
   settingsSeq++;
+  settingsLeaving = null;
+  renderLeaving();
   settingTip = settingHover = settingFocus = null;
   settingTipKept = false;
   settingTyped = new Map();
@@ -1694,7 +1753,7 @@ function renderSettings() {
   if (!open) { pane.replaceChildren(); return; }
   const close = el('button', 'close', 'Close');
   close.type = 'button';
-  close.addEventListener('click', closeSettings);
+  close.addEventListener('click', leaveSettings);
   const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close)];
   if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
   else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
@@ -1885,8 +1944,17 @@ function shipsMore(changes) {
   const risks = ['low', 'high'].filter(r => will.risks.includes(r));
   return { risks: risks.join(','), words: `approved ${risks.map(r => `${r}-risk`).join(' and ')} tickets` };
 }
-// 0274: Save sends every change in one request, and the server saves all of them or none.
-async function saveSettings() {
+// 0274: Save sends every change in one request, and the server saves all of them or none. 0275: true once saved.
+// A Save pressed while one from the same view is being sent waits for that one.
+let settingsSending = null; // { view, done }
+function saveSettings() {
+  if (settingsSending !== null && settingsSending.view === settingsView) return settingsSending.done;
+  const sending = { view: settingsView, done: sendSettings() };
+  settingsSending = sending;
+  sending.done.finally(() => { if (settingsSending === sending) settingsSending = null; });
+  return sending.done;
+}
+async function sendSettings() {
   if (settingsView === null || settingsView.state !== 'ok' || settingsView.saving) return;
   const changes = settingChanges(), mine = settingsSeq;
   if (!changes.length) return;
@@ -1941,12 +2009,14 @@ async function saveSettings() {
     else if (settingTyped.get(c.key) === c.value) { settingTyped.delete(c.key); settingScope.delete(c.key); }
   }
   loadSettings(); // the values speck now reads
+  return true;
 }
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (tipTag !== null) closeTip();
+  else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
   else if (settingsView !== null && settingTip !== null) showSettingTip(null, false); // 0268: the explanation first, then the view
-  else if (settingsView !== null) closeSettings();
+  else if (settingsView !== null) leaveSettings();
   else if (priorityMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();
 });

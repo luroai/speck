@@ -39,6 +39,7 @@ Closing the Settings view with unsaved changes asks what to do with them first.
 ## Notes
 - Escape already hides an open setting explanation first (0268). With an explanation open, Escape still does only that.
 - Failing before this build: none
+- Self-check: a Save pressed in a view opened again while the closed view's save was still being sent waited for that old save; it now waits only for one from the same view.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
