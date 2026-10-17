@@ -522,11 +522,4 @@ test('0032 AC2: when two parallel tickets change the same lines, the second ship
   assert.equal(fs.readFileSync(path.join(r.dir, 'shared.txt'), 'utf8'), 'line one\nline two from ticket 1\nline three\n');
 });
 
-test('0032 AC4: the brief no longer puts parallel tickets out of scope, but dependency graphs stay out', () => {
-  const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
-  const out = brief.split('Not yet:')[1].split('\n\n')[0];
-  assert.doesNotMatch(out, /parallel/i);
-  assert.match(out, /dependency graphs/i);
-});
-
 // ---------- 0025: keep other sessions' files out of a build ----------

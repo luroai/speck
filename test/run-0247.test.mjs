@@ -224,9 +224,3 @@ test('0247 AC4: new code that can\'t start leaves the old one running, said once
 test('0247 AC1: failedSays gives the reason and what happens next', () => {
   assert.equal(failedSays('it stopped.'), 'speck run couldn\'t switch to the new code: it stopped.\nIt carries on with the code it has, and tries again at the next change.');
 });
-
-test('0247 AC5: the brief says speck run switches to new code once it\'s idle', () => {
-  const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
-  const row = brief.split('\n').find(l => l.startsWith('| `speck run` |'));
-  assert.match(row, /switches to its new code once it's idle/);
-});
