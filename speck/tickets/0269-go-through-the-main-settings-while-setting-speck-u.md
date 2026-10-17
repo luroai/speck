@@ -40,6 +40,7 @@ Setting speck up takes the user through each setting in the panel's Settings vie
 ## Notes
 - Checked 2026-10-17: `speck init` copies `templates/config.yml` (`cmdInit` in `scripts/install.mjs`), whose values are generic (`auto_ship: false`, `max_changed_lines: 300`, `max_parallel_builds: 1`), not this repo's own. A project set up with speck 0.5.x had a config matching the template apart from what its setup set: `commands.test`, `commands.test_files`, `worktree_setup` and `auto_ship: true`.
 - Criteria 1, 4 and 5 are about the skill's instructions, so check them by review.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
