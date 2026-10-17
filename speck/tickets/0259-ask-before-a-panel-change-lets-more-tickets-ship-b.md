@@ -40,6 +40,8 @@ started: "2026-10-17T09:22:21.680Z"
 - `risk: high`: it changes whether work ships without the user.
 - `checkConfigValue` in `scripts/config.mjs` already refuses an empty `auto_ship_risk`.
 - Failing before this build: none
+- 0258's tests changed with the scope: auto_ship and auto_ship_risk are now editable, so its read-only check and its "refused setting" example (now `worktrees`) were updated. Its shared page helpers moved to `test/support/settings.mjs`.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

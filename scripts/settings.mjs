@@ -46,10 +46,12 @@ const own = (o, k) => o !== null && typeof o === 'object' && !Array.isArray(o) &
 // A setting's place in an object read from speck/config.yml, or undefined when it isn't there.
 const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] : undefined, o);
 
-// 0258: the settings the panel can change. The rest stay read-only there: auto_ship and auto_ship_risk loosen who ships,
-// builder needs a matching build_command and allow_same_model_review weakens the independent review.
+// 0258: the settings the panel can change, and 0259's auto_ship and auto_ship_risk, which it changes only once you've
+// confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: builder needs a matching
+// build_command and allow_same_model_review weakens the independent review.
 export const EDITABLE = Object.freeze(['reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk']);
+const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
 function choicesOf(key, file) {
@@ -58,6 +60,8 @@ function choicesOf(key, file) {
     return [...new Set(['codex', 'claude-subagent', ...options])];
   }
   if (key === 'reviewer_effort') return ['', ...EFFORTS];
+  if (key === 'auto_ship') return [true, false];
+  if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
   return undefined;
 }
 
@@ -78,11 +82,21 @@ export function panelSettings(repo) {
   }) })) };
 }
 
-const shown = v => v === '' ? '""' : String(v);
+const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : String(v);
+
+// 0259: auto_ship and auto_ship_risk as speck's ship queue reads them (see autoShipRefusal in ship.mjs).
+const shipping = cfg => ({ on: cfg.auto_ship === true, risks: [].concat(cfg.auto_ship_risk ?? []).map(String) });
+// Which tickets ship by themselves with auto_ship on and these risks, in words: "approved low-risk tickets".
+const covered = risks => `approved ${RISKS.filter(r => risks.includes(r)).map(r => `${r}-risk`).join(' and ')} tickets`;
+// Whether going from `was` to `will` lets a ticket ship by itself that wouldn't before, and what would then ship.
+export function loosens(was, will) {
+  return will.on && (!was.on || will.risks.some(r => !was.risks.includes(r))) ? covered(will.risks) : null;
+}
 
 // The panel's Save on a setting: checks the value as `speck config set` does, rewrites only that setting's line in
 // speck/config.yml and commits only that file on the base branch. Every refusal comes before the first write.
-export function panelSetSetting(repo, key, value) {
+// A change that lets more tickets ship by themselves is refused unless `confirmed`, so the page asks you first (0259).
+export function panelSetSetting(repo, key, value, { confirmed = false } = {}) {
   if (!EDITABLE.includes(key))
     return { status: 403, body: { error: `${key} can't be changed from the panel. The panel changes only ${EDITABLE.join(', ')}: change the rest in speck/config.yml.` } };
   const file = path.join(repo, 'speck', 'config.yml');
@@ -92,7 +106,7 @@ export function panelSetSetting(repo, key, value) {
   if (key === 'reviewer_model' && /[\x00-\x1f\x7f]/.test(value))
     return { status: 422, body: { error: 'reviewer_model must be on one line, with no tabs or other control characters.' } };
   const choices = choicesOf(key, parseYaml(text));
-  if (choices && !choices.includes(want))
+  if (choices && ![].concat(want).every(w => choices.includes(w)))
     return { status: 422, body: { error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` } };
   if (key === 'reviewer' && modelFamily(String(cfg.builder)) === modelFamily(want) && cfg.allow_same_model_review !== true)
     return { status: 422, body: { error: `reviewer "${want}" is the same agent as the builder, "${cfg.builder}", and allow_same_model_review is false. Pick a reviewer other than ${cfg.builder}.` } };
@@ -102,7 +116,12 @@ export function panelSetSetting(repo, key, value) {
   const dirty = sh('git', ['status', '--porcelain', '--', 'speck/config.yml'], { cwd: repo });
   if (dirty.status !== 0 || dirty.stdout.trim())
     return { status: 409, body: { error: 'speck/config.yml has uncommitted changes, so saving would commit them too. Commit or undo them, then try again.' } };
-  if (JSON.stringify(valueIn(text, repo, key).value) === JSON.stringify(want)) return { status: 200, body: { ok: true, changed: false } };
+  const same = key === 'auto_ship_risk' ? [...want].sort().join() === [].concat(valueIn(text, repo, key).value).map(String).sort().join()
+    : JSON.stringify(valueIn(text, repo, key).value) === JSON.stringify(want);
+  if (same) return { status: 200, body: { ok: true, changed: false } };
+  const now = shipping(cfg), more = key === 'auto_ship' || key === 'auto_ship_risk' ? loosens(now, { ...now, [key === 'auto_ship' ? 'on' : 'risks']: want }) : null;
+  if (more && !confirmed)
+    return { status: 409, body: { confirm: true, error: `That would let ${more} merge and push to ${cfg.base_branch} without waiting for you, so it needs confirming. Reload the panel, then try again.` } };
   const keys = key.split('.');
   const next = setConfigText(text, keys, yamlValue(want));
   if (JSON.stringify(lookup(parseYaml(next), key)) !== JSON.stringify(want))
@@ -115,10 +134,11 @@ export function panelSetSetting(repo, key, value) {
 }
 
 // The panel's POST /api/settings/<key>/<value>, with both still written as in the address: every failure is an answer.
-export function panelSettingRequest(repo, rawKey, rawValue) {
+// `confirmed`: the address ends with ?confirm=1, sent once you've confirmed a change that lets more tickets ship (0259).
+export function panelSettingRequest(repo, rawKey, rawValue, confirmed = false) {
   let key, value;
   try { key = decodeURIComponent(rawKey); value = decodeURIComponent(rawValue); }
   catch { return { status: 400, body: { error: 'That setting or value isn\'t written properly in the address. Reload the panel, then try again.' } }; }
-  try { return panelSetSetting(repo, key, value); }
+  try { return panelSetSetting(repo, key, value, { confirmed }); }
   catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
 }

@@ -3,8 +3,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fakePage, panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
 import { panelSettings, panelSetSetting, EDITABLE } from '../scripts/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, saveOf } from './support/settings.mjs';
 
 // ---------- 0258: change a setting from the panel ----------
 
@@ -25,62 +26,21 @@ const readCfg = r => fs.readFileSync(cfgOf(r), 'utf8');
 const snapshot = r => ({ text: readCfg(r), head: headOf(r), status: r.g('status', '--porcelain') });
 
 test('0258 AC1: the eight settings can be changed, with reviewer and reviewer_effort offering only what speck accepts, and the rest stay read-only', () => {
-  assert.deepEqual([...EDITABLE], KEYS);
+  assert.deepEqual([...EDITABLE], [...KEYS, 'auto_ship', 'auto_ship_risk']); // 0259 added the last two
   const r = panelRepo();
   fs.writeFileSync(cfgOf(r), readCfg(r).replace(/^reviewer_options:\n/m, 'reviewer_options:\n  my-reviewer:\n    command: "x {prompt}"\n'));
   const s = byKey(panelSettings(r.dir));
-  for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k), k);
+  for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k) || k.startsWith('auto_ship'), k);
   assert.deepEqual(s.reviewer_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
   assert.deepEqual([...s.reviewer.choices].sort(), ['claude-subagent', 'codex', 'my-reviewer']);
   assert.equal(s.reviewer_model.choices, undefined, 'a free value');
-  assert.equal(s.auto_ship.choices, undefined);
 });
 
-// A page whose fetch answers the board with an empty one, GET /api/settings with each of `views` in turn and a POST
-// with each of `saves` in turn.
-function settingsPage(views, saves = []) {
-  const calls = [];
-  const fetch = async (url, opts = {}) => {
-    const method = (opts.method || 'GET').toUpperCase();
-    calls.push({ url: String(url), method, headers: opts.headers || {} });
-    const body = method === 'POST' ? saves.shift() : String(url).startsWith('/api/settings') ? views.shift() : { tickets: [], ideas: [], resume_command: '' };
-    if (body && body.status) return { ok: false, status: body.status, json: async () => body.body };
-    return { ok: true, status: 200, json: async () => body };
-  };
-  const p = fakePage([], { fetch });
-  p.settingsCalls = calls;
-  return p;
-}
 const CHOICES = { reviewer: ['codex', 'claude-subagent'], reviewer_effort: ['', 'low', 'medium', 'high', 'xhigh', 'max'] };
 const view = (pairs = {}) => ({ groups: GROUPS.map(([title, keys]) => ({ title, settings: keys.map(key => ({
   key, value: pairs[key] ?? (key.startsWith('max') || key.startsWith('limits') ? 1 : ''), default: false, explain: `What ${key} does.`,
   editable: KEYS.includes(key), ...(CHOICES[key] ? { choices: CHOICES[key] } : {}) })) })) });
-const open = async p => { p.press(p.byId('settings-open')); await p.settle(); };
-const rowOf = (p, key) => p.all(p.byId('settings')).filter(n => /\bsetting\b/.test(n.className || ''))
-  .find(r => p.all(r).find(n => /\bname\b/.test(n.className || ''))?.textContent === key);
-const controlOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'select' || n.tagName === 'input');
-const saveOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && /\bsave\b/.test(n.className));
-
-test('0258 AC1: in the view, each of the eight has a control and a Save button, the pickers offer only their choices, and the rest have none', async () => {
-  const p = settingsPage([view({ reviewer: 'codex', reviewer_effort: 'high', reviewer_model: 'gpt-x' })]);
-  await p.settle();
-  await open(p);
-  for (const [, keys] of GROUPS) for (const k of keys) {
-    assert.equal(!!controlOf(p, k), KEYS.includes(k), `${k} control`);
-    assert.equal(!!saveOf(p, k), KEYS.includes(k), `${k} Save`);
-  }
-  const options = k => p.all(controlOf(p, k)).filter(n => n.tagName === 'option').map(n => n.value);
-  assert.equal(controlOf(p, 'reviewer').tagName, 'select');
-  assert.deepEqual(options('reviewer'), ['codex', 'claude-subagent']);
-  assert.equal(controlOf(p, 'reviewer').value, 'codex');
-  assert.equal(controlOf(p, 'reviewer_effort').tagName, 'select');
-  assert.deepEqual(options('reviewer_effort'), ['', 'low', 'medium', 'high', 'xhigh', 'max']);
-  assert.equal(controlOf(p, 'reviewer_effort').value, 'high');
-  assert.equal(controlOf(p, 'reviewer_model').value, 'gpt-x');
-  assert.equal(controlOf(p, 'max_parallel_builds').value, '1');
-  // Read-only ones still show their value.
-  assert.ok(p.all(rowOf(p, 'builder')).some(n => /\bvalue\b/.test(n.className || '')));
-});
+const open = openSettings;
 
 test('0258 AC2: saving rewrites only that setting\'s line, keeping its comment, and commits only speck/config.yml on the base branch', () => {
   const r = panelRepo();
@@ -214,7 +174,7 @@ test('0258 AC5: without the token or from another origin it gets 403, a setting 
     assert.equal((await post(p.port, '/api/settings/max_parallel_builds/2', { token: 'nope' })).status, 403);
     assert.equal((await post(p.port, '/api/settings/max_parallel_builds/2', { token, origin: 'http://evil.example' })).status, 403);
     assert.equal((await post(p.port, '/api/settings/max_parallel_builds/2', { token, origin: null })).status, 403);
-    for (const [k, v] of [['build_command', 'rm%20-rf'], ['auto_ship', 'true'], ['allow_same_model_review', 'true'], ['builder', 'codex'], ['__proto__', 'x']]) {
+    for (const [k, v] of [['build_command', 'rm%20-rf'], ['worktrees', 'true'], ['allow_same_model_review', 'true'], ['builder', 'codex'], ['__proto__', 'x']]) {
       const out = await post(p.port, `/api/settings/${k}/${v}`, { token });
       assert.equal(out.status, 403, k);
       assert.match(JSON.parse(out.body).error, /can't be changed from the panel/, k);
