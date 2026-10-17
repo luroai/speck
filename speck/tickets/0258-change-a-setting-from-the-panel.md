@@ -1,7 +1,7 @@
 ---
 id: "0258"
 title: "Change a setting from the panel"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0257"]                # ticket ids that must be done first
 created: 2026-10-16
+started: "2026-10-17T08:53:20.250Z"
 
 ---
 # 0258 · Change a setting from the panel
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Changing a setting today means finding the line in `speck/config.yml`, knowing which values speck accepts, editing it and committing it so `speck run` sees it. That's a lot to ask of someone who just wants two builds at once or a more thorough reviewer.
