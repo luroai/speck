@@ -1,7 +1,7 @@
 ---
 id: "0278"
 title: "Offer Claude's models when Claude reviews"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0277"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T18:37:19.169Z"
+approved: "2026-10-17T18:40:14.309Z"
 
 ---
 # 0278 · Offer Claude's models when Claude reviews
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With `claude-subagent` as the reviewer, the Settings view offers `reviewer_model` only as a text box, so you have to know which names Claude accepts. Codex gets a list (0276), but Claude Code has no command that lists its models.
@@ -50,9 +51,14 @@ With Claude as the reviewer, the Settings view now lets you pick the reviewer's 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 148,366
+- Elapsed since build started: 3 min
+- Changed lines: 36 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
