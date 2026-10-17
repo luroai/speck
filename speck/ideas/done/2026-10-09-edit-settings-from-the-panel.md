@@ -1,6 +1,6 @@
 # Edit settings from the panel
 
-Captured: 2026-10-09 · Status: idea
+Captured: 2026-10-09 · Status: ticketed (0257, 0258, 0259, 0260, 0261)
 
 ## What
 Make settings configurable from the panel: change the settings in `speck/config.yml` from a popup in the panel.
