@@ -42,6 +42,7 @@ The settings in the Settings view that are safe to change can be changed there, 
 - `risk: high` because the panel has no login and this lets it change how builds are reviewed. Writes use the same origin and token check as the panel's other writes.
 - Reuse `checkConfigValue` and `setConfigText` in `scripts/config.mjs` (what `speck config set` uses), and commit as `panelSetPriority` in `scripts/panel.mjs` does. The same-agent check is in `scripts/core.mjs` (`modelFamily`).
 - Failing before this build: none
+- Self-check: a value badly written in the address is refused with 400 and a plain message, a reviewer_model with a line break or control character is refused, and the brief's panel entry no longer says the Settings view changes nothing (a test checks it names the eight settings).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
