@@ -41,6 +41,7 @@ With Claude as the reviewer, the Settings view offers Claude's model names to pi
 - Checked 2026-10-17: `claude --model` takes an alias such as `fable`, `opus` or `sonnet` for the newest model of that kind (`claude --help`, Claude Code 2.1.301).
 - The list of models offered per reviewer is in `scripts/settings.mjs` (0276).
 - Failing before this build: none
+- Self-check: the brief said every reviewer but Codex gets a box to type the model in; it now says what claude-subagent offers, with a test for the names. Also changed one 0276 assertion that expected claude-subagent to have no list.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

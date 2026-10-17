@@ -1677,7 +1677,8 @@ async function loadSettings() {
     const res = await fetch('/api/settings', { cache: 'no-store' });
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
-    next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null }
+    next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null,
+      claude_models: body.claude_models ?? null }
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -1859,7 +1860,8 @@ function settingEditor(x) {
     // offered, but can't be picked again.
     const off = [...new Set([settingNow(x), typed])].filter(c => !choices.includes(c));
     for (const c of [...off, ...choices]) {
-      const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${c} (not offered)` : c);
+      const about = off.includes(c) || x.key !== 'reviewer_model' ? null : (reviewerModelList() || []).find(m => m.slug === c)?.about;
+      const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${c} (not offered)` : about ? `${c}: ${about}` : c);
       o.value = c;
       if (off.includes(c)) o.disabled = true;
       input.appendChild(o);
@@ -1885,7 +1887,8 @@ function settingChoices(x) {
   if (models !== null && x.key === 'reviewer_model') return ['', ...models.map(m => m.slug)];
   if (models !== null) {
     const model = models.find(m => m.slug === settingChosen('reviewer_model'));
-    return ['', ...new Set((model ? [model] : models).flatMap(m => m.efforts))];
+    const listed = (model ? [model] : models).filter(m => m.efforts !== null); // 0278: none for Claude's: speck's own
+    if (listed.length) return ['', ...new Set(listed.flatMap(m => m.efforts))];
   }
   return Array.isArray(x.choices) ? x.choices.map(String) : null;
 }
@@ -1896,11 +1899,15 @@ function settingChosen(key) {
   return x ? settingNow(x) : '';
 }
 // 0276: the models the server read, while the reviewer chosen in the view is the one it read them for; otherwise null.
+// 0278: Claude's model names whenever claude-subagent is chosen, each with `about` and no `efforts` (null).
 function reviewerModelList() {
-  const m = settingsView !== null ? settingsView.reviewer_models : null;
-  if (!m || typeof m !== 'object' || !Array.isArray(m.models) || settingChosen('reviewer') !== m.reviewer) return null;
-  return m.models.filter(x => x && typeof x.slug === 'string')
-    .map(x => ({ slug: x.slug, efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : [] }));
+  const m = settingsView !== null ? settingsView.reviewer_models : null, claude = settingChosen('reviewer') === 'claude-subagent';
+  const list = claude && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
+    : m && typeof m === 'object' && Array.isArray(m.models) && settingChosen('reviewer') === m.reviewer ? m.models : null;
+  if (list === null) return null;
+  return list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug,
+    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude ? null : [],
+    about: typeof x.about === 'string' ? x.about : null }));
 }
 // Why reviewer_model is a box to type in rather than a list, in one line, or null when it's a list or the server
 // didn't say.
