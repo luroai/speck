@@ -1,7 +1,7 @@
 ---
 id: "0276"
 title: "Pick the reviewer's model and effort from what it offers"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T15:48:22.489Z"
 ---
 # 0276 · Pick the reviewer's model and effort from what it offers
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `reviewer_model` is a text box, so you have to know the exact name of a model, and you won't hear when the reviewer's provider releases a new one. `reviewer_effort` offers a fixed list (low to max) that doesn't follow what the model supports: Codex's newest models also offer `ultra`, which speck refuses.
@@ -45,7 +45,7 @@ When the reviewer can say which models it offers, the Settings view lists them, 
 - Self-check: speck asked Codex once for every ticket linted with an effort beyond max, so the answer is now kept for a minute (and re-read when PATH changes); and review.test.mjs's "no model passed to codex" check matched this ticket's worktree path (it has "model" in its name), so it now checks only arguments that set a model or effort.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the reviewer is Codex, the panel's Settings view now lists the models Codex offers, so you pick one rather than typing its exact name, and a new model appears there as soon as Codex knows about it. The effort list follows the model you pick, including Codex's newer efforts such as ultra, which speck now accepts. To see it, open Settings in the panel, pick a model under reviewer_model, and see the effort list change. A saved model that Codex no longer offers stays as it was, marked "not offered". When Codex isn't installed, isn't signed in or doesn't answer within 10 seconds, or the reviewer isn't Codex, you get the typing box and the usual low-to-max list, with one line saying why. Keep an eye on Codex updates: speck reads the list from a Codex debugging command, which may change without notice, in which case speck falls back to the typing box.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,4 +54,69 @@ When the reviewer can say which models it offers, the Settings view lists them, 
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- To the inbox: `speck/ideas/2026-10-17-check-the-effort-against-the-ticket-s-own-reviewer.md` (a Codex-only effort such as ultra passes lint whatever the ticket's reviewer).
+- Known limit: the panel's GET /api/settings wiring (reading the models when the view opens) is tested through reviewerModels and panelSettings directly, not through a running panel.
+- Known limit: other tests may match text against paths that include a worktree's name, as review.test.mjs's check did; this build narrowed only that one.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9c07fbe5cd73b80a1c393a67d29f9c85a3203687",
+    "thread_id": "01a14a92-a814-72f3-bb03-c10d95de7276",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 124077,
+      "cached_input_tokens": 76416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 704,
+      "reasoning_output_tokens": 112
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T15:55:11.106Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs reads reviewerModels on each GET /api/settings. parseCodexModels excludes hidden models; panel.html offers the returned models plus '(default)'. Both 0276 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.html settingChoices derives efforts from the selected model. knownEffort is used by config validation and ticket linting to accept catalogue efforts beyond max. The AC2 tests cover changing models and accepting ultra through config, lint and panel Save; all passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panel.html settingEditor preserves saved values outside the choices and labels them '(not offered)'. The passing AC3 test verifies that changing effort leaves a withdrawn model unchanged and sends only the changed setting."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "codex-models.mjs applies a 10-second timeout and returns explanatory fallback messages. reviewerModels avoids querying other reviewers. The passing AC4 tests exercise missing Codex, command failure, timeout, malformed output and the fallback text box with fixed efforts."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Settings now lists the models Codex offers and adjusts the effort choices to the selected model, including ultra. Saved values remain intact when no longer offered. When a list is unavailable, manual entry remains available with an explanation. The reported tests passed, and I found no blocking issues."
+  }
+}
+```
+
+</details>
