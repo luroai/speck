@@ -39,6 +39,8 @@ The Settings view's info buttons line up, sit clear of the values, and match the
 ## Notes
 - The view is in `templates/panel.html` (search for "0257" and "0273"). Seen at 400 px wide, and on an iPhone on 2026-10-17.
 - Failing before this build: none
+- AC4 already held at 320, 400 and 1200 px before this build (no part of any name split), because the parts are short; the build removes the name's `overflow-wrap: anywhere`, so nothing but the breaks after `_` and `.` is allowed.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
