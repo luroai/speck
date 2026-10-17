@@ -1,7 +1,7 @@
 ---
 id: "0258"
 title: "Change a setting from the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: ["0257"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T08:53:20.250Z"
+approved: "2026-10-17T08:58:46.479Z"
 
 ---
 # 0258 · Change a setting from the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Changing a setting today means finding the line in `speck/config.yml`, knowing which values speck accepts, editing it and committing it so `speck run` sees it. That's a lot to ask of someone who just wants two builds at once or a more thorough reviewer.
@@ -53,9 +54,14 @@ To see it, open the panel, press Settings, change "max_parallel_builds" to 2 and
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 260,490
+- Elapsed since build started: 5 min
+- Changed lines: 164 (limit 5000)
 - Follow-ups: none for the inbox. Known limit: the new controls' look was checked only by the existing layout tests, not in a real browser.
 
 ## Review rounds
