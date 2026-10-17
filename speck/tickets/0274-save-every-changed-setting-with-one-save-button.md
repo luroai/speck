@@ -1,7 +1,7 @@
 ---
 id: "0274"
 title: "Save every changed setting with one Save button"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0273"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T13:44:09.209Z"
 approved: "2026-10-17T13:54:16.241Z"
+blocked_at: "2026-10-17T13:57:12.278Z"
 
 ---
 # 0274 · Save every changed setting with one Save button
 
-**Status:** 👍 approved
+**Status:** ⛔ blocked
 
 ## Problem
 Every editable setting in the Settings view has its own Save button, so the view is cluttered with them, and changing several settings means saving, and committing, each one separately.
@@ -56,6 +57,7 @@ Worth knowing: the question "this machine only or the repo?" now appears beside 
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
+Ticket 0270 left a check that fails whenever a ticket changes any test file that's already in the project, not just when 0270 did. This ticket has to change the older Settings tests (from 0258, 0259 and 0261), because they press the per-setting Save buttons that this ticket removes, so that check will always stop it shipping. Other tickets that change an existing test will hit the same wall. Options: (a) let me change 0270's check so it applies only to 0270's own work, as part of this ticket; (b) a separate fix ticket for 0270's check, with this ticket waiting until it ships; (c) keep the check as it is and drop the change to the older tests, which means keeping a Save button on each setting. I recommend (a): it's a two-line change that keeps what 0270 meant to check, and it unblocks every later ticket too.
 
 ## Review log
 Round 1 (codex): changes requested: F1 A mixed batch saves machine values before writing config.yml.; F2 Controls remain editable while Save awaits its response.
