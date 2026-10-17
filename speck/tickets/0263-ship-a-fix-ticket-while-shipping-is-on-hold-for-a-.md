@@ -1,7 +1,7 @@
 ---
 id: "0263"
 title: "Ship a fix ticket while shipping is on hold for a failing base branch"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T08:53:19.305Z"
 ---
 # 0263 · Ship a fix ticket while shipping is on hold for a failing base branch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a ship finds the base branch's own tests failing, `speck run`'s ship queue holds every ship until the base branch has a new commit. The fix ticket that would give it that commit waits behind the hold too, so nothing ships until someone ships the fix by hand. This happened with 0262 on 2026-10-17: it was approved and covered by `auto_ship`, but it sat unshipped.
@@ -43,7 +43,9 @@ While shipping is on hold for a failing base branch, speck run still ships an ap
 - Self-check: the line putting shipping on hold now says a fix ticket still ships, as it otherwise said no ship would start; test added.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the main branch's own tests start failing, speck run pauses shipping until the main branch changes. Before, that pause also held back the fix ticket meant to mend it, so nothing shipped until someone shipped the fix by hand. Now an approved fix ticket ships during the pause, and everything else still waits.
+
+To see it: while shipping is paused, approve a fix ticket that auto-ship covers. speck run prints a line saying it's shipping that fix despite the pause, and once the fix lands, shipping resumes for everything else. If the fix's own ship fails, the pause stays on and the fix waits for a new change before it's tried again.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,4 +54,66 @@ While shipping is on hold for a failing base branch, speck run still ships an ap
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "541dc1155ea3ce1d6e72ceb069401c00c5824795",
+    "thread_id": "01a14912-5fa5-7403-93c8-1b246e8dd77a",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 90696,
+      "cached_input_tokens": 51712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 616,
+      "reasoning_output_tokens": 87
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T08:55:19.422Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ship-queue.mjs check() allows fix tickets through the hold while shipOrder() retains approval and auto_ship checks. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "check() skips every non-fix ticket while hold remains set. The passing AC2 test checks continued blocking after a fix refusal and resumption after main gains a commit."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "ended() retains the hold after refusal, and check() compares last-attempt branch commits before retrying. Passing AC3 tests cover exits 1 and 14, unchanged commits, and retries after either branch advances."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "check() prints the fix ticket ID and 'shipping it despite the hold' before launch. Passing AC4 tests cover this message, its absence without a hold, and the updated hold announcement."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Approved fixes can now proceed while ordinary shipping is paused for a failing base branch. Other tickets remain paused, and refused fixes wait for a new commit before retrying. The change is narrowly scoped; all 54 reported tests passed, with no blocking concerns found."
+  }
+}
+```
+
+</details>
