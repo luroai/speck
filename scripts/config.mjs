@@ -3,10 +3,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig, MACHINE_SETTINGS, machineConfig, machineConfigFile } from './core.mjs';
+import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig } from './core.mjs';
+import { MACHINE_SETTINGS, machineConfig, machineConfigFile } from './machine.mjs';
 import { sharedCacheDir } from './turns.mjs';
 
-const USAGE = 'Usage: speck config set <key> <value>, or speck config set --machine <key> <value> for this machine only';
+const USAGE = 'Usage: speck config set <key> <value>, speck config set --machine <key> <value> for this machine only, or speck config show [--json] to see the main settings.';
 
 // Every setting `speck config set` can change, with how speck reads it. reviewer_options and other free-form maps
 // are left to hand editing.

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { applyMachineConfig } from './machine.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const TEMPLATES = path.join(ROOT, 'templates');
@@ -97,38 +98,10 @@ function scalar(v) {
   return v;
 }
 
-// 0260: the settings that can be set for this machine only. Their values are kept in the main checkout's speck/.cache/,
-// which git ignores, so every worktree of the repo reads the same ones.
-export const MACHINE_SETTINGS = Object.freeze(['max_parallel_builds', 'max_parallel_tests']);
-const mainCheckouts = new Map();
-export function machineConfigFile(repo) {
-  if (!mainCheckouts.has(repo)) {
-    let main = repo;
-    try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
-    mainCheckouts.set(repo, main);
-  }
-  return path.join(mainCheckouts.get(repo), 'speck', '.cache', 'machine', 'config.yml');
-}
-
-// This machine's values, as written in its file: only the settings it can hold, and {} when there's no file.
-export function machineConfig(repo) {
-  let text;
-  try { text = fs.readFileSync(machineConfigFile(repo), 'utf8'); } catch (e) { if (e.code === 'ENOENT') return {}; throw e; }
-  const read = parseYaml(text), out = {};
-  for (const key of MACHINE_SETTINGS) if (Object.hasOwn(read, key)) out[key] = read[key];
-  return out;
-}
-
 // speck/config.yml with speck's defaults, and with this machine's values over the file's unless `machine` is false.
 export function loadConfig(repo, { machine = true } = {}) {
   const cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
-  if (machine) {
-    for (const [key, v] of Object.entries(machineConfig(repo))) {
-      if (!Number.isSafeInteger(v) || v < 1)
-        throw new SpeckError(`${key} set for this machine in ${machineConfigFile(repo)} must be a whole number of 1 or more (got ${JSON.stringify(v)}). Fix it with \`speck config set --machine ${key} <number>\`, or remove it with \`speck config set --machine ${key} ""\`, then run this again.`);
-      cfg[key] = v;
-    }
-  }
+  if (machine) applyMachineConfig(repo, cfg);
   const limits = {
     max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3, max_merge_rounds: 2,
     escalate_after_repeat_disputes: 2, max_ticket_body_lines: 40, ...(cfg.limits || {}),

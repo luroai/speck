@@ -6,8 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { loadConfig, machineConfigFile } from '../scripts/core.mjs';
-import { maxParallelBuilds } from '../scripts/run.mjs';
+import { loadConfig } from '../scripts/core.mjs';
+import { machineConfigFile, maxParallelBuilds } from '../scripts/machine.mjs';
 import { maxParallelTests } from '../scripts/turns.mjs';
 
 // ---------- 0260: a setting for this machine only ----------
