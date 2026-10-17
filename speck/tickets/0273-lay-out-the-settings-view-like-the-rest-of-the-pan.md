@@ -44,7 +44,7 @@ The Settings view is laid out like the rest of the panel: each group is a box of
 - Self-check: names now break only after a dot or underscore, not mid-word, and the info button keeps its size beside a long name (screenshots at 1200 and 320 px, light and dark).
 
 ## In plain words
-The Settings view now looks like the rest of the panel. Each group of settings sits in its own bordered box with a heading at the top, and each setting is a row with its name on the left and its value or control on the right, lined up down the box. Open Settings from the gear button in the header to see it. On a phone, long setting names wrap onto a second line at a natural break, such as after an underscore, so the view never scrolls sideways.
+The Settings view now looks like the rest of the panel. Each group of settings sits in its own bordered box with a heading at the top, and each setting is a row with its name on the left and its value or control on the right, lined up down the box. Open Settings from the sliders button in the header, just before light/dark, to see it. On a phone, long setting names wrap onto a second line at a natural break, such as after an underscore, so the view never scrolls sideways.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
