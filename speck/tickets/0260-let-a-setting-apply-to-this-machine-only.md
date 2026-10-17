@@ -1,7 +1,7 @@
 ---
 id: "0260"
 title: "Let a setting apply to this machine only"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T09:22:07.848Z"
 ---
 # 0260 · Let a setting apply to this machine only
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Some settings suit a machine rather than a project. `max_parallel_builds` of 4 suits a 16-core Linux box, but an 8 GB laptop needs 1 or 2, and today whatever is committed in `speck/config.yml` applies to every machine that checks the repo out.
@@ -43,7 +43,7 @@ Some settings suit a machine rather than a project. `max_parallel_builds` of 4 s
 - Self-check: kept the usage line `speck config set <key> <value>` as 0087's test reads it, adding `--machine` after it; `speck config set` of a shared value now says when this machine keeps its own value over it; a hand-edited bad machine value gives a plain error naming the fix, which `--machine` can still apply. The panel's Settings view still reads `speck/config.yml` alone (0261).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now tell speck how many builds and test runs to keep going at once on this computer alone, without changing the project's shared settings. A small laptop can run one build at a time while a bigger machine runs four, from the same project. To try it, set the number of builds for this machine, check that the shared settings file is unchanged and nothing new needs saving to git, then start speck run and watch it keep that many builds going. Clearing the value goes back to the shared setting. Worth knowing: the panel's Settings view still shows the shared values only, until the follow-up ticket adds this machine's values there.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,3 +53,66 @@ Some settings suit a machine rather than a project. `max_parallel_builds` of 4 s
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none new. The panel's Settings view reads `speck/config.yml` alone, so it doesn't show a machine value yet: that's 0261.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8333a1232f12873704014b4b86ee79db34782edc",
+    "thread_id": "01a1492e-0604-7a52-90ef-567d97f7e728",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 144154,
+      "cached_input_tokens": 111232,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 728,
+      "reasoning_output_tokens": 62
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:25:36.437Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/config.mjs setMachine writes through sharedCacheDir without changing or committing shared config. Passing test '0260 AC1' checks ignored storage, unchanged config and HEAD, and exact old/new output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/core.mjs loadConfig overlays machine values using the main checkout identified by worktreeList. runOn uses this config through maxParallelBuilds; the test queue uses maxParallelTests. Passing test '0260 AC2' verifies both values from the main checkout and a worktree."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/config.mjs setMachine deletes a blank setting and removes the file when empty. Passing test '0260 AC3' verifies fallback, preservation of the other override and repeated removal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "setMachine restricts keys to MACHINE_SETTINGS and validates through checkConfigValue. Three passing '0260 AC4' tests cover rejected keys, unchanged files, matching validation errors and recovery from an invalid hand-edited value."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The two parallelism settings can now apply only to this machine, with values shared across its worktrees and kept out of git. Clearing a value restores the project setting. All 56 reported tests passed; the code and tests support all four criteria. No blocking issues found."
+  }
+}
+```
+
+</details>
