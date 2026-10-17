@@ -1,7 +1,7 @@
 ---
 id: "0273"
 title: "Lay out the Settings view like the rest of the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T13:33:13.371Z"
 approved: "2026-10-17T13:41:52.217Z"
+finished: "2026-10-17T13:44:00.266Z"
 
 ---
 # 0273 · Lay out the Settings view like the rest of the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The Settings view is a long column of rows with little between them: the groups run into each other, individual settings are hard to pick out, and it doesn't look like the rest of the panel, whose sections sit in bordered boxes with a heading bar.
