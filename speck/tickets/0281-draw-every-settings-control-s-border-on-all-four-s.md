@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T19:17:47.054Z"
-approved: "2026-10-17T19:25:11.961Z"
+approved: "2026-10-17T19:28:32.502Z"
 
 ---
 # 0281 · Draw every Settings control's border on all four sides
@@ -53,13 +53,14 @@ On a phone, the Settings view's info buttons, lists and text and number boxes no
 ## Review log
 Round 1 (codex): changes requested: F1 The minimum border thickness remains unverified for the browser implicated in the defect.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 297,396
-- Elapsed since build started: 7 min
-- Changed lines: 19 (limit 5000)
+- Reviewer tokens: 611,026
+- Elapsed since build started: 11 min
+- Changed lines: 21 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The Settings view's other buttons (Close, Save, Save all) keep half-pixel borders and may lose a side on a phone: `speck/ideas/2026-10-17-keep-the-settings-buttons-borders-whole-on-a-phone.md`.
@@ -214,6 +215,83 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Settings controls now align to whole pixels and have borders at least one device pixel thick at all required ratios. The existing layout is preserved, and all relevant tests pass. Safari was not run directly, but the revised border rules resolve the thickness concern."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ba02291688196e80a04470fb7c92de08c7df644f",
+    "merge": true,
+    "thread_id": "01a14b50-028e-7893-b8d0-3f1c92ac2415",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 311349,
+      "cached_input_tokens": 252288,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2281,
+      "reasoning_output_tokens": 152
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T19:28:30.560Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The passing 0281 AC1 AC2 browser test checks both edges of the specified controls at all four widths and all three pixel ratios. The group shadow takes no layout space, preserving whole-pixel alignment."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The Settings border rules remain 1px at DPR 1 and .5px at DPR 2 and 3. The passing 0281 test checks active declared widths against each required ratio."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All changed production selectors remain scoped to #settings. Passing tests check selector scope and confirm the Plan section retains its border with no outline or shadow."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Review confirms the outer shadow preserves group boxes without affecting row geometry or alignment. The 0273 layout and 0277 alignment browser tests pass on the current code."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The original minimum border-thickness concern remains resolved.",
+        "suggested_fix": "No further change required; the resolution-dependent border widths and their tests remain intact.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "test/panel-0281.test.mjs",
+        "issue": "The original incomplete scope check remains resolved.",
+        "suggested_fix": "No further change required; the scope check now covers the replacement shadow rules and verifies unchanged styles outside Settings.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The replacement shadow preserves the Settings boxes and control alignment while fixing the focus-ring test conflict. All 181 executed tests pass, including the layout and keyboard-focus checks. No blocking concerns remain; Safari has not been tested directly."
   }
 }
 ```
