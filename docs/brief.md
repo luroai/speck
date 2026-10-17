@@ -76,6 +76,8 @@ A ticket is ready only if it passes all of these. `/speck-ticket` checks them an
 
 Guardrail during build: if the diff passes the size limit before the tests pass, the builder stops and proposes a split. It doesn't push on.
 
+**Criteria about documents.** A document is any file written for people to read, such as the README, `docs/` and the changelog. A criterion about a document's wording, tone, order or layout ends with `(checked by review)`: the builder writes no test for it, and the reviewer judges it by reading the document as it is now, citing the passage as its evidence, without counting a missing test against it. A criterion about a fact in a document has no marker and is tested: a command, a setting's name, a version, a file name, a link, or a name that mustn't appear. No test may check a document's exact wording, or the order of its sentences, paragraphs or headings: the reviewer blocks a change that adds one, because the next edit to that document would fail the suite and hold up every ship. The skills and the reviewer prompt are instructions to agents rather than documents, so this rule doesn't cover tests of their wording.
+
 ## The review loop
 
 The implementation agent owns the loop. It spawns a reviewer subagent and they work in turns until the reviewer approves or the loop escalates to you.
