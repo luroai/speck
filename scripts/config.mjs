@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS } from './core.mjs';
 
-const USAGE = 'Usage: speck config set <key> <value>';
+const USAGE = 'Usage: speck config set <key> <value>, or speck config show [--json] to see the main settings.';
 
 // Every setting `speck config set` can change, with how speck reads it. reviewer_options and other free-form maps
 // are left to hand editing.
