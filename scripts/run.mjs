@@ -8,6 +8,7 @@ import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeArgv, handBackQueue } from './hand-back.mjs';
 import { countStop } from './stop-wait.mjs';
+import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { BUILD_ENV, buildEnv } from './build-env.mjs';
 import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
@@ -102,8 +103,7 @@ function runOn(worker) {
   try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
   const mismatch = builderMismatch(cfg);
   if (mismatch) throw new SpeckError(`speck run won't start: ${mismatch.problem} ${mismatch.fix}`);
-  const max = cfg.max_parallel_builds ?? 1;
-  if (!Number.isInteger(max) || max < 1) throw new SpeckError(`max_parallel_builds in speck/config.yml must be a whole number of at least 1 (got "${max}").`);
+  const max = maxParallelBuilds(cfg);
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
   if (branch !== cfg.base_branch)
     throw new SpeckError(`This checkout is on "${branch}", not ${cfg.base_branch}. speck run starts builds from ${cfg.base_branch}, so switch to it, then run this again.`);

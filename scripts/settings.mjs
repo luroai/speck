@@ -67,7 +67,7 @@ function choicesOf(key, file) {
 
 // A setting's value as speck reads it from the file's text: the file's own, or speck's default when it's missing.
 function valueIn(text, repo, key) {
-  const inFile = lookup(parseYaml(text), key) !== undefined, read = lookup(loadConfig(repo), key);
+  const inFile = lookup(parseYaml(text), key) !== undefined, read = lookup(loadConfig(repo, { machine: false }), key);
   return { value: inFile && read !== undefined ? read : SETTING_GROUPS.flatMap(g => g.settings).find(s => s.key === key).default, inFile };
 }
 
