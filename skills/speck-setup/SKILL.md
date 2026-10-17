@@ -40,7 +40,7 @@ If they choose speck, name any work still in progress in the other workflow: for
 - a ban on git worktrees: `worktrees` is on by default, so each build would happen in its own worktree and break the rule. They could change the rule, or turn `worktrees` off.
 - a requirement that changes go through pull requests: shipping merges and pushes straight to the base branch, with no pull request, so every ship would break the rule. Keeping `auto_ship` off (its default) stops speck shipping on its own, but `/speck-ship` still bypasses pull requests, so it doesn't settle the clash. They could change the rule (or relax it for themselves, as section 3, step 3 warns), or not use speck's ship.
 - a requirement for a particular reviewer: every review is done by the reviewer in `speck/config.yml`, so a different one would break the rule. If the required reviewer is one speck can run, they could set it as the reviewer (section 5); otherwise they could change the rule.
-- limits on unattended agents: `speck run` builds without anyone watching, and `auto_ship` ships as soon as the reviewer approves. They could change the rule, or keep `auto_ship` off and leave `build_command` blank (section 6).
+- limits on unattended agents: `speck run` builds without anyone watching, and `auto_ship` ships as soon as the reviewer approves. They could change the rule, or keep `auto_ship` off (section 7) and leave `build_command` blank (section 6).
 
 For each clash, quote the rule, say what would happen and what the user could change: the rule itself (theirs to edit), or a speck setting. Change a speck setting only after the user agrees, with `speck config set`, once speck is installed. If nothing clashes, say so in one line.
 
@@ -55,7 +55,7 @@ If `speck.installed` is true, speck is already here. Say which version, and carr
 
 **Git name and email.** Commits need them. If `repo.git_name_set` or `repo.git_email_set` is false, explain why git wants them and ask before setting a git name and email. Ask for the name and email to use, and whether to set them for every project on this machine (`git config --global user.name "…"`, recommended) or only this one (without `--global`).
 
-**Install speck.** If `speck.installed` is false, explain that this adds the `speck/` folder (settings, ideas and tickets), the speck skills and the `speck` command to the project, and run `npx 'github:luroai/speck#semver:*' init`. It also runs `speck doctor`: don't fix its ✗ items yet, as sections 5 and 7 deal with them.
+**Install speck.** If `speck.installed` is false, explain that this adds the `speck/` folder (settings, ideas and tickets), the speck skills and the `speck` command to the project, and run `npx 'github:luroai/speck#semver:*' init`. It also runs `speck doctor`: don't fix its ✗ items yet, as sections 5 and 8 deal with them.
 
 ## 3. An existing project
 
@@ -106,7 +106,30 @@ With Claude Code as the builder, the default passes `--dangerously-skip-permissi
 
 Then, in a new project, go back to section 4, step 5 for the first ticket. In an existing project that wanted a ticket to add a test runner, make it the same way. Otherwise continue with section 7.
 
-## 7. Finish
+## 7. How much ships, runs and fits in a ticket
+
+`speck init` writes speck's general defaults for the settings below, which nobody chose for this project. Go through them now, so the user knows what each one does and picks its value. Run `speck config show`. It prints each setting of the panel's Settings view by group, with its value now, whether that's speck's default and what it does. Use its explanation for each setting rather than your own words, so setup and the panel say the same thing.
+
+Go through these settings, one at a time and in this order:
+
+- `auto_ship` and `auto_ship_risk` (how much ships without the user)
+- `max_parallel_builds` and `max_parallel_tests` (how much runs at once)
+- `limits.max_acceptance_criteria`, `limits.max_changed_lines` and `limits.max_review_rounds` (how big a ticket can be)
+
+For each one:
+
+1. Give its explanation from `speck config show` and its value now.
+2. Recommend a value for this project and say why in a sentence. For example: keep `auto_ship` off until they've shipped a few tickets themselves; one or two builds at once on a laptop; `max_parallel_tests` at 1 unless the tests are known to run side by side safely; a bigger `limits.max_changed_lines` for a project whose changes usually touch many files.
+3. Wait for their answer before the next setting.
+4. If they pick a different value, run `speck config set <key> <value>` and tell them the old and new value it prints. If they keep it as it is, don't run anything: the file stays as it was.
+
+**Shipping without the user.** Ask about `auto_ship` and `auto_ship_risk` each on its own, never together with other settings or as part of a "keep the defaults" answer. Before asking, say plainly that a ticket `auto_ship` covers is merged and pushed to the base branch as soon as the reviewer approves it, without waiting for them, and that adding `high` to `auto_ship_risk` lets risky changes (such as auth, payments, data deletion or secrets) ship that way too. Turn `auto_ship` on, or add `high` to `auto_ship_risk`, only if the user says yes to that setting after hearing this. Recommend keeping `high` out of `auto_ship_risk`. If `auto_ship` is off and stays off, say that `auto_ship_risk` then has no effect, and ask whether to leave it as it is.
+
+**When speck was already set up.** If `speck.installed` was true when setup started, these settings may have been chosen before. Show all seven with their values from `speck config show` in one list, and ask which, if any, the user wants to change. Go through only those, as above, and leave the rest as they are. The rule on shipping without the user still holds for `auto_ship` and `auto_ship_risk`.
+
+Then continue with section 8.
+
+## 8. Finish
 
 1. Ask before making a commit of the setup changes (`speck/config.yml` and anything else setup changed, staged by name), with the message `speck: set up`.
 2. Run `speck doctor`. For each ✗, explain it and fix it with the user, asking before every change as above, then run it again. Setup is finished once `speck doctor` passes.

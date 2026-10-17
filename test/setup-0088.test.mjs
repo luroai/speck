@@ -137,7 +137,7 @@ test('0088 AC5: it explains that speck run builds skip permission prompts and as
 });
 
 test('0088 AC5: it finishes once speck doctor passes, saying what to do next', () => {
-  const s = flat(section('7.'));
+  const s = flat(section('8.'));
   assert.match(s, /speck doctor/);
   assert.match(s, /passes/);
   assert.match(s, /what to do next/i);
