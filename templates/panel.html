@@ -328,8 +328,18 @@
   #settings .top h3 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; }
   #settings .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #settings .close:hover { color: var(--text); }
-  #settings h4 { margin: 16px 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
-  #settings .setting { padding: 8px 0; border-bottom: .5px solid var(--line-soft); }
+  /* 0273: each group a box with a heading bar, like the panel's sections, with space between them. Each setting is a
+     row, its name and info button on the left and its value or control on the right: every row splits its width the
+     same way, so a group's controls line up in one column. */
+  #settings .sgroup { margin-top: 16px; }
+  #settings .sgroup .sh { padding: 8px 12px; }
+  #settings .sgroup h4 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
+  #settings .setting { padding: 8px 12px; border-bottom: .5px solid var(--line-soft); }
+  #settings .setting:last-child { border-bottom: 0; }
+  #settings .setting .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 12px; }
+  #settings .setting .label { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  #settings .setting .label .info { flex: none; } /* its full size beside a long name */
+  #settings .setting .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
   #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
   #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
@@ -339,6 +349,7 @@
   /* 0258: a setting the panel can change: its control and Save button */
   #settings .setting .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
   #settings .setting input.edit[type="number"] { width: 8ch; }
+  #settings .setting input.edit[type="text"] { width: 16ch; } /* 0273: beside its Save button in the row's right half */
   #settings .setting .risk { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); display: inline-flex; align-items: center; gap: 4px; } /* 0259: auto_ship_risk's boxes */
   #settings .setting .save { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #settings .setting .save:hover { color: var(--text); border-color: var(--text); }
@@ -442,6 +453,7 @@
     .theme, .settings-open { justify-self: end; width: 44px; height: 44px; }
     .settings-open + .theme { margin-left: 0; }
     #settings .setting .info { width: 28px; height: 28px; font-size: 12px; } /* 0268: easier to tap */
+    #settings .setting .row { gap: 8px; } /* 0273: room for the names */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
@@ -1675,23 +1687,32 @@ function renderSettings() {
   else {
     kids.push(el('p', null, 'What speck reads from speck/config.yml now. Saving a change commits it to the base branch, unless it\'s for this machine only. Change the rest in the file.'));
     for (const g of settingsView.groups) {
-      kids.push(el('h4', null, g.title));
+      const rows = [];
       for (const x of Array.isArray(g.settings) ? g.settings : []) {
         const edit = x.editable === true ? settingEditor(x) : null;
         const mine = x.for_machine === true && x.from === 'machine';
         const [info, tip] = settingInfo(x, settingTips.size);
-        kids.push(el('div', 'setting', null,
-          el('div', 'line', null, el('code', 'name', x.key), info, ...(edit ? edit : [el('code', 'value', settingValue(x.value))]),
-            x.for_machine === true ? el('span', 'default', mine ? 'this machine' : 'repo') : null, x.default && !mine ? el('span', 'default', 'default') : null),
+        rows.push(el('div', 'setting', null,
+          el('div', 'row', null, el('span', 'label', null, settingName(x.key), info),
+            el('div', 'control', null, ...(edit ? edit : [el('code', 'value', settingValue(x.value))]),
+              x.for_machine === true ? el('span', 'default', mine ? 'this machine' : 'repo') : null, x.default && !mine ? el('span', 'default', 'default') : null)),
           mine ? machineLine(x) : null,
           settingAsk !== null && settingAsk.key === x.key ? scopeQuestion() : null,
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
           tip));
       }
+      // 0273: a box like the panel's sections, with a heading bar
+      kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }
   }
   pane.replaceChildren(...kids);
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
+}
+// 0273: a setting's name, which a narrow row breaks after a dot or an underscore ("max_parallel_" then "builds"),
+// rather than in the middle of a word.
+function settingName(key) {
+  const parts = String(key).match(/[^._]+[._]?|[._]/g) || [];
+  return el('code', 'name', null, ...parts.flatMap((part, i) => [i > 0 ? el('wbr') : null, el('span', null, part)]));
 }
 // 0268: a setting's info button and its explanation, which a screen reader reads with the button.
 function settingInfo(x, n) {
