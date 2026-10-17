@@ -1,7 +1,7 @@
 ---
 id: "0267"
 title: "Remove the tests that pin documents' wording"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0266"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T08:41:54.734Z"
 approved: "2026-10-17T08:59:27.372Z"
+finished: "2026-10-17T09:05:31.370Z"
 
 ---
 # 0267 · Remove the tests that pin documents' wording
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 About 30 test files read the README, `docs/` or the changelog. Some of them pin a document's exact sentences, or the order of its paragraphs and headings, so editing that document by hand fails the suite and stops every ship until a fix ticket updates the tests. The rest check facts that can really go wrong, such as an install command that must work.
