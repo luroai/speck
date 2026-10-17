@@ -86,7 +86,7 @@ When `speck next <id>` says `ship`, the reviewer has approved. Close out the bui
 When a ship that `speck run`'s queue started is refused in a way this ticket's build has steps for, `speck run` resumes this session with a message saying what happened, with `speck ship`'s own message, and which steps to follow. The ticket is still `approved`, and nothing was shipped or changed. Work in the ticket's worktree, without asking the user:
 
 - A conflict merging it into the base branch (`speck ship` exited 13): follow "Conflict".
-- The tests failed on the ticket as it would land, merged with the base branch, while the base branch's own tests pass (exited 16): follow "Tests fail together".
+- The tests failed on the ticket as it would land, merged with the base branch, while the base branch's own tests pass, or while the base branch is failing but those tests pass there (exited 16): follow "Tests fail together".
 - The base branch's own tests are failing (exited 14): follow "Base branch failing".
 - The message says `speck run` has handed it back twice already without it shipping: follow "Handed back again".
 
