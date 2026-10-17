@@ -1,7 +1,7 @@
 ---
 id: "0265"
 title: "Merge the remote's base branch in when it has diverged cleanly"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0264"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T09:07:33.967Z"
 
 ---
 # 0265 · Merge the remote's base branch in when it has diverged cleanly
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When the remote's base branch has a commit your local base branch doesn't (for example, a README edited on GitHub), and your local base branch has one the remote doesn't, `speck ship` refuses with "each have commits the other doesn't". speck run's ship queue then waits for a new local commit that may never come, so approved tickets sit unshipped with no sign why outside `run.log`. This held up 0257 overnight on 2026-10-16 and 2026-10-17.
