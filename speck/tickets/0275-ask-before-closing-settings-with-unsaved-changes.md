@@ -1,7 +1,7 @@
 ---
 id: "0275"
 title: "Ask before closing Settings with unsaved changes"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0274"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T15:40:28.626Z"
+approved: "2026-10-17T15:45:56.770Z"
 
 ---
 # 0275 · Ask before closing Settings with unsaved changes
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Closing the Settings view throws away any change you haven't saved, without a word, so a change you meant to keep can be lost with one press of Close or Escape.
@@ -50,9 +51,14 @@ To see it, open Settings, change any value, then press Escape. Worth a look: the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 107,876
+- Elapsed since build started: 5 min
+- Changed lines: 82 (limit 5000)
 Follow-ups (Delivery log only, none needing their own ticket):
 - The question's look and keyboard focus have been checked only on the fake page, not in a real browser. Worth a quick look on a phone.
 
