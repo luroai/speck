@@ -1,7 +1,7 @@
 ---
 id: "0261"
 title: "Manage this machine's settings from the panel"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0259","0260"]                # ticket ids that must be done first
 created: 2026-10-16
+started: "2026-10-17T09:38:25.559Z"
 
 ---
 # 0261 · Manage this machine's settings from the panel
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Once a setting can be set for this machine only, someone looking at the Settings view can't tell whether the value shown is theirs or the repo's, and can't choose which to change.
