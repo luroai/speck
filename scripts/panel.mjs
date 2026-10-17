@@ -14,7 +14,8 @@ import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels } from './settings.mjs';
+import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels, builderModels } from './settings.mjs';
+import { codexModelsAsync } from './codex-models.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship, the speck run switch and a setting) ----------
 
@@ -419,9 +420,12 @@ export async function panelServer() {
     // 0276: with the models the reviewer offers, read now too.
     if (where === '/api/settings') {
       return (async () => {
-        let models;
-        try { models = await reviewerModels(repo); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
-        try { send(res, 200, 'application/json', JSON.stringify(panelSettings(repo, { models }))); }
+        // 0279: and the builder's, asking Codex once when it's both
+        let models, built, asked = null;
+        const read = () => (asked ??= codexModelsAsync());
+        try { models = await reviewerModels(repo, read); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
+        try { built = await builderModels(repo, read); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
+        try { send(res, 200, 'application/json', JSON.stringify(panelSettings(repo, { models, builderModels: built }))); }
         catch (e) { send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })); }
       })();
     }

@@ -42,6 +42,7 @@ A `builder_model` setting chooses the model every build runs on, and the Setting
 - Checked 2026-10-17: `claude --model <model>` takes an alias (`fable`, `opus`, `sonnet`) for the newest model of that kind, or a full model name (`claude --help`, Claude Code 2.1.301).
 - `build_command` is read in `scripts/run.mjs` (`DEFAULT_BUILD_COMMAND`, and `resumeArgv` in `scripts/hand-back.mjs` for resumed builds).
 - Failing before this build: none
+- Self-check: a `builder_model` that YAML reads as a number (`builder_model: 5`) is now passed as `--model 5` rather than ignored.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

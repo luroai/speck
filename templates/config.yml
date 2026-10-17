@@ -4,6 +4,7 @@ base_branch: main
 branch_prefix: speck/
 
 builder: claude
+builder_model: ""                # blank: the builder's own default. Otherwise the model every build speck run starts runs on, passed to Claude Code as --model: fable, opus, sonnet, haiku or a full model name
 reviewer: codex                  # codex | claude-subagent
 allow_same_model_review: false   # must be true for builder and reviewer to be the same agent
 reviewer_model: ""               # blank: the reviewer's own default. Otherwise a model name in the reviewer's own format

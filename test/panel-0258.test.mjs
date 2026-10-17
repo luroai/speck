@@ -15,7 +15,7 @@ const KEYS = ['reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_bui
   'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds'];
 const GROUPS = [
   ['Shipping', ['auto_ship', 'auto_ship_risk']],
-  ['Building and reviewing', ['builder', 'reviewer', 'reviewer_model', 'reviewer_effort', 'allow_same_model_review']],
+  ['Building and reviewing', ['builder', 'builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'allow_same_model_review']],
   ['How much runs at once', ['max_parallel_builds', 'max_parallel_tests']],
   ['Ticket size limits', ['limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds']],
 ];
@@ -26,11 +26,11 @@ const readCfg = r => fs.readFileSync(cfgOf(r), 'utf8');
 const snapshot = r => ({ text: readCfg(r), head: headOf(r), status: r.g('status', '--porcelain') });
 
 test('0258 AC1: the eight settings can be changed, with reviewer and reviewer_effort offering only what speck accepts, and the rest stay read-only', () => {
-  assert.deepEqual([...EDITABLE], [...KEYS, 'auto_ship', 'auto_ship_risk']); // 0259 added the last two
+  assert.deepEqual([...EDITABLE], ['builder_model', ...KEYS, 'auto_ship', 'auto_ship_risk']); // 0259 added the last two, 0279 the first
   const r = panelRepo();
   fs.writeFileSync(cfgOf(r), readCfg(r).replace(/^reviewer_options:\n/m, 'reviewer_options:\n  my-reviewer:\n    command: "x {prompt}"\n'));
   const s = byKey(panelSettings(r.dir));
-  for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k) || k.startsWith('auto_ship'), k);
+  for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k) || k.startsWith('auto_ship') || k === 'builder_model', k);
   assert.deepEqual(s.reviewer_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
   assert.deepEqual([...s.reviewer.choices].sort(), ['claude-subagent', 'codex', 'my-reviewer']);
   assert.equal(s.reviewer_model.choices, undefined, 'a free value');

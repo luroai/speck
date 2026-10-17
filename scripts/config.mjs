@@ -12,7 +12,7 @@ const USAGE = 'Usage: speck config set <key> <value>, speck config set --machine
 // Every setting `speck config set` can change, with how speck reads it. reviewer_options and other free-form maps
 // are left to hand editing.
 const KINDS = Object.assign(Object.create(null), {
-  base_branch: 'text', branch_prefix: 'text', builder: 'text', reviewer: 'text', reviewer_model: 'text',
+  base_branch: 'text', branch_prefix: 'text', builder: 'text', builder_model: 'text', reviewer: 'text', reviewer_model: 'text',
   worktree_setup: 'text', build_command: 'text', resume_command: 'text', 'commands.test': 'text', 'github.status_check': 'text',
   'commands.test_files': 'files', 'commands.checks': 'paths',
   allow_same_model_review: 'flag', auto_ship: 'flag', worktrees: 'flag',

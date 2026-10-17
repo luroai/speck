@@ -11,6 +11,7 @@ import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { buildEnv } from './build-env.mjs';
+import { withBuilderModel, builderModelNote } from './build-model.mjs';
 import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
@@ -106,6 +107,7 @@ function runOn(worker) {
   try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
   const mismatch = builderMismatch(cfg);
   if (mismatch) throw new SpeckError(`speck run won't start: ${mismatch.problem} ${mismatch.fix}`);
+  words = withBuilderModel(words, cfg); // 0279: every build it starts, resumes or hands back runs on builder_model
   const max = maxParallelBuilds(cfg);
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
   if (branch !== cfg.base_branch)
@@ -319,6 +321,8 @@ function runOn(worker) {
 
   const watchBoard = () => { started = true; tick(); loop = setInterval(tick, pollMs); };
   if (worker) return awaitGo(adoptEarlierBuilds, watchBoard, stop);
+  const modelNote = builderModelNote(cfg);
+  if (modelNote) console.log(modelNote);
   console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
   adoptEarlierBuilds();
   watchBoard();
