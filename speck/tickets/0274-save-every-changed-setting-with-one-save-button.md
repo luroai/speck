@@ -46,6 +46,7 @@ The Settings view has one Save button that saves every setting you've changed at
 - 0259's cancelled dialog still puts `auto_ship` and `auto_ship_risk` back as they were, and keeps your other changes to save.
 - 0261's question is now asked beside the setting as soon as it's changed, rather than on Save, and the Cancel button is gone: putting the value back stops asking. Clearing this machine's value waits for Save too.
 - Self-check: no changes
+- Decided by the user (2026-10-17), answering the blocked question with option (a): as part of this ticket, test/split-0270.test.mjs loses two tests. "0270 AC3, AC4: no existing test file changed" goes, as it was a one-off check of 0270's own diff and fails every ticket that changes an existing test. "0270 AC1: … each at most 500 lines" goes too, as it turned 0270's one-off goal into a permanent cap; the 600-line rule for every file stays, in 0270 AC2 and 0078 AC2. The rest of that file stays as it is.
 - Criterion 2's single commit and criterion 4's nothing-saved need the server to take the changes together, not one request per setting.
 
 ## In plain words
