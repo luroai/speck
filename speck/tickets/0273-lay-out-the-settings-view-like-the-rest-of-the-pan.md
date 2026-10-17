@@ -1,7 +1,7 @@
 ---
 id: "0273"
 title: "Lay out the Settings view like the rest of the panel"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T13:33:13.371Z"
 
 ---
 # 0273 · Lay out the Settings view like the rest of the panel
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Settings view is a long column of rows with little between them: the groups run into each other, individual settings are hard to pick out, and it doesn't look like the rest of the panel, whose sections sit in bordered boxes with a heading bar.
