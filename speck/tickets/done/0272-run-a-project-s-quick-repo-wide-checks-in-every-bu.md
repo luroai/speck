@@ -1,7 +1,7 @@
 ---
 id: "0272"
 title: "Run a project's quick repo-wide checks in every build"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0270"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T11:05:42.220Z"
 approved: "2026-10-17T11:11:40.500Z"
+finished: "2026-10-17T11:13:43.131Z"
 
 ---
 # 0272 · Run a project's quick repo-wide checks in every build
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Builds run only the ticket's own test files, and `speck ship` runs the whole suite. That's on purpose, to save the suite's minutes on every build (0113). But some of a project's tests check rules for the whole repo, such as speck's limit of 600 lines per script (0078 AC2) and its ban on commit ids in tests (0085 AC3). A build breaks those without knowing, and they only fail at ship time, costing a hand-back and another review round. Four of the six hand-backs on 2026-10-17 were rules like these.
