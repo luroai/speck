@@ -1,7 +1,7 @@
 ---
 id: "0260"
 title: "Let a setting apply to this machine only"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: ["0258"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T09:22:07.848Z"
+approved: "2026-10-17T09:25:45.647Z"
 
 ---
 # 0260 · Let a setting apply to this machine only
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Some settings suit a machine rather than a project. `max_parallel_builds` of 4 suits a 16-core Linux box, but an 8 GB laptop needs 1 or 2, and today whatever is committed in `speck/config.yml` applies to every machine that checks the repo out.
@@ -49,9 +50,14 @@ You can now tell speck how many builds and test runs to keep going at once on th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 144,882
+- Elapsed since build started: 4 min
+- Changed lines: 84 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none new. The panel's Settings view reads `speck/config.yml` alone, so it doesn't show a machine value yet: that's 0261.
 
