@@ -44,7 +44,7 @@ main's whole test suite passes again, and the README keeps what the revision on 
 - No test file of this ticket's own: its scope allows changes only to the README and the four test files (review round 1, F1). AC1 is checked by running those four files. AC2 and AC3 are checked by reading the diff: the README is unchanged, each changed check has a `0262:` comment, and all 20 tests are still there with none skipped.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The README's checks had fallen behind the new README wording, so every approved ticket was refused at ship time. The checks now follow the new wording, and the README itself is unchanged. Once this ships, approved tickets, 0257 included, can ship again. To see it, read the top of the README: it reads just as the revision on GitHub left it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,9 @@ main's whole test suite passes again, and the README keeps what the revision on 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (Delivery log only, no inbox notes):
+  - The README now says you can let speck ship low-risk tickets on its own, while `auto_ship_risk` can also cover high-risk ones. Narrower than the setting, not wrong.
+  - `docs/brief.md` still opens with the old "You own two decisions… Everything in between is automated." wording. It no longer matches the README word for word, though nothing checks that they match.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -115,6 +118,69 @@ main's whole test suite passes again, and the README keeps what the revision on 
     ],
     "escalation_question": "",
     "summary": "The updated tests correctly follow the intentional README revision, and all specified tests pass. Approval is held because the change adds a fifth test file despite the ticket explicitly limiting changes to four. Remove that extra file before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "fb717305b910dfa12c3baffaa721b119fc6a020b",
+    "thread_id": "01a148b1-0ccc-7572-89b6-f1b3da877545",
+    "seconds": 10,
+    "usage": {
+      "input_tokens": 221739,
+      "cached_input_tokens": 173824,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1031,
+      "reasoning_output_tokens": 32
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T07:09:22.085Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "/tmp/speck-0262-tests.txt records all 20 tests in the four specified files passing, with zero failures."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md remains unchanged. The four test files check the wording and order intentionally introduced by commit 1041577, with 0262 comments explaining the updates. Their passing assertions exercise the revised opening."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The diff preserves all 20 pre-existing tests without skips. All pass in the recorded run. Only the four permitted test files and the ticket's review records differ from main; whole-suite verification remains the shipping gate."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/readme-0262.test.mjs",
+        "issue": "The added fifth test file exceeded the ticket's explicit scope. It has now been removed from the change.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The tests now follow the intentional README revision without changing the README. All 20 tests in the four specified files pass. The extra file has been removed, resolving the scope concern. The change is ready for the owner's merge decision."
   }
 }
 ```
