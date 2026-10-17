@@ -1,7 +1,7 @@
 ---
 id: "0267"
 title: "Remove the tests that pin documents' wording"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0266"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T08:41:54.734Z"
 
 ---
 # 0267 · Remove the tests that pin documents' wording
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 About 30 test files read the README, `docs/` or the changelog. Some of them pin a document's exact sentences, or the order of its paragraphs and headings, so editing that document by hand fails the suite and stops every ship until a fix ticket updates the tests. The rest check facts that can really go wrong, such as an install command that must work.
