@@ -40,6 +40,7 @@ A reviewer from the builder's own family is allowed when the two run different m
 - The check is `modelFamily` in `scripts/core.mjs`, used in `scripts/lint.mjs` and `scripts/settings.mjs`. The ticket's reviewer model falls back to `reviewer_model` in `speck/config.yml`, as `speck reviewer-settings` resolves it.
 - Needs `builder_model` from 0279.
 - Failing before this build: none
+- Self-check: the panel checks the settings as they'd be once saved, so saving builder_model or reviewer_model to match the other is refused too, not only reviewer; a builder_model given to a builder other than claude counts as unset, as builds don't get it; updated the README, the brief and the config template, with a test that they name builder_model.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
