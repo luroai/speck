@@ -44,7 +44,11 @@ When the remote's base branch has a commit your local base branch doesn't (for e
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When someone edits the main branch on GitHub (a README tweak, say) while your own copy has commits GitHub doesn't, shipping no longer stops with a message that only shows up in the run log. speck now combines the two itself, says in one line which of GitHub's commits it brought in, and carries on shipping, so approved tickets don't sit waiting overnight.
+
+To see it, edit a file on GitHub, make a commit on your own main, then ship an approved ticket: the ship output names the GitHub commit and the ticket lands.
+
+It still stops, changing nothing, when the two sides changed the same lines, or when combining them would overwrite edits you haven't committed or files git doesn't track, and it names those files. If the ship fails afterwards, for example on a test, the combined commit stays, so the next try doesn't redo it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +58,7 @@ When the remote's base branch has a commit your local base branch doesn't (for e
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up: ship's catch-up fast-forward and its merge of the ticket don't pass `--no-autostash` either: speck/ideas/2026-10-17-keep-merge-autostash-out-of-ship-s-merges.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -120,6 +125,74 @@ When the remote's base branch has a commit your local base branch doesn't (for e
     ],
     "escalation_question": "",
     "summary": "The normal merge, conflict refusal and failed-ship behaviour are covered by seven passing tests. One protection needs fixing: users with Git automatic stashing enabled could have their base branch advanced and local edits left conflicted instead of receiving a safe refusal."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c62dad549d2c10e3791e80bf0fbf52a0d0a0703d",
+    "thread_id": "01a14920-5c6a-7040-80a3-19bbc8687380",
+    "seconds": 12,
+    "usage": {
+      "input_tokens": 231593,
+      "cached_input_tokens": 181760,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1419,
+      "reasoning_output_tokens": 207
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:21:32.437Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ship-remote.mjs mergeRemoteBase creates a two-parent merge commit and reports incoming commits in one line. Both AC1 tests passed, verifying successful shipping and pushing with the base checked out or checked out nowhere."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "mergeRemoteBase checks conflicts using merge-tree before updating the branch or checkout. The passing AC2 test verifies refusal preserves branches, working trees and index."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "mergeRemoteBase now explicitly passes --no-autostash. Four passing AC3 tests cover preserving local edits and untracked files, refusing overlapping files with names and unchanged snapshots, and refusing safely with merge.autoStash=true."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs invokes remoteBaseCatchUp before recording the base for subsequent rollback. The passing AC4 test verifies the merge remains on the local base after shipping tests fail."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship-remote.mjs:36",
+        "issue": "Git automatic stashing could previously bypass overwrite protection and leave local edits conflicted.",
+        "suggested_fix": "Explicitly disable automatic stashing and cover the configured setting with a regression test. Both are now implemented; the regression test passed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Cleanly diverged base branches now merge automatically before shipping, while conflicts and obstructing local files cause a safe refusal. The automatic-stashing issue is fixed, all eight tests passed, and no blocking findings remain."
   }
 }
 ```
