@@ -38,6 +38,7 @@ No file under `scripts/` may be over 600 lines (0078 AC2). `scripts/panel.mjs` a
 
 ## Notes
 - Move whole parts that belong together into new modules under `scripts/`, named for what they do, as 0078 did for `speck.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
