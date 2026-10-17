@@ -1,7 +1,7 @@
 ---
 id: "0271"
 title: "Work out the slow test files from what they start"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T10:57:50.396Z"
+approved: "2026-10-17T11:00:16.676Z"
 
 ---
 # 0271 · Work out the slow test files from what they start
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Test files that start a real panel, a browser or `speck run` must be listed by hand in `test/support/heavy.mjs`, and a test (0233 AC1) fails when one isn't. Builders don't run that test, so they forget, and the ticket is handed back at ship time. Every such ticket also adds to the same list, so tickets built side by side conflict there. On 2026-10-17 this handed back 0258, 0261 and 0268, and caused 0268's merge conflict.
@@ -53,9 +54,14 @@ Worth keeping an eye on: two existing slow tests open a panel or `speck run` in 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 108,416
+- Elapsed since build started: 2 min
+- Changed lines: 0 (limit 5000)
 - Follow-ups:
   - Inbox: speck/ideas/2026-10-17-count-tests-that-start-a-panel-through-another-helper-as-heavy.md (`test/panel-0190.test.mjs` and `test/build-log-0176.test.mjs` start a panel or `speck run` through `onPhone` or `idleCpu`, so they're no longer heavy).
 
