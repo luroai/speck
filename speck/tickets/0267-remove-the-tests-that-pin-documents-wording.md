@@ -40,6 +40,7 @@ No test fails because a document's wording or order changed. The tests that chec
 ## Notes
 - Likely candidates: `test/readme-0089.test.mjs`, `test/readme-0249.test.mjs`, `test/readme-0250.test.mjs`, `test/readme-0251.test.mjs`, `test/readme-0256.test.mjs`, `test/tagline-0255.test.mjs`, `test/brief-0111.test.mjs`, `test/brief-0225.test.mjs`, and the README checks in `test/install-0253.test.mjs`, `test/setup-0088.test.mjs`, `test/setup-0107.test.mjs` and `test/release-*.test.mjs`. Find them with `grep -lE "README|docs/|CHANGELOG" test/*.test.mjs`. Each has to be read: some check facts (0253's install commands, `private-words-0084`), and those stay.
 - A test file that only checks a removed criterion is deleted, not left empty.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
