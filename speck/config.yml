@@ -26,7 +26,7 @@ resume_command: 'claude --resume {session}'
 commands:
   test: "npm test"
   test_files: node --test {files}
-  checks: [test/split-0078.test.mjs, test/history-0085.test.mjs, test/repo-speck-0122.test.mjs, test/luro-0082.test.mjs, test/tmp-cleanup.test.mjs, test/stopped-0173.test.mjs, test/product-0068.test.mjs]
+  checks: [test/split-0078.test.mjs, test/history-0085.test.mjs, test/repo-speck-0122.test.mjs, test/luro-0082.test.mjs, test/tmp-cleanup.test.mjs, test/stopped-0173.test.mjs, test/product-0068.test.mjs, test/install-0253.test.mjs, test/brief-0111.test.mjs, test/build-0116.test.mjs, test/review.test.mjs, test/setup-0107.test.mjs, test/ticket-0205.test.mjs]
 
 limits:
   max_acceptance_criteria: 5
