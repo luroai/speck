@@ -38,6 +38,7 @@ The Settings view shows which settings use this machine's value, and lets you ch
 ## Notes
 - Builds on 0258 (panel writes for settings) and 0260 (machine values).
 - Failing before this build: none
+- Self-check: moved the machine file's write into `saveMachineValue` so the panel and `speck config set --machine` share it; a machine save never calls `loadConfig`, so a bad hand-edited machine value can still be fixed from the panel; an unknown `?scope=` is refused with 400; `speck config show` keeps showing `speck/config.yml`'s values, as it did; added a test that the brief names `speck config set --machine`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

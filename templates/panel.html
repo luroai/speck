@@ -1607,6 +1607,7 @@ $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render
 // 0258: the ones the server marks editable can be changed in place: Save sends one to the server, which commits it.
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
+let settingAsk = null; // 0261: { key, value } while asking whether a change is for this machine only or the repo
 $('settings-open').addEventListener('click', openSettings);
 $('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) closeSettings(); });
 renderSettings(); // closed
@@ -1636,6 +1637,7 @@ function closeSettings() {
   settingsSeq++;
   settingTyped = new Map();
   settingRefused = new Map();
+  settingAsk = null;
   renderSettings();
   const back = $('settings-open');
   if (back.focus) back.focus();
@@ -1654,13 +1656,17 @@ function renderSettings() {
   if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
   else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
-    kids.push(el('p', null, 'What speck reads from speck/config.yml now. Saving a change commits it to the base branch. Change the rest in the file.'));
+    kids.push(el('p', null, 'What speck reads from speck/config.yml now. Saving a change commits it to the base branch, unless it\'s for this machine only. Change the rest in the file.'));
     for (const g of settingsView.groups) {
       kids.push(el('h4', null, g.title));
       for (const x of Array.isArray(g.settings) ? g.settings : []) {
         const edit = x.editable === true ? settingEditor(x) : null;
+        const mine = x.for_machine === true && x.from === 'machine';
         kids.push(el('div', 'setting', null,
-          el('div', 'line', null, el('code', 'name', x.key), ...(edit ? edit : [el('code', 'value', settingValue(x.value))]), x.default ? el('span', 'default', 'default') : null),
+          el('div', 'line', null, el('code', 'name', x.key), ...(edit ? edit : [el('code', 'value', settingValue(x.value))]),
+            x.for_machine === true ? el('span', 'default', mine ? 'this machine' : 'repo') : null, x.default && !mine ? el('span', 'default', 'default') : null),
+          mine ? machineLine(x) : null,
+          settingAsk !== null && settingAsk.key === x.key ? scopeQuestion() : null,
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
           el('p', null, x.explain)));
       }
@@ -1712,6 +1718,23 @@ function settingEditor(x) {
   save.addEventListener('click', () => saveSetting(x.key, input));
   return [input, save];
 }
+// 0261: under a setting that uses this machine's own value, the repo's value and a button to clear this machine's.
+function machineLine(x) {
+  const clear = el('button', 'save', 'Clear this machine\'s value');
+  clear.type = 'button';
+  clear.addEventListener('click', () => saveSetting(x.key, { value: '', clear: true }, 'machine'));
+  return el('p', 'line', null, el('span', null, `The repo's value: ${settingValue(x.repo_value)}${x.default ? ' (default)' : ''}`), clear);
+}
+// 0261: asked on Save for a setting this machine can hold its own value for: where the change goes.
+function scopeQuestion() {
+  const button = (label, then) => { const b = el('button', 'save', label); b.type = 'button'; b.addEventListener('click', then); return b; };
+  const answer = scope => { const a = settingAsk; settingAsk = null; if (a !== null) saveSetting(a.key, { value: a.value }, scope); };
+  return el('p', 'line', null, el('span', null, 'Save this for:'),
+    button('This machine only', () => answer('machine')), button('The repo, for everyone', () => answer('repo')),
+    button('Cancel', () => { if (settingAsk !== null) settingTyped.delete(settingAsk.key); settingAsk = null; renderSettings(); }));
+}
+const forMachine = key => settingsView !== null && Array.isArray(settingsView.groups)
+  && settingsView.groups.some(g => Array.isArray(g.settings) && g.settings.some(x => x.key === key && x.for_machine === true));
 // 0259: auto_ship and auto_ship_risk as the view last read them, as the ship queue reads them.
 function shippingNow() {
   const all = settingsView && Array.isArray(settingsView.groups) ? settingsView.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []) : [];
@@ -1727,12 +1750,20 @@ function shipsMore(key, value) {
   const risks = ['low', 'high'].filter(r => will.risks.includes(r));
   return { risks: risks.join(','), words: `approved ${risks.map(r => `${r}-risk`).join(' and ')} tickets` };
 }
-async function saveSetting(key, input) {
+// `scope`: 'machine' or 'repo' once you've said where a change to a setting this machine can hold goes (0261).
+async function saveSetting(key, input, scope = null) {
   if (settingsView === null || settingsView.saving) return;
   const value = String(input.value ?? ''), mine = settingsSeq;
   if (key === 'auto_ship_risk' && value === '') { // 0259: nothing ticked
     settingTyped.set(key, value);
     settingRefused.set(key, 'Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
+    renderSettings();
+    return;
+  }
+  if (scope === null && forMachine(key)) { // 0261: ask first where it goes
+    settingTyped.set(key, value);
+    settingRefused.delete(key);
+    settingAsk = { key, value };
     renderSettings();
     return;
   }
@@ -1747,11 +1778,12 @@ async function saveSetting(key, input) {
     }
   }
   settingsView.saving = true;
-  settingTyped.set(key, value);
+  if (!input.clear) settingTyped.set(key, value);
   settingRefused.delete(key);
   let why = null, ask = false;
+  const query = [more !== null ? `confirm=${encodeURIComponent(more.risks)}` : null, scope === 'machine' ? 'scope=machine' : null].filter(Boolean).join('&');
   try {
-    const res = await fetch(`/api/settings/${encodeURIComponent(key)}/${encodeURIComponent(value)}${more !== null ? `?confirm=${encodeURIComponent(more.risks)}` : ''}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    const res = await fetch(`/api/settings/${encodeURIComponent(key)}/${encodeURIComponent(value)}${query ? `?${query}` : ''}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
     if (!res.ok) {
       let body = null;
       try { body = await res.json(); } catch { /* no JSON: say what we know */ }

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { SpeckError, sh, loadConfig, parseYaml, modelFamily, findRepoRoot, EFFORTS } from './core.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
+import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 
 export const SETTING_GROUPS = [
   { title: 'Shipping', settings: [
@@ -73,12 +74,16 @@ function valueIn(text, repo, key) {
 
 // Each group's settings, with the value speck reads from `repo`'s speck/config.yml now, and `default: true` for one
 // missing from the file, which has speck's default. One the panel can change is `editable`, with its `choices` when
-// it's picked from a list.
+// it's picked from a list. 0261: one this machine can hold is `for_machine`, with the value speck uses, `from` 'machine'
+// when that's this machine's own or 'repo' when it's speck/config.yml's, and speck/config.yml's in `repo_value`.
 export function panelSettings(repo) {
-  const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text);
+  const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const { value, inFile } = valueIn(text, repo, s.key), choices = choicesOf(s.key, file);
-    return { key: s.key, value, default: !inFile, explain: s.explain, editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}) };
+    const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
+      : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
+    return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
+      editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...machine };
   }) })) };
 }
 
@@ -102,7 +107,7 @@ export function cmdConfigShow(args) {
   if (args.length && !json) throw new SpeckError('Usage: speck config show [--json]');
   const defaults = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, s.default]));
   const groups = panelSettings(findRepoRoot()).groups.map(g => ({ title: g.title, settings: g.settings.map(s => ({
-    key: s.key, value: s.value, is_default: JSON.stringify(s.value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: s.explain,
+    key: s.key, value: s.repo_value ?? s.value, is_default: JSON.stringify(s.repo_value ?? s.value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: s.explain,
   })) }));
   if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
   const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : shown(v);
@@ -114,9 +119,12 @@ export function cmdConfigShow(args) {
 // speck/config.yml and commits only that file on the base branch. Every refusal comes before the first write.
 // A change that lets more tickets ship by themselves is refused unless `confirmed` names the risks that would then ship,
 // as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
-export function panelSetSetting(repo, key, value, { confirmed = null } = {}) {
+// 0261: with `machine`, it sets this machine's own value instead, as `speck config set --machine` does, or clears it when
+// `value` is blank: speck/config.yml and git are left alone, so the branch and the file's changes don't matter.
+export function panelSetSetting(repo, key, value, { confirmed = null, machine = false } = {}) {
   if (!EDITABLE.includes(key))
     return { status: 403, body: { error: `${key} can't be changed from the panel. The panel changes only ${EDITABLE.join(', ')}: change the rest in speck/config.yml.` } };
+  if (machine) return machineSetting(repo, key, value);
   const file = path.join(repo, 'speck', 'config.yml');
   const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo);
   let want;
@@ -151,12 +159,26 @@ export function panelSetSetting(repo, key, value, { confirmed = null } = {}) {
   return { status: 200, body: { ok: true, changed: true } };
 }
 
+function machineSetting(repo, key, value) {
+  if (!MACHINE_SETTINGS.includes(key))
+    return { status: 422, body: { error: `Only ${MACHINE_SETTINGS.join(', ')} can be set for this machine, not ${key}. Save it for the repo instead.` } };
+  let want;
+  try { want = value === '' ? undefined : checkConfigValue(key, value); }
+  catch (e) { if (e instanceof SpeckError) return { status: 422, body: { error: e.message } }; throw e; }
+  if (machineConfig(repo)[key] === want) return { status: 200, body: { ok: true, changed: false } };
+  saveMachineValue(repo, key, want);
+  return { status: 200, body: { ok: true, changed: true } };
+}
+
 // The panel's POST /api/settings/<key>/<value>, with both still written as in the address: every failure is an answer.
 // `confirmed`: the risks in the address's ?confirm=, sent once you've confirmed a change that lets more tickets ship (0259).
-export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null) {
+// `scope`: the address's ?scope=, 'machine' for this machine only (0261), or none for the repo.
+export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null, scope = null) {
   let key, value;
   try { key = decodeURIComponent(rawKey); value = decodeURIComponent(rawValue); }
   catch { return { status: 400, body: { error: 'That setting or value isn\'t written properly in the address. Reload the panel, then try again.' } }; }
-  try { return panelSetSetting(repo, key, value, { confirmed }); }
+  if (scope !== null && scope !== 'machine')
+    return { status: 400, body: { error: `A setting is saved for this machine (scope=machine) or the repo (no scope), not ${JSON.stringify(scope)}. Reload the panel, then try again.` } };
+  try { return panelSetSetting(repo, key, value, { confirmed, machine: scope === 'machine' }); }
   catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
 }
