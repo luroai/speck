@@ -1,7 +1,7 @@
 ---
 id: "0279"
 title: "Choose the model that builds tickets"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T18:42:22.421Z"
 ---
 # 0279 · Choose the model that builds tickets
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 There's no setting for the builder's model: builds run on whatever model `build_command` starts the builder with, which for Claude Code is your own default. You can choose the reviewer's model in the Settings view but not the builder's.
@@ -45,7 +45,7 @@ A `builder_model` setting chooses the model every build runs on, and the Setting
 - Self-check: a `builder_model` that YAML reads as a number (`builder_model: 5`) is now passed as `--model 5` rather than ignored.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now choose which model builds your tickets. In the panel's Settings view, under "Building and reviewing", a new `builder_model` setting sits just below the builder. With Claude Code as the builder it offers Fable, Opus, Sonnet and Haiku, each meaning the newest model of that kind, or "(default)" to keep whatever Claude Code uses on its own. Every build that `speck run` starts, resumes or hands back then runs on the model you picked. To see it, pick a model, save, and start `speck run`: the build's log records the command with the model in it. One thing to keep an eye on: only Claude Code builds use the setting for now. If you build with another agent and set it, `speck run` says so in one line when it starts and builds as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,73 @@ A `builder_model` setting chooses the model every build runs on, and the Setting
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Pass `builder_model` to Codex builds as well: `speck/ideas/2026-10-17-pass-builder-model-to-codex-builds.md`.
+- Known limit: with `builder: claude`, `--model` is added to `build_command` whatever program it starts, so a wrapper script that doesn't take `--model` would need `builder_model` left blank.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c601b2a4d9cd4a22e469a123c0344231d6d60078",
+    "thread_id": "01a14b2f-8f91-7692-8e87-176635b2e4cd",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 222711,
+      "cached_input_tokens": 181248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 808,
+      "reasoning_output_tokens": 106
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T18:46:32.673Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/config.yml adds a blank builder_model with an explanatory comment; scripts/config.mjs accepts it as text. Passing AC1 tests verify setting and clearing it, and unchanged commands for blank values."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/run.mjs applies withBuilderModel before launch, resumeKilled and handBackQueue use the command. Passing AC2 tests exercise model replacement, numeric values, actual run launches, and resumeArgv for resumed and handed-back builds."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs places editable builder_model directly under builder and supplies Claude or Codex models. templates/panel.html renders the list or text fallback. Passing AC3 server and page tests cover placement, explanations, options and saving."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html settingEditor preserves saved values outside the offered list and labels them 'not offered'. Passing AC4 test confirms the value remains unchanged when another setting is saved."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/build-model.mjs leaves other builders' commands unchanged; scripts/run.mjs prints builderModelNote once at startup. Passing AC5 integration test verifies the single notice and unchanged build arguments."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The setting selects the model for Claude builds, including resumed builds, and appears in Settings with the appropriate model choices. Existing saved values are preserved, and other builders receive a clear notice. The reported tests passed; no blocking issues found."
+  }
+}
+```
+
+</details>
