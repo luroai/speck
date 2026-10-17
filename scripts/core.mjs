@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { applyMachineConfig } from './machine.mjs';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const TEMPLATES = path.join(ROOT, 'templates');
@@ -97,8 +98,10 @@ function scalar(v) {
   return v;
 }
 
-export function loadConfig(repo) {
+// speck/config.yml with speck's defaults, and with this machine's values over the file's unless `machine` is false.
+export function loadConfig(repo, { machine = true } = {}) {
   const cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
+  if (machine) applyMachineConfig(repo, cfg);
   const limits = {
     max_acceptance_criteria: 5, max_changed_lines: 300, max_review_rounds: 3, max_merge_rounds: 2,
     escalate_after_repeat_disputes: 2, max_ticket_body_lines: 40, ...(cfg.limits || {}),
