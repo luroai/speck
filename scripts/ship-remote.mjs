@@ -32,8 +32,8 @@ function mergeRemoteBase(repo, remote, base, mergeAt, ours, theirs) {
   const merged = git(['commit-tree', tree.stdout.split('\n')[0].trim(), '-p', ours, '-p', theirs, '-m', `Merge ${remote}/${base} into ${base}`], repo).trim();
   if (git(['branch', '--show-current'], mergeAt).trim() === base) {
     // A fast-forward to the merge keeps uncommitted changes and untracked files, and refuses, changing nothing, when
-    // it would overwrite one.
-    const ff = sh('git', ['merge', '-q', '--ff-only', merged], { cwd: mergeAt });
+    // it would overwrite one. --no-autostash, so merge.autoStash can't stash them and leave them conflicted.
+    const ff = sh('git', ['merge', '-q', '--ff-only', '--no-autostash', merged], { cwd: mergeAt });
     if (ff.status !== 0) {
       const files = inTheWay(ff.stderr);
       throw new SpeckError(files.length
