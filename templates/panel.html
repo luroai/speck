@@ -331,12 +331,16 @@
   /* 0273: each group a box with a heading bar, like the panel's sections, with space between them. Each setting is a
      row, its name and info button on the left and its value or control on the right: every row splits its width the
      same way, so a group's controls line up in one column. */
-  #settings .sgroup { margin-top: 16px; }
+  /* 0281: the box's line drawn just outside it, taking no room, so what's in the box starts on a whole pixel. A
+     half-pixel border shifted it half a pixel, and a phone could then drop a control's left border. */
+  #settings .sgroup { margin-top: 16px; border: 0; outline: .5px solid var(--line); }
   #settings .sgroup .sh { padding: 8px 12px; }
   #settings .sgroup h4 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
   #settings .setting { padding: 8px 12px; border-bottom: .5px solid var(--line-soft); }
   #settings .setting:last-child { border-bottom: 0; }
-  #settings .setting .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 12px; }
+  /* 0281: the left half a whole number of pixels wide, so the info buttons and controls each side of the gap start on a
+     whole pixel when the row's width is odd. Without round(), two equal halves as before. */
+  #settings .setting .row { --gap: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-columns: round(down, calc((100% - var(--gap)) / 2), 1px) minmax(0, 1fr); align-items: center; gap: var(--gap); }
   /* 0277: the name, then the info button at the end of the row's left half, so a group's info buttons line up in one
      column, a row's gap clear of the values, whatever the name's length */
   #settings .setting .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
@@ -349,8 +353,10 @@
   #settings .setting p.bad { color: var(--bad); }
   /* 0258: a setting the panel can change: its control and Save button */
   #settings .setting .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
-  #settings .setting input.edit[type="number"] { width: 8ch; }
-  #settings .setting input.edit[type="text"] { width: 16ch; } /* 0273: in the row's right half */
+  /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
+     pixel. 0273: the text box in the row's right half. */
+  #settings .setting input.edit[type="number"] { box-sizing: border-box; width: calc(8ch + 14px); width: round(up, calc(8ch + 14px), 1px); }
+  #settings .setting input.edit[type="text"] { box-sizing: border-box; width: calc(16ch + 14px); width: round(up, calc(16ch + 14px), 1px); }
   #settings .setting .risk { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); display: inline-flex; align-items: center; gap: 4px; } /* 0259: auto_ship_risk's boxes */
   #settings .setting .save { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #settings .setting .save:hover { color: var(--text); border-color: var(--text); }
@@ -473,7 +479,7 @@
     .theme, .settings-open { justify-self: end; width: 44px; height: 44px; }
     .settings-open + .theme { margin-left: 0; }
     #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
-    #settings .setting .row { gap: 8px; } /* 0273: room for the names */
+    #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }

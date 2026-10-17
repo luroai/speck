@@ -38,6 +38,10 @@ Every info button and control in the Settings view is drawn with its border on a
 ## Notes
 - Seen on an iPhone on 2026-10-17, and measured in Chromium at 390 px wide: `button.info` at left 173.5, `select.edit` at left 199.5, with `.5px` borders (`templates/panel.html`, `#settings .setting` rules).
 - Failing before this build: none
+- Cause, measured in Chromium: the row splits its width into two equal halves, so an odd width puts the right half, and the info buttons at the end of the left half, half a pixel off. On Safari the group box's .5px border adds another half pixel (Chromium draws it 1px wide). The text and number boxes, sized in `ch`, also had fractional right edges.
+- AC2 in Chromium: it draws any border under 1px as 1 CSS px at every pixel ratio, so the test only guards against a regression there. The whole-pixel edges in AC1 are what keep a hairline border from being dropped on a phone.
+- Lists: their width comes from their longest option, which both Chromium and WebKit round up to a whole pixel, so a list's right edge falls on a whole pixel once its left edge does.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
