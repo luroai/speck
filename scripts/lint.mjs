@@ -3,8 +3,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { STATUSES, EFFORTS, TYPES, blank, contentLines, ticketType, ticketPriority, validPriority, modelFamily, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
+import { STATUSES, EFFORTS, TYPES, blank, contentLines, ticketType, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
 import { knownEffort } from './codex-models.mjs';
+import { ticketSameModelProblem } from './same-model.mjs';
 
 export function lintTicket(ticket, cfg) {
   const errors = [], warnings = [];
@@ -21,10 +22,8 @@ export function lintTicket(ticket, cfg) {
       ? 'priority must be blank or a whole number from 1 to 5 (got 0): priority 0 is only for a fix ticket.'
       : `priority must be blank or a whole number from 1 to 5, or 0 on a fix ticket (got ${JSON.stringify(fm.priority)}).`);
   if (!STATUSES.includes(fm.status)) errors.push(`status must be one of ${STATUSES.join(', ')}.`);
-  if (fm.builder && modelFamily(fm.builder) === modelFamily(fm.reviewer) && !cfg.allow_same_model_review)
-    errors.push(fm.builder === fm.reviewer
-      ? `builder and reviewer are both "${fm.builder}". Use a different reviewer or set allow_same_model_review: true.`
-      : `builder "${fm.builder}" and reviewer "${fm.reviewer}" are the same model. Use a different reviewer or set allow_same_model_review: true.`);
+  const sameModel = cfg.allow_same_model_review ? null : ticketSameModelProblem(fm, cfg); // 0280: by model, not only by agent
+  if (sameModel) errors.push(sameModel);
   const top = splitHeader(ticket.raw.slice(fmEnd(ticket.raw)));
   const [wantHeading, , wantStatus] = ticketHeader(fm).split('\n');
   if (!top.heading) warnings.push(`No \`${wantHeading}\` heading at the top. Run \`speck init\` again to add it.`);

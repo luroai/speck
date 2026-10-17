@@ -6,7 +6,7 @@ branch_prefix: speck/
 builder: claude
 builder_model: ""                # blank: the builder's own default. Otherwise the model every build speck run starts runs on, passed to Claude Code as --model: fable, opus, sonnet, haiku or a full model name
 reviewer: codex                  # codex | claude-subagent
-allow_same_model_review: false   # must be true for builder and reviewer to be the same agent
+allow_same_model_review: false   # must be true for a builder and reviewer of the same family unless builder_model and reviewer_model are both set and differ
 reviewer_model: ""               # blank: the reviewer's own default. Otherwise a model name in the reviewer's own format
 reviewer_effort: ""              # blank: the reviewer's own default. Otherwise low | medium | high | xhigh | max
 review_timeout_minutes: 30       # a reviewer speck runs (codex, or a command under reviewer_options) that takes longer than this many minutes is ended, and the round fails
