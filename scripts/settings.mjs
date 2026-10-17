@@ -3,7 +3,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, sh, loadConfig, parseYaml, modelFamily, findRepoRoot, EFFORTS } from './core.mjs';
+import { SpeckError, sh, loadConfig, parseYaml, findRepoRoot, EFFORTS } from './core.mjs';
+import { sameModelProblem } from './same-model.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
@@ -28,7 +29,7 @@ export const SETTING_GROUPS = [
     { key: 'reviewer_effort', default: '',
       explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
     { key: 'allow_same_model_review', default: false,
-      explain: 'Whether the builder and reviewer may be the same model. Leave it false so a different model checks the work: true lets a model review work like its own, which tends to catch less.' },
+      explain: 'Whether the builder and reviewer may be the same model, needed only when they are in the same family (such as a Claude builder and a claude-subagent reviewer) and would run the same model, or when either model is left at its default. Leave it false so a different model checks the work: true lets a model review work like its own, which tends to catch less.' },
   ] },
   { title: 'How much runs at once', settings: [
     { key: 'max_parallel_builds', default: 1,
@@ -162,8 +163,6 @@ function checkChange(repo, text, cfg, { key, value, machine }) {
   const choices = key === 'reviewer_effort' ? undefined : choicesOf(key, parseYaml(text));
   if (choices && ![].concat(want).every(w => choices.includes(w)))
     return { status: 422, error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` };
-  if (key === 'reviewer' && modelFamily(String(cfg.builder)) === modelFamily(want) && cfg.allow_same_model_review !== true)
-    return { status: 422, error: `reviewer "${want}" is the same agent as the builder, "${cfg.builder}", and allow_same_model_review is false. Pick a reviewer other than ${cfg.builder}.` };
   const same = key === 'auto_ship_risk' ? [...want].sort().join() === [].concat(valueIn(text, repo, key).value).map(String).sort().join()
     : JSON.stringify(valueIn(text, repo, key).value) === JSON.stringify(want);
   return { want, same };
@@ -188,6 +187,14 @@ export function panelSaveSettings(repo, changes, { confirmed = null } = {}) {
   const checked = changes.map(c => ({ ...c, ...checkChange(repo, text, cfg, c) }));
   const bad = checked.filter(c => c.error !== undefined);
   if (bad.length) return refusal(bad[0].status, Object.fromEntries(bad.map(c => [c.key, c.error])));
+  // 0280: a reviewer of the builder's own family is refused only when the two would run the same model, or might, as
+  // the settings would be once saved. So a change to builder_model or reviewer_model can be refused too.
+  const models = checked.filter(c => !c.machine && ['reviewer', 'builder_model', 'reviewer_model'].includes(c.key));
+  if (models.length && cfg.allow_same_model_review !== true) {
+    const will = { ...cfg, ...Object.fromEntries(models.map(c => [c.key, c.want])) };
+    const problem = sameModelProblem(String(will.builder ?? ''), String(will.reviewer ?? ''), will, will.reviewer_model);
+    if (problem) return refusal(422, each(models, problem));
+  }
   const toFile = checked.filter(c => !c.machine && !c.same), toMachine = checked.filter(c => c.machine && !c.same);
   let next = text;
   if (toFile.length) {

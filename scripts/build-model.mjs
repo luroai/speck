@@ -3,7 +3,7 @@
 
 // builder_model as speck/config.yml has it, trimmed, a number read as YAML gives it (builder_model: 5) included: ''
 // when it's blank or missing.
-const modelOf = cfg => typeof cfg.builder_model === 'string' || typeof cfg.builder_model === 'number' ? String(cfg.builder_model).trim() : '';
+export const modelOf = cfg => typeof cfg.builder_model === 'string' || typeof cfg.builder_model === 'number' ? String(cfg.builder_model).trim() : '';
 
 // build_command's words with `--model <builder_model>` added at the end when the builder is claude and builder_model
 // is set, replacing any --model the command already gives. Otherwise the words exactly as they are.
