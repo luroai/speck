@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: ["0259","0260"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T09:38:25.559Z"
-approved: "2026-10-17T09:42:50.385Z"
+approved: "2026-10-17T09:46:10.309Z"
 
 ---
 # 0261 · Manage this machine's settings from the panel
@@ -49,13 +49,14 @@ The panel's Settings view now says, for the number of builds and test runs at on
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 208,697
-- Elapsed since build started: 4 min
-- Changed lines: 111 (limit 5000)
+- Reviewer tokens: 548,162
+- Elapsed since build started: 8 min
+- Changed lines: 109 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: `speck config show` still lists `speck/config.yml`'s values only, not this machine's (speck/ideas/2026-10-17-show-this-machine-s-values-in-speck-config-show.md).
 
@@ -115,6 +116,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The panel shows whether these settings come from this machine or the repo, lets users choose where to save changes, and can clear machine overrides. Machine saves leave the repo and commits untouched. The supplied 50-test run passed, and the code supports all four criteria. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1da07478f1be78347b59e28c979fd6184522f33a",
+    "merge": true,
+    "thread_id": "01a1493d-9151-7781-8fc9-e6465dd9ebfc",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 338335,
+      "cached_input_tokens": 269056,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1130,
+      "reasoning_output_tokens": 53
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:46:07.449Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs panelSettings returns effective values, source and repo values. The merged renderSettings preserves these alongside the tooltip controls. Both 0261 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scopeQuestion and saveSetting preserve scope selection. machineSetting shares saveMachineValue with the CLI; repo saves retain validation and commits. Both 0261 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "machineLine sends the clear request; machineSetting removes the override and panelSettings then returns the repo value. The 0261 AC3 storage and view test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Machine writes bypass branch and dirty-config restrictions. The settings route still checks origin and token before writing. Both 0261 AC4 tests passed, including real HTTP 403 checks."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves machine settings controls and the existing settings tooltips. The script-size and test-runner registration fixes address issues caused by this ticket without weakening tests. The reported run has 69 passes, no failures and three skips. All four criteria remain satisfied."
   }
 }
 ```
