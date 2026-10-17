@@ -44,7 +44,7 @@ Every info button and control in the Settings view is drawn with its border on a
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone, the Settings view's info buttons, lists and text and number boxes now show their border on all four sides. Before, an iPhone could leave the left edge off, because they sat half a pixel off the screen's pixel grid. To see it, open Settings on an iPhone and look at the "i" buttons and the boxes beside them: each should have a full outline. The view's layout is the same, and the rest of the panel is unchanged. Worth a look on your phone: the view's other buttons, such as Close and Save, weren't part of this change.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,9 @@ Every info button and control in the Settings view is drawn with its border on a
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The Settings view's other buttons (Close, Save, Save all) keep half-pixel borders and may lose a side on a phone: `speck/ideas/2026-10-17-keep-the-settings-buttons-borders-whole-on-a-phone.md`.
+  - Not tested in WebKit: none is installed here. The AC2 test reads the borders' declared widths at each pixel ratio instead.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -128,6 +131,82 @@ Every info button and control in the Settings view is drawn with its border on a
     ],
     "escalation_question": "",
     "summary": "The change aligns Settings controls to whole pixels and preserves the existing layout. Chromium tests pass, but they do not establish that borders meet the required thickness in Safari. That gap needs resolving before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bcce6e2a417fb7c29de74c6e8274479d74824cd5",
+    "thread_id": "01a14b50-028e-7893-b8d0-3f1c92ac2415",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 197525,
+      "cached_input_tokens": 144640,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1644,
+      "reasoning_output_tokens": 152
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T19:24:52.274Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The passing 0281 AC1 AC2 browser test measures whole-pixel left and right edges at widths 320, 390, 400 and 1280, at DPR 1, 2 and 3."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel.html now sets .edit and .info borders to 1px below 2x and .5px at the required 2x and 3x ratios. The passing test checks active stylesheet declarations, avoiding Chromium's computed-width rounding."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All production changes remain scoped to #settings. The revised passing tests check the affected selectors and verify the Plan section retains its border and has no outline at every required width and ratio."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "CSS review confirms group boxes, rows and shared alignment remain. The fresh test output also confirms the 0273 layout and 0277 info-button alignment browser tests pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The original half-pixel declarations did not establish the required minimum border thickness at DPR 1.",
+        "suggested_fix": "Addressed by the resolution-dependent 1px border override and tests of active declared widths. Dedicated WebKit coverage is not required to establish this thickness calculation.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "test/panel-0281.test.mjs",
+        "issue": "The original AC3 test selected only rules carrying a ticket comment on the same line.",
+        "suggested_fix": "Addressed by checking the affected rule selectors and measuring an outside section's unchanged styles.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings controls now align to whole pixels and have borders at least one device pixel thick at all required ratios. The existing layout is preserved, and all relevant tests pass. Safari was not run directly, but the revised border rules resolve the thickness concern."
   }
 }
 ```
