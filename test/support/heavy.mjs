@@ -75,6 +75,7 @@ export const HEAVY = [
   'test/panel-0208.test.mjs',
   'test/panel-0213.test.mjs',
   'test/panel-0214.test.mjs',
+  'test/panel-0257.test.mjs',
   'test/panel.test.mjs',
   'test/pause-0070.test.mjs',
   'test/ready-0108.test.mjs',

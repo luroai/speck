@@ -9,7 +9,7 @@ import { Worker } from 'node:worker_threads';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild, runState, runsDir, pidAlive, refusalFile, takeRefusal } from './run.mjs';
-import { reviewPack, NO_ROUNDS } from './pack.mjs';
+import { panelPack } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
 import { panelSettings } from './settings.mjs';
@@ -156,17 +156,6 @@ function panelLog(repo, id) {
   const lines = text.split('\n');
   while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
   return { text: lines.slice(-PANEL_LOG_LINES).join('\n'), truncated: lines.length > PANEL_LOG_LINES };
-}
-
-// A ticket's review pack for the panel's Review pack button: the text `speck pack <id>` prints from this checkout now,
-// or null when the ticket has no review rounds, which isn't an error. Reads only, writing nothing.
-function panelPack(repo, id) {
-  try { findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
-  try { return { status: 200, body: { pack: reviewPack(repo, id) } }; }
-  catch (e) {
-    if (!(e instanceof SpeckError)) throw e;
-    return e.message === NO_ROUNDS ? { status: 200, body: { pack: null } } : { status: 409, body: { error: e.message } };
-  }
 }
 
 // 0133: the Ship button in an approved ticket's review pack. It's the user shipping (Gate 2), so it runs `speck ship <id>`
