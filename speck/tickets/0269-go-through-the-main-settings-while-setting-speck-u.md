@@ -1,7 +1,7 @@
 ---
 id: "0269"
 title: "Go through the main settings while setting speck up"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0258"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T09:22:09.236Z"
+approved: "2026-10-17T09:24:59.553Z"
 
 ---
 # 0269 · Go through the main settings while setting speck up
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck init` writes speck's generic defaults into a new project's `speck/config.yml`, and the setup skill then asks only about the base branch, the test command, worktree setup, the builder and reviewer, and unattended builds. It never goes through how much ships without you, how many builds run at once or how big a ticket can be, so those keep defaults the user never chose. Someone who later finds `auto_ship` on, or a 300-line limit, may not know where it came from or what it means.
@@ -50,9 +51,14 @@ Setting speck up now goes through seven more settings: whether approved work shi
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 96,273
+- Elapsed since build started: 3 min
+- Changed lines: 53 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
