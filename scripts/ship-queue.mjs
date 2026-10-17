@@ -76,7 +76,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
   const base = cfg.base_branch;
   const last = new Map(); // each ticket's refs at its last try
   let current = null; // the ship this speck run has going
-  let hold = null; // the base branch's commit a ship found failing (exit 14): no ship starts while it's still there
+  let hold = null; // the base branch's commit a ship found failing (exit 14): only fix tickets ship while it's still there
   const killed = new Map(); // 0212: each ticket's refs when a ship of it killed partway was last tried again at once
 
   const ended = (id, prev, refs, log, since, code, error) => {
@@ -100,19 +100,20 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
     say(`${id} didn't ship: ${why}\nspeck run will try it again once ${base} or its branch has a new commit.`);
     if (code === 14) {
       hold = headOf(repo, base); // as the ship ended: it may have tested commits made while it ran
-      say(`Shipping is on hold until ${base} passes: speck run won't start another ship until ${base} has a new commit.`);
+      say(`Shipping is on hold until ${base} passes: speck run won't start another ship, other than a fix ticket's, until ${base} has a new commit.`);
     }
     if (!error && HAND_BACK[code]) handBack({ id, kind: HAND_BACK[code], why, head: refs.head });
   };
 
   const check = tickets => {
     if (current) return;
-    if (hold !== null) {
-      if (headOf(repo, base) === hold) return;
+    if (hold !== null && headOf(repo, base) !== hold) {
       hold = null;
       say(`${base} has a new commit, so speck run is shipping again.`);
     }
     for (const t of shipOrder(tickets)) {
+      // 0263: on hold, only a fix ticket ships, as it's what gives the base branch the commit that lifts the hold.
+      if (hold !== null && t.type !== 'fix') continue;
       if (waiting(t.id)) continue;
       const refs = refsOf(repo, cfg, t.id);
       if (!last.has(t.id)) {
@@ -128,6 +129,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       const log = path.join(runs, `${t.id}.ship.log`), since = new Date().toISOString();
       current = t.id;
       last.set(t.id, refs);
+      if (hold !== null) say(`${t.id} is a fix ticket, so speck run is shipping it despite the hold on ${base}.`);
       say(`Shipping ${t.id}: speck ship ${t.id} --auto. Log: ${path.relative(repo, log)}`);
       launch(repo, t.id, log, (code, error) => ended(t.id, prev, refs, log, since, code, error));
       return;

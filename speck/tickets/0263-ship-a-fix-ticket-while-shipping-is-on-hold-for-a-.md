@@ -40,6 +40,7 @@ While shipping is on hold for a failing base branch, speck run still ships an ap
 - The hold is in `scripts/ship-queue.mjs` (`hold`, set on exit 14 in `ended`, checked first in `check`). `shipOrder` already puts fix tickets first.
 - Seen on 2026-10-17: 0257's ship exited 14, the hold went on, and 0262 (type fix) was approved at 07:09 but not shipped.
 - Failing before this build: none
+- Self-check: the line putting shipping on hold now says a fix ticket still ships, as it otherwise said no ship would start; test added.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
