@@ -8,6 +8,7 @@ import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeArgv, handBackQueue } from './hand-back.mjs';
 import { countStop } from './stop-wait.mjs';
+import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { BUILD_ENV, buildEnv } from './build-env.mjs';
 import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
@@ -87,13 +88,6 @@ export function cmdRun() {
 }
 
 export const runWorker = () => runOn(true); // speck run on new code, started by the one it replaces (0247)
-
-// How many builds speck run keeps going at once: this machine's value (0260) or speck/config.yml's, as loadConfig read it.
-export function maxParallelBuilds(cfg) {
-  const max = cfg.max_parallel_builds ?? 1;
-  if (!Number.isInteger(max) || max < 1) throw new SpeckError(`max_parallel_builds in speck/config.yml must be a whole number of at least 1 (got "${max}").`);
-  return max;
-}
 
 // Watches the board: starts a build for each ready ticket that isn't waiting on another, up to max_parallel_builds at
 // once, and ships approved ones (shipQueue). Each runs in its own process group, so stopping speck run leaves it running.

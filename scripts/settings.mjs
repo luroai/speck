@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, sh, loadConfig, parseYaml, modelFamily, EFFORTS } from './core.mjs';
+import { SpeckError, sh, loadConfig, parseYaml, modelFamily, findRepoRoot, EFFORTS } from './core.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 
@@ -79,6 +79,21 @@ export function panelSettings(repo) {
 }
 
 const shown = v => v === '' ? '""' : String(v);
+
+// `speck config show [--json]` (0269): each setting of the panel's Settings view, by group, with its value now, whether
+// that's speck's default and the explanation the panel shows, so setup and the panel say the same thing.
+export function cmdConfigShow(args) {
+  const json = args.length === 1 && args[0] === '--json';
+  if (args.length && !json) throw new SpeckError('Usage: speck config show [--json]');
+  const defaults = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, s.default]));
+  const groups = panelSettings(findRepoRoot()).groups.map(g => ({ title: g.title, settings: g.settings.map(s => ({
+    key: s.key, value: s.value, is_default: JSON.stringify(s.value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: s.explain,
+  })) }));
+  if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
+  const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : shown(v);
+  console.log(groups.map(g => `${g.title}\n${g.settings.map(s =>
+    `  ${s.key}: ${show(s.value)} (${s.is_default ? 'the default' : `speck's default is ${show(s.speck_default)}`})\n    ${s.explain}`).join('\n')}`).join('\n\n'));
+}
 
 // The panel's Save on a setting: checks the value as `speck config set` does, rewrites only that setting's line in
 // speck/config.yml and commits only that file on the base branch. Every refusal comes before the first write.
