@@ -40,6 +40,7 @@ The test runner works out which test files are heavy from what they start, so th
 ## Notes
 - Today's list is `HEAVY` in `test/support/heavy.mjs`, used by `runSuite` in `test/support/suite.mjs`. The check is the 0233 AC1 test in `test/suite-0233.test.mjs`, which finds the files with a pattern of helper names.
 - Failing before this build: none
+- Self-check: no changes. Compared the files found from their code with the old list on this repo: the same 94, apart from `test/build-log-0176.test.mjs` and `test/panel-0190.test.mjs`, which the old list named by hand. They start `speck run` or a panel only through other support helpers (`idleCpu`, `onPhone`), which the pattern doesn't name, so they're no longer heavy. Naming more helpers is out of scope; saved as a follow-up.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

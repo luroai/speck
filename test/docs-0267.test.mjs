@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './support/speck.mjs';
-import { HEAVY } from './support/heavy.mjs';
+import { STARTS } from './support/heavy.mjs';
 
 // ---------- 0267: remove the tests that pin documents' wording ----------
 
@@ -23,7 +23,7 @@ const DOC = /README|brief\.md|'brief|CHANGELOG|docs\/releases|'docs'/;
 function docTests() {
   const out = [];
   for (const f of fs.readdirSync(path.join(ROOT, 'test')).filter(f => f.endsWith('.test.mjs')).map(f => `test/${f}`)) {
-    if (f === SELF || HEAVY.includes(f) || !DOC.test(read(f))) continue;
+    if (f === SELF || STARTS.test(read(f)) || !DOC.test(read(f))) continue;
     const outside = [], names = [];
     let cur = null;
     for (const line of read(f).split('\n')) {
