@@ -1,7 +1,7 @@
 ---
 id: "0268"
 title: "Show each setting's explanation in a tooltip"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0258"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T09:22:08.221Z"
 
 ---
 # 0268 · Show each setting's explanation in a tooltip
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel's Settings view (0257) shows a one- or two-sentence explanation under every setting, so the view is long and the values are hard to scan.
