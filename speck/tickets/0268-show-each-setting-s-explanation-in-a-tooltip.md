@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0258"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T09:22:08.221Z"
-approved: "2026-10-17T09:30:08.772Z"
+approved: "2026-10-17T09:37:18.939Z"
 
 ---
 # 0268 · Show each setting's explanation in a tooltip
@@ -53,12 +53,13 @@ To see it, open Settings from the panel's header and try the "i" beside any sett
 ## Review log
 Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2, 1 of them a merge round
+- Review rounds: 3, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 293,858
-- Elapsed since build started: 8 min
+- Reviewer tokens: 610,544
+- Elapsed since build started: 15 min
 - Changed lines: 45 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: on narrow screens the info button is 28 px, below the 44 px tap area the panel's tags have (0165).
@@ -179,6 +180,66 @@ Round 2 (codex, merge round): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The merged change still meets all four criteria. The info text now meets the panel's minimum font size, and the browser test is correctly registered for test scheduling. All 48 tests in the supplied run passed, with none skipped. No blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5138227ee837a046389132b436239f37b8268738",
+    "merge": true,
+    "thread_id": "01a1492d-cc9a-7792-918e-74385777e4b3",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 315118,
+      "cached_input_tokens": 252416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1568,
+      "reasoning_output_tokens": 73
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:37:16.387Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: renderSettings() places each info button immediately after its setting name; settingInfo() supplies an accessible 'About <setting>' label, and showSettingTip() initially hides explanations. The 0268 AC1 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "settingInfo() handles hover, keyboard focus and click; showSettingTip() retains clicked explanations and switches between settings. Both 0268 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The Escape handler hides an explanation before closing Settings, and closeSettings() clears tooltip state. Both 0268 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "settingInfo() links each button to its uniquely identified explanation using aria-describedby. Both 0268 AC4 tests passed, including the browser containment check at 320 px."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves the tooltip behaviour and 0259's settings controls and confirmation checks. Both browser test files remain registered for test scheduling. All 57 tests in the supplied run passed, with none skipped. No blocking concerns found."
   }
 }
 ```
