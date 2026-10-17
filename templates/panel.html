@@ -55,7 +55,7 @@
   code, .mono, .id { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   code { font-size: 12px; color: var(--muted); }
 
-  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: 16px; padding: calc(14px + env(safe-area-inset-top)) 24px 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: clamp(10px, calc(10px + (100vw - 700px) * .03), 16px); padding: calc(14px + env(safe-area-inset-top)) clamp(16px, calc(16px + (100vw - 700px) * .04), 24px) 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .logo { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
   /* 0170: speck's eared logo from the landing page, before the wordmark, in the text colour with the red dot */
   .logo .mark { width: 1em; height: 1em; vertical-align: -.16em; margin-right: 6px; }
@@ -63,13 +63,16 @@
   :root[data-theme="dark"] .logo .mark .dot { fill: #d4664e; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .logo, .run-state, .theme { flex-shrink: 0; }
-  .theme { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
-  .theme:hover { border-color: var(--text); color: var(--text); }
-  .theme svg { width: 15px; height: 15px; }
+  .logo, .run-state, .theme, .settings-open { flex-shrink: 0; }
+  .theme, .settings-open { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+  .theme:hover, .settings-open:hover { border-color: var(--text); color: var(--text); }
+  .theme svg, .settings-open svg { width: 15px; height: 15px; }
   .theme .sun { display: none; }
   :root[data-theme="dark"] .theme .sun { display: block; }
   :root[data-theme="dark"] .theme .moon { display: none; }
+  /* 0257: Settings sits just before light/dark, closer to it than the rest. Below 900 px the header's gaps and sides
+     narrow with the screen, so the project's name still has room beside speck. */
+  .settings-open + .theme { margin-left: -6px; }
 
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); }
   section { background: var(--panel); border: .5px solid var(--line); }
@@ -317,6 +320,21 @@
   td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
   #full-ticket { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 1px solid var(--line); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
   #full-ticket[hidden] { display: none; }
+  /* 0257: the Settings view, a side pane like the full ticket's, over its own backdrop */
+  #settings-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }
+  #settings-backdrop[hidden], #settings[hidden] { display: none; }
+  #settings { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 1px solid var(--line); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
+  #settings .top { display: flex; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); }
+  #settings .top h3 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; }
+  #settings .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #settings .close:hover { color: var(--text); }
+  #settings h4 { margin: 16px 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
+  #settings .setting { padding: 8px 0; border-bottom: .5px solid var(--line-soft); }
+  #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+  #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); overflow-wrap: anywhere; }
+  #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
+  #settings .setting .default { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+  #settings .setting p { margin: 4px 0 0; color: var(--muted); }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
@@ -381,7 +399,9 @@
     color-scheme: dark;
   }
   :root[data-theme="dark"] #full-backdrop { background: rgba(0, 0, 0, .45); }
+  :root[data-theme="dark"] #settings-backdrop { background: rgba(0, 0, 0, .45); }
   :root[data-theme="dark"] #full-ticket { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
+  :root[data-theme="dark"] #settings { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
 
   /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
      clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
@@ -390,7 +410,7 @@
     header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; }
     header > * { white-space: nowrap; }
     /* 0160: scrolled down, one row of speck, Auto-build and light/dark, 44 px buttons and 6 px above and below */
-    header.slim { grid-template-columns: auto minmax(0, 1fr) auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
+    header.slim { grid-template-columns: auto minmax(0, 1fr) auto auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
     header.slim .repo, header.slim .logo span { display: none; }
     .logo span { letter-spacing: .02em; } /* 0161: room for the project's name beside it, at 12 px */
     /* 0170: and room for the mark before speck */
@@ -401,11 +421,13 @@
     .run-state { justify-self: start; height: 44px; min-width: 44px; }
     /* 0163: in two rows, Auto-build has the row under speck and the project to itself, but light/dark's place, so a
        long label is cut short there rather than move the project's name. Slim, each is in its own column again. */
-    header:not(.slim) { grid-template-columns: auto minmax(0, 1fr) auto; }
-    header:not(.slim) .repo { grid-column: 2 / 4; }
+    header:not(.slim) { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+    header:not(.slim) .repo { grid-column: 2 / 5; }
     header:not(.slim) .run-state { grid-column: 1 / 3; }
-    header:not(.slim) .theme { grid-column: 3; }
-    .theme { justify-self: end; width: 44px; height: 44px; }
+    header:not(.slim) .settings-open { grid-column: 3; } /* 0257: Settings, just before light/dark */
+    header:not(.slim) #theme { grid-column: 4; }
+    .theme, .settings-open { justify-self: end; width: 44px; height: 44px; }
+    .settings-open + .theme { margin-left: 0; }
     .run-error, .offline, .restart { padding: 6px 16px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
@@ -486,6 +508,9 @@
   <div class="logo"><svg class="mark" viewBox="8 11 48 48" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M14.5 22.5 A21.5 21.5 0 1 0 22 16.2"/><path d="M12.6 19.8 a5.2 5.2 0 0 1 8.2 -5.6"/><path d="M43.2 14.2 a5.2 5.2 0 0 1 8.2 5.6"/><circle class="dot" cx="31.7" cy="33.2" r="4.8" stroke="none"/></svg>speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
   <button class="run-state" id="run" type="button" aria-pressed="false" hidden></button>
+  <button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="5.5" cy="4.5" r="1.6" fill="var(--bg)"/><circle cx="10.5" cy="11.5" r="1.6" fill="var(--bg)"/></svg>
+  </button>
   <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">
     <svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/></svg>
     <svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
@@ -514,6 +539,8 @@
 </main>
 <div id="full-backdrop" hidden></div>
 <aside id="full-ticket" tabindex="-1" hidden></aside>
+<div id="settings-backdrop" hidden></div>
+<aside id="settings" tabindex="-1" role="dialog" aria-label="Settings" hidden></aside>
 <div id="tag-tip" role="tooltip" hidden></div>
 
 <script>
@@ -1495,7 +1522,7 @@ function renderFull(m) {
   const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
-  holdPage(!!t);
+  holdPage(!!t || settingsView !== null);
   if (sig !== fullBuilt) {
     fullBuilt = sig;
     readyBuilt = readySig;
@@ -1569,9 +1596,70 @@ if (pageHeader) {
 }
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render(); });
+// 0257: the Settings view. It shows the settings people tune, read afresh from speck/config.yml each time it opens, and
+// changes none of them.
+let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
+$('settings-open').addEventListener('click', openSettings);
+$('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) closeSettings(); });
+renderSettings(); // closed
+function openSettings() {
+  settingsView = { state: 'loading' };
+  renderSettings();
+  const pane = $('settings');
+  if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
+  loadSettings();
+}
+async function loadSettings() {
+  const mine = ++settingsSeq;
+  let next;
+  try {
+    const res = await fetch('/api/settings', { cache: 'no-store' });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups }
+      : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
+  } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  settingsView = next;
+  renderSettings();
+}
+function closeSettings() {
+  settingsView = null;
+  settingsSeq++;
+  renderSettings();
+  const back = $('settings-open');
+  if (back.focus) back.focus();
+}
+const settingValue = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : v !== null && typeof v === 'object' ? JSON.stringify(v) : String(v);
+function renderSettings() {
+  const pane = $('settings'), open = settingsView !== null;
+  pane.hidden = !open;
+  $('settings-backdrop').hidden = !open;
+  holdPage(open || fullId !== null);
+  if (!open) { pane.replaceChildren(); return; }
+  const close = el('button', 'close', 'Close');
+  close.type = 'button';
+  close.addEventListener('click', closeSettings);
+  const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close)];
+  if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
+  else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
+  else {
+    kids.push(el('p', null, 'What speck reads from speck/config.yml now. Change them there.'));
+    for (const g of settingsView.groups) {
+      kids.push(el('h4', null, g.title));
+      for (const x of Array.isArray(g.settings) ? g.settings : []) {
+        kids.push(el('div', 'setting', null,
+          el('div', 'line', null, el('code', 'name', x.key), el('code', 'value', settingValue(x.value)), x.default ? el('span', 'default', 'default') : null),
+          el('p', null, x.explain)));
+      }
+    }
+  }
+  pane.replaceChildren(...kids);
+}
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (tipTag !== null) closeTip();
+  else if (settingsView !== null) closeSettings();
   else if (priorityMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();
 });
