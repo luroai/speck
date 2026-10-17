@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T20:29:54.810Z"
-approved: "2026-10-16T20:38:12.798Z"
+approved: "2026-10-17T07:43:12.230Z"
 
 ---
 # 0257 · Show speck's settings, explained, in the panel
@@ -58,13 +58,14 @@ Worth a look: the header's spacing now narrows a little on screens between phone
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 113,707
-- Elapsed since build started: 8 min
-- Changed lines: 164 (limit 5000)
+- Reviewer tokens: 349,575
+- Elapsed since build started: 673 min
+- Changed lines: 198 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none went to the inbox):
 - The auto_ship explanation doesn't mention auto-ship's third condition, that the reviewer could inspect the repo in every round. It's left out to keep the explanation short. Revisit it if people are surprised that a covered ticket waits.
@@ -131,6 +132,71 @@ Follow-ups (Delivery log only, none went to the inbox):
     "findings": [],
     "escalation_question": "",
     "summary": "The panel now shows the requested settings in four explained groups, refreshes their values each time it opens, and offers no editing controls. The tests exercise all five criteria and passed. I found no blocking correctness or scope issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "11840a537a8c047a09b83801c7a22b3e787bde5c",
+    "merge": true,
+    "thread_id": "01a1466f-41ca-7770-a945-245c3838071a",
+    "seconds": 12,
+    "usage": {
+      "input_tokens": 234788,
+      "cached_input_tokens": 129408,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1080,
+      "reasoning_output_tokens": 44
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T07:43:09.605Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains the Settings header button, openSettings(), closeSettings() and Escape handling with focus restoration. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs panelSettings() supplies the required ordered groups, config values and labelled defaults; renderSettings() displays them. All three AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "SETTING_GROUPS retains explanations for all twelve settings, including explicit merge-and-push warnings for both shipping settings. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "openSettings() requests fresh settings on each opening, and panelSettings() rereads config. Passing AC4 tests cover file changes, reopening, errors and stale responses."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "renderSettings() provides only a Close control. Settings requests use GET, and the server rejects POST. Both relevant AC5 tests passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The Settings view still meets all five criteria. The shipping fixes separate Settings from the light/dark button, preserve review-pack behaviour and correctly classify the new server test. The recorded run has no failures. No blocking concerns remain."
   }
 }
 ```
