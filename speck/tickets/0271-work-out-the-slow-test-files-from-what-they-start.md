@@ -1,7 +1,7 @@
 ---
 id: "0271"
 title: "Work out the slow test files from what they start"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T10:57:50.396Z"
 ---
 # 0271 · Work out the slow test files from what they start
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Test files that start a real panel, a browser or `speck run` must be listed by hand in `test/support/heavy.mjs`, and a test (0233 AC1) fails when one isn't. Builders don't run that test, so they forget, and the ticket is handed back at ship time. Every such ticket also adds to the same list, so tickets built side by side conflict there. On 2026-10-17 this handed back 0258, 0261 and 0268, and caused 0268's merge conflict.
@@ -43,7 +43,11 @@ The test runner works out which test files are heavy from what they start, so th
 - Self-check: no changes. Compared the files found from their code with the old list on this repo: the same 94, apart from `test/build-log-0176.test.mjs` and `test/panel-0190.test.mjs`, which the old list named by hand. They start `speck run` or a panel only through other support helpers (`idleCpu`, `onPhone`), which the pattern doesn't name, so they're no longer heavy. Naming more helpers is out of scope; saved as a follow-up.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck's own tests no longer need a hand-kept list of the slow tests that open a panel, a browser or `speck run`. The test runner now spots them by reading each test, so a new slow test is handled without anyone adding it to a list, and tickets built side by side no longer clash over that list or get handed back for forgetting it.
+
+To see it, add a test that opens a panel and run the tests on a machine with 8 cores or fewer: it runs with the other slow tests, at most 2 at a time, with no other change.
+
+Worth keeping an eye on: two existing slow tests open a panel or `speck run` in a roundabout way that isn't spotted, so they now run as ordinary tests. A follow-up to catch them is in the inbox.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,4 +56,72 @@ The test runner works out which test files are heavy from what they start, so th
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: speck/ideas/2026-10-17-count-tests-that-start-a-panel-through-another-helper-as-heavy.md (`test/panel-0190.test.mjs` and `test/build-log-0176.test.mjs` start a panel or `speck run` through `onPhone` or `idleCpu`, so they're no longer heavy).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "aebe960c43bfa02b5a7092e50019cd92df1e3bf9",
+    "thread_id": "01a14984-7a92-7e83-bf8d-3d1dbcdba88a",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 107667,
+      "cached_input_tokens": 74624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 749,
+      "reasoning_output_tokens": 15
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T11:00:00.885Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/support/heavy.mjs heavyFiles uses the exact former 0233 helper pattern. runSuite uses it by default. Passing 0271 AC1 tests cover every helper, exclusions and repository examples."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0271 AC2 AC3 test creates new fixture files calling startPanel and runs the real runner without supplying a heavy list; automatic classification limits their concurrency."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "heavyLimit and scheduling remain unchanged. Passing 0233 tests cover core-count boundaries; passing 0271 integration tests verify automatic detection, two heavy files alongside other files at 8 cores, and ordinary concurrency at 16 cores."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The HEAVY list and its two checking tests are removed. docs-0267 uses STARTS instead. Passing 0271 AC4 test checks exports and remaining test references."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0271-tests.txt: all 13 tests across the three required files passed. Existing scheduling, failure reporting and document tests remain covered; no unrelated changes found."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The runner now identifies heavy test files automatically using the existing helper pattern, removing the manual list while preserving concurrency limits. All 13 targeted tests passed. Two files lose their previous manual classification because they use indirect helpers outside the ticket’s detection rule; this matches the agreed scope."
+  }
+}
+```
+
+</details>
