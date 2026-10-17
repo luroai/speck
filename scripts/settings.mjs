@@ -88,15 +88,18 @@ const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : St
 const shipping = cfg => ({ on: cfg.auto_ship === true, risks: [].concat(cfg.auto_ship_risk ?? []).map(String) });
 // Which tickets ship by themselves with auto_ship on and these risks, in words: "approved low-risk tickets".
 const covered = risks => `approved ${RISKS.filter(r => risks.includes(r)).map(r => `${r}-risk`).join(' and ')} tickets`;
-// Whether going from `was` to `will` lets a ticket ship by itself that wouldn't before, and what would then ship.
+// Whether going from `was` to `will` lets a ticket ship by itself that wouldn't before: then the risks that would ship,
+// as the page names them when it asks ("low,high"), and in words.
 export function loosens(was, will) {
-  return will.on && (!was.on || will.risks.some(r => !was.risks.includes(r))) ? covered(will.risks) : null;
+  if (!will.on || (was.on && will.risks.every(r => was.risks.includes(r)))) return null;
+  return { risks: RISKS.filter(r => will.risks.includes(r)).join(','), words: covered(will.risks) };
 }
 
 // The panel's Save on a setting: checks the value as `speck config set` does, rewrites only that setting's line in
 // speck/config.yml and commits only that file on the base branch. Every refusal comes before the first write.
-// A change that lets more tickets ship by themselves is refused unless `confirmed`, so the page asks you first (0259).
-export function panelSetSetting(repo, key, value, { confirmed = false } = {}) {
+// A change that lets more tickets ship by themselves is refused unless `confirmed` names the risks that would then ship,
+// as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
+export function panelSetSetting(repo, key, value, { confirmed = null } = {}) {
   if (!EDITABLE.includes(key))
     return { status: 403, body: { error: `${key} can't be changed from the panel. The panel changes only ${EDITABLE.join(', ')}: change the rest in speck/config.yml.` } };
   const file = path.join(repo, 'speck', 'config.yml');
@@ -120,8 +123,8 @@ export function panelSetSetting(repo, key, value, { confirmed = false } = {}) {
     : JSON.stringify(valueIn(text, repo, key).value) === JSON.stringify(want);
   if (same) return { status: 200, body: { ok: true, changed: false } };
   const now = shipping(cfg), more = key === 'auto_ship' || key === 'auto_ship_risk' ? loosens(now, { ...now, [key === 'auto_ship' ? 'on' : 'risks']: want }) : null;
-  if (more && !confirmed)
-    return { status: 409, body: { confirm: true, error: `That would let ${more} merge and push to ${cfg.base_branch} without waiting for you, so it needs confirming. Reload the panel, then try again.` } };
+  if (more && confirmed !== more.risks)
+    return { status: 409, body: { confirm: true, error: `That would let ${more.words} merge and push to ${cfg.base_branch} without waiting for you, which hasn't been confirmed. Check the settings as they are now, then save again.` } };
   const keys = key.split('.');
   const next = setConfigText(text, keys, yamlValue(want));
   if (JSON.stringify(lookup(parseYaml(next), key)) !== JSON.stringify(want))
@@ -134,8 +137,8 @@ export function panelSetSetting(repo, key, value, { confirmed = false } = {}) {
 }
 
 // The panel's POST /api/settings/<key>/<value>, with both still written as in the address: every failure is an answer.
-// `confirmed`: the address ends with ?confirm=1, sent once you've confirmed a change that lets more tickets ship (0259).
-export function panelSettingRequest(repo, rawKey, rawValue, confirmed = false) {
+// `confirmed`: the risks in the address's ?confirm=, sent once you've confirmed a change that lets more tickets ship (0259).
+export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null) {
   let key, value;
   try { key = decodeURIComponent(rawKey); value = decodeURIComponent(rawValue); }
   catch { return { status: 400, body: { error: 'That setting or value isn\'t written properly in the address. Reload the panel, then try again.' } }; }

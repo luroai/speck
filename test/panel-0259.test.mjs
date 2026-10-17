@@ -54,7 +54,7 @@ test('0259 AC1: auto_ship and auto_ship_risk are editable, and a change is saved
   assert.equal(r.g('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), 'speck/config.yml');
   assert.deepEqual(byKey(panelSettings(r.dir)).auto_ship_risk.value, ['low', 'high']);
 
-  out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: true });
+  out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: 'low,high' });
   assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.match(lineOf(r, 'auto_ship'), /^auto_ship: true\s+#/);
   assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config auto_ship true');
@@ -70,7 +70,7 @@ test('0259 AC1: auto_ship and auto_ship_risk are editable, and a change is saved
 test('0259 AC1: they are refused as 0258\'s settings are: a bad value, off the base branch, or with config.yml changed', () => {
   const r = panelRepo();
   let was = snapshot(r);
-  let out = panelSetSetting(r.dir, 'auto_ship', 'yes', { confirmed: true });
+  let out = panelSetSetting(r.dir, 'auto_ship', 'yes', { confirmed: 'low,high' });
   assert.equal(out.status, 422);
   assert.match(out.body.error, /true or false/);
   out = panelSetSetting(r.dir, 'auto_ship_risk', 'medium');
@@ -88,7 +88,7 @@ test('0259 AC1: they are refused as 0258\'s settings are: a bad value, off the b
 
   fs.appendFileSync(cfgOf(r), '# a note of mine\n');
   was = snapshot(r);
-  out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: true });
+  out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: 'low' });
   assert.equal(out.status, 409);
   assert.match(out.body.error, /uncommitted changes/);
   assert.deepEqual(snapshot(r), was);
@@ -136,7 +136,7 @@ test('0259 AC2: turning auto_ship on asks first, naming the tickets that would s
   q.press(saveOf(q, 'auto_ship'));
   await q.settle();
   assert.match(q.asked[0], /approved low-risk and high-risk tickets/);
-  assert.deepEqual(posts(q), ['/api/settings/auto_ship/true?confirm=1'], 'confirmed: sent, saying so');
+  assert.deepEqual(posts(q), ['/api/settings/auto_ship/true?confirm=low%2Chigh'], 'confirmed: sent, naming the risks it asked about');
   assert.equal(controlOf(q, 'auto_ship').value, 'true');
 });
 
@@ -159,7 +159,7 @@ test('0259 AC2: adding a risk while auto_ship is on asks first, and cancelling l
   q.press(saveOf(q, 'auto_ship_risk'));
   await q.settle();
   assert.equal(q.asked.length, 1, 'adding low lets more ship too');
-  assert.deepEqual(posts(q), ['/api/settings/auto_ship_risk/low%2Chigh?confirm=1']);
+  assert.deepEqual(posts(q), ['/api/settings/auto_ship_risk/low%2Chigh?confirm=low%2Chigh']);
 });
 
 test('0259 AC2: the server writes nothing that lets more tickets ship by themselves unless the request says it was confirmed', () => {
@@ -171,21 +171,51 @@ test('0259 AC2: the server writes nothing that lets more tickets ship by themsel
   assert.match(out.body.error, /approved low-risk tickets/);
   assert.deepEqual(snapshot(r), was);
   assert.equal(panelSettingRequest(r.dir, 'auto_ship', 'true').status, 409);
-  assert.equal(panelSettingRequest(r.dir, 'auto_ship', 'true', true).status, 200);
+  assert.equal(panelSettingRequest(r.dir, 'auto_ship', 'true', 'low,high').status, 409, 'confirming other risks than would ship');
+  assert.equal(panelSettingRequest(r.dir, 'auto_ship', 'true', 'low').status, 200);
 
   was = snapshot(r);
   out = panelSetSetting(r.dir, 'auto_ship_risk', 'low,high');
   assert.equal(out.status, 409);
   assert.match(out.body.error, /approved low-risk and high-risk tickets/);
   assert.deepEqual(snapshot(r), was);
-  assert.equal(panelSetSetting(r.dir, 'auto_ship_risk', 'low,high', { confirmed: true }).status, 200);
+  assert.equal(panelSetSetting(r.dir, 'auto_ship_risk', 'low,high', { confirmed: 'low,high' }).status, 200);
   assert.deepEqual(byKey(panelSettings(r.dir)).auto_ship_risk.value, ['low', 'high']);
+});
+
+test('0259 AC2: a confirmation that names fewer risks than would now ship is refused, and the view reads the settings again', async () => {
+  // Another tab added high while auto_ship was off; this one still read low only, and asks about low only.
+  const r = panelRepo();
+  assert.equal(panelSetSetting(r.dir, 'auto_ship_risk', 'low,high').status, 200);
+  const was = snapshot(r);
+  const out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: 'low' });
+  assert.equal(out.status, 409);
+  assert.equal(out.body.confirm, true);
+  assert.match(out.body.error, /approved low-risk and high-risk tickets/);
+  assert.deepEqual(snapshot(r), was);
+
+  const p = askingPage([view(false, ['low']), view(false, ['low', 'high'])], [{ status: 409, body: out.body }], true);
+  await p.settle();
+  await openSettings(p);
+  controlOf(p, 'auto_ship').value = 'true';
+  p.press(saveOf(p, 'auto_ship'));
+  await p.settle();
+  assert.deepEqual(posts(p), ['/api/settings/auto_ship/true?confirm=low']);
+  assert.equal(controlOf(p, 'auto_ship').value, 'false', 'as it is now');
+  assert.deepEqual(ticked(p, 'auto_ship_risk'), ['low', 'high'], 'read again');
+  assert.match(rowOf(p, 'auto_ship').textContent, /low-risk and high-risk.*hasn't been confirmed/);
+  // Saving again asks about what would ship now.
+  controlOf(p, 'auto_ship').value = 'true';
+  p.press(saveOf(p, 'auto_ship'));
+  await p.settle();
+  assert.equal(p.asked.length, 2);
+  assert.match(p.asked[1], /approved low-risk and high-risk tickets/);
 });
 
 test('0259 AC3: turning auto_ship off, or removing a risk, is saved without a dialog', async () => {
   const r = panelRepo();
   assert.equal(panelSetSetting(r.dir, 'auto_ship_risk', 'low,high').status, 200);
-  assert.equal(panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: true }).status, 200);
+  assert.equal(panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: 'low,high' }).status, 200);
   let out = panelSetSetting(r.dir, 'auto_ship_risk', 'high');
   assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.deepEqual(byKey(panelSettings(r.dir)).auto_ship_risk.value, ['high']);
@@ -210,7 +240,7 @@ test('0259 AC4: auto_ship_risk with no risk ticked is refused, saying to turn au
   const r = panelRepo();
   const was = snapshot(r);
   for (const v of ['', ' ', '[]']) {
-    const out = panelSetSetting(r.dir, 'auto_ship_risk', v, { confirmed: true });
+    const out = panelSetSetting(r.dir, 'auto_ship_risk', v, { confirmed: 'low,high' });
     assert.equal(out.status, 422, JSON.stringify(v));
     assert.match(out.body.error, /auto_ship to false/);
   }
@@ -233,12 +263,12 @@ test('0259 AC2: the panel server passes on that the change was confirmed, and on
   try {
     const token = tokenOf((await request(p.port)).body);
     const was = snapshot(r);
-    assert.equal((await post(p.port, '/api/settings/auto_ship/true?confirm=1')).status, 403);
+    assert.equal((await post(p.port, '/api/settings/auto_ship/true?confirm=low')).status, 403);
     const asked = await post(p.port, '/api/settings/auto_ship/true', { token });
     assert.equal(asked.status, 409);
     assert.equal(JSON.parse(asked.body).confirm, true);
     assert.deepEqual(snapshot(r), was);
-    const ok = await post(p.port, '/api/settings/auto_ship/true?confirm=1', { token });
+    const ok = await post(p.port, '/api/settings/auto_ship/true?confirm=low', { token });
     assert.equal(ok.status, 200, ok.body);
     assert.match(lineOf(r, 'auto_ship'), /^auto_ship: true /);
   } finally { await stop(p); }

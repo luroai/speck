@@ -1,7 +1,7 @@
 ---
 id: "0259"
 title: Let the panel change auto-ship only after you confirm                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T09:22:21.680Z"
 ---
 # 0259 · Let the panel change auto-ship only after you confirm
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `auto_ship` and `auto_ship_risk` decide which approved tickets merge and push to the base branch without you. Turning that on by a slip of the finger, from a page with no login, would let work ship that nobody looked at.
@@ -54,3 +54,74 @@ started: "2026-10-17T09:22:21.680Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d8cd77f74a26aefa0b74573bd1547d262d9faa65",
+    "thread_id": "01a1492f-cc16-7950-ab79-57bdf8b6b999",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 116119,
+      "cached_input_tokens": 71168,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 769,
+      "reasoning_output_tokens": 156
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:27:35.099Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs exposes both settings and uses the existing validation, branch, clean-config and commit checks. Passing 0259 AC1 tests cover controls, saving, commits and refusals."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "templates/panel.html shipsMore() describes cached settings, while scripts/settings.mjs panelSetSetting() accepts confirmed=true against current settings without checking that their shipping scope matches the dialog. Existing passing AC2 tests cover unchanged settings only."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipsMore() and loosens() allow disabling auto-ship and removing risks without confirmation. The passing 0259 AC3 test exercises both page requests and persisted changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "saveSetting() rejects empty risk selection with guidance to turn auto_ship off; server validation also rejects empty risks. The passing 0259 AC4 test checks both and verifies nothing is written."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "Confirmation is not tied to the scope shown to the user. Open Settings with auto_ship off and risks low. In another tab, add high while auto_ship remains off, which requires no dialog. The first tab still asks only about approved low-risk tickets when enabling auto-ship. Its request carries confirm=1, so the server enables shipping for both low and high. High-risk tickets can therefore ship without the user confirming that consequence.",
+        "suggested_fix": "Bind confirmation to the shipping settings or resulting scope displayed in the dialog. Refuse a stale confirmation before writing, refresh the settings and ask again with the current scope. Add a regression test covering two views with an intervening risk change.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The controls, saving and empty-selection checks work in the covered cases. However, an older Settings tab can enable automatic shipping of high-risk tickets after asking permission only for low-risk tickets. Confirmation must match what will actually be enabled before this is ready to merge."
+  }
+}
+```
+
+</details>
