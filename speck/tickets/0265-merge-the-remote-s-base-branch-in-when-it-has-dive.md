@@ -41,6 +41,7 @@ When the remote's base branch has a commit your local base branch doesn't (for e
 - The merge in criterion 1 counts as a new commit on the base branch for speck run's ship queue (`refsOf`), so a ticket refused earlier is tried again.
 - `scripts/ship.mjs` is at 579 lines and the limit is 600 (0078 AC2), so code added there may need to move into a module of its own.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

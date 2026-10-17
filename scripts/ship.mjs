@@ -10,6 +10,7 @@ import { failingTests } from './tap.mjs';
 import { sharedCacheDir } from './turns.mjs';
 import { removeScratch } from './scratch.mjs';
 import { shipFolders, putBranchBack } from './ship-folders.mjs';
+import { remoteBaseCatchUp } from './ship-remote.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -117,24 +118,6 @@ function testMerged(work, cfg, branch, candidate) {
   }
 }
 
-// Checks the remote's base branch before anything changes. Returns the commit to fast-forward the local base to, if any.
-function remoteBaseCatchUp(repo, remote, base) {
-  if (!remote) return null;
-  const fetched = sh('git', ['fetch', '-q', remote, base], { cwd: repo });
-  if (fetched.status !== 0) {
-    console.log(`Couldn't reach ${remote} to check for new commits on ${base} (${fetched.stderr.trim().split('\n').pop()}). Carrying on with your local ${base}.`);
-    return null;
-  }
-  const theirs = git(['rev-parse', 'FETCH_HEAD'], repo).trim();
-  const ours = git(['rev-parse', base], repo).trim();
-  if (isAncestor(repo, theirs, ours)) return null; // up to date, or only ahead
-  if (isAncestor(repo, ours, theirs)) {
-    console.log(`${remote} has new commits on ${base}: bringing your ${base} up to date before merging.`);
-    return theirs;
-  }
-  throw new SpeckError(`Your ${base} and ${remote}'s ${base} each have commits the other doesn't, so nothing was shipped. Combine them with \`git checkout ${base} && git pull\`, then ship again.`);
-}
-
 // Each tracked file with uncommitted changes, staged or not: its paths (a rename or copy has two, `from` first), its
 // name as git shows it, and whether the change is staged. --no-optional-locks keeps git status from rewriting the
 // index, so checking again and again while ship waits never gets in the way of your own `git commit`.
@@ -225,7 +208,7 @@ export function shipTicket(repo, id) {
   };
   clash('');
   const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
-  const catchUp = remoteBaseCatchUp(repo, remote, base);
+  const catchUp = remoteBaseCatchUp(repo, remote, base, mergeAt);
   const start = git(['branch', '--show-current'], work).trim() || git(['rev-parse', 'HEAD'], work).trim();
   const branchSha = git(['rev-parse', branch], repo).trim();
   let baseSha = git(['rev-parse', base], repo).trim();
