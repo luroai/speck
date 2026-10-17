@@ -1,7 +1,7 @@
 ---
 id: "0274"
 title: "Save every changed setting with one Save button"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0273"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T13:44:09.209Z"
 
 ---
 # 0274 · Save every changed setting with one Save button
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Every editable setting in the Settings view has its own Save button, so the view is cluttered with them, and changing several settings means saving, and committing, each one separately.
