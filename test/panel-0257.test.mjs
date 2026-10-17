@@ -11,7 +11,7 @@ import { panelSettings, SETTING_GROUPS } from '../scripts/settings.mjs';
 
 const GROUPS = [
   ['Shipping', ['auto_ship', 'auto_ship_risk']],
-  ['Building and reviewing', ['builder', 'reviewer', 'reviewer_model', 'reviewer_effort', 'allow_same_model_review']],
+  ['Building and reviewing', ['builder', 'builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'allow_same_model_review']],
   ['How much runs at once', ['max_parallel_builds', 'max_parallel_tests']],
   ['Ticket size limits', ['limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds']],
 ];
@@ -123,7 +123,7 @@ test('0257 AC2: the view shows each group in order, each setting\'s name and val
 
 test('0257 AC3: each setting has an explanation of one or two sentences, and the shipping ones say a ticket they cover is merged and pushed without waiting for you', () => {
   const all = SETTING_GROUPS.flatMap(g => g.settings);
-  assert.equal(all.length, 12);
+  assert.equal(all.length, 13); // 0279 added builder_model
   for (const s of all) {
     assert.equal(typeof s.explain, 'string');
     const sentences = s.explain.trim().split(/(?<=[.!?])\s+(?=[A-Z])/);

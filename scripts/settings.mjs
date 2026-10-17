@@ -19,6 +19,8 @@ export const SETTING_GROUPS = [
   { title: 'Building and reviewing', settings: [
     { key: 'builder', default: 'claude',
       explain: 'The agent that builds each ticket, writing its tests and code. New tickets take it from here, so changing it changes who builds tickets made from now on.' },
+    { key: 'builder_model', default: '',
+      explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given only to Claude Code builds for now. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
       explain: 'The agent that reviews each build and decides whether it is approved: codex, claude-subagent or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
     { key: 'reviewer_model', default: '',
@@ -50,8 +52,8 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 
 // 0258: the settings the panel can change, and 0259's auto_ship and auto_ship_risk, which it changes only once you've
 // confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: builder needs a matching
-// build_command and allow_same_model_review weakens the independent review.
-export const EDITABLE = Object.freeze(['reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
+// build_command and allow_same_model_review weakens the independent review. 0279: and builder_model.
+export const EDITABLE = Object.freeze(['builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
   'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk']);
 const RISKS = ['low', 'high'];
 
@@ -79,7 +81,8 @@ function valueIn(text, repo, key) {
 // when that's this machine's own or 'repo' when it's speck/config.yml's, and speck/config.yml's in `repo_value`.
 // 0276: `models`, from reviewerModels, is given back as `reviewer_models`, for the view to offer the reviewer's models.
 // 0278: and Claude's model names as `claude_models`, for when claude-subagent is picked in the view.
-export function panelSettings(repo, { models } = {}) {
+// 0279: `builderModels`, from builderModels, is given back as `builder_models`, for the view to offer the builder's.
+export function panelSettings(repo, { models, builderModels } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const { value, inFile } = valueIn(text, repo, s.key), choices = choicesOf(s.key, file);
@@ -87,7 +90,7 @@ export function panelSettings(repo, { models } = {}) {
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...machine };
-  }) })), ...(models ? { reviewer_models: models } : {}), claude_models: CLAUDE_MODELS };
+  }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}), claude_models: CLAUDE_MODELS };
 }
 
 // 0278: the model names a claude-subagent reviewer takes, each meaning the newest model of its kind. Claude Code has no
@@ -102,6 +105,15 @@ export async function reviewerModels(repo, read = codexModelsAsync) {
   if (reviewer === 'claude-subagent') return { reviewer, models: CLAUDE_MODELS };
   if (reviewer !== 'codex') return { reviewer, why: `${reviewer || 'This reviewer'} can't list its models, so type the model's name as it names it.` };
   return { reviewer, ...await read() };
+}
+
+// 0279: the models the configured builder offers, read now, for the Settings view: { builder, models } with Claude's
+// model names for claude and the models Codex lists for codex, or { builder, why } in one line when it can't list them.
+export async function builderModels(repo, read = codexModelsAsync) {
+  const builder = String(loadConfig(repo).builder ?? '');
+  if (builder === 'claude') return { builder, models: CLAUDE_MODELS };
+  if (builder !== 'codex') return { builder, why: `${builder || 'This builder'} can't list its models, so type the model's name as it names it.` };
+  return { builder, ...await read() };
 }
 
 const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : String(v);
