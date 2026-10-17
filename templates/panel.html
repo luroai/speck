@@ -331,9 +331,10 @@
   /* 0273: each group a box with a heading bar, like the panel's sections, with space between them. Each setting is a
      row, its name and info button on the left and its value or control on the right: every row splits its width the
      same way, so a group's controls line up in one column. */
-  /* 0281: the box's line drawn just outside it, taking no room, so what's in the box starts on a whole pixel. A
-     half-pixel border shifted it half a pixel, and a phone could then drop a control's left border. */
-  #settings .sgroup { margin-top: 16px; border: 0; outline: .5px solid var(--line); }
+  /* 0281: the box's line drawn just outside it as a shadow, taking no room, so what's in the box starts on a whole
+     pixel. A half-pixel border shifted it half a pixel, and a phone could then drop a control's left border. (Not an
+     outline: only the keyboard's focus ring sets one, 0161.) */
+  #settings .sgroup { margin-top: 16px; border: 0; box-shadow: 0 0 0 .5px var(--line); }
   #settings .sgroup .sh { padding: 8px 12px; }
   #settings .sgroup h4 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 15px; font-weight: 600; letter-spacing: .01em; }
   #settings .setting { padding: 8px 12px; border-bottom: .5px solid var(--line-soft); }
@@ -372,6 +373,7 @@
   /* 0281: under 2 device pixels to a CSS pixel, half a pixel is less than a device pixel, which a browser may not draw,
      so there these borders are a whole pixel. From 2 up, half a pixel is a device pixel or more. */
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .setting .edit, #settings .setting .info { border-width: 1px; } }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .sgroup { box-shadow: 0 0 0 1px var(--line); } }
   #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
   #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
   #settings .setting .info::after { content: ""; position: absolute; inset: -4px; } /* 0277: a 26 by 26 px target */
