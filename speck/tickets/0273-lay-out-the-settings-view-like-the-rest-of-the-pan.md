@@ -40,6 +40,7 @@ The Settings view is laid out like the rest of the panel: each group is a box of
 ## Notes
 - The view is in `templates/panel.html` (search for "0257"). The panel's section boxes are the model.
 - Failing before this build: none
+- Self-check: names now break only after a dot or underscore, not mid-word, and the info button keeps its size beside a long name (screenshots at 1200 and 320 px, light and dark).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
