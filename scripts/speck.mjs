@@ -525,6 +525,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first and commits the ticket; priority "" clears it)
   speck config set <key> <value>      change one setting in speck/config.yml, checked first (nested: commands.test)
+  speck config set --machine <key> <value>  set max_parallel_builds or max_parallel_tests for this machine only ("" removes it)
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)

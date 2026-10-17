@@ -3,9 +3,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS } from './core.mjs';
+import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig, MACHINE_SETTINGS, machineConfig, machineConfigFile } from './core.mjs';
+import { sharedCacheDir } from './turns.mjs';
 
-const USAGE = 'Usage: speck config set <key> <value>';
+const USAGE = 'Usage: speck config set <key> <value>, or speck config set --machine <key> <value> for this machine only';
 
 // Every setting `speck config set` can change, with how speck reads it. reviewer_options and other free-form maps
 // are left to hand editing.
@@ -114,9 +115,36 @@ export function setConfigText(text, keys, v) {
   return lines.join('\n');
 }
 
+// 0260: `speck config set --machine <key> <value>` sets a setting for this machine only, over speck/config.yml's value,
+// in a file git ignores. A blank value removes it, so speck/config.yml's value applies again.
+function setMachine(key, raw) {
+  if (!MACHINE_SETTINGS.includes(key))
+    throw new SpeckError(`--machine can set only ${MACHINE_SETTINGS.join(', ')}, not "${key}". Set ${key} for every machine with \`speck config set ${key} <value>\`.`);
+  const value = raw === '' ? undefined : checkConfigValue(key, raw);
+  const repo = findRepoRoot();
+  const file = machineConfigFile(repo), values = machineConfig(repo);
+  const committed = loadConfig(repo, { machine: false })[key] ?? 1;
+  const before = Object.hasOwn(values, key) ? values[key] : committed;
+  if (value === undefined && !Object.hasOwn(values, key)) {
+    console.log(`${key} has no value for this machine, so speck uses speck/config.yml's: ${show(committed)}.`);
+    return;
+  }
+  if (value === undefined) delete values[key]; else values[key] = value;
+  const keys = MACHINE_SETTINGS.filter(k => Object.hasOwn(values, k));
+  if (keys.length) {
+    sharedCacheDir(repo, 'machine');
+    fs.writeFileSync(file, `# This machine's own values, used over speck/config.yml's. Change them with speck config set --machine.\n${keys.map(k => `${k}: ${values[k]}`).join('\n')}\n`);
+  } else fs.rmSync(file, { force: true });
+  console.log(value === undefined
+    ? `${key} (this machine): ${show(before)} → ${show(committed)}, speck/config.yml's value`
+    : `${key} (this machine): ${show(before)} → ${show(value)}`);
+}
+
 export function cmdConfig(args) {
-  const [sub, key, ...rest] = args;
+  const machine = args.slice(1).includes('--machine');
+  const [sub, key, ...rest] = [args[0], ...args.slice(1).filter(a => a !== '--machine')];
   if (sub !== 'set' || !key || !rest.length) throw new SpeckError(USAGE);
+  if (machine) return setMachine(key, rest.join(' '));
   const value = checkConfigValue(key, rest.join(' '));
   const repo = findRepoRoot();
   const file = path.join(repo, 'speck', 'config.yml');
@@ -129,4 +157,7 @@ export function cmdConfig(args) {
     throw new SpeckError(`Couldn't write ${key} so that speck reads it back as given. Edit speck/config.yml by hand instead.`);
   fs.writeFileSync(file, next);
   console.log(`${key}: ${show(get(text))} → ${show(value)}`);
+  const own = machineConfig(repo);
+  if (Object.hasOwn(own, key))
+    console.log(`This machine uses its own ${key}, ${show(own[key])}, over it. Run \`speck config set --machine ${key} ""\` to use speck/config.yml's.`);
 }

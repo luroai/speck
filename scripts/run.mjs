@@ -88,6 +88,13 @@ export function cmdRun() {
 
 export const runWorker = () => runOn(true); // speck run on new code, started by the one it replaces (0247)
 
+// How many builds speck run keeps going at once: this machine's value (0260) or speck/config.yml's, as loadConfig read it.
+export function maxParallelBuilds(cfg) {
+  const max = cfg.max_parallel_builds ?? 1;
+  if (!Number.isInteger(max) || max < 1) throw new SpeckError(`max_parallel_builds in speck/config.yml must be a whole number of at least 1 (got "${max}").`);
+  return max;
+}
+
 // Watches the board: starts a build for each ready ticket that isn't waiting on another, up to max_parallel_builds at
 // once, and ships approved ones (shipQueue). Each runs in its own process group, so stopping speck run leaves it running.
 // When its code changes, it switches to the new code once nothing it started or adopted is running (run-switch.mjs).
@@ -102,8 +109,7 @@ function runOn(worker) {
   try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
   const mismatch = builderMismatch(cfg);
   if (mismatch) throw new SpeckError(`speck run won't start: ${mismatch.problem} ${mismatch.fix}`);
-  const max = cfg.max_parallel_builds ?? 1;
-  if (!Number.isInteger(max) || max < 1) throw new SpeckError(`max_parallel_builds in speck/config.yml must be a whole number of at least 1 (got "${max}").`);
+  const max = maxParallelBuilds(cfg);
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
   if (branch !== cfg.base_branch)
     throw new SpeckError(`This checkout is on "${branch}", not ${cfg.base_branch}. speck run starts builds from ${cfg.base_branch}, so switch to it, then run this again.`);
