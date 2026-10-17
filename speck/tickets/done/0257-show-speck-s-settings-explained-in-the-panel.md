@@ -1,7 +1,7 @@
 ---
 id: "0257"
 title: "Show speck's settings, explained, in the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-16T20:29:54.810Z"
 approved: "2026-10-17T07:43:12.230Z"
+finished: "2026-10-17T07:44:45.563Z"
 
 ---
 # 0257 · Show speck's settings, explained, in the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Someone who has just set speck up can't tell which of the 30 or so lines in `speck/config.yml` matter, what each one does or what changing it would mean, so they leave settings as they are or change them blind. Some settings matter a lot: `auto_ship` decides whether approved tickets merge and push without them.
