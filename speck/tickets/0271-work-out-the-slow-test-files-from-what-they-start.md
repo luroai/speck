@@ -39,6 +39,7 @@ The test runner works out which test files are heavy from what they start, so th
 
 ## Notes
 - Today's list is `HEAVY` in `test/support/heavy.mjs`, used by `runSuite` in `test/support/suite.mjs`. The check is the 0233 AC1 test in `test/suite-0233.test.mjs`, which finds the files with a pattern of helper names.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
