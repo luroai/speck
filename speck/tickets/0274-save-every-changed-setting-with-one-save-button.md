@@ -39,6 +39,7 @@ The Settings view has one Save button that saves every setting you've changed at
 
 ## Notes
 - Today each Save sends `POST /api/settings/<key>/<value>` (`panelSettingRequest` in `scripts/settings.mjs`), with 0259's `?confirm=` and 0261's `?scope=`.
+- Failing before this build: none
 - Criterion 2's single commit and criterion 4's nothing-saved need the server to take the changes together, not one request per setting.
 
 ## In plain words
