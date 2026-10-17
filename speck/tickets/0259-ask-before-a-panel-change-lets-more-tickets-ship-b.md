@@ -39,6 +39,7 @@ started: "2026-10-17T09:22:21.680Z"
 ## Notes
 - `risk: high`: it changes whether work ships without the user.
 - `checkConfigValue` in `scripts/config.mjs` already refuses an empty `auto_ship_risk`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
