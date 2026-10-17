@@ -37,6 +37,7 @@ The Settings view shows which settings use this machine's value, and lets you ch
 
 ## Notes
 - Builds on 0258 (panel writes for settings) and 0260 (machine values).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
