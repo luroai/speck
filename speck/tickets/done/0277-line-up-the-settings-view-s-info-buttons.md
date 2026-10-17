@@ -1,7 +1,7 @@
 ---
 id: "0277"
 title: "Line up the Settings view's info buttons"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T18:28:45.257Z"
 approved: "2026-10-17T18:35:03.141Z"
+finished: "2026-10-17T18:37:06.261Z"
 
 ---
 # 0277 · Line up the Settings view's info buttons
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In the Settings view, each setting's info button sits straight after its name, so the buttons start at a different place on every row. When a long name wraps, as `allow_same_model_review` and `max_parallel_builds` do on a phone, its button is pushed up against the setting's value with no gap. The buttons are also taller than the controls beside them, so the rows look uneven.
