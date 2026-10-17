@@ -341,6 +341,12 @@
   #settings .setting input.edit[type="number"] { width: 8ch; }
   #settings .setting .save { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #settings .setting .save:hover { color: var(--text); border-color: var(--text); }
+  /* 0268: the info button beside a setting's name, and its explanation under the setting's line while it's open */
+  #settings .setting .info { display: inline-grid; place-items: center; align-self: center; width: 20px; height: 20px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
+  #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
+  #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
+  #settings .setting p.explain { margin-top: 6px; padding: 6px 10px; background: var(--raise); overflow-wrap: anywhere; }
+  #settings .setting p.explain[hidden] { display: none; }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
@@ -434,6 +440,7 @@
     header:not(.slim) #theme { grid-column: 4; }
     .theme, .settings-open { justify-self: end; width: 44px; height: 44px; }
     .settings-open + .theme { margin-left: 0; }
+    #settings .setting .info { width: 28px; height: 28px; font-size: 12px; } /* 0268: easier to tap */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
@@ -1606,6 +1613,10 @@ $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render
 // 0258: the ones the server marks editable can be changed in place: Save sends one to the server, which commits it.
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
+// 0268: each setting's explanation sits behind an info button beside its name. It shows while the pointer is over the
+// button or the button has focus, and a tap or click keeps it until the next tap or click on it. One shows at a time.
+let settingTip = null, settingTipKept = false, settingHover = null, settingFocus = null; // keys, or null
+let settingTips = new Map(); // key → its explanation, in the view as it's drawn
 $('settings-open').addEventListener('click', openSettings);
 $('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) closeSettings(); });
 renderSettings(); // closed
@@ -1633,6 +1644,8 @@ async function loadSettings() {
 function closeSettings() {
   settingsView = null;
   settingsSeq++;
+  settingTip = settingHover = settingFocus = null;
+  settingTipKept = false;
   settingTyped = new Map();
   settingRefused = new Map();
   renderSettings();
@@ -1645,6 +1658,10 @@ function renderSettings() {
   pane.hidden = !open;
   $('settings-backdrop').hidden = !open;
   holdPage(open || fullId !== null);
+  settingTips = new Map();
+  // Drawn afresh, its buttons are new, so no pointer is over one and none has focus: only a kept explanation stays.
+  settingHover = settingFocus = null;
+  if (!settingTipKept) settingTip = null;
   if (!open) { pane.replaceChildren(); return; }
   const close = el('button', 'close', 'Close');
   close.type = 'button';
@@ -1658,14 +1675,37 @@ function renderSettings() {
       kids.push(el('h4', null, g.title));
       for (const x of Array.isArray(g.settings) ? g.settings : []) {
         const edit = x.editable === true ? settingEditor(x) : null;
+        const [info, tip] = settingInfo(x, settingTips.size);
         kids.push(el('div', 'setting', null,
-          el('div', 'line', null, el('code', 'name', x.key), ...(edit ? edit : [el('code', 'value', settingValue(x.value))]), x.default ? el('span', 'default', 'default') : null),
+          el('div', 'line', null, el('code', 'name', x.key), info, ...(edit ? edit : [el('code', 'value', settingValue(x.value))]), x.default ? el('span', 'default', 'default') : null),
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
-          el('p', null, x.explain)));
+          tip));
       }
     }
   }
   pane.replaceChildren(...kids);
+  showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
+}
+// 0268: a setting's info button and its explanation, which a screen reader reads with the button.
+function settingInfo(x, n) {
+  const key = x.key, tip = el('p', 'explain', x.explain);
+  tip.id = `setting-explain-${n}`;
+  const info = el('button', 'info');
+  info.type = 'button';
+  info.setAttribute('aria-label', `About ${key}`);
+  info.setAttribute('aria-describedby', tip.id);
+  info.addEventListener('mouseenter', () => { if (!canHover()) return; settingHover = key; if (settingTip !== key) showSettingTip(key, false); });
+  info.addEventListener('mouseleave', () => { if (settingHover === key) settingHover = null; if (settingTip === key && !settingTipKept && settingFocus !== key) showSettingTip(null, false); });
+  info.addEventListener('focus', () => { settingFocus = key; if (settingTip !== key) showSettingTip(key, false); });
+  info.addEventListener('blur', () => { if (settingFocus === key) settingFocus = null; if (settingTip === key && !settingTipKept && settingHover !== key) showSettingTip(null, false); });
+  info.addEventListener('click', () => { if (settingTip === key && settingTipKept) showSettingTip(null, false); else showSettingTip(key, true); });
+  settingTips.set(key, tip);
+  return [info, tip];
+}
+function showSettingTip(key, kept) {
+  settingTip = key;
+  settingTipKept = key !== null && kept;
+  for (const [k, tip] of settingTips) tip.hidden = k !== key;
 }
 // 0258: a setting's control, a list of the server's choices or a box to type in, and its Save button.
 function settingEditor(x) {
@@ -1719,6 +1759,7 @@ async function saveSetting(key, input) {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (tipTag !== null) closeTip();
+  else if (settingsView !== null && settingTip !== null) showSettingTip(null, false); // 0268: the explanation first, then the view
   else if (settingsView !== null) closeSettings();
   else if (priorityMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();
