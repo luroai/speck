@@ -113,3 +113,12 @@ export function panelSetSetting(repo, key, value) {
     return { status: 500, body: { error: `Couldn't commit speck/config.yml, so ${key} is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
   return { status: 200, body: { ok: true, changed: true } };
 }
+
+// The panel's POST /api/settings/<key>/<value>, with both still written as in the address: every failure is an answer.
+export function panelSettingRequest(repo, rawKey, rawValue) {
+  let key, value;
+  try { key = decodeURIComponent(rawKey); value = decodeURIComponent(rawValue); }
+  catch { return { status: 400, body: { error: 'That setting or value isn\'t written properly in the address. Reload the panel, then try again.' } }; }
+  try { return panelSetSetting(repo, key, value); }
+  catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
+}
