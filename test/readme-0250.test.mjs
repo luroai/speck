@@ -26,11 +26,11 @@ test('0250 AC1: the setup prompt keeps installing the latest release', () => {
 test('0250 AC2: the README names the commands and settings for each step from idea to ship', () => {
   names(readme(), ['/speck-capture', '/speck-ticket', 'set <id> status ready', 'after:', 'speck panel',
     '/speck-build', '/speck-review', 'speck run', 'max_parallel_builds',
-    'speck pack <id>', '/speck-ship', 'auto_ship', 'auto_ship_risk']);
+    'speck pack <id>', '/speck-ship', 'Ship button', 'auto_ship', 'auto_ship_risk']);
 });
 
 test('0250 AC3: the README names what makes each clever bit happen', () => {
-  names(readme(), ['--type=fix', 'speck set <fix-id> status ready', 'speck/ideas/', 'Status: inbox', '## Blocked question',
+  names(readme(), ['--type=fix', 'speck set <fix-id> status ready', '`draft`', '`blocked`', 'speck/ideas/', 'Status: inbox', '## Blocked question',
     '/speck-build <id>', 'speck merge-check <id>', 'max_merge_rounds', 'panel --url', '## Review rounds', '## Delivery log']);
 });
 

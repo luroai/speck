@@ -100,8 +100,9 @@ function blocks(text) {
 const isProse = b => /^[A-Za-z*_[]/.test(b) && !/^\* /.test(b);
 const isHeading = b => /^#{1,6} /.test(b);
 
-// `text` with its prose reworded, a word added to each heading, and in each part under a heading, the first two
-// paragraphs of prose swapped. With `reorder`, the README's and the brief's `##` sections come in reverse order.
+// `text` with every paragraph of prose given new opening words and reworded, a word added to each heading, and in
+// each part under a heading, the first two paragraphs of prose swapped. With `reorder`, the `##` sections come in
+// reverse order. Code blocks, HTML, lists, tables and quotes keep their words; prose keeps its code spans and links.
 function mutate(text, { headings = true, reorder = false } = {}) {
   const parts = [[]];
   for (const b of blocks(text)) {
@@ -109,10 +110,11 @@ function mutate(text, { headings = true, reorder = false } = {}) {
     parts.at(-1).push(b);
   }
   const done = parts.map(part => {
-    const out = part.map(b => b.startsWith('```') || b.startsWith('<') ? b
-      : isHeading(b) ? (headings && !/^# /.test(b) ? `${b} for you` : b)
+    const out = part.map(b => isHeading(b) ? (headings && !/^# /.test(b) ? `${b} for you` : b)
+      : isProse(b) ? `In short, ${b.split('\n').map(reword).join('\n')}`
+      : b.startsWith('```') || b.startsWith('<') ? b
       : b.split('\n').map(reword).join('\n'));
-    const prose = out.map((b, i) => (isProse(b) ? i : -1)).filter(i => i >= 0);
+    const prose = part.map((b, i) => (isProse(b) ? i : -1)).filter(i => i >= 0);
     if (prose.length >= 2) [out[prose[0]], out[prose[1]]] = [out[prose[1]], out[prose[0]]];
     return out;
   });
@@ -137,19 +139,20 @@ test('0267 AC1, AC3: rewording and reordering the README, the brief, the changel
   assert.equal(r.status, 0, r.out.slice(-4000));
 });
 
-test('0267 AC3: the README rewording changes its opening, swaps two paragraphs and rewords each section\'s first sentence', () => {
-  const readme = read('README.md');
-  const after = mutate(readme);
-  const prose = t => blocks(t).filter(isProse);
-  // The opening's first two paragraphs are swapped, and reworded.
-  assert.equal(prose(after)[0], reword(prose(readme)[1]));
-  assert.equal(prose(after)[1], reword(prose(readme)[0]));
-  assert.notEqual(prose(after)[0], prose(readme)[1], 'the opening is reworded');
-  // Every ## section whose first block is a paragraph of prose starts with different words.
-  const firsts = t => t.split(/^## .*$/m).slice(1).map(s => blocks(s)[0]).filter(isProse);
-  const before = firsts(readme), now = firsts(after);
-  assert.ok(before.length >= 10, 'found the sections');
-  assert.ok(before.filter((s, i) => s === now[i]).length <= 1, 'nearly every section opens differently');
+test('0267 AC3: the rewording rewords the opening and every section\'s first sentence, whatever its words, and swaps two paragraphs', () => {
+  const doc = [
+    '# speck', '**Tag line.**', 'Plain line names `npx x init` and [a link](https://example.com/the).', 'Second paragraph.',
+    '## One', 'Opening sentence with no words to swap. Next sentence.', '- a list item', 'Later paragraph.',
+    '## Two', '```bash\nnpx the init\n```', '| `cmd` | does a thing |', 'Only paragraph.',
+  ].join('\n\n') + '\n';
+  assert.equal(mutate(doc, { reorder: true }), [
+    '# speck', 'In short, Plain line names `npx x init` plus [one link](https://example.com/the).', 'In short, **Tag line.**', 'In short, Second paragraph.',
+    '## Two for you', '```bash\nnpx the init\n```', '| `cmd` | does one thing |', 'In short, Only paragraph.',
+    '## One for you', 'In short, Later paragraph.', '- one list item', 'In short, Opening sentence with no words to swap. Next sentence.',
+  ].join('\n\n') + '\n');
+  // Without reordering, the sections stay in place; the changelog keeps its headings.
+  assert.match(mutate(doc), /## One for you[\s\S]*## Two for you/);
+  assert.match(mutate(doc, { headings: false }), /^## One$[\s\S]*^## Two$/m);
 });
 
 test('0267 AC2: the tests that check facts in documents still catch a wrong command, version, link or name', () => {

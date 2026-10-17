@@ -71,3 +71,7 @@ test('0236 AC5: package.json, the newest changelog section name the same version
   // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
   assert.deepEqual(setupPromptProblems(read('README.md')), []);
 });
+
+test('0236 AC4: the release notes name speck test --files', () => {
+  assert.ok(notes().includes('`speck test --files`'));
+});

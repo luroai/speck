@@ -134,3 +134,7 @@ test('0235 AC1: a round-1 response is sent as written, and a saved round-1 promp
   assert.match(missing.stderr, /Can't read the builder's response in .*nope\.md/);
   assert.doesNotMatch(missing.stderr, /at .*\.mjs:\d+/, 'no stack trace');
 });
+
+test('0235 AC4: the brief names speck ship', () => {
+  assert.ok(read('docs/brief.md').includes('`speck ship`'));
+});

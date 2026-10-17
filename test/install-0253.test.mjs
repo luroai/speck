@@ -87,3 +87,7 @@ test('0253 AC4: no release test still checks the prompt names the current versio
     assert.doesNotMatch(t, /speck#v\(\[/, f);
   }
 });
+
+test('0253 AC3: the brief names the files the version check reads', () => {
+  for (const s of ['`package.json`', '`CHANGELOG.md`']) assert.ok(read('docs/brief.md').includes(s), s);
+});
