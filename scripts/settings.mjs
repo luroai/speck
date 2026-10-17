@@ -7,6 +7,7 @@ import { SpeckError, sh, loadConfig, parseYaml, modelFamily, findRepoRoot, EFFOR
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
+import { codexModelsAsync } from './codex-models.mjs';
 
 export const SETTING_GROUPS = [
   { title: 'Shipping', settings: [
@@ -21,9 +22,9 @@ export const SETTING_GROUPS = [
     { key: 'reviewer', default: 'codex',
       explain: 'The agent that reviews each build and decides whether it is approved: codex, claude-subagent or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
     { key: 'reviewer_model', default: '',
-      explain: 'The model the reviewer runs on, written as the reviewer names it. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
+      explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex offers. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
     { key: 'reviewer_effort', default: '',
-      explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
+      explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
     { key: 'allow_same_model_review', default: false,
       explain: 'Whether the builder and reviewer may be the same model. Leave it false so a different model checks the work: true lets a model review work like its own, which tends to catch less.' },
   ] },
@@ -76,7 +77,8 @@ function valueIn(text, repo, key) {
 // missing from the file, which has speck's default. One the panel can change is `editable`, with its `choices` when
 // it's picked from a list. 0261: one this machine can hold is `for_machine`, with the value speck uses, `from` 'machine'
 // when that's this machine's own or 'repo' when it's speck/config.yml's, and speck/config.yml's in `repo_value`.
-export function panelSettings(repo) {
+// 0276: `models`, from reviewerModels, is given back as `reviewer_models`, for the view to offer the reviewer's models.
+export function panelSettings(repo, { models } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const { value, inFile } = valueIn(text, repo, s.key), choices = choicesOf(s.key, file);
@@ -84,7 +86,15 @@ export function panelSettings(repo) {
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...machine };
-  }) })) };
+  }) })), ...(models ? { reviewer_models: models } : {}) };
+}
+
+// 0276: the models the configured reviewer offers, read now, for the Settings view: { reviewer, models: [{ slug,
+// efforts }] } when it can list them (only Codex can), or { reviewer, why } in one line when it can't.
+export async function reviewerModels(repo, read = codexModelsAsync) {
+  const reviewer = String(loadConfig(repo).reviewer ?? '');
+  if (reviewer !== 'codex') return { reviewer, why: `${reviewer || 'This reviewer'} can't list its models, so type the model's name as it names it.` };
+  return { reviewer, ...await read() };
 }
 
 const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : String(v);
@@ -129,7 +139,8 @@ function checkChange(repo, text, cfg, { key, value, machine }) {
   if (machine) return { want, same: machineConfig(repo)[key] === want };
   if (key === 'reviewer_model' && /[\x00-\x1f\x7f]/.test(value))
     return { status: 422, error: 'reviewer_model must be on one line, with no tabs or other control characters.' };
-  const choices = choicesOf(key, parseYaml(text));
+  // 0276: reviewer_effort is checked as speck config set checks it, which accepts an effort Codex lists, such as ultra.
+  const choices = key === 'reviewer_effort' ? undefined : choicesOf(key, parseYaml(text));
   if (choices && ![].concat(want).every(w => choices.includes(w)))
     return { status: 422, error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` };
   if (key === 'reviewer' && modelFamily(String(cfg.builder)) === modelFamily(want) && cfg.allow_same_model_review !== true)

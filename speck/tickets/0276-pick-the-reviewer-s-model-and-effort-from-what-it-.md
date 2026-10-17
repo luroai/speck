@@ -42,6 +42,7 @@ When the reviewer can say which models it offers, the Settings view lists them, 
 - Checked 2026-10-17: `claude --model` takes an alias such as `fable`, `opus` or `sonnet` for the newest model of that kind, or a full model name, and Claude Code 2.1.301 has no command that lists models (`claude --help`).
 - `EFFORTS` in `scripts/core.mjs` is the fixed list today.
 - Failing before this build: none
+- Self-check: speck asked Codex once for every ticket linted with an effort beyond max, so the answer is now kept for a minute (and re-read when PATH changes); and review.test.mjs's "no model passed to codex" check matched this ticket's worktree path (it has "model" in its name), so it now checks only arguments that set a model or effort.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { STATUSES, EFFORTS, TYPES, blank, contentLines, ticketType, ticketPriority, validPriority, modelFamily, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
+import { knownEffort } from './codex-models.mjs';
 
 export function lintTicket(ticket, cfg) {
   const errors = [], warnings = [];
@@ -31,7 +32,7 @@ export function lintTicket(ticket, cfg) {
   if (!top.status) warnings.push(`No \`${wantStatus}\` status line under the heading. Run \`speck init\` again to add it.`);
   else if (top.status !== wantStatus) warnings.push(`The status line "${top.status}" doesn't match the frontmatter status. Run \`speck init\` again to fix it.`);
   for (const [where, v] of [['ticket', fm.reviewer_effort], ['config', cfg.reviewer_effort]])
-    if (!blank(v) && !EFFORTS.includes(String(v).trim())) errors.push(`reviewer_effort "${v}" in ${where} must be blank or one of ${EFFORTS.join(', ')}.`);
+    if (!blank(v) && !knownEffort(String(v).trim())) errors.push(`reviewer_effort "${v}" in ${where} must be blank or one of ${EFFORTS.join(', ')}, or an effort Codex lists for one of its models.`);
   errors.push(...ticketRounds(ticket.raw).errors);
   for (const s of ['problem', 'outcome']) if (!contentLines(sections[s]).length) errors.push(`"${s}" section is empty.`);
   const ac = contentLines(sections['acceptance criteria']).filter(l => /^\d+\.\s+\S/.test(l));

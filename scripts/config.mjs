@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig } from './core.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
+import { knownEffort } from './codex-models.mjs';
 
 const USAGE = 'Usage: speck config set <key> <value>, speck config set --machine <key> <value> for this machine only, or speck config show [--json] to see the main settings.';
 
@@ -29,7 +30,8 @@ export function checkConfigValue(key, value) {
     return value === 'true';
   }
   if (kind === 'effort') {
-    if (value !== '' && !EFFORTS.includes(value)) throw new SpeckError(`${key} must be blank or one of ${EFFORTS.join(', ')} (got ${JSON.stringify(value)}).`);
+    // 0276: or one Codex lists for one of its models, such as ultra
+    if (value !== '' && !knownEffort(value)) throw new SpeckError(`${key} must be blank or one of ${EFFORTS.join(', ')}, or an effort Codex lists for one of its models (got ${JSON.stringify(value)}).`);
     return value;
   }
   if (kind === 'count') {
