@@ -4,8 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig } from './core.mjs';
-import { MACHINE_SETTINGS, machineConfig, machineConfigFile } from './machine.mjs';
-import { sharedCacheDir } from './turns.mjs';
+import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 
 const USAGE = 'Usage: speck config set <key> <value>, speck config set --machine <key> <value> for this machine only, or speck config show [--json] to see the main settings.';
 
@@ -123,19 +122,14 @@ function setMachine(key, raw) {
     throw new SpeckError(`--machine can set only ${MACHINE_SETTINGS.join(', ')}, not "${key}". Set ${key} for every machine with \`speck config set ${key} <value>\`.`);
   const value = raw === '' ? undefined : checkConfigValue(key, raw);
   const repo = findRepoRoot();
-  const file = machineConfigFile(repo), values = machineConfig(repo);
+  const values = machineConfig(repo);
   const committed = loadConfig(repo, { machine: false })[key] ?? 1;
   const before = Object.hasOwn(values, key) ? values[key] : committed;
   if (value === undefined && !Object.hasOwn(values, key)) {
     console.log(`${key} has no value for this machine, so speck uses speck/config.yml's: ${show(committed)}.`);
     return;
   }
-  if (value === undefined) delete values[key]; else values[key] = value;
-  const keys = MACHINE_SETTINGS.filter(k => Object.hasOwn(values, k));
-  if (keys.length) {
-    sharedCacheDir(repo, 'machine');
-    fs.writeFileSync(file, `# This machine's own values, used over speck/config.yml's. Change them with speck config set --machine.\n${keys.map(k => `${k}: ${values[k]}`).join('\n')}\n`);
-  } else fs.rmSync(file, { force: true });
+  saveMachineValue(repo, key, value);
   console.log(value === undefined
     ? `${key} (this machine): ${show(before)} → ${show(committed)}, speck/config.yml's value`
     : `${key} (this machine): ${show(before)} → ${show(value)}`);

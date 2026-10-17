@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, parseYaml, worktreeList } from './core.mjs';
+import { sharedCacheDir } from './turns.mjs';
 
 export const MACHINE_SETTINGS = Object.freeze(['max_parallel_builds', 'max_parallel_tests']);
 
@@ -24,6 +25,19 @@ export function machineConfig(repo) {
   const read = parseYaml(text), out = {};
   for (const key of MACHINE_SETTINGS) if (Object.hasOwn(read, key)) out[key] = read[key];
   return out;
+}
+
+// Sets this machine's `key` to the checked `value`, or removes it when `value` is undefined, rewriting its file (0261:
+// shared by `speck config set --machine` and the panel). Returns the value it had, or undefined.
+export function saveMachineValue(repo, key, value) {
+  const file = machineConfigFile(repo), values = machineConfig(repo), was = values[key];
+  if (value === undefined) delete values[key]; else values[key] = value;
+  const keys = MACHINE_SETTINGS.filter(k => Object.hasOwn(values, k));
+  if (keys.length) {
+    sharedCacheDir(repo, 'machine');
+    fs.writeFileSync(file, `# This machine's own values, used over speck/config.yml's. Change them with speck config set --machine.\n${keys.map(k => `${k}: ${values[k]}`).join('\n')}\n`);
+  } else fs.rmSync(file, { force: true });
+  return was;
 }
 
 // Puts this machine's values in `cfg`, read from speck/config.yml, refusing one that isn't a whole number of 1 or more.
