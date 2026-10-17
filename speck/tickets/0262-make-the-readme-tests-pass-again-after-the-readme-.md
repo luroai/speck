@@ -35,7 +35,7 @@ main's whole test suite passes again, and the README keeps what the revision on 
 - Changes outside the README and these four test files.
 
 ## Notes
-- Failing before this build: the seven tests above, from the full run recorded for main at 9ffa622 on 2026-10-17.
+- The seven tests above failed in the full run recorded for main at 9ffa622 on 2026-10-17. Fixing them is this ticket's whole purpose.
 - Which side to change, the README or a test, depends on what the revision meant. Read `git show 1041577` before changing either.
 
 ## In plain words
