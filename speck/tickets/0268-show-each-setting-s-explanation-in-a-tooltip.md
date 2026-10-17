@@ -1,7 +1,7 @@
 ---
 id: "0268"
 title: "Show each setting's explanation in a tooltip"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T09:22:08.221Z"
 ---
 # 0268 · Show each setting's explanation in a tooltip
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's Settings view (0257) shows a one- or two-sentence explanation under every setting, so the view is long and the values are hard to scan.
@@ -42,7 +42,9 @@ Each setting's explanation sits behind a small info button beside its name, so t
 - Self-check: a redrawn view (after a save) forgot hover and focus on its replaced buttons and kept only a clicked explanation; closing the view clears a kept one; the info button draws its "i" in CSS so it adds no text beside the setting's name and value; square like the rest of the panel.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Settings view is shorter now: each setting shows its name and value, with a small "i" button beside the name. Hover over it, move to it with the keyboard, or tap it to read what the setting does; tap or click it again to hide it, or press Escape. A second Escape closes the view as before.
+
+To see it, open Settings from the panel's header and try the "i" beside any setting. Worth keeping an eye on: on a phone the "i" is a smaller target than the panel's other buttons.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,3 +54,66 @@ Each setting's explanation sits behind a small info button beside its name, so t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Known limit: on narrow screens the info button is 28 px, below the 44 px tap area the panel's tags have (0165).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "22d64ad619678b7e58c54c7f33d18748b99dcc60",
+    "thread_id": "01a1492d-cc9a-7792-918e-74385777e4b3",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 96605,
+      "cached_input_tokens": 55296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 630,
+      "reasoning_output_tokens": 73
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:25:19.615Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: settingInfo() adds an info button immediately after each name, labelled 'About <setting>'; showSettingTip() initially hides all explanations. The 0268 AC1 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "settingInfo() handles hover, focus, blur and click; showSettingTip() displays one explanation and tracks whether a click keeps it open. Both 0268 AC2 tests passed, including combined hover/focus and switching settings."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html: the Escape handler hides the current explanation before closing Settings. Both 0268 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "settingInfo() links each button to its explanation through a unique aria-describedby target. Both 0268 AC4 tests passed, including real-browser checks of every explanation at 320 px with no sideways overflow."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Settings explanations are hidden until requested through an info button. Hover, keyboard focus, clicking and Escape behave as specified, and explanations fit the narrow view. All 29 reported tests passed, including the browser layout check. No blocking concerns found."
+  }
+}
+```
+
+</details>
