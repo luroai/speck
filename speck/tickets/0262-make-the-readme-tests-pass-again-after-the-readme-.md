@@ -39,6 +39,8 @@ main's whole test suite passes again, and the README keeps what the revision on 
 - The seven tests above failed in the full run recorded for main at 9ffa622 on 2026-10-17. Fixing them is this ticket's whole purpose.
 - Which side to change, the README or a test, depends on what the revision meant. Read `git show 1041577` before changing either.
 - Failing before this build: 0249 AC1, 0250 AC1 (the README opens with the tagline…), 0251 AC1, AC2, AC3 and AC5, and 0255 AC1. The recorded result for 9ffa622 failed (exit code 1); its saved output is cut short, so these seven come from running the four README test files. They are this ticket's subject, so unlike other failures from before a build they are fixed here, as the ticket's Notes say.
+- The revision rewrote the opening on purpose (shorter plain line, the two-decisions paragraph reworded and moved before the trust paragraph, the why paragraph no longer carrying the trust points), so the README is left as it is and only the four test files change, each with a `0262:` comment where it does.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
