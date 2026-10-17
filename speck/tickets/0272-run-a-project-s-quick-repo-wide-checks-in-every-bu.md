@@ -41,6 +41,8 @@ A project can name the quick test files that check rules for the whole repo, and
 - `commands.test_files` and `speck test --files` (0113) are the model: see `scripts/config.mjs` for the keys `speck config set` accepts.
 - Criterion 2 is about the skill's instructions, so check it by review.
 - Failing before this build: none
+- AC4 has no automated test: 0122 forbids tests reading this repo's `speck/` folder. Check it by reading `commands.checks` in `speck/config.yml`; every `speck test --files` in this build also fails if a listed file is missing. Listed: 0078 AC2 (scripts under 600 lines), 0085 AC3 (no commit ids), 0122 AC1 (no test reads `speck/`), 0082 AC2 (private words), the tmp clean-up rule (every test file loads the helper first), 0173 AC2 (no single check that a stopped process has gone) and 0068 AC3/AC4 (no product.md). Left out: `test/suite-0271.test.mjs` (0271 AC4) takes about 5.5 seconds; `test/split-0270.test.mjs` repeats 0078 AC2 and its AC3/AC4 test fails on any branch that changes an existing test file.
+- Self-check: a hand-written `commands.checks` that speck reads as a number was ignored; it's now checked as a file name like any other.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

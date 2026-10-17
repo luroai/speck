@@ -543,6 +543,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
                                       or reuse the result for the same code (--fresh: always run it)
   speck test --recorded               print the result recorded for the same code, without running any tests
   speck test --files <file>…          run only those test files with commands.test_files (blank: the whole suite)
+                                      and the files commands.checks lists
   speck review <id> [--tests=f] [--response=f]   run one codex review round
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer
   speck prompt <id> [--tests=f] [--response=f]  print the reviewer prompt (for subagent reviewers)
