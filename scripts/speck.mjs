@@ -14,6 +14,7 @@ import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdConfig } from './config.mjs';
+import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
@@ -525,6 +526,8 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first and commits the ticket; priority "" clears it)
   speck config set <key> <value>      change one setting in speck/config.yml, checked first (nested: commands.test)
+  speck config show [--json]          the main settings by group, with each one's value, whether it's the default and
+                                      what it does, as the panel's Settings view explains them
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on
   speck cancel <id> "<reason>"         cancel a ticket, and record why
   speck status [--json]               tickets by status, blocked first (--json: everything, for programs)
@@ -555,7 +558,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
 `;
 
-const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, new: cmdNew, lint: cmdLint, set: cmdSet, config: cmdConfig, start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
+const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
   review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, 'merge-check': cmdMergeCheck, ship: cmdShip };
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
