@@ -3,13 +3,14 @@
 import { fakePage } from './panel.mjs';
 
 // A page whose fetch answers the board with an empty one, GET /api/settings with each of `views` in turn and a POST
-// with each of `saves` in turn. `globals` replaces what the page sees, for example its `confirm`.
+// with each of `saves` in turn, or once a promise among them resolves. `globals` replaces what the page sees, for example its `confirm`.
 export function settingsPage(views, saves = [], globals = {}) {
   const calls = [];
   const fetch = async (url, opts = {}) => {
     const method = (opts.method || 'GET').toUpperCase();
     calls.push({ url: String(url), method, headers: opts.headers || {} });
-    const body = method === 'POST' ? saves.shift() : String(url).startsWith('/api/settings') ? views.shift() : { tickets: [], ideas: [], resume_command: '' };
+    let body = method === 'POST' ? saves.shift() : String(url).startsWith('/api/settings') ? views.shift() : { tickets: [], ideas: [], resume_command: '' };
+    if (body && body.then) body = await body; // 0274: an answer the test gives later
     if (body && body.status) return { ok: false, status: body.status, json: async () => body.body };
     return { ok: true, status: 200, json: async () => body };
   };

@@ -1,7 +1,7 @@
 ---
 id: "0274"
 title: "Save every changed setting with one Save button"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-17T13:44:09.209Z"
 ---
 # 0274 · Save every changed setting with one Save button
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Every editable setting in the Settings view has its own Save button, so the view is cluttered with them, and changing several settings means saving, and committing, each one separately.
@@ -57,3 +57,87 @@ The Settings view has one Save button that saves every setting you've changed at
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bb7ca12a3a41d795e301e408c8d3ebc814f46ae9",
+    "thread_id": "01a14a22-8979-7092-9f0a-a4746ae90c26",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 212918,
+      "cached_input_tokens": 165504,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 958,
+      "reasoning_output_tokens": 99
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T13:52:47.450Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "settingChanges(), refreshSettings() and .savebar implement one sticky Save with dirty tracking. Both 0274 AC1 tests passed, including real-browser scrolling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSaveSettings() batches shared changes into one commit and saves machine values separately. The three 0274 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "saveSettings() and panelSaveSettings() check the combined shipping changes before saving. Both 0274 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Validation refusals are covered by passing AC4 tests, but scripts/settings.mjs:185 can throw after machine values have been saved, bypassing rollback and leaving a partially saved batch."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "saveSettings() reloads settings after success and clears dirty state. The 0274 AC5 test passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs:180",
+        "issue": "A mixed batch saves machine values before writing config.yml. If fs.writeFileSync() throws, for example because config.yml is not writable, panelSaveRequest() returns 500 but the machine changes remain saved. Exceptions from commitTicketOnly() likewise bypass undo(). This breaks the promised all-or-nothing save.",
+        "suggested_fix": "Handle exceptions throughout the write and commit phase, restoring machine values and any modified repo file before returning failure. Add a mixed-batch test that forces the repo write to fail and verifies both stores remain unchanged.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html:1938",
+        "issue": "Controls remain editable while Save awaits its response. Any edits made during that wait are recorded in settingTyped, but success unconditionally clears the entire map and reloads. Those new edits were never sent and silently disappear.",
+        "suggested_fix": "Disable editing and scope/clear actions during saving, or preserve edits made after the submitted snapshot. Add a test with a delayed save response and an intervening edit.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The single Save button works in the tested flows, including confirmation and one shared commit. Two gaps need fixing: a failed save can leave machine settings partially saved, and edits made while saving can disappear."
+  }
+}
+```
+
+</details>

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv, findChrome, browserPage } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv, findChrome, browserPage, deferred } from './support/panel.mjs';
 import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, tick, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveSettings, panelSaveRequest } from '../scripts/settings.mjs';
 import { machineConfig } from '../scripts/machine.mjs';
@@ -214,6 +214,44 @@ test('0274 AC4: when any change is refused nothing is saved, and the refusal nam
   assert.equal(panelSaveRequest(r.dir, 'repo%3Areviewer_effort=low&delete=all').status, 400);
   assert.equal(panelSaveRequest(r.dir, 'repo%3A__proto__=x').status, 403);
   assert.deepEqual(snapshot(r), was);
+});
+
+test('0274 AC4 F1: when writing or committing speck/config.yml fails, this machine\'s changes are put back too', { skip: process.getuid?.() === 0 ? 'root can write a read-only file' : false }, () => {
+  const r = panelRepo();
+  const changes = [{ key: 'max_parallel_tests', value: '3', machine: true }, { key: 'reviewer_effort', value: 'high' }];
+  let was = snapshot(r);
+  fs.chmodSync(cfgOf(r), 0o444); // can't be written
+  try {
+    const out = panelSaveSettings(r.dir, changes);
+    assert.equal(out.status, 500);
+    assert.match(out.body.error, /nothing was saved/);
+  } finally { fs.chmodSync(cfgOf(r), 0o644); }
+  assert.deepEqual(snapshot(r), was);
+
+  // A commit that fails, here refused by a hook.
+  const hook = path.join(r.dir, '.git', 'hooks', 'pre-commit');
+  fs.writeFileSync(hook, '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+  was = snapshot(r);
+  const out = panelSaveSettings(r.dir, changes);
+  assert.equal(out.status, 500);
+  assert.match(out.body.error, /Couldn't commit speck\/config.yml, so nothing was saved/);
+  assert.deepEqual(snapshot(r), was);
+});
+
+test('0274 AC2 F2: a change made while Save is waiting stays, to be saved next', async () => {
+  const answer = deferred();
+  const p = await opened(page([view(), view({ reviewer_effort: 'high' })], [answer]));
+  changeTo(p, 'reviewer_effort', 'high');
+  p.press(saveButton(p));
+  await p.settle();
+  assert.equal(saveButton(p).disabled, true, 'while saving');
+  changeTo(p, 'limits.max_review_rounds', '5'); // made while waiting
+  answer.resolve({ ok: true, changed: ['reviewer_effort'] });
+  await p.settle();
+  assert.equal(controlOf(p, 'reviewer_effort').value, 'high');
+  assert.equal(controlOf(p, 'limits.max_review_rounds').value, '5', 'kept');
+  assert.equal(saveButton(p).disabled, false, 'still to save');
+  assert.deepEqual(posted(p).map(asked), [{ 'repo:reviewer_effort': 'high' }]);
 });
 
 test('0274 AC4: the view shows each refusal beside its setting, keeping every change in place to fix', async () => {
