@@ -30,6 +30,7 @@ resume_command: 'claude --resume {session}'
 commands:
   test: ""                       # e.g. npm test, pytest
   test_files: ""                 # runs only the given test files while a build works, {files} standing for them, e.g. node --test {files}. A failing full run also uses it to run its failing tests' files once more. Blank: the whole suite, and no second run
+  checks: ""                     # quick test files that check rules for the whole repo, e.g. [test/size.test.mjs, test/style.test.mjs]. speck test --files runs them with the files it's given, so every build runs them before each review round. Blank: none
 
 limits:
   max_acceptance_criteria: 5
