@@ -40,6 +40,7 @@ With Claude as the reviewer, the Settings view offers Claude's model names to pi
 - Checked 2026-10-17: Claude Code's Agent tool, which the builder uses to start a claude-subagent reviewer, takes a model of `sonnet`, `opus`, `haiku` or `fable` (the tool's own schema in this session).
 - Checked 2026-10-17: `claude --model` takes an alias such as `fable`, `opus` or `sonnet` for the newest model of that kind (`claude --help`, Claude Code 2.1.301).
 - The list of models offered per reviewer is in `scripts/settings.mjs` (0276).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
