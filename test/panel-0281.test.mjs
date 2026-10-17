@@ -6,13 +6,35 @@ import { panelRepo, freePort, startPanel, stop, findChrome, browserPage } from '
 
 // ---------- 0281: every Settings control's border on all four sides. Only a real browser lays the view out. ----------
 
-// Each info button, list, text box and number box in the view: its left and right edges, and its border widths.
-const MEASURE = `[...document.querySelectorAll('#settings .setting .info, #settings .setting select.edit, #settings .setting input.edit[type="text"], #settings .setting input.edit[type="number"]')]
-  .filter(n => n.getClientRects().length).map(n => {
-    const r = n.getBoundingClientRect(), cs = getComputedStyle(n);
-    return { what: n.getAttribute('aria-label') || n.tagName, tag: n.tagName, left: r.left, right: r.right,
-      borders: ['Top', 'Right', 'Bottom', 'Left'].map(s => parseFloat(cs['border' + s + 'Width'])) };
-  })`;
+// Each info button, list, text box and number box in the view: its left and right edges, and its borders' widths as
+// the stylesheet sets them at this pixel ratio. Chromium draws any border under 1px as 1px, so its computed widths
+// can't show what a browser that draws half a pixel, as Safari does, is given. The last matching declaration wins, which
+// holds here as the Settings rules all share one specificity.
+const MEASURE = `(() => {
+  const rules = [];
+  const walk = list => { for (const r of Array.from(list)) {
+    if (r.media) { if (matchMedia(r.media.mediaText).matches) walk(r.cssRules); }
+    else if (r.selectorText) rules.push(r);
+  } };
+  for (const sheet of Array.from(document.styleSheets)) walk(sheet.cssRules);
+  // A shorthand with var() in it leaves its longhands blank, so the width is read from the shorthand then.
+  const set = (st, side) => st['border' + side + 'Width']
+    || (st.getPropertyValue('border-' + side.toLowerCase()) || st.getPropertyValue('border')).match(/(?:^|\\s)([\\d.]+px)\\b/)?.[1];
+  const declared = (n, side) => {
+    let w = null;
+    for (const r of rules) if (n.matches(r.selectorText) && set(r.style, side)) w = set(r.style, side);
+    return w;
+  };
+  return [...document.querySelectorAll('#settings .setting .info, #settings .setting select.edit, #settings .setting input.edit[type="text"], #settings .setting input.edit[type="number"]')]
+    .filter(n => n.getClientRects().length).map(n => {
+      const r = n.getBoundingClientRect();
+      return { what: n.getAttribute('aria-label') || n.tagName, tag: n.tagName, left: r.left, right: r.right,
+        borders: ['Top', 'Right', 'Bottom', 'Left'].map(side => declared(n, side)) };
+    });
+})()`;
+// Outside the view, a section keeps its own border, and no outline.
+const OUTSIDE = `(() => { const cs = getComputedStyle(document.getElementById('shaping-section'));
+  return { style: cs.borderLeftStyle, width: cs.borderLeftWidth, outline: cs.outlineStyle }; })()`;
 const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
 
 const skip = findChrome() ? false : 'needs Chrome or Chromium';
@@ -35,16 +57,24 @@ test('0281 AC1 AC2: at every width and pixel ratio, the controls sit on whole pi
         assert.ok(whole(o.left), `${at}: ${o.what}'s left edge at ${o.left} px`);
         assert.ok(whole(o.right), `${at}: ${o.what}'s right edge at ${o.right} px`);
         // AC2
-        for (const w of o.borders) assert.ok(w * dpr >= 1 - 1e-6, `${at}: ${o.what} has a ${w} px border`);
+        for (const w of o.borders) {
+          assert.match(String(w), /^[\d.]+px$/, `${at}: ${o.what}'s border width ${w} is set in px`);
+          assert.ok(parseFloat(w) * dpr >= 1 - 1e-6, `${at}: ${o.what} has a ${w} border`);
+        }
       }
+      // AC3
+      assert.deepEqual(await b.js(OUTSIDE), { style: 'solid', width: '1px', outline: 'none' }, `${at}: the Plan section's border`);
     }
   } finally { await b.close(); await stop(panel); }
 });
 
-// The rules this ticket adds or changes are all the Settings view's.
+// Every rule using what this ticket brings in is one of the Settings view's.
 test('0281 AC3: the change is limited to the Settings view', () => {
   const css = fs.readFileSync(new URL('../templates/panel.html', import.meta.url), 'utf8').split('</style>')[0];
-  const rules = css.split('\n').filter(l => /0281/.test(l) && /\{/.test(l));
-  assert.ok(rules.length >= 1, 'the ticket\'s rules are marked 0281');
-  for (const l of rules) for (const sel of l.slice(0, l.indexOf('{')).split(',')) assert.match(sel.trim(), /^#settings /, l.trim());
+  const rules = css.split("\n").filter(l => l.includes("{") && /round\(|--gap|outline: \.5px|max-resolution/.test(l));
+  assert.ok(rules.length >= 5, `the ticket's rules: ${rules.length}`);
+  for (const l of rules) {
+    const inner = l.trim().replace(/^@media[^{]*\{/, '');
+    for (const sel of inner.slice(0, inner.indexOf('{')).split(',')) assert.match(sel.trim(), /^#settings /, l.trim());
+  }
 });
