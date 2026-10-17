@@ -1,7 +1,7 @@
 ---
 id: "0277"
 title: "Line up the Settings view's info buttons"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T18:28:45.257Z"
+approved: "2026-10-17T18:35:03.141Z"
 
 ---
 # 0277 · Line up the Settings view's info buttons
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In the Settings view, each setting's info button sits straight after its name, so the buttons start at a different place on every row. When a long name wraps, as `allow_same_model_review` and `max_parallel_builds` do on a phone, its button is pushed up against the setting's value with no gap. The buttons are also taller than the controls beside them, so the rows look uneven.
@@ -49,9 +50,14 @@ In the Settings view, each setting's little "i" button now sits at the right-han
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 135,690
+- Elapsed since build started: 6 min
+- Changed lines: 13 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
