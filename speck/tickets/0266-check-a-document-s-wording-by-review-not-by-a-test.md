@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T08:35:03.733Z"
-approved: "2026-10-17T08:36:39.330Z"
+approved: "2026-10-17T08:40:09.649Z"
 
 ---
 # 0266 · Check a document's wording by review, not by a test
@@ -56,12 +56,13 @@ Worth watching: the tests that already pin documents' wording are still there un
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 91,234
-- Elapsed since build started: 2 min
+- Reviewer tokens: 265,366
+- Elapsed since build started: 5 min
 - Changed lines: 12 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only): the brief's size-rules table still says each criterion is "testable", and the ticket skill still says each criterion "will become a test", each now with the exception written next to it. A later wording pass could fold the exception into those lines. Removing the existing tests that pin documents' wording is ticket 0267. No inbox notes.
@@ -122,6 +123,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The guidance now directs builders and reviewers to check document wording by reading it, while keeping tests for factual details. All four criteria are met. No tests were added or weakened, and the recorded run shows 448 existing tests passing. The changes stay within scope."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d6d58bbb1ae4902c9c8e5fe6159647daea6cec42",
+    "merge": true,
+    "thread_id": "01a14901-262b-7473-85a3-83cb3e60a780",
+    "seconds": 12,
+    "usage": {
+      "input_tokens": 173118,
+      "cached_input_tokens": 130048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1014,
+      "reasoning_output_tokens": 18
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T08:40:07.324Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md:21 requires '(checked by review)' for document wording, tone, order or layout; factual criteria remain unmarked and tested. It includes the required definition and examples of documents."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md:25 says 'write no test for it' for marked criteria and prohibits tests of exact wording and sentence, paragraph or heading order. The revised Claims line at line 38 requires tests when a sentence states a fact in changed docs and explicitly says wording needs no test."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/reviewer-prompt.md:9 directs reviewers to read the current document, cite the passage and disregard missing tests for marked criteria. Line 10 makes newly added document wording or order tests blocking findings while permitting factual checks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/brief.md:79 explains the complete rule in the single 'Criteria about documents' passage: review checks how documents read, while tests check factual details."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "All four criteria remain met. The revised self-check preserves the distinction between reviewing wording and testing facts while satisfying the existing test without changing it. The recorded run has 759 passing tests, three skipped and no failures. No blocking concerns remain."
   }
 }
 ```
