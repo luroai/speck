@@ -1,7 +1,7 @@
 ---
 id: "0266"
 title: "Check a document's wording by review, not by a test"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T08:35:03.733Z"
 approved: "2026-10-17T08:40:09.649Z"
+finished: "2026-10-17T08:41:43.119Z"
 
 ---
 # 0266 · Check a document's wording by review, not by a test
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck's build skill writes at least one test for every acceptance criterion, so a criterion about a document's wording ("the README opens with the tagline, then the plain line") becomes a test that pins the exact sentence and where it sits. The next edit to that document, by hand or by a later ticket, fails the suite and holds up every ship, as a README edit made on GitHub did on 2026-10-17. Once speck takes on tasks that aren't code, such as document edits, every one would leave tests like these behind.
