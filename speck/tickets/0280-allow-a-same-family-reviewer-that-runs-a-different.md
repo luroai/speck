@@ -1,7 +1,7 @@
 ---
 id: "0280"
 title: "Allow a same-family reviewer that runs a different model"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0279"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T18:49:03.573Z"
 
 ---
 # 0280 · Allow a same-family reviewer that runs a different model
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `allow_same_model_review` doesn't compare models: it compares agents. A Claude builder with a Claude reviewer counts as "the same model" whatever models they run, so an Opus builder can't be reviewed by Fable without turning the setting on, while its name says it's about the same model.
