@@ -1,7 +1,7 @@
 ---
 id: "0264"
 title: "Hand a ticket back when it fails tests that pass on a failing base branch"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0263"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T08:57:38.722Z"
+approved: "2026-10-17T09:01:41.727Z"
 
 ---
 # 0264 · Hand a ticket back when it fails tests that pass on a failing base branch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ship's tests fail and the base branch's own tests fail too, `speck ship` puts every failure down to the base branch (exit 14, "this isn't the ticket's fault"). That includes tests that pass on the base branch and fail only with the ticket. The ticket's build is then sent back with the "Base branch failing" steps, never hears about its own failures, and has them pointed out only on a later ship, a whole cycle later. 0257 hid three of its own failures this way on 2026-10-17 (0078 AC2, 0233 AC1, 0168 AC4) behind seven README failures on main.
@@ -50,9 +51,14 @@ When a ticket's ship fails its tests while the main branch's own tests are faili
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 165,803
+- Elapsed since build started: 4 min
+- Changed lines: 24 (limit 5000)
 Follow-ups:
 - A base branch run that fails without naming any test counts as failing none, so the ticket is handed back (speck/ideas/2026-10-17-blame-the-base-branch-when-its-run-names-no-tests.md).
 - Tests that failed in the full run but passed on the second try are still named, and can hand a ticket back (speck/ideas/2026-10-17-leave-chance-failures-out-of-a-hand-back.md).
