@@ -1,7 +1,7 @@
 ---
 id: "0261"
 title: "Manage this machine's settings from the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: ["0259","0260"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T09:38:25.559Z"
+approved: "2026-10-17T09:42:50.385Z"
 
 ---
 # 0261 · Manage this machine's settings from the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once a setting can be set for this machine only, someone looking at the Settings view can't tell whether the value shown is theirs or the repo's, and can't choose which to change.
@@ -47,9 +48,14 @@ The panel's Settings view now says, for the number of builds and test runs at on
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 208,697
+- Elapsed since build started: 4 min
+- Changed lines: 111 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: `speck config show` still lists `speck/config.yml`'s values only, not this machine's (speck/ideas/2026-10-17-show-this-machine-s-values-in-speck-config-show.md).
 
