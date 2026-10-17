@@ -32,9 +32,9 @@ const MEASURE = `(() => {
         borders: ['Top', 'Right', 'Bottom', 'Left'].map(side => declared(n, side)) };
     });
 })()`;
-// Outside the view, a section keeps its own border, and no outline.
+// Outside the view, a section keeps its own border, with no outline or shadow.
 const OUTSIDE = `(() => { const cs = getComputedStyle(document.getElementById('shaping-section'));
-  return { style: cs.borderLeftStyle, width: cs.borderLeftWidth, outline: cs.outlineStyle }; })()`;
+  return { style: cs.borderLeftStyle, width: cs.borderLeftWidth, outline: cs.outlineStyle, shadow: cs.boxShadow }; })()`;
 const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
 
 const skip = findChrome() ? false : 'needs Chrome or Chromium';
@@ -63,7 +63,7 @@ test('0281 AC1 AC2: at every width and pixel ratio, the controls sit on whole pi
         }
       }
       // AC3
-      assert.deepEqual(await b.js(OUTSIDE), { style: 'solid', width: '1px', outline: 'none' }, `${at}: the Plan section's border`);
+      assert.deepEqual(await b.js(OUTSIDE), { style: 'solid', width: '1px', outline: 'none', shadow: 'none' }, `${at}: the Plan section's border`);
     }
   } finally { await b.close(); await stop(panel); }
 });
@@ -71,7 +71,7 @@ test('0281 AC1 AC2: at every width and pixel ratio, the controls sit on whole pi
 // Every rule using what this ticket brings in is one of the Settings view's.
 test('0281 AC3: the change is limited to the Settings view', () => {
   const css = fs.readFileSync(new URL('../templates/panel.html', import.meta.url), 'utf8').split('</style>')[0];
-  const rules = css.split("\n").filter(l => l.includes("{") && /round\(|--gap|outline: \.5px|max-resolution/.test(l));
+  const rules = css.split("\n").filter(l => l.includes("{") && /round\(|--gap|box-shadow: 0 0 0|max-resolution/.test(l));
   assert.ok(rules.length >= 5, `the ticket's rules: ${rules.length}`);
   for (const l of rules) {
     const inner = l.trim().replace(/^@media[^{]*\{/, '');
