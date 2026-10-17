@@ -1,7 +1,7 @@
 ---
 id: "0270"
 title: "Give speck's three fullest scripts room to grow"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T10:57:46.651Z"
+approved: "2026-10-17T11:03:26.761Z"
 
 ---
 # 0270 · Give speck's three fullest scripts room to grow
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 No file under `scripts/` may be over 600 lines (0078 AC2). `scripts/panel.mjs` and `scripts/run.mjs` are at exactly 600 lines and `scripts/core.mjs` is at 599, so the next ticket that adds a line to any of them fails at ship time and is handed back to its build. 0258, 0260 and 0261 were each handed back for this on 2026-10-17.
@@ -49,9 +50,14 @@ Nothing changes for someone using speck: every command, the panel and `speck run
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 192,221
+- Elapsed since build started: 6 min
+- Changed lines: 833 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
