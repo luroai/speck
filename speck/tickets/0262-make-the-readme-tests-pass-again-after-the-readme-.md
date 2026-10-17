@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T07:03:30.339Z"
-approved: "2026-10-17T07:09:31.216Z"
+approved: "2026-10-17T07:37:28.234Z"
 
 ---
 # 0262 · Make the README tests pass again after the README revision
@@ -53,12 +53,13 @@ The README's checks had fallen behind the new README wording, so every approved 
 ## Review log
 Round 1 (codex): changes requested: F1 This new file breaches the ticket's explicit scope: changes outside README.md and the four named test files are excluded.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 354,185
-- Elapsed since build started: 6 min
+- Reviewer tokens: 683,796
+- Elapsed since build started: 34 min
 - Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes):
@@ -188,6 +189,70 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The tests now follow the intentional README revision without changing the README. All 20 tests in the four specified files pass. The extra file has been removed, resolving the scope concern. The change is ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "865e231c10171fefdfe176c29edb77b12437df23",
+    "merge": true,
+    "thread_id": "01a148b1-0ccc-7572-89b6-f1b3da877545",
+    "seconds": 11,
+    "usage": {
+      "input_tokens": 328196,
+      "cached_input_tokens": 272128,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1415,
+      "reasoning_output_tokens": 32
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T07:37:26.234Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The recorded run in /tmp/speck-0262-tests.txt passes all four specified README test files, alongside history-0085: 25 tests, zero failures."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md remains unchanged. The four test files retain assertions matching the intentional revision and explanatory 0262 comments. This round changes only the comments' references to the revision; no assertion changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "All 20 original README tests remain without skips. history-0085 AC3 now also passes after commit IDs were removed from comments, without changing the history test. The recorded run has zero failures or skips; shipping provides whole-suite verification."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/readme-0262.test.mjs",
+        "issue": "The previously added file exceeded the ticket's scope. It remains absent from the change.",
+        "suggested_fix": "No further action required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The README tests follow the revised wording while leaving the README unchanged. The comment-only fix also resolves the history check that blocked shipping. All 25 tests run pass, and no blocking concerns remain."
   }
 }
 ```
