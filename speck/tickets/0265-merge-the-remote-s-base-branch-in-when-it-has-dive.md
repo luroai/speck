@@ -1,7 +1,7 @@
 ---
 id: "0265"
 title: "Merge the remote's base branch in when it has diverged cleanly"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0264"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T09:07:33.967Z"
+approved: "2026-10-17T09:21:48.563Z"
 
 ---
 # 0265 · Merge the remote's base branch in when it has diverged cleanly
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the remote's base branch has a commit your local base branch doesn't (for example, a README edited on GitHub), and your local base branch has one the remote doesn't, `speck ship` refuses with "each have commits the other doesn't". speck run's ship queue then waits for a new local commit that may never come, so approved tickets sit unshipped with no sign why outside `run.log`. This held up 0257 overnight on 2026-10-16 and 2026-10-17.
@@ -54,9 +55,15 @@ It still stops, changing nothing, when the two sides changed the same lines, or 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 With merge.autoStash=true, Git can stash overlapping uncommitted edits, advance the base branch, then restore the edits with conflicts.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 372,254
+- Elapsed since build started: 14 min
+- Changed lines: 82 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: ship's catch-up fast-forward and its merge of the ticket don't pass `--no-autostash` either: speck/ideas/2026-10-17-keep-merge-autostash-out-of-ship-s-merges.md.
 
