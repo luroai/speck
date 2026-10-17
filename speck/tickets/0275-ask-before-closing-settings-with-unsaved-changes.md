@@ -1,7 +1,7 @@
 ---
 id: "0275"
 title: "Ask before closing Settings with unsaved changes"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0274"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T15:40:28.626Z"
 
 ---
 # 0275 · Ask before closing Settings with unsaved changes
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Closing the Settings view throws away any change you haven't saved, without a word, so a change you meant to keep can be lost with one press of Close or Escape.
