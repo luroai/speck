@@ -14,7 +14,7 @@ import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettings, panelSettingRequest } from './settings.mjs';
+import { panelSettings, panelSettingRequest, panelSaveRequest } from './settings.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship, the speck run switch and a setting) ----------
 
@@ -349,7 +349,11 @@ export async function panelServer() {
         return wrote(res, out);
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
-    const setting = req.method === 'POST' && where.match(/^\/api\/settings\/([^/]+)\/([^/]*)$/); // 0258: Save in the Settings view
+    const setting = req.method === 'POST' && where.match(/^\/api\/settings\/([^/]+)\/([^/]*)$/); // 0258: one setting
+    const saveAll = req.method === 'POST' && where === '/api/settings/save'; // 0274: the Settings view's one Save
+    if (saveAll && (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token)))
+      return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+    if (saveAll) return wrote(res, panelSaveRequest(repo, req.url.split('?')[1] || ''));
     if (setting && (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token)))
       return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
     const query = new URLSearchParams(req.url.split('?')[1] || ''); // 0259's ?confirm= and 0261's ?scope=

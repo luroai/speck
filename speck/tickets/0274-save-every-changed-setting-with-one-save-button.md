@@ -40,6 +40,10 @@ The Settings view has one Save button that saves every setting you've changed at
 ## Notes
 - Today each Save sends `POST /api/settings/<key>/<value>` (`panelSettingRequest` in `scripts/settings.mjs`), with 0259's `?confirm=` and 0261's `?scope=`.
 - Failing before this build: none
+- 0258's, 0259's and 0261's page tests pressed each setting's own Save, which this ticket removes: they now change the control and press the view's one Save, checking the same things. Their server tests are unchanged: `panelSetSetting` and `POST /api/settings/<key>/<value>` still work, as one change saved the new way.
+- 0259's cancelled dialog still puts `auto_ship` and `auto_ship_risk` back as they were, and keeps your other changes to save.
+- 0261's question is now asked beside the setting as soon as it's changed, rather than on Save, and the Cancel button is gone: putting the value back stops asking. Clearing this machine's value waits for Save too.
+- Self-check: no changes
 - Criterion 2's single commit and criterion 4's nothing-saved need the server to take the changes together, not one request per setting.
 
 ## In plain words
