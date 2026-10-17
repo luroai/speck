@@ -335,6 +335,12 @@
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
   #settings .setting .default { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
   #settings .setting p { margin: 4px 0 0; color: var(--muted); }
+  #settings .setting p.bad { color: var(--bad); }
+  /* 0258: a setting the panel can change: its control and Save button */
+  #settings .setting .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
+  #settings .setting input.edit[type="number"] { width: 8ch; }
+  #settings .setting .save { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #settings .setting .save:hover { color: var(--text); border-color: var(--text); }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
@@ -1041,7 +1047,7 @@ const LOST_MS = 10000; // how long the board's stream, or an answer for the boar
 const WAIT_MS = 15000; // how long the page waits for its request for the board before giving it up (0186)
 const RETRY_MS = 1000; // how soon the page starts again a stream the browser has given up on
 const LOG_LINES = 200; // how many of a log's last lines are shown, as the server first sends them (0189)
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship and the speck run switch
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship, the speck run switch and each setting saved
 const $ = id => document.getElementById(id);
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
@@ -1596,9 +1602,10 @@ if (pageHeader) {
 }
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render(); });
-// 0257: the Settings view. It shows the settings people tune, read afresh from speck/config.yml each time it opens, and
-// changes none of them.
+// 0257: the Settings view. It shows the settings people tune, read afresh from speck/config.yml each time it opens.
+// 0258: the ones the server marks editable can be changed in place: Save sends one to the server, which commits it.
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
+let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
 $('settings-open').addEventListener('click', openSettings);
 $('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) closeSettings(); });
 renderSettings(); // closed
@@ -1626,6 +1633,8 @@ async function loadSettings() {
 function closeSettings() {
   settingsView = null;
   settingsSeq++;
+  settingTyped = new Map();
+  settingRefused = new Map();
   renderSettings();
   const back = $('settings-open');
   if (back.focus) back.focus();
@@ -1644,17 +1653,68 @@ function renderSettings() {
   if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
   else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
-    kids.push(el('p', null, 'What speck reads from speck/config.yml now. Change them there.'));
+    kids.push(el('p', null, 'What speck reads from speck/config.yml now. Saving a change commits it to the base branch. Change the rest in the file.'));
     for (const g of settingsView.groups) {
       kids.push(el('h4', null, g.title));
       for (const x of Array.isArray(g.settings) ? g.settings : []) {
+        const edit = x.editable === true ? settingEditor(x) : null;
         kids.push(el('div', 'setting', null,
-          el('div', 'line', null, el('code', 'name', x.key), el('code', 'value', settingValue(x.value)), x.default ? el('span', 'default', 'default') : null),
+          el('div', 'line', null, el('code', 'name', x.key), ...(edit ? edit : [el('code', 'value', settingValue(x.value))]), x.default ? el('span', 'default', 'default') : null),
+          settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
           el('p', null, x.explain)));
       }
     }
   }
   pane.replaceChildren(...kids);
+}
+// 0258: a setting's control, a list of the server's choices or a box to type in, and its Save button.
+function settingEditor(x) {
+  const now = x.value === null || x.value === undefined ? '' : String(x.value);
+  const typed = settingTyped.has(x.key) ? settingTyped.get(x.key) : now;
+  let input;
+  if (Array.isArray(x.choices)) {
+    input = el('select', 'edit');
+    const choices = x.choices.map(String);
+    // A value the file has that isn't a choice is shown, but can't be picked again.
+    for (const c of choices.includes(now) ? choices : [now, ...choices]) {
+      const o = el('option', null, c === '' ? '(default)' : c);
+      o.value = c;
+      if (!choices.includes(c)) o.disabled = true;
+      input.appendChild(o);
+    }
+  } else {
+    input = el('input', 'edit');
+    input.type = typeof x.value === 'number' ? 'number' : 'text';
+    if (input.type === 'number') input.min = '1';
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') saveSetting(x.key, input); });
+  }
+  input.value = typed;
+  input.setAttribute('aria-label', x.key);
+  const save = el('button', 'save', 'Save');
+  save.type = 'button';
+  save.addEventListener('click', () => saveSetting(x.key, input));
+  return [input, save];
+}
+async function saveSetting(key, input) {
+  if (settingsView === null || settingsView.saving) return;
+  const value = String(input.value ?? ''), mine = settingsSeq;
+  settingsView.saving = true;
+  settingTyped.set(key, value);
+  settingRefused.delete(key);
+  let why = null;
+  try {
+    const res = await fetch(`/api/settings/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (!res.ok) {
+      let body = null;
+      try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+      why = body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`;
+    }
+  } catch { why = `Couldn't reach the panel server, so ${key} wasn't changed.`; }
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  settingsView.saving = false;
+  if (why !== null) { settingRefused.set(key, why); renderSettings(); return; }
+  settingTyped.delete(key);
+  loadSettings(); // the value speck now reads
 }
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
