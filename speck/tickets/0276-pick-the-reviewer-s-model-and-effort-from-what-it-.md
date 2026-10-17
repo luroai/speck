@@ -38,7 +38,7 @@ When the reviewer can say which models it offers, the Settings view lists them, 
 
 ## Notes
 - Checked 2026-10-17: `codex debug models` (codex-cli 0.159.0) prints the model catalogue as JSON: each model's `slug`, `visibility` (`list` or `hide`) and `supported_reasoning_levels` (each with an `effort`, including `ultra` on some models) (the installed tool).
-- Unverified: whether `codex debug models` stays stable between Codex releases (it's under `debug`, so it may change without notice). Criterion 4's fallback covers it going away.
+- Checked 2026-10-17: `codex debug models` works in codex-cli 0.159.0 with the shape above; whether it stays stable between releases can't be checked ahead of time (it's under `debug`), and criterion 4's fallback covers it changing or going away.
 - Checked 2026-10-17: `claude --model` takes an alias such as `fable`, `opus` or `sonnet` for the newest model of that kind, or a full model name, and Claude Code 2.1.301 has no command that lists models (`claude --help`).
 - `EFFORTS` in `scripts/core.mjs` is the fixed list today.
 
