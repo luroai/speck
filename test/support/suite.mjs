@@ -2,7 +2,8 @@
 // but starts the slowest files first. Each full run records how long each file took in speck/.cache/test-times.json,
 // which git ignores, and the next run starts the files longest first, then any with no recorded time alphabetically.
 // `node --test` sorts the files it's given, so the order is set here, through run() from node:test.
-// On a machine with 8 cores or fewer, the heavy files (heavy.mjs) run at most 2 at a time beside the others (0233).
+// On a machine with 8 cores or fewer, the heavy files run at most 2 at a time beside the others (0233): those whose
+// code starts a real panel, browser or `speck run` (heavy.mjs, 0271).
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -11,7 +12,7 @@ import { Readable } from 'node:stream';
 import { run } from 'node:test';
 import { spec, tap } from 'node:test/reporters';
 import { fileURLToPath } from 'node:url';
-import { HEAVY } from './heavy.mjs';
+import { heavyFiles } from './heavy.mjs';
 
 export const timesFile = root => path.join(root, 'speck', '.cache', 'test-times.json');
 
@@ -93,8 +94,9 @@ async function* merged(streams) {
 
 // Runs every test/*.test.mjs file under `root`, writing the report to `out` (TAP, as `node --test` writes when it isn't
 // to a terminal), and records each file's time once the run has ended. Resolves to the exit code: 1 when any test failed.
-// With `cores` at 8 or fewer, the files in `heavy` run at most heavyLimit(cores) at a time, beside the other files.
-export async function runSuite(root, { cores = os.availableParallelism(), concurrency = Math.max(cores - 1, 1), heavy = HEAVY, out = process.stdout } = {}) {
+// With `cores` at 8 or fewer, the files in `heavy` run at most heavyLimit(cores) at a time, beside the other files. By
+// default, `heavy` is the files whose own code starts a real panel, browser or `speck run` (heavyFiles).
+export async function runSuite(root, { cores = os.availableParallelism(), concurrency = Math.max(cores - 1, 1), heavy, out = process.stdout } = {}) {
   let names = [];
   try { names = fs.readdirSync(path.join(root, 'test')).filter(f => f.endsWith('.test.mjs')); } catch { /* no test folder */ }
   if (!names.length) {
@@ -109,7 +111,7 @@ export async function runSuite(root, { cores = os.availableParallelism(), concur
   const times = new Map();
   let failed = false;
   const limit = heavyLimit(cores);
-  const isHeavy = new Set(limit ? heavy : []);
+  const isHeavy = new Set(limit ? heavy ?? heavyFiles(root, files) : []);
   const groups = [[files.filter(f => !isHeavy.has(f)), concurrency], [files.filter(f => isHeavy.has(f)), limit]].filter(([g]) => g.length);
   const streams = groups.map(([g, n]) => run({ files: g.map(f => path.join(root, f)), concurrency: n }));
   for (const stream of streams) {
