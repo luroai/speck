@@ -1,4 +1,4 @@
-// The Settings view's test helpers, shared by 0258's and 0259's tests.
+// The Settings view's test helpers, shared by 0258's, 0259's, 0261's and 0274's tests.
 
 import { fakePage } from './panel.mjs';
 
@@ -21,4 +21,20 @@ export const openSettings = async p => { p.press(p.byId('settings-open')); await
 export const rowOf = (p, key) => p.all(p.byId('settings')).filter(n => /\bsetting\b/.test(n.className || ''))
   .find(r => p.all(r).find(n => /\bname\b/.test(n.className || ''))?.textContent === key);
 export const controlOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'select' || n.tagName === 'input');
-export const saveOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && /\bsave\b/.test(n.className));
+// 0274: the view's one Save button.
+export const saveButton = p => p.all(p.byId('settings')).find(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || ''));
+// A value typed or picked in a setting's control, as the browser tells the page.
+export function changeTo(p, key, value) {
+  const c = controlOf(p, key);
+  c.value = String(value);
+  for (const type of ['input', 'change']) if (c.listeners[type]) c.listeners[type]({ target: c });
+}
+// auto_ship_risk's boxes, and one ticked or unticked, as the browser tells the page.
+export const boxesOf = (p, key) => p.all(rowOf(p, key)).filter(n => n.tagName === 'input' && n.type === 'checkbox');
+export function tick(p, key, risk, on) {
+  const box = boxesOf(p, key).find(b => b.value === risk);
+  box.checked = on;
+  if (box.listeners.change) box.listeners.change({ target: box });
+}
+// The page's POSTs, by address.
+export const posted = p => p.settingsCalls.filter(c => c.method === 'POST').map(c => c.url);
