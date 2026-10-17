@@ -1,7 +1,7 @@
 ---
 id: "0259"
 title: Let the panel change auto-ship only after you confirm                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0258"]                # ticket ids that must be done first
 created: 2026-10-16
+started: "2026-10-17T09:22:21.680Z"
 
 ---
 # 0259 · Let the panel change auto-ship only after you confirm
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `auto_ship` and `auto_ship_risk` decide which approved tickets merge and push to the base branch without you. Turning that on by a slip of the finger, from a page with no login, would let work ship that nobody looked at.
