@@ -40,6 +40,7 @@ A project can name the quick test files that check rules for the whole repo, and
 ## Notes
 - `commands.test_files` and `speck test --files` (0113) are the model: see `scripts/config.mjs` for the keys `speck config set` accepts.
 - Criterion 2 is about the skill's instructions, so check it by review.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
