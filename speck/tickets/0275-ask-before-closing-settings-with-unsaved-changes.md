@@ -38,6 +38,7 @@ Closing the Settings view with unsaved changes asks what to do with them first.
 
 ## Notes
 - Escape already hides an open setting explanation first (0268). With an explanation open, Escape still does only that.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
