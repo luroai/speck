@@ -1,7 +1,7 @@
 ---
 id: "0259"
 title: Let the panel change auto-ship only after you confirm                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: ["0258"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T09:22:21.680Z"
+approved: "2026-10-17T09:29:11.056Z"
 
 ---
 # 0259 · Let the panel change auto-ship only after you confirm
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `auto_ship` and `auto_ship_risk` decide which approved tickets merge and push to the base branch without you. Turning that on by a slip of the finger, from a page with no login, would let work ship that nobody looked at.
@@ -52,9 +53,15 @@ To see it, open the panel, press Settings, set auto_ship to true and press Save:
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Confirmation is not tied to the scope shown to the user.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 340,238
+- Elapsed since build started: 7 min
+- Changed lines: 101 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: the tick boxes' look was checked only by the fake page, not in a real browser.
 
