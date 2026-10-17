@@ -39,6 +39,7 @@ Each setting's explanation sits behind a small info button beside its name, so t
 ## Notes
 - The view is in `templates/panel.html` (search for "0257"). The explanations come from `scripts/settings.mjs`.
 - Failing before this build: none
+- Self-check: a redrawn view (after a save) forgot hover and focus on its replaced buttons and kept only a clicked explanation; closing the view clears a kept one; the info button draws its "i" in CSS so it adds no text beside the setting's name and value; square like the rest of the panel.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
