@@ -45,7 +45,7 @@ A project can name the quick test files that check rules for the whole repo, and
 - Self-check: a hand-written `commands.checks` that speck reads as a number was ignored; it's now checked as a file name like any other.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A project can now name a few quick tests that check rules for the whole project, such as a limit on how long a script may be. Every build runs them with its own tests before each review, so a build that breaks one of those rules finds out straight away rather than when it's shipped. speck's own settings now list thirteen such tests. To see it, look at the new checks setting in the project's settings file and run the tests for any ticket: the listed checks run too. If a listed test file is renamed or removed, every build's test run stops and names it until the list is fixed.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,10 @@ A project can name the quick test files that check rules for the whole repo, and
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- 0270's "no existing test file changed" test fails on any branch that edits an existing test file, so it can't be a check (speck/ideas/2026-10-17-stop-0270-s-test-failing-builds-that-change-a-test-file.md).
+- `speck config show` and the panel's Settings view don't list `commands.checks` yet; it's set with `speck config set` or by hand.
+- The list in `speck/config.yml` is kept by hand: a new repo-wide rule test needs adding to it.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -126,6 +130,79 @@ A project can name the quick test files that check rules for the whole repo, and
     ],
     "escalation_question": "",
     "summary": "The new setting works, and the supplied test run passed. Builds will catch failures in configured checks before review. The repo’s own list is incomplete, however: it leaves out a quick file that enforces rules across skills and tests."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f0b524d2b3c5c19d84108cbd7915cfe5092153ae",
+    "thread_id": "01a1498d-a2fc-7c12-ba13-61683aa6c1dd",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 334046,
+      "cached_input_tokens": 270464,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1979,
+      "reasoning_output_tokens": 156
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T11:11:24.409Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/config.yml defines commands.checks blank with an explanatory comment. scripts/config.mjs accepts the setting; passing AC1 tests cover setting, reading and clearing it."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Reviewed skills/speck-build/SKILL.md: checks run alongside ticket tests and their failures prevent review. scripts/turns.mjs cmdTest includes them automatically in every --files run, covering merge rounds. Passing AC2 tests exercise inclusion, deduplication, failure propagation and blank behaviour."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/turns.mjs checkFiles validates files before tests start and reports missing names. Passing AC3 tests cover missing files, directories and validation when commands.test_files is blank."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reviewed speck/config.yml: commands.checks now lists thirteen files, including 0078, 0085, install-0253 and the additional quick repo-wide checks identified in the sweep. The ticket documents exclusions and timings. The recorded run includes the expanded list and has no failures."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "docs/brief.md describes commands.checks beside commands.test_files, explaining configuration, combined execution, missing files and blank behaviour. The passing AC5 test checks the setting names."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/config.yml",
+        "issue": "The checks list previously omitted quick files enforcing rules across the repo.",
+        "suggested_fix": "Completed: install-0253 and five further quick rule-checking files were added after a wider sweep.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Builds now run the configured quick repo-wide checks alongside ticket tests and stop when a check fails or a listed file is missing. The incomplete checks list has been fixed. All five criteria pass; the recorded run passed 218 tests with three skipped."
   }
 }
 ```
