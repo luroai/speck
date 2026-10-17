@@ -42,10 +42,6 @@ test('AC3: the v0.1 handoff note is gone', () => {
   assert.equal(git('ls-files', 'docs/HANDOFF.md').stdout, '');
 });
 
-test('AC4: the brief\'s sentence that named the owner now says "the maintainer"', () => {
-  assert.match(read('docs/brief.md'), /Someone other than the maintainer installs it and ships a ticket\./);
-});
-
 test('AC5: the panel mockup is gone', () => {
   // 0126 removed the mockup, so it can no longer name anyone.
   assert.equal(fs.existsSync(path.join(ROOT, 'docs', 'panel-mockup.html')), false);

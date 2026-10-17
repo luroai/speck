@@ -110,8 +110,9 @@ test('0235 AC3: the hand-back message says the tests failed on the ticket as it 
   assert.match(m, /"Tests fail together"/);
 });
 
-test('0235 AC4: the brief and /speck-build say the whole suite runs in speck ship, not during a build', () => {
-  for (const f of ['docs/brief.md', BUILD]) {
+// 0267 left the brief's wording to review.
+test('0235 AC4: /speck-build says the whole suite runs in speck ship, not during a build', () => {
+  for (const f of [BUILD]) {
     const s = flat(read(f));
     assert.match(s, /the whole suite runs in `speck ship`, not during a build/i, f);
     assert.doesNotMatch(s, /whole suite[^.|]*before (each|every|the first|the next) review round/i, f);

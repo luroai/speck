@@ -7,21 +7,11 @@ import { spawnSync } from 'node:child_process';
 import { ROOT, CLI } from './support/speck.mjs';
 
 // ---------- 0255: replace speck's tagline with one that says what's different ----------
+// 0267 removed the check on the README's opening lines, which review checks now.
 
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const TAGLINE = "Ship code you can't read, and still trust it.";
-// 0262: the README revision made on GitHub cut the plain line to end at "every time.".
-const PLAIN = 'speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time.';
 const OLD = 'Your judgement, at agent speed.';
-
-test('0255 AC1: under the # speck heading, the README opens with the new tagline and the plain line', () => {
-  const readme = read('README.md');
-  const lines = readme.split('\n').filter(l => l.trim());
-  assert.equal(lines[0], '# speck');
-  assert.equal(lines[1], `**${TAGLINE}**`);
-  assert.equal(lines[2], PLAIN);
-  assert.ok(!readme.includes(OLD), 'the old tagline is gone from the README');
-});
 
 test('0255 AC2: speck help, the comment at the top of scripts/speck.mjs and package.json use the new tagline', () => {
   const help = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' }).stdout;

@@ -18,8 +18,8 @@ function initOutput() {
   return r.stdout.slice(r.stdout.indexOf('Next:'));
 }
 
-test('0125 AC1: the README, package.json and speck help share the tagline, and none says "you merge"', () => {
-  assert.ok(fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8').includes(TAGLINE));
+// 0267: whether the README gives the tagline is left to review.
+test('0125 AC1: package.json and speck help share the tagline, and neither says "you merge"', () => {
   const description = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).description;
   assert.ok(description.startsWith(TAGLINE), description);
   const first = help().split('\n')[0];

@@ -203,10 +203,9 @@ test('0014 AC3: a reviewer command is checked by its first word on the PATH, and
   assert.match(noCodex.out, /✗ Codex CLI \(reviews tickets\)/);
 });
 
-test('0014 AC4: the docs describe the builder as any agent that reads speck skills', () => {
+test('0014 AC4: the README names the skills folders and the agents that read them', () => {
   const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  const req = readme.split('## Requirements')[1].split('\n## ')[0];
-  for (const s of ['`.agents/skills/`', '`.claude/skills/`', 'Claude Code', 'Codex', 'Cursor']) assert.ok(req.includes(s), `README Requirements: ${s}`);
+  for (const s of ['`.agents/skills/`', '`.claude/skills/`', 'Claude Code', 'Codex', 'Cursor']) assert.ok(readme.includes(s), `README: ${s}`);
 });
 
 // ---------- 0023: self-check the build before the first review round ----------

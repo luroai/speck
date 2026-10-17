@@ -65,9 +65,3 @@ test('0244 AC2: when main\'s own tests fail too, it still exits 14 with the same
   assert.match(res.stderr, /and main's own tests are failing too, so this isn't the ticket's fault\. Nothing was shipped\. Fix main, then ship again\./);
   assert.doesNotMatch(res.stderr, BOTH);
 });
-
-test('0244 AC3: the brief says the same as the message', () => {
-  const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
-  assert.match(brief, /If they fail but the base branch's own tests pass, ship says the failure comes from the ticket's change or, when the base branch has moved on, that the tests failed on the ticket as it would land, because of its own change or because of it with the base branch's newer changes, and to merge the base branch's newer changes into the ticket, fix the failing tests, get it reviewed, then ship again\. Either way it names the failing tests when the output is TAP\./);
-  assert.doesNotMatch(brief, /fail together/);
-});

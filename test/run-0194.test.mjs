@@ -289,14 +289,6 @@ test('0194 AC2: a ticket with no build session to resume is reported once, with 
   } finally { await stopRun(run); }
 });
 
-test('0194 AC5: the brief says builds end at approved and one ship queue in speck run ships tickets one at a time', () => {
-  const brief = read('docs/brief.md');
-  const p = brief.match(/^7\. \*\*One build at a time\.\*\*[^\n]*/m)[0];
-  assert.match(p, /Builds end at approved, and one ship queue in `speck run` ships tickets one at a time/);
-  assert.doesNotMatch(brief, /Each build ships its own ticket/i);
-  assert.doesNotMatch(brief, /the build runs `speck ship <id> --auto`/);
-});
-
 test('0194: the other docs no longer say a build ships its own ticket', () => {
   for (const f of ['AGENTS.md', 'README.md', 'skills/speck-review/SKILL.md', 'scripts/install.mjs'])
     assert.doesNotMatch(read(f), /`speck ship <id> --auto` (step )?in/, f);
