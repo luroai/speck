@@ -1,7 +1,7 @@
 ---
 id: "0270"
 title: "Give speck's three fullest scripts room to grow"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T10:57:46.651Z"
 
 ---
 # 0270 · Give speck's three fullest scripts room to grow
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 No file under `scripts/` may be over 600 lines (0078 AC2). `scripts/panel.mjs` and `scripts/run.mjs` are at exactly 600 lines and `scripts/core.mjs` is at 599, so the next ticket that adds a line to any of them fails at ship time and is handed back to its build. 0258, 0260 and 0261 were each handed back for this on 2026-10-17.
