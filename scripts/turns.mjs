@@ -186,6 +186,17 @@ export function runTestsInTurn(repo, cfg, cmd, onStart = () => {}, output = '', 
 // A word the shell reads back as exactly `s`.
 export const shellWord = s => `'${s.replaceAll("'", `'\\''`)}'`;
 
+// The test files commands.checks lists (0272), relative to the repo root: quick checks of rules for the whole repo that
+// `speck test --files` runs with the files it's given. A SpeckError naming any that isn't a file, before anything runs.
+export function checkFiles(repo, cfg) {
+  const v = cfg.commands?.checks;
+  const list = (Array.isArray(v) ? v.map(String) : v == null ? [] : String(v).split(/[\s,]+/)).filter(Boolean);
+  const rels = [...new Set(list.map(f => path.relative(repo, path.resolve(repo, f)) || '.'))];
+  const missing = rels.filter(f => !fs.statSync(path.join(repo, f), { throwIfNoEntry: false })?.isFile());
+  if (missing.length) throw new SpeckError(`commands.checks in speck/config.yml lists ${missing.length === 1 ? 'a test file' : 'test files'} that ${missing.length === 1 ? "doesn't" : "don't"} exist: ${missing.join(', ')}. Fix the list with \`speck config set commands.checks "<file> …"\` (blank for none), then run this again. No tests were run.`);
+  return rels;
+}
+
 // `speck test`: runs commands.test in this checkout when it has a turn, and exits with its exit code. A result recorded
 // for the same code is reused instead, unless --fresh. `speck test --files <file>…` runs commands.test_files with just
 // those files (0113), from the repo root, taking a turn as a full run does (0239) but without a recorded result, as it
@@ -200,10 +211,12 @@ export function cmdTest(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const only = files && String(cfg.commands?.test_files || '').trim();
+  const checks = files ? checkFiles(repo, cfg) : [];
   if (only) {
     if (!only.includes('{files}')) throw new SpeckError(`commands.test_files in speck/config.yml has no {files} to stand for the test files (got ${JSON.stringify(only)}). Fix it with \`speck config set commands.test_files "node --test {files}"\`, then run this again.`);
     // Relative to the repo root, where the command runs. One starting with - gets ./ so it isn't read as an option.
-    const words = files.map(f => { const rel = path.relative(repo, path.resolve(f)) || '.'; return shellWord(rel.startsWith('-') ? `./${rel}` : rel); });
+    const rels = files.map(f => path.relative(repo, path.resolve(f)) || '.');
+    const words = [...new Set([...rels, ...checks])].map(rel => shellWord(rel.startsWith('-') ? `./${rel}` : rel));
     const r = runTestsInTurn(repo, cfg, only.replaceAll('{files}', () => words.join(' ')));
     const signal = r.signal || r.ended.match(/^signal (\w+)$/)?.[1];
     if (r.status !== 0) throw new SpeckError(signal ? `The tests were stopped by ${signal}.` : '', r.status ?? 1);
