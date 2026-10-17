@@ -37,7 +37,9 @@ test('AC2: with nothing set, no model or effort is passed to codex', () => {
   assert.equal(run('review', '1').status, 10);
   const args = calls()[0];
   assert.ok(!args.includes('-m') && !args.includes('--model'), args.join(' '));
-  assert.ok(!args.some(a => /model/.test(a)), args.join(' '));
+  // 0276: a setting given with -c (model=…, model_reasoning_effort=…), not a path that happens to have "model" in it,
+  // such as a worktree named after its ticket's title
+  assert.ok(!args.some(a => /^model/.test(a)), args.join(' '));
 });
 
 test('AC2: no model name is hard-coded in speck code, templates or skills', () => {
