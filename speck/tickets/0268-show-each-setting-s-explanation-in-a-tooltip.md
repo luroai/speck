@@ -1,7 +1,7 @@
 ---
 id: "0268"
 title: "Show each setting's explanation in a tooltip"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-17
 ---
 # 0268 · Show each setting's explanation in a tooltip
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel's Settings view (0257) shows a one- or two-sentence explanation under every setting, so the view is long and the values are hard to scan.
