@@ -1,7 +1,7 @@
 ---
 id: "0267"
 title: "Remove the tests that pin documents' wording"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0266"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T08:41:54.734Z"
+approved: "2026-10-17T08:59:27.372Z"
 
 ---
 # 0267 · Remove the tests that pin documents' wording
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 About 30 test files read the README, `docs/` or the changelog. Some of them pin a document's exact sentences, or the order of its paragraphs and headings, so editing that document by hand fails the suite and stops every ship until a fix ticket updates the tests. The rest check facts that can really go wrong, such as an install command that must work.
@@ -127,9 +128,15 @@ The list below names each test by its file and name, as the ticket asks, so it c
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new self-check reintroduces dependence on document wording.; F2 Removing the sentence assertion also removes its check that the brief names commands.test_files.; F3 AC4 requires an inventory of each test removed or changed and each document-reading test kept.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 765,319
+- Elapsed since build started: 18 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Idea: work out the README's "Built with speck" figures with a command, now that no test checks them (`speck/ideas/2026-10-17-work-out-the-built-with-speck-figures-with-a-command.md`).
