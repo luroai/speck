@@ -115,59 +115,95 @@ export function cmdConfigShow(args) {
     `  ${s.key}: ${show(s.value)} (${s.is_default ? 'the default' : `speck's default is ${show(s.speck_default)}`})\n    ${s.explain}`).join('\n')}`).join('\n\n'));
 }
 
-// The panel's Save on a setting: checks the value as `speck config set` does, rewrites only that setting's line in
-// speck/config.yml and commits only that file on the base branch. Every refusal comes before the first write.
-// A change that lets more tickets ship by themselves is refused unless `confirmed` names the risks that would then ship,
-// as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
-// 0261: with `machine`, it sets this machine's own value instead, as `speck config set --machine` does, or clears it when
-// `value` is blank: speck/config.yml and git are left alone, so the branch and the file's changes don't matter.
-export function panelSetSetting(repo, key, value, { confirmed = null, machine = false } = {}) {
+// One setting's change, checked as `speck config set` does: the value speck would write in `want`, and `same` when the
+// setting already has it, or why it's refused, in `status` and `error`. Nothing is written.
+// 0261: with `machine`, the change is to this machine's own value, or clears it when `value` is blank.
+function checkChange(repo, text, cfg, { key, value, machine }) {
   if (!EDITABLE.includes(key))
-    return { status: 403, body: { error: `${key} can't be changed from the panel. The panel changes only ${EDITABLE.join(', ')}: change the rest in speck/config.yml.` } };
-  if (machine) return machineSetting(repo, key, value);
-  const file = path.join(repo, 'speck', 'config.yml');
-  const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo);
+    return { status: 403, error: `${key} can't be changed from the panel. The panel changes only ${EDITABLE.join(', ')}: change the rest in speck/config.yml.` };
+  if (machine && !MACHINE_SETTINGS.includes(key))
+    return { status: 422, error: `Only ${MACHINE_SETTINGS.join(', ')} can be set for this machine, not ${key}. Save it for the repo instead.` };
   let want;
-  try { want = checkConfigValue(key, value); } catch (e) { if (e instanceof SpeckError) return { status: 422, body: { error: e.message } }; throw e; }
+  try { want = machine && value === '' ? undefined : checkConfigValue(key, value); }
+  catch (e) { if (e instanceof SpeckError) return { status: 422, error: e.message }; throw e; }
+  if (machine) return { want, same: machineConfig(repo)[key] === want };
   if (key === 'reviewer_model' && /[\x00-\x1f\x7f]/.test(value))
-    return { status: 422, body: { error: 'reviewer_model must be on one line, with no tabs or other control characters.' } };
+    return { status: 422, error: 'reviewer_model must be on one line, with no tabs or other control characters.' };
   const choices = choicesOf(key, parseYaml(text));
   if (choices && ![].concat(want).every(w => choices.includes(w)))
-    return { status: 422, body: { error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` } };
+    return { status: 422, error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` };
   if (key === 'reviewer' && modelFamily(String(cfg.builder)) === modelFamily(want) && cfg.allow_same_model_review !== true)
-    return { status: 422, body: { error: `reviewer "${want}" is the same agent as the builder, "${cfg.builder}", and allow_same_model_review is false. Pick a reviewer other than ${cfg.builder}.` } };
-  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
-  if (branch !== cfg.base_branch)
-    return { status: 409, body: { error: `This checkout is on "${branch}", not ${cfg.base_branch}, so the setting would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.` } };
-  const dirty = sh('git', ['status', '--porcelain', '--', 'speck/config.yml'], { cwd: repo });
-  if (dirty.status !== 0 || dirty.stdout.trim())
-    return { status: 409, body: { error: 'speck/config.yml has uncommitted changes, so saving would commit them too. Commit or undo them, then try again.' } };
+    return { status: 422, error: `reviewer "${want}" is the same agent as the builder, "${cfg.builder}", and allow_same_model_review is false. Pick a reviewer other than ${cfg.builder}.` };
   const same = key === 'auto_ship_risk' ? [...want].sort().join() === [].concat(valueIn(text, repo, key).value).map(String).sort().join()
     : JSON.stringify(valueIn(text, repo, key).value) === JSON.stringify(want);
-  if (same) return { status: 200, body: { ok: true, changed: false } };
-  const now = shipping(cfg), more = key === 'auto_ship' || key === 'auto_ship_risk' ? loosens(now, { ...now, [key === 'auto_ship' ? 'on' : 'risks']: want }) : null;
-  if (more && confirmed !== more.risks)
-    return { status: 409, body: { confirm: true, error: `That would let ${more.words} merge and push to ${cfg.base_branch} without waiting for you, which hasn't been confirmed. Check the settings as they are now, then save again.` } };
-  const keys = key.split('.');
-  const next = setConfigText(text, keys, yamlValue(want));
-  if (JSON.stringify(lookup(parseYaml(next), key)) !== JSON.stringify(want))
-    return { status: 422, body: { error: `Couldn't write ${key} so that speck reads it back as given. Edit speck/config.yml by hand instead.` } };
-  fs.writeFileSync(file, next);
-  const commit = commitTicketOnly(repo, file, text, `speck: config ${key} ${shown(want)}`);
-  if (commit.status !== 0)
-    return { status: 500, body: { error: `Couldn't commit speck/config.yml, so ${key} is unchanged:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
-  return { status: 200, body: { ok: true, changed: true } };
+  return { want, same };
 }
 
-function machineSetting(repo, key, value) {
-  if (!MACHINE_SETTINGS.includes(key))
-    return { status: 422, body: { error: `Only ${MACHINE_SETTINGS.join(', ')} can be set for this machine, not ${key}. Save it for the repo instead.` } };
-  let want;
-  try { want = value === '' ? undefined : checkConfigValue(key, value); }
-  catch (e) { if (e instanceof SpeckError) return { status: 422, body: { error: e.message } }; throw e; }
-  if (machineConfig(repo)[key] === want) return { status: 200, body: { ok: true, changed: false } };
-  saveMachineValue(repo, key, want);
-  return { status: 200, body: { ok: true, changed: true } };
+// A refusal of the changes in `keys`, each for the same reason, or each for its own in `refused` (key → why).
+const refusal = (status, refused, more = {}) => ({ status, body: { error: [...new Set(Object.values(refused))].join('\n'), refused, ...more } });
+const each = (changes, why) => Object.fromEntries(changes.map(c => [c.key, why]));
+
+// 0274: the panel's one Save, for every setting changed in the Settings view. `changes`: { key, value, machine } each,
+// with `machine` for this machine's own value (0261). Each is checked first, and if any is refused nothing is saved,
+// with why in `refused` by setting. Otherwise the repo's changes are written to speck/config.yml, rewriting only their
+// lines, and committed in one commit of only that file on the base branch, and this machine's are saved, as
+// `speck config set --machine` does. Settings already at the value given are left alone.
+// A change that lets more tickets ship by themselves is refused unless `confirmed` names the risks that would then ship,
+// as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
+export function panelSaveSettings(repo, changes, { confirmed = null } = {}) {
+  const twice = changes.find((c, i) => changes.findIndex(d => d.key === c.key) !== i);
+  if (twice) return { status: 400, body: { error: `${twice.key} is given more than once. Reload the panel, then try again.` } };
+  const file = path.join(repo, 'speck', 'config.yml');
+  const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo);
+  const checked = changes.map(c => ({ ...c, ...checkChange(repo, text, cfg, c) }));
+  const bad = checked.filter(c => c.error !== undefined);
+  if (bad.length) return refusal(bad[0].status, Object.fromEntries(bad.map(c => [c.key, c.error])));
+  const toFile = checked.filter(c => !c.machine && !c.same), toMachine = checked.filter(c => c.machine && !c.same);
+  let next = text;
+  if (toFile.length) {
+    const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
+    if (branch !== cfg.base_branch)
+      return refusal(409, each(toFile, `This checkout is on "${branch}", not ${cfg.base_branch}, so the setting would be committed to the wrong branch. Switch to ${cfg.base_branch}, then try again.`));
+    const dirty = sh('git', ['status', '--porcelain', '--', 'speck/config.yml'], { cwd: repo });
+    if (dirty.status !== 0 || dirty.stdout.trim())
+      return refusal(409, each(toFile, 'speck/config.yml has uncommitted changes, so saving would commit them too. Commit or undo them, then try again.'));
+    const now = shipping(cfg), will = { ...now };
+    for (const c of toFile) if (c.key === 'auto_ship') will.on = c.want === true; else if (c.key === 'auto_ship_risk') will.risks = [].concat(c.want).map(String);
+    const ships = toFile.filter(c => c.key === 'auto_ship' || c.key === 'auto_ship_risk'), more = ships.length ? loosens(now, will) : null;
+    if (more && confirmed !== more.risks)
+      return refusal(409, each(ships, `That would let ${more.words} merge and push to ${cfg.base_branch} without waiting for you, which hasn't been confirmed. Check the settings as they are now, then save again.`), { confirm: true });
+    for (const c of toFile) next = setConfigText(next, c.key.split('.'), yamlValue(c.want));
+    const read = parseYaml(next), unread = toFile.filter(c => JSON.stringify(lookup(read, c.key)) !== JSON.stringify(c.want));
+    if (unread.length)
+      return refusal(422, Object.fromEntries(unread.map(c => [c.key, `Couldn't write ${c.key} so that speck reads it back as given. Edit speck/config.yml by hand instead.`])));
+  }
+  // This machine's first, so that a write or commit that fails can put them back, and speck/config.yml as it was.
+  const before = machineConfig(repo), undo = () => {
+    for (const c of toMachine) try { saveMachineValue(repo, c.key, before[c.key]); } catch { /* put back all it can */ }
+    if (toFile.length) try { if (fs.readFileSync(file, 'utf8') !== text) fs.writeFileSync(file, text); } catch { /* as above */ }
+  };
+  try {
+    for (const c of toMachine) saveMachineValue(repo, c.key, c.want);
+    if (toFile.length) {
+      fs.writeFileSync(file, next);
+      const commit = commitTicketOnly(repo, file, text, `speck: config ${toFile.map(c => `${c.key} ${shown(c.want)}`).join('; ')}`);
+      if (commit.status !== 0) {
+        undo();
+        return { status: 500, body: { error: `Couldn't commit speck/config.yml, so nothing was saved:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
+      }
+    }
+  } catch (e) {
+    undo();
+    return { status: 500, body: { error: `Couldn't save the settings, so nothing was saved: ${e.message}` } };
+  }
+  return { status: 200, body: { ok: true, changed: [...toFile, ...toMachine].map(c => c.key) } };
+}
+
+// One setting's change, saved as panelSaveSettings saves several, with `changed` true when it changed anything.
+export function panelSetSetting(repo, key, value, { confirmed = null, machine = false } = {}) {
+  const out = panelSaveSettings(repo, [{ key, value, machine }], { confirmed });
+  if (out.status !== 200) { delete out.body.refused; return out; }
+  return { status: 200, body: { ok: true, changed: out.body.changed.length > 0 } };
 }
 
 // The panel's POST /api/settings/<key>/<value>, with both still written as in the address: every failure is an answer.
@@ -180,5 +216,21 @@ export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null, sc
   if (scope !== null && scope !== 'machine')
     return { status: 400, body: { error: `A setting is saved for this machine (scope=machine) or the repo (no scope), not ${JSON.stringify(scope)}. Reload the panel, then try again.` } };
   try { return panelSetSetting(repo, key, value, { confirmed, machine: scope === 'machine' }); }
+  catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
+}
+
+// 0274: the panel's POST /api/settings/save, the Settings view's one Save. Its address's query gives each change, as
+// repo:<key>=<value> for the repo or machine:<key>=<value> for this machine only, and confirm=<risks> once you've
+// confirmed a change that lets more tickets ship by themselves (0259).
+export function panelSaveRequest(repo, query) {
+  const changes = [];
+  let confirmed = null;
+  for (const [name, value] of new URLSearchParams(query)) {
+    const m = name.match(/^(repo|machine):(.+)$/);
+    if (name === 'confirm' && confirmed === null) confirmed = value;
+    else if (m) changes.push({ key: m[2], value, machine: m[1] === 'machine' });
+    else return { status: 400, body: { error: `The panel doesn't save ${JSON.stringify(name)}. Reload the panel, then try again.` } };
+  }
+  try { return panelSaveSettings(repo, changes, { confirmed }); }
   catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
 }
