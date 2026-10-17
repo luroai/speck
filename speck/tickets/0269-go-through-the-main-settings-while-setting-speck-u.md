@@ -1,7 +1,7 @@
 ---
 id: "0269"
 title: "Go through the main settings while setting speck up"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-17
 ---
 # 0269 · Go through the main settings while setting speck up
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck init` writes speck's generic defaults into a new project's `speck/config.yml`, and the setup skill then asks only about the base branch, the test command, worktree setup, the builder and reviewer, and unattended builds. It never goes through how much ships without you, how many builds run at once or how big a ticket can be, so those keep defaults the user never chose. Someone who later finds `auto_ship` on, or a 300-line limit, may not know where it came from or what it means.
