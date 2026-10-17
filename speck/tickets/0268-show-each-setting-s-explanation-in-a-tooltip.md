@@ -38,6 +38,7 @@ Each setting's explanation sits behind a small info button beside its name, so t
 
 ## Notes
 - The view is in `templates/panel.html` (search for "0257"). The explanations come from `scripts/settings.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
