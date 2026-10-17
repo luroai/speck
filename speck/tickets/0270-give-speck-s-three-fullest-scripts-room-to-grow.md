@@ -39,6 +39,8 @@ No file under `scripts/` may be over 600 lines (0078 AC2). `scripts/panel.mjs` a
 ## Notes
 - Move whole parts that belong together into new modules under `scripts/`, named for what they do, as 0078 did for `speck.mjs`.
 - Failing before this build: none
+- Moved: ticket lint to `scripts/lint.mjs` and builder spend to `scripts/spend.mjs` (from core.mjs); finding and signalling a build's processes to `scripts/build-procs.mjs` and its run records to `scripts/build-records.mjs` (from run.mjs); the Ship button and speck run switch to `scripts/panel-run.mjs` and the board reader to `scripts/panel-board.mjs` (from panel.mjs). Each old file re-exports what it exported before. Code tests read or patch by its text (0018, 0079, 0148, 0207, 0232, 0245, 0247, slow-panel) stayed where it was.
+- Self-check: no changes. Every moved line is identical apart from `export` added where another module now imports it; core.mjs now also exports `validPriority`, `splitHeader` and `fmEnd` for lint.mjs.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
