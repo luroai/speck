@@ -1,7 +1,7 @@
 ---
 id: "0268"
 title: "Show each setting's explanation in a tooltip"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0258"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T09:22:08.221Z"
+approved: "2026-10-17T09:25:27.578Z"
 
 ---
 # 0268 · Show each setting's explanation in a tooltip
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's Settings view (0257) shows a one- or two-sentence explanation under every setting, so the view is long and the values are hard to scan.
@@ -50,9 +51,14 @@ To see it, open Settings from the panel's header and try the "i" beside any sett
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 97,235
+- Elapsed since build started: 3 min
+- Changed lines: 45 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: on narrow screens the info button is 28 px, below the 44 px tap area the panel's tags have (0165).
 
