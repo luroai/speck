@@ -1935,9 +1935,11 @@ async function saveSettings() {
     renderSettings();
     return;
   }
-  settingTyped = new Map();
-  settingScope = new Map();
-  settingClear = new Set();
+  // Saved: forget what was sent, keeping any change made while it was being saved, which Save sends next.
+  for (const c of changes) {
+    if (c.clear) settingClear.delete(c.key);
+    else if (settingTyped.get(c.key) === c.value) { settingTyped.delete(c.key); settingScope.delete(c.key); }
+  }
   loadSettings(); // the values speck now reads
 }
 document.addEventListener('keydown', e => {

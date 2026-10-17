@@ -177,17 +177,24 @@ export function panelSaveSettings(repo, changes, { confirmed = null } = {}) {
     if (unread.length)
       return refusal(422, Object.fromEntries(unread.map(c => [c.key, `Couldn't write ${c.key} so that speck reads it back as given. Edit speck/config.yml by hand instead.`])));
   }
-  // This machine's first, so that a commit that fails can put them back.
-  const before = machineConfig(repo), undo = () => { for (const c of toMachine) saveMachineValue(repo, c.key, before[c.key]); };
-  try { for (const c of toMachine) saveMachineValue(repo, c.key, c.want); }
-  catch (e) { undo(); return { status: 500, body: { error: `Couldn't save this machine's settings, so nothing was saved: ${e.message}` } }; }
-  if (toFile.length) {
-    fs.writeFileSync(file, next);
-    const commit = commitTicketOnly(repo, file, text, `speck: config ${toFile.map(c => `${c.key} ${shown(c.want)}`).join('; ')}`);
-    if (commit.status !== 0) {
-      undo();
-      return { status: 500, body: { error: `Couldn't commit speck/config.yml, so nothing was saved:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
+  // This machine's first, so that a write or commit that fails can put them back, and speck/config.yml as it was.
+  const before = machineConfig(repo), undo = () => {
+    for (const c of toMachine) try { saveMachineValue(repo, c.key, before[c.key]); } catch { /* put back all it can */ }
+    if (toFile.length) try { if (fs.readFileSync(file, 'utf8') !== text) fs.writeFileSync(file, text); } catch { /* as above */ }
+  };
+  try {
+    for (const c of toMachine) saveMachineValue(repo, c.key, c.want);
+    if (toFile.length) {
+      fs.writeFileSync(file, next);
+      const commit = commitTicketOnly(repo, file, text, `speck: config ${toFile.map(c => `${c.key} ${shown(c.want)}`).join('; ')}`);
+      if (commit.status !== 0) {
+        undo();
+        return { status: 500, body: { error: `Couldn't commit speck/config.yml, so nothing was saved:\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}` } };
+      }
     }
+  } catch (e) {
+    undo();
+    return { status: 500, body: { error: `Couldn't save the settings, so nothing was saved: ${e.message}` } };
   }
   return { status: 200, body: { ok: true, changed: [...toFile, ...toMachine].map(c => c.key) } };
 }
