@@ -44,7 +44,9 @@ started: "2026-10-17T09:22:21.680Z"
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's Settings view can now switch auto-ship on or off and choose which risks it covers, with a box to tick for low and for high. A change that would let more work ship without anyone looking (switching auto-ship on, or ticking another risk while it's on) first asks you, naming which approved tickets would then be merged and pushed by themselves. Nothing changes until you say yes, and saying no leaves everything as it was. Switching it off or unticking a risk saves straight away, and unticking both is refused with a note to switch auto-ship off instead.
+
+To see it, open the panel, press Settings, set auto_ship to true and press Save: a question appears naming the tickets that would ship by themselves. If the settings changed in another tab since you opened the view, the panel refuses the old answer, shows the settings as they are now and asks again. Worth a look: the new tick boxes were checked by tests rather than in a real browser, so glance at how they sit in the view.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +56,7 @@ started: "2026-10-17T09:22:21.680Z"
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Known limit: the tick boxes' look was checked only by the fake page, not in a real browser.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -120,6 +123,74 @@ started: "2026-10-17T09:22:21.680Z"
     ],
     "escalation_question": "",
     "summary": "The controls, saving and empty-selection checks work in the covered cases. However, an older Settings tab can enable automatic shipping of high-risk tickets after asking permission only for low-risk tickets. Confirmation must match what will actually be enabled before this is ready to merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "db6edf99aefebd2e188b36300ba9bfed124e48b5",
+    "thread_id": "01a1492f-cc16-7950-ab79-57bdf8b6b999",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 222112,
+      "cached_input_tokens": 166272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1238,
+      "reasoning_output_tokens": 156
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:28:59.748Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs makes both settings editable through the existing validation, branch, clean-config and commit checks. Passing 0259 AC1 tests cover controls, saved values, commits and refusals."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "saveSetting() names the resulting ticket risks and sends them as confirmation. panelSetSetting() checks those risks against the current configuration before writing. Passing AC2 tests cover confirmation, cancellation, server enforcement, token protection and stale-view refusal followed by refresh."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipsMore() and loosens() require no confirmation for disabling auto-ship or removing risks. The passing 0259 AC3 test checks both persisted changes and page requests without dialogs."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "saveSetting() refuses an empty selection with guidance to turn auto_ship off; server validation also rejects empty risks. The passing 0259 AC4 test verifies both paths and no writes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "A stale Settings view could previously confirm fewer risks than the server would enable. This is now fixed: confirmation must match the resulting risks, otherwise the server refuses before writing and the page refreshes.",
+        "suggested_fix": "Implemented, with a regression test covering the intervening risk change and refreshed confirmation.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The settings now require confirmation matching the ticket risks that would actually ship. An outdated tab is refused and refreshed before the user tries again. All four criteria are met, and the reported tests pass."
   }
 }
 ```
