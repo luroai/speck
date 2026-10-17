@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-09-edit-settings-from-the-panel.md"           
 after: ["0258"]                # ticket ids that must be done first
 created: 2026-10-16
 started: "2026-10-17T09:22:07.848Z"
-approved: "2026-10-17T09:25:45.647Z"
+approved: "2026-10-17T09:32:55.745Z"
 
 ---
 # 0260 · Let a setting apply to this machine only
@@ -51,13 +51,14 @@ You can now tell speck how many builds and test runs to keep going at once on th
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 144,882
-- Elapsed since build started: 4 min
-- Changed lines: 84 (limit 5000)
+- Reviewer tokens: 398,098
+- Elapsed since build started: 11 min
+- Changed lines: 96 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none new. The panel's Settings view reads `speck/config.yml` alone, so it doesn't show a machine value yet: that's 0261.
 
@@ -117,6 +118,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The two parallelism settings can now apply only to this machine, with values shared across its worktrees and kept out of git. Clearing a value restores the project setting. All 56 reported tests passed; the code and tests support all four criteria. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1d965cbb6e0dd1f56e63c10eed586745fa303aab",
+    "merge": true,
+    "thread_id": "01a1492e-0604-7a52-90ef-567d97f7e728",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 252048,
+      "cached_input_tokens": 208768,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1168,
+      "reasoning_output_tokens": 62
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:32:53.418Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/config.mjs setMachine still writes ignored machine storage without modifying shared config or committing. Passing test '0260 AC1' verifies storage, git status, HEAD and old/new output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/core.mjs loadConfig calls machine.mjs applyMachineConfig; machineConfigFile resolves the main checkout. run.mjs uses the extracted maxParallelBuilds. Passing test '0260 AC2' checks both parallelism settings from the main checkout and a worktree."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "setMachine removes blank overrides and deletes the empty machine file. Passing test '0260 AC3' checks fallback to shared values, preservation of the other override and repeated removal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "setMachine restricts keys to MACHINE_SETTINGS and uses checkConfigValue. All three '0260 AC4' tests pass, covering unsupported settings, validation without changes and repair of invalid machine values."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The extraction preserves the machine settings behaviour and fixes the file-size failure without weakening tests. The merge retains both machine-setting commands and config show. The reported checks passed: 76 tests passed, three skipped and none failed. No blocking issues found."
   }
 }
 ```
