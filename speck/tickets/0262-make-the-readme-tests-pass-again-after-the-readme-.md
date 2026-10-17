@@ -1,7 +1,7 @@
 ---
 id: "0262"
 title: "Make the README tests pass again after the README revision"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T07:03:30.339Z"
+approved: "2026-10-17T07:09:31.216Z"
 
 ---
 # 0262 · Make the README tests pass again after the README revision
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Seven README tests fail on main, so `speck ship` refuses every approved ticket, 0257 included, and nothing can ship. They started failing after the README was revised on GitHub (commit 1041577, merged into main as 9ffa622). The failing tests are 0249 AC1, 0250 AC1, 0251 AC1, AC2, AC3 and AC5, and 0255 AC1. 0250 AC1 and 0255 AC1 expect the README's plain line to read "…the same way every time, so you can set them going, walk away and trust what you come back to." but it now ends at "every time.". 0249 AC1 says "the picture comes after the opening paragraph", and the 0251 tests say "the plain line comes before the image".
@@ -50,9 +51,15 @@ The README's checks had fallen behind the new README wording, so every approved 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 This new file breaches the ticket's explicit scope: changes outside README.md and the four named test files are excluded.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 354,185
+- Elapsed since build started: 6 min
+- Changed lines: 0 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes):
   - The README now says you can let speck ship low-risk tickets on its own, while `auto_ship_risk` can also cover high-risk ones. Narrower than the setting, not wrong.
