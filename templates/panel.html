@@ -369,6 +369,9 @@
   /* 0268: the info button beside a setting's name, and its explanation under the setting's line while it's open */
   /* 0277: no taller than the controls beside it, and its ::after makes the target bigger than the box */
   #settings .setting .info { position: relative; display: inline-grid; place-items: center; align-self: center; width: 18px; height: 18px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
+  /* 0281: under 2 device pixels to a CSS pixel, half a pixel is less than a device pixel, which a browser may not draw,
+     so there these borders are a whole pixel. From 2 up, half a pixel is a device pixel or more. */
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .setting .edit, #settings .setting .info { border-width: 1px; } }
   #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
   #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
   #settings .setting .info::after { content: ""; position: absolute; inset: -4px; } /* 0277: a 26 by 26 px target */
