@@ -1,7 +1,7 @@
 ---
 id: "0276"
 title: "Pick the reviewer's model and effort from what it offers"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0275"]               # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T15:48:22.489Z"
 
 ---
 # 0276 · Pick the reviewer's model and effort from what it offers
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `reviewer_model` is a text box, so you have to know the exact name of a model, and you won't hear when the reviewer's provider releases a new one. `reviewer_effort` offers a fixed list (low to max) that doesn't follow what the model supports: Codex's newest models also offer `ultra`, which speck refuses.
