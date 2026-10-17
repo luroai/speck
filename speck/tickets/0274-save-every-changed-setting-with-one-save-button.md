@@ -1,7 +1,7 @@
 ---
 id: "0274"
 title: "Save every changed setting with one Save button"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0273"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T13:44:09.209Z"
+approved: "2026-10-17T13:54:16.241Z"
 
 ---
 # 0274 · Save every changed setting with one Save button
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every editable setting in the Settings view has its own Save button, so the view is cluttered with them, and changing several settings means saving, and committing, each one separately.
@@ -57,9 +58,15 @@ Worth knowing: the question "this machine only or the repo?" now appears beside 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A mixed batch saves machine values before writing config.yml.; F2 Controls remain editable while Save awaits its response.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 562,453
+- Elapsed since build started: 10 min
+- Changed lines: 369 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups, no inbox note):
   - The page no longer uses `POST /api/settings/<key>/<value>`. It's kept, saving one change through the new combined save, because 0258's, 0259's and 0261's server tests use it. It could go, with those tests moved to `/api/settings/save`.
