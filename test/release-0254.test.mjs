@@ -69,3 +69,7 @@ test('0254 AC5: package.json and the newest changelog section name 0.5.4', () =>
   assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
   assert.equal(JSON.parse(read('package.json')).version, '0.5.4');
 });
+
+test('0254 AC4: the release notes name speck/config.yml', () => {
+  assert.ok(notes().includes('`speck/config.yml`'));
+});

@@ -157,8 +157,7 @@ test('0239 AC4: speck test --files keeps its output and exit code', () => {
   assert.doesNotMatch(res.stderr, /^\s+at /m, 'no stack trace');
 });
 
-test('0239 AC4: docs/brief.md names speck test --files and nice', () => {
+test('0239 AC4: docs/brief.md names speck test --files, commands.test_files, {files} and nice', () => {
   const brief = fs.readFileSync(fileURLToPath(new URL('../docs/brief.md', import.meta.url)), 'utf8');
-  assert.ok(brief.includes('`speck test --files <file>…`'));
-  assert.ok(brief.includes('`nice`'));
+  for (const s of ['`speck test --files <file>…`', '`commands.test_files`', '`{files}`', '`nice`']) assert.ok(brief.includes(s), s);
 });

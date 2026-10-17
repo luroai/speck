@@ -224,3 +224,8 @@ test('0247 AC4: new code that can\'t start leaves the old one running, said once
 test('0247 AC1: failedSays gives the reason and what happens next', () => {
   assert.equal(failedSays('it stopped.'), 'speck run couldn\'t switch to the new code: it stopped.\nIt carries on with the code it has, and tries again at the next change.');
 });
+
+// 0267 left the brief's wording to review.
+test('0247 AC5: the brief names speck run', () => {
+  assert.ok(fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8').includes('`speck run`'));
+});

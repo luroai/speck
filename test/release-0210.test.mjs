@@ -70,3 +70,6 @@ test('0210 AC6: the release notes use none of the private words', () => {
   for (const w of words) assert.ok(!n.includes(w), 'a private word is in the release notes');
 });
 
+test('0210 AC6: the release notes name speck run', () => {
+  assert.ok(notes().includes('`speck run`'));
+});

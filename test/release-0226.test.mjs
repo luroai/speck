@@ -71,3 +71,11 @@ test('0226 AC5: package.json, the newest changelog section name the same version
   // 0253: the setup prompt always installs the latest release, so this checks that instead of a fixed version.
   assert.deepEqual(setupPromptProblems(read('README.md')), []);
 });
+
+test('0226 AC2: the 0.5.1 section names max_parallel_builds', () => {
+  assert.match(changelogSection(read('CHANGELOG.md'), '0.5.1'), /max_parallel_builds/);
+});
+
+test('0226 AC3: the README\'s commands name run and pause <id>', () => {
+  for (const s of ['`run`', '`pause <id>`']) assert.ok(read('README.md').includes(s), s);
+});

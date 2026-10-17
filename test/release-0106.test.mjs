@@ -74,3 +74,7 @@ test('0106 AC4: the 0092 release tests check the current version, not 0.2.0', ()
   assert.doesNotMatch(t, /speck 0\\\.2\\\.0/);
   assert.doesNotMatch(t, /#v0\\\.2\\\.0 init/);
 });
+
+test('0106 AC5: the brief names main, the branch a release is cut from', () => {
+  assert.ok(read('docs/brief.md').includes('`main`'));
+});
