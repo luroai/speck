@@ -339,6 +339,7 @@
   /* 0258: a setting the panel can change: its control and Save button */
   #settings .setting .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
   #settings .setting input.edit[type="number"] { width: 8ch; }
+  #settings .setting .risk { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); display: inline-flex; align-items: center; gap: 4px; } /* 0259: auto_ship_risk's boxes */
   #settings .setting .save { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
   #settings .setting .save:hover { color: var(--text); border-color: var(--text); }
   #full-ticket:focus { outline: none; }
@@ -1668,10 +1669,26 @@ function renderSettings() {
   pane.replaceChildren(...kids);
 }
 // 0258: a setting's control, a list of the server's choices or a box to type in, and its Save button.
+// 0259: auto_ship_risk's is a box to tick for each risk.
 function settingEditor(x) {
-  const now = x.value === null || x.value === undefined ? '' : String(x.value);
+  const now = x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
   const typed = settingTyped.has(x.key) ? settingTyped.get(x.key) : now;
   let input;
+  if (x.key === 'auto_ship_risk' && Array.isArray(x.choices)) {
+    const boxes = x.choices.map(String).map(c => {
+      const box = el('input', 'edit');
+      box.type = 'checkbox';
+      box.value = c;
+      box.checked = typed.split(',').includes(c);
+      box.setAttribute('aria-label', `${x.key} ${c}`);
+      return box;
+    });
+    const save = el('button', 'save', 'Save');
+    save.type = 'button';
+    // What's ticked, as the server reads it: "low,high".
+    save.addEventListener('click', () => saveSetting(x.key, { value: boxes.filter(b => b.checked).map(b => b.value).join(',') }));
+    return [...boxes.map(b => el('label', 'risk', null, b, el('span', null, b.value))), save];
+  }
   if (Array.isArray(x.choices)) {
     input = el('select', 'edit');
     const choices = x.choices.map(String);
@@ -1695,23 +1712,56 @@ function settingEditor(x) {
   save.addEventListener('click', () => saveSetting(x.key, input));
   return [input, save];
 }
+// 0259: auto_ship and auto_ship_risk as the view last read them, as the ship queue reads them.
+function shippingNow() {
+  const all = settingsView && Array.isArray(settingsView.groups) ? settingsView.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []) : [];
+  const of = key => (all.find(x => x.key === key) || {}).value;
+  return { on: of('auto_ship') === true, risks: [].concat(of('auto_ship_risk') ?? []).map(String) };
+}
+// When this change lets more tickets ship by themselves than now, the risks that would then ship ("low,high"), which the
+// server checks against its own reading, and the tickets in words; otherwise null.
+function shipsMore(key, value) {
+  if (key !== 'auto_ship' && key !== 'auto_ship_risk') return null;
+  const was = shippingNow(), will = key === 'auto_ship' ? { ...was, on: value === 'true' } : { ...was, risks: value.split(',') };
+  if (!will.on || (was.on && will.risks.every(r => was.risks.includes(r)))) return null;
+  const risks = ['low', 'high'].filter(r => will.risks.includes(r));
+  return { risks: risks.join(','), words: `approved ${risks.map(r => `${r}-risk`).join(' and ')} tickets` };
+}
 async function saveSetting(key, input) {
   if (settingsView === null || settingsView.saving) return;
   const value = String(input.value ?? ''), mine = settingsSeq;
+  if (key === 'auto_ship_risk' && value === '') { // 0259: nothing ticked
+    settingTyped.set(key, value);
+    settingRefused.set(key, 'Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
+    renderSettings();
+    return;
+  }
+  const more = shipsMore(key, value);
+  if (more !== null) {
+    const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more.words} and push them to the base branch without waiting for you.`;
+    if (typeof confirm !== 'function' || !confirm(ask)) { // cancelled: the setting and the view stay as they were
+      settingTyped.delete(key);
+      settingRefused.delete(key);
+      renderSettings();
+      return;
+    }
+  }
   settingsView.saving = true;
   settingTyped.set(key, value);
   settingRefused.delete(key);
-  let why = null;
+  let why = null, ask = false;
   try {
-    const res = await fetch(`/api/settings/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    const res = await fetch(`/api/settings/${encodeURIComponent(key)}/${encodeURIComponent(value)}${more !== null ? `?confirm=${encodeURIComponent(more.risks)}` : ''}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
     if (!res.ok) {
       let body = null;
       try { body = await res.json(); } catch { /* no JSON: say what we know */ }
       why = body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`;
+      ask = res.status === 409 && body !== null && body.confirm === true;
     }
   } catch { why = `Couldn't reach the panel server, so ${key} wasn't changed.`; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
   settingsView.saving = false;
+  if (why !== null && ask) { settingRefused.set(key, why); settingTyped.delete(key); loadSettings(); return; } // 0259: changed since: read them again
   if (why !== null) { settingRefused.set(key, why); renderSettings(); return; }
   settingTyped.delete(key);
   loadSettings(); // the value speck now reads
