@@ -1,7 +1,7 @@
 ---
 id: "0273"
 title: "Lay out the Settings view like the rest of the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T13:33:13.371Z"
+approved: "2026-10-17T13:41:52.217Z"
 
 ---
 # 0273 · Lay out the Settings view like the rest of the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Settings view is a long column of rows with little between them: the groups run into each other, individual settings are hard to pick out, and it doesn't look like the rest of the panel, whose sections sit in bordered boxes with a heading bar.
@@ -49,9 +50,14 @@ The Settings view now looks like the rest of the panel. Each group of settings s
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 132,849
+- Elapsed since build started: 9 min
+- Changed lines: 33 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
