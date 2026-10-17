@@ -8,7 +8,7 @@ import { ROOT } from './support/speck.mjs';
 // ---------- 0251: open the README with a plain description of what speck does ----------
 
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
-// 0262: the README revision (commit 1041577) cut the plain line to end at "every time.", shortened the opening and
+// 0262: the README revision made on GitHub cut the plain line to end at "every time.", shortened the opening and
 // reworded it. The checks below follow its wording; each change is noted where it's made.
 const PLAIN = 'speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time.';
 const OPENING = 'You make two decisions: what gets built and what gets shipped. When your tickets look right, set them ready, start the builds from the panel and walk away.';

@@ -10,7 +10,7 @@ import { ROOT, CLI } from './support/speck.mjs';
 
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const TAGLINE = "Ship code you can't read, and still trust it.";
-// 0262: the README revision (commit 1041577) cut the plain line to end at "every time.".
+// 0262: the README revision made on GitHub cut the plain line to end at "every time.".
 const PLAIN = 'speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time.';
 const OLD = 'Your judgement, at agent speed.';
 

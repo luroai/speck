@@ -19,7 +19,7 @@ const setting = key => read('templates/config.yml').match(new RegExp(`^\\s*${key
 // The landing page's words, from site/index.html in the speck-site repo.
 const TAGLINE = "Ship code you can't read, and still trust it.";
 // 0255 put this plain line between the tagline and the opening paragraph.
-// 0262: the README revision (commit 1041577) cut it to end at "every time." and
+// 0262: the README revision made on GitHub cut it to end at "every time." and
 // reworded the two-decisions paragraph, which no longer comes last before the image: the trust paragraph does.
 const PLAIN = 'speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time.';
 const OPENING = 'You make two decisions: what gets built and what gets shipped.';
