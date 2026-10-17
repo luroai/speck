@@ -2,19 +2,15 @@
 
 **Ship code you can't read, and still trust it.**
 
-speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time, so you can set them going, walk away and trust what you come back to.
+speck turns ideas from a conversation into tickets, then builds, tests, reviews and ships them the same way every time.
 
-speck is for people who don't write code: product managers, founders, programme managers and designers. It's for engineers too.
+speck was built by a product manager, for people who work in and around engineering teams but don't write code: product managers, founders, programme managers and designers. They've always had to ship code they can't read. It's for engineers too.
 
-You plan your tickets in a conversation with your coding agent. You follow the builds, or manage them, in speck's panel. Both sit side by side in the same app, such as Claude Code's desktop app, Cursor, or an editor with a built-in browser.
+You plan tickets in a conversation with your coding agent and follow the builds in speck's panel. Both sit side by side in one app, such as Claude Code's desktop app, Cursor or an editor with a built-in browser.
 
-When your tickets look right, set them ready, turn on `speck run` in the panel and walk away. Go to a meeting, have lunch, go to bed. While you're gone, speck builds each one, tests it and has it reviewed. With auto-ship on, it ships them too.
+You make two decisions: what gets built and what gets shipped. When your tickets look right, set them ready, start the builds from the panel and walk away. Go to a meeting, have lunch, go to bed. While you're gone, speck works through them and stops only when it needs you. Nothing ships until you ship it, unless you've told speck it can ship low-risk tickets on its own.
 
-speck was built by a product manager, for product managers and other non-technical people who work with engineering teams. They have always had to ship code they can't read and still trust it. The tagline names that situation. speck gives them a way to trust the result without reading the code: criteria agreed up front, an independent check of every change, and evidence in plain English.
-
-You can trust the result because every ticket goes through the same steps, whatever the task. Its tests are written first, from its acceptance criteria, and the builder runs a self-check on its own work. Then a second AI reviews it independently, and the whole test suite runs before it ships. Nothing ships unless you ship it, or you've set auto-ship to cover its risk. Shipping merges the ticket into `main`, and pushes it to your remote, such as GitHub, if you have one.
-
-You own two decisions: what gets built and what gets shipped. Everything in between is automated. speck builds each ticket, has a second AI review it, and stops only when it needs you.
+You can trust the result without reading the code because every ticket goes through the same steps. Its tests are written first, from acceptance criteria you agreed up front. The agent that builds it checks its own work, a second AI reviews it independently, and the whole test suite runs before it ships. Each approved ticket comes with a one-page review pack in plain English, with the reviewer's evidence for every criterion.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/demo-dark.png">
