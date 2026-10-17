@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0264"]               # ticket ids that must be done first
 created: 2026-10-17
 started: "2026-10-17T09:07:33.967Z"
-approved: "2026-10-17T09:21:48.563Z"
+approved: "2026-10-17T09:26:02.028Z"
 
 ---
 # 0265 · Merge the remote's base branch in when it has diverged cleanly
@@ -57,12 +57,13 @@ It still stops, changing nothing, when the two sides changed the same lines, or 
 ## Review log
 Round 1 (codex): changes requested: F1 With merge.autoStash=true, Git can stash overlapping uncommitted edits, advance the base branch, then restore the edits with conflicts.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 372,254
-- Elapsed since build started: 14 min
+- Reviewer tokens: 727,562
+- Elapsed since build started: 18 min
 - Changed lines: 82 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: ship's catch-up fast-forward and its merge of the ticket don't pass `--no-autostash` either: speck/ideas/2026-10-17-keep-merge-autostash-out-of-ship-s-merges.md.
@@ -200,6 +201,75 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Cleanly diverged base branches now merge automatically before shipping, while conflicts and obstructing local files cause a safe refusal. The automatic-stashing issue is fixed, all eight tests passed, and no blocking findings remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a1b883de2b4442266ee1c58548ada11840f64e98",
+    "merge": true,
+    "thread_id": "01a14920-5c6a-7040-80a3-19bbc8687380",
+    "seconds": 12,
+    "usage": {
+      "input_tokens": 353405,
+      "cached_input_tokens": 288768,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1903,
+      "reasoning_output_tokens": 207
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-17T09:25:59.730Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ship-remote.mjs mergeRemoteBase still creates a two-parent merge and reports incoming commits in one line. Both AC1 tests passed, checking successful shipping and pushing with and without a checked-out base branch."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "mergeRemoteBase checks conflicts with merge-tree before changing the branch or checkout. The AC2 snapshot test and the updated conflicting-divergence test in test/ship.test.mjs passed; the latter retains its preservation assertions."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The merge explicitly uses --no-autostash. All four AC3 tests passed, covering preservation of edits and untracked files, named refusals for obstructing files, unchanged snapshots, and merge.autoStash=true."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/ship.mjs still merges the remote before recording the base used for rollback. The AC4 test passed, verifying the merge commit remains after shipping tests fail."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship-remote.mjs:36",
+        "issue": "Git automatic stashing could previously bypass overwrite protection and leave local edits conflicted.",
+        "suggested_fix": "Implemented: --no-autostash remains explicit, and the passing regression test verifies safe refusal with merge.autoStash enabled.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge retains the approved behaviour. The test updates correctly accommodate automatic merging and the new temporary-file cleanup requirement without weakening assertions. All 39 tests in the three reviewed files passed; no blocking findings remain."
   }
 }
 ```
