@@ -40,6 +40,7 @@ Some settings suit a machine rather than a project. `max_parallel_builds` of 4 s
 - `speck/.cache/` is git-ignored. Worktrees must read the main checkout's machine file, as the flaky log in `speck/.cache/flaky/` is shared.
 - Config is read by `loadConfig` in `scripts/core.mjs`, and `speck config set` is in `scripts/config.mjs`. Update `speck config set`'s description in `docs/brief.md`.
 - Failing before this build: none
+- Self-check: kept the usage line `speck config set <key> <value>` as 0087's test reads it, adding `--machine` after it; `speck config set` of a shared value now says when this machine keeps its own value over it; a hand-edited bad machine value gives a plain error naming the fix, which `--machine` can still apply. The panel's Settings view still reads `speck/config.yml` alone (0261).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
