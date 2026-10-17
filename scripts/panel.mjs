@@ -14,7 +14,7 @@ import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettings, panelSettingRequest, panelSaveRequest } from './settings.mjs';
+import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels } from './settings.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship, the speck run switch and a setting) ----------
 
@@ -416,9 +416,14 @@ export async function panelServer() {
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
     }
     // 0257: the settings people tune, read afresh from speck/config.yml each time the Settings view opens.
+    // 0276: with the models the reviewer offers, read now too.
     if (where === '/api/settings') {
-      try { return send(res, 200, 'application/json', JSON.stringify(panelSettings(repo))); }
-      catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })); }
+      return (async () => {
+        let models;
+        try { models = await reviewerModels(repo); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
+        try { send(res, 200, 'application/json', JSON.stringify(panelSettings(repo, { models }))); }
+        catch (e) { send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })); }
+      })();
     }
     const pack = where.match(/^\/api\/tickets\/(\d{1,4})\/pack$/);
     if (pack) {

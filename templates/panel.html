@@ -1648,7 +1648,8 @@ let settingTyped = new Map(), settingRefused = new Map(); // key → what was ty
 let settingScope = new Map(); // 0261: key → 'machine' or 'repo', where a change to a setting this machine can hold goes
 let settingClear = new Set(); // 0261: keys whose machine value is cleared on Save
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
-let settingsBar = null, settingAsks = new Map(); // 0274: the Save button, and where each machine setting's question goes, as drawn
+let settingsBar = null, settingAsks = new Map();
+let settingControls = new Map(); // 0276: key → its control, as drawn // 0274: the Save button, and where each machine setting's question goes, as drawn
 // 0268: each setting's explanation sits behind an info button beside its name. It shows while the pointer is over the
 // button or the button has focus, and a tap or click keeps it until the next tap or click on it. One shows at a time.
 let settingTip = null, settingTipKept = false, settingHover = null, settingFocus = null; // keys, or null
@@ -1673,7 +1674,7 @@ async function loadSettings() {
     const res = await fetch('/api/settings', { cache: 'no-store' });
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
-    next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups }
+    next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null }
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -1746,6 +1747,7 @@ function renderSettings() {
   holdPage(open || fullId !== null);
   settingTips = new Map();
   settingAsks = new Map();
+  settingControls = new Map();
   settingsBar = null;
   // Drawn afresh, its buttons are new, so no pointer is over one and none has focus: only a kept explanation stays.
   settingHover = settingFocus = null;
@@ -1772,6 +1774,7 @@ function renderSettings() {
           mine ? machineLine(x) : null,
           x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null,
           edit && x.for_machine === true ? scopeQuestion(x.key) : null,
+          x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
           tip));
       }
@@ -1815,7 +1818,15 @@ function showSettingTip(key, kept) {
 // and Save sends it with the rest. 0259: auto_ship_risk's is a box to tick for each risk.
 function settingEditor(x) {
   const typed = settingTyped.has(x.key) ? settingTyped.get(x.key) : settingNow(x);
-  const typing = value => { settingTyped.set(x.key, value); refreshSettings(); };
+  const typing = value => {
+    settingTyped.set(x.key, value);
+    // 0276: the reviewer and its model decide what the model and effort lists offer, so those are drawn again.
+    if (x.key === 'reviewer' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) {
+      renderSettings();
+      const again = settingControls.get(x.key);
+      if (again && again.focus) again.focus();
+    } else refreshSettings();
+  };
   if (settingClear.has(x.key)) { // 0261: this machine's value goes on Save, leaving the repo's
     const shown = el('input', 'edit');
     shown.type = 'text';
@@ -1838,14 +1849,16 @@ function settingEditor(x) {
     return boxes.map(b => el('label', 'risk', null, b, el('span', null, b.value)));
   }
   let input;
-  if (Array.isArray(x.choices)) {
+  const choices = settingChoices(x);
+  if (choices !== null) {
     input = el('select', 'edit');
-    const choices = x.choices.map(String), now = settingNow(x);
-    // A value the file has that isn't a choice is shown, but can't be picked again.
-    for (const c of choices.includes(now) ? choices : [now, ...choices]) {
-      const o = el('option', null, c === '' ? '(default)' : c);
+    // A value the file has, or one picked before the list changed, that isn't a choice is shown, marked as not
+    // offered, but can't be picked again.
+    const off = [...new Set([settingNow(x), typed])].filter(c => !choices.includes(c));
+    for (const c of [...off, ...choices]) {
+      const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${c} (not offered)` : c);
       o.value = c;
-      if (!choices.includes(c)) o.disabled = true;
+      if (off.includes(c)) o.disabled = true;
       input.appendChild(o);
     }
   } else {
@@ -1856,9 +1869,45 @@ function settingEditor(x) {
   }
   input.value = typed;
   input.setAttribute('aria-label', x.key);
+  settingControls.set(x.key, input);
   input.addEventListener('input', () => typing(String(input.value ?? '')));
   input.addEventListener('change', () => typing(String(input.value ?? '')));
   return [input];
+}
+// 0276: what a setting's list offers: the server's choices, or with the reviewer's models, read when the view opened,
+// those models for reviewer_model, and for reviewer_effort the efforts the chosen model supports (any model's for the
+// default). null: a box to type in.
+function settingChoices(x) {
+  const models = x.key === 'reviewer_model' || x.key === 'reviewer_effort' ? reviewerModelList() : null;
+  if (models !== null && x.key === 'reviewer_model') return ['', ...models.map(m => m.slug)];
+  if (models !== null) {
+    const model = models.find(m => m.slug === settingChosen('reviewer_model'));
+    return ['', ...new Set((model ? [model] : models).flatMap(m => m.efforts))];
+  }
+  return Array.isArray(x.choices) ? x.choices.map(String) : null;
+}
+// A setting's value as picked or typed in the view, or as the view read it.
+function settingChosen(key) {
+  if (settingTyped.has(key)) return settingTyped.get(key);
+  const x = settingRows().find(r => r.key === key);
+  return x ? settingNow(x) : '';
+}
+// 0276: the models the server read, while the reviewer chosen in the view is the one it read them for; otherwise null.
+function reviewerModelList() {
+  const m = settingsView !== null ? settingsView.reviewer_models : null;
+  if (!m || typeof m !== 'object' || !Array.isArray(m.models) || settingChosen('reviewer') !== m.reviewer) return null;
+  return m.models.filter(x => x && typeof x.slug === 'string')
+    .map(x => ({ slug: x.slug, efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : [] }));
+}
+// Why reviewer_model is a box to type in rather than a list, in one line, or null when it's a list or the server
+// didn't say.
+function modelsWhy() {
+  const m = settingsView !== null ? settingsView.reviewer_models : null;
+  if (!m || typeof m !== 'object' || reviewerModelList() !== null) return null;
+  const chosen = settingChosen('reviewer');
+  if (chosen === m.reviewer) return typeof m.why === 'string' && m.why ? m.why : null;
+  return chosen === 'codex' ? 'Save codex as the reviewer, then open Settings again to pick from its models.'
+    : `${chosen} can't list its models, so type the model's name as it names it.`;
 }
 // A setting's value as its control writes it: "low,high" for a list.
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
