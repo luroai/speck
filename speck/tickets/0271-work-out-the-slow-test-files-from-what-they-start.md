@@ -1,7 +1,7 @@
 ---
 id: "0271"
 title: "Work out the slow test files from what they start"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T10:57:50.396Z"
 
 ---
 # 0271 · Work out the slow test files from what they start
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Test files that start a real panel, a browser or `speck run` must be listed by hand in `test/support/heavy.mjs`, and a test (0233 AC1) fails when one isn't. Builders don't run that test, so they forget, and the ticket is handed back at ship time. Every such ticket also adds to the same list, so tickets built side by side conflict there. On 2026-10-17 this handed back 0258, 0261 and 0268, and caused 0268's merge conflict.
