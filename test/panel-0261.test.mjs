@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
-import { settingsPage, openSettings, rowOf, controlOf, saveOf } from './support/settings.mjs';
+import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo } from './support/settings.mjs';
 import { panelSettings, panelSetSetting, panelSettingRequest } from '../scripts/settings.mjs';
 import { machineConfig, machineConfigFile } from '../scripts/machine.mjs';
 
@@ -16,6 +16,7 @@ const byKey = v => Object.fromEntries(v.groups.flatMap(g => g.settings).map(s =>
 const cfgOf = r => path.join(r.dir, 'speck', 'config.yml');
 const snapshot = r => ({ text: fs.readFileSync(cfgOf(r), 'utf8'), head: headOf(r), status: r.g('status', '--porcelain') });
 const posts = p => p.settingsCalls.filter(c => c.method === 'POST');
+const tagsOf = (p, key) => p.all(rowOf(p, key)).filter(n => /\bdefault\b/.test(n.className || '')).map(n => n.textContent);
 const buttonOf = (p, key, label) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && n.textContent === label);
 
 // A Settings view as the server sends it, with max_parallel_builds from this machine (`machine` set) or the repo.
@@ -62,49 +63,47 @@ test('0261 AC1: the view says whose value each is, with the repo\'s value beside
   assert.doesNotMatch(rowOf(q, 'reviewer_model').textContent, /this machine|repo's value/i);
 });
 
-test('0261 AC2: Save asks whether it\'s for this machine or the repo, and sends it to the one picked', async () => {
-  const p = settingsPage([view(undefined, 2), view(4, 2)], [{ ok: true, changed: true }]);
+test('0261 AC2: a change asks whether it\'s for this machine or the repo, and Save sends it to the one picked', async () => {
+  // 0274: asked beside the setting once it's changed, and sent with the view's one Save.
+  const p = settingsPage([view(undefined, 2), view(4, 2)], [{ ok: true, changed: ['max_parallel_builds'] }]);
   await p.settle();
   await openSettings(p);
-  controlOf(p, 'max_parallel_builds').value = '4';
-  p.press(saveOf(p, 'max_parallel_builds'));
-  await p.settle();
-  assert.deepEqual(posts(p), [], 'nothing is sent before you choose');
+  assert.equal(buttonOf(p, 'max_parallel_builds', 'This machine only'), undefined, 'not asked before a change');
+  changeTo(p, 'max_parallel_builds', '4');
   assert.ok(buttonOf(p, 'max_parallel_builds', 'This machine only'));
   assert.ok(buttonOf(p, 'max_parallel_builds', 'The repo, for everyone'));
-  p.press(buttonOf(p, 'max_parallel_builds', 'This machine only'));
+  p.press(saveButton(p));
   await p.settle();
-  assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/max_parallel_builds/4?scope=machine']);
+  assert.deepEqual(posts(p), [], 'nothing is sent before you choose');
+  p.press(buttonOf(p, 'max_parallel_builds', 'This machine only'));
+  p.press(saveButton(p));
+  await p.settle();
+  assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/save?machine%3Amax_parallel_builds=4']);
   assert.ok(posts(p)[0].headers['X-Speck-Token']);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '4');
-  assert.match(rowOf(p, 'max_parallel_builds').textContent, /this machine/i);
+  assert.deepEqual(tagsOf(p, 'max_parallel_builds'), ['this machine']);
 
-  const q = settingsPage([view(undefined, 2), view(undefined, 5)], [{ ok: true, changed: true }]);
+  const q = settingsPage([view(undefined, 2), view(undefined, 5)], [{ ok: true, changed: ['max_parallel_builds'] }]);
   await q.settle();
   await openSettings(q);
-  controlOf(q, 'max_parallel_builds').value = '5';
-  q.press(saveOf(q, 'max_parallel_builds'));
-  await q.settle();
+  changeTo(q, 'max_parallel_builds', '5');
   q.press(buttonOf(q, 'max_parallel_builds', 'The repo, for everyone'));
+  q.press(saveButton(q));
   await q.settle();
-  assert.deepEqual(posts(q).map(c => c.url), ['/api/settings/max_parallel_builds/5']);
+  assert.deepEqual(posts(q).map(c => c.url), ['/api/settings/save?repo%3Amax_parallel_builds=5']);
 
-  // Cancel sends nothing and puts the value back; a setting no machine can hold saves without asking.
-  const c = settingsPage([view(undefined, 2), view(undefined, 2)], [{ ok: true, changed: true }]);
+  // Putting the value back stops asking; a setting no machine can hold is sent without asking.
+  const c = settingsPage([view(undefined, 2), view(undefined, 2)], [{ ok: true, changed: ['reviewer_model'] }]);
   await c.settle();
   await openSettings(c);
-  controlOf(c, 'max_parallel_builds').value = '7';
-  c.press(saveOf(c, 'max_parallel_builds'));
-  await c.settle();
-  c.press(buttonOf(c, 'max_parallel_builds', 'Cancel'));
-  await c.settle();
-  assert.deepEqual(posts(c), []);
-  assert.equal(controlOf(c, 'max_parallel_builds').value, '2');
+  changeTo(c, 'max_parallel_builds', '7');
+  changeTo(c, 'max_parallel_builds', '2');
   assert.equal(buttonOf(c, 'max_parallel_builds', 'This machine only'), undefined);
-  controlOf(c, 'reviewer_model').value = 'm1';
-  c.press(saveOf(c, 'reviewer_model'));
+  assert.equal(saveButton(c).disabled, true);
+  changeTo(c, 'reviewer_model', 'm1');
+  c.press(saveButton(c));
   await c.settle();
-  assert.deepEqual(posts(c).map(x => x.url), ['/api/settings/reviewer_model/m1']);
+  assert.deepEqual(posts(c).map(x => x.url), ['/api/settings/save?repo%3Areviewer_model=m1']);
 });
 
 test('0261 AC2: this machine only writes the machine file and leaves config.yml and git alone; the repo commits as 0258 does', () => {
@@ -145,11 +144,13 @@ test('0261 AC3: clearing this machine\'s value goes back to the repo\'s, and the
   const clear = buttonOf(p, 'max_parallel_builds', 'Clear this machine\'s value');
   assert.ok(clear);
   p.press(clear);
+  assert.deepEqual(posts(p), [], '0274: cleared on Save');
+  p.press(saveButton(p));
   await p.settle();
-  assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/max_parallel_builds/?scope=machine']);
+  assert.deepEqual(posts(p).map(c => c.url), ['/api/settings/save?machine%3Amax_parallel_builds=']);
   assert.equal(controlOf(p, 'max_parallel_builds').value, '2');
   assert.equal(buttonOf(p, 'max_parallel_builds', 'Clear this machine\'s value'), undefined);
-  assert.doesNotMatch(rowOf(p, 'max_parallel_builds').textContent, /this machine/i);
+  assert.deepEqual(tagsOf(p, 'max_parallel_builds'), ['repo']);
 });
 
 test('0261 AC4: a machine change is saved off the base branch and with config.yml changed; a bad one is refused and changes nothing', () => {
