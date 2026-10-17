@@ -1,7 +1,7 @@
 ---
 id: "0262"
 title: "Make the README tests pass again after the README revision"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-17
+started: "2026-10-17T07:03:30.339Z"
 
 ---
 # 0262 · Make the README tests pass again after the README revision
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Seven README tests fail on main, so `speck ship` refuses every approved ticket, 0257 included, and nothing can ship. They started failing after the README was revised on GitHub (commit 1041577, merged into main as 9ffa622). The failing tests are 0249 AC1, 0250 AC1, 0251 AC1, AC2, AC3 and AC5, and 0255 AC1. 0250 AC1 and 0255 AC1 expect the README's plain line to read "…the same way every time, so you can set them going, walk away and trust what you come back to." but it now ends at "every time.". 0249 AC1 says "the picture comes after the opening paragraph", and the 0251 tests say "the plain line comes before the image".
