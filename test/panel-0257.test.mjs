@@ -176,7 +176,8 @@ test('0257 AC5: the view has no control that changes a setting, and opening and 
   const p = settingsPage([view({ auto_ship: true })]);
   await p.settle();
   await open(p);
-  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName));
+  // 0268: and each setting's info button, which only shows its explanation
+  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName) && n.className !== 'info');
   assert.deepEqual(controls.map(n => n.className), ['close'], 'only the close button');
   p.press(controls[0]);
   await p.settle();
