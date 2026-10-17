@@ -35,7 +35,7 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
    - **Unusual input:** empty, missing, malformed or repeated values, and names that are built in rather than missing (for example `constructor` or `__proto__` used as a key).
    - **State over time:** anything kept between review rounds, runs or re-runs. Can a later run pick up something stale or out of date that an earlier one left?
    - **Error paths:** every failure gives a plain error message saying what to do, changes nothing it shouldn't, and never ends in a stack trace.
-   - **Claims:** every sentence you added to docs or skills matches the code. A test covers each fact in the docs you changed (a command, a setting's name, a version, a file name, a link, or a name that mustn't appear), not every sentence. Narrow any claim the code doesn't fully back.
+   - **Claims:** every sentence you added to docs or skills matches the code, and a test covers it when it states a fact in the docs you changed (a command, a setting's name, a version, a file name, a link, or a name that mustn't appear). A sentence about how a doc reads needs no test. Narrow any claim the code doesn't fully back.
    - **Scope:** nothing outside the ticket changed, and nothing it puts out of scope was touched.
 
    For each problem you find, add a test that fails, fix it, and re-run the tests: the ticket's own test files with `speck test --files`. Then add one line to the ticket's Notes: `Self-check: <what it changed>`, or `Self-check: no changes`.
