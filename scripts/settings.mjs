@@ -22,7 +22,7 @@ export const SETTING_GROUPS = [
     { key: 'reviewer', default: 'codex',
       explain: 'The agent that reviews each build and decides whether it is approved: codex, claude-subagent or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
     { key: 'reviewer_model', default: '',
-      explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex offers. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
+      explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex offers or Claude\'s model names. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
     { key: 'reviewer_effort', default: '',
       explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
     { key: 'allow_same_model_review', default: false,
@@ -78,6 +78,7 @@ function valueIn(text, repo, key) {
 // it's picked from a list. 0261: one this machine can hold is `for_machine`, with the value speck uses, `from` 'machine'
 // when that's this machine's own or 'repo' when it's speck/config.yml's, and speck/config.yml's in `repo_value`.
 // 0276: `models`, from reviewerModels, is given back as `reviewer_models`, for the view to offer the reviewer's models.
+// 0278: and Claude's model names as `claude_models`, for when claude-subagent is picked in the view.
 export function panelSettings(repo, { models } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
@@ -86,13 +87,19 @@ export function panelSettings(repo, { models } = {}) {
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...machine };
-  }) })), ...(models ? { reviewer_models: models } : {}) };
+  }) })), ...(models ? { reviewer_models: models } : {}), claude_models: CLAUDE_MODELS };
 }
 
+// 0278: the model names a claude-subagent reviewer takes, each meaning the newest model of its kind. Claude Code has no
+// command that lists them, so they're written here. With no `efforts`, reviewer_effort offers speck's own.
+export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku']
+  .map(slug => Object.freeze({ slug, about: `the newest ${slug[0].toUpperCase()}${slug.slice(1)}` })));
+
 // 0276: the models the configured reviewer offers, read now, for the Settings view: { reviewer, models: [{ slug,
-// efforts }] } when it can list them (only Codex can), or { reviewer, why } in one line when it can't.
+// efforts }] } when it can list them (Codex, or Claude's names from 0278), or { reviewer, why } in one line when it can't.
 export async function reviewerModels(repo, read = codexModelsAsync) {
   const reviewer = String(loadConfig(repo).reviewer ?? '');
+  if (reviewer === 'claude-subagent') return { reviewer, models: CLAUDE_MODELS };
   if (reviewer !== 'codex') return { reviewer, why: `${reviewer || 'This reviewer'} can't list its models, so type the model's name as it names it.` };
   return { reviewer, ...await read() };
 }

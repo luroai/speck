@@ -152,7 +152,7 @@ test('0276 AC4: when Codex can\'t list its models, one line says why', async () 
     const out = await reviewerModels(r.dir, async () => { asked = true; return { models: [] }; });
     assert.equal(asked, false);
     assert.equal(out.reviewer, 'claude-subagent');
-    assert.match(out.why, /^claude-subagent can't list its models/);
+    assert.deepEqual(out.models.map(m => m.slug), ['fable', 'opus', 'sonnet', 'haiku'], '0278: Claude\'s model names instead');
   });
 });
 
