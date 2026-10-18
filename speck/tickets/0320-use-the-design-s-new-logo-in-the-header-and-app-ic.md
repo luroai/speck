@@ -1,7 +1,7 @@
 ---
 id: "0320"
 title: "Use the design's new logo in the header and app icons"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-18
 ---
 # 0320 · Use the design's new logo in the header and app icons
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The user has updated the LCD design since it was copied into `docs/design/lcd/`. It now has its own logo: a hand-drawn 16 × 16 mark (the ring open at the top left, two ears and the speck), with a header version, a browser-tab icon that follows light and dark by itself, and an app icon showing the handheld with the mark on its screen. The panel's header mark (0303, 0309) and app icons (0305, 0308) were made from the first version and don't match it.
