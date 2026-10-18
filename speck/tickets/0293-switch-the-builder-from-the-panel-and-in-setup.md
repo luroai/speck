@@ -39,6 +39,11 @@ You can switch the builder in the Settings view and in setup, and speck sets eve
 ## Notes
 - From `speck/ideas/2026-10-17-build-with-any-agent.md`. `builderMismatch` in `scripts/install.mjs` checks today that `build_command` matches `builder`.
 - Failing before this build: none
+- AC1, switching to Claude Code: a blank build_command doesn't start Claude Code builds (speck run refuses, and 0088's test keeps that as the way to build by hand), so switching to claude sets build_command to Claude Code's default, its own command. Codex and Cursor get blank.
+- AC2 keeps 0280's rule: a builder of the reviewer's family is allowed when builder_model and reviewer_model are both set and differ (only possible for a Claude builder), as for a reviewer change.
+- AC5: switching never rewrites a ticket's `builder:`, and the view says so. speck run still starts every build with the builder in speck/config.yml, whatever a ticket says: building each ticket with its own builder is "a different builder per ticket", out of scope here. Left as a follow-up.
+- Setup sets the builder with `speck config set builder <name> [--replace]`, which does what the panel does: it refuses to replace a hand-set build_command without --replace, and notes a same-family reviewer rather than refusing, since setup chooses the reviewer next.
+- Self-check: a build_command that YAML reads as a number or list is shown and confirmed as text, so it can still be replaced; README claims narrowed to claude, codex and cursor, with a test for the command it names.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

@@ -10,6 +10,7 @@ import { commitTicketOnly } from './close.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync } from './agents.mjs';
+import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand } from './builder-switch.mjs';
 
 export const SETTING_GROUPS = [
   { title: 'Shipping', settings: [
@@ -20,7 +21,7 @@ export const SETTING_GROUPS = [
   ] },
   { title: 'Building and reviewing', settings: [
     { key: 'builder', default: 'claude',
-      explain: 'The agent that builds each ticket, writing its tests and code. New tickets take it from here, so changing it changes who builds tickets made from now on.' },
+      explain: 'The agent that builds each ticket, writing its tests and code: claude, codex or cursor, offered when it\'s installed and signed in. New tickets take it from here, so changing it changes who builds tickets made from now on, and sets build_command to the new builder\'s own, asking first when that was set by hand.' },
     { key: 'builder_model', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, to Codex builds when build_command is blank, and to Cursor builds when it is blank too. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
@@ -53,9 +54,9 @@ const own = (o, k) => o !== null && typeof o === 'object' && !Array.isArray(o) &
 const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] : undefined, o);
 
 // 0258: the settings the panel can change, and 0259's auto_ship and auto_ship_risk, which it changes only once you've
-// confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: builder needs a matching
-// build_command and allow_same_model_review weakens the independent review. 0279: and builder_model.
-export const EDITABLE = Object.freeze(['builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
+// confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: allow_same_model_review
+// weakens the independent review. 0279: and builder_model. 0293: and builder, which sets build_command with it.
+export const EDITABLE = Object.freeze(['builder', 'builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
   'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk']);
 const RISKS = ['low', 'high'];
 
@@ -65,6 +66,7 @@ function choicesOf(key, file) {
     const options = file.reviewer_options !== null && typeof file.reviewer_options === 'object' ? Object.keys(file.reviewer_options) : [];
     return [...new Set(['codex', 'claude', 'claude-subagent', ...options])];
   }
+  if (key === 'builder') return Object.keys(OWN_BUILD_COMMANDS); // 0293: the builders speck starts by itself
   if (key === 'reviewer_effort') return ['', ...EFFORTS];
   if (key === 'auto_ship') return [true, false];
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
@@ -90,11 +92,15 @@ export function panelSettings(repo, { models, builderModels, agents } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file);
-    const { choices, missing } = s.key === 'reviewer' && agents ? readyReviewers(all, agents, String(value ?? '')) : { choices: all };
+    const { choices, missing } = (s.key === 'reviewer' || s.key === 'builder') && agents ? readyReviewers(all, agents, String(value ?? ''), s.key === 'builder') : { choices: all };
+    // 0293: build_command as the file has it, whether it was set by hand, and each builder's own, for the view to say
+    // what switching the builder sets it to, and to ask first when it replaces one set by hand.
+    const build = s.key !== 'builder' ? {} : { build_command: { value: file.build_command === undefined || file.build_command === null ? null : String(file.build_command),
+      hand_set: handSetBuildCommand(file), own: OWN_BUILD_COMMANDS } };
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
-      editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...machine };
+      editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}), claude_models: CLAUDE_MODELS };
 }
 
@@ -107,13 +113,13 @@ export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku'].
 }));
 
 // 0288: the agent each built-in reviewer runs on. A reviewer set up as a command under reviewer_options is offered as
-// it is: speck can't tell what it runs.
+// it is: speck can't tell what it runs. 0293: with `builders`, each choice is a builder, run on the agent of its name.
 const REVIEWER_AGENTS = { codex: 'codex', claude: 'claude', 'claude-subagent': 'claude' };
-function readyReviewers(choices, { agents }, current) {
+function readyReviewers(choices, { agents }, current, builders = false) {
   const byId = new Map((Array.isArray(agents) ? agents : []).map(a => [a.id, a]));
   const left = [];
   const kept = choices.filter(c => {
-    const agent = Object.hasOwn(REVIEWER_AGENTS, c) ? byId.get(REVIEWER_AGENTS[c]) : undefined;
+    const agent = builders ? byId.get(c) : Object.hasOwn(REVIEWER_AGENTS, c) ? byId.get(REVIEWER_AGENTS[c]) : undefined;
     if (!agent || (agent.installed && agent.signed_in) || c === current) return true;
     left.push(`${c} (${String(agent.why || `${agent.name} isn't ready.`).replace(/\.$/, '')})`);
     return false;
@@ -203,7 +209,9 @@ const each = (changes, why) => Object.fromEntries(changes.map(c => [c.key, why])
 // `speck config set --machine` does. Settings already at the value given are left alone.
 // A change that lets more tickets ship by themselves is refused unless `confirmed` names the risks that would then ship,
 // as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
-export function panelSaveSettings(repo, changes, { confirmed = null } = {}) {
+// 0293: a change to builder sets build_command to the new builder's own in the same commit. One set by hand is replaced
+// only when `replace` is it, exactly as the file has it, as the page read it when you confirmed.
+export function panelSaveSettings(repo, changes, { confirmed = null, replace = null } = {}) {
   const twice = changes.find((c, i) => changes.findIndex(d => d.key === c.key) !== i);
   if (twice) return { status: 400, body: { error: `${twice.key} is given more than once. Reload the panel, then try again.` } };
   const file = path.join(repo, 'speck', 'config.yml');
@@ -213,11 +221,14 @@ export function panelSaveSettings(repo, changes, { confirmed = null } = {}) {
   if (bad.length) return refusal(bad[0].status, Object.fromEntries(bad.map(c => [c.key, c.error])));
   // 0280: a reviewer of the builder's own family is refused only when the two would run the same model, or might, as
   // the settings would be once saved. So a change to builder_model or reviewer_model can be refused too.
-  const models = checked.filter(c => !c.machine && ['reviewer', 'builder_model', 'reviewer_model'].includes(c.key));
+  // 0293: and so can a change to builder, saying which reviewer would be from another family.
+  const models = checked.filter(c => !c.machine && ['builder', 'reviewer', 'builder_model', 'reviewer_model'].includes(c.key));
   if (models.length && cfg.allow_same_model_review !== true) {
     const will = { ...cfg, ...Object.fromEntries(models.map(c => [c.key, c.want])) };
     const problem = sameModelProblem(String(will.builder ?? ''), String(will.reviewer ?? ''), will, will.reviewer_model);
-    if (problem) return refusal(422, each(models, problem));
+    const switching = models.some(c => c.key === 'builder' && !c.same);
+    if (problem) return refusal(422, each(models, switching
+      ? `${problem} For a ${will.builder} builder, a reviewer from another family is ${otherFamilyReviewer(String(will.builder))}: pick it as the reviewer in the same Save.` : problem));
   }
   const toFile = checked.filter(c => !c.machine && !c.same), toMachine = checked.filter(c => c.machine && !c.same);
   let next = text;
@@ -233,6 +244,13 @@ export function panelSaveSettings(repo, changes, { confirmed = null } = {}) {
     const ships = toFile.filter(c => c.key === 'auto_ship' || c.key === 'auto_ship_risk'), more = ships.length ? loosens(now, will) : null;
     if (more && confirmed !== more.risks)
       return refusal(409, each(ships, `That would let ${more.words} merge and push to ${cfg.base_branch} without waiting for you, which hasn't been confirmed. Check the settings as they are now, then save again.`), { confirm: true });
+    // 0293: switching the builder sets build_command to its own, asking first for one set by hand.
+    const builder = toFile.find(c => c.key === 'builder'), file = parseYaml(text), own = builder ? ownBuildCommand(String(builder.want)) : null;
+    if (own !== null && file.build_command !== own) {
+      if (handSetBuildCommand(file) && replace !== String(file.build_command))
+        return refusal(409, each([builder], `build_command is set by hand to '${String(file.build_command)}', and switching the builder replaces it with ${describeBuildCommand(builder.want, own)}, which hasn't been confirmed. Check the settings as they are now, then save again.`), { replace: true });
+      toFile.push({ key: 'build_command', want: own, machine: false });
+    }
     for (const c of toFile) next = setConfigText(next, c.key.split('.'), yamlValue(c.want));
     const read = parseYaml(next), unread = toFile.filter(c => JSON.stringify(lookup(read, c.key)) !== JSON.stringify(c.want));
     if (unread.length)
@@ -282,16 +300,18 @@ export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null, sc
 
 // 0274: the panel's POST /api/settings/save, the Settings view's one Save. Its address's query gives each change, as
 // repo:<key>=<value> for the repo or machine:<key>=<value> for this machine only, and confirm=<risks> once you've
-// confirmed a change that lets more tickets ship by themselves (0259).
+// confirmed a change that lets more tickets ship by themselves (0259). 0293: replace=<build_command> once you've
+// confirmed that switching the builder replaces one set by hand.
 export function panelSaveRequest(repo, query) {
   const changes = [];
-  let confirmed = null;
+  let confirmed = null, replace = null;
   for (const [name, value] of new URLSearchParams(query)) {
     const m = name.match(/^(repo|machine):(.+)$/);
     if (name === 'confirm' && confirmed === null) confirmed = value;
+    else if (name === 'replace' && replace === null) replace = value; // 0293: the build_command you confirmed replacing
     else if (m) changes.push({ key: m[2], value, machine: m[1] === 'machine' });
     else return { status: 400, body: { error: `The panel doesn't save ${JSON.stringify(name)}. Reload the panel, then try again.` } };
   }
-  try { return panelSaveSettings(repo, changes, { confirmed }); }
+  try { return panelSaveSettings(repo, changes, { confirmed, replace }); }
   catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
 }
