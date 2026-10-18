@@ -18,8 +18,9 @@ import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels, b
 import { codexModelsAsync } from './codex-models.mjs';
 import { foremanView, readForeman } from './foreman.mjs';
 import { findAgentsAsync } from './agents.mjs';
+import { goWith } from './go-with.mjs';
 
-// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship, the speck run switch and a setting) ----------
+// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, Ship, the speck run switch and a setting) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -222,7 +223,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -375,6 +376,14 @@ export async function panelServer() {
       try {
         const out = panelStop(repo, stopPath[1]);
         return wrote(res, out);
+      } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
+    }
+    const recommendation = where.match(/^\/api\/tickets\/(\d{1,4})\/recommendation$/); // 0284: Go with the recommendation
+    if (req.method === 'POST' && recommendation) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      try {
+        return wrote(res, goWith(repo, recommendation[1]));
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
     const ship = where.match(/^\/api\/tickets\/(\d{1,4})\/ship$/);

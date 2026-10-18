@@ -39,6 +39,7 @@ A blocked ticket's question in the panel has a button that takes the build's rec
 ## Notes
 - speck run's hand-backs resume a build in `scripts/hand-back.mjs` (`resumeArgv`). Panel writes are in `scripts/panel.mjs`.
 - Failing before this build: none
+- Self-check: a choice left waiting while speck run is off could later resume a session already carried on by hand, so the choice now keeps the branch's commit and speck run drops it if the branch has moved or the session is in use (tested). Also dropped a stray record write before the commit.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
