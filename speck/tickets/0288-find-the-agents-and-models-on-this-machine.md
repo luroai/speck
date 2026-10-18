@@ -41,7 +41,7 @@ speck knows, for each agent it supports, whether it's installed and signed in an
 - From `speck/ideas/2026-10-18-find-the-agents-and-models-on-this-machine.md`. `speck detect` already finds agents on the PATH (`scripts/detect.mjs`).
 - Checked 2026-10-18: `codex debug models` gives each model's `slug`, `display_name`, `description`, `visibility` and efforts (codex-cli 0.159.0). `claude auth status` prints JSON with `loggedIn` (Claude Code 2.1.301). `codex login status` exits 0 when signed in (as `speck detect` uses it).
 - Checked 2026-10-18: Cursor's CLI is `agent` (it was `cursor-agent`); `agent models` lists your account's models and `agent status` shows whether you're signed in (cursor.com/docs/cli/reference/parameters).
-- Unverified: the output format of `agent models` and `agent status` (Cursor's CLI isn't installed here).
+- Checked 2026-10-18: Cursor's docs give no sample output, but a published parser of it (netandreus/pi-cursor-provider) reads `agent models` as a header line starting `Available`, then one model per line as `<id> - <name>`, sometimes followed by `(current)` or `(default)`, and a closing `Tip:` line. `agent status` prints `✓ Logged in as <email>` and takes `--format json` (with no documented fields). Cursor's CLI isn't installed here, so it's tested against stand-ins.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
