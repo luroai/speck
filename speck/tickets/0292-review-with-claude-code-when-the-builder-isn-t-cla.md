@@ -1,7 +1,7 @@
 ---
 id: "0292"
 title: "Review with Claude Code when the builder isn't Claude"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0288"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T10:54:29.066Z"
+approved: "2026-10-18T11:01:59.487Z"
 
 ---
 # 0292 · Review with Claude Code when the builder isn't Claude
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With Codex or Cursor as the builder, the reviewer should come from another family, and Claude is the obvious one. But speck's Claude reviewer (`claude-subagent`) is started by the builder with a tool only Claude Code has, so a Codex or Cursor builder can't use it.
@@ -51,9 +52,15 @@ To see it, set the reviewer to "claude" in the panel's Settings view (it's offer
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The built-in reviewer does not enforce the required read-only access when Claude settings already allow writing Bash commands.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 443,858
+- Elapsed since build started: 8 min
+- Changed lines: 89 (limit 5000)
 - Follow-ups:
   - Keep the Claude reviewer off the user's connectors with `--strict-mcp-config`: speck/ideas/2026-10-18-keep-the-claude-reviewer-off-your-connectors.md.
   - Skipped as a duplicate: an effort only Codex supports (such as `ultra`) reaches `claude --effort` and fails the round. Matches speck/ideas/2026-10-17-check-the-effort-against-the-ticket-s-own-reviewer.md.
