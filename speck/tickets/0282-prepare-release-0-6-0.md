@@ -1,7 +1,7 @@
 ---
 id: "0282"
 title: "Prepare release 0.6.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T09:46:26.237Z"
+approved: "2026-10-18T09:52:24.384Z"
 
 ---
 # 0282 · Prepare release 0.6.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since `v0.5.4`, speck has gained a Settings view in the panel that explains and changes the settings people tune, with settings for this machine only, a builder model and model lists for the reviewer (0257–0261, 0268, 0273–0281). Setup now goes through those settings (0269). Shipping copes better when `main` fails or has moved on GitHub (0263–0265). Builds run a project's quick repo-wide checks (0272), and a document's wording is checked by review, not by tests (0266, 0267). Anyone following the setup prompt today gets 0.5.4 without any of it.
@@ -58,9 +59,15 @@ To see it, read the new 0.6.0 section at the top of the changelog, or the releas
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Under “Everything in between”, the README says a build “writes a test for each acceptance criterion”.; F2 The first change says the only previous way to change a setting was to edit the file.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 699,787
+- Elapsed since build started: 6 min
+- Changed lines: 96 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
