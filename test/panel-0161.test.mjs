@@ -171,9 +171,10 @@ test('0161 AC4: everything reached with the keyboard shows a ring of at least 2 
     for (const b of SURFACES) assert.ok(contrast(look[m[2]], look[b]) >= 3, `${name}: the ring on ${b}`);
   }
   // Nothing takes the ring away, but the full ticket pane, which is focused to scroll it with the keys and is no control.
+  // 0302: the builder badge's frame is an outline too, as in the design, on a canvas the keyboard never reaches.
   for (const r of rs) {
     const o = get(r, 'outline'), w = get(r, 'outline-width'), s = get(r, 'outline-style');
-    if ([o, w, s].every(v => v === undefined) || r === ring) continue;
+    if ([o, w, s].every(v => v === undefined) || r === ring || /^\.q \.top \.badge$/.test(r.sel)) continue;
     assert.equal(r.sel, '#full-ticket:focus', `${r.sel} sets the outline`);
   }
 });
