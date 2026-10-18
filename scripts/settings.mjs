@@ -9,6 +9,7 @@ import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
+import { agentModelsAsync } from './agents.mjs';
 
 export const SETTING_GROUPS = [
   { title: 'Shipping', settings: [
@@ -131,9 +132,11 @@ export async function reviewerModels(repo, read = codexModelsAsync) {
 
 // 0279: the models the configured builder offers, read now, for the Settings view: { builder, models } with Claude's
 // model names for claude and the models Codex lists for codex, or { builder, why } in one line when it can't list them.
-export async function builderModels(repo, read = codexModelsAsync) {
+// 0288: and the models Cursor lists for cursor.
+export async function builderModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
   const builder = String(loadConfig(repo).builder ?? '');
   if (builder === 'claude') return { builder, models: CLAUDE_MODELS };
+  if (builder === 'cursor') return { builder, ...await readCursor() };
   if (builder !== 'codex') return { builder, why: `${builder || 'This builder'} can't list its models, so type the model's name as it names it.` };
   return { builder, ...await read() };
 }

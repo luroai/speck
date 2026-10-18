@@ -1,7 +1,7 @@
 ---
 id: "0288"
 title: "Find the agents and models on this machine"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T10:42:48.088Z"
 ---
 # 0288 · Find the agents and models on this machine
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck offers agents and models it hasn't checked: reviewers that aren't installed or signed in, Codex models by their raw ids, and Claude's four aliases with no names. Other tools show what's really available on the machine, with names and descriptions.
@@ -56,3 +56,79 @@ speck knows, for each agent it supports, whether it's installed and signed in an
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6037ba686a350167c915532213da646c43a2cf2b",
+    "thread_id": "01a14ea1-2c67-7cf3-a106-3190d4a40fdc",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 173312,
+      "cached_input_tokens": 122752,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 943,
+      "reasoning_output_tokens": 130
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T10:49:39.466Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/agents.mjs findAgents and cmdAgents return installation, sign-in and model metadata for all three agents. The reported AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/agents.mjs uses the specified commands, filters Codex models through parseCodexModels, supplies Claude aliases and handles failed or timed-out lists. Reported AC2 tests exercise these behaviours and pass."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Settings renders display names and descriptions and filters built-in reviewers, covered by passing AC3 tests. However, scripts/settings.mjs builderModels explicitly refuses every builder other than Claude and Codex, so Cursor's available models never reach builder_model."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md section 5 instructs setup to run speck agents --json, explain agent readiness, and offer the chosen agent's models using their display names and descriptions."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/agents.mjs agentLines renders agent status, models and reasons as plain lines. The reported AC5 CLI test compares these details with JSON output and passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs:134",
+        "issue": "A Cursor builder still gets a text box saying it cannot list models. builderModels rejects Cursor, and /api/settings calls findAgentsAsync with models:false, discarding the new capability where Settings needs it. The AC3 tests cover only Claude and Codex.",
+        "suggested_fix": "Pass Cursor's discovered models, display names and descriptions into builder_models, retaining the reason when discovery fails. Add a Settings test with builder: cursor that exercises discovery through to the model options.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The new command reports agent readiness and named models, and setup uses it. Settings still cannot offer Cursor's models, so the change needs one integration fix before approval."
+  }
+}
+```
+
+</details>
