@@ -39,6 +39,7 @@ speck run sees every build of the repo's tickets, however it was started, and co
 ## Notes
 - Today the adoption is `adoptEarlierBuilds` in `scripts/run.mjs`, run only at start. Run records are `speck/.cache/runs/<id>.json`.
 - The Foreman (0286, 0287) relies on seeing every build.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
