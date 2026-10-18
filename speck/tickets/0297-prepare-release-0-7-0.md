@@ -43,6 +43,11 @@ speck is ready to be released as 0.7.0.
 - After it ships, check that the `v0.7.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.7.0 --target main --title "speck 0.7.0" --notes-file docs/releases/v0.7.0.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.6.0`: 0288–0293. 0283–0287 and 0294–0296 aren't shipped yet.
+- Built from main at `speck(0293): Switch the builder from the panel and in setup`: 272 shipped, 16 cancelled, 13 minutes median, 1 round median, 139 approved in the first round, worked out as 0282 did, with its figures test.
+- 0282's checks that named 0.6.0 as the current version now check the current version, and its figures test checks only the figures 0.6.0 was built from, as 0282 did for 0254.
+- AC3's status-line test checks only the version on it: 0267's rewording check fails a test that pins "a public preview", so that wording is checked by review.
+- Self-check: the release notes and changelog no longer say a Cursor builder needs a reviewer other than Codex (Cursor is its own family), setup notes rather than refuses a same-family reviewer, and `builder_model` reaches Codex and Cursor builds only through speck's own command for them.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
