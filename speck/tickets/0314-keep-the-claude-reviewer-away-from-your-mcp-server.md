@@ -38,7 +38,7 @@ The Claude reviewer runs with no MCP servers or connectors, only Claude Code's o
 ## Notes
 - From `speck/ideas/2026-10-18-keep-the-claude-reviewer-off-your-connectors.md` (inbox, from 0292). The reviewer's arguments are `CLAUDE_ARGS` in `scripts/reviewers.mjs`.
 - Checked 2026-10-18: `claude --help` (Claude Code 2.1.301) lists `--strict-mcp-config`: "Only use MCP servers from --mcp-config, ignoring all other MCP configurations".
-- Unverified: that claude.ai connectors count as MCP configurations that `--strict-mcp-config` leaves out. Check with a reviewer session that lists its tools before building.
+- Checked 2026-10-18: claude.ai connectors count as MCP configurations that `--strict-mcp-config` leaves out. A session started with the reviewer's arguments listed the claude.ai Claude Docs, Gmail and Google Drive servers (49 `mcp__` tools) in its init record; with `--strict-mcp-config` added it listed no MCP servers and no `mcp__` tools.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
