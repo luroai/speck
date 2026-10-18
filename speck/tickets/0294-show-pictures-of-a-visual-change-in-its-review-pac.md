@@ -1,7 +1,7 @@
 ---
 id: "0294"
 title: "Show pictures of a visual change in its review pack"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0284"]               # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T13:07:36.362Z"
 
 ---
 # 0294 · Show pictures of a visual change in its review pack
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 For a ticket that changes how something looks, the review pack gives criteria with ticks and the reviewer's words, but no picture. Someone who doesn't read code can't judge a visual change without checking out the branch or waiting until it ships, though deciding whether to ship (Gate 2) is what the pack is for.
