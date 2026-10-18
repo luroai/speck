@@ -1,7 +1,7 @@
 ---
 id: "0287"
 title: "Let the Foreman look into work that stops for no known reason"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0286"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:16:47.539Z"
+approved: "2026-10-18T13:36:49.168Z"
 
 ---
 # 0287 · Let the Foreman look into work that stops for no known reason
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Some stops have no recipe in speck: a ship refused for a reason speck doesn't recognise, or a build that ends without being approved or blocked. Today they wait in `run.log` until the user notices and asks an agent to look.
@@ -53,9 +54,16 @@ Worth keeping an eye on: a question from the Foreman stays under Needs you until
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 launch starts an agent before persisting its running record, then ignores whether save succeeds.; F2 The build-exit trigger is checked by searching source text for lookInto calls.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,230,814
+- Elapsed since build started: 20 min
+- Changed lines: 510 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - A Foreman question stays under Needs you until its ticket's status changes: saved to the inbox as `speck/ideas/2026-10-18-answer-or-dismiss-the-foreman-s-question.md`.
