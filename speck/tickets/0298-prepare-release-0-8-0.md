@@ -1,7 +1,7 @@
 ---
 id: "0298"
 title: "Prepare release 0.8.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0297", "0283", "0284", "0285", "0286", "0287", "0294", "0295", "0296", "0299", "0300", "0301"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T14:43:21.385Z"
+approved: "2026-10-18T14:47:08.536Z"
 
 ---
 # 0298 · Prepare release 0.8.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once the Foreman (0283–0287), pictures in review packs (0294) and pull request mode (0295, 0296) ship, speck shows one status for the pipeline and clears technical blockages itself, shows what a visual change looks like before you ship it, and can ship through GitHub pull requests. Anyone following the setup prompt, or updating speck on another machine, gets 0.7.0 without it.
@@ -58,9 +59,14 @@ To see it, after it ships, check that the 0.8.0 release appears on the repositor
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 168,251
+- Elapsed since build started: 4 min
+- Changed lines: 92 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
