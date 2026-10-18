@@ -1,7 +1,7 @@
 ---
 id: "0310"
 title: "Find Cursor in speck detect by either name"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-18
 ---
 # 0310 · Find Cursor in speck detect by either name
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Cursor's CLI is now called `agent` (it was `cursor-agent`). `speck agents` finds it by either name (0288), but `speck detect`, which setup reads, still looks only for `cursor-agent`, so setup can say Cursor isn't installed when it is.
