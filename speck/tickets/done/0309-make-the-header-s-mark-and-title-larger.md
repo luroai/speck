@@ -1,7 +1,7 @@
 ---
 id: "0309"
 title: "Make the header's mark and title larger"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-18T22:23:44.151Z"
 blocked_at: ""
 waited_seconds: 100
 approved: "2026-10-18T22:34:01.025Z"
+finished: "2026-10-18T22:36:32.437Z"
 
 ---
 # 0309 · Make the header's mark and title larger
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The header's LCD mark (19 px) and "speck" title (18 px Doto) are small next to the header's 34 px buttons, so the brand reads weakly, especially on a phone.
