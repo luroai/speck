@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0288"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T10:54:29.066Z"
-approved: "2026-10-18T11:01:59.487Z"
+approved: "2026-10-18T11:06:54.983Z"
 
 ---
 # 0292 · Review with Claude Code when the builder isn't Claude
@@ -54,13 +54,14 @@ To see it, set the reviewer to "claude" in the panel's Settings view (it's offer
 ## Review log
 Round 1 (codex): changes requested: F1 The built-in reviewer does not enforce the required read-only access when Claude settings already allow writing Bash commands.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 443,858
-- Elapsed since build started: 8 min
-- Changed lines: 89 (limit 5000)
+- Reviewer tokens: 892,599
+- Elapsed since build started: 12 min
+- Changed lines: 83 (limit 5000)
 - Follow-ups:
   - Keep the Claude reviewer off the user's connectors with `--strict-mcp-config`: speck/ideas/2026-10-18-keep-the-claude-reviewer-off-your-connectors.md.
   - Skipped as a duplicate: an effort only Codex supports (such as `ultra`) reaches `claude --effort` and fails the round. Matches speck/ideas/2026-10-17-check-the-effort-against-the-ticket-s-own-reviewer.md.
@@ -199,6 +200,75 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Claude can now review builds from other agents, retain its session and use the selected model settings. The inherited-permissions issue is fixed. All four criteria pass, with no blocking findings remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "159f99326a3d60dd8d546d25a4cb277abf954cb9",
+    "merge": true,
+    "thread_id": "01a14eaa-b8c4-7180-90e7-5e3d47a7beaa",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 446619,
+      "cached_input_tokens": 325632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2122,
+      "reasoning_output_tokens": 97
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T11:06:52.409Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/reviewers.mjs retains the built-in non-interactive Claude command, settings isolation, dontAsk permissions and disabled writing tools. cmdReview and runCommandReview send the prompt and record the verdict. The AC1 tests pass. The revised review skill refers explicitly to Codex's complete command, preserving both test and response arguments."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runCommandReview retains session_id capture, --resume and full-history fallback. Both AC2 tests pass, including permission arguments on resumed and fallback runs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewerSettings and commandArgs still supply --model and --effort when set. The AC3 test passes for initial and resumed calls and blank-value omission."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "modelFamily recognises Claude's family; scripts/settings.mjs, templates/panel.html and speck-setup offer Claude and its models. All AC4 tests pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/reviewers.mjs",
+        "issue": "Inherited Claude allow rules could permit writing Bash commands despite dontAsk.",
+        "suggested_fix": "Addressed by --setting-sources= in initial and resumed commands, with regression assertions for initial, resumed and fallback runs.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The review instructions now reuse the existing command without losing required arguments, fixing the shipping regression without changing its test. Claude review functionality remains intact, all criteria pass, and no blocking findings remain."
   }
 }
 ```
