@@ -6,7 +6,7 @@
 <title>speck · control panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@900&family=Shippori+Mincho:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   /* The speck panel as it is today (its tokens, fonts and square corners), with the LCD badge in place of the canvas
      drawing. Only the badges, the mark and the Auto-build builder are new. */
@@ -43,8 +43,10 @@
   .mono, .id { font-family: var(--mono); }
 
   header { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; gap: 14px; padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); background: var(--bg); border-bottom: .5px solid var(--line); }
-  .logo { font: 600 18px/1 var(--serif); display: flex; align-items: center; gap: 7px; flex: none; }
-  .logo canvas { width: 19px; height: 19px; --lcd-bg: transparent; --lcd-off: transparent; --lcd-ink: var(--text); --lcd-red: var(--dot); --lcd-shadow: transparent; }
+  .logo { display: flex; align-items: center; gap: 7px; flex: none; --speck: var(--dot); }
+  .logo b { font: 900 19px/1 "Doto", "Silkscreen", ui-monospace, monospace; }
+  .logo .mk { color: var(--text); }
+  .logo .mk svg { display: block; width: 16px; height: 16px; }
   .logo span { font: 400 12px/1 var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .14em; margin-left: 2px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .run-state { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 12px 0 6px; font: 400 12px/1 var(--mono); white-space: nowrap; color: var(--muted); background: var(--panel); border: .5px solid var(--line); cursor: pointer; flex: none; }
@@ -97,12 +99,12 @@
 </head>
 <body>
 <header>
-  <div class="logo"><canvas class="lcd" id="mark" aria-hidden="true"></canvas>speck<span>control panel</span></div>
+  <div class="logo"><i class="mk" id="mark" aria-hidden="true"></i><b>speck</b><span>control panel</span></div>
   <div class="repo">luroai/speck · main</div>
   <button class="run-state" id="run" aria-pressed="true"><canvas class="lcd" id="mini" aria-hidden="true"></canvas><span id="run-label">Auto-build on</span></button>
   <button class="theme" id="theme" aria-label="Switch between light and dark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 0 0 11z" fill="currentColor"/></svg></button>
 </header>
-<p class="note">A mock of the speck panel with the LCD builder badge. Only the badges, the mark and the Auto-build builder are new; ticket 0264 walks through a whole build so you can see the badge blend between poses. <a href="index.html">Back to the concept</a></p>
+<p class="note">A mock of the speck panel with the LCD builder badge. Only the badges, the logo and the Auto-build builder are new; ticket 0264 walks through a whole build so you can see the badge blend between poses. <a href="index.html">Back to the concept</a></p>
 <main>
   <section>
     <div class="sh"><h2>Plan</h2><span class="n">2 drafts · 1 idea</span></div>
@@ -187,7 +189,8 @@
   setInterval(() => { const s = Math.floor((performance.now() - started) / 1000); demo.el.querySelector('.timer').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }, 1000);
 
   // The mark, the Auto-build builder, and the light/dark button.
-  L.tile(document.getElementById('mark'), L.PANEL, 'still', { cols: 16, rows: 16, k: .3, ox: 8, oy: 15, still: true });
+  document.getElementById('mark').innerHTML = L.logo.markSVG();
+  const fav = document.createElement('link'); fav.rel = 'icon'; fav.type = 'image/svg+xml'; fav.href = 'data:image/svg+xml,' + encodeURIComponent(L.logo.faviconSVG()); document.head.append(fav);
   const mini = L.mini(document.getElementById('mini'));
   const run = document.getElementById('run');
   run.addEventListener('click', () => { const on = run.getAttribute('aria-pressed') !== 'true'; run.setAttribute('aria-pressed', String(on)); document.getElementById('run-label').textContent = on ? 'Auto-build on' : 'Auto-build off'; mini.set(on); });

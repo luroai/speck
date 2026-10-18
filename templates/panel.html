@@ -62,10 +62,9 @@
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: clamp(10px, calc(10px + (100vw - 700px) * .03), 16px); padding: calc(14px + env(safe-area-inset-top)) clamp(16px, calc(16px + (100vw - 700px) * .04), 24px) 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
   /* 0309: the mark, speck and "control panel" in a row, each centred on the mark's line */
   .logo { display: flex; align-items: center; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
-  /* 0170: speck's mark before the wordmark, in the text colour with the red dot. 0303: drawn on the LCD screen by the
-     design's renderer (lcd.js), with no screen or unlit dots behind it. 0309: 32 px, two screen pixels a dot */
-  .logo .mark { display: block; width: 32px; height: 32px; margin-right: 8px; image-rendering: pixelated;
-    --lcd-bg: transparent; --lcd-off: transparent; --lcd-ink: var(--text); --lcd-red: var(--dot); --lcd-shadow: transparent; }
+  /* 0170: speck's mark before the wordmark, in the text colour with the red dot. 0309: 32 px, two screen pixels a dot.
+     0320: the design's logo, its renderer's logo.markSVG() written into the page, with the speck in the panel's --dot */
+  .logo .mark { display: block; width: 32px; height: 32px; margin-right: 8px; --speck: var(--dot); }
   /* 0304: speck's name in the design's dot-matrix lettering, from the panel's own copy of Doto (templates/fonts/). 0309: at 26 px */
   .logo .name { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 26px; line-height: 1; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 12px; }
@@ -605,7 +604,7 @@
 </head>
 <body>
 <header>
-  <div class="logo"><canvas class="mark" id="mark" aria-hidden="true"></canvas><b class="name">speck</b> <span>control panel</span></div>
+  <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges" class="mark" id="mark" aria-hidden="true"><path fill="currentColor" d="M2 1h2v1h-2zM12 1h2v1h-2zM1 2h1v1h-1zM5 2h6v1h-6zM14 2h1v1h-1zM1 3h1v1h-1zM10 3h2v1h-2zM14 3h1v1h-1zM3 4h1v1h-1zM12 4h1v1h-1zM2 5h1v1h-1zM13 5h1v1h-1zM1 6h2v1h-2zM13 6h2v1h-2zM1 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM13 11h2v1h-2zM2 12h1v1h-1zM13 12h1v1h-1zM3 13h1v1h-1zM12 13h1v1h-1zM4 14h2v1h-2zM10 14h2v1h-2zM5 15h6v1h-6z"/><path fill="var(--speck, #c4402a)" d="M7 8h2v1h-2zM7 9h2v1h-2z"/></svg><b class="name">speck</b> <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
   <button class="run-state" id="run" type="button" aria-expanded="false" aria-controls="foreman" hidden></button>
   <button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
@@ -2393,11 +2392,10 @@ function startBadges(inFlight) {
   const still = reducedMotion();
   if (LCD) for (const b of badges.values()) if (!b.lcd) b.lcd = LCD.badge(b.canvas, b.pose, { still });
 }
-// 0303: the header's mark, the builder's still pose on 16 × 16 dots, with no screen behind it (its CSS), and the
-// Foreman's builder, the renderer's mini builder. Both are made once: the builder's canvas stays in the button between
-// redraws, and hops or holds still with its own set(on). Without the renderer the two stay blank.
+// 0303: the Foreman's builder, the renderer's mini builder. It's made once: its canvas stays in the button between
+// redraws, and hops or holds still with its own set(on). Without the renderer it stays blank. The header's mark is the
+// design's logo, written into the page since 0320, so it needs no script.
 const LCD = globalThis.SpeckLCD;
-const headerMark = LCD && typeof LCD.tile === 'function' ? LCD.tile($('mark'), LCD.PANEL, 'still', { cols: 16, rows: 16, k: .3, ox: 8, oy: 15, still: true }) : null;
 const runBuilder = { canvas: el('canvas', 'mini still'), lcd: null, hop: false };
 runBuilder.canvas.setAttribute('aria-hidden', 'true');
 // The builder's canvas, hopping or still. It starts drawing in startBuilder(), once it's in the button, as the renderer
@@ -2429,7 +2427,7 @@ if (typeof matchMedia === 'function') {
   (function zoomed() {
     matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => {
       for (const b of badges.values()) if (b.lcd) b.lcd.scr.size();
-      for (const s of [headerMark, runBuilder.lcd]) if (s) s.scr.size();
+      if (runBuilder.lcd) runBuilder.lcd.scr.size();
       zoomed();
     }, { once: true });
   })();

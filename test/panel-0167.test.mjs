@@ -41,9 +41,9 @@ test('0167 AC2: the speck red is used only for the speck itself', () => {
   const users = plain().filter(r => r.decls.some(([, v]) => tokens(v).some(t => t === '--accent' || t === '--accent-bg'))).map(r => r.sel);
   assert.deepEqual(users, []);
   // 0303: the builders are drawn on the LCD screen, whose speck is its own red, and the header's mark has the speck in
-  // the panel's --dot, which nothing else uses.
+  // the panel's --dot, which nothing else uses (since 0320, as the logo's --speck).
   const dots = plain().flatMap(r => r.decls.filter(([, v]) => tokens(v).includes('--dot')).map(([k]) => `${r.sel} { ${k} }`));
-  assert.deepEqual(dots, ['.logo .mark { --lcd-red }'], 'only the mark\'s speck');
+  assert.deepEqual(dots, ['.logo .mark { --speck }'], 'only the mark\'s speck');
 });
 
 test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours, with underlines or borders to show what can be clicked', () => {
