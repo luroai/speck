@@ -1,7 +1,7 @@
 ---
 id: "0285"
 title: "Show the Foreman's status in the panel's header"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0283"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:34:13.900Z"
+approved: "2026-10-18T12:52:24.581Z"
 
 ---
 # 0285 · Show the Foreman's status in the panel's header
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When nothing is building or shipping, the panel doesn't say why: the reason is in `speck/.cache/runs/run.log`. On 2026-10-17 it took a conversation with an agent to find out each time: `main` had diverged from GitHub, shipping was on hold, speck run was waiting to switch to new code, and the panel page was too old to show a new setting.
@@ -50,9 +51,15 @@ To see it, open the panel with speck run on and press the button at the top. The
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 state() returns running: current, which tracks only ships this queue launched.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 787,738
+- Elapsed since build started: 18 min
+- Changed lines: 296 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none to the inbox):
 - Known limit: a ready ticket that a ship is running for (0196's odd case) has no reason in speck run's record, so it shows "speck run hasn't checked it yet".
