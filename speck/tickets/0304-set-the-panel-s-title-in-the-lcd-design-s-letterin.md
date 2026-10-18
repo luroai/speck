@@ -1,7 +1,7 @@
 ---
 id: "0304"
 title: "Set the panel's title in the LCD design's lettering"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0303"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:08:37.278Z"
+approved: "2026-10-18T22:16:12.846Z"
 
 ---
 # 0304 · Set the panel's title in the LCD design's lettering
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The LCD design (`docs/design/lcd/`) sets speck's name in Doto, a dot-matrix typeface, on the concept and landing pages. The panel's header still sets "speck" in the serif it uses for headings, so the panel and the landing page don't look like one product.
@@ -49,9 +50,14 @@ The panel's header now spells "speck" in the same dot-matrix lettering as the de
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 174,349
+- Elapsed since build started: 8 min
+- Changed lines: 109 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (tidy-ups and known limits, no inbox notes):
 - The bundled font is Google Fonts' full variable TTF, about 450 KB. Subsetting it to the letters of "speck" at weight 900 (as WOFF2) would make it a few KB.
