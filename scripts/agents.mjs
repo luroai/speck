@@ -5,7 +5,7 @@
 
 import { spawnSync, execFile } from 'node:child_process';
 import { SpeckError } from './core.mjs';
-import { onPath } from './install.mjs';
+import { onPath, CURSOR_CLIS } from './install.mjs';
 import { parseCodexModels } from './codex-models.mjs';
 import { CLAUDE_MODELS } from './settings.mjs';
 
@@ -65,7 +65,7 @@ function* codex(opts) {
 
 function* cursor(opts) {
   // Cursor's CLI is `agent`, and was `cursor-agent`.
-  const command = ['agent', 'cursor-agent'].find(onPath);
+  const command = CURSOR_CLIS.find(onPath);
   const base = { id: 'cursor', name: 'Cursor', command: command || 'agent' };
   if (!command) return { ...base, installed: false, signed_in: false, models: [], why: 'Cursor isn\'t installed.', models_why: 'Cursor isn\'t installed.' };
   const status = yield [command, ['status']];

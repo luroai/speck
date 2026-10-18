@@ -37,6 +37,8 @@ Cursor's CLI is now called `agent` (it was `cursor-agent`). `speck agents` finds
 
 ## Notes
 - From `speck/ideas/2026-10-18-speck-detect-finds-cursor-as-agent.md` (inbox, from 0288). `speck detect` looks for `cursor-agent` in `scripts/detect.mjs`.
+- Failing before this build: none
+- Self-check: the brief's `speck detect` row named only `cursor-agent`, so it now says Cursor's CLI is found as `agent` or `cursor-agent`, still reported under the `cursor-agent` key setup reads; a test checks it. `speck agents` now uses the same shared list of names (`CURSOR_CLIS`), so the two can't drift apart.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
