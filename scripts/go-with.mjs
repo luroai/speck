@@ -8,7 +8,7 @@ import { replaceSection, commitTicketOnly } from './close.mjs';
 import { buildTicket, saveRecord, resumeHint } from './build-records.mjs';
 import { questionFacts } from './question-facts.mjs';
 import { pidAlive, runState } from './run-switch.mjs';
-import { resumeFor } from './hand-back.mjs';
+import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { refsOf } from './ship-queue.mjs';
 import { sessionInUse } from './build-procs.mjs';
 import { splitCommand } from './reviewers.mjs';
@@ -117,7 +117,7 @@ export function goWithQueue({ cfg, words, max, running, startBuild, saveRecord: 
         console.log(`${t.id}: ${who} went with its recommendation, but speck run can't resume its build session: ${why}. ${hint(cfg, rec)}, and tell it ${who} went with the recommendation.`);
         continue;
       }
-      const next = { ...kept, went_with: g, resume_command: argv };
+      const next = { ...resumedRecord(kept), went_with: g, resume_command: argv };
       try { save(file, next); } catch (e) { console.log(`${t.id}: ${who} went with its recommendation, but speck run couldn't save its run record (${e.message}), so it tries again on its next check.`); continue; }
       const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
       console.log(`${t.id}: ${who} went with its recommendation, so speck run is resuming its build (session ${rec.session}).`);
