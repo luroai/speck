@@ -1512,6 +1512,7 @@ function packPane(t) {
 function shipPart(t) {
   const id = String(t.id), pending = shippingId === id || t.shipping === true, out = [];
   if (shipped.has(id)) return [el('div', 'ship-said', shipped.get(id))];
+  out.push(...prPart(t)); // 0295
   if (pending || (t.status === 'approved' && packOf.state === 'ok')) {
     const b = el('button', 'ship', pending ? 'Shipping…' : 'Ship');
     b.type = 'button';
@@ -1523,6 +1524,18 @@ function shipPart(t) {
   if (pending) out.push(el('div', 'ship-said', `Shipping ${id}: running the tests, then merging and pushing. This can take a few minutes.`));
   if (shipRefused.has(id)) out.push(el('div', 'ship-said bad', shipRefused.get(id)));
   return out;
+}
+// 0295: in pull request mode, the ticket's pull request, opening on GitHub when pressed, or why it couldn't be opened.
+function prPart(t) {
+  const pr = t.pull_request && typeof t.pull_request === 'object' ? t.pull_request : null;
+  if (pr && typeof pr.url === 'string' && /^https?:\/\//.test(pr.url)) {
+    const a = el('a', null, pr.url);
+    a.href = pr.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    return [el('div', 'ship-said pr', null, el('span', null, 'Pull request: '), a)];
+  }
+  return pr && typeof pr.error === 'string' && pr.error ? [el('div', 'ship-said bad', `No pull request yet: ${pr.error}`)] : [];
 }
 // Asks first; cancelling changes nothing. The next update shows the ticket in the Shipped table once it has shipped.
 async function shipTicket(id) {
