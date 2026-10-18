@@ -42,7 +42,9 @@ The panel's header shows the Foreman, speck run's single status for the whole pi
 - Self-check: named the record run.foreman.json, not <name>.json, so speck run never adopts it as a build's run record; a record counts only while the speck run that wrote it holds the lock; the detail's heading is "Blocked" (0034 keeps "Needs you" out of the page as a heading); its headings are 12 px (0161).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The button at the top of the panel no longer turns speck run on or off. It now says what speck run is doing in a word or two: Off, Idle, Building 2, Shipping 0123, Waiting with a short reason such as "on hold" or "new code", or Needs you 1 when a ticket is blocked. Press it to see why each ready ticket isn't building, what shipping is waiting for and each blocked ticket's question. The on/off switch is now the first thing in Settings, under "Foreman", and works as before. `speck status` starts with the same status and reasons. When the panel has newer code than the page you have open, the button says "Reload page" and offers a reload.
+
+To see it, open the panel with speck run on and press the button at the top. The reasons appear once speck run is running this new code, after its next switch to new code. Until then it shows Idle with "speck run hasn't checked it yet". "Needs you" comes before Building and Shipping, so a blocked ticket shows even while others are building.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,6 +54,10 @@ The panel's header shows the Foreman, speck run's single status for the whole pi
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none to the inbox):
+- Known limit: a ready ticket that a ship is running for (0196's odd case) has no reason in speck run's record, so it shows "speck run hasn't checked it yet".
+- Known limit: `speck status --json` doesn't include the Foreman. Only the plain output and the panel show it.
+- Tidy-up: while speck run waits to switch to new code, it now reads the tickets on every check so it can record why each ready ticket waits. Before, it read nothing until the switch.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +129,79 @@ The panel's header shows the Foreman, speck run's single status for the whole pi
     ],
     "escalation_question": "",
     "summary": "The status display, Settings switch and reload offer are implemented with passing tests. One gap needs fixing: shipping started through the panel or command line can be invisible to the Foreman, making the pipeline appear idle while it is shipping."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d1e7b1d7c71c7cccdd74ea93c860af942082a0eb",
+    "thread_id": "01a14f0f-e026-79c0-aab0-9aaaa34afd57",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 469779,
+      "cached_input_tokens": 389120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1952,
+      "reasoning_output_tokens": 266
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T12:52:11.812Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "foremanView() supplies the status and colour; AC1 tests cover the status variants and header rendering. shipQueue.state() now includes ships started elsewhere, covered by the new passing AC1/AC2 test."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "run.mjs records ready-ticket reasons and shipQueue.state() records shipping activity, holds and refusals. renderForeman() displays these alongside blocked questions. Passing AC2 tests cover opening the detail, its contents, run being off and external shipping."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "renderSettings() places foremanGroup() first. Passing AC3 tests exercise switching speck run on and off and displaying its refusal message."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panel.mjs stamps the served page and state; pageStale() detects differences and renderForeman() offers reload. Passing AC4 tests cover matching stamps, changed page code and pressing reload."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "run.mjs writes run.foreman.json from its scheduling decisions and shipQueue.state(). The panel and plain speck status share foremanView(). Passing AC5 tests exercise actual run records and matching status output."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship-queue.mjs",
+        "issue": "Shipping started outside speck run's queue was missing from the Foreman's status and detail.",
+        "suggested_fix": "Implemented: shipsRunning() reads active ship records, and shipQueue.state() includes external shipping. The new passing test checks the queue state, Shipping status and detail using a live process and ship record.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Foreman now shows pipeline activity and waiting reasons, including shipping started through the panel or command line. The Settings switch and reload offer are covered by passing tests. The previous blocking issue is resolved."
   }
 }
 ```
