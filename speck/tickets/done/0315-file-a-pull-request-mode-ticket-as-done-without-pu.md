@@ -1,7 +1,7 @@
 ---
 id: "0315"
 title: "File a pull request mode ticket as done without pushing to the base branch"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:34:19.579Z"
 approved: "2026-10-18T22:43:56.137Z"
+finished: "2026-10-18T22:46:57.280Z"
 
 ---
 # 0315 · File a pull request mode ticket as done without pushing to the base branch
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In pull request mode, shipping merges the ticket's pull request on GitHub, but filing the shipped ticket as done still commits and pushes straight to the base branch. A base branch protected so that it only takes pull requests refuses that push, and protection is the main reason to use pull request mode.
