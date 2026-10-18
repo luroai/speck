@@ -1,7 +1,7 @@
 ---
 id: "0301"
 title: "Switch speck run to new code without waiting for builds to end"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0300"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:59:17.014Z"
+approved: "2026-10-18T14:07:53.651Z"
 
 ---
 # 0301 · Switch speck run to new code without waiting for builds to end
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a shipped ticket changes speck's own code, speck run starts no new build or ship until every build it's running has ended, so it can switch to the new code. A ticket that's approved and ready to ship can wait a whole build for that. On 2026-10-18 it held up shipping most of the day: 0294 waited for 0300's build, and 0268 and 0269 waited for 0265's.
@@ -54,9 +55,14 @@ Worth keeping an eye on: once speck run has switched, it can't tell how a carrie
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 126,909
+- Elapsed since build started: 9 min
+- Changed lines: 114 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: after the switch, the new code isn't a carried build's parent, so it can't know its exit code. A build that exits by itself without writing a result to its log (a crash) is resumed once, as a killed build, where the old code would have handed it to the Foreman agent.
 - Follow-ups: none sent to the inbox.
