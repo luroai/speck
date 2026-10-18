@@ -362,7 +362,8 @@ function buildExit(runs, id) {
 
 // The session a build launched by `speck run` ran in, from its run record: {id, cwd}, where cwd is the folder the build
 // started from (where its session is kept), or null when there's no record, it can't be read or it lacks either.
-// 0289: with resume_command too when the agent that ran the build resumes it with another command than `board`'s.
+// 0289: with resume_command too when the agent that ran the build (Codex, or Cursor: 0290) resumes it with another
+// command than `board`'s.
 function buildSession(runs, id, cfg, board) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id)) return null;
@@ -370,7 +371,7 @@ function buildSession(runs, id, cfg, board) {
   try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
   const text = v => typeof v === 'string' && v !== '';
   if (!rec || typeof rec !== 'object' || !text(rec.session) || !text(rec.cwd)) return null;
-  const own = resumeCommandOf(cfg, rec.agent === 'codex');
+  const own = resumeCommandOf(cfg, rec.agent ?? null);
   return { id: rec.session, cwd: rec.cwd, ...(own !== board ? { resume_command: own } : {}) };
 }
 
