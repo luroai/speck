@@ -19,8 +19,10 @@ const ENDED = { session: 'sess-1', pid: 0, exited: '2026-10-18T10:00:00.000Z', e
 
 // A repo whose ticket 0001 is blocked on its own branch, checked out here, with `question` under Blocked question, and
 // a run record `record` from speck run (none when null).
-function blockedRepo({ question = QUESTION, record = ENDED, status = 'blocked' } = {}) {
+function blockedRepo({ question = QUESTION, record = ENDED, status = 'blocked', buildCommand = null } = {}) {
   const r = panelRepo();
+  const cfgFile = path.join(r.dir, 'speck', 'config.yml');
+  if (buildCommand !== null) fs.writeFileSync(cfgFile, fs.readFileSync(cfgFile, 'utf8').replace(/^build_command:.*$/m, `build_command: '${buildCommand}'`));
   r.g('checkout', '-q', '-b', 'speck/0001-export-bookings');
   const raw = fs.readFileSync(r.file, 'utf8').replace(/^status: .*$/m, `status: ${status}`);
   fs.writeFileSync(r.file, `${raw.replace(/\s*$/, '')}\n\n## Notes\n- A note.\n\n## Blocked question\n<!-- Filled in by speck only when status is blocked. -->\n${question}\n`);
@@ -160,6 +162,7 @@ test('0284 AC2: a choice whose build was carried on by hand since is dropped, no
 test('0284 AC4: with no run record, or one with no session, there is no button and the question says how to resume it by hand', async () => {
   assert.equal(shown(blockedRepo({ record: null })).blocked_resumable, false);
   assert.equal(shown(blockedRepo({ record: { ...ENDED, session: null } })).blocked_resumable, false);
+  assert.equal(shown(blockedRepo({ buildCommand: 'claude -p hello' })).blocked_resumable, false, 'nor with a build_command speck run can\'t resume a session with');
   const p = page([BLOCKED('0001', { blocked_resumable: false, session: null })]);
   await p.settle();
   assert.equal(goButton(p, '0001'), null);
@@ -170,6 +173,7 @@ test('0284 AC4: going with it is refused, changing nothing, when the build can\'
   const cases = [
     [{ record: null }, /no run record/],
     [{ record: { ...ENDED, session: '' } }, /no session/],
+    [{ buildCommand: 'claude -p hello' }, /build_command needs --session-id \{session\}/],
     [{ record: { ...ENDED, exited: undefined, pid: process.pid } }, /still running/],
     [{ question: 'A or B?' }, /no recommendation/],
     [{ status: 'reviewing' }, /not blocked/],
