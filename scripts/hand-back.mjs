@@ -38,6 +38,10 @@ export function resumeArgv(words, id, session, message = resumeMessage(id)) {
   return words.map((w, i) => (i === at ? '--resume' : i === prompts[0] ? message : w.replace(/\{session\}/g, session)));
 }
 
+// 0319: a run record as speck run resumes the build in it: no longer marked seen (noteBuild), even if the build was
+// started outside speck run, so no other speck run takes the resumed build for one outside speck run.
+export const resumedRecord = ({ seen: _, ...rec }) => rec;
+
 // How speck run resumes a build from its run record `rec`, with `message` (a killed build's by default): { argv }, or
 // { argv: null, why } saying in a few words why it can't. A Codex build (0289) carries on its own session with
 // `codex exec resume`, once its session id has been read from its log; a Cursor build (0290) its chat with `agent -p
@@ -84,7 +88,7 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     const { hand_back: h, exited: _e, exit_code: _c, ...kept } = rec;
     const count = (Number.isInteger(rec.hand_backs) ? rec.hand_backs : 0) + (h.kind === 'base' ? 0 : 1);
     const { argv, why } = resumeFor(words, cfg, id, rec, handBackMessage({ id, kind: h.kind, why: String(h.why ?? ''), base: cfg.base_branch, count }));
-    const next = { ...kept, handed_back: new Date().toISOString(), hand_backs: count, hand_back_command: argv };
+    const next = { ...resumedRecord(kept), handed_back: new Date().toISOString(), hand_backs: count, hand_back_command: argv };
     if (!argv) { try { saveRecord(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said below */ } return cantHandBack({ id, kind: h.kind }, rec, why); }
     try { saveRecord(file, next); } catch (e) { return cantHandBack({ id, kind: h.kind }, rec, `its run record couldn't be saved (${e.message})`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
