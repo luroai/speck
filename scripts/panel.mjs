@@ -15,7 +15,7 @@ import { panelPack } from './pack.mjs';
 import { pictureFile } from './pictures.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels, builderModels } from './settings.mjs';
+import { panelSettings, panelSettingRequest, panelSaveRequestAsync, reviewerModels, builderModels } from './settings.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
@@ -371,7 +371,7 @@ export async function panelServer() {
     if ((setting || saveAll) && (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token)))
       return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
     const query = new URLSearchParams(req.url.split('?')[1] || ''); // 0259's ?confirm= and 0261's ?scope=
-    if (saveAll) return wrote(res, panelSaveRequest(repo, req.url.split('?')[1] || ''));
+    if (saveAll) return (async () => wrote(res, await panelSaveRequestAsync(repo, req.url.split('?')[1] || '')))(); // 0311: reads the new builder's models first
     if (setting) return wrote(res, panelSettingRequest(repo, setting[1], setting[2], query.get('confirm'), query.get('scope')));
     const stopPath = where.match(/^\/api\/tickets\/(\d{1,4})\/stop$/);
     if (req.method === 'POST' && stopPath) {
