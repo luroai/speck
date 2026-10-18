@@ -169,6 +169,9 @@
   .q .back-to-plan:disabled { cursor: default; opacity: .6; }
   .q .stop-refused, .q .plan-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .question { margin: 6px 0 4px; padding: 6px 10px; border-left: 2px solid var(--bad); background: var(--bad-bg); color: var(--text); }
+  /* 0283: under a blocked question, whether it changes what you'd notice and whether the recommendation is a clear one */
+  .question-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; white-space: normal; }
+  .question-fact { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); }
   .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .act.to-ship { color: var(--idea); }
@@ -1103,6 +1106,14 @@ const RETRY_MS = 1000; // how soon the page starts again a stream the browser ha
 const LOG_LINES = 200; // how many of a log's last lines are shown, as the server first sends them (0189)
 const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship, the speck run switch and each setting saved
 const $ = id => document.getElementById(id);
+// 0283: what a blocked question's build says about its options, as speck status --json gives it. Nothing for an unknown.
+function questionFacts(t) {
+  const facts = [
+    t.blocked_noticeable === true ? 'Changes what you\'d notice' : t.blocked_noticeable === false ? 'Doesn\'t change what you\'d notice' : null,
+    t.blocked_clear === true ? 'Clear recommendation' : t.blocked_clear === false ? 'Close call' : null,
+  ].filter(Boolean);
+  return facts.length ? el('div', 'question-facts', null, ...facts.map(f => el('span', 'question-fact', f))) : null;
+}
 function el(tag, cls, text, ...kids) {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
@@ -2243,7 +2254,8 @@ function queueItem(t) {
     }
     return q;
   }
-  if (t.status === 'blocked' && t.blocked_question) q.appendChild(el('div', 'question', t.blocked_question));
+  const facts = t.status === 'blocked' ? questionFacts(t) : null;
+  if (t.status === 'blocked' && (t.blocked_question || facts)) q.appendChild(el('div', 'question', t.blocked_question, facts));
   if (t.resume) q.appendChild(resumeLine(t));
   if (t.paused) q.appendChild(el('div', 'act', `Paused · carry it on with speck play ${t.id}`));
   if (t.exit_label) {
