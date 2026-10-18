@@ -1,7 +1,7 @@
 ---
 id: "0296"
 title: "Ship a pull request mode ticket by merging its pull request"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T14:26:55.074Z"
 ---
 # 0296 · Ship a pull request mode ticket by merging its pull request
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In pull request mode (0295), an approved ticket has a pull request, but speck has no way to ship it: merging through GitHub, tidying up, and doing nothing more when you've already merged it on GitHub.
@@ -54,3 +54,95 @@ In pull request mode, shipping a ticket merges its pull request on GitHub and ti
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d4209c3261a785be2368a0db5be710f537a81509",
+    "thread_id": "01a14f71-7a0c-7343-b865-f95c2dcd872b",
+    "seconds": 45,
+    "usage": {
+      "input_tokens": 188174,
+      "cached_input_tokens": 133504,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1229,
+      "reasoning_output_tokens": 47
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T14:37:24.412Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The passing AC1 tests cover immediate merges, but shipPrTicket in scripts/pr-ship.mjs proceeds to cleanup solely on gh's exit status, without confirming the PR is merged. It also omits the local ship's whole-suite validation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipPrTicket handles MERGED separately; passing AC2 tests exercise cleanup without another merge and refusal when local commits were omitted."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests exercise failing checks, conflicts, required reviews, GitHub refusal, unchanged local state and queue retry after PR changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests exercise prQueue selection, auto_ship eligibility, external-merge cleanup and prLook change detection."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdShip retains shipTicket for local mode; the passing AC5 test verifies local merging without gh, alongside the reported existing shipping tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs:153",
+        "issue": "A successful gh command does not necessarily mean the PR has merged: the ticket explicitly notes that a required merge queue can enable auto-merge instead. The code immediately files the ticket as done and deletes its branches and worktree, potentially before its code reaches the base branch.",
+        "suggested_fix": "Re-read the PR after the command and only tidy up after confirming MERGED. Leave queued PRs intact for a later queue check. Add a test where gh succeeds but the PR remains OPEN.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs:145",
+        "issue": "PR shipping never runs the whole test suite. shipChecks verifies approval and commit history only; local shipping separately tests the candidate merge. Consequently PR mode can ship with failing configured tests, including when GitHub has no checks configured. This bypasses the repository's explicit requirement that speck ship always tests the ticket as it would land.",
+        "suggested_fix": "Run the configured shipping tests against the candidate merged with the current remote base before requesting the GitHub merge, preserving the existing failure safeguards. Add a test proving a failing suite prevents the merge.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs:108",
+        "issue": "A refused base-branch push merely prints a warning and then reports successful shipping. Unlike local shipping, it never records error.unpushed, so the panel cannot show 'Merged, but not pushed'. This is particularly likely on the protected branches PR mode serves, leaving the done-ticket commit only on this computer while the queue reports success.",
+        "suggested_fix": "Preserve the existing unpushed ship-state reporting when the done-ticket push fails, and test a protected-branch push refusal.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The main flows have passing tests, but shipping needs three safeguards before approval: run the required tests, confirm GitHub actually merged before cleanup, and visibly track failed pushes of the completed ticket."
+  }
+}
+```
+
+</details>

@@ -67,7 +67,7 @@ function named(failing) {
 // The refusal for tests that failed on the ticket merged with the base branch's commit `sha`. It runs the tests on
 // that commit alone, in a temporary worktree it removes afterwards, so a broken base branch isn't blamed on the ticket.
 // `moved` says whether the base branch has commits the ticket branch doesn't, and `failing` names the failing tests.
-function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {}) {
+export function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {}) {
   const failed = `Tests failed on the approved branch, so nothing was shipped.${moved ? ` They ran on it merged with ${base} as it is now.` : ''}`;
   const at = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-base-')), 'base');
   console.log(`Checking whether ${base}'s own tests pass, in a temporary worktree at ${at}.`);
@@ -103,7 +103,7 @@ function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {})
 // The ticket branch merged into the base branch's commit `target`, as a commit no branch points at, made in git's
 // object store only (merge-tree), so no branch, folder, index or hook is touched (0192). Null when the merge has
 // conflicts: the real merge then hits them and refuses, as before.
-function candidateMerge(repo, branch, target, message) {
+export function candidateMerge(repo, branch, target, message) {
   const r = sh('git', ['merge-tree', '--write-tree', '--no-messages', target, branch], { cwd: repo });
   if (r.status === 1) return null;
   if (r.status !== 0) throw new SpeckError(`Couldn't work out the merge of ${branch} into the base branch, so nothing was shipped: ${(r.stderr || r.stdout).trim().split('\n').pop()}`);
@@ -111,7 +111,7 @@ function candidateMerge(repo, branch, target, message) {
 }
 
 // Runs the tests on `candidate`, checked out in the ticket branch's folder, then checks the branch out again there.
-function testMerged(work, cfg, branch, candidate) {
+export function testMerged(work, cfg, branch, candidate) {
   git(['checkout', '-q', '--detach', candidate], work);
   try { return runTests(work, cfg, branch); }
   finally {
