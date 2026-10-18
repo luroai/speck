@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>speck · control panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@900&family=Shippori+Mincho:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* The speck panel as it is today (its tokens, fonts and square corners), with the LCD badge in place of the canvas
+     drawing. Only the badges, the mark and the Auto-build builder are new. */
+  :root {
+    --bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #87847d; --line-soft: #e8e7e3;
+    --text: #141413; --muted: #3d3d3a; --faint: #4d4c48;
+    --accent: #853123; --ok: #3f522e; --bad: #921f2d; --run: #304f6d; --idea: #623f6c; --dot: #b0412e;
+    --lcd-bg: #c3c9b1; --lcd-off: #b8bea6; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .22);
+    --serif: "Shippori Mincho", "Noto Serif JP", Georgia, serif; --sans: "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #181818; --panel: #1f1f1f; --raise: #222222; --line: #737373; --line-soft: #262626;
+      --text: #e4e4e4; --muted: #c4c4c4; --faint: #b4b4b4;
+      --accent: #e5a495; --ok: #a5bb8e; --bad: #f39ba5; --run: #97b7d8; --idea: #c3abd1; --dot: #d4664e;
+      --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #181818; --panel: #1f1f1f; --raise: #222222; --line: #737373; --line-soft: #262626;
+    --text: #e4e4e4; --muted: #c4c4c4; --faint: #b4b4b4;
+    --accent: #e5a495; --ok: #a5bb8e; --bad: #f39ba5; --run: #97b7d8; --idea: #c3abd1; --dot: #d4664e;
+    --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font: 400 13px/1.5 var(--sans); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+  canvas.lcd { display: block; image-rendering: pixelated; }
+  .mono, .id { font-family: var(--mono); }
+
+  header { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; gap: 14px; padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); background: var(--bg); border-bottom: .5px solid var(--line); }
+  .logo { display: flex; align-items: center; gap: 7px; flex: none; --speck: var(--dot); }
+  .logo b { font: 900 19px/1 "Doto", "Silkscreen", ui-monospace, monospace; }
+  .logo .mk { color: var(--text); }
+  .logo .mk svg { display: block; width: 16px; height: 16px; }
+  .logo span { font: 400 12px/1 var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .14em; margin-left: 2px; }
+  .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .run-state { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 12px 0 6px; font: 400 12px/1 var(--mono); white-space: nowrap; color: var(--muted); background: var(--panel); border: .5px solid var(--line); cursor: pointer; flex: none; }
+  .run-state canvas { width: 28px; height: 28px; }
+  .theme { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; flex: none; }
+  .theme svg { width: 15px; height: 15px; }
+
+  .note { margin: 16px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); padding: 10px 14px; border: .5px solid var(--line); background: var(--raise); font-size: 13px; color: var(--muted); }
+  .note a { color: var(--text); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 20px; padding: 16px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); align-items: start; }
+  section { background: var(--panel); border: .5px solid var(--line); min-width: 0; }
+  section.full { grid-column: 1 / -1; }
+  .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
+  .sh h2 { margin: 0; font: 600 18px/1.2 var(--serif); }
+  .sh .n { font: 400 12px var(--mono); color: var(--muted); }
+  .group { padding: 7px 14px; font: 400 12px var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); border-bottom: .5px solid var(--line-soft); background: var(--raise); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 12px 14px; border-bottom: .5px solid var(--line-soft); }
+  li:last-child { border-bottom: 0; }
+  .line { display: flex; gap: 8px; align-items: baseline; min-width: 0; }
+  .id { color: var(--muted); font-size: 12px; flex: none; }
+  .title { font: 600 14px/1.4 var(--serif); min-width: 0; }
+  .timer { margin-left: auto; font: 400 12px var(--mono); color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
+  .tag { font: 400 12px/22px var(--mono); padding: 0 7px; border: .5px solid var(--line); color: var(--muted); white-space: nowrap; display: inline-block; }
+  .tags { display: flex; gap: 5px; margin-left: 4px; flex-wrap: wrap; }
+  .sub { margin-top: 4px; font-size: 12.5px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+  .sub .ok { color: var(--ok); }
+  .badgerow { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 12px; align-items: center; margin-top: 8px; }
+  canvas.badge { width: 56px; height: 56px; outline: 1px solid var(--line); outline-offset: -1px; }
+  canvas.badge.wait { outline-color: var(--idea); } canvas.badge.bad { outline-color: var(--bad); }
+  .say { font-size: 13px; display: block; }
+  .say.wait { color: var(--idea); } .say.bad { color: var(--bad); }
+  .stage { font: 400 12px var(--mono); color: var(--run); }
+  .stage.wait { color: var(--idea); } .stage.bad { color: var(--bad); }
+  .progress { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .progress span { font: 400 11px/18px var(--mono); padding: 0 6px; border: .5px solid var(--line-soft); color: var(--faint); }
+  .progress span.done { color: var(--ok); border-color: var(--line-soft); }
+  .progress span.now { color: var(--panel); background: var(--run); border-color: var(--run); }
+  .demo { background: var(--raise); }
+  .demo .hint { font: 400 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--accent); margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 9px 14px; border-bottom: .5px solid var(--line-soft); font-size: 13px; }
+  tr:last-child td { border-bottom: 0; }
+  td.t { font: 600 14px/1.4 var(--serif); }
+  td.num { color: var(--muted); text-align: right; font: 400 12px var(--mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .shipped-wrap { overflow-x: auto; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } .repo { display: none; } .run-state { margin-left: auto; } }
+  @media (max-width: 420px) { .run-state span { display: none; } .run-state { padding-right: 6px; } .logo span { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i class="mk" id="mark" aria-hidden="true"></i><b>speck</b><span>control panel</span></div>
+  <div class="repo">luroai/speck · main</div>
+  <button class="run-state" id="run" aria-pressed="true"><canvas class="lcd" id="mini" aria-hidden="true"></canvas><span id="run-label">Auto-build on</span></button>
+  <button class="theme" id="theme" aria-label="Switch between light and dark"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5a5.5 5.5 0 0 0 0 11z" fill="currentColor"/></svg></button>
+</header>
+<p class="note">A mock of the speck panel with the LCD builder badge. Only the badges, the logo and the Auto-build builder are new; ticket 0264 walks through a whole build so you can see the badge blend between poses. <a href="index.html">Back to the concept</a></p>
+<main>
+  <section>
+    <div class="sh"><h2>Plan</h2><span class="n">2 drafts · 1 idea</span></div>
+    <ul>
+      <li><div class="line"><span class="id">0266</span><span class="title">Draw the builder badge on the LCD screen</span><span class="tags"><span class="tag">P2</span><span class="tag">M</span></span></div><div class="sub"><span>5 criteria</span><span class="ok">✓ lint passes</span></div></li>
+      <li><div class="line"><span class="id">0267</span><span class="title">Add the screen’s colour tokens to both looks</span><span class="tags"><span class="tag">P2</span><span class="tag">S</span></span></div><div class="sub"><span>3 criteria</span><span class="ok">✓ lint passes</span></div></li>
+      <li><div class="line"><span class="id" style="color:var(--idea)">idea</span><span class="title">A companion that lives on the landing page</span></div><div class="sub"><span class="mono">speck/ideas/2026-10-18-companion.md</span></div></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="sh"><h2>Build</h2><span class="n">8 in flight</span></div>
+    <div class="group">Blocked · 1</div>
+    <ul id="blocked"></ul>
+    <div class="group">Building · 5</div>
+    <ul id="building"></ul>
+    <div class="group">Shipping · 2</div>
+    <ul id="shipping"></ul>
+  </section>
+
+  <section class="full">
+    <div class="sh"><h2>Shipped</h2><span class="n">261 in total</span></div>
+    <div class="shipped-wrap"><table><tbody>
+      <tr><td class="mono" style="color:var(--muted);width:56px">0254</td><td class="t">Show each ticket’s stage names under its title</td><td class="num">14 min · 2 rounds · 612,163 tokens</td></tr>
+      <tr><td class="mono" style="color:var(--muted)">0253</td><td class="t">Ask before stopping a build</td><td class="num">9 min · 1 round · 281,090 tokens</td></tr>
+      <tr><td class="mono" style="color:var(--muted)">0251</td><td class="t">Keep the header on screen while scrolling</td><td class="num">6 min · 1 round · 194,266 tokens</td></tr>
+    </tbody></table></div>
+  </section>
+</main>
+<script src="lcd.js"></script>
+<script>
+  const L = SpeckLCD;
+  const STEPS = ['Build', 'Self-check', 'Review', 'Approve', 'Ship'];
+  const TICKETS = {
+    blocked: [{ id: '0255', title: 'Read the reviewer’s model from config', pose: 'bad', say: 'Blocked · it has a question for you', stage: 'Build', tone: 'bad', timer: '31:02', at: 0 }],
+    building: [
+      { id: '0264', title: 'Blend the badge between poses', demo: true, timer: '0:00' },
+      { id: '0262', title: 'Show the build log beside each ticket', pose: 'type', say: 'Writing tests and code', stage: 'Build', timer: '12:41', at: 0 },
+      { id: '0263', title: 'Let a ticket name its own reviewer', pose: 'check', say: 'Checking its own work', stage: 'Self-check', timer: '18:09', at: 1 },
+      { id: '0259', title: 'Retry a ship when the remote is busy', pose: 'review', say: 'Codex is reviewing · round 2', stage: 'Review 2', timer: '26:55', at: 2 },
+      { id: '0261', title: 'Explain a failed lint in plain words', pose: 'still', say: 'Paused', stage: 'Build', timer: 'Paused · 4:12', at: 0 },
+    ],
+    shipping: [
+      { id: '0257', title: 'Keep the panel’s scroll place across reloads', pose: 'ship', say: 'Shipping', stage: '· 0:42', timer: '38:20', at: 4 },
+      { id: '0258', title: 'Group shipped tickets by week', pose: 'wait', say: 'Approved · waiting for you to ship it', stage: 'Ship', tone: 'wait', timer: '22:47', at: 4 },
+    ],
+  };
+  const progress = (at, label) => STEPS.map((s, i) => `<span class="${i < at ? 'done' : i === at ? 'now' : ''}">${i === 2 && label ? label : s}</span>`).join('');
+  const card = t => `<li${t.demo ? ' class="demo"' : ''} data-id="${t.id}">${t.demo ? '<div class="hint">Watch this one</div>' : ''}
+    <div class="line"><span class="id">${t.id}</span><span class="title">${t.title}</span><span class="timer">${t.timer}</span></div>
+    <div class="badgerow"><canvas class="lcd badge${t.tone ? ' ' + t.tone : ''}" role="img" aria-label="${t.say || ''}"></canvas>
+      <div><span class="say${t.tone ? ' ' + t.tone : ''}">${t.say || ''}</span><span class="stage${t.tone ? ' ' + t.tone : ''}">${t.stage || ''}</span><div class="progress">${progress(t.at ?? 0)}</div></div></div></li>`;
+  for (const [group, list] of Object.entries(TICKETS)) document.getElementById(group).innerHTML = list.map(card).join('');
+  for (const list of Object.values(TICKETS)) for (const t of list) {
+    const li = document.querySelector(`li[data-id="${t.id}"]`);
+    t.el = li; t.badge = L.badge(li.querySelector('canvas'), t.pose || 'type');
+  }
+
+  // Ticket 0264 walks through a whole build, its badge blending into each new pose.
+  const demo = TICKETS.building[0];
+  const WALK = [
+    { pose: 'type', say: 'Writing tests and code', stage: 'Build', at: 0, ms: 5600 },
+    { pose: 'check', say: 'Checking its own work', stage: 'Self-check', at: 1, ms: 4500 },
+    { pose: 'review', say: 'Codex is reviewing · round 1', stage: 'Review 1', at: 2, ms: 6200 },
+    { pose: 'type', say: 'The builder is fixing round 1’s findings', stage: 'Review 1', at: 2, ms: 4200 },
+    { pose: 'review', say: 'Codex is reviewing · round 2', stage: 'Review 2', at: 2, ms: 6200 },
+    { pose: 'wait', say: 'Approved · waiting for you to ship it', stage: 'Ship', tone: 'wait', at: 4, ms: 4400 },
+    { pose: 'ship', say: 'Shipping', stage: '· 0:12', at: 4, ms: 3200 },
+  ];
+  let wn = 0, started = performance.now();
+  function walk() {
+    const w = WALK[wn], el = demo.el, c = el.querySelector('canvas'), say = el.querySelector('.say'), stage = el.querySelector('.stage');
+    demo.badge.set(w.pose);
+    c.className = `lcd badge${w.tone ? ' ' + w.tone : ''}`; c.setAttribute('aria-label', w.say);
+    say.textContent = w.say; say.className = `say${w.tone ? ' ' + w.tone : ''}`;
+    stage.textContent = w.stage; stage.className = `stage${w.tone ? ' ' + w.tone : ''}`;
+    el.querySelector('.progress').innerHTML = progress(w.at, w.stage.startsWith('Review') ? w.stage : '');
+    wn = (wn + 1) % WALK.length; if (wn === 0) started = performance.now();
+    setTimeout(walk, w.ms);
+  }
+  walk();
+  setInterval(() => { const s = Math.floor((performance.now() - started) / 1000); demo.el.querySelector('.timer').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }, 1000);
+
+  // The mark, the Auto-build builder, and the light/dark button.
+  document.getElementById('mark').innerHTML = L.logo.markSVG();
+  const fav = document.createElement('link'); fav.rel = 'icon'; fav.type = 'image/svg+xml'; fav.href = 'data:image/svg+xml,' + encodeURIComponent(L.logo.faviconSVG()); document.head.append(fav);
+  const mini = L.mini(document.getElementById('mini'));
+  const run = document.getElementById('run');
+  run.addEventListener('click', () => { const on = run.getAttribute('aria-pressed') !== 'true'; run.setAttribute('aria-pressed', String(on)); document.getElementById('run-label').textContent = on ? 'Auto-build on' : 'Auto-build off'; mini.set(on); });
+  document.getElementById('theme').addEventListener('click', () => {
+    const root = document.documentElement, dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+  });
+</script>
+</body>
+</html>
