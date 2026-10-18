@@ -56,7 +56,7 @@ test('0159 AC1: the 0149 browser test waits with b.loaded() before it asks Chrom
   assert.ok(!/readyState === "complete"', 'the page to load'/.test(AC4), 'no wait that the blank page passes');
 });
 
-test('0159 AC2: the 0149 browser test still checks for no manifest errors, and that its icons load and match icon.svg', () => {
+test('0159 AC2: the 0149 browser test still checks for no manifest errors, and that its icons load and match the design\'s app icon (since 0320)', () => {
   for (const check of [
     "assert.deepEqual(app.errors, [], JSON.stringify(app.errors));",
     "assert.match(app.url, /\\/manifest\\.webmanifest$/);",
@@ -64,7 +64,8 @@ test('0159 AC2: the 0149 browser test still checks for no manifest errors, and t
     "assert.ok(loaded.length >= 5, JSON.stringify(loaded));",
     "assert.notEqual(i.got, 'failed', `${i.src} loads`);",
     "if (i.want && !i.src.endsWith('.svg')) assert.equal(i.got, i.want, i.src);",
-    "draw('/icon.svg'), draw('/apple-touch-icon.png')",
+    "draw(app), draw('/apple-touch-icon.png')",
+    "SpeckLCD.logo.appIconSVG('light')",
     'assert.ok(diff < 2,',
   ]) assert.ok(AC4.includes(check), `still checks: ${check}`);
 });

@@ -43,6 +43,9 @@ The panel's header mark, browser-tab icon and app icons are the design's new log
 - Checked 2026-10-19: lines 1–706 of the new `lcd.js` are identical to the old one; only the logo section and its export are new.
 - The pinned SHA-256 of the old renderer is in `test/panel-0308.test.mjs` and possibly 0302's tests.
 - Failing before this build: not checked
+- AC5 and older tests: criteria 2 to 4 replace the header's canvas mark (0303, 0309) and the icons (0305, 0308), so the older tests that pinned those exact things can't pass unchanged. They're updated to the new logo in place, as 0309 did with 0303's, rather than deleted: 0303 AC1 and AC3, 0304 AC1, 0305 AC1 to AC3 (now a pointer to this ticket's tests), 0308 AC3 (likewise), 0309's browser test, 0149 AC4 and 0159 AC2 (the PNG is compared with the browser's drawing of the design's app icon, not icon.svg), and 0167 AC2 (`--speck` in place of `--lcd-red`). The badges' and the Foreman's builder's tests are unchanged and pass on the new renderer.
+- The header's mark is written into the page as `markSVG()` returns it, with `--speck: var(--dot)` on `.logo .mark` as the design's own panel mock sets it, so it needs no script. The PNGs are drawn from `appIconSVG('light')` by `draw()` in `test/support/icons.mjs`, which paints each of its shapes by how much of each pixel it covers; they're within half a level a channel, on average, of Chrome's own drawing.
+- Self-check: the icon drawing now refuses any shape, path or colour it can't read, with a test, so a change to the design can't be drawn wrong silently.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

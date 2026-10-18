@@ -13,7 +13,8 @@ const face = () => rules().find(r => r.sel === '@font-face' && /"Doto"/.test(get
 const name = () => rule('.logo .name');
 
 test('0304 AC1: the header\'s "speck" is its own element, set in Doto at weight 900, at 26 px since 0309', () => {
-  assert.match(page(), /<div class="logo"><canvas class="mark"[^>]*><\/canvas><b class="name">speck<\/b> <span>control panel<\/span><\/div>/);
+  // 0320: the mark is the design's logo, an svg.
+  assert.match(page(), /<div class="logo"><svg [^>]*class="mark"[^>]*>[\s\S]*?<\/svg><b class="name">speck<\/b> <span>control panel<\/span><\/div>/);
   const r = name();
   assert.ok(r, 'a rule for the name');
   assert.match(get(r, 'font-family'), /^"Doto",/, 'Doto first');
