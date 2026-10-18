@@ -12,7 +12,7 @@ import { SpeckError, sh, loadConfig, worktreeList, ticketBranches, findRepoRoot 
 import { replaceSection, commitTicketOnly } from './close.mjs';
 import { buildTicket, saveRecord } from './build-records.mjs';
 import { readableLog } from './build-log.mjs';
-import { resumeFor } from './hand-back.mjs';
+import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { runWords } from './go-with.mjs';
 import { processesWithEnv } from './build-procs.mjs';
@@ -221,7 +221,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     const message = `speck's Foreman looked into why ticket ${t.id}'s work stopped, and asks the build to carry on: ${r.message} Carry on with ${rec?.agent === 'codex' ? '$speck-build' : '/speck-build'} ${t.id} from where you left off.`;
     const { argv, why } = rec ? resumeFor(words, cfg, t.id, rec, message) : { argv: null, why: 'it has no run record' };
     if (!argv) return say(`${t.id}: the Foreman asked for its build to be resumed, but speck run can't: ${why}.`);
-    const { exited: _e, exit_code: _c, ...kept } = rec, next = { ...kept, foreman_resumed: new Date().toISOString(), resume_command: argv };
+    const { exited: _e, exit_code: _c, ...kept } = rec, next = { ...resumedRecord(kept), foreman_resumed: new Date().toISOString(), resume_command: argv };
     try { saveRecord(file, next); } catch (e) { return say(`${t.id}: the Foreman asked for its build to be resumed, but its run record couldn't be saved (${e.message}).`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
     say(`${t.id}: speck run is resuming its build, as the Foreman asked (session ${rec.session}).`);

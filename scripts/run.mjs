@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
-import { resumeFor, handBackQueue } from './hand-back.mjs';
+import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
@@ -21,7 +21,7 @@ import { prQueue } from './pr-queue.mjs';
 import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
-import { claimResumed, sessionProcess, processTable } from './seen-builds.mjs';
+import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
@@ -258,6 +258,7 @@ function runOn(worker) {
   // 0300: on each check, the builds started since outside speck run: a run record no build of speck run's has, naming
   // a build that's running, as the commands of a build speck run didn't start write it (noteBuild). And a ticket in hand
   // whose build stopped, resumed by hand since: its record is given the resumed build's process (claimResumed).
+  // 0319: a running build another speck run launched is found the same way, and isn't said to be outside speck run.
   const adoptSeen = tickets => {
     const dir = runsDir(repo);
     let rows = null; // the processes, listed once a check and only if needed
@@ -274,7 +275,7 @@ function runOn(worker) {
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
       if (rec.seen === true && !inHand.has(id)) continue; // kept by a conversation whose build is over: see above
-      if (Number.isInteger(rec.pid) && rec.pid > 0 && rec.pid !== process.pid && pidAlive(rec.pid)) adopt(id, file, rec, 'is being built outside speck run');
+      if (Number.isInteger(rec.pid) && rec.pid > 0 && rec.pid !== process.pid && pidAlive(rec.pid)) adopt(id, file, rec, adoptedAs(rec));
     }
   };
   const checkAdopted = () => {
@@ -330,7 +331,7 @@ function runOn(worker) {
     // 0217: the time it waited, stopped, is left out of its build time, counted while it can't be writing the ticket.
     const note = countStop(repo, id);
     if (note) console.log(`${id}:${note}`);
-    const resumed = { ...rec, resumed: new Date().toISOString(), resume_command: argv };
+    const resumed = { ...resumedRecord(rec), resumed: new Date().toISOString(), resume_command: argv };
     // Saved before the build carries on, so a record that can't be saved stops it being resumed at all.
     try { saveRecord(recordFile, resumed); } catch (e) { return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
