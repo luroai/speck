@@ -46,7 +46,7 @@ The panel's app icon is speck drawn on the LCD screen, as the design draws its m
 - Went with the recommendation: keep it centred, with square dots (chosen by the user in the panel, 2026-10-18 22:18 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's app icon, which shows in a browser tab and on a phone's home screen when the panel is added there, is now speck on the LCD screen: the same dark dots and red speck as the mark in the panel's header, on the screen's grey-green. To see it, open the panel and look at its tab, or add it to a phone's home screen. The mark is centred, with a little more space at its sides than above and below because it's taller than it is wide. A phone or browser that kept the old icon may keep showing it until its cache is cleared.
 
 ## Blocked question
 The speck mark is 13 dots wide and 15 tall, so with square dots it can't have the same gap on all four sides of a square icon. The new icon centres it, with equal gaps above and below (about 13% of the icon) and slightly wider equal gaps left and right (about 18%). Is that fine, or should all four gaps match, by making the dots a little wider than tall so the mark becomes square? I recommend keeping it centred as it is: the dots stay square like the header's mark and the screen, and the extra space at the sides is barely noticeable.
@@ -59,6 +59,7 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +126,74 @@ Clear winner: yes
     ],
     "escalation_question": "Does criterion 2 mean centred artwork with equal opposite margins, as implemented, or must all four visible margins be equal even if that requires changing the mark's proportions or spacing?",
     "summary": "The icons correctly show the LCD mark with sharp dots, the requested colours and sizes, and unchanged icon links. Tests pass. Approval needs one design clarification: the artwork is centred, but the side margins are wider than the top and bottom margins."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a1fc9491bd5c0c069190ff0fe9ebef77b7a5427c",
+    "thread_id": "01a15114-044b-7802-b720-487678434536",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 344265,
+      "cached_input_tokens": 284160,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1833,
+      "reasoning_output_tokens": 346
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:18:57.963Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The three AC1 tests in test/icons-0305.test.mjs pass, comparing SVG and PNG dots with the design renderer through markDots() and checking square dots and the specified colours. Artwork and tests are unchanged since round 1."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The ticket Notes record the user's choice to keep the mark centred with square dots. The passing AC2 test verifies equal opposite margins, corner clearance and that the mark fills the icon."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 test checks all three PNG dimensions, RGB format and every pixel's colour, confirming sharp edges without blended colours."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Manifest and page icon links remain unchanged. The passing AC4 test verifies the manifest entries and page links."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/icons-0305.test.mjs",
+        "issue": "The meaning of equal margins required a product decision.",
+        "suggested_fix": "The user chose centred artwork with square dots and equal opposite margins, as recorded in the ticket Notes. The existing implementation and test meet that decision.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The icons correctly show the LCD mark with sharp square dots, the requested colours and sizes, and unchanged icon links. The user resolved the margin question by choosing centred artwork. All criteria pass; no blocking concerns remain."
   }
 }
 ```
