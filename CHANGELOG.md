@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.8.0 · 18 October 2026
+
+What's new since 0.7.0. A minor release that gives speck a Foreman, one status for the whole pipeline that can also clear technical blockages itself, shows pictures of a visual change before you ship it, and can ship through GitHub pull requests.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.8.0 init`.
+
+### The Foreman
+
+- The button at the top of the panel no longer turns `speck run` on or off. It's now the Foreman: what `speck run` is doing, in a word or two and a colour: Off, Idle, Building and how many, Shipping and which ticket, Waiting with a short reason such as "on hold" or "new code", or Needs you and how many, when tickets are blocked. When the panel's server is running newer code than the page you have open, it says so and offers to reload the page.
+- Pressing it opens its detail. Each ready ticket that isn't building says why: the tickets in its `after:` list that aren't done yet, all build slots in use, `speck run` off, or `speck run` switching to new code. Something that holds up everything, such as switching to new code or shipping being on hold, is said once at the top rather than on every line. Under Shipping, every approved ticket that `auto_ship` covers and hasn't shipped yet is listed with why, or that it's next, so "Nothing is waiting to ship" shows only when nothing is. Blocked tickets are listed with their questions.
+- `speck status` starts with the same status and reasons, as `speck run` records them as it works.
+- The on/off switch for `speck run` is now the first thing in the Settings view, in a new Foreman group, and works as before.
+
+### Blocked questions
+
+- A build that stops to ask you something now also says which option it recommends, whether any option would change something you'd notice, and whether its pick is a clear winner or a close call. The panel shows "Changes what you'd notice" or "Doesn't change what you'd notice", and "Clear recommendation" or "Close call", under the question. `speck status --json` gives them as `blocked_recommendation`, `blocked_noticeable` and `blocked_clear`. This first came in 0.7.0 without being listed there. Questions asked without them look as they did, with neither label.
+- A blocked question with a recommendation has a "Go with the recommendation" button in the panel, when `speck run` built the ticket and can resume it. Pressing it asks first, notes your choice and the time in the ticket, sets it building again and has `speck run` carry its build on where it stopped, told which option you chose. Otherwise the question still says how to resume it by hand.
+- A new setting, `foreman_fixing`, says what the Foreman does with blocked questions: `off`, `tell` (the default) or `fix`. With `tell`, blocked tickets wait for you as before and the Foreman counts them under Needs you. `off` is the same without the count. With `fix`, `speck run` takes the recommendation itself when no option changes anything you'd notice and it's a clear winner, notes in the ticket that the Foreman chose it, and starts the build again. It does this once per ticket: if the same ticket blocks again, it waits for you, as does every question that would change what you'd notice, is a close call or doesn't say.
+
+### The Foreman agent
+
+- With `foreman_fixing: fix`, when work stops for a reason speck has no steps for, a ship refused for a reason it doesn't hand back to the build or a build that ends with its ticket neither approved nor blocked, `speck run` starts a Foreman agent with a short brief: the ticket, what happened and the last lines of its log.
+- The agent does one thing: resumes the build with an instruction, has `speck run` try the ship once more, makes a draft fix ticket for you to shape, or asks you one question. It never sets a ticket ready, approves work, ships anything `auto_ship` doesn't cover or changes code.
+- What it did, and why, goes in the ticket's Notes and under Looked into in the Foreman's detail. A question it asks you also counts under Needs you. Only one Foreman agent runs at a time, and it looks into a ticket once until the ticket has new commits.
+- New settings `foreman`, `foreman_model` and `foreman_effort` choose the agent it runs on (`claude` or `codex`; blank uses the builder when that's Codex, and Claude Code otherwise), its model and its effort, blank for the agent's own defaults. They're in the Settings view's Foreman group and setup. With Codex, only its instructions keep it from changing files; Claude Code is limited to reading and running speck's own commands.
+
+### Pictures in review packs
+
+- When a ticket changes how something looks, the build now takes pictures of the result in a real browser, in the light and dark looks where both exist, before review, and keeps them with `speck picture`.
+- They're kept on this computer in `speck/.cache/`, which git ignores, so they're never committed. `speck pack <id>` lists them with what each shows, and the panel's review pack shows each with its caption, full size when you press it. A pack with no pictures looks as it did.
+
+### Shipping through pull requests
+
+- A new setting, `ship_mode`, takes `local`, the default, which ships as before, or `pr`.
+- With `pr`, once a ticket is approved, speck pushes its branch and opens a GitHub pull request into the base branch with `gh`, titled with the ticket's id and title, with its plain review pack as the description. The review pack in the panel links to it. Asking again finds the same pull request rather than opening another. If `gh` isn't installed or signed in, or can't open it, the ticket stays approved, nothing is merged, and the panel and `speck run` say why in one line.
+- Shipping such a ticket, with the Ship button, `/speck-ship` or `speck run`'s queue when `auto_ship` covers it, runs the same checks as a local ship, including the whole test suite on the change as it would land, then merges the pull request on GitHub, brings your base branch up to date, files the ticket as done and removes its worktree and branch. If you merged it on GitHub yourself, shipping only tidies up, and `speck run` notices it and tidies up by itself.
+- When the pull request can't be merged, because of failing or unfinished checks, a conflict or a review GitHub requires, nothing changes on your machine and speck says why in one line. `speck run` tries again once the pull request changes. On a base branch that only takes pull requests, the "done" commit can't be pushed, and the panel says so.
+
+### speck run
+
+- `speck run` now sees every build of your tickets, however it was started. A build you start with `/speck-build` in a conversation, or a stopped build you carry on by hand, counts towards `max_parallel_builds`, isn't started a second time, shows in the panel as building rather than stopped, and is resumed by `speck run` if it stops partway, as its own builds are. It's noticed the next time the build runs one of speck's commands, with nothing to do by hand. Once its ticket is approved or blocked, it stops taking up a build slot, even if the conversation stays open.
+- When a shipped ticket changes speck's own code, `speck run` switches to the new code as soon as no ship is running, rather than waiting for every build to end. Builds that were running carry on untouched, still counted, shown and watched, and each is handled as usual when it ends. While it waits for a ship, it says so once, naming it, and new builds can still start. A carried-over build that crashes partway is resumed once rather than handed to the Foreman, as `speck run` can't tell how it ended.
+
 ## 0.7.0 · 18 October 2026
 
 What's new since 0.6.0. A minor release that lets Codex or Cursor build your tickets as well as Claude Code, lets Claude Code review whichever agent builds, and shows which agents and models are really on your machine.
