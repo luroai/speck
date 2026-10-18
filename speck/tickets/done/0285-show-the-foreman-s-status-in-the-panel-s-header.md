@@ -1,7 +1,7 @@
 ---
 id: "0285"
 title: "Show the Foreman's status in the panel's header"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0283"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:34:13.900Z"
 approved: "2026-10-18T12:52:24.581Z"
+finished: "2026-10-18T12:54:36.544Z"
 
 ---
 # 0285 · Show the Foreman's status in the panel's header
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When nothing is building or shipping, the panel doesn't say why: the reason is in `speck/.cache/runs/run.log`. On 2026-10-17 it took a conversation with an agent to find out each time: `main` had diverged from GitHub, shipping was on hold, speck run was waiting to switch to new code, and the panel page was too old to show a new setting.
