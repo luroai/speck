@@ -43,7 +43,9 @@ With Codex or Cursor as the builder, the reviewer should come from another famil
 - Self-check: added a test that `speck doctor` checks Claude Code is on the PATH for `reviewer: claude`, as the brief now says; dropped an unchecked Gemini example from the brief; ran the built-in command against the real Claude Code 2.1.301 (no Write tool, a Bash write denied, `--resume` keeps the session).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now choose Claude Code as the reviewer whatever agent builds your tickets, so a Codex or Cursor build can be checked by Claude. speck starts Claude Code itself for each review, without anyone at the keyboard, and it can read the code and run harmless commands but can't change anything, even if your own Claude Code settings would normally allow it. Later review rounds carry on the same conversation, and the reviewer model and effort you pick are used.
+
+To see it, set the reviewer to "claude" in the panel's Settings view (it's offered once Claude Code is installed and signed in), then build a ticket and read its review pack. Worth keeping an eye on: Claude reviewing Claude's own build still needs same-model review switched on, as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,7 +54,10 @@ With Codex or Cursor as the builder, the reviewer should come from another famil
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Keep the Claude reviewer off the user's connectors with `--strict-mcp-config`: speck/ideas/2026-10-18-keep-the-claude-reviewer-off-your-connectors.md.
+  - Skipped as a duplicate: an effort only Codex supports (such as `ultra`) reaches `claude --effort` and fails the round. Matches speck/ideas/2026-10-17-check-the-effort-against-the-ticket-s-own-reviewer.md.
+  - Known limit: managed (enterprise) Claude Code settings still apply to the reviewer, as `--setting-sources` can't turn them off.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -119,6 +124,74 @@ With Codex or Cursor as the builder, the reviewer should come from another famil
     ],
     "escalation_question": "",
     "summary": "Claude review, session continuation, model settings and Settings integration are implemented and covered by passing tests. One issue blocks approval: existing Claude permissions can still let the reviewer change files, despite the ticket requiring read-only access."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1041d5b7b11a08e441d546ecf6657c3237dfa850",
+    "thread_id": "01a14eaa-b8c4-7180-90e7-5e3d47a7beaa",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 310053,
+      "cached_input_tokens": 196096,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1511,
+      "reasoning_output_tokens": 97
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T11:01:37.815Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cmdReview selects the built-in Claude command; runCommandReview sends the prompt and records the parsed verdict. CLAUDE_ARGS now disables user, project and local settings, explicitly selects dontAsk and removes file-writing tools. Passing AC1 tests verify the invocation, prompt, verdict parsing and missing-CLI handling. Local claude --help confirms the setting-sources option."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runCommandReview saves session_id as thread_id and uses --resume for subsequent rounds. Passing AC2 tests verify session continuation, settings isolation on resume, and fresh-session fallback with full history."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewerSettings and commandArgs supply --model and --effort. The passing AC3 test verifies both initial and resumed invocations and omission of blank values."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "modelFamily and sameModelProblem recognise Claude's family. scripts/settings.mjs and templates/panel.html offer Claude and its models; speck-setup proposes it for other builders. Passing AC4 tests cover family checks, Settings choices and the setup command."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/reviewers.mjs",
+        "issue": "Inherited Claude allow rules could permit writing Bash commands despite dontAsk.",
+        "suggested_fix": "Addressed by --setting-sources= in the shared arguments for initial and resumed commands. Regression assertions cover initial, resumed and fallback runs; the ticket records a real-CLI enforcement check with an existing Bash write permission.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Claude can now review builds from other agents, retain its session and use the selected model settings. The inherited-permissions issue is fixed. All four criteria pass, with no blocking findings remaining."
   }
 }
 ```
