@@ -11,6 +11,9 @@ import { pidAlive, runState } from './run-switch.mjs';
 import { resumeFor } from './hand-back.mjs';
 import { refsOf } from './ship-queue.mjs';
 import { sessionInUse } from './build-procs.mjs';
+import { splitCommand } from './reviewers.mjs';
+import { codexBuilds, codexStartWords } from './codex-build.mjs';
+import { cursorBuilds, cursorStartWords } from './cursor-build.mjs';
 
 // What the build's session is told when speck run resumes it. `skill` is how its agent names /speck-build.
 export const goWithMessage = (id, option, skill = '/speck-build') =>
@@ -29,13 +32,22 @@ function runsOf(repo) {
   try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
   return path.join(main, 'speck', '.cache', 'runs');
 }
-const sessionOf = rec => (typeof rec?.session === 'string' && rec.session ? rec.session : null);
 // The choice waiting in a run record: { option, at, head }, head being the commit the ticket's branch was at once the
 // choice was committed. null when there's none.
 const pendingOf = rec => (rec?.go_with && typeof rec.go_with === 'object' && typeof rec.go_with.option === 'string' && rec.go_with.option && typeof rec.go_with.head === 'string' && rec.go_with.head ? rec.go_with : null);
 
-// Whether the panel can offer the button: speck run built it, and its run record names its session.
-export const goWithResumable = (runs, id) => !!sessionOf(readRecord(runs, id));
+// The words speck run starts builds with, as it reads them from speck/config.yml, or [] when it has none it can use.
+function runWords(cfg) {
+  if (codexBuilds(cfg)) return codexStartWords(cfg);
+  if (cursorBuilds(cfg)) return cursorStartWords(cfg, 'agent');
+  const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
+  try { return command ? splitCommand(command) : []; } catch { return []; }
+}
+// Why speck run couldn't resume the build in run record `rec`, in a few words, or null when it can.
+const cantResume = (cfg, id, rec) => (!rec ? 'it has no run record from speck run' : resumeFor(runWords(cfg), cfg, id, rec, '').why ?? null);
+
+// Whether the panel can offer the button: speck run built it, and could resume its session.
+export const goWithResumable = (runs, id, cfg) => cantResume(cfg, id, readRecord(runs, id)) === null;
 // Whether speck run has a choice waiting to resume the build with.
 export const goWithWaiting = (runs, id) => !!pendingOf(readRecord(runs, id));
 
@@ -52,8 +64,8 @@ export function goWith(repo, id, now = new Date()) {
   if (!option) return refuse(`Ticket ${pad}'s question has no recommendation to go with. ${byHand}`);
   const runs = runsOf(repo);
   const file = path.join(runs, `${pad}.json`), rec = readRecord(runs, pad);
-  const why = !rec ? 'it has no run record from speck run' : !sessionOf(rec) ? 'its run record has no session'
-    : !Object.hasOwn(rec, 'exited') && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid) ? 'its build is still running' : null;
+  const why = cantResume(cfg, pad, rec)
+    ?? (!Object.hasOwn(rec, 'exited') && Number.isInteger(rec.pid) && rec.pid > 0 && pidAlive(rec.pid) ? 'its build is still running' : null);
   if (why) return refuse(`Ticket ${pad}'s build can't be resumed from here: ${why}. ${byHand}`);
   const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: at }).stdout.trim();
   if (!branch.startsWith(`${cfg.branch_prefix}${pad}-`)) return refuse(`Ticket ${pad}'s branch isn't checked out where its build left it, so its choice can't be committed there. ${byHand}`);

@@ -435,7 +435,7 @@ export function statusData(repo) {
       blocked_noticeable: facts.noticeable,
       blocked_clear: facts.clear,
       // 0284: whether speck run can resume its build, so the panel can offer to go with the recommendation
-      blocked_resumable: t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id),
+      blocked_resumable: t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg),
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },
       problem: sectionText(t.sections.problem),
       outcome: sectionText(t.sections.outcome),
