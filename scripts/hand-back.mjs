@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { refsOf } from './ship-queue.mjs';
 import { shipState } from './ship.mjs';
+import { codexResumeArgv } from './codex-build.mjs';
 
 // What a killed build is told when speck run resumes it.
-const resumeMessage = id => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with /speck-build ${id} from where you left off.`;
+const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
 
 // The steps in /speck-build's section 5 for each kind of hand-back (0194).
 const HAND_BACK_STEPS = { conflict: 'Conflict', tests: 'Tests fail together', base: 'Base branch failing' };
@@ -36,11 +37,24 @@ export function resumeArgv(words, id, session, message = resumeMessage(id)) {
   return words.map((w, i) => (i === at ? '--resume' : i === prompts[0] ? message : w.replace(/\{session\}/g, session)));
 }
 
+// How speck run resumes a build from its run record `rec`, with `message` (a killed build's by default): { argv }, or
+// { argv: null, why } saying in a few words why it can't. A Codex build (0289) carries on its own session with
+// `codex exec resume`, once its session id has been read from its log; any other with build_command (resumeArgv).
+export function resumeFor(words, cfg, id, rec, message) {
+  const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
+  if (rec?.agent === 'codex') {
+    const argv = codexResumeArgv(cfg, session, message ?? resumeMessage(id, '$speck-build'));
+    return argv ? { argv } : { argv: null, why: 'no session id has been read from its log yet, as Codex stopped before writing one' };
+  }
+  const argv = resumeArgv(words, id, session, message ?? resumeMessage(id));
+  return argv ? { argv } : { argv: null, why: session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session' };
+}
+
 // speck run's hand-backs. keep(h) takes one from the ship queue (shipQueue's handBack), check(tickets), on each of
 // speck run's checks, resumes each waiting one while a build slot is free, and waiting(id) says whether one is waiting
 // for a ticket, so the queue doesn't ship it meanwhile (shipQueue's waiting). `running` is speck run's set of builds,
 // `startBuild` starts one as speck run does, and `runs()` is its runs folder.
-export function handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs }) {
+export function handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs, fill = () => null }) {
   // A ship speck run started that needs work on its ticket, kept in the build's run record as hand_back, so a restart
   // still hands it back. Carried out by resumeHandBack, from check, once a build slot is free. A ticket whose build
   // session can't be resumed is said once, here, with what to do.
@@ -49,8 +63,8 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     let rec = null;
     try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* no record */ }
     if (!rec || typeof rec !== 'object' || Array.isArray(rec)) rec = null;
-    const why = !rec ? 'it has no run record from speck run, so it wasn\'t built by speck run'
-      : !resumeArgv(words, h.id, rec.session, '') ? (typeof rec.session === 'string' && rec.session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session') : null;
+    if (rec) rec = fill(h.id) ?? rec; // 0289: a Codex build's session, read from its log if it's not kept yet
+    const why = !rec ? 'it has no run record from speck run, so it wasn\'t built by speck run' : resumeFor(words, cfg, h.id, rec, '').why ?? null;
     if (!why) try { return saveRecord(file, { ...rec, hand_back: { kind: h.kind, why: h.why, head: h.head, at: new Date().toISOString() } }); } catch (e) { return cantHandBack(h, rec, `its run record couldn't be saved (${e.message})`); }
     cantHandBack(h, rec, why);
   };
@@ -63,13 +77,13 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
   const resumeHandBack = (id, file, rec) => {
     const { hand_back: h, exited: _e, exit_code: _c, ...kept } = rec;
     const count = (Number.isInteger(rec.hand_backs) ? rec.hand_backs : 0) + (h.kind === 'base' ? 0 : 1);
-    const argv = resumeArgv(words, id, rec.session, handBackMessage({ id, kind: h.kind, why: String(h.why ?? ''), base: cfg.base_branch, count }));
+    const { argv, why } = resumeFor(words, cfg, id, rec, handBackMessage({ id, kind: h.kind, why: String(h.why ?? ''), base: cfg.base_branch, count }));
     const next = { ...kept, handed_back: new Date().toISOString(), hand_backs: count, hand_back_command: argv };
-    if (!argv) { try { saveRecord(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said below */ } return cantHandBack({ id, kind: h.kind }, rec, 'build_command needs --session-id {session} and one word with {id} in it'); }
+    if (!argv) { try { saveRecord(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said below */ } return cantHandBack({ id, kind: h.kind }, rec, why); }
     try { saveRecord(file, next); } catch (e) { return cantHandBack({ id, kind: h.kind }, rec, `its run record couldn't be saved (${e.message})`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
     console.log(`${id}'s ship needs work on the ticket, so speck run is handing it back to its build (session ${rec.session}).`);
-    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`);
+    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
   };
 
   // A ticket's hand-back from its run record: { file, rec, h, live }, live while its branch is where the ship found it.
