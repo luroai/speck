@@ -26,6 +26,8 @@ import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 import { questionFacts } from './question-facts.mjs';
+import { goWithResumable, goWithWaiting } from './go-with.mjs';
+import { buildSession } from './build-records.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -362,21 +364,6 @@ function buildExit(runs, id) {
   return { at: rec.exited ?? null, code: rec.exit_code ?? null, message };
 }
 
-// The session a build launched by `speck run` ran in, from its run record: {id, cwd}, where cwd is the folder the build
-// started from (where its session is kept), or null when there's no record, it can't be read or it lacks either.
-// 0289: with resume_command too when the agent that ran the build (Codex, or Cursor: 0290) resumes it with another
-// command than `board`'s.
-function buildSession(runs, id, cfg, board) {
-  id = String(id ?? '');
-  if (!/^[\w-]+$/.test(id)) return null;
-  let rec;
-  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
-  const text = v => typeof v === 'string' && v !== '';
-  if (!rec || typeof rec !== 'object' || !text(rec.session) || !text(rec.cwd)) return null;
-  const own = resumeCommandOf(cfg, rec.agent ?? null);
-  return { id: rec.session, cwd: rec.cwd, ...(own !== board ? { resume_command: own } : {}) };
-}
-
 // True while a build launched by `speck run` is paused: `speck pause` left a <id>.paused file beside its run record
 // naming this build's session and pid, and the build has neither exited nor gone. The mark is a file of its own, so
 // pause and play never write the run record that speck run keeps.
@@ -447,6 +434,8 @@ export function statusData(repo) {
       blocked_recommendation: facts.recommendation,
       blocked_noticeable: facts.noticeable,
       blocked_clear: facts.clear,
+      // 0284: whether speck run can resume its build, so the panel can offer to go with the recommendation
+      blocked_resumable: t.fm.status === 'blocked' && goWithResumable(runs, t.fm.id, cfg),
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },
       problem: sectionText(t.sections.problem),
       outcome: sectionText(t.sections.outcome),
@@ -467,7 +456,8 @@ export function statusData(repo) {
       review_running: inHand(t) ? roundRunning(runs, t.fm.id, ticketRounds(t.raw).rounds.length) : null,
       waiting_on: after.filter(id => !done.has(padId(id))),
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
-      build_exit: stop?.counted ? null : buildExit(runs, t.fm.id),
+      // 0284: nor is one waiting for speck run to resume it with the recommendation you went with.
+      build_exit: stop?.counted || (inHand(t) && goWithWaiting(runs, t.fm.id)) ? null : buildExit(runs, t.fm.id),
       session: buildSession(runs, t.fm.id, cfg, resumeCommandOf(cfg)),
       paused: buildPaused(runs, t.fm.id),
       paused_at: (at => (at === null ? null : new Date(at).toISOString()))(buildPaused(runs, t.fm.id) ? pausedSince(path.join(runs, `${t.fm.id}.paused`)) : null),
