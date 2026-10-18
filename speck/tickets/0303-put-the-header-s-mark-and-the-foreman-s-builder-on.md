@@ -1,7 +1,7 @@
 ---
 id: "0303"
 title: "Put the header's mark and the Foreman's builder on the LCD screen"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0302"]  # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T21:51:29.988Z"
 
 ---
 # 0303 · Put the header's mark and the Foreman's builder on the LCD screen
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 After 0302, the badges are drawn on the LCD screen, but the header's mark and the Foreman's button still use the old drawing. The design (`docs/design/lcd/panel-mock.html`) puts both on the same screen.
