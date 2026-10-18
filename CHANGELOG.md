@@ -21,7 +21,7 @@ What's new since 0.6.0. A minor release that lets Codex or Cursor build your tic
 
 - The Settings view's `builder` can now be changed. It offers the builders that are installed and signed in, and saving one sets `build_command` to match in the same commit: Claude Code's own command for `claude`, and blank for `codex` or `cursor`, so `speck run` uses that builder's own. `speck config set builder <name>` does the same from the terminal, and setup uses it.
 - If you'd written your own `build_command`, the view says it will be replaced and asks first, and `speck config set builder` refuses without `--replace`.
-- Saving a builder from the reviewer's own family, without `allow_same_model_review`, is refused with a message suggesting a reviewer from another family, such as `claude` for a Codex builder.
+- Saving a builder from the reviewer's own family is refused with a message suggesting a reviewer from another family, such as `claude` for a Codex builder, unless `allow_same_model_review` is true or, for a Claude builder and reviewer, `builder_model` and `reviewer_model` are both set and differ. `speck config set builder` saves it and notes the clash instead, as setup chooses the reviewer next.
 - Tickets already made keep the builder written in them, and the view says so. `speck run` builds every ready ticket with the builder in `speck/config.yml`.
 
 ### Reviewing
