@@ -13,7 +13,7 @@ import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { buildEnv } from './build-env.mjs';
-import { withBuilderModel, builderModelNote } from './build-model.mjs';
+import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
 import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
@@ -24,7 +24,6 @@ export { DEFAULT_RESUME_COMMAND, resumeHint, resumeCommandOf, buildKilled, build
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
 const RUN_POLL_MS = 5000;
-const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
 
 // The folder for speck run's records and logs, inside speck/.cache/, which git ignores.
 export function runsDir(repo) {

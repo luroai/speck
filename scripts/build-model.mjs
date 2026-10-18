@@ -3,6 +3,9 @@
 // speck run starts with its own command are given it as -m <value> (codex-build.mjs), and Cursor builds as --model
 // <value> (cursor-build.mjs).
 
+// The build_command that starts Claude Code builds, as speck/config.yml has it when speck sets it up.
+export const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
+
 // builder_model as speck/config.yml has it, trimmed, a number read as YAML gives it (builder_model: 5) included: ''
 // when it's blank or missing.
 export const modelOf = cfg => typeof cfg.builder_model === 'string' || typeof cfg.builder_model === 'number' ? String(cfg.builder_model).trim() : '';
