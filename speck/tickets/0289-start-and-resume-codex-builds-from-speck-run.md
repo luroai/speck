@@ -41,6 +41,7 @@ With `builder: codex`, speck run starts each build with Codex, passing `builder_
 - Checked 2026-10-17: in a scratch repo, `codex exec --json --dangerously-bypass-approvals-and-sandbox` ran shell commands with no prompts; `$<skill>` in the prompt ran a skill from `.agents/skills/`; the first `--json` line was `{"type":"thread.started","thread_id":"…"}`; and `codex exec resume <thread_id> '<message>'` carried on that session (codex-cli 0.159.0).
 - Starting and resuming are in `scripts/run.mjs` and `resumeArgv` in `scripts/hand-back.mjs`.
 - Failing before this build: none
+- Self-check: a Codex config with no build_command at all is refused by speck run as before (only `build_command: ""` builds with Codex), so 0279's builder_model note stays as it was; a pause, stop or waiting mark written before the session id is read is given the session too, so it still matches the build.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
