@@ -1,7 +1,7 @@
 ---
 id: "0308"
 title: "Lighten the LCD screen in the panel's light look"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0305"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:24:45.348Z"
+approved: "2026-10-18T22:29:13.686Z"
 
 ---
 # 0308 · Lighten the LCD screen in the panel's light look
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In the panel's light look, the LCD screen behind the builder badges and the Foreman's builder uses the design's `#c3c9b1`, which reads as too dark on the panel's near-white cards, especially on a phone. The app icon (0305) uses the same colour.
@@ -48,9 +49,14 @@ In the panel's light look, the little LCD screens behind the builder pictures on
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 143,870
+- Elapsed since build started: 4 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
