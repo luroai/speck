@@ -1,7 +1,7 @@
 ---
 id: "0320"
 title: "Use the design's new logo in the header and app icons"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T22:51:57.759Z"
 ---
 # 0320 · Use the design's new logo in the header and app icons
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The user has updated the LCD design since it was copied into `docs/design/lcd/`. It now has its own logo: a hand-drawn 16 × 16 mark (the ring open at the top left, two ears and the speck), with a header version, a browser-tab icon that follows light and dark by itself, and an app icon showing the handheld with the mark on its screen. The panel's header mark (0303, 0309) and app icons (0305, 0308) were made from the first version and don't match it.
@@ -48,7 +48,9 @@ The panel's header mark, browser-tab icon and app icons are the design's new log
 - Self-check: the icon drawing now refuses any shape, path or colour it can't read, with a test, so a change to the design can't be drawn wrong silently.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel now uses the design's new logo everywhere it shows one. The header's mark is the hand-drawn ring with two ears and the red speck, in the text colour, in both the light and the dark look. The browser tab shows the same mark, and it switches between light and dark by itself to match your browser. The home-screen icons on a phone or computer are now the little handheld with the mark on its screen, in the design's own colours.
+
+To see it, open the panel and look at the header and the browser tab, then add the panel to a phone's home screen. The builder badges and the Foreman's builder look and move exactly as before. A browser may keep showing the old tab or home-screen icon for a while until it clears its stored copy.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +60,71 @@ The panel's header mark, browser-tab icon and app icons are the design's new log
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Tidy-up only: the stand-in renderer in `test/panel-0303.test.mjs` still has a `tile()` that nothing calls now except the check that the page draws no tile.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8174a587f734387185101cb96ff9188c3e748aed",
+    "thread_id": "01a1513f-faa3-7032-b14f-273657510ccd",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 572264,
+      "cached_input_tokens": 451840,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1382,
+      "reasoning_output_tokens": 47
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T23:02:33.957Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Both lcd.js files have the required SHA-256. Git blob identities confirm concept.html and panel-mock.html exactly match the original next/ files. Passing 0320 AC1 tests check removal of next/ and updated hash checks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html embeds logo.markSVG() output with currentColor, --speck: var(--dot), crispEdges and 32 px dimensions. Passing 0320 browser tests verify colours and size in both looks; 0309 verifies header layout."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Independently confirmed templates/icons/icon.svg equals logo.faviconSVG(). Its media query supplies light and dark colours. The 0320 equality and browser loading tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Independently regenerated all three PNGs in memory and confirmed exact matches. Passing 0320 tests verify dimensions and design colours; 0149 AC4 compares the PNG with Chrome's rendering of appIconSVG('light')."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The renderer diff preserves drawing code before the logo section, also checked by passing 0320 AC5. Badge and Foreman regression tests passed. Full recorded output reports 198 passes, zero failures and three unrelated skips. Older logo assertions were replaced with coverage of the requested behaviour."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The header, browser tab and app icons now use the supplied design's new logo. The design files match exactly, the icons use the correct colours, and the builder animations remain unchanged. Relevant tests passed, with no blocking concerns found."
+  }
+}
+```
+
+</details>
