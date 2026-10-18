@@ -1,7 +1,7 @@
 ---
 id: "0291"
 title: "Show Codex and Cursor builds' logs and tokens in the panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:05:34.361Z"
+approved: "2026-10-18T12:10:00.031Z"
 
 ---
 # 0291 · Show Codex and Cursor builds' logs and tokens in the panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel reads build logs and builder spend only from Claude Code's `stream-json` output. A Codex or Cursor build's live log would show raw JSON, and its tokens wouldn't be counted.
@@ -62,9 +63,14 @@ Worth keeping an eye on: if a Cursor build is stopped and picked up again, its t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 152,571
+- Elapsed since build started: 4 min
+- Changed lines: 47 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Whether Cursor's usage covers a resumed chat, and what its result text holds: `speck/ideas/2026-10-18-count-a-resumed-cursor-build-s-tokens.md`.
