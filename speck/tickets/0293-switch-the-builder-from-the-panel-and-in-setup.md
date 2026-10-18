@@ -1,7 +1,7 @@
 ---
 id: "0293"
 title: "Switch the builder from the panel and in setup"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0292", "0290"]               # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T12:14:23.327Z"
 
 ---
 # 0293 · Switch the builder from the panel and in setup
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `builder` is read-only in the panel, because changing it needs a `build_command` that starts that agent, and setup asks the user to write one. Someone with Codex or Cursor can't switch to it without editing `speck/config.yml` by hand.
