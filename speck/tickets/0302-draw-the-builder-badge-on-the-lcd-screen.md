@@ -41,6 +41,7 @@ Every ticket's builder badge is drawn on the LCD screen by the design's own rend
 - The design is the user's artifact, "speck LCD" (claude.ai/artifact/R5CQDZJfMZ2rYcTmZK1B8z). Its renderer and panel mock are copied into `docs/design/lcd/` (`lcd.js`, `panel-mock.html`), so the build doesn't need the artifact. Don't edit `lcd.js`: it's the design. It exposes `window.SpeckLCD`.
 - The renderer draws one still frame per pose when reduced motion is on (`RM`), so the panel doesn't need its own check.
 - Today's badge is drawn in `templates/panel.html` (search for "0168" and "badgeColours"). The page is served by `scripts/panel.mjs`, which will need to serve `lcd.js` too.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
