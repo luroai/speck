@@ -1,7 +1,7 @@
 ---
 id: "0300"
 title: "See every build, however it was started"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0287"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:44:56.380Z"
+approved: "2026-10-18T13:54:56.073Z"
 
 ---
 # 0300 · See every build, however it was started
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck run looks for builds it didn't start only when it starts up or switches to new code. A build started afterwards with `/speck-build` in a conversation, or a build resumed by hand, isn't counted towards `max_parallel_builds`, isn't watched for stopping partway, and can show in the panel as stopped while it's running, because its run record says it exited. Seen on 2026-10-18 with 0290 and 0291, resumed by hand.
@@ -53,9 +54,15 @@ Worth keeping an eye on: if a conversation building a ticket is closed partway, 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 tick returns for switchWhenIdle before calling adoptSeen.; F2 adopt sets seen to rec.seen === true && fresh, where fresh means the ticket is absent from launched.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 545,706
+- Elapsed since build started: 10 min
+- Changed lines: 200 (limit 5000)
 Follow-ups:
 - Inbox: speck/ideas/2026-10-18-let-speck-pause-and-stop-a-build-started-outside-speck-run.md (pause and stop don't reach a build speck run didn't start).
 - Skipped as a duplicate: a stopped build resumed by hand gets a new process in its run record, so the time it waited stopped may not be added to the build's waiting time. Matches speck/ideas/2026-10-15-know-when-a-stopped-build-starts-again.md.
