@@ -1,7 +1,7 @@
 ---
 id: "0303"
 title: "Put the header's mark and the Foreman's builder on the LCD screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T21:51:29.988Z"
 ---
 # 0303 · Put the header's mark and the Foreman's builder on the LCD screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0302, the badges are drawn on the LCD screen, but the header's mark and the Foreman's button still use the old drawing. The design (`docs/design/lcd/panel-mock.html`) puts both on the same screen.
@@ -41,7 +41,7 @@ The header's mark and the builder on the Foreman's button are drawn on the LCD s
 - Self-check: the Foreman's builder was made before its canvas was in the button, so it took the light look's screen colours when the panel opened dark; it's made once the canvas is in place now, with a test, and the browser test opens the panel in each look. The old drawing's tests are retired (0163's drawing test, 0170's and 0184's checks of the header's SVG mark, test/support/badge.mjs), and the browser tests that spotted a refresh by a new canvas in the button now look for a new label, as the builder's canvas stays. On a phone the mark is 19 px too, as AC1 gives, in place of 0.9 em.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The little speck logo before "speck" at the top of the panel, and the builder in the Foreman's button, are now drawn in the same dot-matrix LCD style as the ticket badges. The logo is drawn in dots in the text colour with the red speck and nothing behind it. The builder sits on its own small LCD screen. It hops while builds are running and stands still otherwise. Switch between light and dark with the header's button and both change with it. On a phone the logo is a touch larger than before (19 px), as the design shows it. With reduced motion turned on, the builder doesn't move.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -50,4 +50,66 @@ The header's mark and the builder on the Foreman's button are drawn on the LCD s
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "818d6bb6896e91d0a3adc6372e473f4472c49dca",
+    "thread_id": "01a15108-1e07-7782-8a62-96e1ba801760",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 129816,
+      "cached_input_tokens": 79488,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 643,
+      "reasoning_output_tokens": 25
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:01:07.000Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html creates headerMark with the exact tile arguments and applies 19 px sizing and transparent screen tokens. panel-0303.test.mjs checks the renderer call, styling and actual browser pixels; all passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "builderFor() and startBuilder() retain a 28 px mini canvas before the status and call its set(true/false) on activity changes. Passing 0303 tests check these transitions; retained 0163 browser tests verify actual movement and stillness."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/lcd.js Screen.look() and relook() read canvas colour tokens and respond to theme changes. The passing 0303 browser test checks both canvases when opened in each theme and after switching."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reviewed the templates/panel.html diff: header changes are confined to the mark, mini builder and their rendering lifecycle. Existing labels, controls and layout rules remain intact apart from the mark's required 19 px sizing."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The header mark and Foreman's builder now use the LCD renderer, with correct colours in both themes. The builder moves during builds and stays still otherwise, respecting reduced motion. The reported tests passed, including browser checks. No blocking concerns found."
+  }
+}
+```
+
+</details>
