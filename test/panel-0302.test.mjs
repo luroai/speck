@@ -120,7 +120,8 @@ test('0302 AC2: without the renderer (it didn\'t load), the cards still show, wi
 
 // The page's CSS custom properties in a rule, as { name: value }.
 const tokens = rule => Object.fromEntries([...rule.matchAll(/(--lcd-[a-z]+):\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
-const LIGHT = { '--lcd-bg': '#c3c9b1', '--lcd-off': '#b8bea6', '--lcd-ink': '#20241d', '--lcd-red': '#d63f28', '--lcd-shadow': 'rgba(30, 40, 15, .22)' };
+// The light look's screen and unlit dots are lighter since 0308.
+const LIGHT = { '--lcd-bg': '#e6e9db', '--lcd-off': '#dde1cf', '--lcd-ink': '#20241d', '--lcd-red': '#d63f28', '--lcd-shadow': 'rgba(30, 40, 15, .14)' };
 const DARK = { '--lcd-bg': '#0d130f', '--lcd-off': '#151d17', '--lcd-ink': '#cfe6c6', '--lcd-red': '#ff5a3f', '--lcd-shadow': 'transparent' };
 
 test('0302 AC3: the page has the screen\'s colours as tokens, with the design\'s values in the light and dark looks', () => {
