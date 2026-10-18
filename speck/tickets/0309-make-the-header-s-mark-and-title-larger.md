@@ -1,7 +1,7 @@
 ---
 id: "0309"
 title: "Make the header's mark and title larger"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ waited_seconds: 100
 ---
 # 0309 · Make the header's mark and title larger
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The header's LCD mark (19 px) and "speck" title (18 px Doto) are small next to the header's 34 px buttons, so the brand reads weakly, especially on a phone.
@@ -46,7 +46,7 @@ The header's mark and "speck" title are larger, closer to the landing page's, an
 - Changed older tests to the new sizes: 0303 (mark 32 px), 0304 ("speck" 26 px; "control panel" beside it only on wider screens), 0170 (reads the title's own font size, and allows a mark up to 1.25 × its height).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The speck mark and name at the top of the panel are bigger: the mark is about two thirds larger and the name half as large again, so the brand stands out next to the buttons. The mark's dots stay sharp and even. On a phone, the small "control panel" label no longer shows, so the larger name and your project's name both fit on the top row. Open the panel on a computer and on a phone to see it. On the narrowest phones, a long project name is still shortened with "…", as before.
 
 ## Blocked question
 At 26 px, "speck" and "control panel" leave too little room on a phone (375 px) for the project's name, so even "speck · base main" is cut short with "…". Which do you want on a phone? (A) Keep it like that: a long project name is cut short. (B) Hide "control panel" in the phone header too, not only once you've scrolled down, so the larger mark, the title and the full project name all fit. (C) Keep today's smaller mark and title on phones, larger only on wider screens. I recommend B: the brand gets larger where it's weakest, the project's name stays readable, and "control panel" says the least.
@@ -59,3 +59,66 @@ Clear winner: no
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (tidy-ups only, no inbox notes): the design mock `docs/design/lcd/panel-mock.html` still draws the header's mark at 19 px; update it if the mock should match the panel.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ae96b553d9ead15d770e2eb442393c02ec2f22b2",
+    "thread_id": "01a15126-1412-79a1-9581-07e567dac77f",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 136717,
+      "cached_input_tokens": 95744,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 765,
+      "reasoning_output_tokens": 43
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:33:52.541Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html sets .logo .mark to 32 × 32 px and initialises LCD.tile with a 16 × 16 grid. templates/lcd.js Screen.size uses an integer pixel scale. Passing panel-0309 browser test confirms both displayed and canvas dimensions at 32 × 32."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html sets .logo .name to 26 px Doto, weight 900, and centres the flex row. Passing panel-0309 static and browser tests verify typography, placement and vertical centring."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Button sizing rules are unchanged. Passing panel-0309 browser test verifies 34 px desktop buttons, 44 px phone buttons, a 32 px logo height and header heights of 63 px desktop and 105 px phone."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing panel-0309 browser test checks widths 320, 375, 400, 699, 700 and 1280 in both looks, including slim phone headers, for overflow and overlap. Phone label hiding follows the user's recorded option B; the repo hides in the slim header. Existing panel-0140 tests also passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The header now has a larger, evenly rendered mark and a larger centred title. Buttons retain their sizes, and tested layouts fit from 320 px upwards in both looks. On phones, “control panel” hides as requested to preserve space for the project name. The reported test run passed with no failures."
+  }
+}
+```
+
+</details>
