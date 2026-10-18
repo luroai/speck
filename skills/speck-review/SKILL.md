@@ -33,13 +33,7 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 
 This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, the diff, the test output and your response file. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
 
-**`claude`**
-
-```
-speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md
-```
-
-speck runs Claude Code itself, without a person and read-only, with the reviewer model (`--model`) and effort (`--effort`) if they're set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
+**`claude`**: run the same `speck review` command as for Codex. speck runs Claude Code itself, without a person and read-only, with the reviewer model (`--model`) and effort (`--effort`) if they're set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
 
 **Any reviewer with a `command`** under `reviewer_options` in `speck/config.yml`
 
