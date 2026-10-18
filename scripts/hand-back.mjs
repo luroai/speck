@@ -5,6 +5,7 @@ import path from 'node:path';
 import { refsOf } from './ship-queue.mjs';
 import { shipState } from './ship.mjs';
 import { codexResumeArgv } from './codex-build.mjs';
+import { cursorResumeArgv } from './cursor-build.mjs';
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
@@ -39,9 +40,14 @@ export function resumeArgv(words, id, session, message = resumeMessage(id)) {
 
 // How speck run resumes a build from its run record `rec`, with `message` (a killed build's by default): { argv }, or
 // { argv: null, why } saying in a few words why it can't. A Codex build (0289) carries on its own session with
-// `codex exec resume`, once its session id has been read from its log; any other with build_command (resumeArgv).
+// `codex exec resume`, once its session id has been read from its log; a Cursor build (0290) its chat with `agent -p
+// --resume`; any other with build_command (resumeArgv).
 export function resumeFor(words, cfg, id, rec, message) {
   const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
+  if (rec?.agent === 'cursor') {
+    const argv = cursorResumeArgv(session, message ?? resumeMessage(id));
+    return argv ? { argv } : { argv: null, why: 'its run record has no session' };
+  }
   if (rec?.agent === 'codex') {
     const argv = codexResumeArgv(cfg, session, message ?? resumeMessage(id, '$speck-build'));
     return argv ? { argv } : { argv: null, why: 'no session id has been read from its log yet, as Codex stopped before writing one' };

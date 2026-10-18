@@ -4,7 +4,7 @@ base_branch: main
 branch_prefix: speck/
 
 builder: claude
-builder_model: ""                # blank: the builder's own default. Otherwise the model every build speck run starts runs on, passed to Claude Code as --model (fable, opus, sonnet, haiku or a full model name), or to Codex as -m when build_command is blank
+builder_model: ""                # blank: the builder's own default. Otherwise the model every build speck run starts runs on, passed to Claude Code as --model (fable, opus, sonnet, haiku or a full model name), or to Codex as -m or Cursor as --model when build_command is blank (Cursor: auto when this is blank)
 reviewer: codex                  # codex | claude | claude-subagent
 allow_same_model_review: false   # must be true for a builder and reviewer of the same family unless builder_model and reviewer_model are both set and differ
 reviewer_model: ""               # blank: the reviewer's own default. Otherwise a model name in the reviewer's own format
@@ -20,7 +20,7 @@ worktree_setup: ""               # run in each new worktree, for example: npm ci
 
 # speck run: starts a build for each ready ticket. {id} is the ticket, {session} a fresh UUID for the build's session.
 # The default skips every permission prompt, because nobody is there to answer them: the agent can run any command.
-# With builder: codex, leave it blank ("") and speck run starts and resumes each build with Codex itself.
+# With builder: codex or cursor, leave it blank ("") and speck run starts and resumes each build with that agent itself.
 build_command: 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions'
 max_parallel_builds: 1           # how many builds speck run keeps going at once
 max_parallel_tests: 1            # how many full test runs (speck test, speck ship) go at once in this repo, from any worktree. The rest wait their turn
