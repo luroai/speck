@@ -57,9 +57,9 @@ test('0303 AC1: the mark is drawn once with tile(canvas, PANEL, \'still\', the d
   assert.equal(tiles.length, 1, 'a refresh doesn\'t draw it again');
 });
 
-test('0303 AC1: at 19 px, with the screen and unlit dots transparent, the ink the text colour and the speck --dot', () => {
+test('0303 AC1: at 32 px since 0309, with the screen and unlit dots transparent, the ink the text colour and the speck --dot', () => {
   const css = rule('.logo .mark');
-  for (const d of ['width: 19px', 'height: 19px', '--lcd-bg: transparent', '--lcd-off: transparent', '--lcd-ink: var(--text)', '--lcd-red: var(--dot)', '--lcd-shadow: transparent']) {
+  for (const d of ['width: 32px', 'height: 32px', '--lcd-bg: transparent', '--lcd-off: transparent', '--lcd-ink: var(--text)', '--lcd-red: var(--dot)', '--lcd-shadow: transparent']) {
     assert.ok(css.includes(d), `${d} in .logo .mark { ${css} }`);
   }
   const root = (page().match(/:root \{([\s\S]*?)\}/) || [])[1] || '', dark = (page().match(/:root\[data-theme="dark"\] \{([\s\S]*?)\}/) || [])[1] || '';
@@ -161,7 +161,7 @@ test('0303 AC3: in a real browser, the mark and the builder follow the light and
             await new Promise(res => setTimeout(res, 50));
           }
           const where = `${look}, opened ${first}`;
-          assert.equal(x.mark.width, 19, `${where}: the mark is 19 px`);
+          assert.equal(x.mark.width, 32, `${where}: the mark is 32 px, since 0309`);
           assert.equal(x.mini.width, 28, `${where}: the builder is 28 px`);
           assert.ok(x.mark.colours.includes(x.text), `${where}: the mark's ink is the text colour ${x.text}: ${JSON.stringify(x)}`);
           assert.ok(x.mark.colours.includes(x.dot), `${where}: the speck is ${x.dot}: ${JSON.stringify(x)}`);
