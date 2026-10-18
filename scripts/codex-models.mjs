@@ -11,7 +11,7 @@ const ARGS = ['debug', 'models'];
 // An effort speck passes to Codex inside quotes (model_reasoning_effort="…"), so only a plain word.
 const WORD = /^[a-z][a-z0-9_-]{0,31}$/;
 
-// What `codex debug models` printed, as { models: [{ slug, efforts }] } with the models it lists (not those it
+// What `codex debug models` printed, as { models: [{ slug, display_name?, description?, efforts }] } with the models it lists (not those it
 // hides), or { why } in one line.
 export function parseCodexModels(stdout) {
   let json;
@@ -21,7 +21,9 @@ export function parseCodexModels(stdout) {
     if (m === null || typeof m !== 'object' || m.visibility !== 'list' || typeof m.slug !== 'string' || !m.slug.trim() || /[\x00-\x1f\x7f]/.test(m.slug)) continue;
     const efforts = (Array.isArray(m.supported_reasoning_levels) ? m.supported_reasoning_levels : [])
       .map(l => l?.effort).filter(e => typeof e === 'string' && WORD.test(e));
-    if (!models.some(x => x.slug === m.slug)) models.push({ slug: m.slug, efforts: [...new Set(efforts)] });
+    // 0288: and its display name and description, where Codex gives them
+    const words = Object.fromEntries(['display_name', 'description'].filter(k => typeof m[k] === 'string' && m[k].trim()).map(k => [k, m[k].trim().replace(/\s+/g, ' ')]));
+    if (!models.some(x => x.slug === m.slug)) models.push({ slug: m.slug, ...words, efforts: [...new Set(efforts)] });
   }
   return models.length ? { models } : { why: 'Codex lists no models: check it\'s signed in (codex login), or type the model\'s name.' };
 }
