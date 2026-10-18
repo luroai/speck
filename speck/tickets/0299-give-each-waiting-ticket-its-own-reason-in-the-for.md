@@ -1,7 +1,7 @@
 ---
 id: "0299"
 title: "Give each waiting ticket its own reason in the Foreman's detail"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ approved: "2026-10-18T14:26:43.088Z"
 ---
 # 0299 · Give each waiting ticket its own reason in the Foreman's detail
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 While speck run waits to switch to new code, the Foreman's detail gives that as the reason for every ready ticket, though most are waiting for other tickets in their `after:` list, and its Shipping section says "Nothing is waiting to ship" while an approved ticket shows "Approved · waiting to ship" on the board. Seen on 2026-10-18: 0295, 0296 and 0298 all said "speck run is switching to new code once the build of 0287 ends", while 0295 was waiting for 0294 and 0287, and 0294 was approved and held.
@@ -53,6 +53,7 @@ Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
 
 ## Delivery log
+- Follow-up: no test covers the Foreman's empty Shipping list in pull request mode (merge review F1, minor): speck/ideas/2026-10-18-test-the-foreman-shipping-list-in-pull-request-mode.md
 - Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
 - Reviewer tokens: 494,288
@@ -186,6 +187,80 @@ Round 2 (codex, merge round): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The merge preserves the newer code handover behaviour and this ticket’s individual waiting reasons. Shipping still lists covered approved tickets with their reasons, consistently across the panel and command line. The reported tests passed; no blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0d21377df234b01bffa6a2b832585aa01c0b8b2a",
+    "merge": true,
+    "thread_id": "01a14f5c-7a89-7701-8197-cb5663f25507",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 578600,
+      "cached_input_tokens": 494976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2385,
+      "reasoning_output_tokens": 222
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T14:30:58.072Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run.mjs ownWait prioritises unfinished dependencies in normal checks and switchingReady. Passed 0299 AC1 covers switching; existing 0285 tests cover occupied build slots. readyOnBase was moved unchanged to build-records.mjs."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanView collects shared holds; renderForeman displays them above the sections. Passed 0299 AC2 checks placement, repetition and ticket-specific reasons. The merged code retains 0301's handover timing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipQueue.state lists covered approved tickets except the running ship, with individual waiting reasons. Both 0299 AC3 tests passed. run.mjs suppresses this queue's waiting entries in pull request mode, where prs.check replaces ships.check."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "renderForeman renders ship.waiting before choosing the empty Shipping message. Passed 0299 AC4 checks waiting and empty cases."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "foremanLines and renderForeman use the same foremanView reasons. Passed 0299 AC5 compares their output; existing 0285 AC5 exercises speck status."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "minor",
+        "file": "scripts/run.mjs",
+        "issue": "The new pull request mode suppression of Shipping entries has no regression test. The existing pull request tests exercise its queue directly, bypassing this record-writing branch.",
+        "suggested_fix": "Add a focused integration test confirming that an approved ticket in pull request mode is absent from the Foreman's Shipping waiting list.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves individual waiting reasons, shared explanations and consistent panel and command-line output. The readiness check was moved without changing its behaviour. Reported tests passed. The pull request mode adjustment looks correct but would benefit from a regression test."
   }
 }
 ```
