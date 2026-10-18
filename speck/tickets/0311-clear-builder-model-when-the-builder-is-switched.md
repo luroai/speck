@@ -1,7 +1,7 @@
 ---
 id: "0311"
 title: "Clear builder_model when the builder is switched"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:32:27.950Z"
+approved: "2026-10-18T22:39:22.841Z"
 
 ---
 # 0311 · Clear builder_model when the builder is switched
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Switching the builder, in the Settings view or with `speck config set builder`, leaves `builder_model` as it was. Switching from Claude Code to Codex with `builder_model: opus` left set means every Codex build is started with a model Codex doesn't have.
@@ -49,9 +50,15 @@ To see it, set a builder model such as opus, then switch the builder to Codex: t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 panelSaveSettings adds an exception absent from the ticket: supplying builder_model in the same Save bypasses the check entirely.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 411,616
+- Elapsed since build started: 7 min
+- Changed lines: 91 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: the panel's older one-setting address (POST /api/settings/<key>/<value>), which the page no longer uses, reads the new builder's models while it waits, holding up the panel's server for up to the agent's time limit. The Settings view's Save reads them without waiting.
 
