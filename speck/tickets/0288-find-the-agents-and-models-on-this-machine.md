@@ -1,7 +1,7 @@
 ---
 id: "0288"
 title: "Find the agents and models on this machine"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T10:42:48.088Z"
+approved: "2026-10-18T10:50:56.457Z"
 
 ---
 # 0288 · Find the agents and models on this machine
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck offers agents and models it hasn't checked: reviewers that aren't installed or signed in, Codex models by their raw ids, and Claude's four aliases with no names. Other tools show what's really available on the machine, with names and descriptions.
@@ -56,9 +57,15 @@ To see it, run `speck agents` in the project, or open Settings in the panel. Wor
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A Cursor builder still gets a text box saying it cannot list models.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 463,874
+- Elapsed since build started: 8 min
+- Changed lines: 237 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - `speck detect` still looks only for `cursor-agent`: saved to `speck/ideas/2026-10-18-speck-detect-finds-cursor-as-agent.md`.
