@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { sh, findTicket, worktreeList } from './core.mjs';
+import { sh, findTicket, worktreeList, parseTicket } from './core.mjs';
 import { splitCommand } from './reviewers.mjs';
 import { CODEX_RESUME_COMMAND } from './codex-build.mjs';
 import { cursorResumeCommand } from './cursor-build.mjs';
@@ -101,4 +101,12 @@ export function buildTicket(repo, cfg, id) {
   const branch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${id}-`);
   const at = list.find(w => w.branch && branch.test(w.branch) && fs.existsSync(w.path))?.path || list[0].path;
   return { at, t: findTicket(at, id) };
+}
+
+// Whether the ticket at `rel` is ready in the base branch's latest commit. A ticket set ready but not committed, or
+// never committed at all, isn't: `speck start` would refuse it.
+export function readyOnBase(repo, base, rel) {
+  const r = sh('git', ['show', `refs/heads/${base}:${rel}`], { cwd: repo });
+  if (r.status !== 0) return false;
+  try { return parseTicket(r.stdout).fm.status === 'ready'; } catch { return false; }
 }

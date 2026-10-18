@@ -274,7 +274,7 @@
   .foreman h4 { margin: 8px 0 2px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .foreman ul { margin: 0; padding-left: 18px; }
   .foreman p { margin: 2px 0; }
-  .foreman .stale { color: var(--warn); }
+  .foreman .stale, .foreman .held { color: var(--warn); }
   .foreman .reload, #settings .run-switch { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
   #settings .run-switch:disabled { cursor: default; opacity: .6; }
   #settings .run-row { padding: 8px 12px; }
@@ -3133,7 +3133,7 @@ function foremanOf(st) {
   const on = !!(st && st.run && st.run.on), list = v => (Array.isArray(v) ? v : []);
   const tone = f && typeof f.tone === 'string' ? f.tone : on ? 'idle' : 'off';
   return { word: f && typeof f.word === 'string' ? f.word : on ? 'Idle' : 'Off', tone, on,
-    building: list(f && f.building), ready: list(f && f.ready), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
+    building: list(f && f.building), ready: list(f && f.ready), held: list(f && f.held), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
     agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null }; // 0287: the Foreman agent's work
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
@@ -3152,12 +3152,13 @@ function renderForeman(f, stale) {
   }
   const item = (id, ...rest) => el('li', null, null, el('code', null, id), ...rest.map(r => (typeof r === 'string' ? el('span', null, ` ${r}`) : r)));
   const section = (title, items, none) => [el('h4', null, title), items.length ? el('ul', null, null, ...items) : el('p', 'none', none)];
+  for (const h of f.held) kids.push(el('p', 'held', String(h))); // 0299: what holds up every build or ship, said once
   kids.push(...section('Building', f.building.map(id => item(String(id))), 'Nothing is building.'));
   kids.push(...section('Ready, not building', f.ready.map(r => item(String(r.id), String(r.why || ''))), 'No ready ticket is waiting.'));
   const s = f.ship, ship = [];
   if (s && typeof s.running === 'string' && s.running) ship.push(item(s.running, 'is shipping.'));
-  if (s && s.hold) ship.push(el('li', null, `Shipping is ${String(s.hold.message || 'on hold')}`));
-  for (const r of s && Array.isArray(s.refused) ? s.refused : []) ship.push(item(String(r.id), String(r.message || '')));
+  // 0299: every approved ticket auto_ship covers that isn't shipping, with why. The hold is said above the sections.
+  for (const w of s && Array.isArray(s.waiting) ? s.waiting : []) ship.push(item(String(w.id), String(w.why || '')));
   kids.push(...section('Shipping', ship, f.on ? 'Nothing is waiting to ship.' : 'speck run is off, so nothing ships by itself.'));
   kids.push(...section('Blocked', f.blocked.map(b => item(String(b.id), String(b.title || ''),
     b.question ? el('p', 'question', String(b.question)) : null)), 'Nothing is blocked.'));
