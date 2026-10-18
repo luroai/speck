@@ -1,7 +1,7 @@
 ---
 id: "0319"
 title: "Stop calling speck run's own builds outside speck run"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-18
 ---
 # 0319 · Stop calling speck run's own builds outside speck run
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Since 0300, `speck run` says a build it has just launched itself is "being built outside speck run". On 2026-10-18 it said so of 0302, 0305 and 0309 a moment after launching each. The build is counted once and runs normally, but the message is wrong, and it makes the log and the Foreman's detail misleading.
