@@ -1,7 +1,7 @@
 ---
 id: "0293"
 title: "Switch the builder from the panel and in setup"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T12:14:23.327Z"
 ---
 # 0293 · Switch the builder from the panel and in setup
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `builder` is read-only in the panel, because changing it needs a `build_command` that starts that agent, and setup asks the user to write one. Someone with Codex or Cursor can't switch to it without editing `speck/config.yml` by hand.
@@ -46,7 +46,11 @@ You can switch the builder in the Settings view and in setup, and speck sets eve
 - Self-check: a build_command that YAML reads as a number or list is shown and confirmed as text, so it can still be replaced; README claims narrowed to claude, codex and cursor, with a test for the command it names.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+You can now change which agent builds your tickets (Claude Code, Codex or Cursor) from the panel's Settings view, and setup does the same. speck sets up how builds start for that agent, so there's nothing to edit by hand. The list only offers agents that are installed and signed in on this machine.
+
+To see it, open Settings, pick a different builder and save. The view says that tickets already made keep the builder written in them. If the reviewer would be the same kind of model as the new builder, saving is refused and a different reviewer is suggested. If you'd written your own build command, speck asks before replacing it.
+
+Worth keeping an eye on: after a switch, automatic builds use the new builder for every ready ticket, including older ones. The builder's model setting also stays as it was, so check it still suits the new builder.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +60,74 @@ You can switch the builder in the Settings view and in setup, and speck sets eve
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- `speck run` builds every ready ticket with the configured builder, not the one a ticket records: `speck/ideas/2026-10-18-build-older-tickets-with-the-builder-they-were-made-with.md`.
+- Switching the builder keeps `builder_model`, which may name another builder's model: `speck/ideas/2026-10-18-clear-builder-model-when-the-builder-is-switched.md`.
+- Not done again: setup's blank-build_command advice for a Codex builder with its own command is already in the inbox (`speck/ideas/2026-10-18-setup-s-blank-build-command-advice-for-codex.md`).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4165fbda14cb249a83fcb19ec31abd58d5414f91",
+    "thread_id": "01a14ef6-4472-7f90-a37d-e92d2284e915",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 204568,
+      "cached_input_tokens": 145152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1135,
+      "reasoning_output_tokens": 327
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T12:22:39.336Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs filters builder choices through readyReviewers and saves builder with its matching build_command in one commit. The three AC1 tests passed, including command changes for all three builders. Claude uses its default command as clarified in the ticket."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelSaveSettings checks the proposed settings with sameModelProblem and suggests another-family reviewer on refusal. The AC2 test passed, covering refusal without changes, changing reviewer together, and allow_same_model_review."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html replacesCommand asks before replacement; panelSaveSettings verifies confirmation against the current command. Both AC3 tests passed, covering cancellation, incorrect confirmation, successful replacement and numeric YAML values."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md section 5 explicitly offers installed, signed-in agents, recommends Claude Code and uses config set builder with consent before --replace. Section 6 explains the resulting commands. The CLI behaviour test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The two AC5 tests passed: existing ticket builder metadata remains unchanged, newly created tickets inherit the new builder, and builderSwitchLine explains this in Settings. This meets the interpretation explicitly recorded in the ticket's Notes."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Builder switching works in Settings and setup, updates the build command, protects custom commands with confirmation, and checks reviewer compatibility. The recorded run passed 140 tests with three skipped. Existing tickets retain their recorded builder, although automatic builds still use the current global builder—a limitation explicitly deferred by this ticket."
+  }
+}
+```
+
+</details>
