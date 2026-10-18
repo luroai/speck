@@ -1,7 +1,7 @@
 ---
 id: "0287"
 title: "Let the Foreman look into work that stops for no known reason"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0286"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:16:47.539Z"
 approved: "2026-10-18T13:36:49.168Z"
+finished: "2026-10-18T13:41:58.718Z"
 
 ---
 # 0287 · Let the Foreman look into work that stops for no known reason
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Some stops have no recipe in speck: a ship refused for a reason speck doesn't recognise, or a build that ends without being approved or blocked. Today they wait in `run.log` until the user notices and asks an agent to look.
