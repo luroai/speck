@@ -17,7 +17,7 @@ import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
 import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels, builderModels } from './settings.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
-import { foremanView, readForeman } from './foreman.mjs';
+import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { findAgentsAsync } from './agents.mjs';
 import { goWith } from './go-with.mjs';
 
@@ -283,12 +283,14 @@ export async function panelServer() {
   // What /api/state answers with for a reading: the board, plus speck run's state and the last restart's error, kept in
   // parts so a page gets only what changed since the board it has (0188, see boardVersions), with the finished tickets
   // the page shows only in the Shipped figures cut down to those (0178, see panelBoard).
+  // 0286: foreman_fixing as speck/config.yml has it now, or its default when that can't be read.
+  const fixingNow = () => { try { return fixingOf(loadConfig(repo)); } catch { return 'tell'; } };
   const boards = boardVersions(), stateOf = out => {
     if (out.error) return { status: 500, body: JSON.stringify({ error: out.error }) };
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
-      const run = runState(runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets });
+      const run = runState(runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow() });
       const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...pageNow() });
       return { status: 200, body: snap.body, snap };
     }

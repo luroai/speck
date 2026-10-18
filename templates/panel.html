@@ -1839,7 +1839,8 @@ function renderSettings() {
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', leaveSettings);
-  const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close), foremanGroup()]; // 0285: the Foreman first
+  const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close)];
+  let foremanRows = []; // 0286: the server's Foreman settings, shown in the Foreman group
   if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
   else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
@@ -1864,11 +1865,13 @@ function renderSettings() {
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
           tip));
       }
+      if (g.title === 'Foreman') { foremanRows = rows; continue; }
       // 0273: a box like the panel's sections, with a heading bar
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }
     if (settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
   }
+  kids.splice(1, 0, foremanGroup(foremanRows)); // 0285: the Foreman first
   pane.replaceChildren(...kids);
   refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
@@ -3163,11 +3166,11 @@ function drawRunSwitch() {
   runSwitchButton.disabled = !!runSwitching || !state;
   runSwitchButton.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets';
 }
-function foremanGroup() {
+function foremanGroup(rows = []) {
   drawRunSwitch();
   return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Foreman')),
     el('div', 'run-row', null, el('div', 'row', null, el('span', 'label', 'speck run'), runSwitchButton),
-      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.')));
+      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.')), ...rows);
 }
 // 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.
