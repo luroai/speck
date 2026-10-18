@@ -48,8 +48,9 @@ const text = v => (typeof v === 'string' ? v : '');
 // { word, tone, building, ready: [{ id, why }], ship: { running, hold, refused: [{ id, message }] } | null,
 // blocked: [{ id, title, question }] }, word being the status in one or two words and tone its colour:
 // off, idle, ok (building or shipping), warn (waiting) or bad (needs you). 0286: `fixing` is foreman_fixing: with off,
-// blocked tickets aren't counted under Needs you.
-export function foremanView({ run, record, tickets, fixing = 'tell' }) {
+// blocked tickets aren't counted under Needs you. 0287: `agent` is the Foreman agent's (agentView), given back as it is,
+// its questions to you counted under Needs you.
+export function foremanView({ run, record, tickets, fixing = 'tell', agent = null }) {
   const on = !!(run && run.on);
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
@@ -67,9 +68,11 @@ export function foremanView({ run, record, tickets, fixing = 'tell' }) {
     refused: list(s.refused).filter(r => r && typeof r.id === 'string').map(r => ({ id: r.id, message: text(r.message) })),
   } : null;
   const switching = rec && rec.switching && typeof rec.switching === 'object';
-  const view = (word, tone) => ({ word, tone, building, ready: ready.map(({ id, why }) => ({ id, why })), ship, blocked });
+  const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
+  const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
+  const view = (word, tone) => ({ word, tone, building, ready: ready.map(({ id, why }) => ({ id, why })), ship, blocked, agent: ag });
   if (!on) return view('Off', 'off');
-  if (blocked.length && fixing !== 'off') return view(`Needs you ${blocked.length}`, 'bad');
+  if ((blocked.length && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? blocked.length : 0) + asks.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
   const why = switching ? 'new code' : ship && ship.hold ? 'on hold' : ready.find(r => SHORT[r.kind]) ? SHORT[ready.find(r => SHORT[r.kind]).kind]
@@ -84,5 +87,9 @@ export function foremanLines(v) {
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
   if (v.ship && v.ship.hold) lines.push(`  Shipping ${v.ship.hold.message}`);
   for (const r of v.ship ? v.ship.refused : []) lines.push(`  ${r.id} waiting to ship: ${r.message}`);
+  const a = v.agent; // 0287: the Foreman agent
+  if (a?.running) lines.push(`  The Foreman is looking into ${a.running.id}: ${a.running.what}`);
+  for (const q of a?.asks || []) lines.push(`  The Foreman asks you about ${q.id}: ${q.question}`);
+  for (const d of a?.did || []) lines.push(`  The Foreman ${d.did} for ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${d.why}`);
   return lines;
 }
