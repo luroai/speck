@@ -38,6 +38,7 @@ Every blocked question says, in a form speck can read, which option the build re
 ## Notes
 - First step of `speck/ideas/2026-10-17-a-foreman-that-keeps-the-work-moving.md`.
 - Blocking is in `/speck-build` sections 5 and 6, and `speck set <id> status blocked`. speck run writes a blocked question itself in `scripts/run.mjs` (search for "Blocked question").
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
