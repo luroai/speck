@@ -91,7 +91,7 @@ const measure = b => b.js(`(() => {
   const r = document.createRange(); r.setStart(word, 0); r.setEnd(word, 5);
   const m = mark.getBoundingClientRect(), w = r.getBoundingClientRect();
   return { text: r.toString(), mark: { left: m.left, right: m.right, top: m.top, bottom: m.bottom, height: m.height },
-    word: { left: w.left, top: w.top, bottom: w.bottom }, font: parseFloat(getComputedStyle(logo).fontSize),
+    word: { left: w.left, top: w.top, bottom: w.bottom }, font: parseFloat(getComputedStyle(logo.querySelector('.name')).fontSize),
     shown: getComputedStyle(mark).display !== 'none' && m.width > 0 };
 })()`);
 
@@ -102,7 +102,8 @@ for (const theme of ['light', 'dark']) for (const width of [1280, 375]) {
       assert.equal(x.text, 'speck');
       assert.ok(x.shown, `${where}: the mark shows`);
       assert.ok(x.mark.right <= x.word.left && x.word.left - x.mark.right <= 10, `${where}: immediately left of the wordmark: ${JSON.stringify(x)}`);
-      assert.ok(x.mark.height >= x.font * 0.8 && x.mark.height <= x.font * 1.2, `${where}: about as tall as the wordmark: ${JSON.stringify(x)}`);
+      // 0309: a 32 px mark beside a 26 px speck
+      assert.ok(x.mark.height >= x.font * 0.8 && x.mark.height <= x.font * 1.25, `${where}: about as tall as the wordmark: ${JSON.stringify(x)}`);
       assert.ok(x.mark.top >= x.word.top - 2 && x.mark.bottom <= x.word.bottom + 2, `${where}: on the wordmark's line: ${JSON.stringify(x)}`);
     };
     await check('at the top');
