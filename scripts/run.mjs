@@ -261,9 +261,9 @@ function runOn(worker) {
   };
 
   // Starts a build in its own process group, logging to <id>.log (opened with `flags`), and keeps its run record:
-  // record(pid) is its text, written with pid null before it starts and again with its pid once it has. `env` is the
-  // session in its environment (buildEnv): its own, unless it's a Codex build's (0289).
-  const startBuild = (id, argv, cwd, session, flags, record, env = session) => {
+  // record(pid) is its text, written with pid null before it starts and again with its pid once it has. `shown` is the
+  // session it reports, and `session` the one in its environment (buildEnv): the same, unless it's a Codex build's (0289).
+  const startBuild = (id, argv, cwd, shown, flags, record, session = shown) => {
     launched.add(id);
     running.add(id);
     const dir = runsDir(repo);
@@ -274,7 +274,7 @@ function runOn(worker) {
       // Written before the build starts, so a record that can't be written stops the build from starting at all.
       if (flags === 'w') fs.writeFileSync(recordFile, record(null));
       fd = fs.openSync(log, flags);
-      child = spawn(argv[0], argv.slice(1), { cwd, detached: true, stdio: ['ignore', fd, fd], env: buildEnv(argv, env) });
+      child = spawn(argv[0], argv.slice(1), { cwd, detached: true, stdio: ['ignore', fd, fd], env: buildEnv(argv, session) });
     } catch (e) { if (fd !== null) fs.closeSync(fd); return finished(id, log, null, null, e.message); }
     fs.closeSync(fd);
     let done = false;
@@ -283,9 +283,9 @@ function runOn(worker) {
     child.unref();
     if (child.pid) {
       try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {
-        console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${session ?? 'not known yet'}.`);
+        console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${shown ?? 'not known yet'}.`);
       }
-      console.log(`${flags === 'a' ? 'Resumed' : 'Launched'} ${id} (session ${session ?? 'read from its log once Codex writes it'}). Log: ${path.relative(repo, log)}`);
+      console.log(`${flags === 'a' ? 'Resumed' : 'Launched'} ${id} (session ${shown ?? 'read from its log once Codex writes it'}). Log: ${path.relative(repo, log)}`);
     }
   };
 
