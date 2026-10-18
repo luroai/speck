@@ -42,6 +42,7 @@ The panel's header mark, browser-tab icon and app icons are the design's new log
 - The new renderer adds `SpeckLCD.logo`: `MARK` (the bitmap), `LOOKS`, `markSVG(o)`, `faviconSVG()`, `appIconSVG(look, size)` and `avatarSVG(look, size)`. The concept page's "Logos" band (`concept.html`, search for `id="logos"`) shows each in use.
 - Checked 2026-10-19: lines 1–706 of the new `lcd.js` are identical to the old one; only the logo section and its export are new.
 - The pinned SHA-256 of the old renderer is in `test/panel-0308.test.mjs` and possibly 0302's tests.
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
