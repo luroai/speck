@@ -34,7 +34,7 @@ test('0298 AC2: CHANGELOG.md has a 0.8.0 section above 0.7.0, naming how to inst
   assert.ok(s, 'CHANGELOG.md has a 0.8.0 section');
   assert.ok(log.indexOf(s) < log.indexOf(changelogSection(log, '0.7.0')), '0.8.0 comes above 0.7.0');
   assert.match(s, INSTALL, 'it says how to install this release');
-  for (const name of ['foreman_fixing', '`foreman`', 'foreman_model', 'foreman_effort', 'ship_mode', 'speck picture', 'speck pack', 'Go with the recommendation']) assert.ok(s.includes(name), name);
+  for (const name of ['foreman_fixing', '`foreman`', 'foreman_model', 'foreman_effort', 'ship_mode', 'speck picture', 'speck pack', 'blocked_recommendation']) assert.ok(s.includes(name), name);
 });
 
 test('0298 AC2: the 0.7.0 and earlier sections are as v0.7.0 tagged them', t => {
