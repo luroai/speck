@@ -81,7 +81,7 @@ test('0295 AC2: speck pushes the approved branch and opens a pull request into t
   assert.equal(r.ticketIn(r.wt).fm.pull_request, pr.url);
   assert.equal(r.g('status', '--porcelain'), '');
   assert.equal(gIn(r.wt, 'status', '--porcelain').stdout, '');
-  assert.equal(r.remoteHas(BRANCH), r.sha(BRANCH));
+  assert.equal(r.remoteHas(`${BRANCH}^1`), r.sha(BRANCH), 'pushed with the commit filing it as done on top (0315)');
   assert.equal(r.remoteHas('main'), r.sha('main'), 'main is as it was');
   assert.equal(r.ticketIn(r.wt).fm.status, 'approved');
   assert.deepEqual(statusData(r.dir).tickets.find(t => t.id === '0001').pull_request, { url: pr.url, error: null });
@@ -95,7 +95,7 @@ test('0295 AC2: speck close opens the pull request once the ticket is approved',
   assert.match(closed.stdout, /Opened its pull request: https:\/\/github\.com\/o\/r\/pull\/1/);
   assert.equal(r.ticketIn(r.wt).fm.status, 'approved');
   assert.equal(r.ticketIn(r.wt).fm.pull_request, 'https://github.com/o/r/pull/1');
-  assert.equal(r.remoteHas(BRANCH), r.sha(BRANCH));
+  assert.equal(r.remoteHas(`${BRANCH}^1`), r.sha(BRANCH), 'pushed with the commit filing it as done on top (0315)');
 });
 
 test('0295 AC2: the panel shows the ticket\'s pull request in its review pack, opening on GitHub', async () => {
@@ -129,7 +129,7 @@ test('0295 AC2: the link is written on the ticket even when its branch isn\'t ch
   const pr = openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh });
   assert.equal(parseTicket(r.g('show', `${BRANCH}:${TICKET}`)).fm.pull_request, pr.url);
   assert.equal(r.g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).length, 1, 'the temporary worktree is gone');
-  assert.equal(r.remoteHas(BRANCH), r.sha(BRANCH));
+  assert.equal(r.remoteHas(`${BRANCH}^1`), r.sha(BRANCH), 'pushed with the commit filing it as done on top (0315)');
   assert.equal(r.g('branch', '--show-current'), 'main');
 });
 
