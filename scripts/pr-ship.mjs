@@ -3,7 +3,8 @@
 // local ship does: the local base branch brought up to date, the ticket filed as done, its worktree and branch removed.
 // A pull request already merged on GitHub only gets the tidying up. One that can't be merged changes nothing locally.
 import { SpeckError, sh, git, loadConfig, findTicket, placeTicket, writeField, isAncestor, padId } from './core.mjs';
-import { shipChecks, ticketBranch, autoShipBlocker, deleteRemoteBranch } from './ship.mjs';
+import { shipChecks, ticketBranch, autoShipBlocker, deleteRemoteBranch, candidateMerge, testMerged, testFailure } from './ship.mjs';
+import { failingTests } from './tap.mjs';
 import { shipFolders, putBranchBack } from './ship-folders.mjs';
 import { runGh, lastLine, branchFolder, removeFolder } from './pull-request.mjs';
 import { removeScratch } from './scratch.mjs';
@@ -105,17 +106,33 @@ function tidy(repo, cfg, pad, branch, remote, { main, work, mergeAt, linked }) {
   }
   catchUp(mergeAt, remote, base, pad);
   fileDone(mergeAt, pad);
-  const push = sh('git', ['push', '-q', remote, base], { cwd: main });
-  console.log(push.status === 0 ? `Pushed ${base} to ${remote}.`
-    : `Couldn't push the done ticket on ${base} to ${remote} (${lastLine(push)}), so it's on your local ${base} only. It goes up with your next push of ${base}.`);
   const removed = linked ? sh('git', ['worktree', 'remove', '--force', linked], { cwd: main }) : null;
   if (removed && removed.status !== 0) console.log(`Couldn't remove the worktree at ${linked} (${lastLine(removed)}), so ${branch} is kept. Run \`git worktree remove ${linked}\`, then \`git branch -D ${branch}\`.`);
   else {
     if (removed) console.log(`Removed the ticket's worktree at ${linked}.`);
     git(['branch', '-D', branch], main);
   }
-  deleteRemoteBranch(main, remote, branch);
+  deleteRemoteBranch(main, remote, branch); // its commits are in the remote's base branch already, through the pull request
   removeScratch(pad);
+  // Last, as a local ship pushes: a refusal, as on a protected branch, is kept in the ship record for the panel (0204).
+  const push = sh('git', ['push', '-q', remote, base], { cwd: main });
+  if (push.status === 0) return console.log(`Pushed ${base} to ${remote}.`);
+  const e = new SpeckError(`${pad}'s pull request is merged and its ticket is done on your ${base}, but pushing ${base} to ${remote} failed (${lastLine(push)}), so the done ticket is on this computer only. Run \`git push ${remote} ${base}\` once ${remote} takes it.`);
+  e.unpushed = { remote, base, sha: git(['rev-parse', base], main).trim() };
+  throw e;
+}
+
+// The whole suite on the ticket merged with the remote's base branch as it is now, as a local ship tests what lands,
+// in `at`, where its branch is checked out. Throws, as a local ship does, when it fails; nothing else changes.
+function testLanding(at, cfg, pad, branch, remote) {
+  const base = cfg.base_branch;
+  const fetched = sh('git', ['fetch', '-q', remote, base], { cwd: at });
+  if (fetched.status !== 0) throw new SpeckError(`speck couldn't fetch ${base} from ${remote} to test ${pad} as it would land (${lastLine(fetched)}), so its pull request wasn't merged. Nothing was changed.`);
+  const target = git(['rev-parse', 'FETCH_HEAD'], at).trim(), tip = git(['rev-parse', branch], at).trim();
+  const candidate = candidateMerge(at, branch, target, `speck(${pad}): test`);
+  if (!candidate) throw new SpeckError(`${branch} conflicts with ${remote}'s ${base}, so ${pad}'s pull request wasn't merged. Merge ${base} into it, get it reviewed, then ship again. Nothing was changed.`, 13);
+  const r = testMerged(at, cfg, branch, candidate);
+  if (!r.ok) throw testFailure(at, cfg, base, target, { moved: !isAncestor(at, target, tip), failing: failingTests(r.output) });
 }
 
 // `speck ship <id>` in pull request mode. `auto` is --auto: an open pull request is merged only when auto_ship covers
@@ -143,15 +160,18 @@ export function shipPrTicket(repo, id, { auto = false, gh = 'gh' } = {}) {
       const why = auto ? autoShipBlocker(folder.at, cfg, pad) : '';
       if (why) throw new SpeckError(`Not merging automatically: ${why}. The ticket stays approved, waiting for you to run /speck-ship ${pad}.`, 12);
       shipChecks(folder.at, cfg, pad, branch);
+      if (!v.headRefOid) throw new SpeckError(`gh didn't say which commit ${pad}'s pull request, ${v.url}, is at, so speck couldn't check it's the one the reviewer approved. Nothing was changed.`);
+      if (v.headRefOid !== local) throw new SpeckError(isAncestor(repo, v.headRefOid, local)
+        ? `${branch} has commits its pull request doesn't, so it wasn't merged. Run \`speck pr ${pad}\` to push them, then ship again. Nothing was changed.`
+        : `${pad}'s pull request, ${v.url}, has commits that aren't on ${branch}, so the reviewer hasn't seen them and it wasn't merged. Nothing was changed.`);
+      const held = whyNotMergeable(v);
+      if (held) throw new SpeckError(`${pad}'s pull request, ${v.url}, can't be merged yet: ${held}. Nothing was changed.`);
+      testLanding(folder.at, cfg, pad, branch, remote);
     } finally { removeFolder(repo, folder.temp); }
-    if (!v.headRefOid) throw new SpeckError(`gh didn't say which commit ${pad}'s pull request, ${v.url}, is at, so speck couldn't check it's the one the reviewer approved. Nothing was changed.`);
-    if (v.headRefOid !== local) throw new SpeckError(isAncestor(repo, v.headRefOid, local)
-      ? `${branch} has commits its pull request doesn't, so it wasn't merged. Run \`speck pr ${pad}\` to push them, then ship again. Nothing was changed.`
-      : `${pad}'s pull request, ${v.url}, has commits that aren't on ${branch}, so the reviewer hasn't seen them and it wasn't merged. Nothing was changed.`);
-    const why = whyNotMergeable(v);
-    if (why) throw new SpeckError(`${pad}'s pull request, ${v.url}, can't be merged yet: ${why}. Nothing was changed.`);
     const merged = runGh(gh, ['pr', 'merge', String(v.number), '--merge', '--match-head-commit', local], repo);
     if (merged.status !== 0) throw new SpeckError(`GitHub didn't merge ${pad}'s pull request, ${v.url}: ${lastLine(merged) || `gh exited with ${merged.status}`}. Nothing was changed.`);
+    // With a merge queue or auto-merge, gh succeeds having only queued it: tidying up waits until GitHub has merged it.
+    if (findPr(gh, repo, pad, branch, base)?.state !== 'MERGED') throw new SpeckError(`gh accepted ${pad}'s pull request, ${v.url}, but GitHub hasn't merged it yet, as with a merge queue, so nothing was tidied up. Ship it again once it's merged; speck run does that by itself.`);
     console.log(`Merged ${pad}'s pull request on GitHub: ${v.url}.`);
   }
   tidy(repo, cfg, pad, branch, remote, folders);

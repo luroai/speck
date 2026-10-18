@@ -9,7 +9,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { refsOf, launchShip } from './ship-queue.mjs';
-import { otherShipRunning } from './ship.mjs';
+import { otherShipRunning, shipState } from './ship.mjs';
 import { prLook } from './pr-ship.mjs';
 import { readPrRecord } from './pull-request.mjs';
 import { sharedCacheDir } from './turns.mjs';
@@ -77,6 +77,7 @@ export function prQueue(repo, cfg, { say = console.log, launch = launchPr, ship 
         current = null;
         if (code === 0) return say(`Shipped ${t.id}.`);
         if (code === 15) { shipped.delete(t.id); looked.delete(t.id); return; } // another ship started just before it: not a try
+        if (!error && shipState(runs, t.id)?.unpushed) return say(`${t.id}'s pull request is merged, but its done ticket wasn't pushed: ${lastLine(log)}`);
         say(`${t.id} didn't ship: ${error || lastLine(log) || (code === null ? 'it was stopped' : `it exited with ${code}`)} speck run tries again once its pull request, ${base} or its branch changes.`);
       });
       return;

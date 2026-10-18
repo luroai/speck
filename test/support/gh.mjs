@@ -40,7 +40,8 @@ if (args[0] === 'pr' && args[1] === 'view') {
 }
 if (args[0] === 'pr' && args[1] === 'merge') {
   const p = find(args[2]);
-  if (read('merge', 'ok').trim() !== 'ok') { console.error('GraphQL: Pull request is not mergeable: the base branch policy prohibits the merge. (mergePullRequest)'); process.exit(1); }
+  if (!['ok', 'queue'].includes(read('merge', 'ok').trim())) { console.error('GraphQL: Pull request is not mergeable: the base branch policy prohibits the merge. (mergePullRequest)'); process.exit(1); }
+  if (read('merge', 'ok').trim() === 'queue') { console.log('! Pull request #' + args[2] + ' will be added to the merge queue for main when ready'); process.exit(0); }
   const head = tip(p.head);
   if (args.includes('--match-head-commit') && opt('--match-head-commit') !== head) { console.error('GraphQL: Head branch was modified. Review and try the merge again. (mergePullRequest)'); process.exit(1); }
   const base = tip(p.base), tree = git('merge-tree', '--write-tree', base, head).split('\\n')[0];

@@ -12,9 +12,9 @@ import { fakeGh } from './gh.mjs';
 export const TICKET = 'speck/tickets/0001-export-bookings.md';
 export const runs = dir => path.join(dir, 'speck', '.cache', 'runs');
 
-// `mode` is ship_mode, and `config` any other lines to set, such as 'auto_ship: true', on both branches.
-export function prRepo({ mode = 'pr', config = [] } = {}) {
-  const r = shipRepo();
+// `mode` is ship_mode, `test` the test command as shipRepo takes it, and `config` any other lines to set, such as 'auto_ship: true', on both branches.
+export function prRepo({ mode = 'pr', config = [], test = 'true' } = {}) {
+  const r = shipRepo({ test });
   const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
   gIn(bare, 'init', '-q', '--bare', '-b', 'main');
   for (const cwd of [r.dir, r.wt]) {
