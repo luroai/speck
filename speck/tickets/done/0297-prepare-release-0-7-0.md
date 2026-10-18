@@ -1,7 +1,7 @@
 ---
 id: "0297"
 title: "Prepare release 0.7.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0288", "0289", "0290", "0291", "0292", "0293"]  # ticket ids that must 
 created: 2026-10-18
 started: "2026-10-18T12:25:35.297Z"
 approved: "2026-10-18T12:31:47.446Z"
+finished: "2026-10-18T12:36:06.056Z"
 
 ---
 # 0297 · Prepare release 0.7.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Once 0288–0293 ship, speck can build with Codex or Cursor as well as Claude Code, review with Claude Code from the command line, find the agents and models on the machine, and switch the builder from the panel and in setup. Anyone following the setup prompt, or updating speck on another machine, gets 0.6.0 without it.
