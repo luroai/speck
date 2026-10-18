@@ -1791,7 +1791,8 @@ function renderSettings() {
           mine ? machineLine(x) : null,
           x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null,
           edit && x.for_machine === true ? scopeQuestion(x.key) : null,
-          x.key === 'reviewer' && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288
+          (x.key === 'reviewer' || x.key === 'builder') && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293
+          x.key === 'builder' ? builderSwitchLine(x) : null,
           x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
           x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
@@ -1840,7 +1841,7 @@ function settingEditor(x) {
   const typing = value => {
     settingTyped.set(x.key, value);
     // 0276: the reviewer and its model decide what the model and effort lists offer, so those are drawn again.
-    if (x.key === 'reviewer' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) {
+    if (x.key === 'reviewer' || x.key === 'builder' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) {
       renderSettings();
       const again = settingControls.get(x.key);
       if (again && again.focus) again.focus();
@@ -1953,6 +1954,28 @@ function modelsWhy() {
   if (chosen === m.reviewer) return typeof m.why === 'string' && m.why ? m.why : null;
   return chosen === 'codex' ? 'Save codex as the reviewer, then open Settings again to pick from its models.'
     : `${chosen} can't list its models, so type the model's name as it names it.`;
+}
+// 0293: what switching the builder does, said while a new one is picked, and the build_command it sets.
+const BUILDER_NAMES = { claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' };
+function builderCommandWords(x, builder) {
+  const own = x.build_command && x.build_command.own && typeof x.build_command.own === 'object' && Object.hasOwn(x.build_command.own, builder) ? x.build_command.own[builder] : null;
+  if (typeof own !== 'string') return null;
+  return own === '' ? `blank, so speck run starts each build with ${BUILDER_NAMES[builder] || builder}'s own command` : `${BUILDER_NAMES[builder] || builder}'s own command`;
+}
+function builderSwitchLine(x) {
+  const picked = settingChosen('builder');
+  if (picked === settingNow(x)) return null;
+  const sets = builderCommandWords(x, picked);
+  return el('p', null, `Tickets already made keep the builder they were made with, ${settingNow(x)}. Saving changes who builds tickets made from now on${sets ? `, and sets build_command to ${sets}` : ''}.`);
+}
+// When these changes switch the builder and build_command was set by hand: what to ask before replacing it, and the
+// build_command to send as confirmed; otherwise null.
+function replacesCommand(changes) {
+  const c = changes.find(c => c.key === 'builder'), x = settingRows().find(r => r.key === 'builder');
+  if (!c || !x || !x.build_command || x.build_command.hand_set !== true) return null;
+  const now = x.build_command.value, sets = builderCommandWords(x, c.value);
+  if (sets === null) return null;
+  return { value: typeof now === 'string' ? now : '', ask: `build_command is set by hand to '${typeof now === 'string' ? now : ''}', not ${settingNow(x)}'s own command. Switching the builder to ${c.value} replaces it: build_command will be ${sets}. Replace it?` };
 }
 // A setting's value as its control writes it: "low,high" for a list.
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
@@ -2069,13 +2092,21 @@ async function sendSettings() {
       return;
     }
   }
+  const replacing = replacesCommand(changes);
+  if (replacing !== null && (typeof confirm !== 'function' || !confirm(replacing.ask))) { // 0293: cancelled: the builder goes back as it was
+    settingTyped.delete('builder');
+    settingRefused.delete('builder');
+    renderSettings();
+    return;
+  }
   settingsView.saving = true;
   settingRefused = new Map();
   settingsFailed = null;
   refreshSettings();
-  let refused = null, why = null, ask = false;
+  let refused = null, why = null, ask = false, again = false;
   const query = [...changes.map(c => `${c.machine ? 'machine' : 'repo'}%3A${encodeURIComponent(c.key)}=${encodeURIComponent(c.value)}`),
-    ...(more !== null ? [`confirm=${encodeURIComponent(more.risks)}`] : [])].join('&');
+    ...(more !== null ? [`confirm=${encodeURIComponent(more.risks)}`] : []),
+    ...(replacing !== null ? [`replace=${encodeURIComponent(replacing.value)}`] : [])].join('&');
   try {
     const res = await fetch(`/api/settings/save?${query}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
     if (!res.ok) {
@@ -2084,6 +2115,7 @@ async function sendSettings() {
       why = body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`;
       refused = body && body.refused !== null && typeof body.refused === 'object' ? body.refused : null;
       ask = res.status === 409 && body !== null && body.confirm === true;
+      again = res.status === 409 && body !== null && body.replace === true; // 0293: build_command changed since
     }
   } catch { why = "Couldn't reach the panel server, so nothing was saved."; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -2094,6 +2126,7 @@ async function sendSettings() {
     for (const [k, v] of mineToo) settingRefused.set(k, v);
     if (!mineToo.length) settingsFailed = why;
     if (ask) { for (const k of ['auto_ship', 'auto_ship_risk']) settingTyped.delete(k); loadSettings(); return; } // 0259: changed since: read them again
+    if (again) { loadSettings(); return; } // 0293: read build_command again, keeping the builder picked
     renderSettings();
     return;
   }
