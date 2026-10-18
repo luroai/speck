@@ -39,7 +39,13 @@ With `builder: cursor`, speck run starts each build with Cursor's CLI, passing `
 ## Notes
 - Checked 2026-10-18: Cursor's CLI is `agent`; `-p`/`--print` runs without a person, `-f`/`--force` allows commands, `--trust` trusts the workspace in headless mode, `--output-format stream-json` works with `--print`, `--model` picks the model, `--resume [chatId]` resumes a chat, and `agent create-chat` makes an empty chat and returns its id (cursor.com/docs/cli/reference/parameters).
 - Checked 2026-10-18: Cursor loads skills from `.agents/skills/`, `.cursor/skills/` and `.claude/skills/` (cursor.com/docs/skills).
-- Unverified: whether `/speck-build <id>` in a `-p` prompt runs the skill in the CLI, and what `agent create-chat` prints besides the id (Cursor's CLI isn't installed here). Check both before building.
+- Checked 2026-10-18 by running Cursor CLI 2026.10.16-e3cb207 (installed as both `agent` and `cursor-agent`, signed in) in a scratch repo:
+  - `agent create-chat` prints only the chat id and a newline, exit 0.
+  - `agent -p --force --trust --output-format stream-json --model auto --resume <id> '/alpha-check'` ran a skill from `.agents/skills/` by its slash name, ran its shell command with no prompts, and exited 0. Without `--trust`, a folder it hasn't seen before stops to ask for trust.
+  - stream-json lines: `{"type":"system","subtype":"init","session_id":…,"model":…}`; `user`; `thinking` (subtype `delta`/`completed`); `tool_call` with subtype `started`/`completed` (a shell command's is `tool_call.shellToolCall.args.command`, and on completed `tool_call.shellToolCall.result.success.exitCode`, stdout and stderr); `{"type":"assistant","message":{"content":[{"type":"text","text":…}]}}`; and a final `{"type":"result","subtype":"success","is_error":false,"result":…,"session_id":…,"usage":{"inputTokens":…,"outputTokens":…,"cacheReadTokens":…,"cacheWriteTokens":…}}`. No cost field.
+  - On a free Cursor plan only the `auto` model works: a named model fails with "ActionRequiredError: Named models unavailable Free plans can only use Auto". A chat keeps the model it was first run with. So when `builder_model` is blank, speck passes `--model auto` rather than no `--model`.
+  - `agent models` prints "Available models", a blank line, then one `<id> - <display name>` per line, with "(current, default)" after the default.
+- Checked 2026-10-18: a resumed chat remembers earlier turns (two `-p --resume <id>` runs on one chat from `agent create-chat`: the second recalled a word given in the first).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
