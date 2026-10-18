@@ -38,6 +38,7 @@ The review pack of a ticket that changes how something looks shows pictures of t
 
 ## Notes
 - From `speck/ideas/2026-10-16-show-images-in-review-packs.md`, with its open questions decided: the builder takes the pictures, of the result only, in light and dark, kept beside the pack.
+- Failing before this build: none
 - Tests already drive a real browser with `browserPage()` in `test/support/panel.mjs`. The pack is built in `scripts/pack.mjs`.
 
 ## In plain words
