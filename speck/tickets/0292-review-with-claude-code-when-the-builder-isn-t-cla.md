@@ -39,6 +39,8 @@ With Codex or Cursor as the builder, the reviewer should come from another famil
 - Reviewer commands are in `scripts/reviewers.mjs`; the review skill is `skills/speck-review/SKILL.md`.
 - Checked 2026-10-18: Claude Code 2.1.301. `--permission-mode plan` isn't enforced for this: the model declines writes itself, with no harness denial. `--permission-mode dontAsk` is: in `-p` it runs read-only commands (`git status`, `cat`, the Read tool) and denies everything not pre-approved (`touch`, `echo x > f`, the Write tool), listing each in `permission_denials`. It must be passed explicitly, as a user's `defaultMode: bypassPermissions` otherwise wins. `--disallowedTools Edit Write NotebookEdit` removes the file-writing tools. Allow rules in the project's own settings still apply under dontAsk.
 - Failing before this build: none
+- AC4's family part already held: `modelFamily('claude')` was already `claude`. Its test passed before any code changed and guards it.
+- Self-check: added a test that `speck doctor` checks Claude Code is on the PATH for `reviewer: claude`, as the brief now says; dropped an unchecked Gemini example from the brief; ran the built-in command against the real Claude Code 2.1.301 (no Write tool, a Bash write denied, `--resume` keeps the session).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

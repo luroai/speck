@@ -1918,9 +1918,9 @@ function settingChosen(key) {
   return x ? settingNow(x) : '';
 }
 // 0276: the models the server read, while the reviewer chosen in the view is the one it read them for; otherwise null.
-// 0278: Claude's model names whenever claude-subagent is chosen, each with no `efforts` (null).
+// 0278: Claude's model names whenever claude-subagent (or 0292's claude) is chosen, each with no `efforts` (null).
 function reviewerModelList() {
-  const m = settingsView !== null ? settingsView.reviewer_models : null, claude = settingChosen('reviewer') === 'claude-subagent';
+  const m = settingsView !== null ? settingsView.reviewer_models : null, claude = ['claude', 'claude-subagent'].includes(settingChosen('reviewer'));
   const list = claude && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
     : m && typeof m === 'object' && Array.isArray(m.models) && settingChosen('reviewer') === m.reviewer ? m.models : null;
   if (list === null) return null;

@@ -24,7 +24,7 @@ export const SETTING_GROUPS = [
     { key: 'builder_model', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given only to Claude Code builds for now. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
-      explain: 'The agent that reviews each build and decides whether it is approved: codex, claude-subagent or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
+      explain: 'The agent that reviews each build and decides whether it is approved: codex, claude (Claude Code, run by speck, for any builder), claude-subagent (a Claude Code subagent the builder starts, for Claude Code builders) or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
     { key: 'reviewer_model', default: '',
       explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex offers or Claude\'s model names. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
     { key: 'reviewer_effort', default: '',
@@ -63,7 +63,7 @@ const RISKS = ['low', 'high'];
 function choicesOf(key, file) {
   if (key === 'reviewer') {
     const options = file.reviewer_options !== null && typeof file.reviewer_options === 'object' ? Object.keys(file.reviewer_options) : [];
-    return [...new Set(['codex', 'claude-subagent', ...options])];
+    return [...new Set(['codex', 'claude', 'claude-subagent', ...options])];
   }
   if (key === 'reviewer_effort') return ['', ...EFFORTS];
   if (key === 'auto_ship') return [true, false];
@@ -82,7 +82,7 @@ function valueIn(text, repo, key) {
 // it's picked from a list. 0261: one this machine can hold is `for_machine`, with the value speck uses, `from` 'machine'
 // when that's this machine's own or 'repo' when it's speck/config.yml's, and speck/config.yml's in `repo_value`.
 // 0276: `models`, from reviewerModels, is given back as `reviewer_models`, for the view to offer the reviewer's models.
-// 0278: and Claude's model names as `claude_models`, for when claude-subagent is picked in the view.
+// 0278: and Claude's model names as `claude_models`, for when claude-subagent (or 0292's claude) is picked in the view.
 // 0279: `builderModels`, from builderModels, is given back as `builder_models`, for the view to offer the builder's.
 // 0288: with `agents`, from findAgentsAsync, reviewer offers only the reviewers whose agent is installed and signed in,
 // and the current value, with why the others are left out in `missing`, one line.
@@ -98,7 +98,7 @@ export function panelSettings(repo, { models, builderModels, agents } = {}) {
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}), claude_models: CLAUDE_MODELS };
 }
 
-// 0278: the model names a claude-subagent reviewer takes, each meaning the newest model of its kind. Claude Code has no
+// 0278: the model names a claude-subagent reviewer (or 0292's claude) takes, each meaning the newest model of its kind. Claude Code has no
 // command that lists them, so they're written here. With no `efforts`, reviewer_effort offers speck's own.
 // 0288: each with a display name and description, as Codex gives its models.
 export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku'].map(slug => {
@@ -108,7 +108,7 @@ export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku'].
 
 // 0288: the agent each built-in reviewer runs on. A reviewer set up as a command under reviewer_options is offered as
 // it is: speck can't tell what it runs.
-const REVIEWER_AGENTS = { codex: 'codex', 'claude-subagent': 'claude' };
+const REVIEWER_AGENTS = { codex: 'codex', claude: 'claude', 'claude-subagent': 'claude' };
 function readyReviewers(choices, { agents }, current) {
   const byId = new Map((Array.isArray(agents) ? agents : []).map(a => [a.id, a]));
   const left = [];
@@ -125,7 +125,7 @@ function readyReviewers(choices, { agents }, current) {
 // efforts }] } when it can list them (Codex, or Claude's names from 0278), or { reviewer, why } in one line when it can't.
 export async function reviewerModels(repo, read = codexModelsAsync) {
   const reviewer = String(loadConfig(repo).reviewer ?? '');
-  if (reviewer === 'claude-subagent') return { reviewer, models: CLAUDE_MODELS };
+  if (reviewer === 'claude' || reviewer === 'claude-subagent') return { reviewer, models: CLAUDE_MODELS };
   if (reviewer !== 'codex') return { reviewer, why: `${reviewer || 'This reviewer'} can't list its models, so type the model's name as it names it.` };
   return { reviewer, ...await read() };
 }
