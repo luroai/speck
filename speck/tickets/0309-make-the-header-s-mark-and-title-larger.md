@@ -37,6 +37,7 @@ The header's mark and "speck" title are larger, closer to the landing page's, an
 
 ## Notes
 - The sizes are `.logo .mark` and `.logo .name` in `templates/panel.html` (0303, 0304). The landing page sets its mark at 26 px and its name at 24 px.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
