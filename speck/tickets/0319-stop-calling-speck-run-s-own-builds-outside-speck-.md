@@ -1,7 +1,7 @@
 ---
 id: "0319"
 title: "Stop calling speck run's own builds outside speck run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:35:05.298Z"
+approved: "2026-10-18T22:44:16.732Z"
 
 ---
 # 0319 · Stop calling speck run's own builds outside speck run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0300, `speck run` says a build it has just launched itself is "being built outside speck run". On 2026-10-18 it said so of 0302, 0305 and 0309 a moment after launching each. The build is counted once and runs normally, but the message is wrong, and it makes the log and the Foreman's detail misleading.
@@ -48,9 +49,15 @@ speck run no longer says a build it started, or resumed, is "being built outside
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 seen:true describes an earlier external build, but all three speck run resume paths retain that flag.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 400,441
+- Elapsed since build started: 9 min
+- Changed lines: 28 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Two speck runs watched this repo at once, past the lock: saved as speck/ideas/2026-10-18-find-how-two-speck-runs-watched-one-repo.md.
