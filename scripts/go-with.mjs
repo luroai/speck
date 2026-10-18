@@ -58,7 +58,10 @@ export const goWithWaiting = (runs, id) => !!pendingOf(readRecord(runs, id));
 // The panel's write. Every refusal comes before the first write. The choice goes in the run record once it's committed,
 // with the commit the branch is then at. Returns { status, body } for the server to send.
 // 0286: with `by` 'foreman', speck run's Foreman makes the choice, saying so in the Notes, at most once per ticket.
+// 0317: `by` is 'user' only for the panel's button, and anything else is refused, so a choice is never put down to you
+// that you didn't make.
 export function goWith(repo, id, now = new Date(), { by = 'user' } = {}) {
+  if (by !== 'user' && by !== 'foreman') return { status: 500, body: { error: `speck can't tell who went with ticket ${id}'s recommendation, so nothing changed.` } };
   const cfg = loadConfig(repo);
   let at, t;
   try { ({ at, t } = buildTicket(repo, cfg, id)); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }

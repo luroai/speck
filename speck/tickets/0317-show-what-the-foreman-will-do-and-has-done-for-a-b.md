@@ -38,6 +38,11 @@ The panel shows whether the Foreman's Fixing is on, what it will do about each b
 ## Notes
 - From `speck/ideas/2026-10-18-show-what-the-foreman-answered.md` (inbox, from 0286) and the user's report on 0305. Taking a recommendation is in `scripts/go-with.mjs` (`FOREMAN_CHOSE`); the status is `scripts/foreman.mjs` and `templates/panel.html`.
 - Failing before this build: none
+- 0305 (the report in Problem): its question said "Changes what you'd notice: yes", so the Foreman couldn't take it, and its run record has no `by`, so the choice came from the panel's button, and its Notes were right. goWith already recorded the Foreman's choices as the Foreman's (0286); this build makes the panel pass `by: 'user'` itself and has goWith refuse any other `by`, so a choice is never put down to you by default.
+- "Until the ticket moves on": the card shows who went with the recommendation while the ticket is building or reviewing and hasn't been approved since the choice. The Notes give the time to the minute, so a choice made in the same minute as an approval counts as before it.
+- The Foreman will take a recommendation only when speck run could resume the build too (goWith refuses otherwise), so the card says it's waiting for you then. A blocked ticket the Foreman will take isn't counted under Needs you.
+- Two earlier tests (0053 AC4, 0069 AC2) expected the blocked card's line as "Answer the question, then run /speck-build <id>"; it now starts "Waiting for you. ", and their expected text is updated to match.
+- Self-check: the header passed null to replaceChildren when Fixing wasn't fix, which a browser shows as the word "null": fixed. The blocked card's progress line said "it has a question for you" on a ticket the Foreman will take: it now says the Foreman will take its recommendation.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

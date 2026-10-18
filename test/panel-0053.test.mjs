@@ -95,7 +95,7 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   assert.match(topOf(a).children.find(n => n.className === 'sub').textContent, /^03:0\d$/, 'the time since started, in the top row (MM:SS since 0058)');
   const c = rowOf(p, '0003');
   assert.deepEqual(shape(c), ['top', 'question', 'act']);
-  assert.equal(c.children[2].textContent, 'Answer the question, then run /speck-build 0003'); // 0069
+  assert.equal(c.children[2].textContent, 'Waiting for you. Answer the question, then run /speck-build 0003'); // 0069, 0317
   const waiting = rowOf(p, '0004');
   assert.deepEqual(shape(waiting), ['top', 'act']);
   assert.equal(waiting.children[1].textContent, 'Queued · waiting on 0005');
