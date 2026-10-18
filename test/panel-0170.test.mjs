@@ -87,7 +87,7 @@ async function inBrowser(fn, { width = 1280, theme = 'light' } = {}) {
 }
 // Where the mark and the wordmark are drawn, and their colours.
 const measure = b => b.js(`(() => {
-  const logo = document.querySelector('header .logo'), mark = logo.querySelector('.mark'), word = mark.nextSibling;
+  const logo = document.querySelector('header .logo'), mark = logo.querySelector('.mark'), word = logo.querySelector('.name').firstChild; // 0304: in its own element
   const r = document.createRange(); r.setStart(word, 0); r.setEnd(word, 5);
   const m = mark.getBoundingClientRect(), w = r.getBoundingClientRect();
   return { text: r.toString(), mark: { left: m.left, right: m.right, top: m.top, bottom: m.bottom, height: m.height },
