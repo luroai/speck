@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, page, panelRepo, freePort, startPanel, stop, raw, findChrome, browserPage } from './support/panel.mjs';
+import { ROOT, panelRepo, freePort, startPanel, stop, raw, findChrome, browserPage } from './support/panel.mjs';
 import { ICONS, PNGS, png, readPng, logo } from './support/icons.mjs';
 
 // ---------- 0170: speck's eared logo, from the landing page, across the panel ----------
@@ -15,15 +15,12 @@ const SITE = {
   // 0184: the dot is the builder's eye, larger and just above the circle's centre, in place of the site's nose.
   dot: { cx: '31.7', cy: '33.2', r: '4.8' },
 };
-const LIGHT_DOT = '#b0412e', DARK_DOT = '#d4664e';
+const LIGHT_DOT = '#b0412e';
 const SVG = () => fs.readFileSync(path.join(ICONS, 'icon.svg'), 'utf8');
 const hex = c => `#${c.map(n => n.toString(16).padStart(2, '0')).join('')}`;
 const attrs = s => Object.fromEntries([...s.matchAll(/([\w-]+)="([^"]*)"/g)].map(a => [a[1], a[2]]));
 const pathsOf = svg => [...svg.matchAll(/<path\b([^>]*)>/g)].map(m => attrs(m[1]).d);
 const circlesOf = svg => [...svg.matchAll(/<circle\b([^>]*)>/g)].map(m => attrs(m[1]));
-// The header's logo: the markup of its first row, and the mark inside it.
-const logoHtml = () => (page().match(/<div class="logo">([\s\S]*?)<\/div>/) || [])[1] || '';
-const headerMark = () => (logoHtml().match(/<svg\b[\s\S]*?<\/svg>/) || [])[0] || '';
 
 test('0170 AC1: icon.svg is the open circle, the two ears and the red dot on the solid #faf9f5 background', () => {
   const svg = SVG();
@@ -71,22 +68,8 @@ test('0170 AC2: icon.svg draws the landing page\'s own circle, ears and dot, cha
   for (const t of svg.matchAll(/transform="([^"]*)"/g)) assert.match(t[1], /^translate\([-\d.]+[\s,]+[-\d.]+\)$/);
 });
 
-test('0170 AC2: the header\'s mark draws the same shapes as the landing page', () => {
-  const svg = headerMark();
-  assert.ok(svg, 'the header has the mark');
-  assert.deepEqual(pathsOf(svg), SITE.paths);
-  const { cx, cy, r } = circlesOf(svg)[0] || {};
-  assert.deepEqual({ cx, cy, r }, SITE.dot);
-  assert.doesNotMatch(svg, /transform=/);
-});
-
-test('0170 AC3: the mark sits just before the "speck" wordmark, in the text colour', () => {
-  assert.match(logoHtml(), /^<svg class="mark"[\s\S]*?<\/svg>speck <span>control panel<\/span>$/);
-  const svg = headerMark();
-  assert.match(svg, /stroke="currentColor"/);
-  assert.match(svg, /fill="none"/);
-  assert.match(svg, /stroke-linecap="round"/);
-});
+// 0303: the header's mark is drawn on the LCD screen, so its markup, shapes and colours are checked in
+// panel-0303.test.mjs. Where it sits, beside the wordmark, is checked here still.
 
 // The panel's page in Chrome, at a width, in a look.
 async function inBrowser(fn, { width = 1280, theme = 'light' } = {}) {
@@ -109,14 +92,11 @@ const measure = b => b.js(`(() => {
   const m = mark.getBoundingClientRect(), w = r.getBoundingClientRect();
   return { text: r.toString(), mark: { left: m.left, right: m.right, top: m.top, bottom: m.bottom, height: m.height },
     word: { left: w.left, top: w.top, bottom: w.bottom }, font: parseFloat(getComputedStyle(logo).fontSize),
-    shown: getComputedStyle(mark).display !== 'none' && m.width > 0,
-    stroke: getComputedStyle(mark.querySelector('path')).stroke, colour: getComputedStyle(logo).color,
-    dot: getComputedStyle(mark.querySelector('circle')).fill };
+    shown: getComputedStyle(mark).display !== 'none' && m.width > 0 };
 })()`);
-const rgbOf = h => `rgb(${[1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(', ')})`;
 
 for (const theme of ['light', 'dark']) for (const width of [1280, 375]) {
-  test(`0170 AC3: ${theme}, at ${width} px, the mark is just left of "speck", about as tall, in the text colour with the red dot`, skip, () => inBrowser(async b => {
+  test(`0170 AC3: ${theme}, at ${width} px, the mark is just left of "speck" and about as tall`, skip, () => inBrowser(async b => {
     const check = async where => {
       const x = await measure(b);
       assert.equal(x.text, 'speck');
@@ -124,8 +104,6 @@ for (const theme of ['light', 'dark']) for (const width of [1280, 375]) {
       assert.ok(x.mark.right <= x.word.left && x.word.left - x.mark.right <= 10, `${where}: immediately left of the wordmark: ${JSON.stringify(x)}`);
       assert.ok(x.mark.height >= x.font * 0.8 && x.mark.height <= x.font * 1.2, `${where}: about as tall as the wordmark: ${JSON.stringify(x)}`);
       assert.ok(x.mark.top >= x.word.top - 2 && x.mark.bottom <= x.word.bottom + 2, `${where}: on the wordmark's line: ${JSON.stringify(x)}`);
-      assert.equal(x.stroke, x.colour, `${where}: in the header's text colour`);
-      assert.equal(x.dot, rgbOf(theme === 'dark' ? DARK_DOT : LIGHT_DOT), `${where}: the red dot`);
     };
     await check('at the top');
     if (width < 700) {
@@ -137,12 +115,6 @@ for (const theme of ['light', 'dark']) for (const width of [1280, 375]) {
     }
   }, { width, theme }));
 }
-
-test('0170 AC4: the header\'s mark is hidden from screen readers', () => {
-  const open = (headerMark().match(/^<svg\b[^>]*>/) || [''])[0];
-  assert.equal(attrs(open)['aria-hidden'], 'true');
-  assert.doesNotMatch(headerMark(), /<title\b/);
-});
 
 test('0170 AC4: in a browser, the speck name reads as "speck control panel", with nothing from the mark', skip, () => inBrowser(async b => {
   const ax = await b.send('Accessibility.getFullAXTree');

@@ -224,7 +224,7 @@ test('0061 AC2-AC4: in a real browser, the pane formats Markdown, runs no HTML a
     await b.js(`(() => { const s = document.querySelector('#full-ticket strong'); const r = document.createRange(); r.setStart(s.firstChild, 0); r.setEnd(s.parentNode.lastChild, 3); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
     const picked = await b.js('getSelection().toString()');
     assert.ok(picked.startsWith('bold problem'), picked);
-    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
+    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
     await refreshed('a refresh'); await refreshed('a second refresh');
     assert.equal(await b.js('getSelection().toString()'), picked, 'the selection is kept');
   } finally {

@@ -181,8 +181,8 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     await b.drag(await b.js(charAt(`${item} .detail p.text`, 0)), await b.js(charAt(`${item} .detail p.text`, 13)));
     assert.equal(await sel(), 'Export button', 'the drag selected text');
     // AC1 and AC5: unchanged refreshes keep it, and the header keeps updating.
-    // Each refresh puts a new square in the Auto-build button (0150), so a square that isn't the one marked is a refresh since.
-    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
+    // Each refresh puts a new label in the Foreman's button (0150; 0303: its builder stays), so a label that isn't the one marked is a refresh since.
+    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
     await refreshed('a refresh'); await refreshed('a second refresh');
     assert.match(await autoBuild(), /^(Off|Idle)$/, 'the header button is still updated (0285: with the Foreman\'s status)');
     assert.equal(await sel(), 'Export button', 'kept through refreshes');

@@ -3,8 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { page } from './support/panel.mjs';
-import { ICONS, PNGS, png, readPng, logo, arc } from './support/icons.mjs';
+import { ICONS, PNGS, png, readPng, logo } from './support/icons.mjs';
 
 // ---------- 0184: the logo's red dot is the builder's eye: larger, and just above the circle's centre ----------
 
@@ -13,7 +12,6 @@ const SVG = () => fs.readFileSync(path.join(ICONS, 'icon.svg'), 'utf8');
 const hex = c => `#${c.map(n => n.toString(16).padStart(2, '0')).join('')}`;
 const attrs = s => Object.fromEntries([...s.matchAll(/([\w-]+)="([^"]*)"/g)].map(a => [a[1], a[2]]));
 const circlesOf = svg => [...svg.matchAll(/<circle\b([^>]*)>/g)].map(m => attrs(m[1]));
-const headerMark = () => ((page().match(/<div class="logo">([\s\S]*?)<\/div>/) || [])[1] || '').match(/<svg\b[\s\S]*?<\/svg>/)?.[0] || '';
 
 test('0184 AC1: icon.svg\'s dot is the eye, in the same red, with the rest of the icon unchanged', () => {
   const svg = SVG();
@@ -46,29 +44,5 @@ test('0184 AC2: each PNG is made again from the new icon.svg, with the eye where
   }
 });
 
-test('0184 AC3: the header\'s mark has the eye, red in light and dark mode', () => {
-  const svg = headerMark();
-  assert.ok(svg, 'the header has the mark');
-  const dots = circlesOf(svg);
-  assert.equal(dots.length, 1);
-  const { cx, cy, r } = dots[0];
-  assert.deepEqual({ cx, cy, r }, EYE);
-  assert.equal(dots[0].class, 'dot');
-  assert.match(page(), /\.logo \.mark \.dot \{ fill: #b0412e; \}/);
-  assert.match(page(), /:root\[data-theme="dark"\] \.logo \.mark \.dot \{ fill: #d4664e; \}/);
-});
-
-test('0184 AC3: the eye stays clear of the circle\'s stroke at every size the header draws it', () => {
-  const svg = headerMark();
-  // The mark is an SVG scaled as a whole, so its stroke keeps the same width in its own units on phone, desktop and the
-  // slim header (0160): no rule in the page changes the mark's stroke width.
-  assert.doesNotMatch(page(), /\.mark[^{]*\{[^}]*stroke-width/);
-  const half = Number(svg.match(/stroke-width="([\d.]+)"/)[1]) / 2;
-  const { cx, cy, r } = circlesOf(svg)[0];
-  const [body] = [...svg.matchAll(/<path\b[^>]* d="([^"]+)"/g)].map(m => arc(m[1]));
-  // The gap between the eye's edge and the inside edge of the circle's stroke.
-  const gap = body.r - half - (Math.hypot(Number(cx) - body.cx, Number(cy) - body.cy) + Number(r));
-  assert.ok(gap > 2, `the eye is ${gap.toFixed(2)} units clear of the circle's stroke`);
-  // Just above the circle's centre: 2.2 units, give or take a tenth.
-  assert.ok(Math.abs(body.cy - Number(cy) - 2.2) <= 0.1, `the eye is ${(body.cy - Number(cy)).toFixed(2)} units above the centre`);
-});
+// 0303: the header's mark is drawn on the LCD screen, from the renderer's still pose, so its checks are in
+// panel-0303.test.mjs.

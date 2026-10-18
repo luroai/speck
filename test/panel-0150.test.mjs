@@ -167,8 +167,8 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
     await b.until(`document.getElementById('run-switch') && !/Loading the settings/.test(document.getElementById('settings').textContent)`, 'the Settings view');
     await b.js(`document.getElementById('run-switch').focus()`);
     // Two refreshes later it's still the focused element, so a key press reaches it.
-    await b.js(`window.seen = document.getElementById('run').firstChild`);
-    await b.until(`document.getElementById('run').firstChild !== window.seen`, 'a refresh');
+    await b.js(`window.seen = document.getElementById('run').lastChild`);
+    await b.until(`document.getElementById('run').lastChild !== window.seen`, 'a refresh');
     assert.equal(await b.js(`document.activeElement === document.getElementById('run-switch')`), true, 'still focused after a refresh');
     await press(b, 'Enter', 'Enter', 13);
     await b.until(`window.runCalls.length === 1 && document.getElementById('run-switch').textContent === 'Auto-build on'`, 'Enter to start it');

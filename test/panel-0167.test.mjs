@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, panelModel, T, full, idea, round, page } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, panelModel, T, full, idea, round } from './support/panel.mjs';
 import { good, fm, startRepo } from './support/speck.mjs';
 import { rules, selectors, tokens, get, rule } from './support/css.mjs';
 
@@ -40,9 +40,10 @@ test('0167 AC2: the speck red is used only for the speck itself', () => {
   // Since 0168 the speck is the builder badge's eye, drawn on its canvas, so no rule uses the speck red.
   const users = plain().filter(r => r.decls.some(([, v]) => tokens(v).some(t => t === '--accent' || t === '--accent-bg'))).map(r => r.sel);
   assert.deepEqual(users, []);
-  assert.match(page(), /speck: v\('accent'\)/, 'the badge\'s eye');
-  assert.match(page(), /g\.fillStyle = C\.speck; g\.fill\(\);/, 'and only the eye is filled with it');
-  assert.equal(page().match(/C\.speck/g).length, 1);
+  // 0303: the builders are drawn on the LCD screen, whose speck is its own red, and the header's mark has the speck in
+  // the panel's --dot, which nothing else uses.
+  const dots = plain().flatMap(r => r.decls.filter(([, v]) => tokens(v).includes('--dot')).map(([k]) => `${r.sel} { ${k} }`));
+  assert.deepEqual(dots, ['.logo .mark { --lcd-red }'], 'only the mark\'s speck');
 });
 
 test('0167 AC3: ids, titles, Plan tabs and links are in the normal text colours, with underlines or borders to show what can be clicked', () => {
