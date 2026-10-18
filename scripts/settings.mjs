@@ -9,6 +9,7 @@ import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { FIXING } from './foreman.mjs';
 import { FOREMAN_AGENTS } from './foreman-agent.mjs';
+import { SHIP_MODES } from './pull-request.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync } from './agents.mjs';
@@ -32,6 +33,9 @@ export const SETTING_GROUPS = [
       explain: 'When true, speck run ships each approved ticket whose risk auto_ship_risk lists: it is merged and pushed to the base branch without waiting for you. When false, every approved ticket waits for you to ship it.' },
     { key: 'auto_ship_risk', default: ['low'],
       explain: 'Which ticket risks auto_ship covers: low, high or both. While auto_ship is on, a ticket it covers is merged and pushed to the base branch without waiting for you, so adding high lets risky changes ship unseen too.' },
+    // 0295
+    { key: 'ship_mode', default: 'local',
+      explain: 'How an approved ticket ships. local: speck merges it into the base branch on this computer and pushes it. pr: once a ticket is approved, speck pushes its branch and opens a pull request into the base branch on GitHub with gh, with its review pack, and merges nothing itself. Needs gh installed and signed in.' },
   ] },
   { title: 'Building and reviewing', settings: [
     { key: 'builder', default: 'claude',
@@ -71,7 +75,7 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 // confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: allow_same_model_review
 // weakens the independent review. 0279: and builder_model. 0293: and builder, which sets build_command with it.
 export const EDITABLE = Object.freeze(['builder', 'builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'ship_mode', 'foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']);
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
@@ -85,6 +89,7 @@ function choicesOf(key, file) {
   if (key === 'auto_ship') return [true, false];
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
   if (key === 'foreman_fixing') return [...FIXING]; // 0286
+  if (key === 'ship_mode') return [...SHIP_MODES]; // 0295
   if (key === 'foreman') return ['', ...FOREMAN_AGENTS]; // 0287
   if (key === 'foreman_effort') return ['', ...EFFORTS];
   return undefined;
