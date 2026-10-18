@@ -1,7 +1,7 @@
 ---
 id: "0302"
 title: "Draw the builder badge on the LCD screen"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-18
 ---
 # 0302 · Draw the builder badge on the LCD screen
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The panel's builder badge is drawn on a canvas in the panel's own style. The user has designed a new look for speck, shared by the Luro landing page and the panel: speck drawn on a dot-matrix LCD screen, with each change of pose blending over 0.7 seconds with a hop and a blink. The panel needs to match that design exactly.
