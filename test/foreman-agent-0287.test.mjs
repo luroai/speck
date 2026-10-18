@@ -26,13 +26,13 @@ const ON = { on: true, pid: process.pid };
 
 // The Foreman agent's queue in a repo, with a stand-in for starting the agent: each start is kept, and its agent runs
 // until the test ends it with end(). Builds it resumes are kept too.
-function agents(r, { fixing = 'fix', max = 1, cfg = {}, persist } = {}) {
+function agents(r, { fixing = 'fix', max = 1, cfg = {}, persist, withToken = () => [] } = {}) {
   const starts = [], resumed = [], said = [], again = [], running = new Set(), live = new Set();
   const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: fixing, ...cfg }),
     words: WORDS, cfg: CFG, max, running, ships: { again: id => again.push(id) }, say: m => said.push(m),
     startBuild: (id, argv, cwd, session, flags, record) => { resumed.push({ id, argv, rec: JSON.parse(record(4242)) }); running.add(id); },
     start: (argv, cwd, log, env) => { const pid = 90000 + starts.length; starts.push({ argv, cwd, log, token: env.SPECK_FOREMAN_RUN, pid }); live.add(pid); return { pid, exited: () => !live.has(pid) }; },
-    alive: pid => live.has(pid), ...(persist ? { persist } : {}) });
+    alive: pid => live.has(pid), withToken, ...(persist ? { persist } : {}) });
   return { q, starts, resumed, said, again, running, end: s => live.delete(s.pid), check: (tickets = [T('0001', 'building')]) => q.check(tickets) };
 }
 const brief = s => s.argv[2]; // claude -p <brief>
@@ -314,6 +314,28 @@ test('0287 AC5: a record that can\'t be saved never starts a second Foreman agen
   assert.equal(a.resumed.length, 1, 'its resume is carried out once');
   assert.equal(a.starts.length, 1);
   assert.ok(saves > 0);
+});
+
+test('0287 AC5: after a restart, an agent whose process id wasn\'t saved still holds the Foreman until it has ended', () => {
+  const r = blockedRepo({ status: 'building' });
+  const persist = (runs, st) => { if (st.running?.pid) throw new Error('disk full'); saveRecord(path.join(runs, 'run.foreman-agent.json'), { ...st, tried: { ...st.tried } }); };
+  const a = agents(r, { persist });
+  a.q.stuck({ id: '0001', what: 'first', log: '' });
+  a.check();
+  assert.equal(readAgentState(r.runs).running.pid, null);
+  const token = a.starts[0].token;
+  let holding = [4242]; // the agent's processes, found by its token
+  const b = agents(r, { withToken: t => (t === token ? holding : []) }); // speck run restarted
+  b.q.stuck({ id: '0002', what: 'second', log: '' });
+  b.check(); b.check();
+  assert.equal(b.starts.length, 0, 'waits for the first agent');
+  const c = agents(r, { withToken: () => { throw new Error('ps failed'); } });
+  c.check();
+  assert.equal(c.starts.length, 0, 'counts as running when it can\'t be checked');
+  holding = [];
+  b.check();
+  assert.equal(b.starts.length, 1, 'the next once it has ended');
+  assert.match(brief(b.starts[0]), /ticket 0002/);
 });
 
 test('0287 AC1: speck run starts the Foreman agent when a build it started exits with its ticket still building, and not when it\'s blocked', async () => {
