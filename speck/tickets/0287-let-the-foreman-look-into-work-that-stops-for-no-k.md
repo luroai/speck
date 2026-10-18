@@ -137,3 +137,84 @@ With the Foreman's Fixing setting on, speck run starts a Foreman agent with a sh
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e716b2a7e73e19c21323709c54f2138fdac13426",
+    "thread_id": "01a14f35-43c5-7640-b75a-360a90e6fc69",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 403207,
+      "cached_input_tokens": 325888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2917,
+      "reasoning_output_tokens": 1099
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T13:34:57.583Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The new AC1 integration test runs speck run with a real short-lived builder and fake Foreman executable, verifies the brief after a building ticket's process exits, and verifies no launch for a blocked ticket. Ship refusal and brief contents retain passing unit coverage."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The Foreman skill and foremanBrief restrict the agent to four actions. foremanAction checks the run token, ticket and single action; reship requires auto_ship coverage, and fix creates a draft."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The template, configuration validation, Settings group and setup skill expose all three settings. Passing AC3 tests cover saving values, defaults and agent arguments."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 test exercises the Notes entry, recorded reason, status detail and panel rendering."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "The launch reservation prevents duplicate agents within the current process, but if saving the spawned PID fails, a restarted speck run treats the persisted pid:null reservation as an ended agent even while that detached agent remains alive."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "The persistence fix still permits overlapping agents across a speck run restart. If the reservation saves but the subsequent PID save fails, the agent runs detached while the persisted record has pid:null. After restarting speck run, child is null, so check treats that reservation as ended and can launch the next queued agent while the original remains alive. The new test retains the same queue instance throughout and misses this case.",
+        "suggested_fix": "Make a reservation with an unknown PID safe to recover across restarts: do not release it and launch another agent without establishing that the original process has ended. Add a test that fails the PID save, reconstructs the queue while the first agent remains alive, and verifies a second queued stop cannot launch.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/foreman-agent-0287.test.mjs",
+        "issue": "The previous source-text assertion has been replaced with an integration test that exercises the actual build-exit trigger.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The build-exit behaviour is now tested properly. The recording fix prevents duplicate agents during one run, but restarting speck run after a failed process-record save can still leave two Foreman agents running together."
+  }
+}
+```
+
+</details>

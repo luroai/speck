@@ -15,6 +15,7 @@ import { readableLog } from './build-log.mjs';
 import { resumeFor } from './hand-back.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { runWords } from './go-with.mjs';
+import { processesWithEnv } from './build-procs.mjs';
 import { fixingOf } from './foreman.mjs';
 import { statusData } from './speck.mjs';
 
@@ -163,7 +164,8 @@ function spawnAgent(argv, cwd, log, env) {
 // and resumes builds it asked to, while a build slot is free. Each ticket is looked into at most once for the same
 // commits (codeKey). `ships` is speck run's ship queue, whose again(id) ships a ticket once more.
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, running, startBuild, ships,
-  start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState }) {
+  start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
+  withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`) }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const config = () => { try { return readConfig(); } catch { return null; } };
@@ -231,7 +233,10 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
     let changed = false;
     if (child && !child.exited() && s.running?.token !== child.token) return; // its record wasn't saved: wait for it to end
     if (s.running) {
-      const gone = child && child.token === s.running.token ? child.exited() : !(Number.isInteger(s.running.pid) && alive(s.running.pid));
+      // One started by an earlier speck run whose process id wasn't saved is found by the token in its environment, and
+      // counts as running when that can't be checked.
+      const pidless = () => { try { return withToken(s.running.token).length === 0; } catch { return false; } };
+      const gone = child && child.token === s.running.token ? child.exited() : Number.isInteger(s.running.pid) ? !alive(s.running.pid) : pidless();
       if (gone) { finish(s); changed = true; }
     }
     const c = config();
