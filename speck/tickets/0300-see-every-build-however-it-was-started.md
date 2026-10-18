@@ -43,7 +43,11 @@ speck run sees every build of the repo's tickets, however it was started, and co
 - Self-check: a build outside speck run stops counting once its ticket is no longer building or reviewing, since a conversation stays open after it approves or blocks, and speck run may then launch that ticket when it's ready again; builds speck run started skip the check before reading anything; the brief names only the commands a test covers.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck run now notices every build of your tickets, not only the ones it started itself. If you build a ticket by typing `/speck-build` in a conversation, or carry on a stopped build by hand, speck run counts it against how many builds may run at once, won't start a second build of it, and the panel shows it as building rather than stopped. If that build stops partway, speck run handles it as it would one of its own. Nothing needs doing by hand: the build is noticed the next time it runs one of speck's commands, or straight away when it's a stopped build carried on by hand.
+
+To see it, start speck run, then build a ticket in a conversation: speck run's output says the ticket "is being built outside speck run", and the panel shows it as building. Once the build approves or blocks the ticket, it stops taking up a build slot, even if the conversation stays open.
+
+Worth keeping an eye on: if a conversation building a ticket is closed partway, speck run carries that session on by itself, as it does for its own builds.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,7 +56,11 @@ speck run sees every build of the repo's tickets, however it was started, and co
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-18-let-speck-pause-and-stop-a-build-started-outside-speck-run.md (pause and stop don't reach a build speck run didn't start).
+- Skipped as a duplicate: a stopped build resumed by hand gets a new process in its run record, so the time it waited stopped may not be added to the build's waiting time. Matches speck/ideas/2026-10-15-know-when-a-stopped-build-starts-again.md.
+- Known limit: a conversation's build that ends partway is resumed by speck run with build_command when its session can be resumed, as speck run's own killed builds are.
+- Known limit: a build is found from the agent above a speck command through shells only (Claude Code, Codex and Cursor's CLI); a command run any other way, or from a test runner, isn't taken for a build.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -132,6 +140,87 @@ speck run sees every build of the repo's tickets, however it was started, and co
     ],
     "escalation_question": "",
     "summary": "Normal external builds are detected and shown correctly, and the supplied tests pass. Two lifecycle gaps can still leave an open conversation occupying a build slot after its work finishes, including indefinitely delaying a code update. These need fixing before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ce7bad652b199e1d1d26da70cd1999b4c16dcedf",
+    "thread_id": "01a14f48-203b-7933-b7d7-fee5045f109b",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 327268,
+      "cached_input_tokens": 269184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2005,
+      "reasoning_output_tokens": 203
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T13:54:26.640Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs adoptSeen counts external builds before scheduling. Passing AC1 tests verify capacity limits, prevention of duplicate launches, and release after approval, including during code switching and after external resumption."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing AC2 test verifies that noteBuild and claimResumed remove an exited record's stopped state in statusData. adoptSeen invokes claimResumed on each normal check."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "checkAdopted uses the existing killedInHand and lookInto handling. The passing combined AC1/AC3 test verifies stopped-partway handling and capacity release after an external process ends."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs dispatch calls noteThisBuild automatically. Passing AC4 tests exercise ancestry detection and real CLI calls for next, start and diffstat, verifying that records identify the agent process."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing AC5 tests verify the SPECK_BUILD_SESSION exclusion, preservation of existing live records, and normal completion of a runner-launched build without external adoption."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "External conversations could prevent a code switch after their tickets finished.",
+        "suggested_fix": "Completed: tick now calls releaseSeen before switchWhenIdle. The new passing regression test verifies switching while the approved build's conversation remains alive.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/run.mjs",
+        "issue": "An externally resumed build previously launched by this runner could retain its slot after approval.",
+        "suggested_fix": "Completed: adopt tracks seen independently from fresh, so releaseSeen releases the current external process. The new passing regression test verifies another ticket launches while the resumed conversation remains alive.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "External builds are counted, shown and watched automatically. Both lifecycle issues are fixed and covered by passing regression tests. All acceptance criteria pass, with no blocking findings remaining."
   }
 }
 ```
