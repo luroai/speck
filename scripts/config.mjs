@@ -6,8 +6,10 @@ import path from 'node:path';
 import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig } from './core.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { knownEffort } from './codex-models.mjs';
+import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand } from './builder-switch.mjs';
+import { sameModelProblem } from './same-model.mjs';
 
-const USAGE = 'Usage: speck config set <key> <value>, speck config set --machine <key> <value> for this machine only, or speck config show [--json] to see the main settings.';
+const USAGE = 'Usage: speck config set <key> <value>, speck config set --machine <key> <value> for this machine only, speck config set builder <name> [--replace] to switch the builder, or speck config show [--json] to see the main settings.';
 
 // Every setting `speck config set` can change, with how speck reads it. reviewer_options and other free-form maps
 // are left to hand editing.
@@ -146,9 +148,11 @@ function setMachine(key, raw) {
 
 export function cmdConfig(args) {
   const machine = args.slice(1).includes('--machine');
-  const [sub, key, ...rest] = [args[0], ...args.slice(1).filter(a => a !== '--machine')];
+  const replace = args[1] === 'builder' && args.slice(2).includes('--replace'); // 0293
+  const [sub, key, ...rest] = [args[0], ...args.slice(1).filter(a => a !== '--machine' && !(replace && a === '--replace'))];
   if (sub !== 'set' || !key || !rest.length) throw new SpeckError(USAGE);
   if (machine) return setMachine(key, rest.join(' '));
+  if (key === 'builder') return setBuilder(rest.join(' '), replace);
   const value = checkConfigValue(key, rest.join(' '));
   const repo = findRepoRoot();
   const file = path.join(repo, 'speck', 'config.yml');
@@ -164,4 +168,32 @@ export function cmdConfig(args) {
   const own = machineConfig(repo);
   if (Object.hasOwn(own, key))
     console.log(`This machine uses its own ${key}, ${show(own[key])}, over it. Run \`speck config set --machine ${key} ""\` to use speck/config.yml's.`);
+}
+
+// 0293: `speck config set builder <name> [--replace]`, as the panel's Settings view switches it: build_command is set
+// to the new builder's own in the same write, for a builder speck starts by itself. One set by hand is replaced only
+// with --replace. A builder of the reviewer's family is set, with a note saying which reviewer is from another family.
+function setBuilder(value, replace) {
+  const repo = findRepoRoot();
+  const file = path.join(repo, 'speck', 'config.yml');
+  const text = fs.readFileSync(file, 'utf8'), was = parseYaml(text);
+  const before = was.builder ?? 'claude', own = ownBuildCommand(value);
+  const changes = [['builder', value]];
+  if (value !== before && own !== null && was.build_command !== own) {
+    if (handSetBuildCommand(was) && !replace)
+      throw new SpeckError(`build_command is set by hand to ${show(was.build_command)}, and switching the builder to ${value} replaces it with ${describeBuildCommand(value, own)}. Run \`speck config set builder ${value} --replace\` to replace it, or set build_command yourself.`);
+    changes.push(['build_command', own]);
+  }
+  let next = text;
+  for (const [k, v] of changes) next = setConfigText(next, [k], yamlValue(v));
+  const read = parseYaml(next);
+  for (const [k, v] of changes) if (read[k] !== v)
+    throw new SpeckError(`Couldn't write ${k} so that speck reads it back as given. Edit speck/config.yml by hand instead.`);
+  fs.writeFileSync(file, next);
+  for (const [k, v] of changes) console.log(`${k}: ${show(was[k])} → ${show(v)}`);
+  const cfg = loadConfig(repo);
+  if (cfg.allow_same_model_review !== true) {
+    const problem = sameModelProblem(value, String(cfg.reviewer ?? ''), cfg, cfg.reviewer_model);
+    if (problem) console.log(`Note: ${problem} For a ${value} builder, a reviewer from another family is ${otherFamilyReviewer(value)}: \`speck config set reviewer ${otherFamilyReviewer(value)}\`.`);
+  }
 }

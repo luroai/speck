@@ -153,7 +153,7 @@ To use the panel from your phone, put it behind a private tunnel that makes you 
 speck needs the following on your machine.
 
 - macOS or Linux
-- [Claude Code](https://claude.com/claude-code), or another builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Set it as `builder:` in `speck/config.yml`, so `speck doctor` checks the right tool. Claude Code is the default and the one most tested.
+- [Claude Code](https://claude.com/claude-code), or another builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Switch it in the panel's Settings view or with `speck config set builder <name>`, which sets `build_command` to match for Claude Code, Codex and Cursor. Claude Code is the default and the one most tested.
 - git
 - Node.js 20 or newer, which your agent can install for you
 - Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise [Claude Code](https://claude.com/claude-code) (`reviewer: claude`), any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
@@ -207,7 +207,7 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | `status` | Tickets by status, blocked first (`--json` for programs) |
 | `pack <id>` | The review pack for a ticket |
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
-| `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first. `config set --machine <key> <value>` sets `max_parallel_builds` or `max_parallel_tests` for this machine only |
+| `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first. `config set --machine <key> <value>` sets `max_parallel_builds` or `max_parallel_tests` for this machine only. `config set builder <name>` sets `build_command` to that builder's own too, for `claude`, `codex` or `cursor`, and `--replace` lets it replace one set by hand |
 | `config show` | The main settings by group, with each one's value, whether it's the default and what it does |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
 

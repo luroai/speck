@@ -192,9 +192,9 @@ test('0274 AC4: when any change is refused nothing is saved, and the refusal nam
   assert.deepEqual(snapshot(r), was);
 
   // A setting the panel can't change, one for this machine that no machine holds, or one given twice.
-  out = panelSaveSettings(r.dir, [{ key: 'reviewer_effort', value: 'low' }, { key: 'builder', value: 'codex' }]);
+  out = panelSaveSettings(r.dir, [{ key: 'reviewer_effort', value: 'low' }, { key: 'build_command', value: 'x' }]); // 0293: not builder, which can be now
   assert.equal(out.status, 403);
-  assert.match(out.body.refused.builder, /can't be changed from the panel/);
+  assert.match(out.body.refused.build_command, /can't be changed from the panel/);
   out = panelSaveSettings(r.dir, [{ key: 'reviewer_model', value: 'm', machine: true }]);
   assert.equal(out.status, 422);
   out = panelSaveSettings(r.dir, [{ key: 'reviewer_model', value: 'm' }, { key: 'reviewer_model', value: 'n', machine: true }]);
