@@ -1,7 +1,7 @@
 ---
 id: "0294"
 title: "Show pictures of a visual change in its review pack"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0284"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:07:36.362Z"
+approved: "2026-10-18T13:14:16.119Z"
 
 ---
 # 0294 · Show pictures of a visual change in its review pack
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 For a ticket that changes how something looks, the review pack gives criteria with ticks and the reviewer's words, but no picture. Someone who doesn't read code can't judge a visual change without checking out the branch or waiting until it ships, though deciding whether to ship (Gate 2) is what the pack is for.
@@ -51,9 +52,14 @@ When a ticket changes how something looks, the build now takes pictures of the r
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 268,953
+- Elapsed since build started: 7 min
+- Changed lines: 168 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox note): pictures stay in `speck/.cache/pictures/<id>/` after the ticket ships, with nothing tidying them away; `speck pack` gives each picture's full path on this machine.
 
