@@ -38,6 +38,7 @@ You can switch the builder in the Settings view and in setup, and speck sets eve
 
 ## Notes
 - From `speck/ideas/2026-10-17-build-with-any-agent.md`. `builderMismatch` in `scripts/install.mjs` checks today that `build_command` matches `builder`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
