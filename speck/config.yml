@@ -43,3 +43,5 @@ reviewer_options:
 github:
   status_check: speck/review
 max_parallel_tests: 2
+foreman_fixing: fix
+foreman: claude
