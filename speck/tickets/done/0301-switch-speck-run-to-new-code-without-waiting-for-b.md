@@ -1,7 +1,7 @@
 ---
 id: "0301"
 title: "Switch speck run to new code without waiting for builds to end"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0300"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:59:17.014Z"
 approved: "2026-10-18T14:11:25.134Z"
+finished: "2026-10-18T14:13:24.173Z"
 
 ---
 # 0301 · Switch speck run to new code without waiting for builds to end
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a shipped ticket changes speck's own code, speck run starts no new build or ship until every build it's running has ended, so it can switch to the new code. A ticket that's approved and ready to ship can wait a whole build for that. On 2026-10-18 it held up shipping most of the day: 0294 waited for 0300's build, and 0268 and 0269 waited for 0265's.
