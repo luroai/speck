@@ -44,7 +44,11 @@ In pull request mode, shipping a ticket merges its pull request on GitHub and ti
 - The speck-ship skill doesn't mention pull request mode: an older test (ship.test.mjs AC1) keeps "pull request" out of the build, review and ship skills, so that's left as a follow-up rather than loosening it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In pull request mode, shipping a ticket now merges its pull request on GitHub, instead of saying to merge it there yourself. Before merging, speck checks the same things a local ship does, including running the whole test suite on the change as it would land, and that GitHub has nothing in the way. Then it brings your copy of the main branch up to date, files the ticket as done and removes its branch. If you merged the pull request on GitHub yourself, shipping only does the tidying up.
+
+To see it, set ship_mode to "pr", approve a ticket so it gets a pull request, then press Ship or run /speck-ship. With auto_ship on, speck run does it by itself, and it notices a pull request you merged on GitHub and tidies up after it within about a minute.
+
+Worth keeping an eye on: when the pull request can't be merged (failing or unfinished checks, a conflict, or a review GitHub requires), nothing changes and speck says why in one line; speck run tries again once the pull request changes. On a main branch that only takes pull requests, the "done" note can't be pushed, so the panel says it wasn't pushed.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +58,10 @@ In pull request mode, shipping a ticket merges its pull request on GitHub and ti
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The speck-ship and speck-setup skills don't mention pull request mode: `speck/ideas/2026-10-18-tell-the-skills-about-pull-request-mode.md`.
+  - On a protected base branch the done ticket's commit can't be pushed: `speck/ideas/2026-10-18-file-a-pull-request-mode-ticket-as-done-on-a-protected-branch.md`.
+  - The panel's Ship button and speck run's waiting messages say "ship" for both modes; worth checking their wording reads right in pull request mode.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -141,6 +149,95 @@ In pull request mode, shipping a ticket merges its pull request on GitHub and ti
     ],
     "escalation_question": "",
     "summary": "The main flows have passing tests, but shipping needs three safeguards before approval: run the required tests, confirm GitHub actually merged before cleanup, and visibly track failed pushes of the completed ticket."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e77c18492c53ebe903ba4ce4121f91ea7417599f",
+    "thread_id": "01a14f71-7a0c-7343-b865-f95c2dcd872b",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 322946,
+      "cached_input_tokens": 251264,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2079,
+      "reasoning_output_tokens": 138
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T14:40:17.879Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/pr-ship.mjs now tests the candidate merge, requests the GitHub merge and confirms MERGED before cleanup. Passing AC1 tests cover normal shipping, queued merges, failing tests, local catch-up and refused pushes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipPrTicket's MERGED path skips merging and runs tidy. Passing AC2 tests verify cleanup without another merge and protection of unmerged local commits."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "whyNotMergeable refuses failing checks, conflicts and required reviews. Passing AC3 tests verify one-line explanations, unchanged local state and queue retries after PR changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "prQueue selects eligible open PRs and externally merged PRs; shipPrTicket enforces automatic-shipping eligibility. Passing AC4 tests exercise both paths and PR change detection."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "cmdShip continues to use shipTicket for local mode. The passing AC5 test verifies local shipping without gh; reported existing shipping tests also pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs",
+        "issue": "Cleanup previously started when gh succeeded without confirming that GitHub had merged the PR.",
+        "suggested_fix": "Implemented: re-read the PR and require MERGED before cleanup. The passing queued-merge test verifies that an open PR remains intact.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs",
+        "issue": "PR shipping previously skipped the configured whole-suite shipping check.",
+        "suggested_fix": "Implemented: testLanding fetches the remote base and tests the candidate merge using the existing shipping helpers. The passing failure test verifies that failing tests prevent the GitHub merge.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs",
+        "issue": "A refused push previously appeared as successful shipping without preserving the panel's unpushed state.",
+        "suggested_fix": "Implemented: tidy throws an error carrying unpushed metadata. The passing protected-branch test verifies the retained ship state and queue message.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The three blocking issues are fixed and covered by passing tests. Shipping now checks the tests, waits for GitHub to confirm the merge before cleanup, and records failed pushes visibly. All acceptance criteria pass."
   }
 }
 ```
