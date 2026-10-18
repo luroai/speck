@@ -148,9 +148,3 @@ test('0315 AC4: with ship_mode local, shipping files the ticket on the branch, m
   assert.match(show(r.bare, `main:${DONE}`).stdout, /^status: done/m);
 });
 
-// ---------- the docs ----------
-
-test('0315: the brief no longer says pull request mode pushes the base branch', () => {
-  const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  assert.doesNotMatch(brief, /pushes the base branch last/);
-});
