@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { fakePage, startPanel, stop, freePort, request, post, tokenOf, env as panelEnv, CLI } from './support/panel.mjs';
+import { fakePage, switchPage, startPanel, stop, freePort, request, post, tokenOf, env as panelEnv, CLI } from './support/panel.mjs';
 import { runRepo, startRun, stopRun, until, alive, killAll } from './support/run.mjs';
 import { hasStopped } from './support/stopped.mjs';
 
@@ -197,12 +197,12 @@ test('0128 AC5: turning speck run on or off without the token, or from another o
 // ---------- the page ----------
 
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
-// 0150: the speck run pill is itself the button, Auto-build.
-const switchOf = p => p.byId('run');
-const pillText = p => p.byId('run').textContent;
+// 0150: the speck run pill is itself the button, Auto-build. 0285: in the Settings view's Foreman group now.
+const switchOf = p => p.runSwitch();
+const pillText = p => p.runSwitch().textContent;
 
 test('0128 AC1: while speck run is off, the page has a button to turn it on, which posts with the token and then shows it on', async () => {
-  const p = fakePage([state(null), { ok: true, run: { on: true, pid: 77 } }]);
+  const p = switchPage([state(null), { ok: true, run: { on: true, pid: 77 } }]);
   await p.settle();
   const b = switchOf(p);
   assert.ok(b, 'the speck run pill is a button');
@@ -220,7 +220,7 @@ test('0128 AC1: while speck run is off, the page has a button to turn it on, whi
 });
 
 test('0128 AC3: while speck run is on, the page has a button to turn it off, which then shows it off', async () => {
-  const p = fakePage([state({ on: true, pid: 77 }), { ok: true, run: { on: false, pid: null } }]);
+  const p = switchPage([state({ on: true, pid: 77 }), { ok: true, run: { on: false, pid: null } }]);
   await p.settle();
   assert.equal(switchOf(p).textContent, 'Auto-build on');
   p.press(switchOf(p));
@@ -231,7 +231,7 @@ test('0128 AC3: while speck run is on, the page has a button to turn it off, whi
 
 test('0128 AC4: a refusal shows speck run\'s own message and leaves it off, until the next click', async () => {
   const msg = 'No build_command is set in speck/config.yml, so speck run has nothing to start builds with.';
-  const p = fakePage([state(null), { status: 409, body: { error: msg } }, state(null), new Error('down'), { ok: true, run: { on: true, pid: 9 } }]);
+  const p = switchPage([state(null), { status: 409, body: { error: msg } }, state(null), new Error('down'), { ok: true, run: { on: true, pid: 9 } }]);
   await p.settle();
   p.press(switchOf(p));
   await p.settle();

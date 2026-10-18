@@ -177,7 +177,8 @@ test('0257 AC5: the view has no control that changes a setting, and opening and 
   await p.settle();
   await open(p);
   // 0268: and each setting's info button, which only shows its explanation
-  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName) && n.className !== 'info');
+  // 0285: and the speck run switch in the Foreman group, which turns speck run on or off rather than change a setting
+  const controls = p.all(pane(p)).filter(n => ['button', 'input', 'select', 'textarea', 'form'].includes(n.tagName) && n.className !== 'info' && !/\brun-switch\b/.test(n.className));
   assert.deepEqual(controls.map(n => n.className), ['close'], 'only the close button');
   p.press(controls[0]);
   await p.settle();
