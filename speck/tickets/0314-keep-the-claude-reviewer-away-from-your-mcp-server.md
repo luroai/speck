@@ -1,7 +1,7 @@
 ---
 id: "0314"
 title: "Keep the Claude reviewer away from your MCP servers and connectors"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-18
 ---
 # 0314 · Keep the Claude reviewer away from your MCP servers and connectors
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The built-in `reviewer: claude` (0292) runs Claude Code without your settings and without file-editing tools, but it still loads your MCP servers and claude.ai connectors, such as Gmail and Drive. A reviewer only needs to read the code, and shouldn't be able to reach anything else of yours.
