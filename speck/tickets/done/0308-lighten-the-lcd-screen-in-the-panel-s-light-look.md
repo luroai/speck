@@ -1,7 +1,7 @@
 ---
 id: "0308"
 title: "Lighten the LCD screen in the panel's light look"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0305"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:24:45.348Z"
 approved: "2026-10-18T22:29:13.686Z"
+finished: "2026-10-18T22:31:37.824Z"
 
 ---
 # 0308 · Lighten the LCD screen in the panel's light look
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In the panel's light look, the LCD screen behind the builder badges and the Foreman's builder uses the design's `#c3c9b1`, which reads as too dark on the panel's near-white cards, especially on a phone. The app icon (0305) uses the same colour.
