@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0284"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:07:36.362Z"
-approved: "2026-10-18T13:42:05.697Z"
+approved: "2026-10-18T13:57:53.322Z"
 
 ---
 # 0294 · Show pictures of a visual change in its review pack
@@ -54,12 +54,13 @@ When a ticket changes how something looks, the build now takes pictures of the r
 ## Review log
 Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2, 1 of them a merge round
+- Review rounds: 3, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 677,468
-- Elapsed since build started: 34 min
+- Reviewer tokens: 1,267,371
+- Elapsed since build started: 50 min
 - Changed lines: 164 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox note): pictures stay in `speck/.cache/pictures/<id>/` after the ticket ships, with nothing tidying them away; `speck pack` gives each picture's full path on this machine.
@@ -180,6 +181,66 @@ Round 2 (codex, merge round): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The merged change still meets all four criteria. The two compatibility fixes preserve picture capture and viewing while restoring the existing tests. The reported run passed 160 tests with three skipped; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bab66193a763eb9e526cc82fce862e1861c6ae0f",
+    "merge": true,
+    "thread_id": "01a14f25-56f4-7592-90eb-c30c56064dd2",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 587974,
+      "cached_input_tokens": 494720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1929,
+      "reasoning_output_tokens": 147
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T13:57:50.767Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 3 step 6 requires real-browser pictures of every changed view before review, in light and dark where both exist. This instruction remains intact after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/pictures.mjs retains shared, git-ignored cache storage and captioned listings through reviewPack. Passing AC2 tests exercise storage, worktree sharing, git exclusion, listing and clearing. scripts/speck.mjs preserves both picture and foreman command registrations and imports."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelPack supplies captioned picture URLs, panelServer serves the images, and templates/panel.html picturesPart links each thumbnail to its full-size image. All AC3 tests pass after the merge."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both AC4 tests pass, verifying unchanged pack text and no picture heading or figures when pictures are absent. The relevant rendering and pack-generation code remains intact."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merge preserves both the new picture command and main’s Foreman command. All four criteria remain met, and the reported checks passed with no failures. No blocking concerns remain."
   }
 }
 ```
