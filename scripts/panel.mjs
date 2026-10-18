@@ -466,7 +466,7 @@ export async function panelServer() {
       let found;
       try { found = pictureFile(repo, picture[1], picture[2]); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the picture: ${e.message}\n`); }
-      if (!found) return send(res, 404, 'text/plain', 'Not found.\n');
+      if (!found) return send(res, 404, 'text/plain', 'No such picture.\n');
       res.writeHead(200, { 'Content-Type': found.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
       return res.end(found.body);
     }
