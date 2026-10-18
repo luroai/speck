@@ -44,7 +44,11 @@ With `builder: codex`, speck run starts each build with Codex, passing `builder_
 - Self-check: a Codex config with no build_command at all is refused by speck run as before (only `build_command: ""` builds with Codex), so 0279's builder_model note stays as it was; a pause, stop or waiting mark written before the session id is read is given the session too, so it still matches the build.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If you build with Codex, `speck run` can now start and look after those builds itself. Set `builder: codex` and leave `build_command` blank (`build_command: ""`). Each ready ticket is then built by Codex, on the model you chose in `builder_model` if you set one. If a build is stopped partway, or a ship sends a ticket back for more work, speck carries on in that build's own Codex session, as it already did for Claude Code.
+
+To see it, set those two settings, set a ticket ready and turn `speck run` on. The run's log shows the build start, and once the build is stopped or blocked, the panel offers a `codex exec resume …` command to reopen its session. Claude Code builds work exactly as before.
+
+Worth keeping an eye on: these builds run Codex with its approvals and sandbox turned off, as Claude Code builds already skip their prompts. A build stopped in its first moments, before Codex has named its session, can't be picked up again automatically: speck says so, and you carry it on with `$speck-build <id>`.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +58,11 @@ With `builder: codex`, speck run starts each build with Codex, passing `builder_
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - The same-model check and the "only passed to Claude Code builds" wording don't yet count `builder_model` on Codex builds: `speck/ideas/2026-10-18-same-model-check-counts-builder-model-on-codex-builds.md`.
+  - Known limit: only `build_command: ""` counts as blank. A bare `build_command:` line reads as an empty mapping, and a config with no `build_command` at all, are refused by `speck run` as before. With `builder: codex`, the refusal now suggests `build_command: ''`.
+  - Known limit: the panel shows the Codex resume command for a build only when `resume_command` is unset or is Claude Code's. A `resume_command` of your own is used for every build.
+  - The inbox idea `speck/ideas/2026-10-17-pass-builder-model-to-codex-builds.md` is covered by this ticket, as its Notes say: it can be closed when the inbox is triaged.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +134,79 @@ With `builder: codex`, speck run starts each build with Codex, passing `builder_
     ],
     "escalation_question": "",
     "summary": "Codex builds start, capture their session and resume automatically as intended. The passing tests cover these paths well. One fix is needed: after builder settings change, the panel can show a resume command for the wrong agent, preventing users from reopening an existing build."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9e5a170060746736bf53643d03fdc07de9801dd4",
+    "thread_id": "01a14ea3-032c-7681-9089-fecd6ac0cd5c",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 353413,
+      "cached_input_tokens": 278784,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1726,
+      "reasoning_output_tokens": 172
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T10:53:31.469Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs uses codexStartWords for Codex with a blank build_command and otherwise preserves the configured command. Passing AC1 tests verify launch arguments and optional builder_model."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/codex-build.mjs threadId and fillSession persist the first thread.started session. Passing AC2 tests cover parsing, run records and matching marks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "resumeFor and codexResumeArgv resume the recorded Codex session for stopped builds and hand-backs. buildSession now supplies a per-session resume command, honoured by panel resumeOf. Passing AC3 tests cover automatic resumes, panel commands, builder changes and custom commands."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "resumeFor explains when no Codex session has been read. The passing AC4 test verifies a single-line report and no resume launch for both stopped builds and hand-backs."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Claude launch and resume argument handling remain unchanged. The passing AC5 test checks models, resume arguments and hints; the new panel regression test also preserves Claude commands under a changed builder configuration."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Resolved: panel resume commands now follow the build's recorded agent when it differs from the current builder configuration.",
+        "suggested_fix": "Implemented through per-session resume_command data and panel support, with regression coverage for both agents and custom commands.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Codex builds now start with the selected model, retain their session and resume after interruptions or hand-backs. The panel fix correctly reopens existing builds even after builder settings change. All five criteria pass, with no outstanding blocking findings."
   }
 }
 ```
