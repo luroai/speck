@@ -114,6 +114,11 @@ export function claimResumed(runs, id, { find = sessionProcess } = {}) {
   return next;
 }
 
+// 0319: what speck run says of a running build it finds on a check: outside speck run only when its record is marked
+// seen, as noteBuild and claimResumed mark it. Any other was launched or resumed by a speck run, such as a second one
+// running in the same repo, which speck run's lock should prevent.
+export const adoptedAs = rec => (rec?.seen === true ? 'is being built outside speck run' : 'is already being built');
+
 // 0300: the commands a build runs as it works, each with the ticket it's for: named first, or else the ticket whose
 // branch this checkout is on.
 const BUILD_COMMANDS = new Set(['start', 'next', 'review', 'merge-check', 'test', 'diffstat']);

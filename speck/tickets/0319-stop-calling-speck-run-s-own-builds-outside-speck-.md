@@ -38,6 +38,8 @@ Since 0300, `speck run` says a build it has just launched itself is "being built
 ## Notes
 - The message is written where `scripts/run.mjs` adopts builds (search for "being built outside speck run").
 - Failing before this build: none
+- Cause found: on 2026-10-18 two speck runs were watching this repo at once (processes 434685, running since 16 Oct, and 1571492, holding the lock since 14:54), both logging to the same run.log. Each launch by one was found a check later by the other, which took it for a build outside speck run. A single speck run never mislabels its own builds (0300 AC5's test). The fix labels a found build by its record: only records marked `seen`, which only noteBuild and claimResumed write, are outside speck run; any other is "already being built". How two speck runs got past the lock is a separate follow-up.
+- Self-check: no changes. Unusual records (no `seen`, `seen` not true) read as another speck run's build; carried builds (0301) and the start-up adoption are untouched.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
