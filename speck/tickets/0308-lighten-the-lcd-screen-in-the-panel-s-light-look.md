@@ -38,6 +38,7 @@ The LCD screen in the panel's light look is a lighter tint the user chose (shade
 ## Notes
 - The user picked shade C from four drawn with the design's renderer on 2026-10-18 (A `#c3c9b1` today, B `#d9ddca`, C `#e6e9db`, D `#f0f1e8`).
 - The renderer reads its colours from the page's tokens when it starts drawing, so a change of token needs the screens to pick it up (as switching looks already does).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
