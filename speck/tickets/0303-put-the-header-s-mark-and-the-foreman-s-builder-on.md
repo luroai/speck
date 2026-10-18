@@ -38,6 +38,7 @@ The header's mark and the builder on the Foreman's button are drawn on the LCD s
 ## Notes
 - See 0302's Notes for where the design and its renderer are.
 - Failing before this build: none
+- Self-check: the Foreman's builder was made before its canvas was in the button, so it took the light look's screen colours when the panel opened dark; it's made once the canvas is in place now, with a test, and the browser test opens the panel in each look. The old drawing's tests are retired (0163's drawing test, 0170's and 0184's checks of the header's SVG mark, test/support/badge.mjs), and the browser tests that spotted a refresh by a new canvas in the button now look for a new label, as the builder's canvas stays. On a phone the mark is 19 px too, as AC1 gives, in place of 0.9 em.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
