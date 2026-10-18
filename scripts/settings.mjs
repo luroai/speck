@@ -8,6 +8,7 @@ import { sameModelProblem } from './same-model.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { FIXING } from './foreman.mjs';
+import { FOREMAN_AGENTS } from './foreman-agent.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync } from './agents.mjs';
@@ -17,7 +18,14 @@ export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
   { title: 'Foreman', settings: [
     { key: 'foreman_fixing', default: 'tell',
-      explain: 'What the Foreman does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. Any other question waits for you whatever this is set to.' },
+      explain: 'What the Foreman does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. With fix, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
+    // 0287: the agent the Foreman looks into stops with
+    { key: 'foreman', default: '',
+      explain: 'The agent the Foreman runs on when it looks into work that stopped for a reason speck has no steps for: claude or codex. Blank uses the builder when that\'s codex, and claude otherwise.' },
+    { key: 'foreman_model', default: '',
+      explain: 'The model the Foreman agent runs on, written as that agent names it. Blank leaves it to the agent\'s own default.' },
+    { key: 'foreman_effort', default: '',
+      explain: 'How hard the Foreman agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default.' },
   ] },
   { title: 'Shipping', settings: [
     { key: 'auto_ship', default: false,
@@ -63,7 +71,7 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 // confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: allow_same_model_review
 // weakens the independent review. 0279: and builder_model. 0293: and builder, which sets build_command with it.
 export const EDITABLE = Object.freeze(['builder', 'builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'foreman_fixing']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']);
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
@@ -77,6 +85,8 @@ function choicesOf(key, file) {
   if (key === 'auto_ship') return [true, false];
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
   if (key === 'foreman_fixing') return [...FIXING]; // 0286
+  if (key === 'foreman') return ['', ...FOREMAN_AGENTS]; // 0287
+  if (key === 'foreman_effort') return ['', ...EFFORTS];
   return undefined;
 }
 

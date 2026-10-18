@@ -41,7 +41,7 @@ function runsOf(repo) {
 const pendingOf = rec => (rec?.go_with && typeof rec.go_with === 'object' && typeof rec.go_with.option === 'string' && rec.go_with.option && typeof rec.go_with.head === 'string' && rec.go_with.head ? rec.go_with : null);
 
 // The words speck run starts builds with, as it reads them from speck/config.yml, or [] when it has none it can use.
-function runWords(cfg) {
+export function runWords(cfg) {
   if (codexBuilds(cfg)) return codexStartWords(cfg);
   if (cursorBuilds(cfg)) return cursorStartWords(cfg, 'agent');
   const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
