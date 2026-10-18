@@ -5,6 +5,7 @@ import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, changedLines, posix, writeField } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
 import { who, reviewTotals, roundsLine } from './pack.mjs';
+import { prMode, openAndKeep } from './pull-request.mjs';
 
 // ---------- close (write the logs, set approved and commit, once the reviewer has approved) ----------
 
@@ -107,5 +108,15 @@ export function cmdClose(args) {
   const commit = commitTicketOnly(repo, t.file, original, `speck(${pad}): approved`);
   if (commit.status !== 0)
     throw new SpeckError(`Couldn't commit the ticket, so nothing was changed.\n${(commit.stderr || commit.stdout || '').trim().split('\n').slice(-5).join('\n')}`);
-  console.log(`${pad} approved, committed as speck(${pad}): approved. Next: speck ship ${pad} --auto (or /speck-ship ${pad}).`);
+  if (!prMode(cfg)) return console.log(`${pad} approved, committed as speck(${pad}): approved. Next: speck ship ${pad} --auto (or /speck-ship ${pad}).`);
+  // 0295: in pull request mode, approval opens the ticket's pull request. A failure leaves it approved, with nothing merged.
+  console.log(`${pad} approved, committed as speck(${pad}): approved. ship_mode is pr, so speck is opening its pull request.`);
+  try {
+    const pr = openAndKeep(repo, cfg, pad);
+    console.log(`${pr.found ? 'Its pull request was already open' : 'Opened its pull request'}: ${pr.url}`);
+  } catch (e) {
+    if (!(e instanceof SpeckError)) throw e;
+    console.log(e.opened ? `${e.message.split('\n')[0]} The ticket stays approved and nothing was merged.`
+      : `No pull request yet: ${e.message.split('\n')[0]} The ticket stays approved and nothing was merged. speck run tries again, or run \`speck pr ${pad}\`.`);
+  }
 }

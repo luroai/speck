@@ -16,6 +16,8 @@ import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { saveForeman } from './foreman.mjs';
+import { prMode } from './pull-request.mjs';
+import { prQueue } from './pr-queue.mjs';
 import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
@@ -138,6 +140,7 @@ function runOn(worker) {
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
   // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
   const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id), stuck: x => agents.stuck(x) });
+  const prs = prMode(cfg) ? prQueue(repo, cfg) : null; // 0295: in pull request mode, it opens pull requests instead of shipping
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
@@ -407,7 +410,7 @@ function runOn(worker) {
     const tickets = readTickets();
     if (!tickets) return;
     adoptSeen(tickets);
-    ships.check(tickets);
+    if (prs) prs.check(tickets); else ships.check(tickets);
     foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
     agents.check(tickets); // 0287: the Foreman agent's next look, and the builds it asked to resume
