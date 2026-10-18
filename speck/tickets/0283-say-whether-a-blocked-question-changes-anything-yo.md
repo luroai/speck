@@ -1,7 +1,7 @@
 ---
 id: "0283"
 title: "Say whether a blocked question changes anything you'd notice"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0290", "0293"]               # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T12:25:31.161Z"
 
 ---
 # 0283 · Say whether a blocked question changes anything you'd notice
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build blocks, its question gives the options and a recommendation, but nothing says whether the choice changes anything the user would notice, or whether the recommendation is a clear winner or a judgement call. So every blocked ticket waits for the user, even though none has ever needed a product decision: on 2026-10-17, 0274 blocked on a test 0270 left behind, and the user just took the recommendation.
