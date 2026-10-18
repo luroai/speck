@@ -1,7 +1,7 @@
 ---
 id: "0310"
 title: "Find Cursor in speck detect by either name"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:32:31.875Z"
+approved: "2026-10-18T22:34:57.135Z"
 
 ---
 # 0310 · Find Cursor in speck detect by either name
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Cursor's CLI is now called `agent` (it was `cursor-agent`). `speck agents` finds it by either name (0288), but `speck detect`, which setup reads, still looks only for `cursor-agent`, so setup can say Cursor isn't installed when it is.
@@ -47,9 +48,15 @@ When you set speck up, it now notices Cursor's command-line tool whether it's in
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The documentation test requires the exact phrase ‘`agent` or `cursor-agent`’.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 341,178
+- Elapsed since build started: 2 min
+- Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: both `speck detect` and `speck agents` count any executable named `agent` on the PATH as Cursor's CLI, without running it to check.
 
