@@ -39,6 +39,8 @@ Every blocked question says, in a form speck can read, which option the build re
 - First step of `speck/ideas/2026-10-17-a-foreman-that-keeps-the-work-moving.md`.
 - Blocking is in `/speck-build` sections 5 and 6, and `speck set <id> status blocked`. speck run writes a blocked question itself in `scripts/run.mjs` (search for "Blocked question").
 - Failing before this build: none
+- Self-check: a yes or no value such as `constructor` is now read as unknown, not as a built-in name; the panel shows the facts on a blocked ticket even when its section holds nothing but them.
+- The three are written as lines under `## Blocked question` (`Recommended:`, `Changes what you'd notice:`, `Clear winner:`). `speck status --json` gives them as `blocked_recommendation`, `blocked_noticeable` and `blocked_clear`, null when unknown, and leaves them out of `blocked_question`. The text `speck status` still prints the whole section.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

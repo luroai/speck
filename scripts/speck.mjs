@@ -24,6 +24,7 @@ import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
 import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
+import { questionFacts } from './question-facts.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -428,7 +429,8 @@ export function statusData(repo) {
   const leads = groupLeader();
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
-    const question = contentLines(t.sections['blocked question']).join('\n');
+    const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
+    const question = facts.question;
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null;
@@ -440,6 +442,10 @@ export function statusData(repo) {
       worktree: t.at || null,
       acceptance_criteria: criteriaText(t.sections['acceptance criteria']),
       blocked_question: question || null,
+      // 0283: the option the build recommends, whether any option changes what you'd notice, and whether it's a clear winner; null when unknown
+      blocked_recommendation: facts.recommendation,
+      blocked_noticeable: facts.noticeable,
+      blocked_clear: facts.clear,
       lint: { errors: lint.errors.length, warnings: lint.warnings.length },
       problem: sectionText(t.sections.problem),
       outcome: sectionText(t.sections.outcome),
