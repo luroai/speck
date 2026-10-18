@@ -51,5 +51,5 @@ test('0310 AC4: speck detect and speck agents agree on whether Cursor is install
 test('0310 AC1: the brief says speck detect finds Cursor\'s CLI by either name', () => {
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
   const row = brief.split('\n').find(l => l.startsWith('| `speck detect` |'));
-  assert.match(row, /`agent` or `cursor-agent`/);
+  for (const name of ['`agent`', '`cursor-agent`']) assert.ok(row.includes(name), `the speck detect row names ${name}`);
 });
