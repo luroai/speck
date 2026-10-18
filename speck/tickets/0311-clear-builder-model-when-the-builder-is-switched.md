@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:32:27.950Z"
-approved: "2026-10-18T22:39:22.841Z"
+approved: "2026-10-18T22:45:13.491Z"
 
 ---
 # 0311 · Clear builder_model when the builder is switched
@@ -52,12 +52,13 @@ To see it, set a builder model such as opus, then switch the builder to Codex: t
 ## Review log
 Round 1 (codex): changes requested: F1 panelSaveSettings adds an exception absent from the ticket: supplying builder_model in the same Save bypasses the check entirely.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 411,616
-- Elapsed since build started: 7 min
+- Reviewer tokens: 796,620
+- Elapsed since build started: 13 min
 - Changed lines: 91 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: the panel's older one-setting address (POST /api/settings/<key>/<value>), which the page no longer uses, reads the new builder's models while it waits, holding up the panel's server for up to the agent's time limit. The Settings view's Save reads them without waiting.
@@ -195,6 +196,75 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The previous gap is fixed. Settings and the command line now clear unsupported or unverifiable models when switching builders, explain why, and retain supported models. All four criteria pass; the recorded test run has no failures."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "888065e1d66c61cc4402e1f410c2e60731523fb4",
+    "merge": true,
+    "thread_id": "01a1512a-6edb-79e0-a028-05c7b38840ef",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 383084,
+      "cached_input_tokens": 317312,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1920,
+      "reasoning_output_tokens": 89
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:45:10.966Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs panelSaveSettings checks the effective model and clears unsupported values in the same save; templates/panel.html displays the reason. Passing AC1 tests cover the commit, message and simultaneous builder/model changes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/config.mjs setBuilder clears unsupported models in the same write and explains why on one line. The CLI AC2 test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/builder-switch.mjs clearsBuilderModel preserves offered models. Passing AC3 tests cover Settings, CLI and simultaneous changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/agents.mjs offeredModels and offeredModelsAsync return null for unreadable model lists, triggering clearing. Passing AC4 tests cover Settings, CLI and simultaneous changes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "Simultaneous builder and builder_model changes previously bypassed model validation.",
+        "suggested_fix": "Implemented and preserved after merging main: validate the effective model, with regression coverage for unsupported, supported and unreadable model lists.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the approved behaviour and fixes the explanation-length failure without weakening tests. All four criteria pass. The recorded run has 141 passes, no failures and three skips."
   }
 }
 ```
