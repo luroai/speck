@@ -1,7 +1,7 @@
 ---
 id: "0282"
 title: "Prepare release 0.6.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T09:46:26.237Z"
 
 ---
 # 0282 · Prepare release 0.6.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Since `v0.5.4`, speck has gained a Settings view in the panel that explains and changes the settings people tune, with settings for this machine only, a builder model and model lists for the reviewer (0257–0261, 0268, 0273–0281). Setup now goes through those settings (0269). Shipping copes better when `main` fails or has moved on GitHub (0263–0265). Builds run a project's quick repo-wide checks (0272), and a document's wording is checked by review, not by tests (0266, 0267). Anyone following the setup prompt today gets 0.5.4 without any of it.
