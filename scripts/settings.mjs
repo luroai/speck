@@ -7,12 +7,18 @@ import { SpeckError, sh, loadConfig, parseYaml, findRepoRoot, EFFORTS } from './
 import { sameModelProblem } from './same-model.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
+import { FIXING } from './foreman.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand } from './builder-switch.mjs';
 
 export const SETTING_GROUPS = [
+  // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
+  { title: 'Foreman', settings: [
+    { key: 'foreman_fixing', default: 'tell',
+      explain: 'What the Foreman does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. Any other question waits for you whatever this is set to.' },
+  ] },
   { title: 'Shipping', settings: [
     { key: 'auto_ship', default: false,
       explain: 'When true, speck run ships each approved ticket whose risk auto_ship_risk lists: it is merged and pushed to the base branch without waiting for you. When false, every approved ticket waits for you to ship it.' },
@@ -57,7 +63,7 @@ const lookup = (o, key) => key.split('.').reduce((at, k) => own(at, k) ? at[k] :
 // confirmed a change that lets more tickets ship by themselves. The rest stay read-only there: allow_same_model_review
 // weakens the independent review. 0279: and builder_model. 0293: and builder, which sets build_command with it.
 export const EDITABLE = Object.freeze(['builder', 'builder_model', 'reviewer', 'reviewer_model', 'reviewer_effort', 'max_parallel_builds', 'max_parallel_tests',
-  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk']);
+  'limits.max_acceptance_criteria', 'limits.max_changed_lines', 'limits.max_review_rounds', 'auto_ship', 'auto_ship_risk', 'foreman_fixing']);
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
@@ -70,6 +76,7 @@ function choicesOf(key, file) {
   if (key === 'reviewer_effort') return ['', ...EFFORTS];
   if (key === 'auto_ship') return [true, false];
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
+  if (key === 'foreman_fixing') return [...FIXING]; // 0286
   return undefined;
 }
 
