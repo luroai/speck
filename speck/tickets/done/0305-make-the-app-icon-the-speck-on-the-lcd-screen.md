@@ -1,7 +1,7 @@
 ---
 id: "0305"
 title: "Make the app icon the speck on the LCD screen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-18T22:08:25.582Z"
 blocked_at: ""
 waited_seconds: 238
 approved: "2026-10-18T22:22:33.550Z"
+finished: "2026-10-18T22:24:35.124Z"
 
 ---
 # 0305 · Make the app icon the speck on the LCD screen
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel's app icon, which a phone shows when the panel is added to its home screen and a browser shows in its tab, is today's line drawing of speck. The LCD design puts speck on a dot-matrix screen everywhere.
