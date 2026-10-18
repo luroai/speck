@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
-import { resumeFor, handBackQueue } from './hand-back.mjs';
+import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
@@ -331,7 +331,7 @@ function runOn(worker) {
     // 0217: the time it waited, stopped, is left out of its build time, counted while it can't be writing the ticket.
     const note = countStop(repo, id);
     if (note) console.log(`${id}:${note}`);
-    const resumed = { ...rec, resumed: new Date().toISOString(), resume_command: argv };
+    const resumed = { ...resumedRecord(rec), resumed: new Date().toISOString(), resume_command: argv };
     // Saved before the build carries on, so a record that can't be saved stops it being resumed at all.
     try { saveRecord(recordFile, resumed); } catch (e) { return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;

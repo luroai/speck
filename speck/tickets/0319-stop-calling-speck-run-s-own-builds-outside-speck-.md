@@ -1,7 +1,7 @@
 ---
 id: "0319"
 title: "Stop calling speck run's own builds outside speck run"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T22:35:05.298Z"
 ---
 # 0319 · Stop calling speck run's own builds outside speck run
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0300, `speck run` says a build it has just launched itself is "being built outside speck run". On 2026-10-18 it said so of 0302, 0305 and 0309 a moment after launching each. The build is counted once and runs normally, but the message is wrong, and it makes the log and the Foreman's detail misleading.
@@ -52,3 +52,74 @@ Since 0300, `speck run` says a build it has just launched itself is "being built
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6199128d1fd2ef7a97a74e24cde022b3d14c8633",
+    "thread_id": "01a1512a-da1e-74b2-b01b-45d1b8b40580",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 137795,
+      "cached_input_tokens": 90880,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 919,
+      "reasoning_output_tokens": 60
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:39:09.219Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run.mjs adoptSeen uses adoptedAs and skips running builds. Passing 0319 integration test checks adoption of another run's launch; passing 0300 AC5 integration test checks an actual launch through its exit."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "resumeKilled in run.mjs, resumeHandBack in hand-back.mjs and goWithQueue in go-with.mjs preserve seen:true from earlier conversation or manual builds. adoptedAs then labels these speck-run-resumed builds outside speck run. The 0319 AC2 test constructs only records without seen:true and misses this lifecycle."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "noteBuild and claimResumed mark external builds seen:true. Passing 0319 AC3 tests exercise both writers, and the integration test verifies the outside-speck-run message appears once."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "adoptEarlierBuilds retains the carried-build message unchanged. The passing 0319 integration test checks 'carries on through the switch' for a handed-over running build."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/seen-builds.mjs",
+        "issue": "seen:true describes an earlier external build, but all three speck run resume paths retain that flag. If a conversation build stops and speck run resumes it, another watching run still calls the new build outside speck run. This leaves criterion 2 unsatisfied in the same multiple-run situation this fix targets.",
+        "suggested_fix": "Ensure records written when speck run resumes a build identify its current ownership, including records previously marked seen:true. Add coverage starting with a genuinely external record and exercising the resume writers before checking the adoption message.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change correctly labels newly launched builds and preserves manual-build and code-switch reporting. One case remains: when speck run resumes a build previously run by hand, its old external-build marker survives and can produce the same misleading message."
+  }
+}
+```
+
+</details>
