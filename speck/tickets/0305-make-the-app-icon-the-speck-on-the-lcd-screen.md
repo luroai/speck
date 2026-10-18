@@ -1,7 +1,7 @@
 ---
 id: "0305"
 title: "Make the app icon the speck on the LCD screen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -21,7 +21,7 @@ approved: "2026-10-18T22:19:05.140Z"
 ---
 # 0305 · Make the app icon the speck on the LCD screen
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's app icon, which a phone shows when the panel is added to its home screen and a browser shows in its tab, is today's line drawing of speck. The LCD design puts speck on a dot-matrix screen everywhere.
@@ -201,6 +201,75 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The icons correctly show the LCD mark with sharp square dots, the requested colours and sizes, and unchanged icon links. The user resolved the margin question by choosing centred artwork. All criteria pass; no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "97a1542b133505554ca31bad178eccca3ae233f1",
+    "merge": true,
+    "thread_id": "01a15114-044b-7802-b720-487678434536",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 494119,
+      "cached_input_tokens": 415872,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2304,
+      "reasoning_output_tokens": 370
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:22:30.696Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "The icons and renderer-based checks are unchanged from the approved round. All three AC1 tests in test/icons-0305.test.mjs pass, checking the dot pattern, square dots and specified colours."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The recorded user decision permits centred artwork with equal opposite margins. The passing AC2 test checks those margins, corner clearance and the mark's size."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 test verifies 192, 512 and 180 pixel square PNGs and checks every pixel uses one of the three solid colours, confirming sharp edges."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The manifest and page icon links remain unchanged against the merged main. The AC4 test passes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/icons-0305.test.mjs",
+        "issue": "The meaning of equal margins required a product decision.",
+        "suggested_fix": "The user's recorded choice of centred artwork with square dots and equal opposite margins is implemented and tested.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change preserves the approved LCD icons and the user's margin choice. The test-count fix addresses a regression caused by retiring the old artwork test while preserving the browser timeout and cleanup checks. All tests run this round pass, with no blocking concerns."
   }
 }
 ```
