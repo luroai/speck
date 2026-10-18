@@ -1,7 +1,7 @@
 ---
 id: "0297"
 title: "Prepare release 0.7.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T12:25:35.297Z"
 ---
 # 0297 · Prepare release 0.7.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once 0288–0293 ship, speck can build with Codex or Cursor as well as Claude Code, review with Claude Code from the command line, find the agents and models on the machine, and switch the builder from the panel and in setup. Anyone following the setup prompt, or updating speck on another machine, gets 0.6.0 without it.
@@ -60,3 +60,79 @@ speck is ready to be released as 0.7.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3fedf934b89243d855a7a3720983d08f7783691c",
+    "thread_id": "01a14efd-a821-7b81-a138-c47905c25dbe",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 220147,
+      "cached_input_tokens": 161024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1560,
+      "reasoning_output_tokens": 149
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T12:30:48.731Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json declares 0.7.0. Both AC1 tests passed, including running init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The new changelog covers 0288–0293 and preserves earlier sections, confirmed by passing AC2 tests. Its unconditional claim about refusing same-family builders contradicts sameModelProblem in scripts/same-model.mjs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say 0.7.0, a public preview. Passing AC3 tests check versions, the latest-release setup command and new command names. README changes reflect the shipped builder and token-reporting behaviour."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "docs/releases/v0.7.0.md includes installation, per-project updates, upgrade guidance and the correct changelog link; AC4 tests passed. The Settings refusal claim omits the supported different-model exception."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent recalculation from current speck/tickets/done matches all README figures: 272 shipped, 16 cancelled, 13 minutes median, one round median and 139 first-round approvals. Version consistency tests passed; the recorded run has 136 passes, no failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "CHANGELOG.md; docs/releases/v0.7.0.md",
+        "issue": "Both documents say Settings refuses a builder from the reviewer's family without mentioning that Claude builder/reviewer pairs are allowed when builder_model and reviewer_model are both set and differ. scripts/same-model.mjs explicitly permits this, and shipped ticket 0293 records that exception. The release therefore describes an existing supported configuration incorrectly.",
+        "suggested_fix": "Qualify the same-family refusal statements with the explicit different-model exception. Keep the distinction clear that the CLI builder switch warns about an incompatible reviewer, whereas Settings refuses it.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The version bump, installation guidance and refreshed project figures check out, and the reported tests pass. One release-documentation correction remains: the same-family reviewer restriction is described more strictly than it works."
+  }
+}
+```
+
+</details>
