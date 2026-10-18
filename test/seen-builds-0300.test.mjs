@@ -114,10 +114,13 @@ test('0300 AC1: a build outside speck run that approves its ticket doesn\'t hold
     assert.ok(await until(() => /0001 is being built outside speck run/.test(run.out())), run.out());
     const f = path.join(path.dirname(cli), 'run-switch.mjs');
     fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace("'speck run switched to the new code.'", "'speck run switched to the new code. v2'"));
-    assert.ok(await until(() => /switch to the new code when its running builds and ships have ended: the build of 0001/.test(run.out())), run.out());
+    // 0301: speck run no longer waits for builds to switch, so the new code carries the build on, and releases it
+    // once it approves its ticket.
+    assert.ok(await until(() => run.out().includes('switched to the new code. v2')), run.out());
+    assert.ok(!/will switch to the new code/.test(run.out()), run.out());
     setStatus(r.dir, '0001', 'building', 'approved');
     r.g('commit', '-qam', '0001 approved');
-    assert.ok(await until(() => run.out().includes('switched to the new code. v2')), run.out());
+    assert.ok(await until(() => /0001 is approved, so its build outside speck run no longer counts/.test(run.out())), run.out());
     assert.ok(alive(pid), 'its conversation carries on');
   } finally { await stopRun(run); killAll([pid].filter(Boolean)); }
 });
