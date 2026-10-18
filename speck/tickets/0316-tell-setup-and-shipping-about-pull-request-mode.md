@@ -1,7 +1,7 @@
 ---
 id: "0316"
 title: "Tell setup and shipping about pull request mode"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0315"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:47:16.757Z"
+approved: "2026-10-18T22:52:22.182Z"
 
 ---
 # 0316 · Tell setup and shipping about pull request mode
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Pull request mode has shipped (0295, 0296), but the skills don't know about it: setup still warns that speck can't work with a base branch that requires pull requests, and `/speck-ship` describes only merging locally.
@@ -48,9 +49,14 @@ Setting speck up no longer says it can't work with a team that ships through pul
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 146,288
+- Elapsed since build started: 5 min
+- Changed lines: 32 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Review F1 (minor): the ship skill's conflict advice promises a hand-back from `speck run`, but a conflict GitHub reports is refused before the exit-13 landing check, so it isn't handed back. Saved as `speck/ideas/2026-10-18-hand-back-a-pull-request-github-says-conflicts.md`; the skill's wording can be narrowed with it.
