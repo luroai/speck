@@ -20,6 +20,7 @@ import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
 import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs';
+import { agentView, cmdForeman } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
@@ -487,7 +488,7 @@ function cmdStatus(args = []) {
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   // 0285: the Foreman, as the panel's header shows it, from speck run's own record. Blocked tickets are listed below.
   const board = tickets.map(t => ({ id: t.fm.id, status: t.fm.status, title: t.fm.title, blocked_question: null }));
-  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg) }))) console.log(line);
+  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board) }))) console.log(line);
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);
@@ -564,10 +565,12 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
+  speck foreman <action> <id> ...     what the Foreman agent speck run starts may do: resume, reship, fix or ask
+                                      (only that agent may run it)
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, 'merge-check': cmdMergeCheck, ship: cmdShip };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, 'merge-check': cmdMergeCheck, ship: cmdShip, foreman: cmdForeman };
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {

@@ -39,6 +39,8 @@ With the Foreman's Fixing setting on, speck run starts a Foreman agent with a sh
 ## Notes
 - From `speck/ideas/2026-10-17-a-foreman-that-keeps-the-work-moving.md`, step 3. The agent's steps go in a new skill, which is the Foreman's instructions, not a user command (only Capture, Ticket, Build and Ship are user commands).
 - Failing before this build: none
+- Self-check: `speck foreman` now keeps the agent's text and reason to one line in the Notes, refuses a ticket with no Notes section before it makes a fix ticket, and speck run drops a waiting stop whose ticket has since finished.
+- How it works: the Foreman agent's code is in `scripts/foreman-agent.mjs`. speck run keeps its record in `speck/.cache/runs/run.foreman-agent.json`; the agent's actions go in `run.foreman-did.jsonl`. Commits titled `speck(<id>): Foreman: …` don't count as new commits, for the ship queue or for looking into a ticket again. Adding settings changed the fixed setting lists in the 0257 and 0258 tests, and the new agent-only skill is left out of 0107's check that the other skills stay in the slash menu.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

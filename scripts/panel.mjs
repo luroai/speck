@@ -17,6 +17,7 @@ import { logFeed } from './log-feed.mjs';
 import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels, builderModels } from './settings.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
+import { agentView } from './foreman-agent.mjs';
 import { findAgentsAsync } from './agents.mjs';
 import { goWith } from './go-with.mjs';
 
@@ -289,7 +290,7 @@ export async function panelServer() {
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
-      const run = runState(runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow() });
+      const run = runState(runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets) });
       const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...pageNow() });
       return { status: 200, body: snap.body, snap };
     }

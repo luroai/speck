@@ -14,6 +14,9 @@ review_timeout_minutes: 30       # a reviewer speck runs (codex, or a command un
 auto_ship: false                 # true: the build ships a ticket as soon as the reviewer approves it, without waiting for /speck-ship
 auto_ship_risk: [low]            # which ticket risks auto_ship covers: low, high or both
 foreman_fixing: tell             # what the Foreman does with a build's blocked question: off (leave it to you) | tell (also count it under Needs you) | fix (take the recommendation when no option changes anything you'd notice and it's a clear winner, once per ticket)
+foreman: ""                      # the agent the Foreman runs on to look into work that stops for a reason speck has no steps for, with foreman_fixing: fix: claude | codex, blank for the builder when it's codex, otherwise claude
+foreman_model: ""                # blank: the Foreman agent's own default. Otherwise a model name in that agent's own format
+foreman_effort: ""               # blank: the Foreman agent's own default. Otherwise low | medium | high | xhigh | max
 ship_wait_minutes: 30            # how long speck ship waits for staged changes in the base branch's checkout to be committed or unstaged before it refuses
 
 worktrees: true                  # true: each build gets its own git worktree beside your checkout (speck start). false: builds branch in your checkout
