@@ -1,7 +1,7 @@
 ---
 id: "0304"
 title: "Set the panel's title in the LCD design's lettering"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0303"]  # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T22:08:37.278Z"
 
 ---
 # 0304 · Set the panel's title in the LCD design's lettering
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The LCD design (`docs/design/lcd/`) sets speck's name in Doto, a dot-matrix typeface, on the concept and landing pages. The panel's header still sets "speck" in the serif it uses for headings, so the panel and the landing page don't look like one product.
