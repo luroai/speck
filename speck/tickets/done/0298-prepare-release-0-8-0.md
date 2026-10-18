@@ -1,7 +1,7 @@
 ---
 id: "0298"
 title: "Prepare release 0.8.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0297", "0283", "0284", "0285", "0286", "0287", "0294", "0295", "0296", 
 created: 2026-10-18
 started: "2026-10-18T14:43:21.385Z"
 approved: "2026-10-18T14:50:53.609Z"
+finished: "2026-10-18T14:52:51.011Z"
 
 ---
 # 0298 · Prepare release 0.8.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Once the Foreman (0283–0287), pictures in review packs (0294) and pull request mode (0295, 0296) ship, speck shows one status for the pipeline and clears technical blockages itself, shows what a visual change looks like before you ship it, and can ship through GitHub pull requests. Anyone following the setup prompt, or updating speck on another machine, gets 0.7.0 without it.
