@@ -1,7 +1,7 @@
 ---
 id: "0309"
 title: "Make the header's mark and title larger"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,12 +14,13 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:23:44.151Z"
-blocked_at: "2026-10-18T22:30:28.626Z"
+blocked_at: ""
+waited_seconds: 100
 
 ---
 # 0309 · Make the header's mark and title larger
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 The header's LCD mark (19 px) and "speck" title (18 px Doto) are small next to the header's 34 px buttons, so the brand reads weakly, especially on a phone.
@@ -40,6 +41,7 @@ The header's mark and "speck" title are larger, closer to the landing page's, an
 - The sizes are `.logo .mark` and `.logo .name` in `templates/panel.html` (0303, 0304). The landing page sets its mark at 26 px and its name at 24 px.
 - Failing before this build: none
 - Built so far: 32 px mark and 26 px title at every width, laid out in a row centred on the mark. Wide screens fit well. On a 375 px phone, the two-row header has about 123 px left for the project's name, so even "speck · base main" is cut short with "…", and 0140 AC3 (the project's name in full at 375 px) fails. A 14 px title on phones doesn't help, because the 32 px mark alone takes about 19 px more than before.
+- Went with the recommendation: B, hide "control panel" on phones (chosen by the user in the panel, 2026-10-18 22:32 UTC).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
