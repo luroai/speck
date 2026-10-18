@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { sh, ticketBranches } from './core.mjs';
 import { shipState, otherShipRunning, shipsRunning } from './ship.mjs';
 import { sharedCacheDir } from './turns.mjs';
+import { foremanOnly } from './foreman-agent.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
@@ -71,8 +72,10 @@ const HAND_BACK = { 13: 'conflict', 16: 'tests', 14: 'base' };
 // a ship (launchShip), `say` prints a line, and `handBack` gets { id, kind, why, head } for a refusal the ticket's
 // build has steps for, head being its branch as the ship tried it.
 // A ticket for which `waiting(id)` is true has a hand-back still to run, so it isn't shipped until that has run.
-// state(tickets) is what shipping is waiting for, for the Foreman's record (0285).
-export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, handBack = () => {}, waiting = () => false } = {}) {
+// state(tickets) is what shipping is waiting for, for the Foreman's record (0285). 0287: `stuck` gets { id, what, log }
+// for a refusal no build has steps for, for the Foreman agent to look into, and again(id) ships a ticket once more
+// without a new commit. Commits only the Foreman made (its notes) don't count as new.
+export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, handBack = () => {}, waiting = () => false, stuck = () => {} } = {}) {
   const runs = sharedCacheDir(repo, 'runs');
   const base = cfg.base_branch;
   const last = new Map(); // each ticket's refs at its last try
@@ -81,6 +84,8 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
   const killed = new Map(); // 0212: each ticket's refs when a ship of it killed partway was last tried again at once
   const said = new Map(); // 0285: each ticket's message from its last try that didn't ship, and why the hold started
   let holdWhy = '';
+  const forced = new Set(); // 0287: tickets the Foreman asked to ship once more
+  const same = (id, prev, refs) => prev.base === refs.base && (prev.head === refs.head || foremanOnly(repo, id, prev.head, refs.head));
 
   const ended = (id, prev, refs, log, since, code, error) => {
     current = null;
@@ -108,6 +113,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       say(`Shipping is on hold until ${base} passes: speck run won't start another ship, other than a fix ticket's, until ${base} has a new commit.`);
     }
     if (!error && HAND_BACK[code]) handBack({ id, kind: HAND_BACK[code], why, head: refs.head });
+    else stuck({ id, what: `its ship was refused: ${why}`, log }); // 0287
   };
 
   const check = tickets => {
@@ -121,7 +127,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       if (hold !== null && t.type !== 'fix') continue;
       if (waiting(t.id)) continue;
       const refs = refsOf(repo, cfg, t.id);
-      if (!last.has(t.id)) {
+      if (!last.has(t.id) && !forced.has(t.id)) {
         const message = earlierTry(repo, runs, t.id, refs);
         if (message !== null) {
           last.set(t.id, refs);
@@ -130,8 +136,9 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
         }
       }
       const prev = last.get(t.id);
-      if (prev && prev.base === refs.base && prev.head === refs.head) continue;
+      if (prev && !forced.has(t.id) && same(t.id, prev, refs)) continue;
       if (otherShipRunning(runs)) return; // another ship: wait for it to end
+      forced.delete(t.id);
       const log = path.join(runs, `${t.id}.ship.log`), since = new Date().toISOString();
       current = t.id;
       last.set(t.id, refs);
@@ -153,11 +160,12 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       const prev = last.get(t.id);
       if (!prev) continue;
       const refs = refsOf(repo, cfg, t.id);
-      if (prev.base === refs.base && prev.head === refs.head)
+      if (!forced.has(t.id) && same(t.id, prev, refs))
         refused.push({ id: t.id, message: `waiting for a new commit on ${base} or its branch. Its last try: ${said.get(t.id) || 'it didn\'t ship'}` });
     }
     return { running: shipping, hold: hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` }, refused };
   };
 
-  return { check, state, running: () => current, note: () => (current ? ` The ship of ${current} is still running, and carries on to its end.` : '') };
+  const again = id => { forced.add(String(id)); };
+  return { check, state, again, running: () => current, note: () => (current ? ` The ship of ${current} is still running, and carries on to its end.` : '') };
 }

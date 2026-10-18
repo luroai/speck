@@ -3092,7 +3092,8 @@ function foremanOf(st) {
   const on = !!(st && st.run && st.run.on), list = v => (Array.isArray(v) ? v : []);
   const tone = f && typeof f.tone === 'string' ? f.tone : on ? 'idle' : 'off';
   return { word: f && typeof f.word === 'string' ? f.word : on ? 'Idle' : 'Off', tone, on,
-    building: list(f && f.building), ready: list(f && f.ready), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked) };
+    building: list(f && f.building), ready: list(f && f.ready), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
+    agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null }; // 0287: the Foreman agent's work
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
@@ -3119,6 +3120,12 @@ function renderForeman(f, stale) {
   kids.push(...section('Shipping', ship, f.on ? 'Nothing is waiting to ship.' : 'speck run is off, so nothing ships by itself.'));
   kids.push(...section('Blocked', f.blocked.map(b => item(String(b.id), String(b.title || ''),
     b.question ? el('p', 'question', String(b.question)) : null)), 'Nothing is blocked.'));
+  // 0287: what the Foreman agent is looking into, its questions to you and what it did lately, and why
+  const a = f.agent, list = v => (Array.isArray(v) ? v : []), looked = [];
+  if (a && a.running && typeof a.running === 'object') looked.push(item(String(a.running.id), `is being looked into: ${String(a.running.what || '')}`));
+  for (const q of list(a && a.asks)) looked.push(item(String(q.id), 'The Foreman asks you:', el('p', 'question', String(q.question || ''))));
+  for (const d of list(a && a.did)) looked.push(item(String(d.id), `The Foreman ${String(d.did || d.action || '')}${d.text ? `: ${String(d.text)}` : ''}.`, d.why ? `Why: ${String(d.why)}` : ''));
+  kids.push(...section('Looked into', looked, 'The Foreman hasn\'t had to look into anything.'));
   box.replaceChildren(...kids);
 }
 // 0285: the speck run switch, in the Settings view's Foreman group. One button, kept between redraws so it keeps focus,
