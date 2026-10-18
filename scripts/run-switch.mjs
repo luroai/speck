@@ -1,5 +1,5 @@
-// speck run's lock, and its switch to new code once it's idle (0247). The process you start holds the lock throughout.
-// It runs speck run itself until its code changes; from the first switch on, it only waits on a speck run it started on
+// speck run's lock, and its switch to new code once no ship is running (0247), with builds carrying on through it (0301).
+// The process you start holds the lock throughout. It runs speck run itself until its code changes; from the first switch on, it only waits on a speck run it started on
 // the new code, passing it Ctrl+C, and starts the next one on each later change. So the lock's pid, the terminal and
 // run.log stay the same, and only one speck run is ever watching the board.
 import fs from 'node:fs';
@@ -47,21 +47,23 @@ export function codeWatch(running) {
   };
 }
 
-// The tickets the speck run this one replaced had launched, taking the switch's variables out of the environment, so
-// no build or ship it starts gets them.
-export function launchedBefore() {
-  let ids = [];
-  try { ids = JSON.parse(process.env.SPECK_RUN_LAUNCHED || '[]'); } catch { /* none */ }
-  for (const k of ['SPECK_RUN_CODE', 'SPECK_RUN_CODE_URL', 'SPECK_RUN_LAUNCHED']) delete process.env[k];
-  return Array.isArray(ids) ? ids.filter(id => typeof id === 'string') : [];
+// What the speck run this one replaced handed over: the tickets it had launched, and the builds it had running, which
+// carry on (0301). Takes the switch's variables out of the environment, so no build or ship it starts gets them.
+export function handedOver() {
+  const ids = name => {
+    let v = [];
+    try { v = JSON.parse(process.env[name] || '[]'); } catch { /* none */ }
+    return Array.isArray(v) ? v.filter(id => typeof id === 'string') : [];
+  };
+  const got = { launched: ids('SPECK_RUN_LAUNCHED'), running: ids('SPECK_RUN_RUNNING') };
+  for (const k of ['SPECK_RUN_CODE', 'SPECK_RUN_CODE_URL', 'SPECK_RUN_LAUNCHED', 'SPECK_RUN_RUNNING']) delete process.env[k];
+  return got;
 }
 
-// What speck run says once as it waits to switch: the builds and the ship it's waiting for.
-export function waitingSays(builds, ship) {
-  const names = [...builds.map(id => `the build of ${id}`), ...(ship ? [`the ship of ${ship}`] : [])];
-  if (!names.length) return 'speck run\'s code has changed, so it\'s switching to the new code.';
-  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
-  return `speck run's code has changed, so it will switch to the new code when its running builds and ships have ended: ${list}. It starts no new build or ship until then.`;
+// What speck run says once as it waits to switch: the ship it's waiting for, if any.
+export function waitingSays(ship) {
+  if (!ship) return 'speck run\'s code has changed, so it\'s switching to the new code.';
+  return `speck run's code has changed, so it will switch to the new code when the ship of ${ship} has ended. It starts no new ship until then, and new builds may still start.`;
 }
 export const failedSays = reason => `speck run couldn't switch to the new code: ${reason}\nIt carries on with the code it has, and tries again at the next change.`;
 
@@ -69,10 +71,10 @@ export const failedSays = reason => `speck run couldn't switch to the new code: 
 const whyFailed = e => (e && e.name === 'SpeckError' ? e.message : `${(e && e.name) || 'Error'}: ${String((e && e.message) || e).split('\n')[0]}`);
 
 // Starts speck run on the code as it is now (`hash`), writing where this one does, with the tickets launched so far, so
-// it doesn't launch them again. It loads, checks its settings and adopts earlier builds, launching nothing, says
-// 'ready' and waits for 'go' to start watching. Calls ready(child) once, or failed(reason) if it can't start, having
-// stopped it.
-export function startSuccessor(hash, launched, { ready, failed }) {
+// it doesn't launch them again, and the builds running, which it watches from then on. It loads, checks its settings
+// and adopts earlier builds, launching nothing, says 'ready' and waits for 'go' to start watching. Calls ready(child)
+// once, or failed(reason) if it can't start, having stopped it.
+export function startSuccessor(hash, { launched, running }, { ready, failed }) {
   const loader = `try { const m = await import(process.env.SPECK_RUN_CODE_URL); m.runWorker(); }
 catch (e) { process.send({ type: 'failed', reason: e && e.name === 'SpeckError' ? e.message : (e && e.name || 'Error') + ': ' + String(e && e.message || e).split('\\n')[0] }, () => process.exit(1)); }`;
   let child, settled = false;
@@ -81,7 +83,7 @@ catch (e) { process.send({ type: 'failed', reason: e && e.name === 'SpeckError' 
   const timer = setTimeout(() => fail(`it wasn't ready within ${SWITCH_START_MS / 1000} seconds.`), SWITCH_START_MS);
   try {
     child = spawn(process.execPath, ['--input-type=module', '-e', loader], { stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
-      env: { ...process.env, SPECK_RUN_CODE: hash, SPECK_RUN_LAUNCHED: JSON.stringify(launched), SPECK_RUN_CODE_URL: pathToFileURL(path.join(DIR, 'speck.mjs')).href } });
+      env: { ...process.env, SPECK_RUN_CODE: hash, SPECK_RUN_LAUNCHED: JSON.stringify(launched), SPECK_RUN_RUNNING: JSON.stringify(running), SPECK_RUN_CODE_URL: pathToFileURL(path.join(DIR, 'speck.mjs')).href } });
   } catch (e) { fail(`${e.message}.`); return null; }
   child.on('error', e => fail(`${e.message}.`));
   child.on('exit', code => fail(`it stopped with exit code ${code} before it was ready.`));
@@ -92,12 +94,14 @@ catch (e) { process.send({ type: 'failed', reason: e && e.name === 'SpeckError' 
   return child;
 }
 
-// speck run's side of the switch, called on each of its checks: true from a change until it has switched, a switch has
-// failed or the code is back to what it runs, and speck run starts nothing meanwhile. It says so once, naming what
-// busy() gives ([build ids], ship id or null), and switches once that's nothing. A `worker` (on new code) asks the
-// process you started to switch; that process itself starts its successor, stops its loop and becomes its host.
-// If the new code can't start, it says why once and carries on, until the next change.
-export function codeSwitch({ worker, code, busy, launched, stopLoop }) {
+// speck run's side of the switch, called on each of its checks. From a change, it says once that it's switching, naming
+// the ship busy() gives (its id or null), and while that runs speck run carries on as usual: it starts no other ship,
+// as only one runs at a time, but may start builds. Once no ship is running it hands over, giving the new code the
+// builds running (running()), which carry on. True from then until it has switched or the switch has failed, and
+// speck run starts nothing meanwhile. handOver() is called as it hands over and stayed() if the new code can't start.
+// A `worker` (on new code) asks the process you started to switch; that process itself starts its successor, stops
+// its loop and becomes its host. If the new code can't start, it says why once and carries on, until the next change.
+export function codeSwitch({ worker, code, busy, launched, running, stopLoop, handOver = () => {}, stayed = () => {} }) {
   const watch = codeWatch(code);
   let waiting = false, handing = false, stay = null;
   if (worker) process.on('message', m => { if (m?.type === 'stay') stay?.(m.reason); });
@@ -105,14 +109,16 @@ export function codeSwitch({ worker, code, busy, launched, stopLoop }) {
     const next = watch.changed();
     if (!next) { waiting = false; return false; }
     if (handing) return true;
-    const [builds, ship] = busy();
-    if (!waiting) console.log(waitingSays(builds, ship));
+    const ship = busy();
+    if (!waiting) console.log(waitingSays(ship));
     waiting = true;
-    if (builds.length || ship) return true;
+    if (ship) return false;
     handing = true;
-    const failed = reason => { handing = waiting = false; watch.failed(next); console.log(failedSays(reason)); };
-    if (worker) { stay = failed; process.send({ type: 'switch', code: next, launched: launched() }); }
-    else startSuccessor(next, launched(), { ready: child => { stopLoop(); hostRuns(child, ['SIGINT', 'SIGTERM']); }, failed });
+    handOver();
+    const failed = reason => { handing = waiting = false; watch.failed(next); console.log(failedSays(reason)); stayed(); };
+    const given = { launched: launched(), running: running() };
+    if (worker) { stay = failed; process.send({ type: 'switch', code: next, ...given }); }
+    else startSuccessor(next, given, { ready: child => { stopLoop(); hostRuns(child, ['SIGINT', 'SIGTERM']); }, failed });
     return true;
   };
 }
@@ -142,7 +148,8 @@ export function hostRuns(worker, stopSignals) {
     w.on('exit', (code, signal) => { starting?.kill('SIGKILL'); process.exit(code ?? (signal ? 0 : 1)); });
     w.on('message', m => {
       if (m?.type !== 'switch' || starting || stopping) return;
-      starting = startSuccessor(m.code, Array.isArray(m.launched) ? m.launched : [], {
+      const list = v => (Array.isArray(v) ? v : []);
+      starting = startSuccessor(m.code, { launched: list(m.launched), running: list(m.running) }, {
         // The old one exits before the new one starts watching, so only one is ever watching.
         ready: next => {
           starting = null;
