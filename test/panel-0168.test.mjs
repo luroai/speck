@@ -43,7 +43,6 @@ function fake(tickets = TICKETS) {
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const classes = n => (n.className || '').split(' ');
-const script = () => page().match(/<script>([\s\S]*?)<\/script>/)[1];
 
 test('0168 AC1: each in-flight card has a badge row under its title: the badge, then the sentence and the stage\'s name', async () => {
   const p = fake();
@@ -69,14 +68,7 @@ test('0168 AC2: the badge plays the laptop loop while an agent is at work, from 
   await p.settle();
   const at = FLIGHT.filter(id => SHOWS[id][0] === 'type');
   assert.deepEqual(at, ['0401'], 'building (self-check and review too until 0169, shipping until 0172)');
-  const js = script();
-  const loop = js.match(/ {4}type\(g, t\) \{([\s\S]*?)\n {4}\},/)[1];
-  assert.match(loop, /const CY = 2800/, 'a 2.8 second loop');
-  assert.match(js, /const GL = '\{\}<>;\/=\(\)\[\]\*'/, 'the code characters');
-  assert.match(loop, /GL\[/, 'which fly off while it types');
-  assert.match(loop, /rr\(g, -24, -16, 48, 16, 3\)/, 'the laptop lid');
-  assert.match(loop, /g\.arc\(0, -8, 3\.4, -2\.0, -2\.35 \+ Math\.PI \* 2\)/, 'its ensō sticker');
-  assert.match(loop, /box\(g,/, 'the finished block that pops out');
+  // Since 0302 the laptop loop is the design's renderer's, which test/panel-0302.test.mjs checks the badge is drawn with.
 });
 
 test('0168 AC3: waiting for you, the builder waves a flag; blocked or stopped, a "?"; paused, it stands still', async () => {
@@ -87,11 +79,7 @@ test('0168 AC3: waiting for you, the builder waves a flag; blocked or stopped, a
   assert.equal(pose('0406'), 'bad');
   assert.equal(pose('0407'), 'bad');
   assert.equal(pose('0404'), 'still');
-  const js = script();
-  assert.match(js.match(/ {4}wait\(g, t\) \{([\s\S]*?)\n {4}\},/)[1], /flag:[\s\S]*hop\(/, 'a flag and a hop');
-  assert.match(js.match(/ {4}bad\(g, t\) \{([\s\S]*?)\n {4}\},/)[1], /q: \{/, 'a question mark');
-  assert.match(js, /fillText\('\?', 0, 0\)/);
-  assert.match(js, /const edge = pose === 'wait' \? C\.wait : pose === 'bad' \? C\.bad : C\.line;/, 'the tile\'s edge');
+  // Since 0302 the poses are drawn by the design's renderer (test/panel-0302.test.mjs), its frame purple or crimson.
 });
 
 test('0168 AC3: an approved ticket auto-ship will ship isn\'t waiting for you, and one whose auto-ship failed needs you', async () => {
@@ -119,11 +107,7 @@ test('0168 AC4: the badge is an image named for what it shows, and ready tickets
   for (const id of ['0409', '0410']) assert.equal(p.all(rowOf(p, id)).filter(n => /\b(badge|badgerow|say|stage)\b/.test(n.className || '')).length, 0, `${id}: no badge`);
 });
 
-test('0168 AC5: the badge reads its colours from the panel\'s tokens', () => {
-  const js = script();
-  for (const k of ['text', 'panel', 'accent', 'line', 'idea', 'bad', 'raise']) assert.match(js.match(/function badgeColours\(\) \{([\s\S]*?)\n\}/)[1], new RegExp(`v\\('${k}'\\)`), k);
-  assert.doesNotMatch(js.match(/const BADGE = \(\(\) => \{([\s\S]*?)\n\}\)\(\);/)[1], /#[0-9a-f]{3,6}\b|rgb\(/i, 'no colour of its own');
-});
+// 0168 AC5's colours: since 0302 the badge is drawn in the LCD screen's tokens (test/panel-0302.test.mjs).
 
 // ---------- in a real browser ----------
 
@@ -140,12 +124,12 @@ const stub = theme => `(() => {
     return real(url, opts);
   };
 })();`;
-async function withPanel(fn, { width = 1280, theme = 'light', motion = 'no-preference', scale = 1 } = {}) {
+async function withPanel(fn, { width = 1280, height = 900, theme = 'light', motion = 'no-preference', scale = 1 } = {}) {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
-    await b.send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: scale, mobile: width < 700 });
+    await b.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: width < 700 });
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: motion }] });
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(theme) });
@@ -155,8 +139,6 @@ async function withPanel(fn, { width = 1280, theme = 'light', motion = 'no-prefe
   } finally { await b.close(); await stop(panel); }
 }
 const CARD = id => `[...document.querySelectorAll('#queue .q')].find(n => n.querySelector('.id').textContent === ${JSON.stringify(id)})`;
-const RGB = v => `(() => { const s = document.createElement('span'); s.style.color = ${JSON.stringify(v)}; document.body.appendChild(s);
-  const c = getComputedStyle(s).color; s.remove(); return c.match(/\\d+/g).slice(0, 3).map(Number); })()`;
 const LOOK = id => `(() => {
   const card = ${CARD(id)}, rect = n => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
   const cs = getComputedStyle(card);
@@ -164,10 +146,6 @@ const LOOK = id => `(() => {
     line: rect(card.querySelector('.top .line')), title: rect(card.querySelector('.top .title')), badge: rect(card.querySelector('.badge')),
     say: rect(card.querySelector('.say')), stage: rect(card.querySelector('.stage') || card.querySelector('.ship-at')), sub: rect(card.querySelector('.top .sub')) };
 })()`;
-// How many of a badge's pixels are in each colour: its pixels as [r, g, b] for each opaque one.
-const PIXELS = id => `(() => { const c = ${CARD(id)}.querySelector('canvas.badge'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, out = [];
-  for (let i = 0; i < d.length; i += 4) if (d[i + 3] === 255) out.push([d[i], d[i + 1], d[i + 2]]); return { w: c.width, px: out }; })()`;
-const near = (a, b) => a.every((v, i) => Math.abs(v - b[i]) <= 2);
 const FRAME = id => `${CARD(id)}.querySelector('canvas.badge').toDataURL()`;
 
 for (const theme of ['light', 'dark']) {
@@ -191,21 +169,7 @@ for (const theme of ['light', 'dark']) {
           for (const k of ['badge', 'say', 'stage', 'sub', 'line']) assert.ok(l[k].left >= l.card.left - 0.5 && l[k].right <= l.card.right + 0.5, `${id}: its ${k} overflows the card`);
         }
         assert.equal(await b.js(`document.documentElement.scrollWidth <= innerWidth`), true, 'the page doesn\'t scroll sideways');
-        // AC5: drawn in the look's own colours: the tile, the ink, the speck as its eye, and the edge for its state. With
-        // reduced motion, so each badge holds a pose and the eye isn't caught mid-blink.
-        const colour = {};
-        for (const k of ['raise', 'text', 'accent', 'line', 'idea', 'bad']) colour[k] = await b.js(RGB(`var(--${k})`));
-        const has = (px, c) => px.filter(p => near(p, c)).length;
-        for (const id of ['0401', '0404', '0405', '0406']) {
-          const { px } = await b.js(PIXELS(id));
-          for (const k of ['raise', 'text', 'accent']) assert.ok(has(px, colour[k]) > 4, `${id}: has its ${k}`);
-        }
-        const edge = async id => b.js(`(() => { const c = ${CARD(id)}.querySelector('canvas.badge'), s = c.width / 56; return [...c.getContext('2d').getImageData(Math.round(28 * s), Math.round(1.2 * s), 1, 1).data].slice(0, 3); })()`);
-        assert.ok(near(await edge('0405'), colour.idea), `waiting: a purple edge, ${await edge('0405')}`);
-        assert.ok(near(await edge('0406'), colour.bad), `blocked: a crimson edge, ${await edge('0406')}`);
-        assert.ok(near(await edge('0407'), colour.bad), 'stopped: a crimson edge');
-        assert.ok(near(await edge('0401'), colour.line), 'at work: the line colour');
-        assert.ok(has((await b.js(PIXELS('0406'))).px, colour.bad) > 20, 'blocked: a crimson "?"');
+        // AC5's colours: since 0302, the LCD screen's (test/panel-0302.test.mjs).
       }, { width, theme, scale: 2, motion: 'reduce' });
     });
   }
@@ -218,7 +182,7 @@ test('0168 AC2 to AC4: in a real browser, a badge moves unless its build is paus
     await new Promise(r => setTimeout(r, 450));
     const then = await frames(b);
     for (const id of FLIGHT) assert.equal(first[id] !== then[id], id !== '0404', `${id}: ${id === '0404' ? 'still' : 'moves'}`);
-  });
+  }, { height: 2400 }); // 0302: every badge in view, as the renderer draws only those
   await withPanel(async b => {
     const first = await frames(b);
     const blank = await b.js(`(() => { const c = document.createElement('canvas'); c.width = c.height = 56; return c.toDataURL(); })()`);
@@ -235,7 +199,7 @@ test('0168 AC4: in a real browser, the badge is an image with its name, and a ch
     const before = await b.js(FRAME('0404'));
     await b.js(`document.querySelector('.theme') ? document.querySelector('.theme').click() : setLook('dark')`);
     await b.until(`${FRAME('0404')} !== ${JSON.stringify(before)}`, 'the paused badge in the new look');
-  });
+  }, { height: 2400 }); // 0302: every badge in view, as the renderer draws only those
 });
 
 test('0168 AC5: in a real browser, a zoom draws a badge that holds still again at the new size, so it stays sharp', skip, async () => {
@@ -248,25 +212,3 @@ test('0168 AC5: in a real browser, a zoom draws a badge that holds still again a
   }, { motion: 'reduce' });
 });
 
-test('0168 AC5: in a real browser, no pose reaches past the tile\'s rounded edge at any point in its loop', skip, async () => {
-  await withPanel(async b => {
-    const outside = await b.js(`(() => {
-      badgeColours();
-      const c = document.createElement('canvas'); c.width = c.height = 224; const g = c.getContext('2d'), out = {};
-      const edge = new Path2D(); edge.roundRect(56 - 1.4, 56 - 1.4, 112 + 2.8, 112 + 2.8, 25.4); // the tile's edge and its line, at twice the size
-      // The reviewer slides in past it (test/panel-0169.test.mjs), and the boat sails out past it (test/panel-0172.test.mjs).
-      for (const pose of Object.keys(BADGE.POSES).filter(k => k !== 'review' && k !== 'ship')) {
-        out[pose] = 0;
-        for (let t = 0; t < 8400; t += 23) {
-          g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 224, 224); g.setTransform(2, 0, 0, 2, 56, 56);
-          BADGE.draw(g, pose, t, false);
-          g.setTransform(1, 0, 0, 1, 0, 0);
-          const d = g.getImageData(0, 0, 224, 224).data;
-          for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 24) { const x = (i / 4) % 224 + .5, y = Math.floor(i / 4 / 224) + .5; if (!g.isPointInPath(edge, x, y)) out[pose]++; }
-        }
-      }
-      return out;
-    })()`, 60000);
-    assert.deepEqual(outside, { type: 0, check: 0, wait: 0, bad: 0, still: 0 });
-  });
-});

@@ -42,6 +42,7 @@ Every ticket's builder badge is drawn on the LCD screen by the design's own rend
 - The renderer draws one still frame per pose when reduced motion is on (`RM`), so the panel doesn't need its own check.
 - Today's badge is drawn in `templates/panel.html` (search for "0168" and "badgeColours"). The page is served by `scripts/panel.mjs`, which will need to serve `lcd.js` too.
 - Failing before this build: not checked
+- Self-check: no changes. Tests of the old canvas drawing (0168 AC2/AC3 source checks, 0168 AC5 colours and tile edge, 0169's and 0172's drawing tests) are retired, as the design's renderer replaces that drawing; their pose-choice tests stay. 0161's outline rule allows the badge's frame, an outline as in the design, on a canvas the keyboard never reaches. The Auto-build builder keeps the old drawing until 0303.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

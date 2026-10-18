@@ -1,5 +1,5 @@
-// The panel's builder badge drawing code (BADGE, from templates/panel.html), run in Node against a canvas that records
-// what each frame draws instead of drawing it (0169).
+// The panel's drawing of the Auto-build button's builder (BADGE, from templates/panel.html), run in Node against a
+// canvas that records what each frame draws instead of drawing it (0169). The badges are the LCD screen's since 0302.
 import { page } from './panel.mjs';
 
 // BADGE, evaluated on its own: it uses nothing but Math.
@@ -7,7 +7,7 @@ export function loadBadge() {
   const src = page().match(/const BADGE = \(\(\) => \{[\s\S]*?\n\}\)\(\);/)[0];
   const BADGE = new Function(`${src}\nreturn BADGE;`)();
   // Each colour is its own name, so a recorded mark says which colour it was drawn in.
-  Object.assign(BADGE.C, { ink: 'ink', paper: 'paper', speck: 'speck', line: 'line', wait: 'wait', bad: 'bad', tile: 'tile', ok: 'ok', code: 'code' });
+  Object.assign(BADGE.C, { ink: 'ink', paper: 'paper', speck: 'speck' });
   return BADGE;
 }
 
@@ -46,22 +46,5 @@ export function recorder() {
   return g;
 }
 
-// Draws one frame of a pose at time t and returns what it drew.
-export function frame(BADGE, pose, t) {
-  const g = recorder();
-  BADGE.draw(g, pose, t);
-  return g.marks;
-}
-// The characters of code in a frame.
-export const glyphs = marks => marks.filter(k => k.op === 'text' && /code|ok/.test(k.colour) && k.text !== '?');
-// The builder's eye (the speck) and its body's centre, and the reviewer's eyes' centre, or null.
+// The builder's eye (the speck), or null.
 export const eye = marks => { const k = marks.find(k => k.op === 'fill' && k.colour === 'speck'); return k ? k.path[0] : null; };
-export const body = marks => { const k = marks.find(k => k.op === 'fill' && k.colour === 'paper' && k.path[0]?.kind === 'arc' && Math.abs(k.path[0].r - 20 * .64) < .5); return k ? k.path[0] : null; };
-export const reviewerEyes = marks => {
-  const e = marks.filter(k => k.op === 'fill' && k.colour === 'ink' && k.path[0]?.kind === 'arc' && Math.abs(k.path[0].r - 2.4 * .64) < .2).map(k => k.path[0]);
-  return e.length === 2 ? { x: (e[0].x + e[1].x) / 2, y: (e[0].y + e[1].y) / 2 } : null;
-};
-// The rings round characters: stroked circles in the code's colour.
-export const rings = marks => marks.filter(k => k.op === 'stroke' && k.colour === 'code' && k.path[0]?.kind === 'arc').map(k => k.path[0]);
-// A green tick: a dashed stroke in the green.
-export const ticks = marks => marks.filter(k => k.op === 'stroke' && k.colour === 'ok' && k.dash.length);

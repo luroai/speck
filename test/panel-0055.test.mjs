@@ -118,7 +118,7 @@ test('0055 AC1-AC4: in a real browser, only the in-flight step moves, through re
     const t = `${row('0002')}.querySelector('.title')`;
     await b.drag(await b.js(charIn(t, 0)), await b.js(charIn(t, 6)));
     assert.equal(await b.js('getSelection().toString()'), 'A buil');
-    await b.js(`window.badge = ${row('0002')}.querySelector('canvas.badge')`);
+    await b.js(`void (window.badge = ${row('0002')}.querySelector('canvas.badge'))`); // 0302: the canvas itself stays in the page
     await refreshed(b, 'a refresh'); await refreshed(b, 'a second refresh');
     assert.equal(await b.js(`${row('0002')}.querySelector('canvas.badge') === window.badge`), true, 'the same badge runs on');
     await b.js(`window.drawn = ${frame}`);
