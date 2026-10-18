@@ -6,7 +6,8 @@ import path from 'node:path';
 import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig } from './core.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { knownEffort } from './codex-models.mjs';
-import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand } from './builder-switch.mjs';
+import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
+import { offeredModels } from './agents.mjs';
 import { sameModelProblem } from './same-model.mjs';
 import { FIXING } from './foreman.mjs';
 import { FOREMAN_AGENTS } from './foreman-agent.mjs';
@@ -195,13 +196,16 @@ function setBuilder(value, replace) {
       throw new SpeckError(`build_command is set by hand to ${show(was.build_command)}, and switching the builder to ${value} replaces it with ${describeBuildCommand(value, own)}. Run \`speck config set builder ${value} --replace\` to replace it, or set build_command yourself.`);
     changes.push(['build_command', own]);
   }
+  // 0311: and clears a builder_model the new builder doesn't offer, saying why.
+  const cleared = value !== before ? clearsBuilderModel(was.builder_model, value, () => offeredModels(value)) : null;
+  if (cleared !== null) changes.push(['builder_model', '']);
   let next = text;
   for (const [k, v] of changes) next = setConfigText(next, [k], yamlValue(v));
   const read = parseYaml(next);
   for (const [k, v] of changes) if (read[k] !== v)
     throw new SpeckError(`Couldn't write ${k} so that speck reads it back as given. Edit speck/config.yml by hand instead.`);
   fs.writeFileSync(file, next);
-  for (const [k, v] of changes) console.log(`${k}: ${show(was[k])} → ${show(v)}`);
+  for (const [k, v] of changes) console.log(`${k}: ${show(was[k])} → ${show(v)}${k === 'builder_model' ? `, cleared because ${cleared}.` : ''}`);
   const cfg = loadConfig(repo);
   if (cfg.allow_same_model_review !== true) {
     const problem = sameModelProblem(value, String(cfg.reviewer ?? ''), cfg, cfg.reviewer_model);
