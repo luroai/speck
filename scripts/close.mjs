@@ -116,6 +116,7 @@ export function cmdClose(args) {
     console.log(`${pr.found ? 'Its pull request was already open' : 'Opened its pull request'}: ${pr.url}`);
   } catch (e) {
     if (!(e instanceof SpeckError)) throw e;
-    console.log(`No pull request yet: ${e.message.split('\n')[0]} The ticket stays approved and nothing was merged. speck run tries again, or run \`speck pr ${pad}\`.`);
+    console.log(e.opened ? `${e.message.split('\n')[0]} The ticket stays approved and nothing was merged.`
+      : `No pull request yet: ${e.message.split('\n')[0]} The ticket stays approved and nothing was merged. speck run tries again, or run \`speck pr ${pad}\`.`);
   }
 }
