@@ -11,6 +11,9 @@ import { checkConfigValue } from '../scripts/config.mjs';
 import { panelSettings } from '../scripts/settings.mjs';
 import { foremanView, foremanLines } from '../scripts/foreman.mjs';
 import { shipQueue } from '../scripts/ship-queue.mjs';
+import { saveRecord } from '../scripts/build-records.mjs';
+import { startRun, stopRun, until, runRepo } from './support/run.mjs';
+import { CLI } from './support/panel.mjs';
 import { foremanAgentQueue, foremanAction, foremanArgv, foremanAgentOf, buildStuck, agentView, readAgentState, codeKey } from '../scripts/foreman-agent.mjs';
 
 Object.assign(process.env, gitEnv); // speck foreman commits in this process
@@ -23,13 +26,13 @@ const ON = { on: true, pid: process.pid };
 
 // The Foreman agent's queue in a repo, with a stand-in for starting the agent: each start is kept, and its agent runs
 // until the test ends it with end(). Builds it resumes are kept too.
-function agents(r, { fixing = 'fix', max = 1, cfg = {} } = {}) {
+function agents(r, { fixing = 'fix', max = 1, cfg = {}, persist } = {}) {
   const starts = [], resumed = [], said = [], again = [], running = new Set(), live = new Set();
   const q = foremanAgentQueue({ repo: r.dir, runs: () => r.runs, readConfig: () => ({ ...loadConfig(r.dir), foreman_fixing: fixing, ...cfg }),
     words: WORDS, cfg: CFG, max, running, ships: { again: id => again.push(id) }, say: m => said.push(m),
     startBuild: (id, argv, cwd, session, flags, record) => { resumed.push({ id, argv, rec: JSON.parse(record(4242)) }); running.add(id); },
     start: (argv, cwd, log, env) => { const pid = 90000 + starts.length; starts.push({ argv, cwd, log, token: env.SPECK_FOREMAN_RUN, pid }); live.add(pid); return { pid, exited: () => !live.has(pid) }; },
-    alive: pid => live.has(pid) });
+    alive: pid => live.has(pid), ...(persist ? { persist } : {}) });
   return { q, starts, resumed, said, again, running, end: s => live.delete(s.pid), check: (tickets = [T('0001', 'building')]) => q.check(tickets) };
 }
 const brief = s => s.argv[2]; // claude -p <brief>
@@ -66,9 +69,6 @@ test('0287 AC1: with tell or off, nothing starts the Foreman agent', () => {
 test('0287 AC1: a build that ends with its ticket neither approved nor blocked is a stop for the Foreman', () => {
   for (const s of ['building', 'reviewing', 'ready']) assert.equal(typeof buildStuck(s), 'string', s);
   for (const s of ['approved', 'blocked', 'done', 'cancelled', null]) assert.equal(buildStuck(s), null, String(s));
-  const run = fs.readFileSync(path.join(ROOT, 'scripts', 'run.mjs'), 'utf8');
-  assert.match(run, /lookInto\(id, log\)/);
-  assert.match(run, /lookInto\(id, b\.log\)/);
 });
 
 test('0287 AC1: the ship queue gives the Foreman a refusal it has no hand-back for, and not one it hands back', () => {
@@ -293,4 +293,57 @@ test('0287 AC5: at most one Foreman agent at a time, and once for the same ticke
   a.check([T('0003', 'done')]);
   assert.equal(a.starts.length, 3, 'not for a ticket that has since finished');
   assert.deepEqual(readAgentState(r.runs).queue, []);
+});
+
+test('0287 AC5: a record that can\'t be saved never starts a second Foreman agent, nor repeats its actions', () => {
+  const r = blockedRepo({ status: 'building' });
+  let fail = () => false, saves = 0;
+  const persist = (runs, st) => { saves++; if (fail(st)) throw new Error('disk full'); saveRecord(path.join(runs, 'run.foreman-agent.json'), { ...st, tried: { ...st.tried } }); };
+  const a = agents(r, { persist });
+  a.q.stuck({ id: '0001', what: 'its build ended', log: '' });
+  fail = () => true; // the reservation can't be saved: nothing starts
+  a.check(); a.check();
+  assert.equal(a.starts.length, 0);
+  fail = st => !!st.running?.pid; // reserved, but its process id can't be saved
+  a.check(); a.check(); a.check();
+  assert.equal(a.starts.length, 1, 'one agent, though its record still has no process id');
+  act(r, a.starts[0].token, 'resume', '0001', 'Carry on.', '--why=it stopped partway'); // its token was saved as it was reserved
+  a.end(a.starts[0]);
+  fail = () => true; // nothing can be saved now
+  a.check(); a.check(); a.check();
+  assert.equal(a.resumed.length, 1, 'its resume is carried out once');
+  assert.equal(a.starts.length, 1);
+  assert.ok(saves > 0);
+});
+
+test('0287 AC1: speck run starts the Foreman agent when a build it started exits with its ticket still building, and not when it\'s blocked', async () => {
+  // A fake builder that starts its ticket, as /speck-build does, sets it to FAKE_STATUS there and exits.
+  const builder = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0287-b-')), 'build.cjs');
+  fs.writeFileSync(builder, `const { spawnSync } = require('child_process');
+const id = process.argv[2];
+const wt = spawnSync(process.execPath, [${JSON.stringify(CLI)}, 'start', id], { encoding: 'utf8' }).stdout.trim().split('\\n').pop();
+if (process.env.FAKE_STATUS) { spawnSync(process.execPath, [${JSON.stringify(CLI)}, 'set', id, 'status', process.env.FAKE_STATUS], { cwd: wt }); spawnSync('git', ['commit', '-qam', 'status'], { cwd: wt }); }
+`);
+  // A fake Foreman agent: claude on the PATH, writing its arguments down.
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0287-bin-')), out = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0287-out-'));
+  fs.writeFileSync(path.join(bin, 'claude'), `#!/bin/sh\nprintf '%s\\n' "$@" > "${out}/$$.txt"\n`, { mode: 0o755 });
+  const briefs = () => fs.readdirSync(out).map(f => fs.readFileSync(path.join(out, f), 'utf8'));
+  for (const [status, expect] of [['', true], ['blocked', false]]) {
+    const r = runRepo({ worktrees: 'true', command: `"${process.execPath}" "${builder}" {id} {session}` });
+    fs.appendFileSync(r.cfgFile, 'foreman_fixing: fix\n');
+    r.g('commit', '-qam', 'fix');
+    for (const f of fs.readdirSync(out)) fs.rmSync(path.join(out, f));
+    const run = startRun(r.dir, { PATH: `${bin}${path.delimiter}${process.env.PATH}`, FAKE_STATUS: status });
+    try {
+      assert.ok(await until(() => /0001 build exited with code 0/.test(run.out())), run.out());
+      if (expect) {
+        assert.ok(await until(() => briefs().length === 1), run.out());
+        assert.match(briefs()[0], /ticket 0001/);
+        assert.match(briefs()[0], /still building, neither approved nor blocked/);
+      } else {
+        await new Promise(res => setTimeout(res, 400)); // a few of speck run's checks
+        assert.deepEqual(briefs(), [], run.out());
+      }
+    } finally { await stopRun(run); }
+  }
 });

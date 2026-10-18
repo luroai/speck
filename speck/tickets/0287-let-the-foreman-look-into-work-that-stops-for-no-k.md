@@ -1,7 +1,7 @@
 ---
 id: "0287"
 title: "Let the Foreman look into work that stops for no known reason"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T13:16:47.539Z"
 ---
 # 0287 · Let the Foreman look into work that stops for no known reason
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Some stops have no recipe in speck: a ship refused for a reason speck doesn't recognise, or a build that ends without being approved or blocked. Today they wait in `run.log` until the user notices and asks an agent to look.
@@ -53,3 +53,87 @@ With the Foreman's Fixing setting on, speck run starts a Foreman agent with a sh
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "958f5ac72ee53629c6634c7855db39d9f2baf977",
+    "thread_id": "01a14f35-43c5-7640-b75a-360a90e6fc69",
+    "seconds": 54,
+    "usage": {
+      "input_tokens": 251866,
+      "cached_input_tokens": 183808,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1783,
+      "reasoning_output_tokens": 730
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T13:31:46.976Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "unclear",
+        "evidence": "foremanAgentQueue and shipQueue have useful unit coverage, but the build-exit test only checks buildStuck and searches run.mjs for calls to lookInto. No test exercises speck run observing an actual build exit and starting the Foreman."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "skills/speck-foreman/SKILL.md explicitly restricts the agent to resume, reship, fix or ask and forbids changing files, approving, setting ready or shipping directly. foremanAction validates its four actions; reship requires an approved ticket covered by auto_ship, and fix creates a draft."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/config.yml, config.mjs, settings.mjs and the setup skill expose all three settings. The AC3 tests exercise configuration validation, CLI saving, Settings metadata and agent arguments; the reported run passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "foremanAction writes the action and reason into Notes and the action record. The AC4 test exercises Notes, agentView, status lines and the panel detail; the reported run passed."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "foremanAgentQueue.launch starts the process before saving its running record and ignores save failure. A failed save leaves the persisted queue available to launch again while the first agent remains alive."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs",
+        "issue": "launch starts an agent before persisting its running record, then ignores whether save succeeds. If saving fails, the next check reads the old queued stop and starts another agent. This breaks both single-agent execution and once-per-commits protection. The first agent also cannot authenticate its action without the saved token.",
+        "suggested_fix": "Persist a launch reservation before spawning and handle subsequent persistence failure without allowing another launch. Add a test that forces state saving to fail and verifies repeated checks cannot start overlapping agents or repeat the same stop.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/foreman-agent-0287.test.mjs",
+        "issue": "The build-exit trigger is checked by searching source text for lookInto calls. This does not exercise speck run detecting a stopped build, finding its ticket status and launching the Foreman, so a central part of AC1 remains unverified.",
+        "suggested_fix": "Add a bounded integration test using a short-lived fake builder and fake Foreman executable. Verify that a build exiting with its ticket still building or reviewing starts the Foreman with the expected brief, while approved and blocked tickets do not.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The settings, permitted actions and activity display are covered well. Changes are needed because a recording failure can start multiple Foreman agents, and the actual build-exit trigger has not been tested."
+  }
+}
+```
+
+</details>

@@ -163,10 +163,11 @@ function spawnAgent(argv, cwd, log, env) {
 // and resumes builds it asked to, while a build slot is free. Each ticket is looked into at most once for the same
 // commits (codeKey). `ships` is speck run's ship queue, whose again(id) ships a ticket once more.
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, running, startBuild, ships,
-  start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log }) {
-  let child = null; // the agent this speck run started: { token, exited }
+  start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState }) {
+  let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
+  const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const config = () => { try { return readConfig(); } catch { return null; } };
-  const save = s => { try { saveAgentState(runs(), s); return true; } catch (e) { say(`The Foreman couldn't save its record (${e.message}), so it tries again on speck run's next check.`); return false; } };
+  const save = s => { try { persist(runs(), s); return true; } catch (e) { say(`The Foreman couldn't save its record (${e.message}), so it tries again on speck run's next check.`); return false; } };
 
   const stuck = ({ id, what, log }) => {
     const c = config();
@@ -179,27 +180,34 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
 
   // An agent that has ended: each action it took for its ticket is carried out.
   const finish = s => {
-    const r = s.running, mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
+    const r = s.running;
+    s.running = null;
+    child = null;
+    if (finished.has(r.token)) return;
+    finished.add(r.token);
+    const mine = readActions(runs()).filter(a => a.run === r.token && a.id === r.id);
     for (const a of mine) {
       if (a.action === 'reship') { ships.again(a.id); say(`${a.id}: the Foreman asked for its ship to be tried again: ${a.why}`); }
       else if (a.action === 'resume') s.resumes = [...s.resumes.filter(x => x.id !== a.id), { id: a.id, message: a.text }];
       else say(`${a.id}: the Foreman ${ACTIONS[a.action]}: ${a.text}${a.why ? ` (${a.why})` : ''}`);
     }
     if (!mine.length) say(`${r.id}: the Foreman looked into it and took no action. Its log: ${path.relative(repo, path.join(runs(), LOG))}`);
-    s.running = null;
-    child = null;
   };
 
   const launch = (s, c, next) => {
     const token = crypto.randomUUID(), agent = foremanAgentOf(c);
     const brief = foremanBrief({ id: next.id, what: next.what, log: next.log ? path.relative(repo, next.log) : 'its log', tail: next.log ? logTail(next.log) : '', agent });
     const argv = foremanArgv(c, brief);
+    // Reserved in the record before it starts, so a record that can't be saved starts nothing, and the agent's token is
+    // there for `speck foreman` to check.
     s.queue = s.queue.slice(1);
     s.tried[next.id] = next.key;
+    s.running = { id: next.id, token, pid: null, key: next.key, what: next.what, started: new Date().toISOString() };
+    if (!save(s)) return;
     const started = start(argv, repo, path.join(runs(), LOG), { ...process.env, SPECK_FOREMAN_RUN: token });
-    if (started.error || !started.pid) { save(s); return say(`${next.id}: the Foreman couldn't start ${agent}: ${started.error || 'it has no process id'}.`); }
+    if (started.error || !started.pid) { s.running = null; save(s); return say(`${next.id}: the Foreman couldn't start ${agent}: ${started.error || 'it has no process id'}.`); }
     child = { token, exited: started.exited };
-    s.running = { id: next.id, token, pid: started.pid, key: next.key, what: next.what, started: new Date().toISOString() };
+    s.running = { ...s.running, pid: started.pid };
     save(s);
     say(`${next.id}: the Foreman (${agent}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
@@ -221,6 +229,7 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
   const check = tickets => {
     const s = readAgentState(runs());
     let changed = false;
+    if (child && !child.exited() && s.running?.token !== child.token) return; // its record wasn't saved: wait for it to end
     if (s.running) {
       const gone = child && child.token === s.running.token ? child.exited() : !(Number.isInteger(s.running.pid) && alive(s.running.pid));
       if (gone) { finish(s); changed = true; }
