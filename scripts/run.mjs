@@ -226,8 +226,24 @@ function runOn(worker) {
     launched.add(id);
     running.add(id);
     const session = rec.session ?? 'unknown';
-    adopted.set(id, { pid, session, file, log: path.join(dir, `${id}.log`), seen: rec.seen === true && fresh });
+    adopted.set(id, { pid, session, file, log: path.join(dir, `${id}.log`), seen: rec.seen === true, fresh });
     console.log(`${id} ${what} (session ${session}, process ${pid}), so speck run won't launch it. It counts towards max_parallel_builds until it stops.${buildPaused(dir, id) ? ` It's paused: run \`speck play ${id}\` to carry it on.` : ''}`);
+  };
+  // 0300: a build outside speck run whose conversation carries on once it has approved or blocked its ticket no longer
+  // counts. Checked before anything waits for builds to end, such as switching to new code. A ticket speck run never
+  // launched may be launched once it's ready again.
+  const inHandOf = tickets => new Set((tickets || []).filter(t => t.status === 'building' || t.status === 'reviewing').map(t => t.id));
+  const releaseSeen = tickets => {
+    const inHand = inHandOf(tickets);
+    for (const t of tickets || []) {
+      const b = adopted.get(t.id);
+      if (!b?.seen || inHand.has(t.id)) continue;
+      adopted.delete(t.id);
+      running.delete(t.id);
+      if (b.fresh) launched.delete(t.id);
+      recordExit(t.id, b.file, null);
+      console.log(`${t.id} is ${t.status}, so its build outside speck run no longer counts towards max_parallel_builds.`);
+    }
   };
   // 0300: on each check, the builds started since outside speck run: a run record no build of speck run's has, naming
   // a build that's running, as the commands of a build speck run didn't start write it (noteBuild). And a ticket in hand
@@ -236,18 +252,8 @@ function runOn(worker) {
     const dir = runsDir(repo);
     let rows = null; // the processes, listed once a check and only if needed
     const find = session => sessionProcess(session, rows ??= processTable());
-    const inHand = new Set((tickets || []).filter(t => t.status === 'building' || t.status === 'reviewing').map(t => t.id));
+    const inHand = inHandOf(tickets);
     for (const t of tickets || []) {
-      const b = adopted.get(t.id);
-      // A conversation that built it carries on once its build has approved or blocked it: it no longer counts.
-      if (b?.seen && t.status !== 'building' && t.status !== 'reviewing') {
-        adopted.delete(t.id);
-        running.delete(t.id);
-        launched.delete(t.id); // speck run never launched it, so it may launch it once it's ready again
-        recordExit(t.id, b.file, null);
-        console.log(`${t.id} is ${t.status}, so its build outside speck run no longer counts towards max_parallel_builds.`);
-        continue;
-      }
       if (running.has(t.id) || !inHand.has(t.id)) continue;
       if (claimResumed(dir, t.id, { find })) console.log(`${t.id}'s build was resumed outside speck run.`);
     }
@@ -267,7 +273,7 @@ function runOn(worker) {
       b.session = fill(id)?.session ?? b.session;
       adopted.delete(id);
       running.delete(id);
-      if (b.seen) launched.delete(id);
+      if (b.seen && b.fresh) launched.delete(id);
       const byStop = stoppedBySpeck(b.file), inHand = killedInHand(id);
       if (!inHand) recordExit(id, b.file, null);
       if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
@@ -383,6 +389,7 @@ function runOn(worker) {
   function tick() {
     for (const id of running) fill(id);
     checkAdopted();
+    if ([...adopted.values()].some(b => b.seen)) { const tickets = readTickets(); if (tickets) releaseSeen(tickets); }
     if (switchWhenIdle()) {
       const tickets = readTickets() || [], builds = [...running], ship = ships.running();
       const names = [...builds.map(id => `the build of ${id}`), ...(ship ? [`the ship of ${ship}`] : [])];
