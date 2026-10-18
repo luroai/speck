@@ -18,7 +18,7 @@ import { endBuild } from './stop-end.mjs';
 import { saveForeman, switchingReady } from './foreman.mjs';
 import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
-import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
+import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable } from './seen-builds.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
@@ -101,9 +101,10 @@ export const runWorker = () => runOn(true); // speck run on new code, started by
 
 // Watches the board: starts a build for each ready ticket that isn't waiting on another, up to max_parallel_builds at
 // once, and ships approved ones (shipQueue). Each runs in its own process group, so stopping speck run leaves it running.
-// When its code changes, it switches to the new code once nothing it started or adopted is running (run-switch.mjs).
+// When its code changes, it switches to the new code once no ship it started is running, and the new code watches the
+// builds that were running (run-switch.mjs).
 function runOn(worker) {
-  const code = process.env.SPECK_RUN_CODE || codeHash(), before = launchedBefore();
+  const code = process.env.SPECK_RUN_CODE || codeHash(), { launched: before, running: carried } = handedOver();
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
@@ -166,7 +167,11 @@ function runOn(worker) {
     try { return ['building', 'reviewing'].includes(statusData(repo).tickets.find(t => t.id === id)?.status); } catch { return true; }
   };
 
-  const finished = (id, log, code, signal, failed, recordFile) => {
+  // 0301: from handing over to new code, a build's end is kept, not handled: the new code watches the build and handles
+  // its end. If the new code can't start, each kept end is handled then. The process you started keeps them for good.
+  let kept = null;
+  const finished = (...end) => { if (kept) kept.push(end); else endOf(...end); };
+  const endOf = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
     fill(id);
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
@@ -206,7 +211,9 @@ function runOn(worker) {
 
   // Builds an earlier speck run launched: each run file with no exit recorded. One whose process is still running is
   // left alone and watched until it stops; it counts towards max_parallel_builds meanwhile. One whose process has
-  // gone gets its exit recorded now. Its exit code can't be known, as it isn't this speck run's child.
+  // gone gets its exit recorded now. Its exit code can't be known, as it isn't this speck run's child. 0301: one that
+  // the speck run this one replaced had running is watched even if it has gone, so its end is handled as that one would
+  // have (checkAdopted), rather than just recorded.
   const adopted = new Map();
   const adoptEarlierBuilds = () => {
     const dir = runsDir(repo);
@@ -216,9 +223,9 @@ function runOn(worker) {
       let rec;
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
-      const pid = rec.pid;
-      if (!(Number.isInteger(pid) && pid > 0 && pid !== process.pid && pidAlive(pid))) { if (!killedInHand(id)) recordExit(id, file, null); continue; }
-      adopt(id, file, rec, 'is already being built');
+      const pid = rec.pid, valid = Number.isInteger(pid) && pid > 0 && pid !== process.pid, ran = carried.includes(id);
+      if (!(valid && (ran || pidAlive(pid)))) { if (!killedInHand(id)) recordExit(id, file, null); continue; }
+      adopt(id, file, rec, ran ? 'carries on through the switch' : 'is already being built');
     }
   };
   const adopt = (id, file, rec, what) => {
@@ -371,15 +378,15 @@ function runOn(worker) {
   // 0287: the Foreman agent, for stops speck has no steps for
   const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), words, cfg, max, running, startBuild, ships });
 
-  const switchWhenIdle = codeSwitch({ worker, code, busy: () => [[...running], ships.running()], launched: () => [...launched], stopLoop: () => clearInterval(loop) });
+  const switchWhenIdle = codeSwitch({ worker, code, busy: () => ships.running(), launched: () => [...launched], running: () => [...running],
+    stopLoop: () => clearInterval(loop), handOver: () => { kept = []; }, stayed: () => { const ends = kept || []; kept = null; for (const end of ends) endOf(...end); } });
   // 0285: the Foreman's record of this check: the builds running, why each ready ticket isn't building and shipping's
   // state. `lock` is the pid holding speck run's lock (the process you started), so a record left by an earlier speck
   // run isn't read as this one's.
   const lock = worker ? process.ppid : process.pid;
   const foreman = (tickets, ready, switching = null) =>
     saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: ships.state(tickets, { switching: !!switching }) });
-  // 0299: what holds a ready ticket up of its own, as { kind, why }, or null: checked before anything that holds up
-  // every build, such as all build slots in use or switching to new code, so its line gives its own reason.
+  // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
     if (launched.has(t.id)) return { kind: 'unstarted', why: 'its build ended without starting it, so speck run won\'t launch it again' };
@@ -404,15 +411,15 @@ function runOn(worker) {
     }
   };
   function tick() {
+    // Handing over to new code, which watches the builds from now on: nothing is checked or started meanwhile.
+    if (switchWhenIdle()) {
+      const tickets = readTickets() || [], builds = [...running], ship = ships.running();
+      const why = `speck run is switching to new code${ship ? ` once the ship of ${ship} ends` : ''}`;
+      return foreman(tickets, switchingReady(tickets, running, ownWait), { builds, ship, why }); // 0299: each ticket's own reason first
+    }
     for (const id of running) fill(id);
     checkAdopted();
     if ([...adopted.values()].some(b => b.seen)) { const tickets = readTickets(); if (tickets) releaseSeen(tickets); }
-    if (switchWhenIdle()) {
-      const tickets = readTickets() || [], builds = [...running], ship = ships.running();
-      const names = [...builds.map(id => `the build of ${id}`), ...(ship ? [`the ship of ${ship}`] : [])];
-      const why = `speck run is switching to new code${names.length ? ` once ${names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`} ${names.length === 1 ? 'ends' : 'end'}` : ''}`;
-      return foreman(tickets, switchingReady(tickets, running, ownWait), { builds, ship, why });
-    }
     const tickets = readTickets();
     if (!tickets) return;
     adoptSeen(tickets);
