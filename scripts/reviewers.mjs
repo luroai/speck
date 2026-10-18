@@ -72,8 +72,9 @@ export function commandArgs(cmd, values) {
 // 0292: reviewers speck can run as a command without one under reviewer_options. Claude Code runs without a person (-p)
 // in dontAsk mode, which runs read-only commands and denies anything not pre-approved rather than asking, with its
 // file-writing tools taken away. It loads no user, project or local settings, so no allow rule there can pre-approve a
-// command that writes. A reviewer_options entry with a command of its own is used instead.
-const CLAUDE_ARGS = '-p --permission-mode dontAsk --setting-sources= --disallowedTools "Edit Write NotebookEdit" --output-format json --model {model} --effort {effort}';
+// command that writes. 0314: --strict-mcp-config with no --mcp-config loads no MCP servers or claude.ai connectors.
+// A reviewer_options entry with a command of its own is used instead.
+const CLAUDE_ARGS = '-p --permission-mode dontAsk --setting-sources= --strict-mcp-config --disallowedTools "Edit Write NotebookEdit" --output-format json --model {model} --effort {effort}';
 const BUILT_IN = Object.freeze({
   claude: Object.freeze({ command: `claude ${CLAUDE_ARGS}`, resume_command: `claude --resume {session} ${CLAUDE_ARGS}`, session_id_path: 'session_id' }),
 });

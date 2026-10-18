@@ -12,13 +12,13 @@ const FONT = path.join(ROOT, 'templates', 'fonts', 'Doto.ttf');
 const face = () => rules().find(r => r.sel === '@font-face' && /"Doto"/.test(get(r, 'font-family') || ''));
 const name = () => rule('.logo .name');
 
-test('0304 AC1: the header\'s "speck" is its own element, set in Doto at weight 900, at the header\'s 18 px', () => {
+test('0304 AC1: the header\'s "speck" is its own element, set in Doto at weight 900, at 26 px since 0309', () => {
   assert.match(page(), /<div class="logo"><canvas class="mark"[^>]*><\/canvas><b class="name">speck<\/b> <span>control panel<\/span><\/div>/);
   const r = name();
   assert.ok(r, 'a rule for the name');
   assert.match(get(r, 'font-family'), /^"Doto",/, 'Doto first');
   assert.equal(get(r, 'font-weight'), '900');
-  assert.equal(get(r, 'font-size'), '18px', 'the size the header has always set speck at');
+  assert.equal(get(r, 'font-size'), '26px', 'the size 0309 sets speck at');
   assert.equal(get(r, 'line-height'), '1', 'no taller a line than its size, so the header keeps its height');
 });
 
@@ -76,7 +76,7 @@ test('0304 AC1, AC2 and AC4: in a real browser, Doto loads from the panel and th
         assert.match(m.font, /^Doto,/, at);
         assert.equal(m.header, m.serif, `the header is as tall as with the old serif title: ${at}`);
         assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 1.5, `speck is centred on the mark, as the design sets them: ${at}`);
-        assert.ok(m.name.top < m.label.bottom && m.label.top < m.name.bottom, `speck is on the line beside "control panel": ${at}`);
+        if (width >= 700) assert.ok(m.name.top < m.label.bottom && m.label.top < m.name.bottom, `speck is on the line beside "control panel": ${at}`); // 0309: a phone has no "control panel"
         assert.ok(m.width <= m.view, `nothing past the right edge: ${at}`);
       }
     }

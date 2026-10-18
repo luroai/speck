@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { onPath } from './install.mjs';
+import { onPath, CURSOR_CLIS } from './install.mjs';
 
 const OS_NAMES = { darwin: 'macOS', linux: 'Linux', win32: 'Windows' };
 
@@ -55,13 +55,14 @@ function speckFacts(dir) {
   return { installed, version };
 }
 
-// The agents setup can use. Codex counts as signed in the way speck doctor checks it.
+// The agents setup can use. Codex counts as signed in the way speck doctor checks it. 0310: Cursor's CLI is on the
+// PATH by either of its names (CURSOR_CLIS), as speck agents finds it.
 function agentFacts() {
   const codex = onPath('codex');
   return {
     claude: { on_path: onPath('claude') },
     codex: { on_path: codex, signed_in: codex && run('codex', ['login', 'status'])?.status === 0 },
-    'cursor-agent': { on_path: onPath('cursor-agent') },
+    'cursor-agent': { on_path: CURSOR_CLIS.some(onPath) },
     gemini: { on_path: onPath('gemini') },
   };
 }
