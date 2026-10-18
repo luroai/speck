@@ -2384,11 +2384,11 @@ function badgeFor(id, b) {
 // drawing, now that its canvas is on the page and has the look's colours.
 function startBadges(inFlight) {
   for (const [id, b] of badges) if (!inFlight.has(id) || b.canvas.isConnected === false) badges.delete(id);
-  const LCD = globalThis.SpeckLCD;
-  if (LCD) for (const b of badges.values()) if (!b.lcd) b.lcd = LCD.badge(b.canvas, b.pose);
+  const LCD = globalThis.SpeckLCD, still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (LCD) for (const b of badges.values()) if (!b.lcd) b.lcd = LCD.badge(b.canvas, b.pose, { still });
 }
-// The renderer reads the reduced-motion setting once, as the page loads; a change to it holds the badges still or lets
-// them move again.
+// The renderer reads the reduced-motion setting once, as the page loads, so each new badge is given it as it is now,
+// and a change to it holds the badges already drawn still or lets them move again.
 if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
   for (const b of badges.values()) if (b.lcd) { b.lcd.cast.still = b.lcd.scr.still = e.matches; b.lcd.scr.dirty = true; }
 });
