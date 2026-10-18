@@ -1,7 +1,7 @@
 ---
 id: "0317"
 title: "Show what the Foreman will do and has done for a blocked ticket"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0308", "0309"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:36:46.607Z"
+approved: "2026-10-18T22:49:21.083Z"
 
 ---
 # 0317 · Show what the Foreman will do and has done for a blocked ticket
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With the Foreman's Fixing set to `fix`, a blocked ticket looks the same as one waiting for you, though the Foreman is about to take its recommendation, and once it has, the panel doesn't say so: it's only in the ticket's Notes and speck run's log. On 2026-10-18, 0305 showed as blocked and then carried on, with nothing on the board to say why. Its Notes also said "chosen by the user in the panel", which may not be how it was chosen.
@@ -53,9 +54,14 @@ To see it, set the Foreman's Fixing to fix in Settings and look at a blocked tic
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 240,595
+- Elapsed since build started: 13 min
+- Changed lines: 140 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): speck/ideas/2026-10-18-foreman-will-take-it-while-speck-run-is-off.md, a blocked card says the Foreman will take its recommendation even while speck run is off.
 - Known limit: the Notes give a choice's time to the minute, so a choice made in the same minute as an approval is taken to be before it, and the card doesn't show it.
