@@ -1,7 +1,7 @@
 ---
 id: "0289"
 title: "Start and resume Codex builds from speck run"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T10:41:59.157Z"
 
 ---
 # 0289 · Start and resume Codex builds from speck run
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck run can only start and resume builds with Claude Code: it gives each build a session id up front (`--session-id {session}`) and resumes it by that id. Codex chooses its own session id, so with Codex as the builder, speck run can't resume a build after a hand-back or a stop, and `builder_model` isn't passed to it.
