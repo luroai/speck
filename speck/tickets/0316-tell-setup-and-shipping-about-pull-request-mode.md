@@ -37,6 +37,7 @@ Setup offers pull request mode where it fits, and the shipping skill describes h
 
 ## Notes
 - From `speck/ideas/2026-10-18-tell-the-skills-about-pull-request-mode.md` (inbox, from 0296). Skills are in `skills/speck-setup/` and `skills/speck-ship/`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
