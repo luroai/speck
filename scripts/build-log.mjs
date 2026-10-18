@@ -7,6 +7,9 @@ import fs from 'node:fs';
 // session and rate-limit events) are left out. Any other line, such as plain `claude -p` output or an error, is kept as is.
 // With `times`, each agent message, tool call and failed tool result starts with its event's local time (`HH:MM:SS `),
 // when the event has an ISO 8601 timestamp that reads as a date.
+// A Codex build's log (`codex exec --json`) and a Cursor one (`--output-format stream-json`) read the same way (0291):
+// the agent's messages and one line per shell command it runs ("→ Shell: npm test"), with "  ✗ exit code N" after a
+// command that fails, and the rest (reasoning, thinking, file changes and other tools) left out.
 const LOG_DETAIL = 200;
 export function readableLog(text, { times = false } = {}) {
   return readable(text, times, null).out.join('\n');
@@ -51,14 +54,43 @@ function readable(text, times, last) {
         const c = typeof b.content === 'string' ? b.content : Array.isArray(b.content) ? b.content.map(x => x?.text || '').join(' ') : '';
         out.push(`${at}  ✗ ${short(c) || 'failed'}`);
       }
+    } else if (e.type === 'item.completed' && e.item && typeof e.item === 'object') { // Codex
+      const i = e.item;
+      if (i.type === 'agent_message' && typeof i.text === 'string' && i.text.trim()) { out.push(i.text.trim(), ''); last = i.text.trim(); }
+      else if (i.type === 'command_execution') {
+        out.push(shellLine(i.command, short));
+        if (typeof i.exit_code === 'number' && i.exit_code !== 0) out.push(`  ✗ exit code ${i.exit_code}`);
+      }
+    } else if (e.type === 'turn.failed') { // Codex
+      out.push(`Build ended: ${short(e.error?.message ?? '') || 'error'}`);
+    } else if (e.type === 'tool_call' && e.tool_call?.shellToolCall && typeof e.tool_call.shellToolCall === 'object') { // Cursor
+      const c = e.tool_call.shellToolCall;
+      if (e.subtype === 'started') out.push(shellLine(c.args?.command, short));
+      else if (e.subtype === 'completed' && c.result && typeof c.result === 'object') {
+        const code = c.result.success?.exitCode;
+        if (typeof code === 'number' && code !== 0) out.push(`  ✗ exit code ${code}`);
+        else if (!c.result.success) out.push('  ✗ failed');
+      }
     } else if (e.type === 'result') {
       const r = typeof e.result === 'string' ? e.result.trim() : '';
       if (r && last === UNSAID) unsure = true;
-      if (r && r !== last) out.push(r);
+      // Cursor's result runs all of the turn's messages together, so it's left out when it ends with the last one.
+      const cursor = e.usage && typeof e.usage === 'object' && 'inputTokens' in e.usage;
+      if (r && r !== last && !(cursor && typeof last === 'string' && last && r.endsWith(last))) out.push(r);
       if (e.is_error === true || (e.subtype && e.subtype !== 'success')) out.push(`Build ended: ${e.subtype || 'error'}`);
     }
   }
   return { out, unsure, last };
+}
+
+// A shell command's line in a Codex or Cursor log. Codex runs each command as `/bin/bash -lc '<command>'`, so that is
+// shown as the command alone.
+function shellLine(command, short) {
+  let c = Array.isArray(command) ? command.join(' ') : typeof command === 'string' ? command : '';
+  const m = c.match(/^(?:\S*\/)?(?:ba|z)?sh -l?c '((?:[^']|'\\'')*)'$/);
+  if (m) c = m[1].replaceAll("'\\''", "'");
+  c = short(c);
+  return c ? `→ Shell: ${c}` : '→ Shell';
 }
 
 // The last n lines of a build log as readableLog shows them, trailing blank lines dropped, or null when there are none.

@@ -46,6 +46,9 @@ The panel shows a Codex or Cursor build's log as readably as a Claude Code one, 
 - Not checked, and not needed for this ticket: that a resumed Cursor chat remembers earlier turns (a quick check printed no result line).
 - Cursor's tokens: `inputTokens` + `outputTokens`, plus the cache fields counted as Claude Code's are. No cost.
 - Failing before this build: none
+- Checked 2026-10-18 by running codex-cli 0.159.0 twice in a scratch repo, the second time resumed: `turn.completed` usage is cumulative over the session (output 5, then 10), and `input_tokens` includes `cached_input_tokens`. So a Codex build's tokens are the last `turn.completed`'s `input_tokens` + `output_tokens`.
+- Cost "shown as unknown": the panel already leaves out a builder cost that isn't recorded (0120), and shows no $0, so a Codex or Cursor build's card shows its tokens and no cost figure.
+- Self-check: no changes
 - The reader is `scripts/build-log.mjs`; spend is `scripts/spend.mjs`.
 
 ## In plain words
