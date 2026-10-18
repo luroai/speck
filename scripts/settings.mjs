@@ -21,7 +21,7 @@ export const SETTING_GROUPS = [
     { key: 'builder', default: 'claude',
       explain: 'The agent that builds each ticket, writing its tests and code. New tickets take it from here, so changing it changes who builds tickets made from now on.' },
     { key: 'builder_model', default: '',
-      explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given only to Claude Code builds for now. Blank leaves it to the builder\'s own default.' },
+      explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, and to Codex builds when build_command is blank. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
       explain: 'The agent that reviews each build and decides whether it is approved: codex, claude-subagent or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
     { key: 'reviewer_model', default: '',

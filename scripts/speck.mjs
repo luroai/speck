@@ -17,7 +17,7 @@ import { cmdConfig } from './config.mjs';
 import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
-import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
+import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
@@ -472,9 +472,9 @@ export function statusData(repo) {
     const text = fs.readFileSync(path.join(dir, f), 'utf8');
     return { path: `speck/ideas/${f}`, title: (text.match(/^# (.+)$/m) || [])[1]?.trim() || f, status: ideaStatus(text) || null, body: text };
   });
-  // The command that reopens a build's session, for the panel. A config without the setting gets the default.
-  const resume = !Object.hasOwn(cfg, 'resume_command') ? DEFAULT_RESUME_COMMAND : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
-  return { tickets: entries, ideas, resume_command: resume };
+  // The command that reopens a build's session, for the panel. A config without the setting gets the default (0289:
+  // Codex's, for Codex builds).
+  return { tickets: entries, ideas, resume_command: resumeCommandOf(cfg) };
 }
 
 function cmdStatus(args = []) {

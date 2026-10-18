@@ -47,12 +47,12 @@ export function buildProcesses(pid, session, me = process.pid) {
 
 // Sends `signal` to a build and everything it started. Stopping goes round again for any process started meanwhile.
 // A process that has gone meanwhile is skipped. Returns the processes it signalled, and the first error that stopped
-// it (null if none), so the caller can undo what it did.
+// it (null if none), so the caller can undo what it did. A Codex build's environment holds its env_session (0289).
 export function signalBuild(b, signal) {
   const sent = [];
   try {
     for (let pass = 0; pass < 10; pass++) {
-      const fresh = buildProcesses(b.pid, b.rec.session).filter(p => !sent.includes(p));
+      const fresh = buildProcesses(b.pid, b.rec.env_session ?? b.rec.session).filter(p => !sent.includes(p));
       if (!fresh.length) break;
       for (const p of fresh) {
         try { process.kill(p, signal); sent.push(p); }
