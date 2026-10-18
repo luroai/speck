@@ -9,12 +9,14 @@ import { spawn, spawnSync } from 'node:child_process';
 import { runRepo, startRun, until, alive, killAll, stopRun, record, env, CLI } from './support/run.mjs';
 import { buildOfThisProcess, noteBuild, claimResumed } from '../scripts/seen-builds.mjs';
 import { statusData } from '../scripts/speck.mjs';
+import { cliCopy } from './support/panel.mjs';
 
 const runs = dir => path.join(dir, 'speck', '.cache', 'runs');
 const wait = ms => new Promise(res => setTimeout(res, ms));
 // The environment of a build speck run didn't start: none of speck run's, nor this session's own Claude Code.
 const outside = (() => { const e = { ...env }; for (const k of ['SPECK_BUILD_SESSION', 'CLAUDE_PID', 'CLAUDE_CODE_SESSION_ID']) delete e[k]; return e; })();
 const table = list => new Map(list.map(([pid, ppid, args]) => [pid, { ppid, args: args.split(' ') }]));
+const setStatus = (dir, id, from, to) => { const f = path.join(dir, 'speck', 'tickets', `${id}-t.md`); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(`status: ${from}`, `status: ${to}`)); };
 const shown = (dir, id) => statusData(dir).tickets.find(t => t.id === id);
 const exitedRecord = (dir, id, rec = {}) => {
   fs.mkdirSync(runs(dir), { recursive: true });
@@ -90,15 +92,52 @@ test('0300 AC1: a build outside speck run stops counting once its ticket is appr
     assert.ok(await until(() => /watching for ready tickets/.test(run.out())), run.out());
     pid = await agentBuilding(r.dir, '0001');
     assert.ok(await until(() => /0001 is being built outside speck run/.test(run.out())), run.out());
-    const set = (id, from, to) => { const f = path.join(r.dir, 'speck', 'tickets', `${id}-t.md`); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(`status: ${from}`, `status: ${to}`)); };
-    set('0002', 'draft', 'ready');
-    set('0001', 'building', 'approved');
+    setStatus(r.dir, '0002', 'draft', 'ready');
+    setStatus(r.dir, '0001', 'building', 'approved');
     r.g('commit', '-qam', '0001 approved, 0002 ready');
     assert.ok(await until(() => r.calls().length >= 1), run.out());
     assert.deepEqual(r.calls().map(c => c.args[0]), ['0002']);
     assert.match(run.out(), /0001 is approved, so its build outside speck run no longer counts/);
     assert.ok(alive(pid));
     assert.ok('exited' in record(r.dir, '0001'));
+  } finally { await stopRun(run); killAll([pid, ...r.calls().map(c => c.pid)].filter(Boolean)); }
+});
+
+test('0300 AC1: a build outside speck run that approves its ticket doesn\'t hold up switching to new code', async () => {
+  const r = runRepo({ tickets: [['0001', { status: 'building' }]] });
+  const { cli } = cliCopy();
+  const run = startRun(r.dir, {}, cli);
+  let pid = null;
+  try {
+    assert.ok(await until(() => /watching for ready tickets/.test(run.out())), run.out());
+    pid = await agentBuilding(r.dir, '0001');
+    assert.ok(await until(() => /0001 is being built outside speck run/.test(run.out())), run.out());
+    const f = path.join(path.dirname(cli), 'run-switch.mjs');
+    fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace("'speck run switched to the new code.'", "'speck run switched to the new code. v2'"));
+    assert.ok(await until(() => /switch to the new code when its running builds and ships have ended: the build of 0001/.test(run.out())), run.out());
+    setStatus(r.dir, '0001', 'building', 'approved');
+    r.g('commit', '-qam', '0001 approved');
+    assert.ok(await until(() => run.out().includes('switched to the new code. v2')), run.out());
+    assert.ok(alive(pid), 'its conversation carries on');
+  } finally { await stopRun(run); killAll([pid].filter(Boolean)); }
+});
+
+test('0300 AC1: a build speck run started, resumed by hand after it exited, stops counting once it approves its ticket', async () => {
+  const r = runRepo({ tickets: [['0001', {}], ['0002', { status: 'draft' }]], max: 1 });
+  const run = startRun(r.dir);
+  let pid = null;
+  try {
+    assert.ok(await until(() => /0001 is still ready/.test(run.out())), run.out());
+    const session = record(r.dir, '0001').session;
+    setStatus(r.dir, '0001', 'ready', 'building');
+    r.g('commit', '-qam', '0001 building');
+    pid = sleeper('claude', '--resume', session);
+    assert.ok(await until(() => /0001 is being built outside speck run/.test(run.out())), run.out());
+    setStatus(r.dir, '0002', 'draft', 'ready');
+    setStatus(r.dir, '0001', 'building', 'approved');
+    r.g('commit', '-qam', '0001 approved, 0002 ready');
+    assert.ok(await until(() => r.calls().some(c => c.args[0] === '0002')), run.out());
+    assert.ok(alive(pid));
   } finally { await stopRun(run); killAll([pid, ...r.calls().map(c => c.pid)].filter(Boolean)); }
 });
 
@@ -111,8 +150,7 @@ test('0300 AC1, AC3: speck run counts a build started outside it, and treats it 
     pid = await agentBuilding(r.dir, '0001');
     assert.ok(await until(() => /0001 is being built outside speck run/.test(run.out())), run.out());
     // 0002 set ready and committed: the one build slot is in use.
-    const file = path.join(r.dir, 'speck', 'tickets', '0002-t.md');
-    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('status: draft', 'status: ready'));
+    setStatus(r.dir, '0002', 'draft', 'ready');
     r.g('commit', '-qam', '0002 ready');
     assert.ok(await until(() => { try { return JSON.stringify(JSON.parse(fs.readFileSync(path.join(runs(r.dir), 'run.foreman.json'), 'utf8')).ready ?? []).includes('slots'); } catch { return false; } }), run.out());
     assert.deepEqual(r.calls(), [], '0002 waits for the slot, and 0001 is not launched');
