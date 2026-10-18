@@ -6,6 +6,12 @@ import { rules, rule, get } from './support/css.mjs';
 
 // ---------- 0309: a larger mark and title in the header ----------
 
+test('0309 AC4: on a phone, "control panel" is hidden in the header, not only once it slims', () => {
+  const phone = rules().filter(r => r.at.some(a => /max-width: 699\.98px/.test(a)));
+  assert.ok(phone.some(r => r.sel === '.logo span' && get(r, 'display') === 'none'), 'hidden on a phone');
+  assert.ok(!rule('.logo span').decls.some(([k, v]) => k === 'display' && v === 'none'), 'shown on wider screens');
+});
+
 // Every rule for a selector, in any at-rule, so a phone's own size can't undo the header's.
 const all = sel => rules().filter(r => r.sel.split(',').map(s => s.trim()).includes(sel));
 
@@ -31,7 +37,7 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 const MEASURE = `(async () => {
   await document.fonts.ready;
   const box = s => { const e = document.querySelector(s), r = e.getBoundingClientRect(), shown = getComputedStyle(e).display !== 'none' && r.width > 0;
-    return { shown, top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height, mid: r.top + r.height / 2 }; };
+    return { shown, cut: e.scrollWidth > e.clientWidth + 0.5, ellipsis: getComputedStyle(e).textOverflow === 'ellipsis', top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height, mid: r.top + r.height / 2 }; };
   const c = document.getElementById('mark');
   return { header: box('header'), logo: box('.logo'), mark: box('.logo .mark'), name: box('.logo .name'), label: box('.logo span'), repo: box('.repo'),
     theme: box('#theme'), settings: box('#settings-open'), canvas: [c.width, c.height], font: getComputedStyle(document.querySelector('.logo .name')).fontFamily,
@@ -43,7 +49,7 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
-    for (const width of [1280, 700, 699, 400, 320]) {
+    for (const width of [1280, 700, 699, 400, 375, 320]) {
       const phone = width < 700;
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 800, deviceScaleFactor: 1, mobile: phone });
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
@@ -68,8 +74,11 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
         assert.equal(m.header.height, phone ? 105 : 63, `the header grows only by what the mark needs: ${at}`);
         // AC4: nothing past the right edge, and nothing overlapping
         assert.ok(m.scroll <= m.view, `nothing past the right edge: ${at}`);
-        assert.ok(m.label.shown && m.repo.shown, `"control panel" and the project show at the top of the page: ${at}`);
-        assert.ok(m.label.left >= m.name.right, `"control panel" after speck: ${at}`);
+        // On a phone, "control panel" hides, so the project's name shows in full beside speck
+        assert.equal(m.label.shown, !phone, `"control panel" shows only on wider screens: ${at}`);
+        if (!phone) assert.ok(m.label.left >= m.name.right, `"control panel" after speck: ${at}`);
+        // (at 320 px a long one was cut short with an ellipsis before 0309 too, and still is)
+        assert.ok(m.repo.shown && (!m.repo.cut || (width < 375 && m.repo.ellipsis)), `the project's name shows in full from 375 px: ${at}`);
         for (const [x, y] of [['logo', 'repo'], ['logo', 'theme'], ['logo', 'settings'], ['repo', 'theme'], ['repo', 'settings']]) assert.ok(apart(m[x], m[y]), `${x} and ${y} don't overlap: ${at}`);
         assert.ok(m.repo.right <= m.view, at);
         if (phone) {

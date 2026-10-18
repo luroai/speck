@@ -508,12 +508,12 @@
     header > * { white-space: nowrap; }
     /* 0160: scrolled down, one row of speck, Auto-build and light/dark, 44 px buttons and 6 px above and below */
     header.slim { grid-template-columns: auto minmax(0, 1fr) auto auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
-    header.slim .repo, header.slim .logo span { display: none; }
-    .logo span { letter-spacing: .02em; } /* 0161: room for the project's name beside it, at 12 px */
+    header.slim .repo { display: none; }
+    /* 0309: no "control panel" on a phone, so the larger mark and speck leave room for the project's name in full */
+    .logo span { display: none; }
     /* 0170: and room for the mark before speck */
     header { column-gap: 6px; }
     .logo .mark { margin-right: 6px; }
-    .logo span { letter-spacing: 0; margin-left: 8px; }
     .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
     .run-state { justify-self: start; height: 44px; min-width: 44px; }
     /* 0163: in two rows, Auto-build has the row under speck and the project to itself, but light/dark's place, so a

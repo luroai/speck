@@ -76,7 +76,7 @@ test('0304 AC1, AC2 and AC4: in a real browser, Doto loads from the panel and th
         assert.match(m.font, /^Doto,/, at);
         assert.equal(m.header, m.serif, `the header is as tall as with the old serif title: ${at}`);
         assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 1.5, `speck is centred on the mark, as the design sets them: ${at}`);
-        assert.ok(m.name.top < m.label.bottom && m.label.top < m.name.bottom, `speck is on the line beside "control panel": ${at}`);
+        if (width >= 700) assert.ok(m.name.top < m.label.bottom && m.label.top < m.name.bottom, `speck is on the line beside "control panel": ${at}`); // 0309: a phone has no "control panel"
         assert.ok(m.width <= m.view, `nothing past the right edge: ${at}`);
       }
     }

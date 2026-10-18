@@ -42,6 +42,8 @@ The header's mark and "speck" title are larger, closer to the landing page's, an
 - Failing before this build: none
 - Built so far: 32 px mark and 26 px title at every width, laid out in a row centred on the mark. Wide screens fit well. On a 375 px phone, the two-row header has about 123 px left for the project's name, so even "speck · base main" is cut short with "…", and 0140 AC3 (the project's name in full at 375 px) fails. A 14 px title on phones doesn't help, because the 32 px mark alone takes about 19 px more than before.
 - Went with the recommendation: B, hide "control panel" on phones (chosen by the user in the panel, 2026-10-18 22:32 UTC).
+- Self-check: at 320 px a long project name (the tests' temporary repo) is still cut short with its ellipsis, as it was before this build; from 375 px it shows in full, so the browser test checks both. The slim phone header stays within 60 px.
+- Changed older tests to the new sizes: 0303 (mark 32 px), 0304 ("speck" 26 px; "control panel" beside it only on wider screens), 0170 (reads the title's own font size, and allows a mark up to 1.25 × its height).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
