@@ -38,6 +38,9 @@ The panel's app icon is speck drawn on the LCD screen, as the design draws its m
 ## Notes
 - The icons are served from `templates/icons/` by `scripts/panel.mjs` (0149). The design's renderer is `docs/design/lcd/lcd.js`; the dots can be read from it once and written into the SVG, so the icon doesn't run any script.
 - Failing before this build: none
+- Unlit dots aren't drawn, as in the header's mark (0303): the icon is the screen colour with the ink and red dots on it, the three colours AC1 names.
+- The old drawing's tests are retired, as the icons no longer show it: 0149's check that each PNG is the eared logo, 0170's AC1, AC2 and AC5 checks of the eared mark (its AC4 still checks the icons are served), and all of panel-0184.test.mjs, which only checked the eye in icon.svg and the PNGs. icons-0305.test.mjs checks the new icons; 0149's browser test still checks that icon.svg and the apple-touch-icon draw the same.
+- Self-check: no changes. The PNGs use whole-pixel dots, 9 px apart at 180 and 192 and 24 px at 512, chosen so the margins match exactly on each side; icon.svg is laid out as the 180 px icon.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
