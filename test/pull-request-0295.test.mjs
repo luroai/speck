@@ -16,33 +16,12 @@ import { openAndKeep, prShown, readPrRecord } from '../scripts/pull-request.mjs'
 import { prQueue } from '../scripts/pr-queue.mjs';
 import { shipRepo, gIn, env, BRANCH } from './support/ship.mjs';
 import { speck } from './support/cli.mjs';
-import { fakeGh } from './support/gh.mjs';
+import { prRepo, TICKET, runs } from './support/pr.mjs';
 import { fakePage, T, queueRows, gitEnv } from './support/panel.mjs';
 
 Object.assign(process.env, gitEnv); // the commits speck makes when the tests call it directly
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const TICKET = 'speck/tickets/0001-export-bookings.md';
-const runs = dir => path.join(dir, 'speck', '.cache', 'runs');
-
-// An approved ticket in its own worktree, with main pushed to a bare remote, in pull request mode on both branches.
-function prRepo({ mode = 'pr' } = {}) {
-  const r = shipRepo();
-  const bare = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-remote-'));
-  gIn(bare, 'init', '-q', '--bare', '-b', 'main');
-  for (const cwd of [r.dir, r.wt]) {
-    const file = path.join(cwd, 'speck', 'config.yml');
-    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^ship_mode: .*$/m, `ship_mode: ${mode}`));
-    assert.equal(gIn(cwd, 'commit', '-qam', `ship_mode ${mode}`).status, 0);
-  }
-  r.g('remote', 'add', 'origin', bare);
-  r.g('push', '-q', '-u', 'origin', 'main');
-  const gh = fakeGh();
-  const cfg = loadConfig(r.dir);
-  const ticketIn = cwd => parseTicket(fs.readFileSync(path.join(cwd, TICKET), 'utf8'));
-  const remoteHas = ref => gIn(bare, 'rev-parse', '--verify', '-q', ref).stdout.trim();
-  return { ...r, bare, gh, cfg, ticketIn, remoteHas, cli: (cwd, ...a) => speck(cwd, gh.env(env), ...a) };
-}
 
 // The ticket back to reviewing, as it is before speck close, with the sections close writes.
 function toReviewing(r) {
@@ -242,12 +221,12 @@ test('0295 AC4: speck close in pull request mode still approves when gh fails, s
   assert.equal(r.sha('main'), main);
 });
 
-test('0295 AC4: speck ship merges nothing in pull request mode', () => {
+test('0295 AC4: speck ship merges nothing in pull request mode until the ticket has a pull request', () => {
   const r = prRepo();
   const before = r.snapshot();
   const shipped = r.cli(r.dir, 'ship', '1');
   assert.notEqual(shipped.status, 0);
-  assert.match(shipped.stderr, /ship_mode is pr .*speck pr 0001.*Nothing was changed\./);
+  assert.match(shipped.stderr, /0001 has no open or merged pull request.*speck pr 0001.*Nothing was changed\./); // 0296: with one, it merges it
   assert.deepEqual(r.snapshot(), before);
 });
 

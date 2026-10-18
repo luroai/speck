@@ -11,11 +11,12 @@ import { sharedCacheDir } from './turns.mjs';
 import { removeScratch } from './scratch.mjs';
 import { shipFolders, putBranchBack } from './ship-folders.mjs';
 import { remoteBaseCatchUp } from './ship-remote.mjs';
-import { prMode, prShown } from './pull-request.mjs';
+import { prMode } from './pull-request.mjs';
+import { shipPrTicket } from './pr-ship.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
-function ticketBranch(repo, cfg, id) {
+export function ticketBranch(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
   const names = ticketBranches(repo, cfg, pad);
   if (names.length !== 1) throw new SpeckError(names.length
@@ -66,7 +67,7 @@ function named(failing) {
 // The refusal for tests that failed on the ticket merged with the base branch's commit `sha`. It runs the tests on
 // that commit alone, in a temporary worktree it removes afterwards, so a broken base branch isn't blamed on the ticket.
 // `moved` says whether the base branch has commits the ticket branch doesn't, and `failing` names the failing tests.
-function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {}) {
+export function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {}) {
   const failed = `Tests failed on the approved branch, so nothing was shipped.${moved ? ` They ran on it merged with ${base} as it is now.` : ''}`;
   const at = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'speck-base-')), 'base');
   console.log(`Checking whether ${base}'s own tests pass, in a temporary worktree at ${at}.`);
@@ -102,7 +103,7 @@ function testFailure(repo, cfg, base, sha, { moved = false, failing = [] } = {})
 // The ticket branch merged into the base branch's commit `target`, as a commit no branch points at, made in git's
 // object store only (merge-tree), so no branch, folder, index or hook is touched (0192). Null when the merge has
 // conflicts: the real merge then hits them and refuses, as before.
-function candidateMerge(repo, branch, target, message) {
+export function candidateMerge(repo, branch, target, message) {
   const r = sh('git', ['merge-tree', '--write-tree', '--no-messages', target, branch], { cwd: repo });
   if (r.status === 1) return null;
   if (r.status !== 0) throw new SpeckError(`Couldn't work out the merge of ${branch} into the base branch, so nothing was shipped: ${(r.stderr || r.stdout).trim().split('\n').pop()}`);
@@ -110,7 +111,7 @@ function candidateMerge(repo, branch, target, message) {
 }
 
 // Runs the tests on `candidate`, checked out in the ticket branch's folder, then checks the branch out again there.
-function testMerged(work, cfg, branch, candidate) {
+export function testMerged(work, cfg, branch, candidate) {
   git(['checkout', '-q', '--detach', candidate], work);
   try { return runTests(work, cfg, branch); }
   finally {
@@ -359,7 +360,7 @@ export function shipTicket(repo, id) {
 }
 
 // Only once the base branch is safely pushed: until then, the remote copy is the backup.
-function deleteRemoteBranch(repo, remote, branch) {
+export function deleteRemoteBranch(repo, remote, branch) {
   const found = sh('git', ['ls-remote', '--exit-code', '--heads', remote, branch], { cwd: repo });
   if (found.status === 2) return;
   const del = found.status === 0 ? sh('git', ['push', remote, '--delete', branch], { cwd: repo }) : found;
@@ -368,7 +369,7 @@ function deleteRemoteBranch(repo, remote, branch) {
 }
 
 // Why an approved ticket can't ship without the user, or '' if config lets the builder ship it straight after approval.
-function autoShipBlocker(repo, cfg, id) {
+export function autoShipBlocker(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
   if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
   return autoShipWhyNot(cfg, pad, findTicket(repo, pad).fm.risk, rounds(repo, pad));
@@ -542,13 +543,9 @@ export function cmdShip(args) {
   // Read once and removed, so nothing the ship runs, such as the tests, inherits it.
   const alone = !!process.env.SPECK_SHIP_ALONE;
   delete process.env.SPECK_SHIP_ALONE;
-  // 0295: in pull request mode, an approved ticket goes to GitHub as a pull request, and speck merges nothing itself.
-  if (prMode(loadConfig(repo))) {
-    const pad = String(id).padStart(4, '0'), url = /^\d{1,4}$/.test(id) ? prShown(sharedCacheDir(repo, 'runs'), pad)?.url : null;
-    throw new SpeckError(`ship_mode is pr in speck/config.yml, so speck doesn't merge ${pad} itself: ${url ? `merge its pull request on GitHub, ${url}` : `run \`speck pr ${pad}\` to open its pull request, then merge it on GitHub`}. Nothing was changed.`);
-  }
+  const pr = prMode(loadConfig(repo)); // 0296: in pull request mode, shipping merges its pull request on GitHub
   // --auto is how the builder ships straight after approval. It only goes ahead when config allows it for this ticket.
-  if (auto) {
+  if (auto && !pr) {
     // Read the ticket where its branch is checked out, so the checks see the approved copy, not the base branch's.
     const cfg = loadConfig(repo);
     let folder = repo;
@@ -567,7 +564,7 @@ export function cmdShip(args) {
     endShip(took, false, null);
     throw new SpeckError(`Another ship is running in this repo, so ${id.padStart(4, '0')} wasn't shipped. Nothing was changed.`, 15);
   }
-  try { shipTicket(repo, id); }
+  try { if (pr) shipPrTicket(repo, id, { auto }); else shipTicket(repo, id); }
   catch (e) { if (auto && e?.together) e.code = 16; if (took) endShip(took, auto, e); throw e; }
   finally { if (lock) releaseShipLock(lock); }
   if (took) endShip(took, auto, null);
