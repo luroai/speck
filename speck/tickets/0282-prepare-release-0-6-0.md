@@ -43,6 +43,7 @@ speck is ready to be released as 0.6.0.
 - Covers every ticket shipped since `v0.5.4`: 0257–0281, apart from 0262, which only updated tests.
 - After it ships, check that the `v0.6.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.6.0 --target main --title "speck 0.6.0" --notes-file docs/releases/v0.6.0.md`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
