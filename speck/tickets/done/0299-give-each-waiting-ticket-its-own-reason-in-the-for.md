@@ -1,7 +1,7 @@
 ---
 id: "0299"
 title: "Give each waiting ticket its own reason in the Foreman's detail"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0294"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T14:08:11.858Z"
 approved: "2026-10-18T14:31:12.290Z"
+finished: "2026-10-18T14:33:18.191Z"
 
 ---
 # 0299 · Give each waiting ticket its own reason in the Foreman's detail
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 While speck run waits to switch to new code, the Foreman's detail gives that as the reason for every ready ticket, though most are waiting for other tickets in their `after:` list, and its Shipping section says "Nothing is waiting to ship" while an approved ticket shows "Approved · waiting to ship" on the board. Seen on 2026-10-18: 0295, 0296 and 0298 all said "speck run is switching to new code once the build of 0287 ends", while 0295 was waiting for 0294 and 0287, and 0294 was approved and held.
