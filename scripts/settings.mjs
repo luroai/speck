@@ -233,8 +233,7 @@ const each = (changes, why) => Object.fromEntries(changes.map(c => [c.key, why])
 // as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
 // 0293: a change to builder sets build_command to the new builder's own in the same commit. One set by hand is replaced
 // only when `replace` is it, exactly as the file has it, as the page read it when you confirmed.
-// 0311: and clears a builder_model the new builder doesn't offer, unless builder_model is changed in the same Save,
-// giving why in `cleared`. `offered`: { builder, models }, the new builder's models as read already, or they're read now.
+// 0311: and clears a builder_model the new builder doesn't offer, as it would be once saved, giving why in `cleared`. `offered`: { builder, models }, the new builder's models as read already, or they're read now.
 export function panelSaveSettings(repo, changes, { confirmed = null, replace = null, offered = null } = {}) {
   const twice = changes.find((c, i) => changes.findIndex(d => d.key === c.key) !== i);
   if (twice) return { status: 400, body: { error: `${twice.key} is given more than once. Reload the panel, then try again.` } };
@@ -244,10 +243,14 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   const bad = checked.filter(c => c.error !== undefined);
   if (bad.length) return refusal(bad[0].status, Object.fromEntries(bad.map(c => [c.key, c.error])));
   const switched = checked.find(c => c.key === 'builder' && !c.machine && !c.same), cleared = {};
-  if (switched && !checked.some(c => c.key === 'builder_model')) {
-    const to = String(switched.want);
-    const why = clearsBuilderModel(parseYaml(text).builder_model, to, () => offered?.builder === to ? offered.models : offeredModels(to));
-    if (why !== null) { checked.push({ key: 'builder_model', want: '', machine: false, same: false }); cleared.builder_model = why; }
+  if (switched) {
+    const to = String(switched.want), given = checked.find(c => c.key === 'builder_model');
+    const why = clearsBuilderModel(given ? given.want : parseYaml(text).builder_model, to, () => offered?.builder === to ? offered.models : offeredModels(to));
+    if (why !== null) {
+      if (given) Object.assign(given, { want: '', same: JSON.stringify(valueIn(text, repo, 'builder_model').value) === '""' });
+      else checked.push({ key: 'builder_model', want: '', machine: false, same: false });
+      cleared.builder_model = why;
+    }
   }
   // 0280: a reviewer of the builder's own family is refused only when the two would run the same model, or might, as
   // the settings would be once saved. So a change to builder_model or reviewer_model can be refused too.
@@ -351,8 +354,9 @@ export function panelSaveRequest(repo, query, { offered = null } = {}) {
 export async function panelSaveRequestAsync(repo, query, find) {
   let offered = null;
   try {
-    const to = new URLSearchParams(query).get('repo:builder'), cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
-    if (to !== null && to !== String(cfg.builder ?? 'claude') && clearsBuilderModel(cfg.builder_model, to, () => []) !== null)
+    const q = new URLSearchParams(query), to = q.get('repo:builder'), cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
+    const model = q.has('repo:builder_model') ? q.get('repo:builder_model') : cfg.builder_model;
+    if (to !== null && to !== String(cfg.builder ?? 'claude') && clearsBuilderModel(model, to, () => []) !== null)
       offered = { builder: to, models: await offeredModelsAsync(to, find) };
   } catch { /* panelSaveRequest says what's wrong */ }
   return panelSaveRequest(repo, query, { offered });

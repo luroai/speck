@@ -1,7 +1,7 @@
 ---
 id: "0311"
 title: "Clear builder_model when the builder is switched"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T22:32:27.950Z"
 ---
 # 0311 · Clear builder_model when the builder is switched
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Switching the builder, in the Settings view or with `speck config set builder`, leaves `builder_model` as it was. Switching from Claude Code to Codex with `builder_model: opus` left set means every Codex build is started with a model Codex doesn't have.
@@ -51,3 +51,74 @@ When the builder is switched, a `builder_model` the new builder doesn't offer is
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bb1740420f8e80509bfeca1e2655291342d47a50",
+    "thread_id": "01a1512a-6edb-79e0-a028-05c7b38840ef",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 153820,
+      "cached_input_tokens": 106624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 810,
+      "reasoning_output_tokens": 78
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:38:37.373Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/settings.mjs panelSaveSettings skips validation whenever builder_model appears in the same Save. The AC1 tests pass for a builder-only change but do not cover changing both settings."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/config.mjs setBuilder clears unsupported models and prints the reason on one line. The CLI AC2 test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "clearsBuilderModel preserves names included in the offered models. The AC3 test passed for synchronous and asynchronous Settings saves and the CLI."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The AC4 tests passed for builder-only changes and unavailable model lists, but panelSaveSettings bypasses clearing when builder_model is supplied in the same Save, even when models cannot be read."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "panelSaveSettings adds an exception absent from the ticket: supplying builder_model in the same Save bypasses the check entirely. A user can change opus to sonnet and switch to Codex in one Save, leaving Codex configured with an unsupported Claude model. The same bypass applies when the new builder's models cannot be read.",
+        "suggested_fix": "When switching builders, check the effective builder_model, including any value submitted in that Save. Clear it with the existing explanation if unsupported or unverifiable, and preserve it if offered. Add tests covering simultaneous changes for all three outcomes.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Switching only the builder works in Settings and the command line, with a clear explanation when the model is removed. However, changing the builder and model together bypasses the check and can still leave builds using an unsupported model. Fix that gap before merge."
+  }
+}
+```
+
+</details>
