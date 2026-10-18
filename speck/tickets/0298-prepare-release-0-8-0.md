@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0297", "0283", "0284", "0285", "0286", "0287", "0294", "0295", "0296", "0299", "0300", "0301"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T14:43:21.385Z"
-approved: "2026-10-18T14:47:08.536Z"
+approved: "2026-10-18T14:50:53.609Z"
 
 ---
 # 0298 · Prepare release 0.8.0
@@ -60,12 +60,13 @@ To see it, after it ships, check that the 0.8.0 release appears on the repositor
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 168,251
-- Elapsed since build started: 4 min
+- Reviewer tokens: 457,037
+- Elapsed since build started: 8 min
 - Changed lines: 92 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
@@ -131,6 +132,71 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The release version, changelog, README and release notes are consistent with the shipped changes. Installation and upgrade instructions include the new defaults and the pull request shipping limitation. The figures were recalculated, and the reported tests pass. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ee3985893970debf879e16ee2b07c66710d8126d",
+    "merge": true,
+    "thread_id": "01a14f7a-6656-7c93-a016-510a797772a3",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 287544,
+      "cached_input_tokens": 222720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1242,
+      "reasoning_output_tokens": 75
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T14:50:51.236Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json remains at 0.8.0. Both AC1 tests passed, including running init and checking it prints speck 0.8.0."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md retains the reviewed release coverage above 0.7.0. The preservation test passed. The amended coverage test checks blocked_recommendation, a field name, instead of prose wording."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md still identify 0.8.0 as a public preview. The latest-release setup prompt and accurate build and shipping descriptions remain unchanged. AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.8.0.md remains unchanged: release purpose, shipped changes, installation and per-project updates, settings and defaults, protected-branch limitation and changelog link are present. No person's name appears. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The figures calculation and version/changelog consistency tests passed. The reported run passed 136 tests with no failures and three skips, including the previously failing 0267 document-rewording check."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The test now checks a real field name rather than requiring particular wording in the changelog. The release documents and figures remain correct, and the previously failing document-rewording check passes. Ready for the owner's merge decision."
   }
 }
 ```
