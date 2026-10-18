@@ -1,7 +1,7 @@
 ---
 id: "0290"
 title: "Start and resume Cursor builds from speck run"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T12:05:55.735Z"
 ---
 # 0290 · Start and resume Cursor builds from speck run
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck lists Cursor as a builder, but speck run can't start or resume a Cursor build without a hand-written `build_command`, and it can't resume one at all, since it only resumes by Claude Code's `--session-id`.
@@ -51,7 +51,11 @@ With `builder: cursor`, speck run starts each build with Cursor's CLI, passing `
 - Self-check: `agent create-chat` is given 20 seconds rather than a minute, since speck run waits for it on each check; a failed chat is said once per reason and tried again on the next check, with no run record written.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If you build with Cursor, `speck run` can now start and look after those builds itself. Set `builder: cursor` and leave `build_command` blank (`build_command: ""`). For each ready ticket, speck first opens a new Cursor chat, then runs the build in it, on the model in `builder_model`, or on Cursor's Auto model if you leave that blank, which is the one a free Cursor plan allows. If a build is stopped partway, or a ship sends a ticket back for more work, speck carries on in that same chat.
+
+To see it, set those two settings, set a ticket ready and turn `speck run` on. The run's log shows the build start with its chat id, and once a build is stopped or blocked, the panel offers an `agent -p … --resume …` command to reopen its chat. If Cursor can't open a chat (for example, you're not signed in), `speck run` says why in one line, leaves the ticket ready and tries again shortly after. Codex and Claude Code builds work as before.
+
+Worth keeping an eye on: these builds run Cursor with `--force`, so they can run any command on this machine without asking, as Claude Code and Codex builds already do. While Cursor is opening a chat, `speck run` waits for it, for up to 20 seconds.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,3 +65,75 @@ With `builder: cursor`, speck run starts each build with Cursor's CLI, passing `
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Known limit: speck run waits for `agent create-chat` on each attempt (up to 20 seconds), and retries a failed one on every check, so a Cursor CLI that keeps failing slowly slows speck run's checks.
+  - Known limit: the same-model check doesn't know which family a Cursor build runs on, since that depends on `builder_model`.
+  - Skipped as a duplicate: `speck detect` lists only `cursor-agent` (`speck/ideas/2026-10-18-speck-detect-finds-cursor-as-agent.md`).
+  - Skipped as a duplicate: the setup skill's advice to leave `build_command` blank when someone declines automatic builds now turns them on for Cursor too (`speck/ideas/2026-10-18-setup-s-blank-build-command-advice-for-codex.md`).
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4a34940b27a5739c7dfeab901cbba879acc97a98",
+    "thread_id": "01a14eec-0d4e-7ed1-a891-dededd991af4",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 209821,
+      "cached_input_tokens": 146944,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 664,
+      "reasoning_output_tokens": 51
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T12:11:21.927Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs launch creates the chat before starting the process and records its session; cursorStartWords supplies the required flags and model. Passing 0290 AC1 integration test verifies actual process arguments and saved session. Blank model uses auto, as clarified in the ticket Notes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/hand-back.mjs resumeFor selects cursorResumeArgv for Cursor records. Passing 0290 AC2 tests exercise killed-build resumption, hand-back queue arguments and the panel's displayed resume command."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/cursor-build.mjs cursorCli prefers agent and falls back to cursor-agent. Passing 0290 AC3 tests isolate PATH and verify starts, resumes and doctor checks."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "createChat returns a single-line failure reason; run.mjs launch returns before creating a run record or starting a build. Passing 0290 AC4 integration test verifies retries, one diagnostic, no build process and ready status."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Existing Codex and custom-command launch paths remain intact. Passing 0290 AC5 tests verify Codex and Claude commands; the existing run-codex-0289 tests also passed. Recorded output confirms 130 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Cursor builds now create and retain a chat, start with the configured model, and resume that chat after interruptions or hand-backs. Failed chat creation leaves tickets ready and explains why. Tests cover the process launches, panel commands and compatibility with existing builders. No blocking issues found."
+  }
+}
+```
+
+</details>
