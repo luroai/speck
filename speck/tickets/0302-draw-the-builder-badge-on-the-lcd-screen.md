@@ -1,7 +1,7 @@
 ---
 id: "0302"
 title: "Draw the builder badge on the LCD screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0299"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T21:33:18.276Z"
+approved: "2026-10-18T21:48:49.972Z"
 
 ---
 # 0302 · Draw the builder badge on the LCD screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's builder badge is drawn on a canvas in the panel's own style. The user has designed a new look for speck, shared by the Luro landing page and the panel: speck drawn on a dot-matrix LCD screen, with each change of pose blending over 0.7 seconds with a hop and a blink. The panel needs to match that design exactly.
@@ -51,9 +52,15 @@ Every ticket in flight on the panel's Build list now shows its little builder on
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The explicit visual acceptance check remains unverified: neither the supplied results nor the builder response records comparing all seven animated poses against panel-mock.html in the same browser.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 900,930
+- Elapsed since build started: 16 min
+- Changed lines: 1010 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (Delivery log only, no inbox notes):
   - 0303 should remove what's left of the old canvas drawing in `templates/panel.html` (`BADGE`, `paintBadge`, `drawBadges`, `badgeColours`) and `test/support/badge.mjs` once the Auto-build builder moves to the renderer's `mini()`.
