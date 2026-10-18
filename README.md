@@ -17,7 +17,7 @@ You can trust the result without reading the code because every ticket goes thro
   <img alt="An agent conversation on the left, with speck's panel open beside it on the right, showing tickets being planned, built and waiting to ship." src="docs/images/demo-light.png">
 </picture>
 
-> Status: 0.6.0, a public preview. It works end to end on a local machine. Expect rough edges.
+> Status: 0.7.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -56,7 +56,7 @@ Read a draft, then set it ready with Set ready in `speck panel`, or with `speck 
 
 speck builds each ticket tests first, checks its own work, then has a second AI review it. Each ticket is built in its own git worktree, and no agent ever approves its own work.
 
-`speck run` watches for ready tickets and starts `/speck-build <id>` for each, highest priority first, using `build_command` in `speck/config.yml`. It builds one at a time unless you raise `max_parallel_builds`. You can also start a build yourself with `/speck-build <id>`.
+`speck run` watches for ready tickets and starts `/speck-build <id>` for each, highest priority first, using `build_command` in `speck/config.yml`, or, when that's blank with `builder: codex` or `builder: cursor`, that agent's own command. It builds one at a time unless you raise `max_parallel_builds`. You can also start a build yourself with `/speck-build <id>`.
 
 A build runs `speck start <id>`, which makes the ticket's branch in its own git worktree beside your checkout (with `worktrees: true`) and sets it to `building`. It writes a test for each acceptance criterion and checks that the tests fail, then writes the simplest code that makes them pass. A criterion about how a document reads ends with "(checked by review)" and gets no test: the reviewer checks it by reading the document. A build runs the ticket's own tests; the whole suite runs when a ticket ships. If the change goes over `limits.max_changed_lines`, it stops and proposes a split rather than pushing on. Before the first review round it runs a self-check, going over its change the way an adversarial reviewer would: unusual input, stale state, error paths, claims in docs and scope.
 
@@ -97,7 +97,7 @@ These are the jobs speck takes off your hands, from raising its own fix tickets 
 
 **It fits in your pocket.** Put the panel behind a private tunnel and add it to your phone's home screen. It opens as an app, so you can set tickets ready and ship from anywhere. Start it with `speck panel --url https://<hostname>`, the address your tunnel gives it (see [The panel](#the-panel)).
 
-**It keeps the receipts.** Every ticket keeps how long it took and how many review rounds it needed, and the panel shows what builds cost. Each round's full record is saved in the ticket's `## Review rounds`, and approval adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to its `## Delivery log`. Builds that `speck run` starts also record the builder's tokens and cost. The code, the tickets and the tests say what the product does, so there's no separate spec to keep up to date.
+**It keeps the receipts.** Every ticket keeps how long it took and how many review rounds it needed, and the panel shows what builds cost. Each round's full record is saved in the ticket's `## Review rounds`, and approval adds the review rounds, reviewer, reviewer tokens, elapsed time and changed lines to its `## Delivery log`. Builds that `speck run` starts also record the builder's tokens, and its cost when the builder reports one, as Claude Code does. The code, the tickets and the tests say what the product does, so there's no separate spec to keep up to date.
 
 ## Under the hood
 
@@ -201,7 +201,7 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | Command | What it does |
 |---|---|
 | `set <id> status ready` | Approves a ticket for building: `node .speck/scripts/speck.mjs set <id> status ready` (Gate 1). Run it on the base branch: it commits the ticket, and only that file. `set` also changes a ticket's priority, size, title and other fields |
-| `run` | Starts `/speck-build` in a non-interactive session for each ticket once it's committed as ready on the base branch, one at a time unless you raise `max_parallel_builds`, using `build_command` in `speck/config.yml`. The default skips all permission prompts. A build that was killed before it finished is resumed once |
+| `run` | Starts `/speck-build` in a non-interactive session for each ticket once it's committed as ready on the base branch, one at a time unless you raise `max_parallel_builds`, using `build_command` in `speck/config.yml`, or Codex's or Cursor's own command when that's blank. The default skips all permission prompts. A build that was killed before it finished is resumed once |
 | `panel` | The control panel in your browser |
 | `pause <id>` / `play <id>` / `stop <id>` | Hold a running build where it is, carry it on, or end it and block its ticket, keeping its branch and work if it had started. A ticket stopped before its build started is built again with `/speck-build <id>` |
 | `status` | Tickets by status, blocked first (`--json` for programs) |
@@ -209,6 +209,7 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
 | `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first. `config set --machine <key> <value>` sets `max_parallel_builds` or `max_parallel_tests` for this machine only. `config set builder <name>` sets `build_command` to that builder's own too, for `claude`, `codex` or `cursor`, and `--replace` lets it replace one set by hand |
 | `config show` | The main settings by group, with each one's value, whether it's the default and what it does |
+| `agents` | Says whether each of Claude Code, Codex and Cursor is installed and signed in, and lists its models (`--json` for programs) |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
 
 ## Using another reviewer
@@ -245,9 +246,9 @@ speck/
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **265 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **272 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **13 minutes** median from a build starting to its ticket shipping.
-- **1 review round** median. 136 tickets were approved in the first round.
+- **1 review round** median. 139 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 

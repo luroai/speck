@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.7.0 · 18 October 2026
+
+What's new since 0.6.0. A minor release that lets Codex or Cursor build your tickets as well as Claude Code, lets Claude Code review whichever agent builds, and shows which agents and models are really on your machine.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.7.0 init`.
+- A new command, `speck agents`, says for each of Claude Code, Codex and Cursor whether it's installed and signed in, and lists the models it offers, with their display names and descriptions where the agent gives them. `speck agents --json` gives the same for programs. A list that can't be read within 10 seconds is left empty, with the reason.
+- Setup uses it to say which agents are ready, offers each installed and signed-in builder, recommending Claude Code, and offers their models.
+
+### Building with Codex or Cursor
+
+- With `builder: codex` and `build_command: ""`, `speck run` starts each build with Codex itself, on `builder_model` when it's set. It reads each build's Codex session from its log, so a build it resumes after a stop, or a ticket a ship hands back, carries on in that same session, and the panel shows `codex exec resume …` as the command that reopens it. A build stopped before Codex named its session can't be resumed by itself: `speck run` says so in one line.
+- With `builder: cursor` and `build_command: ""`, `speck run` opens a new Cursor chat for each build and runs the build in it, on `builder_model`, or on Cursor's Auto model when that's blank, the only one a free Cursor plan allows. Resumed and handed-back builds carry on in the same chat. If Cursor can't open a chat, for example because you're not signed in, `speck run` says why in one line, leaves the ticket ready and tries again shortly after. speck finds Cursor's command as `agent`, or as `cursor-agent` when only that is installed.
+- A `build_command` you've set yourself is still used as it is, and Claude Code builds start and resume as before.
+- The panel's live log of a Codex or Cursor build now reads like a Claude Code one: the agent's messages, and one line for each command it runs. Once such a build ends, its tokens are recorded and shown wherever a Claude Code build's are. Codex and Cursor don't say what a build cost, so no cost is shown for them rather than $0.
+
+### Switching the builder
+
+- The Settings view's `builder` can now be changed. It offers the builders that are installed and signed in, and saving one sets `build_command` to match in the same commit: Claude Code's own command for `claude`, and blank for `codex` or `cursor`, so `speck run` uses that builder's own. `speck config set builder <name>` does the same from the terminal, and setup uses it.
+- If you'd written your own `build_command`, the view says it will be replaced and asks first, and `speck config set builder` refuses without `--replace`.
+- Saving a builder from the reviewer's own family is refused with a message suggesting a reviewer from another family, such as `claude` for a Codex builder, unless `allow_same_model_review` is true or, for a Claude builder and reviewer, `builder_model` and `reviewer_model` are both set and differ. `speck config set builder` saves it and notes the clash instead, as setup chooses the reviewer next.
+- Tickets already made keep the builder written in them, and the view says so. `speck run` builds every ready ticket with the builder in `speck/config.yml`.
+
+### Reviewing
+
+- `reviewer: claude` is a new built-in reviewer: `speck review` runs Claude Code itself, without a person, so any builder can be reviewed by Claude. It can read files and run read-only commands but not change files, even when your own Claude Code settings would allow it. Later rounds resume the same session, and `reviewer_model` and `reviewer_effort` are passed to it when set. `speck doctor` checks Claude Code is installed for it.
+- The Settings view's `reviewer` offers only reviewers whose agent is installed and signed in, plus the current one, and says in one line why any other is missing. `builder_model` and `reviewer_model` show each model's display name and description, and a Cursor builder's models are listed too.
+
 ## 0.6.0 · 18 October 2026
 
 What's new since 0.5.4. A minor release that gives speck a Settings view in the panel, lets you choose the models that build and review, and makes shipping cope better when `main` fails or has moved on.
