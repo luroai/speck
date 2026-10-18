@@ -50,7 +50,9 @@ speck is ready to be released as 0.6.0.
 - Self-check: README's setup and ship-queue sentences narrowed to what 0263, 0265 and 0269 do; release notes no longer say the machine values live in `speck/config.yml`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.6.0. It gathers everything shipped since 0.5.4: the panel's new Settings view, settings for one computer only, choosing the models that build and review, setup going through the settings that matter, shipping that copes better when the main branch fails or has moved on, quick project-wide checks in every build, and document wording checked by the reviewer instead of by tests. The changelog, the release notes, the README and its figures (265 tickets shipped) are up to date.
+
+To see it, read the new 0.6.0 section at the top of the changelog, or the release notes. Someone upgrading just runs the install command again: the new settings default to how speck worked before. After it ships, check that the v0.6.0 release page appeared on GitHub; if it didn't, the ticket's Notes say how to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +62,7 @@ speck is ready to be released as 0.6.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -139,6 +142,87 @@ speck is ready to be released as 0.6.0.
     ],
     "escalation_question": "",
     "summary": "The version bump, changelog, upgrade instructions and recalculated figures are in place, and the reported tests pass. Two documentation corrections are needed: builds no longer test every criterion, and settings could already be changed through a command before this release."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "787582461a3e31cacc000ee1467c70720c49241d",
+    "thread_id": "01a14e6b-bac2-70c2-bcfd-31fb18891419",
+    "seconds": 22,
+    "usage": {
+      "input_tokens": 410768,
+      "cached_input_tokens": 344832,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2437,
+      "reasoning_output_tokens": 197
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T09:52:17.095Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json remains at 0.6.0. Both AC1 tests passed, including running speck init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md describes the shipped changes under 0.6.0 above 0.5.4. Both AC2 tests passed, including comparison of all older sections with the v0.5.4 tag."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md identify 0.6.0 as a public preview. The latest-release setup prompt remains intact. README's build explanation now explicitly exempts document criteria marked '(checked by review)', resolving F1. AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.6.0.md explains the release, changes, installation and upgrade defaults, and links to the changelog without naming anyone. It now correctly acknowledges the existing config set command, resolving F2. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README figures remain consistent with the independently checked done tickets: 265 shipped, 16 cancelled, 13 minutes median, one review round median and 136 first-round approvals. Both AC5 tests passed. Current test output records 135 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "README.md",
+        "issue": "The build explanation previously omitted the exception for document criteria checked by review.",
+        "suggested_fix": "Completed: the paragraph now explicitly explains that these criteria receive no test and are checked by the reviewer.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "docs/releases/v0.6.0.md",
+        "issue": "The release notes previously claimed that changing settings required editing the config file.",
+        "suggested_fix": "Completed: the notes now acknowledge both file editing and the existing speck config set command.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release preparation meets all five criteria. Both documentation errors are corrected, the figures match the shipped tickets, and the reported tests pass. No blocking concerns remain."
   }
 }
 ```
