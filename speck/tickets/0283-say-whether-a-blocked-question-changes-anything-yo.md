@@ -1,7 +1,7 @@
 ---
 id: "0283"
 title: "Say whether a blocked question changes anything you'd notice"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0290", "0293"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:25:31.161Z"
+approved: "2026-10-18T12:28:47.890Z"
 
 ---
 # 0283 · Say whether a blocked question changes anything you'd notice
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build blocks, its question gives the options and a recommendation, but nothing says whether the choice changes anything the user would notice, or whether the recommendation is a clear winner or a judgement call. So every blocked ticket waits for the user, even though none has ever needed a product decision: on 2026-10-17, 0274 blocked on a test 0270 left behind, and the user just took the recommendation.
@@ -49,9 +50,14 @@ When a build stops to ask you something, it now also says which option it recomm
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 94,956
+- Elapsed since build started: 3 min
+- Changed lines: 63 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - The text `speck status` still prints a blocked question's three fact lines along with the question. That's harmless, but it could show them as words like the panel does.
