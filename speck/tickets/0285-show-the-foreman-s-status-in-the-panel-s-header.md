@@ -1,7 +1,7 @@
 ---
 id: "0285"
 title: "Show the Foreman's status in the panel's header"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T12:34:13.900Z"
 ---
 # 0285 · Show the Foreman's status in the panel's header
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When nothing is building or shipping, the panel doesn't say why: the reason is in `speck/.cache/runs/run.log`. On 2026-10-17 it took a conversation with an agent to find out each time: `main` had diverged from GitHub, shipping was on hold, speck run was waiting to switch to new code, and the panel page was too old to show a new setting.
@@ -52,3 +52,79 @@ The panel's header shows the Foreman, speck run's single status for the whole pi
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "324e5738f17172cce1e681e140589f807b1a9c45",
+    "thread_id": "01a14f0f-e026-79c0-aab0-9aaaa34afd57",
+    "seconds": 46,
+    "usage": {
+      "input_tokens": 314733,
+      "cached_input_tokens": 242688,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1274,
+      "reasoning_output_tokens": 266
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T12:50:48.475Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "foremanView() and the AC1 tests cover the listed statuses, but shipQueue.state() reports only its own current ship. A ship started through the panel or CLI can leave the header saying Idle."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "renderForeman() and the AC2 tests cover ready reasons, refusals, holds and blocked questions. However, shipping started outside the queue is absent from the detail."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html: renderSettings() places foremanGroup() first. The two AC3 tests exercise switching on/off and displaying a refusal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs stamps the served page and state; pageStale() and renderForeman() offer reload. AC4 tests cover matching stamps, changed page code and pressing reload."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/run.mjs records ready-ticket reasons through saveForeman(), using shipQueue.state() for shipping reasons. The AC5 integration test exercises actual run records; foremanLines() shares their presentation with plain speck status."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/ship-queue.mjs",
+        "issue": "state() returns running: current, which tracks only ships this queue launched. check() recognises ships started elsewhere through otherShipRunning(), but never records them. Consequently, while speck run is on, pressing Ship in the panel or running speck ship can produce an Idle header and an empty Shipping detail throughout an active ship. A direct foremanView() check with a ticket whose ship.running is true reproduces this.",
+        "suggested_fix": "Have speck run record active shipping from all launch sources, using the existing ship records, and expose that through the shared Foreman view. Add coverage for a ship started outside this queue.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The status display, Settings switch and reload offer are implemented with passing tests. One gap needs fixing: shipping started through the panel or command line can be invisible to the Foreman, making the pipeline appear idle while it is shipping."
+  }
+}
+```
+
+</details>

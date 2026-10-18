@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fakePage, deferred, page, T, click, panelRepo, startPanel, stop, request, cliCopy, freePort } from './support/panel.mjs';
 import { runRepo, startRun, stopRun, until, killAll, env as runEnv, CLI } from './support/run.mjs';
 import { shipRepo } from './support/ship.mjs';
@@ -103,6 +103,28 @@ test('0285 AC2: the ship queue records its hold and each refusal waiting for a n
   q.check([A('0002')]);
   launches[1].done(14);
   assert.match(q.state([A('0003')]).hold.message, /^on hold until main has a new commit: 0002's ship found main's own tests failing\./);
+});
+
+test('0285 AC1, AC2: a ship started outside speck run\'s queue, from the panel\'s Ship button or speck ship, shows as shipping', async () => {
+  const r = shipRepo();
+  const q = shipQueue(r.dir, { base_branch: 'main', branch_prefix: 'speck/' }, { say: () => {}, launch: () => {} });
+  // A live `speck ship 0002` process, and its ship record naming it, as a ship started outside speck run leaves them.
+  const p = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)', 'speck', 'ship', '0002'], { detached: true, stdio: 'ignore' });
+  p.unref();
+  try {
+    const runs = path.join(r.dir, 'speck', '.cache', 'runs');
+    fs.mkdirSync(runs, { recursive: true });
+    fs.writeFileSync(path.join(runs, '0002.ship.json'), JSON.stringify({ pid: p.pid, started: new Date().toISOString(), auto: false }));
+    const s = q.state([]);
+    assert.equal(s.running, '0002');
+    const v = view({ ship: s });
+    assert.equal(v.word, 'Shipping 0002');
+    const page = fakePage([state(v)]);
+    await page.settle();
+    click(header(page));
+    await page.settle();
+    assert.match(detail(page).textContent, /0002 is shipping\./);
+  } finally { killAll([p.pid]); }
 });
 
 test('0285 AC3: Settings has a Foreman group, first, with the speck run switch, which turns speck run on and off as the header\'s did', async () => {

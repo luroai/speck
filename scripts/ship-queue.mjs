@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { sh, ticketBranches } from './core.mjs';
-import { shipState, otherShipRunning } from './ship.mjs';
+import { shipState, otherShipRunning, shipsRunning } from './ship.mjs';
 import { sharedCacheDir } from './turns.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
@@ -142,12 +142,13 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
     }
   };
 
-  // 0285: shipping's state: the ship running, the hold and each ticket refused that waits for a new commit, with its
-  // message. A ticket the hold covers is left out of `refused`, and one waiting for its hand-back says so.
+  // 0285: shipping's state: the ship running, whoever started it (this queue, the panel's Ship button or speck ship),
+  // the hold and each ticket refused that waits for a new commit, with its message. A ticket the hold covers is left
+  // out of `refused`, and one waiting for its hand-back says so.
   const state = tickets => {
-    const refused = [];
+    const shipping = current || shipsRunning(runs)[0] || null, refused = [];
     for (const t of shipOrder(tickets)) {
-      if (t.id === current || (hold !== null && t.type !== 'fix')) continue;
+      if (t.id === shipping || (hold !== null && t.type !== 'fix')) continue;
       if (waiting(t.id)) { refused.push({ id: t.id, message: 'handed back to its build, which is working on it' }); continue; }
       const prev = last.get(t.id);
       if (!prev) continue;
@@ -155,7 +156,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
       if (prev.base === refs.base && prev.head === refs.head)
         refused.push({ id: t.id, message: `waiting for a new commit on ${base} or its branch. Its last try: ${said.get(t.id) || 'it didn\'t ship'}` });
     }
-    return { running: current, hold: hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` }, refused };
+    return { running: shipping, hold: hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` }, refused };
   };
 
   return { check, state, running: () => current, note: () => (current ? ` The ship of ${current} is still running, and carries on to its end.` : '') };
