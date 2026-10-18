@@ -87,13 +87,17 @@ function runs(cmd, args) {
 }
 
 // The builders doctor knows how to check: the name shown, the command on the PATH, and how to install it.
-// Cursor's installer also provides `agent`, but `cursor-agent` is the name that can't clash with other tools.
+// Cursor's installer also provides `agent`, but `cursor-agent` is the name that can't clash with other tools. 0290: either
+// counts as installed (CURSOR_CLIS).
 const BUILDERS = {
   claude: ['Claude Code', 'claude', 'Install Claude Code: https://claude.com/claude-code'],
   cursor: ['Cursor CLI', 'cursor-agent', 'Install the Cursor CLI: https://cursor.com/docs/cli/installation'],
   codex: ['Codex CLI', 'codex', 'Install it with `npm install -g @openai/codex`: https://github.com/openai/codex'],
   gemini: ['Gemini CLI', 'gemini', 'Install it with `npm install -g @google/gemini-cli`: https://github.com/google-gemini/gemini-cli'],
 };
+
+// 0290: the names Cursor's CLI is installed as: `agent`, and `cursor-agent`, which it was called before.
+export const CURSOR_CLIS = ['agent', 'cursor-agent'];
 
 // True if `cmd` is an executable file: a path as given, or a name found on the PATH. Nothing is run.
 export function onPath(cmd) {
@@ -138,7 +142,7 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   // hasOwn, so a name like `constructor` or `toString` is an unknown builder, not a built-in object property.
   if (Object.hasOwn(BUILDERS, builder)) {
     const [label, cmd, fix] = BUILDERS[builder];
-    checks.push(check(`${label} (builds tickets)`, onPath(cmd), fix));
+    checks.push(check(`${label} (builds tickets)`, builder === 'cursor' ? CURSOR_CLIS.some(onPath) : onPath(cmd), fix));
   } else checks.push({ name: `speck can't check builder "${builder}": it only knows ${Object.keys(BUILDERS).join(', ')}. Make sure it reads skills from .agents/skills/ or .claude/skills/.`, ok: true, info: true });
   const mismatch = builderMismatch(cfg);
   if (mismatch) checks.push(check(`build_command matches the builder: ${mismatch.problem}`, false, mismatch.fix));

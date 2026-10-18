@@ -8,6 +8,7 @@ import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, handBackQueue } from './hand-back.mjs';
 import { codexBuilds, codexStartWords, fillSession } from './codex-build.mjs';
+import { cursorBuilds, cursorCli, cursorStartWords, createChat } from './cursor-build.mjs';
 import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
@@ -103,10 +104,13 @@ function runOn(worker) {
   const cfg = loadConfig(repo);
   const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
   const codex = codexBuilds(cfg); // 0289: builder codex with build_command blank builds with speck's own Codex command
-  if (!command && !codex)
-    throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${cfg.builder === 'codex' ? '' : DEFAULT_BUILD_COMMAND}'${cfg.builder === 'codex' ? '\nA blank build_command starts each build with Codex.' : ''}`);
+  const cursor = cursorBuilds(cfg) ? cursorCli() : null; // 0290: and builder cursor with Cursor's CLI, found once
+  const own = { codex: 'Codex', cursor: 'Cursor' }[cfg.builder];
+  if (!command && !codex && !cursor)
+    throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${own ? '' : DEFAULT_BUILD_COMMAND}'${own ? `\nA blank build_command starts each build with ${own}.` : ''}`);
   let words;
   if (codex) words = codexStartWords(cfg);
+  else if (cursor) words = cursorStartWords(cfg, cursor);
   else try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
   const mismatch = builderMismatch(cfg);
   if (mismatch) throw new SpeckError(`speck run won't start: ${mismatch.problem} ${mismatch.fix}`);
@@ -222,12 +226,26 @@ function runOn(worker) {
   };
 
   // A Codex build (0289) chooses its own session, so its record has none until it's read from its log (fill). It's
-  // marked `agent: codex`, and its processes are found by the fresh UUID in their environment (env_session).
+  // marked `agent: codex`, and its processes are found by the fresh UUID in their environment (env_session). A Cursor
+  // build (0290) runs in a chat made for it first, whose id is its session; when that can't be made, the ticket stays
+  // ready, said once until the reason changes, and the next check tries again.
+  const chatFailed = new Map();
   const launch = id => {
-    const tag = crypto.randomUUID(), session = codex ? null : tag;
+    let tag = crypto.randomUUID();
+    if (cursor) {
+      const chat = createChat(cursor, repo);
+      if (!chat.session) {
+        if (chatFailed.get(id) !== chat.why) console.log(`${id} wasn't started, and stays ready: ${chat.why}. speck run tries again on its next check.`);
+        chatFailed.set(id, chat.why);
+        return;
+      }
+      chatFailed.delete(id);
+      tag = chat.session;
+    }
+    const session = codex ? null : tag;
     const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, tag));
     const started = new Date().toISOString();
-    const own = codex ? { agent: 'codex', env_session: tag } : {};
+    const own = codex ? { agent: 'codex', env_session: tag } : cursor ? { agent: 'cursor' } : {};
     const record = pid => `${JSON.stringify({ id, session, ...own, cwd: repo, started, pid, command: argv }, null, 2)}\n`;
     startBuild(id, argv, repo, session, 'w', record, tag);
   };

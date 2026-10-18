@@ -47,6 +47,8 @@ With `builder: cursor`, speck run starts each build with Cursor's CLI, passing `
   - `agent models` prints "Available models", a blank line, then one `<id> - <display name>` per line, with "(current, default)" after the default.
 - Checked 2026-10-18: a resumed chat remembers earlier turns (two `-p --resume <id>` runs on one chat from `agent create-chat`: the second recalled a word given in the first).
 - Failing before this build: none
+- With the user's checked facts, a blank `builder_model` starts a Cursor build with `--model auto`, not without `--model` as AC1 reads: a free plan can only use auto, and a chat keeps the model it first ran on. A resumed build passes no `--model`, as AC2 has it.
+- Self-check: `agent create-chat` is given 20 seconds rather than a minute, since speck run waits for it on each check; a failed chat is said once per reason and tried again on the next check, with no run record written.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
