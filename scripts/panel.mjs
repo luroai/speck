@@ -12,6 +12,7 @@ import { panelShip, panelRunOn, panelRunOff } from './panel-run.mjs';
 export { panelRunOn } from './panel-run.mjs';
 import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
+import { pictureFile } from './pictures.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
 import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels, builderModels } from './settings.mjs';
@@ -456,6 +457,16 @@ export async function panelServer() {
     if (pack) {
       try { const out = panelPack(repo, pack[1]); return send(res, out.status, 'application/json', JSON.stringify(out.body)); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't make the review pack: ${e.message}` })); }
+    }
+    // 0294: a picture the builder took of a visual change, shown in its review pack.
+    const picture = where.match(/^\/api\/tickets\/(\d{1,4})\/pictures\/(\d{1,3})$/);
+    if (picture) {
+      let found;
+      try { found = pictureFile(repo, picture[1], picture[2]); }
+      catch (e) { return send(res, 500, 'text/plain', `Couldn't read the picture: ${e.message}\n`); }
+      if (!found) return send(res, 404, 'text/plain', 'Not found.\n');
+      res.writeHead(200, { 'Content-Type': found.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
+      return res.end(found.body);
     }
     return send(res, 404, 'text/plain', 'Not found.\n');
   });
