@@ -1,7 +1,7 @@
 ---
 id: "0297"
 title: "Prepare release 0.7.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0288", "0289", "0290", "0291", "0292", "0293"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:25:35.297Z"
+approved: "2026-10-18T12:31:47.446Z"
 
 ---
 # 0297 · Prepare release 0.7.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once 0288–0293 ship, speck can build with Codex or Cursor as well as Claude Code, review with Claude Code from the command line, find the agents and models on the machine, and switch the builder from the panel and in setup. Anyone following the setup prompt, or updating speck on another machine, gets 0.6.0 without it.
@@ -58,9 +59,15 @@ To see it, read the new 0.7.0 section at the top of the changelog, or the releas
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Both documents say Settings refuses a builder from the reviewer's family without mentioning that Claude builder/reviewer pairs are allowed when builder_model and reviewer_model are both set and differ.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 573,251
+- Elapsed since build started: 6 min
+- Changed lines: 75 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
