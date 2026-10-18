@@ -37,6 +37,7 @@ The panel's app icon is speck drawn on the LCD screen, as the design draws its m
 
 ## Notes
 - The icons are served from `templates/icons/` by `scripts/panel.mjs` (0149). The design's renderer is `docs/design/lcd/lcd.js`; the dots can be read from it once and written into the SVG, so the icon doesn't run any script.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
