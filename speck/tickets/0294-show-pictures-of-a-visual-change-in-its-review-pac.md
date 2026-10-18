@@ -39,6 +39,9 @@ The review pack of a ticket that changes how something looks shows pictures of t
 ## Notes
 - From `speck/ideas/2026-10-16-show-images-in-review-packs.md`, with its open questions decided: the builder takes the pictures, of the result only, in light and dark, kept beside the pack.
 - Failing before this build: none
+- AC1 is checked by review: the new step 5 in section 3 of `skills/speck-build/SKILL.md`. A test checks only the facts it names (the command, the folder).
+- Self-check: a caption with a line break, hand-edited into `pictures.json`, is now put on one line when read, so the pack's list keeps one line per picture.
+- Pictures: taken in a real browser (Chromium through Playwright) of a throwaway repo's review pack with two sample pictures, light and dark, and kept with `speck picture 0294`.
 - Tests already drive a real browser with `browserPage()` in `test/support/panel.mjs`. The pack is built in `scripts/pack.mjs`.
 
 ## In plain words
