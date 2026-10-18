@@ -17,11 +17,11 @@ export const SHIP_MODES = Object.freeze(['local', 'pr']);
 export const prMode = cfg => cfg?.ship_mode === 'pr';
 
 // The last line of a command's output, as one line.
-const lastLine = r => String(r.stderr || r.stdout || r.error?.message || '').trim().split('\n').pop().trim();
+export const lastLine = r => String(r.stderr || r.stdout || r.error?.message || '').trim().split('\n').pop().trim();
 
 // The folder the ticket's branch is checked out in, which may be this one, or else a temporary worktree of it, which
 // `temp` says is to be removed afterwards.
-function branchFolder(repo, cfg, pad, branch) {
+export function branchFolder(repo, cfg, pad, branch) {
   if (git(['branch', '--show-current'], repo).trim() === branch) return { at: repo, temp: null };
   const there = ticketsElsewhere(repo, cfg, pad).at(-1);
   if (there) return { at: there.at, temp: null };
@@ -32,14 +32,14 @@ function branchFolder(repo, cfg, pad, branch) {
   return { at, temp };
 }
 
-function removeFolder(repo, temp) {
+export function removeFolder(repo, temp) {
   if (!temp) return;
   sh('git', ['worktree', 'remove', '--force', path.join(temp, 'wt')], { cwd: repo });
   fs.rmSync(temp, { recursive: true, force: true });
 }
 
 // Runs gh, giving back { status, stdout, stderr } and `missing` when it isn't installed.
-function runGh(gh, args, cwd) {
+export function runGh(gh, args, cwd) {
   const r = spawnSync(gh, args, { cwd, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
   return { status: r.status, stdout: r.stdout || '', stderr: r.stderr || '', missing: r.error?.code === 'ENOENT', error: r.error };
 }
