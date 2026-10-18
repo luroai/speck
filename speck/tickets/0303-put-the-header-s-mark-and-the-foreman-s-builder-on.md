@@ -37,6 +37,7 @@ The header's mark and the builder on the Foreman's button are drawn on the LCD s
 
 ## Notes
 - See 0302's Notes for where the design and its renderer are.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
