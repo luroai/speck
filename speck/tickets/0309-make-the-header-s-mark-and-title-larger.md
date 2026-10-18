@@ -1,7 +1,7 @@
 ---
 id: "0309"
 title: "Make the header's mark and title larger"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:23:44.151Z"
+blocked_at: "2026-10-18T22:30:28.626Z"
 
 ---
 # 0309 · Make the header's mark and title larger
 
-**Status:** 🔨 building
+**Status:** ⛔ blocked
 
 ## Problem
 The header's LCD mark (19 px) and "speck" title (18 px Doto) are small next to the header's 34 px buttons, so the brand reads weakly, especially on a phone.
@@ -38,12 +39,16 @@ The header's mark and "speck" title are larger, closer to the landing page's, an
 ## Notes
 - The sizes are `.logo .mark` and `.logo .name` in `templates/panel.html` (0303, 0304). The landing page sets its mark at 26 px and its name at 24 px.
 - Failing before this build: none
+- Built so far: 32 px mark and 26 px title at every width, laid out in a row centred on the mark. Wide screens fit well. On a 375 px phone, the two-row header has about 123 px left for the project's name, so even "speck · base main" is cut short with "…", and 0140 AC3 (the project's name in full at 375 px) fails. A 14 px title on phones doesn't help, because the 32 px mark alone takes about 19 px more than before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+At 26 px, "speck" and "control panel" leave too little room on a phone (375 px) for the project's name, so even "speck · base main" is cut short with "…". Which do you want on a phone? (A) Keep it like that: a long project name is cut short. (B) Hide "control panel" in the phone header too, not only once you've scrolled down, so the larger mark, the title and the full project name all fit. (C) Keep today's smaller mark and title on phones, larger only on wider screens. I recommend B: the brand gets larger where it's weakest, the project's name stays readable, and "control panel" says the least.
+Recommended: B, hide "control panel" on phones
+Changes what you'd notice: yes
+Clear winner: no
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
