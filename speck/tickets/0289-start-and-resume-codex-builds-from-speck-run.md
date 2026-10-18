@@ -1,7 +1,7 @@
 ---
 id: "0289"
 title: "Start and resume Codex builds from speck run"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ approved: "2026-10-18T10:53:56.755Z"
 ---
 # 0289 · Start and resume Codex builds from speck run
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 speck run can only start and resume builds with Claude Code: it gives each build a session id up front (`--session-id {session}`) and resumes it by that id. Codex chooses its own session id, so with Codex as the builder, speck run can't resume a build after a hand-back or a stop, and `builder_model` isn't passed to it.
@@ -69,6 +69,7 @@ Round 2 (codex): approve.
   - The same-model check and the "only passed to Claude Code builds" wording don't yet count `builder_model` on Codex builds: `speck/ideas/2026-10-18-same-model-check-counts-builder-model-on-codex-builds.md`.
   - Known limit: only `build_command: ""` counts as blank. A bare `build_command:` line reads as an empty mapping, and a config with no `build_command` at all, are refused by `speck run` as before. With `builder: codex`, the refusal now suggests `build_command: ''`.
   - Known limit: the panel shows the Codex resume command for a build only when `resume_command` is unset or is Claude Code's. A `resume_command` of your own is used for every build.
+  - Merge round F2 (minor): the setup skill still offers a blank `build_command` to Codex users who decline automatic builds, which for Codex turns them on: `speck/ideas/2026-10-18-setup-s-blank-build-command-advice-for-codex.md`.
   - The inbox idea `speck/ideas/2026-10-17-pass-builder-model-to-codex-builds.md` is covered by this ticket, as its Notes say: it can be closed when the inbox is triaged.
 
 ## Review rounds
@@ -214,6 +215,88 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "Codex builds now start with the selected model, retain their session and resume after interruptions or hand-backs. The panel fix correctly reopens existing builds even after builder settings change. All five criteria pass, with no outstanding blocking findings."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "294f417c1f93fec934ae15a3867aeb316295de1b",
+    "merge": true,
+    "thread_id": "01a14ea3-032c-7681-9089-fecd6ac0cd5c",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 558675,
+      "cached_input_tokens": 454272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2510,
+      "reasoning_output_tokens": 221
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T11:05:13.385Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run.mjs selects codexStartWords only for Codex with an explicitly blank build_command. Passing AC1 tests verify the command, optional model and custom-command selection."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "codex-build.mjs threadId and fillSession retain the first thread.started session in the run record. Passing AC2 tests cover parsing, persistence and matching marks."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "resumeFor uses codexResumeArgv for recorded Codex builds. buildSession and panel resumeOf retain per-build commands across configuration changes. All automatic-resume, hand-back and panel AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "resumeFor returns an explicit missing-session reason. The passing AC4 test verifies one-line reporting and no launch for stopped builds and hand-backs without a session."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Claude argument handling remains unchanged. startBuild's renamed parameters preserve the environment session and displayed session. AC5 and the previously failing run-0245 tests passed without changing existing tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "Resolved: the panel uses the build's recorded agent to choose its resume command, including after builder settings change.",
+        "suggested_fix": "Implemented and covered by the passing per-build panel regression test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "minor",
+        "file": "skills/speck-setup/SKILL.md",
+        "issue": "The custom-command paragraph now explicitly includes Codex, but still offers blank build_command as a way to prevent automatic builds. For Codex, that starts automatic builds with approvals and sandbox disabled, contradicting the preceding paragraph.",
+        "suggested_fix": "Limit the blank-command refusal advice to Cursor and Gemini; give Codex users who decline automatic builds separate advice to leave speck run off.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change meets all five criteria. Both compatibility failures are fixed without weakening tests, and the panel fix remains intact. One minor setup-instruction inconsistency remains for Codex users who decline automatic builds."
   }
 }
 ```
