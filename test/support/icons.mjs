@@ -9,8 +9,8 @@ import { ROOT } from './panel.mjs';
 export const ICONS = path.join(ROOT, 'templates', 'icons');
 // Each PNG the panel serves, with its size in pixels.
 export const PNGS = { 'icon-192.png': 192, 'icon-512.png': 512, 'apple-touch-icon.png': 180 };
-// 0305: the light look's screen, ink and red, as the design's renderer gives them.
-export const LCD = { bg: '#c3c9b1', ink: '#20241d', red: '#d63f28' };
+// 0305: the light look's screen, ink and red, as the panel's tokens give them (the screen lighter since 0308).
+export const LCD = { bg: '#e6e9db', ink: '#20241d', red: '#d63f28' };
 // How much of the icon the mark's tallest side may take: the rest is the margin, so rounded corners miss it.
 const FILL = 0.75;
 
@@ -75,13 +75,17 @@ const chunk = (type, data) => {
   len.writeUInt32BE(data.length); sum.writeUInt32BE(crc(t));
   return Buffer.concat([len, t, sum]);
 };
-// An 8-bit RGB PNG, with no alpha channel, so it has no transparency. It's compressed at zlib's default level: at
-// level 9 the eye's PNGs (0184) held bytes such as "O6" that the "no model name is hard-coded" scan of templates/ flags.
+// An 8-bit RGB PNG, with no alpha channel, so it has no transparency. Compressed bytes can happen to hold text such as
+// "O6" that the "no model name is hard-coded" scan of templates/ flags (the eye's PNGs at level 9 in 0184, the 512 px
+// icon at the default level in 0308), so it takes the first zlib level, from the default, whose bytes hold none.
+const NAMED = /\bo[1-9]|gpt-|claude-|opus|sonnet|haiku|gemini-|codex-mini/i;
 export function png(size, px = draw(size)) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 2;
   const rows = Buffer.concat(Array.from({ length: size }, (_, y) => Buffer.concat([Buffer.from([0]), px.subarray(y * size * 3, (y + 1) * size * 3)])));
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
+  const make = level => Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(rows, { level })), chunk('IEND', Buffer.alloc(0))]);
+  for (const level of [6, 7, 8, 9, 5, 4, 3, 2, 1]) { const b = make(level); if (!NAMED.test(b.toString('utf8'))) return b; }
+  throw new Error(`every zlib level leaves text the model-name scan flags in the ${size} px icon`);
 }
 
 export function writeIcons() {
