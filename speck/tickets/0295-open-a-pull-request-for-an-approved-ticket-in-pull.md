@@ -1,7 +1,7 @@
 ---
 id: "0295"
 title: "Open a pull request for an approved ticket in pull request mode"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0294", "0287"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T14:08:19.808Z"
+approved: "2026-10-18T14:21:59.952Z"
 
 ---
 # 0295 · Open a pull request for an approved ticket in pull request mode
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck ships by merging into the base branch and pushing it, with no pull request. Teams, and projects whose base branch only takes changes through pull requests, can't use it.
@@ -54,9 +55,15 @@ Worth knowing: in "pr" mode speck doesn't merge anything yet, so the Ship button
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Opening a pull request checks only the ticket's status field.; F2 When the ticket branch is not checked out, openAndKeep reports success but never records pull_request on the ticket.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 637,441
+- Elapsed since build started: 14 min
+- Changed lines: 271 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The panel hides why a link wasn't written on the ticket when it has the link (reviewer's minor F3): `speck/ideas/2026-10-18-show-why-a-pull-request-link-isn-t-on-its-ticket.md`.
