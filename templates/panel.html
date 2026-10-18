@@ -60,14 +60,15 @@
 
   @font-face { font-family: "Doto"; src: url("/fonts/Doto.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: clamp(10px, calc(10px + (100vw - 700px) * .03), 16px); padding: calc(14px + env(safe-area-inset-top)) clamp(16px, calc(16px + (100vw - 700px) * .04), 24px) 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .logo { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
+  /* 0309: the mark, speck and "control panel" in a row, each centred on the mark's line */
+  .logo { display: flex; align-items: center; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
   /* 0170: speck's mark before the wordmark, in the text colour with the red dot. 0303: drawn on the LCD screen by the
-     design's renderer (lcd.js), with no screen or unlit dots behind it */
-  .logo .mark { display: inline-block; width: 19px; height: 19px; vertical-align: -.16em; margin-right: 6px; image-rendering: pixelated;
+     design's renderer (lcd.js), with no screen or unlit dots behind it. 0309: 32 px, two screen pixels a dot */
+  .logo .mark { display: block; width: 32px; height: 32px; margin-right: 8px; image-rendering: pixelated;
     --lcd-bg: transparent; --lcd-off: transparent; --lcd-ink: var(--text); --lcd-red: var(--dot); --lcd-shadow: transparent; }
-  /* 0304: speck's name in the design's dot-matrix lettering, from the panel's own copy of Doto (templates/fonts/) */
-  .logo .name { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 18px; line-height: 1; }
-  .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 6px; }
+  /* 0304: speck's name in the design's dot-matrix lettering, from the panel's own copy of Doto (templates/fonts/). 0309: at 26 px */
+  .logo .name { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 26px; line-height: 1; }
+  .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 12px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .logo, .run-state, .theme, .settings-open { flex-shrink: 0; }
   .theme, .settings-open { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
@@ -508,14 +509,12 @@
     header > * { white-space: nowrap; }
     /* 0160: scrolled down, one row of speck, Auto-build and light/dark, 44 px buttons and 6 px above and below */
     header.slim { grid-template-columns: auto minmax(0, 1fr) auto auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
-    header.slim .repo, header.slim .logo span { display: none; }
-    .logo span { letter-spacing: .02em; } /* 0161: room for the project's name beside it, at 12 px */
+    header.slim .repo { display: none; }
+    /* 0309: no "control panel" on a phone, so the larger mark and speck leave room for the project's name in full */
+    .logo span { display: none; }
     /* 0170: and room for the mark before speck */
     header { column-gap: 6px; }
-    .logo .mark { margin-right: 4px; }
-    .logo span { letter-spacing: 0; margin-left: 0; }
-    /* 0304: Doto is wider than the serif was, so on a phone speck is a little smaller, keeping the project's name in full, and raised to stay centred on the mark */
-    .logo .name { font-size: 14px; vertical-align: .1em; }
+    .logo .mark { margin-right: 6px; }
     .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
     .run-state { justify-self: start; height: 44px; min-width: 44px; }
     /* 0163: in two rows, Auto-build has the row under speck and the project to itself, but light/dark's place, so a
