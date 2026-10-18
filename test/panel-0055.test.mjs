@@ -58,7 +58,9 @@ test('0055 AC3: the motion is drawn only when the browser doesn\'t ask for reduc
   for (let i = end; i < css.length; i++) { if (css[i] === '{') depth++; else if (css[i] === '}' && --depth === 0) { end = i; break; } }
   const inside = css.slice(at, end + 1), outside = css.slice(0, at) + css.slice(end + 1);
   // Since 0168 the badge moves in the page script, which draws a still pose when the browser asks for reduced motion.
-  assert.match(page(), /const fixed = matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches \|\| pose === 'still';/, 'a still badge with reduced motion');
+  // 0302 and 0303: the LCD renderer's badges and the Foreman's builder, each made still with reduced motion.
+  assert.match(page(), /LCD\.badge\(b\.canvas, b\.pose, \{ still \}\)/, 'a still badge with reduced motion');
+  assert.match(page(), /b\.lcd\.cast\.still = b\.lcd\.scr\.still = reducedMotion\(\);/, 'and a still builder in the Foreman\'s button');
   assert.doesNotMatch(outside, /\.moving/, 'no rule outside it changes a moving step');
   assert.doesNotMatch(outside, /animation:/, 'and nothing else animates');
 });
@@ -92,8 +94,9 @@ function repoWithBoard() {
   fs.writeFileSync(path.join(runs, '0003.json'), JSON.stringify({ id: '0003', session: 's', started: ago(6), exited: ago(1), exit_code: 1 }));
   return r;
 }
-// Each refresh puts a new square in the Auto-build button (0150), so a square that isn't the one marked is a refresh since.
-const refreshed = async (b, what) => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
+// Each refresh puts a new label in the Foreman's button (0150; 0303: its builder stays), so a label that isn't the one
+// marked is a refresh since.
+const refreshed = async (b, what) => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
 const row = id => `[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}')`;
 // The page point at a character offset in the text of the element an expression finds.
 const charIn = (expr, offset) => `(() => { const n = ${expr}.firstChild, r = document.createRange(); r.setStart(n, ${offset}); r.setEnd(n, ${offset} + 1);

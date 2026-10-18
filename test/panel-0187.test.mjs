@@ -165,9 +165,9 @@ test('0187 AC2: the page opens one stream, asks for the board only when told, an
   for (const f of p.timers.splice(0)) f();
   await p.settle();
   assert.equal(states(), 1, 'a keep-alive asks for nothing');
-  const drawn = p.byId('run').children[0];
+  const drawn = p.byId('run').children.at(-1); // its label: the builder before it stays between redraws (0303)
   sources[0].emit('ping', '1');
-  assert.notEqual(p.byId('run').children[0], drawn, 'but redraws the page, so what it works out from the clock moves on');
+  assert.notEqual(p.byId('run').children.at(-1), drawn, 'but redraws the page, so what it works out from the clock moves on');
   sources[0].emit('message', '2');
   await p.settle();
   assert.equal(states(), 2);

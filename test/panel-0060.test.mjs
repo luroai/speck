@@ -153,7 +153,7 @@ test('0060 AC1-AC5: in a real browser, the pane holds the page still and closes 
     assert.ok(!(await isHidden()), 'a selection ending outside leaves it open');
 
     // AC5: the refresh neither closes it nor moves the page.
-    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
+    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
     await refreshed('a refresh'); await refreshed('a second refresh');
     assert.ok(!(await isHidden()), 'the refresh keeps it open');
     await still(300, 'the refresh keeps the page still');
