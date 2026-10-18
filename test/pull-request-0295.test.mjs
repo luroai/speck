@@ -128,6 +128,57 @@ test('0295 AC2: the panel shows the ticket\'s pull request in its review pack, o
   assert.equal(link.target, '_blank');
 });
 
+test('0295 AC2: a branch changed since the reviewer approved it, or without an approving review, gets no pull request', () => {
+  const changed = prRepo();
+  fs.writeFileSync(path.join(changed.wt, 'shared.txt'), 'unreviewed\n');
+  assert.equal(gIn(changed.wt, 'commit', '-qam', 'after approval').status, 0);
+  const unreviewed = prRepo();
+  const file = path.join(unreviewed.wt, TICKET);
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/\n## Review rounds[\s\S]*$/, '\n'));
+  assert.equal(gIn(unreviewed.wt, 'commit', '-qam', 'no rounds').status, 0);
+  for (const [r, said] of [[changed, /These files changed after the reviewer approved: shared\.txt/], [unreviewed, /The review loop says "review", not "ship"/]]) {
+    assert.throws(() => openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh }), e => said.test(e.message));
+    assert.equal(r.remoteHas(BRANCH), '', 'nothing pushed');
+    assert.deepEqual(r.gh.calls(), [], 'gh never asked');
+    assert.match(statusData(r.dir).tickets.find(t => t.id === '0001').pull_request.error, said);
+  }
+});
+
+test('0295 AC2: the link is written on the ticket even when its branch isn\'t checked out anywhere', () => {
+  const r = prRepo();
+  assert.equal(r.g('worktree', 'remove', r.wt), '');
+  const pr = openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh });
+  assert.equal(parseTicket(r.g('show', `${BRANCH}:${TICKET}`)).fm.pull_request, pr.url);
+  assert.equal(r.g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).length, 1, 'the temporary worktree is gone');
+  assert.equal(r.remoteHas(BRANCH), r.sha(BRANCH));
+  assert.equal(r.g('branch', '--show-current'), 'main');
+});
+
+test('0295 AC2: a link that couldn\'t be written on the ticket is shown with why, and written when tried again', () => {
+  const r = prRepo();
+  r.hook('exit 1', 'pre-commit');
+  assert.throws(() => openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh }), e => e.opened === true && /^Opened 0001's pull request, https:\/\/github\.com\/o\/r\/pull\/1, but couldn't write its link on the ticket/.test(e.message));
+  const shown = statusData(r.dir).tickets.find(t => t.id === '0001').pull_request;
+  assert.equal(shown.url, 'https://github.com/o/r/pull/1');
+  assert.match(shown.error, /couldn't write its link on the ticket/);
+  assert.equal(r.ticketIn(r.wt).fm.pull_request, undefined);
+  assert.equal(gIn(r.wt, 'status', '--porcelain').stdout, '', 'the ticket is put back');
+  fs.rmSync(path.join(r.dir, '.git', 'hooks', 'pre-commit'));
+  const again = openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh });
+  assert.equal(again.found, true);
+  assert.equal(r.ticketIn(r.wt).fm.pull_request, again.url);
+  assert.deepEqual(statusData(r.dir).tickets.find(t => t.id === '0001').pull_request, { url: again.url, error: null });
+  assert.equal(r.gh.prs().length, 1);
+});
+
+test('0295 AC4: speck run tries again a ticket whose link isn\'t on it yet', () => {
+  const r = prRepo();
+  const launched = [];
+  const q = prQueue(r.dir, r.cfg, { say: () => {}, launch: (repo, id, log, done) => { launched.push(id); done(0); } });
+  q.check([{ id: '0001', status: 'approved', build_running: false, pull_request: { url: 'https://github.com/o/r/pull/1', error: "Opened it, but couldn't write its link on the ticket." } }]);
+  assert.deepEqual(launched, ['0001']);
+});
+
 // ---------- AC3: opening it again ----------
 
 test('0295 AC3: opening it again finds the existing pull request instead of making a second one', () => {

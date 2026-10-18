@@ -25,7 +25,7 @@ function ticketBranch(repo, cfg, id) {
 }
 
 // Every reason not to ship, checked with the ticket branch checked out and before anything changes.
-function shipChecks(repo, cfg, pad, branch) {
+export function shipChecks(repo, cfg, pad, branch) { // 0295: and before opening a pull request
   const t = findTicket(repo, pad);
   if (t.fm.status !== 'approved')
     throw new SpeckError(`Ticket ${pad} is "${t.fm.status}" on ${branch}, not "approved". Only a ticket the reviewer approved can be shipped.`);

@@ -1,6 +1,6 @@
 // 0295: speck run's pull request queue, used instead of its ship queue with `ship_mode: pr`. It opens the pull request
-// of each approved ticket that has none, one at a time, with `speck pr <id>` in a process of its own, and says in one
-// line what came of it. One that couldn't be opened is tried again once the base branch or its branch has a new commit.
+// of each approved ticket that has none, or whose link isn't yet written on it, one at a time, with `speck pr <id>` in
+// a process of its own, and says in one line what came of it. One that couldn't be opened is tried again once the base branch or its branch has a new commit.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -35,7 +35,7 @@ export function prQueue(repo, cfg, { say = console.log, launch = launchPr } = {}
   const check = tickets => {
     if (current) return;
     for (const t of tickets) {
-      if (t.status !== 'approved' || t.build_running || t.pull_request?.url) continue;
+      if (t.status !== 'approved' || t.build_running || (t.pull_request?.url && !t.pull_request.error)) continue;
       const refs = refsOf(repo, cfg, t.id), key = `${refs.base} ${refs.head}`;
       if (last.get(t.id) === key) continue;
       last.set(t.id, key);
@@ -45,9 +45,9 @@ export function prQueue(repo, cfg, { say = console.log, launch = launchPr } = {}
       launch(repo, t.id, log, code => {
         current = null;
         const rec = readPrRecord(runs, t.id);
-        if (code === 0 && typeof rec?.url === 'string') return say(`Opened ${t.id}'s pull request: ${rec.url}`);
+        if (code === 0 && typeof rec?.url === 'string' && !rec.error) return say(`Opened ${t.id}'s pull request: ${rec.url}`);
         const why = (code !== 0 && typeof rec?.error === 'string' && rec.error) || lastLine(log) || (code === null ? 'speck pr was stopped' : `speck pr exited with ${code}`);
-        say(`${t.id}'s pull request wasn't opened: ${why} speck run tries again once ${base} or its branch has a new commit.`);
+        say(`${rec?.url ? `${t.id}: ` : `${t.id}'s pull request wasn't opened: `}${why} speck run tries again once ${base} or its branch has a new commit.`);
       });
       return;
     }
