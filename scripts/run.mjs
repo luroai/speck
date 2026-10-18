@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
-import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
+import { SpeckError, sh, findRepoRoot, loadConfig, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, handBackQueue } from './hand-back.mjs';
 import { goWithQueue } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
@@ -16,6 +16,8 @@ import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { saveForeman, switchingReady } from './foreman.mjs';
+import { prMode } from './pull-request.mjs';
+import { prQueue } from './pr-queue.mjs';
 import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
@@ -23,7 +25,7 @@ import { claimResumed, sessionProcess, processTable } from './seen-builds.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
-import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket } from './build-records.mjs';
+import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase } from './build-records.mjs';
 export { DEFAULT_RESUME_COMMAND, resumeHint, resumeCommandOf, buildKilled, buildTicket } from './build-records.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
@@ -138,6 +140,7 @@ function runOn(worker) {
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
   // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
   const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id), stuck: x => agents.stuck(x) });
+  const prs = prMode(cfg) ? prQueue(repo, cfg) : null; // 0295: in pull request mode, it opens pull requests instead of shipping
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
@@ -385,7 +388,7 @@ function runOn(worker) {
   // run isn't read as this one's.
   const lock = worker ? process.ppid : process.pid;
   const foreman = (tickets, ready, switching = null) =>
-    saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: ships.state(tickets, { switching: !!switching }) });
+    saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) } }); // 0299; 0295: none waits to ship in pull request mode
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
@@ -423,7 +426,7 @@ function runOn(worker) {
     const tickets = readTickets();
     if (!tickets) return;
     adoptSeen(tickets);
-    ships.check(tickets);
+    if (prs) prs.check(tickets); else ships.check(tickets);
     foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
     agents.check(tickets); // 0287: the Foreman agent's next look, and the builds it asked to resume
@@ -458,14 +461,6 @@ function runOn(worker) {
   console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
   adoptEarlierBuilds();
   watchBoard();
-}
-
-// Whether the ticket at `rel` is ready in the base branch's latest commit. A ticket set ready but not committed, or
-// never committed at all, isn't: `speck start` would refuse it.
-function readyOnBase(repo, base, rel) {
-  const r = sh('git', ['show', `refs/heads/${base}:${rel}`], { cwd: repo });
-  if (r.status !== 0) return false;
-  try { return parseTicket(r.stdout).fm.status === 'ready'; } catch { return false; }
 }
 
 // ---------- pause and play (hold a build speck run launched, then carry it on) ----------
