@@ -1,7 +1,7 @@
 ---
 id: "0295"
 title: "Open a pull request for an approved ticket in pull request mode"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0294", "0287"]               # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T14:08:19.808Z"
 
 ---
 # 0295 · Open a pull request for an approved ticket in pull request mode
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck ships by merging into the base branch and pushing it, with no pull request. Teams, and projects whose base branch only takes changes through pull requests, can't use it.
