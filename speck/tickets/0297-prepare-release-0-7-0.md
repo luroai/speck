@@ -50,7 +50,9 @@ speck is ready to be released as 0.7.0.
 - Self-check: the release notes and changelog no longer say a Cursor builder needs a reviewer other than Codex (Cursor is its own family), setup notes rather than refuses a same-family reviewer, and `builder_model` reaches Codex and Cursor builds only through speck's own command for them.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.7.0. It gathers everything shipped since 0.6.0: building tickets with Codex or Cursor as well as Claude Code, following those builds' logs and tokens in the panel, switching the builder from the Settings view or in setup, having Claude Code review whichever agent builds, and a new way to see which agents and models are installed and signed in on the machine. The changelog, the release notes, the README and its figures (272 tickets shipped) are up to date.
+
+To see it, read the new 0.7.0 section at the top of the changelog, or the release notes. Someone upgrading runs the install command again in each project: nothing changes until they choose a new builder or reviewer. After it ships, check that the v0.7.0 release page appeared on GitHub; if it didn't, the ticket's Notes say how to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +62,7 @@ speck is ready to be released as 0.7.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +134,79 @@ speck is ready to be released as 0.7.0.
     ],
     "escalation_question": "",
     "summary": "The version bump, installation guidance and refreshed project figures check out, and the reported tests pass. One release-documentation correction remains: the same-family reviewer restriction is described more strictly than it works."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "32a1afa9cc6b36064553cae5b720f069b1e5a4e8",
+    "thread_id": "01a14efd-a821-7b81-a138-c47905c25dbe",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 349272,
+      "cached_input_tokens": 280320,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2272,
+      "reasoning_output_tokens": 149
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T12:31:38.693Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json declares 0.7.0. Both AC1 tests passed, including executing init and checking that it prints speck 0.7.0."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.7.0 above 0.6.0 and describes shipped tickets 0288–0293. The corrected reviewer restriction matches scripts/same-model.mjs. Both AC2 tests passed, including preservation of earlier sections."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md state 0.7.0, a public preview. The setup prompt retains the latest-release command. README guidance reflects the shipped builder, reviewer and token-reporting changes; all AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.7.0.md explains the release, its changes, installation, updates in each project and upgrade implications, with the correct changelog link and no personal names. The corrected Claude model exception matches sameModelProblem. All AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README figures match the independently recalculated done-ticket figures: 272 shipped, 16 cancelled, 13 minutes median, one review round median and 139 first-round approvals. Both AC5 tests passed. The fresh recorded run reports 136 passes, no failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "CHANGELOG.md; docs/releases/v0.7.0.md",
+        "issue": "The same-family reviewer restriction previously omitted the supported exception for explicitly different Claude models.",
+        "suggested_fix": "Implemented: both documents describe the exception, and the changelog distinguishes CLI warnings from Settings refusals.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release documentation correction is complete. Version 0.7.0, installation and upgrade guidance, and refreshed project figures all check out. The reported tests pass, and no blocking findings remain."
   }
 }
 ```
