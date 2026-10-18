@@ -1,7 +1,7 @@
 ---
 id: "0303"
 title: "Put the header's mark and the Foreman's builder on the LCD screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0302"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T21:51:29.988Z"
+approved: "2026-10-18T22:01:15.353Z"
 
 ---
 # 0303 · Put the header's mark and the Foreman's builder on the LCD screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0302, the badges are drawn on the LCD screen, but the header's mark and the Foreman's button still use the old drawing. The design (`docs/design/lcd/panel-mock.html`) puts both on the same screen.
@@ -47,9 +48,14 @@ The little speck logo before "speck" at the top of the panel, and the builder in
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 130,459
+- Elapsed since build started: 10 min
+- Changed lines: 124 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
