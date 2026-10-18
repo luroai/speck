@@ -42,7 +42,11 @@ A blocked ticket's question in the panel has a button that takes the build's rec
 - Self-check: a choice left waiting while speck run is off could later resume a session already carried on by hand, so the choice now keeps the branch's commit and speck run drops it if the branch has moved or the session is in use (tested). Also dropped a stray record write before the commit.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a blocked ticket's question comes with a recommendation, the panel now shows a "Go with the recommendation" button on the question. Pressing it asks you to confirm, notes your choice and the time in the ticket, sets it building again and has speck run pick its build back up where it stopped, told which option you chose.
+
+To see it, open a blocked ticket in the panel's Build column whose question ends with a "Recommended:" line, and press the button. The button only appears when speck run built the ticket and can resume it; otherwise the question still says how to carry it on by hand.
+
+Worth watching: if speck run is off when you press it, the ticket shows as building but nothing happens until you turn speck run on.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,6 +56,10 @@ A blocked ticket's question in the panel has a button that takes the build's rec
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-18-say-when-a-chosen-recommendation-waits-for-speck-run.md (with speck run off, a ticket you went with shows as building while nothing runs, and the page doesn't show the server's message).
+- Known limit: the old question stays under Blocked question once the ticket is building again; the panel only shows it while blocked.
+- Known limit: a choice whose session is in use, or whose branch has moved since, is dropped by speck run with one log line, as it was carried on by hand.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -118,6 +126,74 @@ A blocked ticket's question in the panel has a button that takes the build's rec
     ],
     "escalation_question": "",
     "summary": "The standard build path is covered by passing tests, and choices are recorded with their time. One failure path needs fixing: the panel can accept a recommendation and clear the blocked state even when it cannot restart that build."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7794cc0f26c069d4ef00398ec5b0fe76e9528454",
+    "thread_id": "01a14f1b-f6b4-7cd0-aa3c-1d05898594ae",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 354878,
+      "cached_input_tokens": 305920,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1698,
+      "reasoning_output_tokens": 348
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T13:04:58.093Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html goWithButton requires a blocked ticket, a recommendation and blocked_resumable. The AC1 rendering and status tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/go-with.mjs goWith validates resumability before writing; goWithQueue uses resumeFor with goWithMessage to resume the recorded session. Passing AC2 tests exercise the request, session, message, building status, capacity waiting and stale-choice rejection."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "goWith appends the recommended option and UTC time to Notes and commits the ticket. The passing combined AC2/AC3 test verifies the recorded choice, timestamp and preservation of existing notes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "goWithResumable and goWith now share cantResume, using resumeFor. Passing AC4 tests cover missing records, missing sessions and unsupported build commands, verifying hidden buttons, manual instructions and refusals without changes."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/go-with.mjs",
+        "issue": "Previously, an unsupported build command could clear the blocked state before discovering that the build could not resume. The shared resumability check now prevents this before any write.",
+        "suggested_fix": "Implemented; regression coverage verifies unsupported commands hide the button and leave the ticket and run record unchanged.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change meets all four criteria. Users can accept a recommendation, have their choice recorded with the time, and resume the ticket's own build session. The previous failure path is fixed, and all reported checks passed."
   }
 }
 ```
