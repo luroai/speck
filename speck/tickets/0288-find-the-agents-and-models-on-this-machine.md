@@ -43,6 +43,7 @@ speck knows, for each agent it supports, whether it's installed and signed in an
 - Checked 2026-10-18: Cursor's CLI is `agent` (it was `cursor-agent`); `agent models` lists your account's models and `agent status` shows whether you're signed in (cursor.com/docs/cli/reference/parameters).
 - Checked 2026-10-18: Cursor's docs give no sample output, but a published parser of it (netandreus/pi-cursor-provider) reads `agent models` as a header line starting `Available`, then one model per line as `<id> - <name>`, sometimes followed by `(current)` or `(default)`, and a closing `Tip:` line. `agent status` prints `✓ Logged in as <email>` and takes `--format json` (with no documented fields). Cursor's CLI isn't installed here, so it's tested against stand-ins.
 - Failing before this build: none
+- Self-check: a list cut off for being too long is no longer reported as taking too long in the panel.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

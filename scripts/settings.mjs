@@ -83,21 +83,42 @@ function valueIn(text, repo, key) {
 // 0276: `models`, from reviewerModels, is given back as `reviewer_models`, for the view to offer the reviewer's models.
 // 0278: and Claude's model names as `claude_models`, for when claude-subagent is picked in the view.
 // 0279: `builderModels`, from builderModels, is given back as `builder_models`, for the view to offer the builder's.
-export function panelSettings(repo, { models, builderModels } = {}) {
+// 0288: with `agents`, from findAgentsAsync, reviewer offers only the reviewers whose agent is installed and signed in,
+// and the current value, with why the others are left out in `missing`, one line.
+export function panelSettings(repo, { models, builderModels, agents } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
-    const { value, inFile } = valueIn(text, repo, s.key), choices = choicesOf(s.key, file);
+    const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file);
+    const { choices, missing } = s.key === 'reviewer' && agents ? readyReviewers(all, agents, String(value ?? '')) : { choices: all };
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
-      editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...machine };
+      editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...machine };
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}), claude_models: CLAUDE_MODELS };
 }
 
 // 0278: the model names a claude-subagent reviewer takes, each meaning the newest model of its kind. Claude Code has no
 // command that lists them, so they're written here. With no `efforts`, reviewer_effort offers speck's own.
-export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku']
-  .map(slug => Object.freeze({ slug, about: `the newest ${slug[0].toUpperCase()}${slug.slice(1)}` })));
+// 0288: each with a display name and description, as Codex gives its models.
+export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku'].map(slug => {
+  const kind = `${slug[0].toUpperCase()}${slug.slice(1)}`;
+  return Object.freeze({ slug, display_name: kind, description: `Always the newest ${kind} model` });
+}));
+
+// 0288: the agent each built-in reviewer runs on. A reviewer set up as a command under reviewer_options is offered as
+// it is: speck can't tell what it runs.
+const REVIEWER_AGENTS = { codex: 'codex', 'claude-subagent': 'claude' };
+function readyReviewers(choices, { agents }, current) {
+  const byId = new Map((Array.isArray(agents) ? agents : []).map(a => [a.id, a]));
+  const left = [];
+  const kept = choices.filter(c => {
+    const agent = Object.hasOwn(REVIEWER_AGENTS, c) ? byId.get(REVIEWER_AGENTS[c]) : undefined;
+    if (!agent || (agent.installed && agent.signed_in) || c === current) return true;
+    left.push(`${c} (${String(agent.why || `${agent.name} isn't ready.`).replace(/\.$/, '')})`);
+    return false;
+  });
+  return { choices: kept, ...(left.length ? { missing: `Not offered: ${left.join('; ')}.` } : {}) };
+}
 
 // 0276: the models the configured reviewer offers, read now, for the Settings view: { reviewer, models: [{ slug,
 // efforts }] } when it can list them (Codex, or Claude's names from 0278), or { reviewer, why } in one line when it can't.
