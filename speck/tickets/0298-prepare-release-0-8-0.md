@@ -43,6 +43,11 @@ speck is ready to be released as 0.8.0.
 - After it ships, check that the `v0.8.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.8.0 --target main --title "speck 0.8.0" --notes-file docs/releases/v0.8.0.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.7.0`: 0284–0287, 0294–0296 and 0299–0301. 0283 shipped just before the `v0.7.0` tag but 0.7.0's changelog and notes didn't list it, so 0.8.0's changelog describes it and says it first came in 0.7.0.
+- Built from main at `speck(0296): Ship a pull request mode ticket by merging its pull request`: 284 shipped, 16 cancelled, 13 minutes median, 1 round median, 141 approved in the first round, worked out as 0297 did, with its figures test.
+- 0297's checks that named 0.7.0 as the current version now check the current version, and its figures test checks only the figures 0.7.0 was built from, as 0297 did for 0282.
+- README: the ship paragraph and the `/speck-ship` row no longer say every ship merges locally (`ship_mode: pr` merges the pull request), and starting a build yourself now says `speck run` counts and watches it (0300).
+- Self-check: the release notes no longer say a repo whose main branch only takes pull requests can use speck without a catch: the "done" commit can't be pushed there, and they say so.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

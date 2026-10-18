@@ -17,7 +17,7 @@ You can trust the result without reading the code because every ticket goes thro
   <img alt="An agent conversation on the left, with speck's panel open beside it on the right, showing tickets being planned, built and waiting to ship." src="docs/images/demo-light.png">
 </picture>
 
-> Status: 0.7.0, a public preview. It works end to end on a local machine. Expect rough edges.
+> Status: 0.8.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -56,7 +56,7 @@ Read a draft, then set it ready with Set ready in `speck panel`, or with `speck 
 
 speck builds each ticket tests first, checks its own work, then has a second AI review it. Each ticket is built in its own git worktree, and no agent ever approves its own work.
 
-`speck run` watches for ready tickets and starts `/speck-build <id>` for each, highest priority first, using `build_command` in `speck/config.yml`, or, when that's blank with `builder: codex` or `builder: cursor`, that agent's own command. It builds one at a time unless you raise `max_parallel_builds`. You can also start a build yourself with `/speck-build <id>`.
+`speck run` watches for ready tickets and starts `/speck-build <id>` for each, highest priority first, using `build_command` in `speck/config.yml`, or, when that's blank with `builder: codex` or `builder: cursor`, that agent's own command. It builds one at a time unless you raise `max_parallel_builds`. You can also start a build yourself with `/speck-build <id>`: `speck run` counts it towards `max_parallel_builds` and watches it as it does its own.
 
 A build runs `speck start <id>`, which makes the ticket's branch in its own git worktree beside your checkout (with `worktrees: true`) and sets it to `building`. It writes a test for each acceptance criterion and checks that the tests fail, then writes the simplest code that makes them pass. A criterion about how a document reads ends with "(checked by review)" and gets no test: the reviewer checks it by reading the document. A build runs the ticket's own tests; the whole suite runs when a ticket ships. If the change goes over `limits.max_changed_lines`, it stops and proposes a split rather than pushing on. Before the first review round it runs a self-check, going over its change the way an adversarial reviewer would: unusual input, stale state, error paths, claims in docs and scope.
 
@@ -68,7 +68,7 @@ Read a one-page review pack, then ship. Or let low-risk work ship itself.
 
 Every approved ticket has a review pack (`speck pack <id>`, or the ticket in the panel), written for someone who doesn't read code. When a ticket changes how something looks, the build takes pictures of the result in a real browser, and the pack shows them. Read it, then run `/speck-ship <id>` or click the Ship button in the review pack. That's Gate 2. Agents never merge or ship unless you do one of those, or you turn on `auto_ship` in `speck/config.yml`. With `auto_ship` on, `speck run` ships each approved ticket whose risk is listed in `auto_ship_risk` (`[low]` by default) as soon as the reviewer approves it, while it's on. With `ship_mode: pr`, once a ticket is approved, speck pushes the ticket's branch and opens a GitHub pull request for it with `gh`, with its review pack, and the panel shows the link. Shipping then merges that pull request on GitHub once its checks pass, instead of merging locally, and tidies up as a local ship does. If you merge it on GitHub yourself, shipping it, or `speck run`, only tidies up.
 
-Shipping runs `speck ship <id>`. It refuses, changing nothing, unless the reviewer approved the ticket, nothing outside `speck/` changed after that approval, the working tree is clean and the whole test suite passes on the ticket merged with the base branch as it is now. Then it sets the ticket to `done`, merges the branch into `main`, pushes it if you have a remote, and deletes the branch. No GitHub needed. Everything happens in your local repo.
+Shipping runs `speck ship <id>`. It refuses, changing nothing, unless the reviewer approved the ticket, nothing outside `speck/` changed after that approval, the working tree is clean and the whole test suite passes on the ticket merged with the base branch as it is now. Then, with the default `ship_mode: local`, it sets the ticket to `done`, merges the branch into `main`, pushes it if you have a remote, and deletes the branch. No GitHub needed. Everything happens in your local repo. With `ship_mode: pr`, it merges the ticket's pull request on GitHub instead.
 
 ## What a review pack looks like
 
@@ -195,7 +195,7 @@ In your agent:
 | `/speck-capture` | Saves an idea or the current conversation to `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into small, numbered draft tickets that pass the size rules, or triages the inbox down to at most three decisions |
 | `/speck-build <id>` | Builds one ready ticket: tests from the acceptance criteria, then code, then the review loop. Ends with the ticket `approved`, for `speck run` to ship if `auto_ship` allows it |
-| `/speck-ship <id>` | Ships an approved ticket (Gate 2): final checks and tests, then merges into `main`, pushes and deletes the branch. Only you run this, or click the Ship button in the ticket's review pack in the panel |
+| `/speck-ship <id>` | Ships an approved ticket (Gate 2): final checks and tests, then merges into `main`, pushes and deletes the branch, or with `ship_mode: pr` merges its pull request and tidies up. Only you run this, or click the Ship button in the ticket's review pack in the panel |
 | `/speck-status` | Tickets by status: approved (waiting for you) first, then blocked questions |
 | `/speck-review <id>` | Re-runs the review loop on its own |
 
@@ -249,9 +249,9 @@ speck/
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **272 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **284 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **13 minutes** median from a build starting to its ticket shipping.
-- **1 review round** median. 139 tickets were approved in the first round.
+- **1 review round** median. 141 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
