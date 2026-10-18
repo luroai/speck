@@ -1,7 +1,7 @@
 ---
 id: "0292"
 title: "Review with Claude Code when the builder isn't Claude"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0288"]               # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T10:54:29.066Z"
 
 ---
 # 0292 · Review with Claude Code when the builder isn't Claude
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 With Codex or Cursor as the builder, the reviewer should come from another family, and Claude is the obvious one. But speck's Claude reviewer (`claude-subagent`) is started by the builder with a tool only Claude Code has, so a Codex or Cursor builder can't use it.
