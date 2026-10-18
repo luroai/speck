@@ -1,7 +1,7 @@
 ---
 id: "0296"
 title: "Ship a pull request mode ticket by merging its pull request"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0295"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T14:26:55.074Z"
+approved: "2026-10-18T14:40:43.545Z"
 
 ---
 # 0296 · Ship a pull request mode ticket by merging its pull request
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In pull request mode (0295), an approved ticket has a pull request, but speck has no way to ship it: merging through GitHub, tidying up, and doing nothing more when you've already merged it on GitHub.
@@ -54,9 +55,15 @@ Worth keeping an eye on: when the pull request can't be merged (failing or unfin
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A successful gh command does not necessarily mean the PR has merged: the ticket explicitly notes that a required merge queue can enable auto-merge instead.; F2 PR shipping never runs the whole test suite.; F3 A refused base-branch push merely prints a warning and then reports successful shipping.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 514,428
+- Elapsed since build started: 14 min
+- Changed lines: 260 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The speck-ship and speck-setup skills don't mention pull request mode: `speck/ideas/2026-10-18-tell-the-skills-about-pull-request-mode.md`.
