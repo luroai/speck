@@ -1,7 +1,7 @@
 ---
 id: "0294"
 title: "Show pictures of a visual change in its review pack"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T13:07:36.362Z"
 ---
 # 0294 · Show pictures of a visual change in its review pack
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 For a ticket that changes how something looks, the review pack gives criteria with ticks and the reviewer's words, but no picture. Someone who doesn't read code can't judge a visual change without checking out the branch or waiting until it ships, though deciding whether to ship (Gate 2) is what the pack is for.
@@ -45,7 +45,7 @@ The review pack of a ticket that changes how something looks shows pictures of t
 - Tests already drive a real browser with `browserPage()` in `test/support/panel.mjs`. The pack is built in `scripts/pack.mjs`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a ticket changes how something looks, the build now takes pictures of the result in a real browser, in the light and dark looks, and keeps them with the ticket's review pack. Open an approved ticket's review pack in the panel and the pictures appear under the acceptance criteria, each with a caption saying what it shows; press one to see it full size. This ticket's own pack has two pictures of exactly that. A pack with no pictures looks the same as before. The pictures stay on this computer and are never committed, so they won't show for someone looking at the project elsewhere.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,66 @@ The review pack of a ticket that changes how something looks shows pictures of t
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (known limits, no inbox note): pictures stay in `speck/.cache/pictures/<id>/` after the ticket ships, with nothing tidying them away; `speck pack` gives each picture's full path on this machine.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3f99228f253441a0da942e1f877c3583eb35e9a1",
+    "thread_id": "01a14f25-56f4-7592-90eb-c30c56064dd2",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 268039,
+      "cached_input_tokens": 216064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 914,
+      "reasoning_output_tokens": 147
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T13:14:06.410Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md, section 3 step 5, requires real-browser pictures of each changed view before review, in light and dark where available, and fresh pictures after visual fixes."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/pictures.mjs stores captioned pictures in the shared speck/.cache/pictures/<id>/ directory; reviewPack lists them through picturesLines. Passing AC2 tests cover CLI storage, git exclusion, worktree sharing, captions and clearing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelPack supplies pictures and panelServer serves their bytes. templates/panel.html picturesPart renders captioned images linking to the full-size files. Passing AC3 tests exercise rendering and HTTP delivery; the saved light-look screenshot also shows the pictures beneath the criteria."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "picturesLines returns no content when pictures are absent, and the panel adds no picture elements. Both passing AC4 tests verify the unchanged pack output and panel presentation."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Visual changes now have captioned pictures in their review packs, with full-size viewing from the panel. Pictures remain outside git, and packs without pictures retain their existing presentation. The reported tests passed, and I found no blocking issues."
+  }
+}
+```
+
+</details>
