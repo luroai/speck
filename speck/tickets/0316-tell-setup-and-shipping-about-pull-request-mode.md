@@ -38,6 +38,8 @@ Setup offers pull request mode where it fits, and the shipping skill describes h
 ## Notes
 - From `speck/ideas/2026-10-18-tell-the-skills-about-pull-request-mode.md` (inbox, from 0296). Skills are in `skills/speck-setup/` and `skills/speck-ship/`.
 - Failing before this build: none
+- Every criterion is checked by review: no new tests. Three existing tests asserted the wording this ticket replaces (the ship skill never mentioning pull requests, and setup's old pull-request clash sentence), so they now check the new facts instead: `ship_mode: local` as the default in setup and the template, and `ship_mode: pr` in the ship skill.
+- Self-check: setup no longer says `speck run`'s ship queue ships every ticket in pull request mode, only those `auto_ship` covers; the ship skill's conflict advice says `speck run` hands it back only when its queue started the ship.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
