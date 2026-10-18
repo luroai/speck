@@ -69,6 +69,23 @@ export function commandArgs(cmd, values) {
   return out;
 }
 
+// 0292: reviewers speck can run as a command without one under reviewer_options. Claude Code runs without a person (-p)
+// in dontAsk mode, which runs read-only commands and denies anything not pre-approved rather than asking, with its
+// file-writing tools taken away. It loads no user, project or local settings, so no allow rule there can pre-approve a
+// command that writes. A reviewer_options entry with a command of its own is used instead.
+const CLAUDE_ARGS = '-p --permission-mode dontAsk --setting-sources= --disallowedTools "Edit Write NotebookEdit" --output-format json --model {model} --effort {effort}';
+const BUILT_IN = Object.freeze({
+  claude: Object.freeze({ command: `claude ${CLAUDE_ARGS}`, resume_command: `claude --resume {session} ${CLAUDE_ARGS}`, session_id_path: 'session_id' }),
+});
+
+// The options a reviewer runs with: its own under reviewer_options when they give a command, or speck's built-in ones.
+export function reviewerOptions(cfg, name) {
+  const own = cfg.reviewer_options?.[name];
+  const mine = own && typeof own === 'object' ? own : {};
+  if (typeof mine.command === 'string' && mine.command.trim()) return mine;
+  return Object.hasOwn(BUILT_IN, name) ? BUILT_IN[name] : mine;
+}
+
 // A JSON object from text that is JSON, or holds a ```json fenced block.
 function jsonIn(text) {
   const tries = [text.trim(), ...[...String(text).matchAll(/```[a-z]*\r?\n([\s\S]*?)\r?\n```/gi)].map(m => m[1])];
@@ -141,7 +158,7 @@ function atPath(obj, dotted) {
 // If the reviewer can resume a session (session_id_path and resume_command), later rounds continue it with only the new
 // round's prompt. Otherwise, or if resuming fails, a fresh run gets the full history.
 export function runCommandReview(repo, id, name, command, s) {
-  const options = s.cfg.reviewer_options?.[name] || {};
+  const options = reviewerOptions(s.cfg, name);
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
   const values = { model: settings.model, effort: settings.effort };
   // Only the latest round's session has seen every round so far. An older one would miss the rounds since.

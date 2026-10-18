@@ -32,7 +32,7 @@ test('0258 AC1: the eight settings can be changed, with reviewer and reviewer_ef
   const s = byKey(panelSettings(r.dir));
   for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k) || k.startsWith('auto_ship') || k === 'builder_model', k);
   assert.deepEqual(s.reviewer_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
-  assert.deepEqual([...s.reviewer.choices].sort(), ['claude-subagent', 'codex', 'my-reviewer']);
+  assert.deepEqual([...s.reviewer.choices].sort(), ['claude', 'claude-subagent', 'codex', 'my-reviewer']); // 0292 added claude
   assert.equal(s.reviewer_model.choices, undefined, 'a free value');
 });
 
@@ -121,8 +121,8 @@ test('0258 AC3: a value speck wouldn\'t accept is refused, saying what\'s allowe
   refused('limits.max_changed_lines', 'lots', /whole number of 1 or more/);
   refused('reviewer_effort', 'huge', /blank or one of low, medium, high, xhigh, max/);
   refused('reviewer', 'claude-subagent', /same.*allow_same_model_review/);
-  refused('reviewer', 'nobody', /codex, claude-subagent/);
-  refused('reviewer', '', /codex, claude-subagent/);
+  refused('reviewer', 'nobody', /codex, claude, claude-subagent/);
+  refused('reviewer', '', /codex, claude, claude-subagent/);
   refused('reviewer_model', 'a\nb', /one line/);
   assert.deepEqual(snapshot(r), was);
 });
