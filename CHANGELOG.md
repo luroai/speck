@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.6.0 · 18 October 2026
+
+What's new since 0.5.4. A minor release that gives speck a Settings view in the panel, lets you choose the models that build and review, and makes shipping cope better when `main` fails or has moved on.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.6.0 init`.
+- Setting speck up now also goes through seven more settings: `auto_ship`, `auto_ship_risk`, `max_parallel_builds`, `max_parallel_tests` and the three ticket size limits. For each, setup explains it in the same words as the panel's Settings view, shows its value, recommends one and asks. It turns on shipping without you, or lets high-risk tickets ship that way, only if you say yes to that setting by itself. Running setup again on a project that's already set up asks only about the settings you want to change.
+- `speck config show` lists those settings by group, with each one's value, whether it's the default and what it does.
+
+### Settings in the panel
+
+- The panel's header has a Settings button. It opens a view of the settings people tune, in four groups: shipping, building and reviewing, how much runs at once, and ticket size limits. Each shows its value, marked "default" when `speck/config.yml` doesn't set it, and an "i" button that shows what the setting does and what changing it would mean.
+- You can change the settings there. One Save button at the bottom saves every change together, checking each first and refusing anything speck wouldn't accept with a message saying what's allowed. Shared changes are committed together. Saving a shared change is refused while the panel's checkout is on another branch or `speck/config.yml` has unsaved edits of your own, so those are never swept up with it.
+- Switching `auto_ship` on, or letting it cover another risk, first asks you, naming the approved tickets that would then be merged and pushed by themselves. Nothing changes until you say yes.
+- Closing the view with unsaved changes asks whether to save them, discard them or keep editing.
+- The view is laid out like the rest of the panel, with each group in its own box, every "i" button in one column, and every box and button drawn with its border on all four sides on a phone.
+
+### Settings for this machine only
+
+- `speck config set --machine max_parallel_builds 3` sets how many builds this computer keeps going, without changing the project's shared settings: a small laptop can run one build while a bigger machine runs four. `max_parallel_tests` works the same way. The value is kept in `speck/.cache/machine/config.yml`, which git ignores, and is used from every worktree. Setting it to `""` goes back to the shared value.
+- The Settings view says whether each of those two values is this machine's own or the shared one. Saving one asks whether it's for this machine only or for everyone, and a button clears this machine's value.
+
+### Building and reviewing
+
+- A new setting, `builder_model`, chooses the model every build `speck run` starts, resumes or hands back runs on, passed to Claude Code as `--model`. With Claude Code building, the Settings view offers Fable, Opus, Sonnet and Haiku, each meaning the newest model of that kind, and with Codex building, Codex's models. Blank, the default, leaves the model to Claude Code. With another builder, `speck run` says in one line that the setting is only used for Claude Code builds.
+- With Codex as the reviewer, the Settings view lists the models Codex offers for `reviewer_model`, and `reviewer_effort` lists the efforts the chosen model supports, including efforts beyond `max` such as `ultra`, which speck now accepts. With a Claude reviewer it offers Fable, Opus, Sonnet and Haiku. A saved model the list doesn't include still shows, marked as not offered. When Codex can't be asked, you get a text box as before, with one line saying why.
+- A reviewer from the builder's own family, such as a Claude subagent reviewing a Claude build, is now allowed without `allow_same_model_review` when `builder_model` and `reviewer_model` are both set and differ. If they don't, the refusal says which models it compared and what to change.
+- A new setting, `commands.checks`, lists quick test files that check rules for the whole repo. `speck test --files` runs them with the files it's given, so every build runs them before each review round and finds out straight away when it breaks one. A listed file that doesn't exist fails the run, naming it. Blank, the default, runs none.
+- A criterion about how a document reads ends with "(checked by review)": the reviewer checks it by reading the document, and the build writes no test for it. Facts in documents, such as a command, a setting's name, a version or a link, are still tested.
+
+### Shipping
+
+- While `speck run` has paused shipping because `main`'s own tests are failing, an approved fix ticket still ships, so the fix no longer waits for someone to ship it by hand.
+- When a ticket's ship fails tests while `main`'s own tests fail too, the message names just the tests that pass on `main`, and `speck run` hands the ticket back to its build to fix them, instead of blaming `main` and pausing shipping. Only when every failing test also fails on `main` is shipping paused, as before.
+- When `main` on your remote has commits your own `main` doesn't, and yours has commits the remote doesn't, `speck ship` merges the remote's in, says which commits it brought in and carries on. It still stops, changing nothing, when both changed the same lines, or the merge would overwrite edits you haven't committed or files git doesn't track, and it names them.
+
+### Working on speck
+
+- Editing speck's README, brief, changelog or release notes by hand no longer fails its tests, as long as the commands, settings, versions, links and names in them stay right.
+- Three of speck's fullest scripts were split up to give each room to grow, and speck's own test runner now spots slow tests by what they start, instead of from a list kept by hand.
+
 ## 0.5.4 · 16 October 2026
 
 What's changed since 0.5.3. A patch release so that every install command gets the newest release, agents set a ticket ready only when you tell them to, and the README says plainly what speck is.
