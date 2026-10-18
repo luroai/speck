@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0284"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:07:36.362Z"
-approved: "2026-10-18T13:14:16.119Z"
+approved: "2026-10-18T13:42:05.697Z"
 
 ---
 # 0294 · Show pictures of a visual change in its review pack
@@ -53,13 +53,14 @@ When a ticket changes how something looks, the build now takes pictures of the r
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 268,953
-- Elapsed since build started: 7 min
-- Changed lines: 168 (limit 5000)
+- Reviewer tokens: 677,468
+- Elapsed since build started: 34 min
+- Changed lines: 164 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox note): pictures stay in `speck/.cache/pictures/<id>/` after the ticket ships, with nothing tidying them away; `speck pack` gives each picture's full path on this machine.
 
@@ -119,6 +120,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Visual changes now have captioned pictures in their review packs, with full-size viewing from the panel. Pictures remain outside git, and packs without pictures retain their existing presentation. The reported tests passed, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "013411d18afe4fa406470d73c1760710511fa329",
+    "merge": true,
+    "thread_id": "01a14f25-56f4-7592-90eb-c30c56064dd2",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 407085,
+      "cached_input_tokens": 333568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1430,
+      "reasoning_output_tokens": 147
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T13:42:03.307Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-build/SKILL.md section 3 step 6 still requires real-browser pictures of each changed view, in both looks where available, before the first review round. Moving this step preserves the requirement."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/pictures.mjs retains shared, git-ignored cache storage and captioned listings through picturesLines in reviewPack. Passing AC2 tests cover storage, worktree sharing, git exclusion, captions and clearing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelPack, the picture HTTP route and picturesPart retain captioned thumbnails linking to full-size files. All AC3 tests pass. The revised missing-picture response remains a 404 and restores compatibility with the existing panel restart tests."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both AC4 tests pass: packs without pictures retain their text and render without picture elements. The merged changes preserve the existing panel behaviour."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all four criteria. The two compatibility fixes preserve picture capture and viewing while restoring the existing tests. The reported run passed 160 tests with three skipped; no blocking concerns remain."
   }
 }
 ```
