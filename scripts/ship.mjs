@@ -11,6 +11,7 @@ import { sharedCacheDir } from './turns.mjs';
 import { removeScratch } from './scratch.mjs';
 import { shipFolders, putBranchBack } from './ship-folders.mjs';
 import { remoteBaseCatchUp } from './ship-remote.mjs';
+import { prMode, prShown } from './pull-request.mjs';
 
 // ---------- ship (the user's gate: merge an approved ticket locally) ----------
 
@@ -541,6 +542,11 @@ export function cmdShip(args) {
   // Read once and removed, so nothing the ship runs, such as the tests, inherits it.
   const alone = !!process.env.SPECK_SHIP_ALONE;
   delete process.env.SPECK_SHIP_ALONE;
+  // 0295: in pull request mode, an approved ticket goes to GitHub as a pull request, and speck merges nothing itself.
+  if (prMode(loadConfig(repo))) {
+    const pad = String(id).padStart(4, '0'), url = /^\d{1,4}$/.test(id) ? prShown(sharedCacheDir(repo, 'runs'), pad)?.url : null;
+    throw new SpeckError(`ship_mode is pr in speck/config.yml, so speck doesn't merge ${pad} itself: ${url ? `merge its pull request on GitHub, ${url}` : `run \`speck pr ${pad}\` to open its pull request, then merge it on GitHub`}. Nothing was changed.`);
+  }
   // --auto is how the builder ships straight after approval. It only goes ahead when config allows it for this ticket.
   if (auto) {
     // Read the ticket where its branch is checked out, so the checks see the approved copy, not the base branch's.
