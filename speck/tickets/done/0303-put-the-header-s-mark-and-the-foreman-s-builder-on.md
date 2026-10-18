@@ -1,7 +1,7 @@
 ---
 id: "0303"
 title: "Put the header's mark and the Foreman's builder on the LCD screen"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0302"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T21:51:29.988Z"
 approved: "2026-10-18T22:06:11.263Z"
+finished: "2026-10-18T22:08:11.653Z"
 
 ---
 # 0303 · Put the header's mark and the Foreman's builder on the LCD screen
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 After 0302, the badges are drawn on the LCD screen, but the header's mark and the Foreman's button still use the old drawing. The design (`docs/design/lcd/panel-mock.html`) puts both on the same screen.
