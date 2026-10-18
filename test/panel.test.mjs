@@ -84,10 +84,11 @@ test('0031 AC2: / is the page, /api/state matches speck status --json, other pat
     const api = await request(port, { pathName: '/api/state' });
     assert.equal(api.status, 200);
     assert.match(api.headers['content-type'], /application\/json/);
-    assert.deepEqual(JSON.parse(api.body), JSON.parse(r.run('status', '--json').stdout));
+    const board = body => { const { foreman, page, ...rest } = JSON.parse(body); return rest; }; // 0285: the Foreman and the page's stamp, which the board doesn't have
+    assert.deepEqual(board(api.body), JSON.parse(r.run('status', '--json').stdout));
     // At the time of the request: a new ticket shows up straight away.
     r.write('0002-two.md', fm({ id: '"0002"', title: 'Two' }));
-    const again = JSON.parse((await request(port, { pathName: '/api/state' })).body);
+    const again = board((await request(port, { pathName: '/api/state' })).body);
     assert.deepEqual(again, JSON.parse(r.run('status', '--json').stdout));
     assert.ok(again.tickets.some(t => t.id === '0002'));
     assert.equal((await request(port, { pathName: '/api/state?x=1' })).status, 200, 'a query string is ignored');
@@ -146,7 +147,9 @@ test('0031 AC4: the page gets /api/state when the panel says the board changed, 
   assert.match(html, /new EventSource\('\/api\/events'\)/);
   assert.doesNotMatch(html, /POLL_MS|setTimeout\(poll/, 'no poll on a timer');
   assert.match(html, /disconnected/i);
-  assert.doesNotMatch(html, /location\.reload/, 'no page reloads');
+  // 0285: the one reload is the Foreman's offer when the server's code is newer than the page's, pressed by the user.
+  assert.equal(html.match(/location\.reload/g).length, 1, 'no other page reloads');
+  assert.match(html, /reload\.addEventListener\('click', \(\) => location\.reload\(\)\)/);
 });
 
 test('0031 AC3: the model sorts tickets into Shaping, the Queue and Shipped, and leaves cancelled tickets out', () => {

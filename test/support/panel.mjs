@@ -242,6 +242,15 @@ export function fakePage(responses, globals = {}, { made = () => {} } = {}) {
   return { byId: id => document.getElementById(id), document, timers, waits, elapse, intervals, all, settle, calls, key, press, pointer }; // document: its listeners (0187)
 }
 
+// 0285: the page, with runSwitch() giving the speck run switch, which is in the Settings view's Foreman group now: found
+// among the nodes the page made, so a test can check and press it as it did the header's, without opening Settings.
+export function switchPage(responses, globals = {}) {
+  const made = [];
+  const p = fakePage(responses, globals, { made: n => made.push(n) });
+  p.runSwitch = () => made.find(n => n.id === 'run-switch');
+  return p;
+}
+
 export const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); promise.resolve = resolve; return promise; };
 
 export const full = (id, o = {}) => T(id, 'draft', { problem: `Problem of ${id}.`, outcome: `Outcome of ${id}.`, out_of_scope: '- Not this.', notes: '- A note.\n- Self-check: no changes',

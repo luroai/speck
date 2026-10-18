@@ -12,6 +12,7 @@ import { cursorBuilds, cursorCli, cursorStartWords, createChat } from './cursor-
 import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
+import { saveForeman } from './foreman.mjs';
 import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
 import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
@@ -309,17 +310,32 @@ function runOn(worker) {
   const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => [[...running], ships.running()], launched: () => [...launched], stopLoop: () => clearInterval(loop) });
-  function tick() {
-    for (const id of running) fill(id);
-    checkAdopted();
-    if (switchWhenIdle()) return;
-    let tickets;
-    try { tickets = statusData(repo).tickets; lastError = null; } catch (e) {
+  // 0285: the Foreman's record of this check: the builds running, why each ready ticket isn't building and shipping's
+  // state. `lock` is the pid holding speck run's lock (the process you started), so a record left by an earlier speck
+  // run isn't read as this one's.
+  const lock = worker ? process.ppid : process.pid;
+  const foreman = (tickets, ready, switching = null) =>
+    saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: ships.state(tickets) });
+  const readTickets = () => {
+    try { const tickets = statusData(repo).tickets; lastError = null; return tickets; } catch (e) {
       const msg = e instanceof SpeckError ? e.message : String(e?.message || e);
       if (msg !== lastError) console.error(`speck run couldn't read the tickets, and will try again: ${msg}`);
       lastError = msg;
-      return;
+      return null;
     }
+  };
+  function tick() {
+    for (const id of running) fill(id);
+    checkAdopted();
+    if (switchWhenIdle()) {
+      const tickets = readTickets() || [], builds = [...running], ship = ships.running();
+      const names = [...builds.map(id => `the build of ${id}`), ...(ship ? [`the ship of ${ship}`] : [])];
+      const why = `speck run is switching to new code${names.length ? ` once ${names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`} ${names.length === 1 ? 'ends' : 'end'}` : ''}`;
+      const ready = tickets.filter(t => t.status === 'ready' && !running.has(t.id)).map(t => ({ id: t.id, kind: 'switching', why }));
+      return foreman(tickets, ready, { builds, ship });
+    }
+    const tickets = readTickets();
+    if (!tickets) return;
     ships.check(tickets);
     // Builds that were killed with their ticket in hand: each resumed once.
     const runs = runsDir(repo);
@@ -331,22 +347,30 @@ function runOn(worker) {
       if (running.size < max) resumeKilled(t.id, rec);
     }
     handBacks.check(tickets);
+    const ready = []; // 0285: why each ready ticket it doesn't launch isn't building
+    const wait = (t, kind, why) => ready.push({ id: t.id, kind, why });
     for (const t of tickets) {
-      if (running.size >= max) break;
-      if (t.status !== 'ready' || (t.waiting_on || []).length || launched.has(t.id)) continue;
+      if (t.status !== 'ready' || running.has(t.id)) continue;
+      if ((t.waiting_on || []).length) { wait(t, 'after', `waiting for ${t.waiting_on.join(', ')}`); continue; }
+      if (launched.has(t.id)) { wait(t, 'unstarted', 'its build ended without starting it, so speck run won\'t launch it again'); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
+      if (running.size >= max) { wait(t, 'slots', `all ${max} build slot${max === 1 ? '' : 's'} in use`); continue; }
       if (heldByStop(repo, t)) {
         if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
         held.add(t.id);
+        wait(t, 'stopped', 'ended by speck stop: set it ready again and commit it to build it');
         continue;
       }
       if (!readyOnBase(repo, cfg.base_branch, t.path)) {
         if (!uncommitted.has(t.id)) console.log(`${t.id} is ready but not committed as ready on ${cfg.base_branch}, so speck run is waiting for it to be committed before launching it.`);
         uncommitted.add(t.id);
+        wait(t, 'uncommitted', `not committed as ready on ${cfg.base_branch}`);
         continue;
       }
       launch(t.id);
+      if (!launched.has(t.id) && chatFailed.has(t.id)) wait(t, 'chat', chatFailed.get(t.id));
     }
+    foreman(tickets, ready);
   }
 
   const watchBoard = () => { started = true; tick(); loop = setInterval(tick, pollMs); };

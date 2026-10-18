@@ -259,6 +259,23 @@
   .run-state { gap: 6px; max-width: 100%; min-width: 0; }
   .run-state .mini { display: block; flex: none; width: 28px; height: 28px; margin-left: -4px; }
   .run-state .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* 0285: the Foreman's status, coloured by its tone, and its detail under the header */
+  .run-state.fm-ok { color: var(--ok); border-color: var(--ok); }
+  .run-state.fm-warn { color: var(--warn); border-color: var(--warn); }
+  .run-state.fm-bad { color: var(--bad); border-color: var(--bad); }
+  .run-state.fm-off { color: var(--muted); }
+  .foreman { font-size: 13px; padding: 8px 24px 12px; border-bottom: .5px solid var(--line); background: var(--raise); }
+  .foreman[hidden] { display: none; }
+  .foreman h4 { margin: 8px 0 2px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .foreman ul { margin: 0; padding-left: 18px; }
+  .foreman p { margin: 2px 0; }
+  .foreman .stale { color: var(--warn); }
+  .foreman .reload, #settings .run-switch { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
+  #settings .run-switch:disabled { cursor: default; opacity: .6; }
+  #settings .run-row { padding: 8px 12px; }
+  #settings .run-row .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+  #settings .run-row .label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); }
+  #settings .run-row p { margin: 4px 0 0; color: var(--muted); }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
@@ -489,6 +506,7 @@
     #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
+    .foreman { padding: 8px 16px 12px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
     .sh { flex-wrap: wrap; align-items: center; }
@@ -567,7 +585,7 @@
 <header>
   <div class="logo"><svg class="mark" viewBox="8 11 48 48" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M14.5 22.5 A21.5 21.5 0 1 0 22 16.2"/><path d="M12.6 19.8 a5.2 5.2 0 0 1 8.2 -5.6"/><path d="M43.2 14.2 a5.2 5.2 0 0 1 8.2 5.6"/><circle class="dot" cx="31.7" cy="33.2" r="4.8" stroke="none"/></svg>speck <span>control panel</span></div>
   <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
-  <button class="run-state" id="run" type="button" aria-pressed="false" hidden></button>
+  <button class="run-state" id="run" type="button" aria-expanded="false" aria-controls="foreman" hidden></button>
   <button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="5.5" cy="4.5" r="1.6" fill="var(--bg)"/><circle cx="10.5" cy="11.5" r="1.6" fill="var(--bg)"/></svg>
   </button>
@@ -576,6 +594,7 @@
     <svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
   </button>
 </header>
+<div class="foreman" id="foreman" hidden></div>
 <div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
 <div class="restart" id="restart" hidden></div>
 <div class="run-error" id="run-error" hidden></div>
@@ -1104,6 +1123,7 @@ const LOST_MS = 10000; // how long the board's stream, or an answer for the boar
 const WAIT_MS = 15000; // how long the page waits for its request for the board before giving it up (0186)
 const RETRY_MS = 1000; // how soon the page starts again a stream the browser has given up on
 const LOG_LINES = 200; // how many of a log's last lines are shown, as the server first sends them (0189)
+const PAGE = '{{page}}'; // 0285: the stamp of the code this page was sent with, which /api/state gives as it is now
 const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship, the speck run switch and each setting saved
 const $ = id => document.getElementById(id);
 // 0283: what a blocked question's build says about its options, as speck status --json gives it. Nothing for an unknown.
@@ -1784,7 +1804,7 @@ function renderSettings() {
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', leaveSettings);
-  const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close)];
+  const kids = [el('div', 'top', null, el('h3', null, 'Settings'), close), foremanGroup()]; // 0285: the Foreman first
   if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
   else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
@@ -2152,6 +2172,7 @@ async function sendSettings() {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (tipTag !== null) closeTip();
+  else if (foremanOpen && settingsView === null) { foremanOpen = false; render(); } // 0285: the Foreman's detail
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
   else if (settingsView !== null && settingTip !== null) showSettingTip(null, false); // 0268: the explanation first, then the view
   else if (settingsView !== null) leaveSettings();
@@ -2997,28 +3018,88 @@ function render() {
   more.setAttribute('aria-expanded', String(moreStats));
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
-  // Whether speck run is on, shown as Auto-build (0144): when it's off, setting a ticket ready starts nothing. The
-  // indicator is itself the switch (0150). The button stays put and only its contents change, so it keeps focus.
-  // 0199: it says only whether Auto-build is on or off, with the builder in place of the square (0163), hopping while
-  // any build or ship is at work. The Build list says what each ticket is doing.
-  const on = !!(state.run && state.run.on);
+  // 0285: the Foreman, speck run's one status for the whole pipeline, in place of the speck run switch, which is in
+  // Settings now. Pressing it opens its detail. The button stays put and only its contents change, so it keeps focus,
+  // with the builder in place of a square (0163), hopping while any build or ship is at work.
+  const f = foremanOf(state), stale = pageStale(state);
   const run = $('run');
   run.hidden = false;
-  run.className = `run-state ${on ? 'run-on' : 'run-off'}`;
+  run.className = `run-state fm-${stale ? 'warn' : f.tone}`;
   const builder = el('canvas', `mini ${atWork(m.queue, shippingId) ? 'hop' : 'still'}`);
   builder.setAttribute('aria-hidden', 'true');
-  run.replaceChildren(builder, el('span', 'label',
-    runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Auto-build on' : 'Auto-build off'));
+  run.replaceChildren(builder, el('span', 'label', stale ? 'Reload page' : f.word));
   drawBadges(builder);
-  run.setAttribute('aria-pressed', String(on));
-  run.disabled = !!runSwitching;
-  run.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets';
+  run.setAttribute('aria-expanded', String(foremanOpen));
+  run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
+  renderForeman(f, stale);
+  drawRunSwitch();
   if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
 }
 $('run').addEventListener('click', e => {
   e.stopPropagation();
-  if (state && !$('run').disabled) switchRun(state.run && state.run.on ? 'off' : 'on');
+  foremanOpen = !foremanOpen;
+  render();
 });
+// 0285: the Foreman's status and detail, as the server worked them out from speck run's own record. A server without
+// it (older code) gets what the page can tell: on or off.
+let foremanOpen = false; // whether the Foreman's detail is open
+function foremanOf(st) {
+  const f = st && st.foreman && typeof st.foreman === 'object' ? st.foreman : null;
+  const on = !!(st && st.run && st.run.on), list = v => (Array.isArray(v) ? v : []);
+  const tone = f && typeof f.tone === 'string' ? f.tone : on ? 'idle' : 'off';
+  return { word: f && typeof f.word === 'string' ? f.word : on ? 'Idle' : 'Off', tone, on,
+    building: list(f && f.building), ready: list(f && f.ready), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked) };
+}
+// 0285: true when the server's code is newer than the code this page was sent with.
+const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
+function renderForeman(f, stale) {
+  const box = $('foreman');
+  box.hidden = !foremanOpen;
+  if (!foremanOpen) { box.replaceChildren(); return; }
+  const kids = [];
+  if (stale) {
+    const reload = el('button', 'reload', 'Reload page');
+    reload.type = 'button';
+    reload.id = 'foreman-reload';
+    reload.addEventListener('click', () => location.reload());
+    kids.push(el('p', 'stale', 'The panel is running newer code than this page shows. ', reload));
+  }
+  const item = (id, ...rest) => el('li', null, null, el('code', null, id), ...rest.map(r => (typeof r === 'string' ? el('span', null, ` ${r}`) : r)));
+  const section = (title, items, none) => [el('h4', null, title), items.length ? el('ul', null, null, ...items) : el('p', 'none', none)];
+  kids.push(...section('Building', f.building.map(id => item(String(id))), 'Nothing is building.'));
+  kids.push(...section('Ready, not building', f.ready.map(r => item(String(r.id), String(r.why || ''))), 'No ready ticket is waiting.'));
+  const s = f.ship, ship = [];
+  if (s && typeof s.running === 'string' && s.running) ship.push(item(s.running, 'is shipping.'));
+  if (s && s.hold) ship.push(el('li', null, `Shipping is ${String(s.hold.message || 'on hold')}`));
+  for (const r of s && Array.isArray(s.refused) ? s.refused : []) ship.push(item(String(r.id), String(r.message || '')));
+  kids.push(...section('Shipping', ship, f.on ? 'Nothing is waiting to ship.' : 'speck run is off, so nothing ships by itself.'));
+  kids.push(...section('Blocked', f.blocked.map(b => item(String(b.id), String(b.title || ''),
+    b.question ? el('p', 'question', String(b.question)) : null)), 'Nothing is blocked.'));
+  box.replaceChildren(...kids);
+}
+// 0285: the speck run switch, in the Settings view's Foreman group. One button, kept between redraws so it keeps focus,
+// working as the header's did (0150): it reads Auto-build on or off, and a press turns speck run off or on.
+const runSwitchButton = el('button', 'run-switch');
+runSwitchButton.type = 'button';
+runSwitchButton.id = 'run-switch';
+runSwitchButton.addEventListener('click', e => {
+  e.stopPropagation();
+  if (state && !runSwitchButton.disabled) switchRun(state.run && state.run.on ? 'off' : 'on');
+});
+function drawRunSwitch() {
+  const on = !!(state && state.run && state.run.on);
+  runSwitchButton.className = `run-switch ${on ? 'run-on' : 'run-off'}`;
+  runSwitchButton.textContent = runSwitching ? (runSwitching === 'on' ? 'Starting…' : 'Pausing…') : on ? 'Auto-build on' : 'Auto-build off';
+  runSwitchButton.setAttribute('aria-pressed', String(on));
+  runSwitchButton.disabled = !!runSwitching || !state;
+  runSwitchButton.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets';
+}
+function foremanGroup() {
+  drawRunSwitch();
+  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Foreman')),
+    el('div', 'run-row', null, el('div', 'row', null, el('span', 'label', 'speck run'), runSwitchButton),
+      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.')));
+}
 // 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.
 async function switchRun(to) {
