@@ -3,34 +3,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn, spawnSync } from 'node:child_process';
-import { ROOT, env, runRepo, until, alive, leftRunning } from './support/run.mjs';
+import { ROOT, runRepo, until, alive } from './support/run.mjs';
 import { shipRepo } from './support/ship.mjs';
 import { cliCopy } from './support/panel.mjs';
 import { waitingSays, failedSays } from '../scripts/run-switch.mjs';
+import { startRun, stop, lockPid, childrenOf, count, edit, SWITCHED, mark, watching, setReady } from './support/run-switch.mjs';
 
 // ---------- 0247: speck run switches to its new code once it's idle ----------
-
-// speck run from a copy of the CLI, in a process group of its own, as a terminal starts it, so Ctrl+C can be sent to
-// the whole group.
-function startRun(dir, cli, extraEnv = {}) {
-  const child = spawn(process.execPath, [cli, 'run'], { cwd: dir, detached: true, env: { ...env, ...extraEnv } });
-  let out = '';
-  child.stdout.on('data', d => { out += d; });
-  child.stderr.on('data', d => { out += d; });
-  const exited = new Promise(res => child.on('exit', code => res(code)));
-  return { child, out: () => out, exited };
-}
-const stop = async run => { if (run.child.exitCode === null) { try { process.kill(-run.child.pid, 'SIGINT'); } catch { /* gone */ } await run.exited; } };
-const lockPid = dir => { try { return Number(fs.readFileSync(path.join(dir, 'speck', '.cache', 'runs', 'run.lock'), 'utf8')); } catch { return null; } };
-const childrenOf = pid => spawnSync('ps', ['-o', 'pid=', '--ppid', String(pid)], { encoding: 'utf8' }).stdout.trim().split('\n').filter(Boolean).map(Number);
-const count = (text, part) => text.split(part).length - 1;
-// Changes a file of the copied CLI's code. Marked in run-switch.mjs, where the line is.
-const edit = (cli, file, fn) => { const f = path.join(path.dirname(cli), file); fs.writeFileSync(f, fn(fs.readFileSync(f, 'utf8'))); };
-// The line speck run on new code says as it takes over, marked so the test knows which code said it.
-const SWITCHED = 'speck run switched to the new code.';
-const mark = tag => src => src.replace(/'speck run switched to the new code\.[^']*'/, `'${SWITCHED} ${tag}'`);
-const watching = run => until(() => run.out().includes('speck run: watching for ready tickets'));
 
 test('0247 AC1, AC3: a change to the code\'s content switches it, the same content saved again doesn\'t, and the lock, output and Ctrl+C stay', async () => {
   const r = runRepo({ tickets: [['0001', { status: 'draft' }]] });
@@ -87,53 +66,6 @@ test('0247 AC3: the panel\'s off switch, SIGINT to the process it started, stops
   } finally { await stop(run); }
 });
 
-test('0247 AC2: it waits for the running build, saying so once, starts nothing new meanwhile, and the new code carries on', async () => {
-  const r = runRepo({ tickets: [['0001', {}], ['0002', {}]], max: 1 });
-  const { cli } = cliCopy();
-  const run = startRun(r.dir, cli, { FAKE_MS: '1500' });
-  try {
-    assert.ok(await until(() => r.calls().length === 1), run.out());
-    edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes('will switch to the new code')), run.out());
-    assert.ok(run.out().includes(waitingSays(['0001'], null)), run.out());
-    assert.ok(await until(() => r.calls().length === 2, 10000), run.out());
-    const out = run.out();
-    assert.equal(count(out, 'will switch to the new code'), 1, out);
-    assert.ok(out.indexOf('0001 build exited with code 0.') < out.indexOf(`${SWITCHED} v2`), out);
-    assert.ok(out.indexOf('0001 build exited with code 0.') < out.indexOf('Launched 0002'), `0002 is launched only once 0001 has ended:\n${out}`);
-    assert.ok(!out.includes('couldn\'t switch'), `so by the new code:\n${out}`);
-    assert.equal(count(out, 'Launched 0001'), 1, `the new code doesn't launch 0001 again:\n${out}`);
-  } finally { await stop(run); }
-});
-
-// Sets a draft ticket ready and commits it, for speck run to launch.
-const setReady = (r, id) => {
-  const t = path.join(r.dir, 'speck', 'tickets', `${id}-t.md`);
-  fs.writeFileSync(t, fs.readFileSync(t, 'utf8').replace('status: draft', 'status: ready'));
-  r.g('commit', '-qam', `ready ${id}`);
-};
-
-test('0247 AC1, AC2: it waits for a build it adopted, naming it once, launches nothing meanwhile, then switches', async () => {
-  const r = runRepo({ tickets: [['0002', { status: 'draft' }]], max: 2 });
-  const left = leftRunning(r.dir, '0001');
-  const { cli } = cliCopy();
-  const run = startRun(r.dir, cli);
-  try {
-    assert.ok(await until(() => run.out().includes('0001 is already being built')), run.out());
-    edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(waitingSays(['0001'], null))), run.out());
-    setReady(r, '0002');
-    await new Promise(res => setTimeout(res, 600));
-    assert.equal(r.calls().length, 0, `nothing is launched while it waits:\n${run.out()}`);
-    process.kill(left.pid, 'SIGKILL');
-    assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`)), run.out());
-    assert.ok(await until(() => r.calls().length === 1), run.out());
-    const out = run.out();
-    assert.equal(count(out, 'will switch to the new code'), 1, out);
-    assert.ok(out.indexOf('0001 build (session old-0001') < out.indexOf(`${SWITCHED} v2`), out);
-  } finally { try { process.kill(left.pid, 'SIGKILL'); } catch { /* gone */ } await stop(run); }
-});
-
 test('0247 AC1, AC2: it waits for the ship it started, naming it once, then switches', async () => {
   const r = shipRepo({ test: 'sleep 1.5' });
   const cfg = path.join(r.dir, 'speck', 'config.yml');
@@ -144,7 +76,7 @@ test('0247 AC1, AC2: it waits for the ship it started, naming it once, then swit
   try {
     assert.ok(await until(() => run.out().includes('Shipping 0001')), run.out());
     edit(cli, 'run-switch.mjs', mark('v2'));
-    assert.ok(await until(() => run.out().includes(waitingSays([], '0001'))), run.out());
+    assert.ok(await until(() => run.out().includes(waitingSays('0001'))), run.out());
     assert.ok(await until(() => run.out().includes(`${SWITCHED} v2`), 20000), run.out());
     const out = run.out();
     assert.equal(count(out, 'will switch to the new code'), 1, out);
@@ -185,10 +117,10 @@ test('0247 AC4: new code that fails getting ready leaves the old one running, th
   } finally { await stop(run); }
 });
 
-test('0247 AC2: what it says names each build and the ship it waits for', () => {
-  assert.equal(waitingSays(['0001', '0003'], '0002'), 'speck run\'s code has changed, so it will switch to the new code when its running builds and ships have ended: the build of 0001, the build of 0003 and the ship of 0002. It starts no new build or ship until then.');
-  assert.equal(waitingSays([], '0002'), 'speck run\'s code has changed, so it will switch to the new code when its running builds and ships have ended: the ship of 0002. It starts no new build or ship until then.');
-  assert.equal(waitingSays([], null), 'speck run\'s code has changed, so it\'s switching to the new code.');
+// 0301: it waits for the ship only, so it names only that (run-switch-0301.test.mjs).
+test('0247 AC2: what it says names the ship it waits for', () => {
+  assert.ok(waitingSays('0002').includes('the ship of 0002'));
+  assert.equal(waitingSays(null), 'speck run\'s code has changed, so it\'s switching to the new code.');
 });
 
 test('0247 AC4: new code that can\'t start leaves the old one running, said once with the reason, and the next change switches', async () => {
