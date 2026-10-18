@@ -1,7 +1,7 @@
 ---
 id: "0296"
 title: "Ship a pull request mode ticket by merging its pull request"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0295"]               # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T14:26:55.074Z"
 
 ---
 # 0296 · Ship a pull request mode ticket by merging its pull request
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In pull request mode (0295), an approved ticket has a pull request, but speck has no way to ship it: merging through GitHub, tidying up, and doing nothing more when you've already merged it on GitHub.
