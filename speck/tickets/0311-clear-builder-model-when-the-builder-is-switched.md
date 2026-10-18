@@ -37,6 +37,7 @@ When the builder is switched, a `builder_model` the new builder doesn't offer is
 
 ## Notes
 - From `speck/ideas/2026-10-18-clear-builder-model-when-the-builder-is-switched.md` (inbox, from 0293). Settings are saved in `scripts/settings.mjs` and `scripts/config.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
