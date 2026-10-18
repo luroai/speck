@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0300"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:59:17.014Z"
-approved: "2026-10-18T14:07:53.651Z"
+approved: "2026-10-18T14:11:25.134Z"
 
 ---
 # 0301 · Switch speck run to new code without waiting for builds to end
@@ -56,12 +56,13 @@ Worth keeping an eye on: once speck run has switched, it can't tell how a carrie
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 126,909
-- Elapsed since build started: 9 min
+- Reviewer tokens: 391,786
+- Elapsed since build started: 12 min
 - Changed lines: 114 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: after the switch, the new code isn't a carried build's parent, so it can't know its exit code. A build that exits by itself without writing a result to its log (a crash) is resumed once, as a killed build, where the old code would have handed it to the Foreman agent.
@@ -128,6 +129,71 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The change switches speck run to updated code without waiting for builds, while preserving their capacity limits, visibility and completion handling. The relevant tests passed, including recovery when the new code cannot start. I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "33a5d68174cc5ebed58cfa08d3fc6f60699af846",
+    "merge": true,
+    "thread_id": "01a14f56-8ff0-73d1-99b8-28841cac671f",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 263684,
+      "cached_input_tokens": 193024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1193,
+      "reasoning_output_tokens": 155
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T14:11:22.600Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run-switch.mjs codeSwitch waits only for the running ship before handing over. Passing 0301 AC1 integration tests verify switching while builds remain alive and after a ship ends."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/run.mjs adoptEarlierBuilds adds carried builds to running and adopted; checkAdopted watches them. Passing 0301 AC2 tests verify capacity limits and the building record used by the panel."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0301 AC3 tests exercise shipping an approved ticket after its carried build ends, handling a stopped build left building, and handling completion when successor startup fails. scripts/run.mjs preserves these completion paths."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "codeSwitch waits while ships.running() names a ship; shipQueue.check prevents concurrent ships. The passing 0301 AC4 integration test verifies one named waiting message and a new build starting while the ship runs."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The handover adopts existing processes without signalling or relaunching them. The passing 0301 AC5 test verifies the original process survives and its build launches once."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change retains the intended behaviour and passes the relevant tests. The updated 0300 test preserves its original purpose: an outside conversation can continue after approval without occupying a build slot. No blocking issues found."
   }
 }
 ```
