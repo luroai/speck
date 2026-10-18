@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0297", "0283", "0284", "0285", "0286", "0287", "0294", "0295", "0296"]  # ticket ids that must be done first
+after: ["0297", "0283", "0284", "0285", "0286", "0287", "0294", "0295", "0296", "0299", "0300"]  # ticket ids that must be done first
 created: 2026-10-18
 
 ---
