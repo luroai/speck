@@ -71,7 +71,9 @@ test('0059 AC3: with panel.html missing, / gives a plain-text 500 naming the fil
     assert.doesNotMatch(res.body, /\n\s+at /, 'no stack trace');
     const api = await request(port, { pathName: '/api/state' });
     assert.equal(api.status, 200);
-    assert.deepEqual(JSON.parse(api.body), JSON.parse(r.run('status', '--json').stdout));
+    const { foreman, ...board } = JSON.parse(api.body); // 0285: the Foreman's status, which the board doesn't have
+    assert.equal(typeof foreman.word, 'string');
+    assert.deepEqual(board, JSON.parse(r.run('status', '--json').stdout));
     assert.equal(p.child.exitCode, null, 'still running');
     fs.writeFileSync(c.page, original);
     const back = await request(port);

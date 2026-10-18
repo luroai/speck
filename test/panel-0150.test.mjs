@@ -1,15 +1,17 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, deferred, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { switchPage, deferred, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
 
 // ---------- 0150: tidy the panel header ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
 const header = () => page().match(/<header>([\s\S]*?)<\/header>/)[1];
-const runOf = p => p.byId('run');
-const dotOf = p => p.all(runOf(p)).find(n => /\bmini\b/.test(n.className || '')); // 0163: the builder in place of the square
+// 0285: the header button shows the Foreman now, and the Auto-build switch is in the Settings view's Foreman group.
+const headerOf = p => p.byId('run');
+const runOf = p => p.runSwitch();
+const dotOf = p => p.all(headerOf(p)).find(n => /\bmini\b/.test(n.className || '')); // 0163: the builder in place of the square
 const ON = 'Pause Auto-build: ready tickets wait';
 const OFF = 'Start Auto-build: build ready tickets';
 
@@ -17,14 +19,14 @@ test('0150 AC1: the header has no live, connecting… or disconnected indicator'
   const h = header();
   assert.doesNotMatch(h, /id="pills"/);
   assert.doesNotMatch(h, /connecting…|disconnected|\blive ·/);
-  const p = fakePage([state(null), new Error('down'), state(null)]);
+  const p = switchPage([state(null), new Error('down'), state(null)]);
   await p.settle();
   assert.equal(p.byId('pills').children.length, 0, 'nothing is put in a connection indicator');
-  assert.doesNotMatch(runOf(p).textContent, /live|disconnected/);
+  assert.doesNotMatch(headerOf(p).textContent, /live|disconnected/);
 });
 
 test('0150 AC1: when the panel can\'t reach its server, the banner under the header still says so, and it goes when it\'s back', async () => {
-  const p = fakePage([state(null), new Error('down'), state(null)]);
+  const p = switchPage([state(null), new Error('down'), state(null)]);
   await p.settle();
   assert.equal(p.byId('offline').hidden, true);
   p.timers.shift()(); await p.settle();
@@ -41,18 +43,18 @@ test('0150 AC2: Auto-build is one button in the header, with no separate Pause o
   assert.match(h, /<button class="run-state" id="run" type="button"/);
   assert.doesNotMatch(h, /id="run-switch"/);
   for (const run of [null, { on: true, pid: 7 }]) {
-    const p = fakePage([state(run)]);
+    const p = switchPage([state(run)]);
     await p.settle();
-    assert.doesNotMatch(runOf(p).textContent, /ready tickets wait|Pause|Start/);
-    assert.equal(p.all(runOf(p)).filter(n => n.tagName === 'button').length, 0, 'no button inside it');
+    assert.doesNotMatch(headerOf(p).textContent, /ready tickets wait|Pause|Start/);
+    assert.equal(p.all(headerOf(p)).filter(n => n.tagName === 'button').length, 0, 'no button inside it');
     assert.equal(p.byId('run-switch').children.length, 0, 'nothing is put in a separate switch');
   }
 });
 
 test('0150 AC2: on, it reads "Auto-build on" with a green square, aria-pressed true and a tooltip saying a click pauses it', async () => {
-  const p = fakePage([state({ on: true, pid: 7 })]);
+  const p = switchPage([state({ on: true, pid: 7 })]);
   await p.settle();
-  assert.equal(runOf(p).hidden, false);
+  assert.equal(headerOf(p).hidden, false);
   assert.equal(runOf(p).textContent, 'Auto-build on');
   assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
   assert.equal(runOf(p).attrs['aria-pressed'], 'true');
@@ -61,7 +63,7 @@ test('0150 AC2: on, it reads "Auto-build on" with a green square, aria-pressed t
 });
 
 test('0150 AC2: off, it reads "Auto-build off" with a red square, aria-pressed false and a tooltip saying a click starts it', async () => {
-  const p = fakePage([state(null)]);
+  const p = switchPage([state(null)]);
   await p.settle();
   assert.equal(runOf(p).textContent, 'Auto-build off');
   assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
@@ -70,7 +72,7 @@ test('0150 AC2: off, it reads "Auto-build off" with a red square, aria-pressed f
 });
 
 test('0150 AC2: clicking it starts or pauses speck run as Start and Pause did, with the token', async () => {
-  const p = fakePage([state(null), { ok: true, run: { on: true, pid: 9 } }, { ok: true, run: { on: false, pid: null } }]);
+  const p = switchPage([state(null), { ok: true, run: { on: true, pid: 9 } }, { ok: true, run: { on: false, pid: null } }]);
   await p.settle();
   p.press(runOf(p));
   await p.settle();
@@ -89,7 +91,7 @@ test('0150 AC2: clicking it starts or pauses speck run as Start and Pause did, w
 test('0150 AC2: while a request is pending it reads "Starting…" or "Pausing…" and can\'t be clicked', async () => {
   for (const [run, label, url] of [[null, 'Starting…', '/api/run/on'], [{ on: true, pid: 7 }, 'Pausing…', '/api/run/off']]) {
     const answer = deferred();
-    const p = fakePage([state(run), answer]);
+    const p = switchPage([state(run), answer]);
     await p.settle();
     p.press(runOf(p));
     await p.settle();
@@ -102,7 +104,7 @@ test('0150 AC2: while a request is pending it reads "Starting…" or "Pausing…
 });
 
 test('0150 AC2: if starting fails, the reason shows under the header', async () => {
-  const p = fakePage([state(null), { status: 409, body: { error: 'speck run is already running.' } }]);
+  const p = switchPage([state(null), { status: 409, body: { error: 'speck run is already running.' } }]);
   await p.settle();
   p.press(runOf(p));
   await p.settle();
@@ -138,7 +140,7 @@ async function withPage(run, width, fn) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && /Auto-build/.test(document.getElementById('run').textContent)`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && document.querySelector('#run .label')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -158,21 +160,24 @@ const press = async (b, key, code, keyCode) => {
   await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: keyCode });
 };
 
+// 0285: the switch is in the Settings view's Foreman group now.
 test('0150 AC2: pressing Enter or Space on the focused button starts or pauses speck run, and it keeps focus through refreshes', skip, async () => {
   await withPage(null, 1280, async b => {
-    await b.js(`document.getElementById('run').focus()`);
+    await b.js(`document.getElementById('settings-open').click()`);
+    await b.until(`document.getElementById('run-switch') && !/Loading the settings/.test(document.getElementById('settings').textContent)`, 'the Settings view');
+    await b.js(`document.getElementById('run-switch').focus()`);
     // Two refreshes later it's still the focused element, so a key press reaches it.
     await b.js(`window.seen = document.getElementById('run').firstChild`);
     await b.until(`document.getElementById('run').firstChild !== window.seen`, 'a refresh');
-    assert.equal(await b.js(`document.activeElement === document.getElementById('run')`), true, 'still focused after a refresh');
+    assert.equal(await b.js(`document.activeElement === document.getElementById('run-switch')`), true, 'still focused after a refresh');
     await press(b, 'Enter', 'Enter', 13);
-    await b.until(`window.runCalls.length === 1 && document.getElementById('run').textContent === 'Auto-build on'`, 'Enter to start it');
+    await b.until(`window.runCalls.length === 1 && document.getElementById('run-switch').textContent === 'Auto-build on'`, 'Enter to start it');
     assert.deepEqual(await b.js('window.runCalls'), ['on']);
-    assert.equal(await b.js(`document.getElementById('run').getAttribute('aria-pressed')`), 'true');
-    await b.until(`!document.getElementById('run').disabled`, 'the request to finish');
-    await b.js(`document.getElementById('run').focus()`);
+    assert.equal(await b.js(`document.getElementById('run-switch').getAttribute('aria-pressed')`), 'true');
+    await b.until(`!document.getElementById('run-switch').disabled`, 'the request to finish');
+    await b.js(`document.getElementById('run-switch').focus()`);
     await press(b, ' ', 'Space', 32);
-    await b.until(`window.runCalls.length === 2 && document.getElementById('run').textContent === 'Auto-build off'`, 'Space to pause it');
+    await b.until(`window.runCalls.length === 2 && document.getElementById('run-switch').textContent === 'Auto-build off'`, 'Space to pause it');
     assert.deepEqual(await b.js('window.runCalls'), ['on', 'off']);
   });
 });

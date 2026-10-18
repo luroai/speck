@@ -39,6 +39,7 @@ The panel's header shows the Foreman, speck run's single status for the whole pi
 ## Notes
 - From `speck/ideas/2026-10-17-a-foreman-that-keeps-the-work-moving.md`, step 1. The switch is `.run-state` in `templates/panel.html` and `panelRunOn` in `scripts/panel.mjs`.
 - Failing before this build: none
+- Self-check: named the record run.foreman.json, not <name>.json, so speck run never adopts it as a build's run record; a record counts only while the speck run that wrote it holds the lock; the detail's heading is "Blocked" (0034 keeps "Needs you" out of the page as a heading); its headings are 12 px (0161).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

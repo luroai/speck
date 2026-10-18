@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { fakePage, page, startPanel, stop, freePort, request } from './support/panel.mjs';
+import { fakePage, switchPage, page, startPanel, stop, freePort, request } from './support/panel.mjs';
 import { runRepo, startRun, stopRun, until } from './support/run.mjs';
 
 // ---------- 0127: the panel shows whether speck run is on ----------
@@ -13,7 +13,8 @@ const lockOf = dir => path.join(dir, 'speck', '.cache', 'runs', 'run.lock');
 // /api/state has run only while speck run is on, so it still matches speck status --json otherwise (0031): no run means off.
 const apiRun = async port => JSON.parse((await request(port, { pathName: '/api/state' })).body).run;
 const OFF = undefined;
-const runPill = p => p.all(p.byId('run')).find(n => /\brun-(on|off)\b/.test(n.className || ''));
+// 0285: the Auto-build switch, in the Settings view's Foreman group now.
+const runPill = p => [p.runSwitch()].find(n => /\brun-(on|off)\b/.test(n.className || ''));
 const state = on => ({ tickets: [], ideas: [], resume_command: '', ...(on ? { run: { on: true, pid: 4242 } } : {}) });
 
 test('0127 AC1: while speck run is running, /api/state reports it on', async () => {
@@ -29,7 +30,7 @@ test('0127 AC1: while speck run is running, /api/state reports it on', async () 
 });
 
 test('0127 AC1: the page shows speck run is on when the state says so', async () => {
-  const p = fakePage([state(true)]);
+  const p = switchPage([state(true)]);
   await p.settle();
   const pill = runPill(p);
   assert.ok(pill, 'a speck run pill is in the header');
@@ -60,7 +61,7 @@ test('0127 AC2: after speck run stops, /api/state reports it off', async () => {
 
 test('0127 AC2: the page shows speck run is off when the state has no run, or a run that is not on', async () => {
   for (const s of [state(false), { ...state(false), run: { on: false, pid: null } }]) {
-    const p = fakePage([s]);
+    const p = switchPage([s]);
     await p.settle();
     const pill = runPill(p);
     assert.ok(pill, 'a speck run pill is in the header');
@@ -70,7 +71,7 @@ test('0127 AC2: the page shows speck run is off when the state has no run, or a 
 });
 
 test('0127 AC3: the page shows the new state at its next refresh, without reloading', async () => {
-  const p = fakePage([state(false), state(true), state(false)]);
+  const p = switchPage([state(false), state(true), state(false)]);
   await p.settle();
   assert.equal(runPill(p).textContent, 'Auto-build off');
   p.timers.shift()(); await p.settle();

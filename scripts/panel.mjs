@@ -16,6 +16,7 @@ import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
 import { panelSettings, panelSettingRequest, panelSaveRequest, reviewerModels, builderModels } from './settings.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
+import { foremanView, readForeman } from './foreman.mjs';
 import { findAgentsAsync } from './agents.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Ship, the speck run switch and a setting) ----------
@@ -250,8 +251,12 @@ export async function panelServer() {
   let shipping = null; // the id of the ticket a Ship button is shipping, until speck ship has finished
   let switching = false; // true while the speck run switch is turning it on or off
   const pageFile = path.join(TEMPLATES, 'panel.html');
-  const page = () => fs.readFileSync(pageFile, 'utf8')
-    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token);
+  // 0285: the code a page was sent with: this server's code and the page file. /api/state gives the stamp of the code
+  // now, so a page sent before either changed can say it's out of date.
+  const stampOf = html => crypto.createHash('sha256').update(running).update('\0').update(html).digest('hex').slice(0, 16);
+  const page = () => { const html = fs.readFileSync(pageFile, 'utf8'); return html.replace('{{page}}', () => stampOf(html))
+    .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token); };
+  const pageNow = () => { try { return { page: stampOf(fs.readFileSync(pageFile, 'utf8')) }; } catch { return {}; } };
   // With --url, its one address too: the tunnel in front of the panel sends its hostname as the Host, with no port.
   const origins = new Set([`http://127.0.0.1:${port}`, `http://localhost:${port}`, ...(url ? [url.origin] : [])]);
   // Only these Host headers are served, so a web page on another name that resolves here (DNS rebinding) gets nothing.
@@ -279,7 +284,12 @@ export async function panelServer() {
   const boards = boardVersions(), stateOf = out => {
     if (out.error) return { status: 500, body: JSON.stringify({ error: out.error }) };
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
-    try { const run = runState(runs); const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}) }); return { status: 200, body: snap.body, snap }; }
+    // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
+    try {
+      const run = runState(runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets });
+      const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...pageNow() });
+      return { status: 200, body: snap.body, snap };
+    }
     catch (e) { return { status: 500, body: JSON.stringify({ error: e instanceof SpeckError ? e.message : String(e?.message || e) }) }; }
   };
   const answerState = (res, have) => {

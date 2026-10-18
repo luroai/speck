@@ -71,6 +71,7 @@ const HAND_BACK = { 13: 'conflict', 16: 'tests', 14: 'base' };
 // a ship (launchShip), `say` prints a line, and `handBack` gets { id, kind, why, head } for a refusal the ticket's
 // build has steps for, head being its branch as the ship tried it.
 // A ticket for which `waiting(id)` is true has a hand-back still to run, so it isn't shipped until that has run.
+// state(tickets) is what shipping is waiting for, for the Foreman's record (0285).
 export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, handBack = () => {}, waiting = () => false } = {}) {
   const runs = sharedCacheDir(repo, 'runs');
   const base = cfg.base_branch;
@@ -78,10 +79,12 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
   let current = null; // the ship this speck run has going
   let hold = null; // the base branch's commit a ship found failing (exit 14): only fix tickets ship while it's still there
   const killed = new Map(); // 0212: each ticket's refs when a ship of it killed partway was last tried again at once
+  const said = new Map(); // 0285: each ticket's message from its last try that didn't ship, and why the hold started
+  let holdWhy = '';
 
   const ended = (id, prev, refs, log, since, code, error) => {
     current = null;
-    if (code === 0) return say(`Shipped ${id}.`);
+    if (code === 0) { said.delete(id); return say(`Shipped ${id}.`); }
     // Another ship started just before it: not a try, so it's tried again once that one has ended.
     if (code === 15) return prev ? last.set(id, prev) : last.delete(id);
     // The record's message is this ship's only if the ship took the record after it started.
@@ -98,8 +101,10 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
     // 0216: merged but not pushed, so the ticket is done and won't be tried again: its message says how to push it.
     if (!error && rec?.unpushed && rec.started >= since) return say(`${id} merged into ${base} but wasn't pushed: ${why}`);
     say(`${id} didn't ship: ${why}\nspeck run will try it again once ${base} or its branch has a new commit.`);
+    said.set(id, why);
     if (code === 14) {
       hold = headOf(repo, base); // as the ship ended: it may have tested commits made while it ran
+      holdWhy = `${id}'s ship found ${base}'s own tests failing`;
       say(`Shipping is on hold until ${base} passes: speck run won't start another ship, other than a fix ticket's, until ${base} has a new commit.`);
     }
     if (!error && HAND_BACK[code]) handBack({ id, kind: HAND_BACK[code], why, head: refs.head });
@@ -120,6 +125,7 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
         const message = earlierTry(repo, runs, t.id, refs);
         if (message !== null) {
           last.set(t.id, refs);
+          said.set(t.id, message || 'its last auto-ship didn\'t finish');
           say(`${t.id}'s last auto-ship didn't finish${message ? `: ${message}` : '.'}\nspeck run will ship it once ${base} or its branch has a new commit.`);
         }
       }
@@ -136,5 +142,21 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
     }
   };
 
-  return { check, running: () => current, note: () => (current ? ` The ship of ${current} is still running, and carries on to its end.` : '') };
+  // 0285: shipping's state: the ship running, the hold and each ticket refused that waits for a new commit, with its
+  // message. A ticket the hold covers is left out of `refused`, and one waiting for its hand-back says so.
+  const state = tickets => {
+    const refused = [];
+    for (const t of shipOrder(tickets)) {
+      if (t.id === current || (hold !== null && t.type !== 'fix')) continue;
+      if (waiting(t.id)) { refused.push({ id: t.id, message: 'handed back to its build, which is working on it' }); continue; }
+      const prev = last.get(t.id);
+      if (!prev) continue;
+      const refs = refsOf(repo, cfg, t.id);
+      if (prev.base === refs.base && prev.head === refs.head)
+        refused.push({ id: t.id, message: `waiting for a new commit on ${base} or its branch. Its last try: ${said.get(t.id) || 'it didn\'t ship'}` });
+    }
+    return { running: current, hold: hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` }, refused };
+  };
+
+  return { check, state, running: () => current, note: () => (current ? ` The ship of ${current} is still running, and carries on to its end.` : '') };
 }
