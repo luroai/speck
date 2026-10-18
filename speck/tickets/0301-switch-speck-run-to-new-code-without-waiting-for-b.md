@@ -38,6 +38,7 @@ speck run switches to new code as soon as no ship is running, without waiting fo
 
 ## Notes
 - The switch is in `scripts/run-switch.mjs` (0247), and builds are picked up after it by `adoptEarlierBuilds` in `scripts/run.mjs`, which 0300 makes run on every check.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
