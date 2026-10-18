@@ -1,7 +1,7 @@
 ---
 id: "0301"
 title: "Switch speck run to new code without waiting for builds to end"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T13:59:17.014Z"
 ---
 # 0301 · Switch speck run to new code without waiting for builds to end
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a shipped ticket changes speck's own code, speck run starts no new build or ship until every build it's running has ended, so it can switch to the new code. A ticket that's approved and ready to ship can wait a whole build for that. On 2026-10-18 it held up shipping most of the day: 0294 waited for 0300's build, and 0268 and 0269 waited for 0265's.
@@ -42,7 +42,13 @@ speck run switches to new code as soon as no ship is running, without waiting fo
 - Self-check: added a test that a build ending while new code fails to start is handled once the switch has failed; narrowed the brief to say a carried build's end is handled as for any build speck run watches but didn't start, since its exit code can't be known after the switch.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a shipped ticket changes speck itself, speck run now moves to the new version as soon as no ship is in progress, instead of waiting for every running build to finish. So an approved ticket no longer sits waiting for an unrelated build before it ships.
+
+Builds that were running carry on untouched: they still take up a build slot, still show as building in the panel, and when each one ends speck run deals with it as usual. If a ship is running when the change lands, speck run says once that it's waiting for that ship, and new builds can still start meanwhile.
+
+To see it, ship a ticket that changes speck while another build is running: speck run's log says it switched to the new code straight away, and the other build keeps going.
+
+Worth keeping an eye on: once speck run has switched, it can't tell how a carried-over build ended, only that it ended, so one that crashes partway is resumed once rather than handed to the Foreman.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,3 +58,72 @@ speck run switches to new code as soon as no ship is running, without waiting fo
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: after the switch, the new code isn't a carried build's parent, so it can't know its exit code. A build that exits by itself without writing a result to its log (a crash) is resumed once, as a killed build, where the old code would have handed it to the Foreman agent.
+- Follow-ups: none sent to the inbox.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1110b4543897b801d560c6350eb4f5bf3b4f0774",
+    "thread_id": "01a14f56-8ff0-73d1-99b8-28841cac671f",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 126200,
+      "cached_input_tokens": 75520,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 709,
+      "reasoning_output_tokens": 155
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T14:07:42.717Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run-switch.mjs codeSwitch waits only for busy()'s ship, then hands over running build IDs. Passing 0301 AC1 tests exercise switching during a build and after a ship ends."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/run.mjs handedOver/adoptEarlierBuilds adopts carried builds into running and adopted; checkAdopted watches their completion. Passing 0301 AC2 tests check build-slot limits and the Foreman building record used by the panel."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/run.mjs checkAdopted handles carried builds through the existing completion path. Passing 0301 AC3 tests exercise approved-ticket shipping, a stopped build left building, and completion while successor startup fails."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "codeSwitch returns without handing over while a ship runs; shipQueue.check refuses another ship while current is set. Passing 0301 AC4 integration test checks the named message occurs once and a new build starts before the ship ends."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The handover passes build IDs without signalling or relaunching their processes. The passing 0301 AC5 integration test verifies the original build remains alive through the switch and is launched only once."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change switches speck run to updated code without waiting for builds, while preserving their capacity limits, visibility and completion handling. The relevant tests passed, including recovery when the new code cannot start. I found no blocking issues."
+  }
+}
+```
+
+</details>
