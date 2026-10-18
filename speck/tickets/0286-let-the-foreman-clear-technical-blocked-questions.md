@@ -39,6 +39,8 @@ With the Foreman's Fixing setting on, speck run takes the recommendation for a b
 ## Notes
 - Never: set a ticket ready, approve work, or ship beyond what `auto_ship` covers.
 - Failing before this build: none
+- Self-check: the Foreman now skips a blocked ticket whose build speck run still has running (tried on a later check), rather than logging that it left the question for you; a refusal is worded as "didn't take its recommendation".
+- How it works: speck run's Foreman calls 0284's goWith with `by: 'foreman'`, so the Notes line says "chosen by the Foreman", and that line is how it knows it has already chosen once for the ticket. 0284's `blockedRepo` test helper moved to `test/support/blocked.mjs` to share it. Adding a setting changed the fixed setting lists in the 0257 and 0258 tests.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
