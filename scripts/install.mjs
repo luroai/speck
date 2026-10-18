@@ -147,7 +147,10 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   checks.push({ ...check('GitHub CLI (optional)', ghInstalled,
     'Not needed to build or ship. Install it from https://cli.github.com if you want to work with GitHub from the terminal.'), optional: true });
   const command = cfg.reviewer_options?.[reviewer]?.command;
-  if (typeof command === 'string' && command.trim()) {
+  if (!(typeof command === 'string' && command.trim()) && reviewer === 'claude') {
+    checks.push(check('Claude Code (reviews tickets)', onPath('claude'),
+      'Install Claude Code so `claude` is on your PATH, or set `reviewer: codex` in speck/config.yml.'));
+  } else if (typeof command === 'string' && command.trim()) {
     let first = '';
     try { first = splitCommand(command)[0] || ''; } catch { /* an unclosed quote: reported as not found */ }
     checks.push(check(`Reviewer command for "${reviewer}" (${first || 'empty'})`, Boolean(first) && onPath(first),

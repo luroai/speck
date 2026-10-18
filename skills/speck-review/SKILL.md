@@ -33,6 +33,14 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 
 This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, the diff, the test output and your response file. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
 
+**`claude`**
+
+```
+speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md
+```
+
+speck runs Claude Code itself, without a person and read-only, with the reviewer model (`--model`) and effort (`--effort`) if they're set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
+
 **Any reviewer with a `command`** under `reviewer_options` in `speck/config.yml`
 
 ```
@@ -75,6 +83,8 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 ```
 
 This resumes the same Codex session. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
+
+**claude:** run the same command, with `--response`. speck resumes the same Claude Code session, or, if resuming fails, says so in one line and starts a fresh one with the full history.
 
 **Reviewer with a `command`:** run the same command as for Codex, with `--response`. If the reviewer's config has `session_id_path` and `resume_command`, speck continues its session and sends only your response, the new diff and the tests. Otherwise, or if resuming fails, speck says so in one line and resends the round-1 prompt, every earlier verdict and response, then your new response and the diff since its last review. Either way, carry on as normal.
 

@@ -271,7 +271,7 @@ export function slugify(s) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'ticket';
 }
 
-// A claude-subagent reviewer is Claude, so it counts as the same model as a claude builder.
+// A claude-subagent reviewer is Claude, so it counts as the same model as a claude builder, as a claude reviewer (0292) does.
 export const modelFamily = agent => agent === 'claude-subagent' ? 'claude' : agent;
 
 // ---------- diff size ----------
