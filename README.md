@@ -224,7 +224,7 @@ reviewer_options:
 
 To let later rounds continue the reviewer's own session instead of resending everything, add `session_id_path` (where the session id is in its output) and a `resume_command` with `{session}`. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode. Flags change, so check your tool's current ones.
 
-Claude Code needs no command: set `reviewer: claude` and speck runs it for you, whatever the builder, so a Codex or Cursor build can be reviewed by Claude. It runs without a person in Claude Code's `dontAsk` permission mode, which runs read-only commands and denies anything else rather than asking, with its file-writing tools taken away, and later rounds resume the same session. Allow rules in your project's own Claude Code settings still apply. Set `allow_same_model_review: true` if Claude is also the builder, unless `builder_model` and `reviewer_model` are both set and differ.
+Claude Code needs no command: set `reviewer: claude` and speck runs it for you, whatever the builder, so a Codex or Cursor build can be reviewed by Claude. It runs without a person in Claude Code's `dontAsk` permission mode, which runs read-only commands and denies anything else rather than asking, with its file-writing tools taken away and without your own Claude Code settings, so no allow rule in them lets it change files. Later rounds resume the same session. Set `allow_same_model_review: true` if Claude is also the builder, unless `builder_model` and `reviewer_model` are both set and differ.
 
 ## Repo layout
 

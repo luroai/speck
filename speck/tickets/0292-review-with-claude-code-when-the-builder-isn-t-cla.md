@@ -1,7 +1,7 @@
 ---
 id: "0292"
 title: "Review with Claude Code when the builder isn't Claude"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T10:54:29.066Z"
 ---
 # 0292 · Review with Claude Code when the builder isn't Claude
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 With Codex or Cursor as the builder, the reviewer should come from another family, and Claude is the obvious one. But speck's Claude reviewer (`claude-subagent`) is started by the builder with a tool only Claude Code has, so a Codex or Cursor builder can't use it.
@@ -37,7 +37,7 @@ With Codex or Cursor as the builder, the reviewer should come from another famil
 
 ## Notes
 - Reviewer commands are in `scripts/reviewers.mjs`; the review skill is `skills/speck-review/SKILL.md`.
-- Checked 2026-10-18: Claude Code 2.1.301. `--permission-mode plan` isn't enforced for this: the model declines writes itself, with no harness denial. `--permission-mode dontAsk` is: in `-p` it runs read-only commands (`git status`, `cat`, the Read tool) and denies everything not pre-approved (`touch`, `echo x > f`, the Write tool), listing each in `permission_denials`. It must be passed explicitly, as a user's `defaultMode: bypassPermissions` otherwise wins. `--disallowedTools Edit Write NotebookEdit` removes the file-writing tools. Allow rules in the project's own settings still apply under dontAsk.
+- Checked 2026-10-18: Claude Code 2.1.301. `--permission-mode plan` isn't enforced for this: the model declines writes itself, with no harness denial. `--permission-mode dontAsk` is: in `-p` it runs read-only commands (`git status`, `cat`, the Read tool) and denies everything not pre-approved (`touch`, `echo x > f`, the Write tool), listing each in `permission_denials`. It must be passed explicitly, as a user's `defaultMode: bypassPermissions` otherwise wins. `--disallowedTools Edit Write NotebookEdit` removes the file-writing tools. Allow rules in the project's own settings still apply under dontAsk, unless `--setting-sources=` (empty) is given: checked 2026-10-18 in a trusted folder, a local `Bash(touch:*)` allow rule let `touch` run without it and was denied with it.
 - Failing before this build: none
 - AC4's family part already held: `modelFamily('claude')` was already `claude`. Its test passed before any code changed and guards it.
 - Self-check: added a test that `speck doctor` checks Claude Code is on the PATH for `reviewer: claude`, as the brief now says; dropped an unchecked Gemini example from the brief; ran the built-in command against the real Claude Code 2.1.301 (no Write tool, a Bash write denied, `--resume` keeps the session).
@@ -53,3 +53,74 @@ With Codex or Cursor as the builder, the reviewer should come from another famil
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "18c7bb057ff3aa6628b1831ada976b7870eddf80",
+    "thread_id": "01a14eaa-b8c4-7180-90e7-5e3d47a7beaa",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 131481,
+      "cached_input_tokens": 81280,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 813,
+      "reasoning_output_tokens": 80
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T10:59:58.484Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/reviewers.mjs routes Claude through runCommandReview and parses its verdict correctly, covered by passing AC1 tests. However, CLAUDE_ARGS uses dontAsk while retaining inherited allow rules, so pre-approved Bash commands can still change files. The test checks arguments against a fake CLI; it does not exercise permission enforcement."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewerOptions supplies session_id_path and resume_command; runCommandReview saves and resumes thread_id. Passing AC2 tests cover continuation and fallback with full history."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "CLAUDE_ARGS includes model and effort placeholders, filled by commandArgs using reviewerSettings. The passing AC3 test checks both flags in initial and resumed calls, and their omission when blank."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "modelFamily and sameModelProblem recognise Claude's family. scripts/settings.mjs and templates/panel.html offer Claude and its models; skills/speck-setup/SKILL.md proposes reviewer claude for Codex builders. Passing AC4 tests cover these paths."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/reviewers.mjs",
+        "issue": "The built-in reviewer does not enforce the required read-only access when Claude settings already allow writing Bash commands. dontAsk denies commands that need approval, but honours existing allow rules, as the ticket and updated documentation explicitly acknowledge. Removing Edit, Write and NotebookEdit leaves Bash available, so an inherited Bash allow rule can permit file changes during review.",
+        "suggested_fix": "Enforce read-only execution independently of inherited Claude permissions, or isolate permission settings and restrict available commands so existing write approvals cannot apply. Add a permission-enforcement check with a pre-existing Bash write allow rule, covering initial and resumed sessions.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Claude review, session continuation, model settings and Settings integration are implemented and covered by passing tests. One issue blocks approval: existing Claude permissions can still let the reviewer change files, despite the ticket requiring read-only access."
+  }
+}
+```
+
+</details>

@@ -23,6 +23,7 @@ test('0292 AC1: reviewer claude runs Claude Code without a person, read-only, wi
   const [call] = r.calls();
   assert.ok(call.args.includes('-p'), 'runs without a person (print mode)');
   assert.equal(after(call.args, '--permission-mode'), 'dontAsk', 'anything not pre-approved is denied, not asked');
+  assert.ok(call.args.includes('--setting-sources='), 'no allow rule from user, project or local settings applies');
   assert.deepEqual(after(call.args, '--disallowedTools').split(/[\s,]+/).sort(), ['Edit', 'NotebookEdit', 'Write'], 'no file-writing tools');
   assert.equal(after(call.args, '--output-format'), 'json');
   assert.ok(!call.args.some(a => /bypass|dangerously/i.test(a)), 'never skips permissions');
@@ -61,6 +62,7 @@ test('0292 AC2: later rounds resume the same Claude Code session with only the n
   assert.ok(!first.args.includes('--resume'));
   assert.equal(after(second.args, '--resume'), 'S7');
   assert.equal(after(second.args, '--permission-mode'), 'dontAsk', 'still read-only when resumed');
+  assert.ok(second.args.includes('--setting-sources='));
   assert.ok(second.args.includes('--disallowedTools'));
   assert.match(second.stdin, /^# Review round 2/);
   assert.match(second.stdin, /fixed for the resumed round/);
@@ -76,6 +78,7 @@ test('0292 AC2: a resume that fails starts a fresh read-only session with the fu
   const last = r.calls().at(-1);
   assert.ok(!last.args.includes('--resume'));
   assert.equal(after(last.args, '--permission-mode'), 'dontAsk');
+  assert.ok(last.args.includes('--setting-sources='));
   assert.match(last.stdin, /# Earlier review rounds/);
   assert.equal(r.roundFile(2).meta.session, 'fresh');
 });
