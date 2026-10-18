@@ -66,7 +66,8 @@ test('0147 AC3: the full-ticket pane\'s backdrop is rgba(20, 20, 19, .2) in ligh
 test('0147 AC4: every font list in the stylesheet is one of the landing page\'s three, in its order', () => {
   const lists = fontLists(css(page()));
   assert.ok(lists.length > 20, `the stylesheet's font lists are found (${lists.length})`);
-  for (const l of lists) assert.ok(FONTS.includes(l), `unexpected font list: ${l}`);
+  // 0304: and the design's Doto for speck's name in the header, with a monospace fall-back
+  for (const l of lists) assert.ok(FONTS.includes(l) || l === '"Doto", ui-monospace, monospace', `unexpected font list: ${l}`);
   for (const f of FONTS) assert.ok(lists.includes(f), `${f} is used`);
   assert.deepEqual(fontLists('a { font-family: "X", Georgia, serif; }'), ['"X", Georgia, serif'], 'the check finds a stray list');
 });
@@ -74,7 +75,9 @@ test('0147 AC4: every font list in the stylesheet is one of the landing page\'s 
 test('0147 AC4: no font is loaded from another host', () => {
   const html = page();
   assert.doesNotMatch(html, /<link\b[^>]*https?:\/\//i);
-  assert.doesNotMatch(css(html), /@import|@font-face|url\(/i);
+  assert.doesNotMatch(css(html), /@import/i);
+  // 0304: the one font loaded is Doto, from the panel itself
+  assert.deepEqual([...css(html).matchAll(/url\(([^)]*)\)/gi)].map(m => m[1]), ['"/fonts/Doto.ttf"']);
 });
 
 // AC5: each commit this ticket made (and, on its own branch, the uncommitted work) against the one before it.
