@@ -37,6 +37,7 @@ Since 0300, `speck run` says a build it has just launched itself is "being built
 
 ## Notes
 - The message is written where `scripts/run.mjs` adopts builds (search for "being built outside speck run").
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
