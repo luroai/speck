@@ -1,7 +1,7 @@
 ---
 id: "0299"
 title: "Give each waiting ticket its own reason in the Foreman's detail"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,12 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0294"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T14:08:11.858Z"
-approved: "2026-10-18T14:26:43.088Z"
+approved: "2026-10-18T14:31:12.290Z"
 
 ---
 # 0299 · Give each waiting ticket its own reason in the Foreman's detail
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 While speck run waits to switch to new code, the Foreman's detail gives that as the reason for every ready ticket, though most are waiting for other tickets in their `after:` list, and its Shipping section says "Nothing is waiting to ship" while an approved ticket shows "Approved · waiting to ship" on the board. Seen on 2026-10-18: 0295, 0296 and 0298 all said "speck run is switching to new code once the build of 0287 ends", while 0295 was waiting for 0294 and 0287, and 0294 was approved and held.
@@ -51,14 +51,15 @@ When you open the Foreman's detail, each ready ticket now says what is really ho
 ## Review log
 Round 1 (codex): approve.
 Round 2 (codex, merge round): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Follow-up: no test covers the Foreman's empty Shipping list in pull request mode (merge review F1, minor): speck/ideas/2026-10-18-test-the-foreman-shipping-list-in-pull-request-mode.md
-- Review rounds: 2, 1 of them a merge round
+- Review rounds: 3, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 494,288
-- Elapsed since build started: 19 min
-- Changed lines: 119 (limit 5000)
+- Reviewer tokens: 1,075,273
+- Elapsed since build started: 23 min
+- Changed lines: 141 (limit 5000)
+- Follow-up: no test covers the Foreman's empty Shipping list in pull request mode (merge review F1, minor): speck/ideas/2026-10-18-test-the-foreman-shipping-list-in-pull-request-mode.md
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
