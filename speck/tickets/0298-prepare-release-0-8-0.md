@@ -1,7 +1,7 @@
 ---
 id: "0298"
 title: "Prepare release 0.8.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T14:43:21.385Z"
 ---
 # 0298 · Prepare release 0.8.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once the Foreman (0283–0287), pictures in review packs (0294) and pull request mode (0295, 0296) ship, speck shows one status for the pipeline and clears technical blockages itself, shows what a visual change looks like before you ship it, and can ship through GitHub pull requests. Anyone following the setup prompt, or updating speck on another machine, gets 0.7.0 without it.
@@ -50,7 +50,9 @@ speck is ready to be released as 0.8.0.
 - Self-check: the release notes no longer say a repo whose main branch only takes pull requests can use speck without a catch: the "done" commit can't be pushed there, and they say so.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is now ready to be released as 0.8.0. Once this ships, the release page appears on GitHub by itself, and anyone who installs or updates speck gets the Foreman, pictures in review packs, shipping through pull requests and the other changes since 0.7.0. The changelog and the release notes describe each change in plain words, and how to upgrade: nothing changes unless you choose it, apart from the speck run switch moving from the panel's header into Settings. The README's "Built with speck" figures are up to date: 284 tickets shipped.
+
+To see it, after it ships, check that the 0.8.0 release appears on the repository's Releases page on GitHub. If it doesn't, the ticket's notes give the command to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,3 +62,71 @@ speck is ready to be released as 0.8.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b73ecb70657cd72870623a714b552b62e5058e57",
+    "thread_id": "01a14f7a-6656-7c93-a016-510a797772a3",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 167486,
+      "cached_input_tokens": 113152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 765,
+      "reasoning_output_tokens": 75
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T14:46:58.536Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json sets 0.8.0. Both 0298 AC1 tests passed, including invoking init and checking its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 0.8.0 above 0.7.0 and covers the shipped Foreman, pictures, pull request and build-watching tickets. It identifies 0283 as first released in 0.7.0. The tagged-history preservation test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md state 0.8.0, a public preview. README retains the latest-release setup command and describes pull request shipping and externally started builds accurately. All three AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.8.0.md provides the release purpose, changes and benefits, installation, per-project updates, settings and defaults, and changelog link. Claims match the shipped tickets, including the protected-branch limitation; no person's name appears. AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README figures match the calculation using the same helper as 0297 and the recorded build-base commit: 284 shipped, 16 cancelled, 13 minutes median, one review round median, 141 first-round approvals. Both AC5 tests passed. The reported run had 133 passes, no failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release version, changelog, README and release notes are consistent with the shipped changes. Installation and upgrade instructions include the new defaults and the pull request shipping limitation. The figures were recalculated, and the reported tests pass. Ready for the owner's merge decision."
+  }
+}
+```
+
+</details>
