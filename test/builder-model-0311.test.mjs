@@ -183,3 +183,26 @@ test('0311 AC4: a builder named like a built-in is named as given, and a blank b
   assert.equal(clearsBuilderModel('opus', 'constructor', () => ['x']), "constructor doesn't offer opus, as speck agents lists its models");
   for (const blank of ['', '  ', null, undefined]) assert.equal(clearsBuilderModel(blank, 'codex', () => { throw new Error('read'); }), null);
 });
+
+test('0311 AC1, AC3, AC4: a builder_model given in the same Save as the builder is checked as it would be saved', async () => {
+  const r = opusRepo();
+  // Not offered: cleared, and opus as it was isn't kept either.
+  let out = panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }, { key: 'builder_model', value: 'sonnet' }], { offered: CODEX });
+  assert.equal(out.status, 200, JSON.stringify(out.body));
+  assert.equal(readCfg(r).builder, 'codex');
+  assert.equal(readCfg(r).builder_model, '');
+  assert.match(out.body.cleared.builder_model, /Codex doesn't offer sonnet/);
+  // Offered: kept.
+  out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=cursor&repo%3Abuilder_model=auto', finder(['auto']));
+  assert.equal(out.status, 200, JSON.stringify(out.body));
+  assert.equal(readCfg(r).builder, 'cursor');
+  assert.equal(readCfg(r).builder_model, 'auto');
+  assert.equal(out.body.cleared, undefined);
+  // Can't be read: cleared.
+  out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=codex&repo%3Abuilder_model=gpt-small', finder([]));
+  assert.equal(out.status, 200, JSON.stringify(out.body));
+  assert.equal(readCfg(r).builder, 'codex');
+  assert.equal(readCfg(r).builder_model, '');
+  assert.match(out.body.cleared.builder_model, /couldn't be read/);
+  assert.equal(r.g('status', '--porcelain'), '');
+});
