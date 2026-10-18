@@ -1,7 +1,7 @@
 ---
 id: "0308"
 title: "Lighten the LCD screen in the panel's light look"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0305"]  # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T22:24:45.348Z"
 
 ---
 # 0308 · Lighten the LCD screen in the panel's light look
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In the panel's light look, the LCD screen behind the builder badges and the Foreman's builder uses the design's `#c3c9b1`, which reads as too dark on the panel's near-white cards, especially on a phone. The app icon (0305) uses the same colour.
