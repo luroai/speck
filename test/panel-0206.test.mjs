@@ -57,6 +57,8 @@ test('0206 check: panels still running', () => { const left = panelsOf(process.p
   const calls = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').split('\n').filter(Boolean) : [];
   return { code, out, left, calls };
 }
+// 0149's own tests, as its file lists them, so the run's totals follow it when a test moves out of it.
+const TESTS_0149 = (fs.readFileSync(path.join(ROOT, 'test', 'panel-0149.test.mjs'), 'utf8').match(/^test\(/gm) || []).length;
 const count = (out, what) => Number((out.match(new RegExp(`^# ${what} (\\d+)$`, 'm')) || [])[1]);
 
 test('0206 AC1: a call to the page that is never answered fails in its time limit, naming the call', async () => {
@@ -101,8 +103,8 @@ function carriedOn(r, method) {
   assert.match(r.out, /^not ok \d+ - 0149 AC4\b/m, r.out);
   assert.match(r.out, new RegExp(`Chrome didn't answer ${method.replace('.', '\\.')} within 0\\.5 s`), r.out);
   assert.equal(count(r.out, 'fail'), 1, r.out);
-  assert.equal(count(r.out, 'tests'), 11, r.out);
-  assert.match(r.out, /^ok 11 - 0206 check: panels still running$/m, r.out);
+  assert.equal(count(r.out, 'tests'), TESTS_0149 + 1, r.out);
+  assert.match(r.out, new RegExp(`^ok ${TESTS_0149 + 1} - 0206 check: panels still running$`, 'm'), r.out);
   assert.ok(r.calls.includes('Target.disposeBrowserContext'), `the page's browser context was closed: ${r.calls.join(', ')}`);
   assert.deepEqual(r.left, [], 'no panel or browser is left running');
 }
