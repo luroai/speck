@@ -1,7 +1,7 @@
 ---
 id: "0295"
 title: "Open a pull request for an approved ticket in pull request mode"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0294", "0287"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T14:08:19.808Z"
 approved: "2026-10-18T14:21:59.952Z"
+finished: "2026-10-18T14:26:36.574Z"
 
 ---
 # 0295 · Open a pull request for an approved ticket in pull request mode
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck ships by merging into the base branch and pushing it, with no pull request. Teams, and projects whose base branch only takes changes through pull requests, can't use it.
