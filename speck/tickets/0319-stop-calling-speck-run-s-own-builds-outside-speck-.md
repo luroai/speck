@@ -42,7 +42,7 @@ Since 0300, `speck run` says a build it has just launched itself is "being built
 - Self-check: no changes. Unusual records (no `seen`, `seen` not true) read as another speck run's build; carried builds (0301) and the start-up adoption are untouched.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck run no longer says a build it started, or resumed, is "being built outside speck run". The message was showing up because a second speck run was watching the same project and mistook the first one's builds for ones started by hand. Builds you start yourself from a conversation, or resume by hand, are still reported as outside speck run, once. To see it, watch speck run's log as it launches a ticket: there's a "Launched" line and no "outside speck run" line after it. Keep an eye out for two speck runs on one project, which shouldn't happen: that's saved as a separate idea.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,6 +52,9 @@ Since 0300, `speck run` says a build it has just launched itself is "being built
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Two speck runs watched this repo at once, past the lock: saved as speck/ideas/2026-10-18-find-how-two-speck-runs-watched-one-repo.md.
+  - With two speck runs, a build stopping is logged by both ("build exited" and "build … stopped"). Goes away with the follow-up above.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -118,6 +121,74 @@ Since 0300, `speck run` says a build it has just launched itself is "being built
     ],
     "escalation_question": "",
     "summary": "The change correctly labels newly launched builds and preserves manual-build and code-switch reporting. One case remains: when speck run resumes a build previously run by hand, its old external-build marker survives and can produce the same misleading message."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9c09d43b1f81c3bc15a38cc5e75540ba3e7d32a7",
+    "thread_id": "01a1512a-da1e-74b2-b01b-45d1b8b40580",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 260220,
+      "cached_input_tokens": 196224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1507,
+      "reasoning_output_tokens": 60
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:44:01.326Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run.mjs adoptSeen skips running builds and uses adoptedAs to label found records. Passing 0319 tests cover another run's launch; the passing 0300 AC5 integration test follows an actual launch through exit without an outside-speck-run message."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "All four resume writers now use resumedRecord to remove seen. Passing 0319 AC2 tests exercise hand-back, recommendation and Foreman resume writers from seen:true records, checking both saved and build records. The integration test exercises stopped-build resumption through a real speck run."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "noteBuild and claimResumed still mark external builds seen:true. Passing 0319 AC3 tests exercise both writers, and the integration test checks that the external-build message appears once."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "adoptEarlierBuilds retains its carried-build reporting. The passing 0319 integration test verifies 'carries on through the switch' for a handed-over build."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/hand-back.mjs",
+        "issue": "External-build markers previously survived when speck run resumed those builds.",
+        "suggested_fix": "Implemented: resumedRecord removes seen in every resume writer, with regression coverage for each path.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change now distinguishes speck run's launched and resumed builds from builds run by hand, while preserving code-switch reporting. The previous resume-marker problem is fixed. All reviewed criteria pass; the reported test run has no failures."
   }
 }
 ```
