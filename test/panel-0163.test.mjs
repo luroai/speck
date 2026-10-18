@@ -2,7 +2,6 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { T, switchPage, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
-import { loadBadge, recorder, eye } from './support/badge.mjs';
 
 // ---------- 0163: the running build in the Auto-build button ----------
 
@@ -98,24 +97,7 @@ test('0163 AC3: in place of the square, the builder: bouncing while a build is r
   assert.match(css, /\.run-state \.mini \{[^}]*width: 28px; height: 28px/, 'about 28 px');
 });
 
-test('0163 AC3: the builder is drawn without its tile, filling the space, and only moves while it hops', () => {
-  const BADGE = loadBadge();
-  const draw = (t, moving) => { const g = recorder(); BADGE.bare(g, t, moving); return g.marks; };
-  const marks = draw(500, true);
-  assert.equal(marks.filter(k => k.colour === 'tile' || k.colour === 'line').length, 0, 'no tile and no tile edge');
-  const body = marks.find(k => k.op === 'fill' && k.colour === 'paper' && k.path[0]?.kind === 'arc' && k.path[0].r > 15);
-  assert.ok(body, 'the builder\'s body, larger than in the tile');
-  const eyeY = t => eye(draw(t, true)).y, stillY = t => eye(draw(t, false)).y;
-  const ys = Array.from({ length: 30 }, (_, i) => eyeY(i * 47));
-  assert.ok(Math.max(...ys) - Math.min(...ys) > 1, 'it bounces');
-  assert.ok(Math.max(...ys) - Math.min(...ys) < 8, 'gently');
-  assert.deepEqual(new Set(Array.from({ length: 30 }, (_, i) => stillY(i * 47))).size, 1, 'still, it doesn\'t move');
-  const front = eye(draw(0, false));
-  assert.equal(Math.round(front.x * 10) / 10, 28, 'facing front');
-  for (let t = 0; t < 5000; t += 37) for (const k of draw(t, true)) for (const q of k.path || []) {
-    assert.ok(q.x - (q.r || 0) >= 0 && q.x + (q.r || 0) <= 56 && q.y - (q.r || 0) >= 0 && q.y + (q.r || 0) <= 56, `inside the canvas at ${t}`);
-  }
-});
+// 0303: the builder is the LCD renderer's mini builder, so the drawing of it is checked in panel-0303.test.mjs.
 
 test('0163 AC4: clicking still starts or pauses Auto-build, and the tooltip says only what a click will do (0199)', async () => {
   const p = switchPage([state([BUILDING]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
@@ -175,10 +157,11 @@ async function withPanel(tickets, fn, { width = 1280, motion = 'no-preference' }
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
-// The builder's pixels, as a string, a few frames apart.
+// The builder's pixels, as a string, a few frames apart. 0303: over one whole hop (1.4 s) of the LCD screen's builder,
+// which moves a dot at a time.
 const FRAMES = `(async () => {
   const c = document.querySelector('#run canvas.mini'), out = [];
-  for (let i = 0; i < 6; i++) { out.push(Array.from(c.getContext('2d').getImageData(0, 0, c.width, c.height).data).join()); await new Promise(r => setTimeout(r, 90)); }
+  for (let i = 0; i < 16; i++) { out.push(Array.from(c.getContext('2d').getImageData(0, 0, c.width, c.height).data).join()); await new Promise(r => setTimeout(r, 90)); }
   return { distinct: new Set(out).size, drawn: out.some(d => /[1-9]/.test(d)), width: c.getBoundingClientRect().width, height: c.getBoundingClientRect().height };
 })()`;
 
