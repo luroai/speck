@@ -1,7 +1,7 @@
 ---
 id: "0286"
 title: "Let the Foreman clear technical blocked questions"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0284"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:07:36.873Z"
 approved: "2026-10-18T13:13:57.392Z"
+finished: "2026-10-18T13:16:24.051Z"
 
 ---
 # 0286 · Let the Foreman clear technical blocked questions
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build that blocks on a technical question waits for the user, though the user has always taken the build's recommendation. The work stops until they notice.
