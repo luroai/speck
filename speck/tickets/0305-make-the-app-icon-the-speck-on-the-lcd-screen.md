@@ -1,7 +1,7 @@
 ---
 id: "0305"
 title: "Make the app icon the speck on the LCD screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,12 +16,12 @@ created: 2026-10-18
 started: "2026-10-18T22:08:25.582Z"
 blocked_at: ""
 waited_seconds: 238
-approved: "2026-10-18T22:19:05.140Z"
+approved: "2026-10-18T22:22:33.550Z"
 
 ---
 # 0305 · Make the app icon the speck on the LCD screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's app icon, which a phone shows when the panel is added to its home screen and a browser shows in its tab, is today's line drawing of speck. The LCD design puts speck on a dot-matrix screen everywhere.
@@ -58,12 +58,13 @@ Clear winner: yes
 ## Review log
 Round 1 (codex): escalate: F1 Criterion 2 says equal margins on every side, but the implementation and test interpret this as equal opposite margins.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 575,277
-- Elapsed since build started: 11 min
+- Reviewer tokens: 1,071,700
+- Elapsed since build started: 14 min
 - Changed lines: 63 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
