@@ -1,69 +1,69 @@
-// 0149: draws the panel's PNG icons from templates/icons/icon.svg, with no dependencies, so the PNGs can be checked
-// against the SVG and made again when it changes: node -e "import('./test/support/icons.mjs').then(m => m.writeIcons())"
+// 0149: the panel's PNG icons, and since 0305 its icon.svg too, with no dependencies, so the icons can be checked against
+// the design and made again when it changes: node -e "import('./test/support/icons.mjs').then(m => m.writeIcons())"
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import zlib from 'node:zlib';
 import { ROOT } from './panel.mjs';
 
 export const ICONS = path.join(ROOT, 'templates', 'icons');
 // Each PNG the panel serves, with its size in pixels.
 export const PNGS = { 'icon-192.png': 192, 'icon-512.png': 512, 'apple-touch-icon.png': 180 };
+// 0305: the light look's screen, ink and red, as the design's renderer gives them.
+export const LCD = { bg: '#c3c9b1', ink: '#20241d', red: '#d63f28' };
+// How much of the icon the mark's tallest side may take: the rest is the margin, so rounded corners miss it.
+const FILL = 0.75;
 
-const num = (s, re) => Number((s.match(re) || [])[1]);
 const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
 
-// The logo as the SVG gives it: the background, each arc (an SVG arc from one point to another, absolute or relative,
-// turned into its centre and the angles it covers) with their shared stroke, the dot, and the group's translate (0170).
-export function logo(svg = fs.readFileSync(path.join(ICONS, 'icon.svg'), 'utf8')) {
-  const arcs = [...svg.matchAll(/<path[^>]* d="([^"]+)"/g)].map(m => arc(m[1]));
-  const move = (svg.match(/<g[^>]* transform="translate\(([-\d.]+)[\s,]+([-\d.]+)\)"/) || []).slice(1).map(Number);
-  return {
-    bg: rgb((svg.match(/<rect[^>]* fill="(#[0-9a-f]{6})"/i) || [])[1]),
-    ink: rgb((svg.match(/<(?:g|path)[^>]* stroke="(#[0-9a-f]{6})"/i) || [])[1]),
-    half: num(svg, /stroke-width="([\d.]+)"/) / 2,
-    arcs,
-    at: move.length ? move : [0, 0],
-    dot: { cx: num(svg, /<circle[^>]* cx="([\d.]+)"/), cy: num(svg, /<circle[^>]* cy="([\d.]+)"/), r: num(svg, /<circle[^>]* r="([\d.]+)"/),
-      fill: rgb((svg.match(/<circle[^>]* fill="(#[0-9a-f]{6})"/i) || [])[1]) },
-  };
+// 0305: the header's mark (0303), read from the design's renderer: its 16 × 16 dots as rows of '.' (unlit), '#' (ink)
+// and 'R' (the speck's red). The renderer runs once here, with stand-ins for the browser, so the icon runs no script.
+export function markDots() {
+  const ctx = { window: {}, getComputedStyle: () => ({ getPropertyValue: () => '' }), performance: { now: () => 0 } };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'docs', 'design', 'lcd', 'lcd.js'), 'utf8'), ctx);
+  const L = ctx.window.SpeckLCD;
+  const { scr } = L.tile({ getContext: () => null, getBoundingClientRect: () => ({ width: 0 }) }, L.PANEL, 'still',
+    { cols: 16, rows: 16, k: .3, ox: 8, oy: 15, still: true });
+  scr.buf.v.fill(0); scr.draw(scr, scr.at, 16);
+  const mark = { [L.INK]: '#', [L.RED]: 'R' };
+  return Array.from({ length: scr.rows }, (_, y) => Array.from(scr.buf.v.subarray(y * scr.cols, (y + 1) * scr.cols), v => mark[v] || '.').join(''));
 }
 
-// One path of a move and an arc: "M x1 y1 A r r 0 large sweep x2 y2", or with "a" and x2 y2 relative to x1 y1.
-export function arc(d) {
-  const relative = d.includes('a');
-  const [x1, y1, r, , , large, sweep, ex, ey] = d.replace(/[MAa]/g, ' ').trim().split(/[\s,]+/).map(Number);
-  const x2 = relative ? x1 + ex : ex, y2 = relative ? y1 + ey : ey;
-  // SVG's endpoint-to-centre conversion, for a circle (rx = ry = r, no rotation).
-  const mx = (x1 - x2) / 2, my = (y1 - y2) / 2, h2 = mx * mx + my * my;
-  const k = (large === sweep ? -1 : 1) * Math.sqrt(Math.max(0, (r * r - h2) / h2));
-  const cx = k * my + (x1 + x2) / 2, cy = -k * mx + (y1 + y2) / 2;
-  const a1 = Math.atan2(y1 - cy, x1 - cx), a2 = Math.atan2(y2 - cy, x2 - cx);
-  const turn = a => ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-  // sweep 1 draws with the angle growing, 0 with it shrinking: the arc covers the angles it passes on the way.
-  const span = sweep ? turn(a2 - a1) : turn(a1 - a2);
-  const onArc = a => (sweep ? turn(a - a1) : turn(a1 - a)) <= span;
-  return { cx, cy, r, onArc, ends: [[x1, y1], [x2, y2]] };
+// The lit dots, each with its column, row and colour, and the columns and rows they span.
+export function lit(dots = markDots()) {
+  const on = dots.flatMap((row, y) => [...row].flatMap((c, x) => (c === '.' ? [] : [{ x, y, fill: c === 'R' ? LCD.red : LCD.ink }])));
+  const xs = on.map(d => d.x), ys = on.map(d => d.y);
+  return { on, x: Math.min(...xs), y: Math.min(...ys), cols: Math.max(...xs) - Math.min(...xs) + 1, rows: Math.max(...ys) - Math.min(...ys) + 1 };
 }
 
-// The distance from a point to an arc, with its round caps.
-function toArc({ cx, cy, r, onArc, ends }, x, y) {
-  if (onArc(Math.atan2(y - cy, x - cx))) return Math.abs(Math.hypot(x - cx, y - cy) - r);
-  return Math.min(...ends.map(([ex, ey]) => Math.hypot(x - ex, y - ey)));
+// Where the dots go in an icon `size` pixels square: each dot `pitch` pixels apart, `dot` pixels square (the gap
+// between them as the renderer leaves it), from `left`, `top`. Whole pixels, so each dot's edges are sharp, and the
+// pitch is chosen so the lit dots' edges sit as far from the left as the right, and from the top as the bottom.
+export function layout(size, M = lit()) {
+  const gap = p => (p >= 3 ? Math.max(1, Math.round(p * .16)) : 0);
+  let pitch = Math.floor(size * FILL / Math.max(M.cols, M.rows));
+  while (pitch > 1 && [M.cols, M.rows].some(n => (size - (n * pitch - gap(pitch))) % 2)) pitch--;
+  const dot = pitch - gap(pitch);
+  return { pitch, dot, left: (size - (M.cols * pitch - gap(pitch))) / 2, top: (size - (M.rows * pitch - gap(pitch))) / 2 };
 }
 
-// The icon at `size` pixels, as RGB rows: 4 × 4 samples a pixel, drawn in the SVG's order.
-export function draw(size, L = logo()) {
-  const n = 4, px = Buffer.alloc(size * size * 3);
-  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-    let ink = 0, dot = 0;
-    for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) {
-      // A point on the icon, moved back by the group's translate onto the mark's own shapes.
-      const u = (x + (sx + 0.5) / n) * 64 / size - L.at[0], v = (y + (sy + 0.5) / n) * 64 / size - L.at[1];
-      if (Math.hypot(u - L.dot.cx, v - L.dot.cy) <= L.dot.r) dot++;
-      else if (L.arcs.some(a => toArc(a, u, v) <= L.half)) ink++;
-    }
-    const s = n * n;
-    for (let c = 0; c < 3; c++) px[(y * size + x) * 3 + c] = Math.round((L.bg[c] * (s - ink - dot) + L.ink[c] * ink + L.dot.fill[c] * dot) / s);
+// icon.svg: the screen, then each lit dot as a square, laid out as the 180 px icon, so it matches the apple-touch-icon.
+export function iconSvg(M = lit()) {
+  const S = 180, { pitch, dot, left, top } = layout(S, M);
+  const rect = d => `    <rect x="${left + (d.x - M.x) * pitch}" y="${top + (d.y - M.y) * pitch}" width="${dot}" height="${dot}"/>`;
+  const group = fill => [`  <g fill="${fill}">`, ...M.on.filter(d => d.fill === fill).map(rect), '  </g>'];
+  return [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" shape-rendering="crispEdges">`,
+    `  <rect width="${S}" height="${S}" fill="${LCD.bg}"/>`, ...group(LCD.ink), ...group(LCD.red), '</svg>', ''].join('\n');
+}
+
+// The icon at `size` pixels, as RGB rows: the screen colour, with each lit dot filled in.
+export function draw(size, M = lit()) {
+  const { pitch, dot, left, top } = layout(size, M), px = Buffer.alloc(size * size * 3), bg = rgb(LCD.bg);
+  for (let n = 0; n < size * size; n++) px.set(bg, n * 3);
+  for (const d of M.on) {
+    const c = rgb(d.fill), x0 = left + (d.x - M.x) * pitch, y0 = top + (d.y - M.y) * pitch;
+    for (let y = y0; y < y0 + dot; y++) for (let x = x0; x < x0 + dot; x++) px.set(c, (y * size + x) * 3);
   }
   return px;
 }
@@ -85,6 +85,7 @@ export function png(size, px = draw(size)) {
 }
 
 export function writeIcons() {
+  fs.writeFileSync(path.join(ICONS, 'icon.svg'), iconSvg());
   for (const [name, size] of Object.entries(PNGS)) fs.writeFileSync(path.join(ICONS, name), png(size));
 }
 
