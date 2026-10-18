@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0288"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T10:54:29.066Z"
-approved: "2026-10-18T11:06:54.983Z"
+approved: "2026-10-18T11:11:04.304Z"
 
 ---
 # 0292 · Review with Claude Code when the builder isn't Claude
@@ -55,12 +55,13 @@ To see it, set the reviewer to "claude" in the panel's Settings view (it's offer
 Round 1 (codex): changes requested: F1 The built-in reviewer does not enforce the required read-only access when Claude settings already allow writing Bash commands.
 Round 2 (codex): approve.
 Round 3 (codex, merge round): approve.
+Round 4 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 3, 1 of them a merge round
+- Review rounds: 4, 2 of them merge rounds
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 892,599
-- Elapsed since build started: 12 min
+- Reviewer tokens: 1,525,573
+- Elapsed since build started: 17 min
 - Changed lines: 83 (limit 5000)
 - Follow-ups:
   - Keep the Claude reviewer off the user's connectors with `--strict-mcp-config`: speck/ideas/2026-10-18-keep-the-claude-reviewer-off-your-connectors.md.
@@ -269,6 +270,75 @@ Round 3 (codex, merge round): approve.
     ],
     "escalation_question": "",
     "summary": "The review instructions now reuse the existing command without losing required arguments, fixing the shipping regression without changing its test. Claude review functionality remains intact, all criteria pass, and no blocking findings remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 4 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 4,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "76f5d1f53ccb3844acb9ec8a317baa11d2c4f132",
+    "merge": true,
+    "thread_id": "01a14eaa-b8c4-7180-90e7-5e3d47a7beaa",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 630235,
+      "cached_input_tokens": 485376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2739,
+      "reasoning_output_tokens": 97
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T11:11:01.596Z"
+  },
+  "verdict": {
+    "round": 4,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "cmdReview selects Claude's built-in command and runCommandReview sends the prompt and records the parsed verdict. CLAUDE_ARGS retains non-interactive mode, settings isolation, dontAsk permissions and disabled writing tools. All AC1 tests pass after the merge."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "runCommandReview retains session_id capture, --resume and full-history fallback. Passing AC2 tests verify continuation and permission arguments on resumed and fallback runs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewerSettings and commandArgs pass --model and --effort when set. The AC3 test passes for initial and resumed calls and blank-value omission."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "modelFamily retains Claude family recognition. Settings, panel model choices and setup still offer Claude, with all AC4 tests passing. The merged templates/config.yml preserves main's Codex builder_model comment and this ticket's Claude reviewer choice."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/reviewers.mjs",
+        "issue": "Inherited Claude allow rules could permit writing Bash commands despite dontAsk.",
+        "suggested_fix": "Addressed by --setting-sources= in initial and resumed commands, with regression assertions covering initial, resumed and fallback runs.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both Codex build support and Claude review support. The config conflict keeps both intended comments without changing setting values. All criteria pass, the reported tests have no failures, and no blocking findings remain."
   }
 }
 ```
