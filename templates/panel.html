@@ -273,6 +273,7 @@
   .run-state { gap: 6px; max-width: 100%; min-width: 0; }
   .run-state .mini { display: block; flex: none; width: 28px; height: 28px; margin-left: -4px; image-rendering: pixelated; }
   .run-state .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .run-state .fixing { flex: none; font-size: 11px; color: var(--muted); border-left: .5px solid var(--line); padding-left: 6px; } /* 0317 */
   /* 0285: the Foreman's status, coloured by its tone, and its detail under the header */
   .run-state.fm-ok { color: var(--ok); border-color: var(--ok); }
   .run-state.fm-warn { color: var(--warn); border-color: var(--warn); }
@@ -680,7 +681,7 @@ function doing(t, shipping) {
   const autoShips = t.status === 'approved' && t.auto_ship === true && !t.red && !t.to_ship;
   const tone = t.red ? 'bad' : t.to_ship || (approved && !autoShips) ? 'to-ship' : '';
   const at = sentence => ({ sentence, tone, moving: false });
-  if (t.status === 'blocked') return at('Blocked · it has a question for you');
+  if (t.status === 'blocked') return at(t.foreman_will === true ? 'Blocked · the Foreman will take its recommendation' : 'Blocked · it has a question for you'); // 0317
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
@@ -2347,7 +2348,12 @@ function queueItem(t) {
     if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : 'question exit', t.exit_message));
   }
   if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
-  if (t.status === 'blocked') q.appendChild(el('div', 'act', `Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
+  // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
+  // build carries on with a recommendation says who went with it, until it moves on
+  if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `The Foreman will take its recommendation: ${t.blocked_recommendation}`));
+  else if (t.status === 'blocked') q.appendChild(el('div', 'act', `Waiting for you. Answer the question, then run /speck-build ${t.id}`)); // the bar already shows the status
+  const went = wentWithOf(t);
+  if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'The Foreman went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
     q.appendChild(fullButton(t));
@@ -2468,6 +2474,9 @@ async function stopBuild(id) {
 }
 // 0284: a blocked question with a recommendation, whose build speck run can resume, has a Go with the recommendation
 // button. It asks first, naming the option; the server records it and speck run carries the build on with it.
+// 0317: the recommendation a ticket's build is carrying on with, as the server gives it, or null; and a choice's time.
+const wentWithOf = t => (t.went_with && typeof t.went_with === 'object' && typeof t.went_with.option === 'string' && t.went_with.option ? t.went_with : null);
+const tookAt = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? `${new Date(at).toISOString().slice(0, 16).replace('T', ' ')} UTC` : '');
 function goWithButton(t) {
   if (t.status !== 'blocked' || typeof t.blocked_recommendation !== 'string' || !t.blocked_recommendation || t.blocked_resumable !== true) return null;
   const id = String(t.id), pending = goingWith.has(id);
@@ -2895,7 +2904,7 @@ function render() {
   const run = $('run');
   run.hidden = false;
   run.className = `run-state fm-${stale ? 'warn' : f.tone}`;
-  run.replaceChildren(builderFor(atWork(m.queue, shippingId)), el('span', 'label', stale ? 'Reload page' : f.word));
+  run.replaceChildren(builderFor(atWork(m.queue, shippingId)), el('span', 'label', stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
   startBuilder();
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
@@ -2911,13 +2920,20 @@ $('run').addEventListener('click', e => {
 // 0285: the Foreman's status and detail, as the server worked them out from speck run's own record. A server without
 // it (older code) gets what the page can tell: on or off.
 let foremanOpen = false; // whether the Foreman's detail is open
+// 0317: what each Fixing setting has the Foreman do, as scripts/foreman.mjs says it
+const FIXING_SAYS = {
+  off: 'off. The Foreman leaves blocked questions to you, without counting them under Needs you.',
+  tell: 'tell. The Foreman leaves blocked questions to you, and counts them under Needs you.',
+  fix: 'fix. The Foreman takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
+};
 function foremanOf(st) {
   const f = st && st.foreman && typeof st.foreman === 'object' ? st.foreman : null;
   const on = !!(st && st.run && st.run.on), list = v => (Array.isArray(v) ? v : []);
   const tone = f && typeof f.tone === 'string' ? f.tone : on ? 'idle' : 'off';
   return { word: f && typeof f.word === 'string' ? f.word : on ? 'Idle' : 'Off', tone, on,
     building: list(f && f.building), ready: list(f && f.ready), held: list(f && f.held), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
-    agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null }; // 0287: the Foreman agent's work
+    agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null, // 0287: the Foreman agent's work
+    fixing: f && typeof f.fixing === 'string' ? f.fixing : null, took: list(f && f.took) }; // 0317
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
@@ -2935,6 +2951,7 @@ function renderForeman(f, stale) {
   }
   const item = (id, ...rest) => el('li', null, null, el('code', null, id), ...rest.map(r => (typeof r === 'string' ? el('span', null, ` ${r}`) : r)));
   const section = (title, items, none) => [el('h4', null, title), items.length ? el('ul', null, null, ...items) : el('p', 'none', none)];
+  if (f.fixing && Object.hasOwn(FIXING_SAYS, f.fixing)) kids.push(el('p', 'fixing-says', `Fixing: ${FIXING_SAYS[f.fixing]}`)); // 0317
   for (const h of f.held) kids.push(el('p', 'held', String(h))); // 0299: what holds up every build or ship, said once
   kids.push(...section('Building', f.building.map(id => item(String(id))), 'Nothing is building.'));
   kids.push(...section('Ready, not building', f.ready.map(r => item(String(r.id), String(r.why || ''))), 'No ready ticket is waiting.'));
@@ -2944,7 +2961,10 @@ function renderForeman(f, stale) {
   for (const w of s && Array.isArray(s.waiting) ? s.waiting : []) ship.push(item(String(w.id), String(w.why || '')));
   kids.push(...section('Shipping', ship, f.on ? 'Nothing is waiting to ship.' : 'speck run is off, so nothing ships by itself.'));
   kids.push(...section('Blocked', f.blocked.map(b => item(String(b.id), String(b.title || ''),
-    b.question ? el('p', 'question', String(b.question)) : null)), 'Nothing is blocked.'));
+    b.question ? el('p', 'question', String(b.question)) : null, el('p', 'waits', b.foreman === true ? 'The Foreman will take its recommendation.' : 'Waiting for you.'))), 'Nothing is blocked.'));
+  // 0317: the recommendations the Foreman took in the last 24 hours
+  kids.push(...section('Recommendations taken', f.took.filter(w => w && typeof w === 'object').map(w => item(String(w.id), `The Foreman went with the recommendation: ${String(w.option || '')} · ${tookAt(w.at)}`)),
+    'The Foreman hasn\'t taken a recommendation in the last 24 hours.'));
   // 0287: what the Foreman agent is looking into, its questions to you and what it did lately, and why
   const a = f.agent, list = v => (Array.isArray(v) ? v : []), looked = [];
   if (a && a.running && typeof a.running === 'object') looked.push(item(String(a.running.id), `is being looked into: ${String(a.running.what || '')}`));

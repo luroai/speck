@@ -33,6 +33,12 @@ const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new co
 // or fix (takes the recommendation of one that changes nothing you'd notice and has a clear winner). tell by default,
 // and for any value speck doesn't know.
 export const FIXING = Object.freeze(['off', 'tell', 'fix']);
+// 0317: what each setting has the Foreman do, as its detail and `speck status` say it.
+export const FIXING_SAYS = Object.freeze({
+  off: 'off. The Foreman leaves blocked questions to you, without counting them under Needs you.',
+  tell: 'tell. The Foreman leaves blocked questions to you, and counts them under Needs you.',
+  fix: 'fix. The Foreman takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
+});
 export const fixingOf = cfg => (cfg && FIXING.includes(cfg.foreman_fixing) ? cfg.foreman_fixing : 'tell');
 // 0286: whether the Foreman may take a blocked ticket's recommendation, from what `speck status --json` gives (0283):
 // a recommendation, no change you'd notice and a clear winner. Anything unknown is left for you.
@@ -62,12 +68,17 @@ export function switchingReady(tickets, running, own) {
 // blocked: [{ id, title, question }] }, word being the status in one or two words and tone its colour:
 // off, idle, ok (building or shipping), warn (waiting) or bad (needs you). 0286: `fixing` is foreman_fixing: with off,
 // blocked tickets aren't counted under Needs you. 0287: `agent` is the Foreman agent's (agentView), given back as it is,
-// its questions to you counted under Needs you.
-export function foremanView({ run, record, tickets, fixing = 'tell', agent = null }) {
+// its questions to you counted under Needs you. 0317: `fixing` is given back, each blocked ticket says whether the
+// Foreman will take its recommendation (foreman_will on the board's ticket), those aren't counted under Needs you, and
+// `took` lists the recommendations the Foreman took in the 24 hours before `now`, newest first.
+export function foremanView({ run, record, tickets, fixing = 'tell', agent = null, now = Date.now() }) {
   const on = !!(run && run.on);
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
-  const blocked = all.filter(t => t.status === 'blocked').map(t => ({ id: String(t.id), title: text(t.title), question: text(t.blocked_question) }));
+  const blocked = all.filter(t => t.status === 'blocked').map(t => ({ id: String(t.id), title: text(t.title), question: text(t.blocked_question), foreman: t.foreman_will === true }));
+  const took = all.flatMap(t => list(t.foreman_took).filter(w => w && typeof w.option === 'string' && Number.isFinite(Date.parse(w.at)) && now - Date.parse(w.at) <= 864e5)
+    .map(w => ({ id: String(t.id), title: text(t.title), option: w.option, at: w.at }))).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  const yours = blocked.filter(b => !b.foreman).length;
   const building = rec ? list(rec.building).map(String) : [];
   const said = new Map(rec ? list(rec.ready).filter(r => r && typeof r.id === 'string').map(r => [r.id, r]) : []);
   const ready = all.filter(t => t.status === 'ready' && !building.includes(String(t.id))).map(t => {
@@ -91,9 +102,9 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
   if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
-  const view = (word, tone) => ({ word, tone, building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, agent: ag });
+  const view = (word, tone) => ({ word, tone, fixing, building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
   if (!on) return view('Off', 'off');
-  if ((blocked.length && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? blocked.length : 0) + asks.length}`, 'bad');
+  if ((yours && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
   const why = switching ? 'new code' : ship && ship.hold ? 'on hold' : ready.find(r => SHORT[r.kind]) ? SHORT[ready.find(r => SHORT[r.kind]).kind]
@@ -103,8 +114,9 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
 
 // The Foreman for `speck status`: its status, then each ready ticket's reason and shipping's state, one per line.
 // Blocked tickets aren't repeated: speck status lists them with their questions.
+// 0317: with Fixing on, the status says so and what Fixing does, and the recommendations the Foreman took lately follow.
 export function foremanLines(v) {
-  const lines = [`FOREMAN: ${v.word}`];
+  const lines = [`FOREMAN: ${v.word}${v.fixing === 'fix' ? ' · Fixing on' : ''}`, ...(v.fixing === 'fix' ? [`  Fixing: ${FIXING_SAYS.fix}`] : [])];
   for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
   for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);
@@ -112,5 +124,6 @@ export function foremanLines(v) {
   if (a?.running) lines.push(`  The Foreman is looking into ${a.running.id}: ${a.running.what}`);
   for (const q of a?.asks || []) lines.push(`  The Foreman asks you about ${q.id}: ${q.question}`);
   for (const d of a?.did || []) lines.push(`  The Foreman ${d.did} for ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${d.why}`);
+  for (const w of v.took || []) lines.push(`  The Foreman went with the recommendation for ${w.id}: ${w.option} (${w.at.slice(0, 16).replace('T', ' ')} UTC)`);
   return lines;
 }
