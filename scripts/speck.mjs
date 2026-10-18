@@ -29,6 +29,7 @@ import { runInProcess } from './in-process.mjs';
 import { questionFacts } from './question-facts.mjs';
 import { goWithResumable, goWithWaiting } from './go-with.mjs';
 import { buildSession } from './build-records.mjs';
+import { noteThisBuild } from './seen-builds.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -575,7 +576,7 @@ const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {
   if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);
-  else if (COMMANDS[cmd]) COMMANDS[cmd](args);
+  else if (COMMANDS[cmd]) { try { COMMANDS[cmd](args); } finally { noteThisBuild(cmd, args); } }
   else throw new SpeckError(`Unknown command "${cmd}".\n\n${HELP}`);
 }
 
