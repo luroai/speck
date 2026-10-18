@@ -1,7 +1,7 @@
 ---
 id: "0321"
 title: "Never run two speck runs for one repo"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-18
 ---
 # 0321 · Never run two speck runs for one repo
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck run` keeps a lock so only one runs per repo, yet on 2026-10-18 two ran in this repo for about eight hours. One was the speck run started on 2026-10-16 (process 434685), which had switched to new code and was working through a worker process (2456375) it started. The other (1571492) was started at 14:54 from the Settings view's switch and held `run.lock`. Both launched builds and ships, saw each other's builds as "outside speck run", and took turns writing the Foreman's status, so the header changed every two or three seconds. Two speck runs can start the same build or ship twice.
