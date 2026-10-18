@@ -40,7 +40,7 @@ const rule = sel => (page().match(new RegExp(`\\n\\s*${sel.replace(/[.*+?^${}()|
 
 test('0303 AC1: the header\'s mark is a canvas before "speck", hidden from screen readers, in place of the old drawing', () => {
   const logo = (page().match(/<div class="logo">([\s\S]*?)<\/div>/) || [])[1] || '';
-  assert.match(logo, /^<canvas class="mark" id="mark" aria-hidden="true"><\/canvas>speck <span>control panel<\/span>$/);
+  assert.match(logo, /^<canvas class="mark" id="mark" aria-hidden="true"><\/canvas><b class="name">speck<\/b> <span>control panel<\/span>$/, 'with speck in its own element since 0304');
   assert.doesNotMatch(logo, /<svg\b/, 'the old drawing is gone');
 });
 

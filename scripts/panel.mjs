@@ -425,6 +425,15 @@ export async function panelServer() {
       try { return send(res, 200, 'text/javascript', fs.readFileSync(path.join(TEMPLATES, 'lcd.js'))); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(TEMPLATES, 'lcd.js')}: ${e.message}\nPut the file back, then reload.\n`); }
     }
+    // 0304: the design's dot-matrix typeface for speck's name, served from the repo so it shows with no internet.
+    if (where === '/fonts/Doto.ttf') {
+      const file = path.join(TEMPLATES, 'fonts', 'Doto.ttf');
+      let body;
+      try { body = fs.readFileSync(file); }
+      catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${file}: ${e.message}\nPut the file back, then reload.\n`); }
+      res.writeHead(200, { 'Content-Type': 'font/ttf', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
+      return res.end(body);
+    }
     if (Object.hasOwn(icons, where)) {
       let body;
       try { body = fs.readFileSync(path.join(iconsDir, where.slice(1))); }

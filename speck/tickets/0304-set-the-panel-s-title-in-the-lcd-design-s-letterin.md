@@ -39,6 +39,7 @@ The panel's header shows "speck" in the design's dot-matrix lettering.
 - The design's pages load Doto from Google Fonts (`family=Doto:wght@500;700;900`) and set names with `font: 900 … "Doto", "Silkscreen", ui-monospace, monospace`.
 - Checked 2026-10-18: Doto's licence is the SIL Open Font License 1.1 (google/fonts ofl/doto/OFL.txt), with no Reserved Font Name, so bundling the font file with its licence is allowed.
 - Failing before this build: none
+- Self-check: the wider Doto name cut the project's name short on a 375 px phone (0140's test), so on phones it is set at 14 px and raised .1em to stay centred on the mark; an earlier try with negative letter-spacing made the letters touch, so it was dropped.
 - The header is `.logo` in `templates/panel.html`; fonts are served by `scripts/panel.mjs` like the icons in `templates/icons/`.
 
 ## In plain words
