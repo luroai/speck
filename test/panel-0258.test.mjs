@@ -26,11 +26,11 @@ const readCfg = r => fs.readFileSync(cfgOf(r), 'utf8');
 const snapshot = r => ({ text: readCfg(r), head: headOf(r), status: r.g('status', '--porcelain') });
 
 test('0258 AC1: the eight settings can be changed, with reviewer and reviewer_effort offering only what speck accepts, and the rest stay read-only', () => {
-  assert.deepEqual([...EDITABLE], ['builder', 'builder_model', ...KEYS, 'auto_ship', 'auto_ship_risk', 'foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']); // 0259 added auto_ship and auto_ship_risk, 0279 builder_model, 0293 builder, 0286 foreman_fixing, 0287 the Foreman agent's
+  assert.deepEqual([...EDITABLE], ['builder', 'builder_model', ...KEYS, 'auto_ship', 'auto_ship_risk', 'ship_mode', 'foreman_fixing', 'foreman', 'foreman_model', 'foreman_effort']); // 0259 added auto_ship and auto_ship_risk, 0279 builder_model, 0293 builder, 0286 foreman_fixing, 0287 the Foreman agent's, 0295 ship_mode
   const r = panelRepo();
   fs.writeFileSync(cfgOf(r), readCfg(r).replace(/^reviewer_options:\n/m, 'reviewer_options:\n  my-reviewer:\n    command: "x {prompt}"\n'));
   const s = byKey(panelSettings(r.dir));
-  for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k) || k.startsWith('auto_ship') || k === 'builder_model' || k === 'builder', k);
+  for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k) || k.startsWith('auto_ship') || k === 'builder_model' || k === 'builder' || k === 'ship_mode', k);
   assert.deepEqual(s.reviewer_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
   assert.deepEqual([...s.reviewer.choices].sort(), ['claude', 'claude-subagent', 'codex', 'my-reviewer']); // 0292 added claude
   assert.equal(s.reviewer_model.choices, undefined, 'a free value');

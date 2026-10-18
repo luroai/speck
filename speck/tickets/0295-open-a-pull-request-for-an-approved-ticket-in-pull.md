@@ -41,6 +41,7 @@ In pull request mode, an approved ticket gets a GitHub pull request with its rev
 - From `speck/ideas/2026-10-08-pr-ship-mode.md`, opening the pull request only after approval, as the user prefers.
 - Checked 2026-10-18: `gh pr create --base <base> --head <branch> --title … --body-file …` and `gh pr list --head <branch>` behave as needed: gh 2.101.0 has `pr create -B/--base -H/--head -t/--title -F/--body-file` and `pr list --head <branch> --state --json`.
 - Failing before this build: none
+- Self-check: `speck pr`'s note when the link couldn't be written on the ticket now says why (a failed commit, or no checkout of its branch), not always the latter.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

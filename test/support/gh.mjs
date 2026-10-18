@@ -1,0 +1,42 @@
+// A stand-in for GitHub's gh, for the pull request mode tests (0295): a script called gh in a folder of its own,
+// which logs each call and keeps the pull requests it has "opened" in that folder.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const SCRIPT = `#!${process.execPath}
+const fs = require('fs'), path = require('path');
+const dir = __dirname, args = process.argv.slice(2);
+const read = (f, d) => { try { return fs.readFileSync(path.join(dir, f), 'utf8'); } catch { return d; } };
+fs.appendFileSync(path.join(dir, 'calls.jsonl'), JSON.stringify({ args, body: args.includes('--body-file') ? fs.readFileSync(args[args.indexOf('--body-file') + 1], 'utf8') : null }) + '\\n');
+const prs = JSON.parse(read('prs.json', '[]'));
+const opt = k => args[args.indexOf(k) + 1];
+if (args[0] === '--version') { console.log('gh version 2.101.0 (fake)'); process.exit(0); }
+if (args[0] === 'auth') { if (read('auth', 'ok').trim() === 'ok') process.exit(0); console.error('You are not logged into any GitHub hosts. To log in, run: gh auth login'); process.exit(1); }
+if (args[0] === 'pr' && args[1] === 'list') { console.log(JSON.stringify(prs.filter(p => p.head === opt('--head') && p.base === opt('--base')).map(p => ({ url: p.url, state: p.state })))); process.exit(0); }
+if (args[0] === 'pr' && args[1] === 'create') {
+  if (read('create', 'ok').trim() !== 'ok') { console.error('pull request create failed: GraphQL: Resource not accessible by integration (createPullRequest)'); process.exit(1); }
+  const url = 'https://github.com/o/r/pull/' + (prs.length + 1);
+  prs.push({ url, state: 'OPEN', head: opt('--head'), base: opt('--base'), title: opt('--title') });
+  fs.writeFileSync(path.join(dir, 'prs.json'), JSON.stringify(prs));
+  console.log(url);
+  process.exit(0);
+}
+console.error('fake gh: unexpected ' + args.join(' '));
+process.exit(2);
+`;
+
+// { bin, gh, calls(), prs(), set(name, value) }: put `bin` first on PATH, or pass `gh` as the command.
+export function fakeGh() {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-gh-'));
+  const gh = path.join(bin, 'gh');
+  fs.writeFileSync(gh, SCRIPT, { mode: 0o755 });
+  const lines = f => { try { return fs.readFileSync(path.join(bin, f), 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)); } catch { return []; } };
+  return {
+    bin, gh,
+    calls: () => lines('calls.jsonl'),
+    prs: () => { try { return JSON.parse(fs.readFileSync(path.join(bin, 'prs.json'), 'utf8')); } catch { return []; } },
+    set: (name, value) => fs.writeFileSync(path.join(bin, name), typeof value === 'string' ? value : JSON.stringify(value)),
+    env: (base = process.env) => ({ ...base, PATH: `${bin}${path.delimiter}${base.PATH}` }),
+  };
+}
