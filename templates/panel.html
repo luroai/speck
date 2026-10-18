@@ -172,6 +172,11 @@
   /* 0283: under a blocked question, whether it changes what you'd notice and whether the recommendation is a clear one */
   .question-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; white-space: normal; }
   .question-fact { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 0 8px; border: .5px solid var(--line); color: var(--muted); }
+  /* 0284: on a blocked question with a recommendation, the button that takes it and has speck run carry the build on */
+  .q .go-with { display: block; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 6px 0 0; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; white-space: normal; }
+  .q .go-with:hover { border-color: var(--text); }
+  .q .go-with:disabled { cursor: default; opacity: .6; }
+  .q .go-with-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .act.to-ship { color: var(--idea); }
@@ -548,7 +553,7 @@
        anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
     .q .top .tag:not(.pick) { z-index: 1; }
     .q .full-open { min-height: 44px; }
-    .q .stop-build, .q .back-to-plan { min-width: 44px; min-height: 44px; }
+    .q .stop-build, .q .back-to-plan, .q .go-with { min-width: 44px; min-height: 44px; }
     .resume { flex-wrap: wrap; }
     .resume .cmd { min-width: 0; }
     .resume .copy { min-width: 44px; min-height: 44px; }
@@ -1124,7 +1129,7 @@ const WAIT_MS = 15000; // how long the page waits for its request for the board 
 const RETRY_MS = 1000; // how soon the page starts again a stream the browser has given up on
 const LOG_LINES = 200; // how many of a log's last lines are shown, as the server first sends them (0189)
 const PAGE = '{{page}}'; // 0285: the stamp of the code this page was sent with, which /api/state gives as it is now
-const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, ship, the speck run switch and each setting saved
+const TOKEN = '{{token}}'; // put in by the server each time it starts, and sent with Set ready, Back to Plan, each priority change, stop, Go with the recommendation, ship, the speck run switch and each setting saved
 const $ = id => document.getElementById(id);
 // 0283: what a blocked question's build says about its options, as speck status --json gives it. Nothing for an unknown.
 function questionFacts(t) {
@@ -1248,6 +1253,8 @@ let priorityMenu = null; // the id of the draft whose priority menu is open, or 
 const priorityRefused = new Map(); // id → why the server refused to set its priority, until the next click on its tag
 const stopping = new Set(); // ids whose stop request hasn't been answered yet
 const stopRefused = new Map(); // id → why the server refused to stop its build, until the next click on its Stop build button
+const goingWith = new Set(); // 0284: ids whose Go with the recommendation request hasn't been answered yet
+const goWithRefused = new Map(); // 0284: id → why the server refused it, until the next click on its button
 const unreadying = new Set(); // ids whose Back to Plan request hasn't been answered yet
 const planRefused = new Map(); // id → why the server refused to move it back to Plan, until the next click on its Back to Plan button
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
@@ -2276,7 +2283,7 @@ function queueItem(t) {
     return q;
   }
   const facts = t.status === 'blocked' ? questionFacts(t) : null;
-  if (t.status === 'blocked' && (t.blocked_question || facts)) q.appendChild(el('div', 'question', t.blocked_question, facts));
+  if (t.status === 'blocked' && (t.blocked_question || facts)) q.appendChild(el('div', 'question', t.blocked_question, facts, goWithButton(t), goWithRefusal(t)));
   if (t.resume) q.appendChild(resumeLine(t));
   if (t.paused) q.appendChild(el('div', 'act', `Paused · carry it on with speck play ${t.id}`));
   if (t.exit_label) {
@@ -2631,6 +2638,38 @@ async function stopBuild(id) {
   stopping.delete(id);
   render();
 }
+// 0284: a blocked question with a recommendation, whose build speck run can resume, has a Go with the recommendation
+// button. It asks first, naming the option; the server records it and speck run carries the build on with it.
+function goWithButton(t) {
+  if (t.status !== 'blocked' || typeof t.blocked_recommendation !== 'string' || !t.blocked_recommendation || t.blocked_resumable !== true) return null;
+  const id = String(t.id), pending = goingWith.has(id);
+  const b = el('button', 'go-with', pending ? 'Going with it…' : 'Go with the recommendation');
+  b.type = 'button';
+  b.disabled = pending;
+  b.title = `Go with "${t.blocked_recommendation}", and have speck run carry the build on`;
+  b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) goWithIt(id, t.blocked_recommendation); });
+  return b;
+}
+const goWithRefusal = t => (goWithRefused.has(String(t.id)) ? el('div', 'go-with-refused', goWithRefused.get(String(t.id))) : null);
+async function goWithIt(id, option) {
+  if (goingWith.has(id)) return;
+  if (typeof confirm !== 'function' || !confirm(`Go with the recommendation for ${id}: "${option}"? It's recorded in the ticket's Notes, the ticket is set building, and speck run resumes its build with it.`)) return;
+  goWithRefused.delete(id);
+  goingWith.add(id);
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/recommendation`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN } });
+    if (!res.ok) {
+      let why = null;
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      goWithRefused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
+    }
+  } catch {
+    goWithRefused.set(id, "Couldn't reach the panel server, so nothing changed.");
+  }
+  goingWith.delete(id);
+  render();
+}
 // An open ready ticket in the queue has a Back to Plan button: the server sets it back to draft and commits it, and
 // the next refresh moves it to Plan's drafts. A refusal shows under the button until the next click on it.
 function backToPlanButton(t) {
@@ -2948,6 +2987,8 @@ function render() {
   for (const id of stopRefused.keys()) if (!m.queue.some(t => String(t.id) === id && t.pausable)) stopRefused.delete(id);
   // The same for a refused Back to Plan once its ticket isn't ready in the queue.
   for (const id of planRefused.keys()) if (!m.queue.some(t => String(t.id) === id && !t.inFlight)) planRefused.delete(id);
+  // 0284: and a refused Go with the recommendation once its ticket isn't blocked.
+  for (const id of goWithRefused.keys()) if (!m.queue.some(t => String(t.id) === id && t.status === 'blocked')) goWithRefused.delete(id);
   if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
@@ -2958,7 +2999,7 @@ function render() {
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null,
-    unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null], queueItem,
+    unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
   $('queue').hidden = !m.queue.length; // 0162: an empty Build is one line, the message beside its heading
