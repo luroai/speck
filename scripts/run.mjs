@@ -8,6 +8,7 @@ import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
 import { resumeFor, handBackQueue } from './hand-back.mjs';
 import { goWithQueue } from './go-with.mjs';
+import { foremanFixQueue } from './foreman-fix.mjs';
 import { codexBuilds, codexStartWords, fillSession } from './codex-build.mjs';
 import { cursorBuilds, cursorCli, cursorStartWords, createChat } from './cursor-build.mjs';
 import { countStop } from './stop-wait.mjs';
@@ -310,6 +311,7 @@ function runOn(worker) {
 
   const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
   const goWiths = goWithQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) }); // 0284
+  const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }); // 0286
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => [[...running], ships.running()], launched: () => [...launched], stopLoop: () => clearInterval(loop) });
   // 0285: the Foreman's record of this check: the builds running, why each ready ticket isn't building and shipping's
@@ -339,6 +341,7 @@ function runOn(worker) {
     const tickets = readTickets();
     if (!tickets) return;
     ships.check(tickets);
+    foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
     // Builds that were killed with their ticket in hand: each resumed once.
     const runs = runsDir(repo);

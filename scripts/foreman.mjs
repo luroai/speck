@@ -29,6 +29,16 @@ export function readForeman(runs) {
 // The reason a ready ticket isn't building, in a word or two, for the status: by the kind speck run recorded.
 const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new code', uncommitted: 'not committed', stopped: 'stopped', unstarted: 'not started', chat: 'Cursor chat' };
 
+// 0286: foreman_fixing, what the Foreman does with a blocked question: off (nothing), tell (counts it under Needs you)
+// or fix (takes the recommendation of one that changes nothing you'd notice and has a clear winner). tell by default,
+// and for any value speck doesn't know.
+export const FIXING = Object.freeze(['off', 'tell', 'fix']);
+export const fixingOf = cfg => (cfg && FIXING.includes(cfg.foreman_fixing) ? cfg.foreman_fixing : 'tell');
+// 0286: whether the Foreman may take a blocked ticket's recommendation, from what `speck status --json` gives (0283):
+// a recommendation, no change you'd notice and a clear winner. Anything unknown is left for you.
+export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_recommendation === 'string' && t.blocked_recommendation !== ''
+  && t.blocked_noticeable === false && t.blocked_clear === true;
+
 const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
 
@@ -37,8 +47,9 @@ const text = v => (typeof v === 'string' ? v : '');
 // speck run that wrote it holds the lock: one left by an earlier speck run is out of date. Returns
 // { word, tone, building, ready: [{ id, why }], ship: { running, hold, refused: [{ id, message }] } | null,
 // blocked: [{ id, title, question }] }, word being the status in one or two words and tone its colour:
-// off, idle, ok (building or shipping), warn (waiting) or bad (needs you).
-export function foremanView({ run, record, tickets }) {
+// off, idle, ok (building or shipping), warn (waiting) or bad (needs you). 0286: `fixing` is foreman_fixing: with off,
+// blocked tickets aren't counted under Needs you.
+export function foremanView({ run, record, tickets, fixing = 'tell' }) {
   const on = !!(run && run.on);
   const rec = on && record && record.lock === run.pid ? record : null;
   const all = list(tickets).filter(t => t && typeof t === 'object');
@@ -58,7 +69,7 @@ export function foremanView({ run, record, tickets }) {
   const switching = rec && rec.switching && typeof rec.switching === 'object';
   const view = (word, tone) => ({ word, tone, building, ready: ready.map(({ id, why }) => ({ id, why })), ship, blocked });
   if (!on) return view('Off', 'off');
-  if (blocked.length) return view(`Needs you ${blocked.length}`, 'bad');
+  if (blocked.length && fixing !== 'off') return view(`Needs you ${blocked.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
   if (building.length) return view(`Building ${building.length}`, 'ok');
   const why = switching ? 'new code' : ship && ship.hold ? 'on hold' : ready.find(r => SHORT[r.kind]) ? SHORT[ready.find(r => SHORT[r.kind]).kind]
