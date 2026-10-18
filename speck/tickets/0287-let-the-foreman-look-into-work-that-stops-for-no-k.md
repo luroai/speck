@@ -38,6 +38,7 @@ With the Foreman's Fixing setting on, speck run starts a Foreman agent with a sh
 
 ## Notes
 - From `speck/ideas/2026-10-17-a-foreman-that-keeps-the-work-moving.md`, step 3. The agent's steps go in a new skill, which is the Foreman's instructions, not a user command (only Capture, Ticket, Build and Ship are user commands).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
