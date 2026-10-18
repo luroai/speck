@@ -38,6 +38,7 @@ A blocked ticket's question in the panel has a button that takes the build's rec
 
 ## Notes
 - speck run's hand-backs resume a build in `scripts/hand-back.mjs` (`resumeArgv`). Panel writes are in `scripts/panel.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
