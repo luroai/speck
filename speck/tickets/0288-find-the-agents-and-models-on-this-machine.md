@@ -46,7 +46,11 @@ speck knows, for each agent it supports, whether it's installed and signed in an
 - Self-check: a list cut off for being too long is no longer reported as taking too long in the panel.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+There's a new command, `speck agents`, that says which of Claude Code, Codex and Cursor are installed on this machine and signed in, and lists the models each one offers, with their proper names and descriptions where the agent gives them. Setup now uses it to tell you which agents are ready and to offer their models.
+
+In the panel's Settings view, the model lists for the builder and the reviewer now show each model's proper name and description, and a Cursor builder's models are listed too. The reviewer list only offers reviewers whose agent is installed and signed in (plus whichever one is set now), with one line saying why any other is missing.
+
+To see it, run `speck agents` in the project, or open Settings in the panel. Worth keeping an eye on: Cursor isn't installed on this machine, so its part was checked only against stand-ins that copy the output format of Cursor's CLI as others have seen it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,11 @@ speck knows, for each agent it supports, whether it's installed and signed in an
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- `speck detect` still looks only for `cursor-agent`: saved to `speck/ideas/2026-10-18-speck-detect-finds-cursor-as-agent.md`.
+- Known limit: Cursor's CLI is called `agent`, a common name, so another program called `agent` on the PATH would be asked `agent status` and `agent models` and reported as Cursor (not signed in, unless it prints "Logged in").
+- Known limit: the format of `agent models` and `agent status` comes from a published parser, not from Cursor's docs or a real install. Check it against the real CLI once Cursor is installed.
+- Known limit: `speck agents` asks each agent in turn, so with every agent stuck it can take up to 50 seconds. The panel asks them all at once.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -127,6 +136,79 @@ speck knows, for each agent it supports, whether it's installed and signed in an
     ],
     "escalation_question": "",
     "summary": "The new command reports agent readiness and named models, and setup uses it. Settings still cannot offer Cursor's models, so the change needs one integration fix before approval."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e42b88ecf32dcedf0f6863cadd0e5f3c969d9a32",
+    "thread_id": "01a14ea1-2c67-7cf3-a106-3190d4a40fdc",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 288095,
+      "cached_input_tokens": 225920,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1524,
+      "reasoning_output_tokens": 130
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T10:50:33.464Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/agents.mjs findAgents and cmdAgents report all three agents with installation, sign-in and model metadata. Both AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/agents.mjs uses the specified discovery commands and 10-second timeout; parseCodexModels excludes hidden models; CLAUDE_MODELS supplies the four described aliases. Passing AC2 tests cover discovery, parsing, failures and timeouts."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs builderModels now obtains Cursor models through agentModelsAsync. /api/settings passes these to the view, which renders display names and descriptions. readyReviewers filters unavailable built-in reviewers while retaining the current value and explaining omissions. All four AC3 tests pass, including Cursor discovery through rendered options and the missing-agent fallback."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md section 5 instructs setup to run speck agents --json, explain readiness, offer ready agents and present their models by display name and description."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "scripts/agents.mjs agentLines prints statuses, model metadata and failure reasons as plain lines. The passing AC5 test compares the CLI output with its JSON details."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs:135",
+        "issue": "Settings previously failed to offer Cursor's discovered models.",
+        "suggested_fix": "Implemented: builderModels reads Cursor models through agentModelsAsync, with a test covering discovery, rendered options and the missing-agent fallback.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Cursor gap is fixed. The command reports agent readiness and named models, Settings displays the available choices, and setup uses the discovery results. All five criteria pass; the reported tests have no failures. Cursor remains verified through stand-ins because its CLI is not installed here."
   }
 }
 ```
