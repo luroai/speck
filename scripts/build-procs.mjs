@@ -13,7 +13,7 @@ export function processRows() {
 
 // The processes whose environment holds `entry` (NAME=value). Linux reads /proc; macOS asks ps for each process's
 // environment. Anywhere else, or for a process whose environment can't be read, it finds nothing.
-function processesWithEnv(entry) {
+export function processesWithEnv(entry) {
   if (process.platform === 'linux') {
     const found = [];
     for (const d of fs.readdirSync('/proc').filter(d => /^\d+$/.test(d))) {
