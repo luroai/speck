@@ -449,6 +449,12 @@
   #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad { color: var(--bad); }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--text); }
+  /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */
+  #full-ticket .pack-pictures { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 0 0 8px; }
+  #full-ticket .pack-pictures figure { margin: 0; }
+  #full-ticket .pack-pictures a { display: block; border: .5px solid var(--line-soft); background: var(--raise); }
+  #full-ticket .pack-pictures img { display: block; width: 100%; height: auto; }
+  #full-ticket .pack-pictures figcaption { margin-top: 4px; font-size: 12px; color: var(--muted); }
   /* 0142: an opened draft's, idea's or inbox note's Markdown in Plan, formatted as in the full ticket pane */
   .shaping .md { overflow-wrap: anywhere; }
   .shaping .md p { margin: 0 0 8px; color: var(--text); }
@@ -1455,7 +1461,7 @@ async function loadPack(id) {
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
     if (res.ok && body && body.pack === null) next = { state: 'none' };
-    else if (res.ok && body && typeof body.pack === 'string') next = { state: 'ok', text: body.pack };
+    else if (res.ok && body && typeof body.pack === 'string') next = { state: 'ok', text: body.pack, pictures: packPictures(body.pictures) };
     else next = { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `The server couldn't make the review pack (${res.status}).` };
   } catch {
     next = { state: 'error', text: "Couldn't reach the panel server, so the review pack can't be shown." };
@@ -1463,6 +1469,23 @@ async function loadPack(id) {
   if (mine !== packSeq || !packOf || packOf.id !== id) return;
   packOf = { id, ...next };
   render();
+}
+// 0294: the pictures of a visual change the server listed with the pack, each with its caption, served by the panel.
+const packPictures = list => (Array.isArray(list) ? list : []).filter(p => p && typeof p.caption === 'string' && typeof p.url === 'string' && /^\/api\/tickets\/\d+\/pictures\/\d+$/.test(p.url));
+// Each picture, small, with its caption under it. Pressing it opens it full size in a new tab.
+function picturesPart(pictures) {
+  return [el('h6', 'md-h3', 'Pictures'), el('div', 'pack-pictures', null, ...pictures.map(p => {
+    const img = el('img');
+    img.src = p.url;
+    img.alt = p.caption;
+    img.loading = 'lazy';
+    const a = el('a', null, null, img);
+    a.href = p.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.title = 'Open full size';
+    return el('figure', null, null, a, el('figcaption', null, p.caption));
+  }))];
 }
 // The side pane with a review pack: its Markdown formatted, tables included, and the findings in a <details> element
 // that folds away, as the pack's own <details> does where Markdown is shown with HTML.
@@ -1474,7 +1497,12 @@ function packPane(t) {
   if (packOf.state === 'loading') body.appendChild(el('p', null, 'Loading the review pack…'));
   else if (packOf.state === 'none') body.appendChild(el('p', null, `There's no review pack for ${t.id}: it has no review rounds recorded.`));
   else if (packOf.state === 'error') body.appendChild(el('p', 'bad', packOf.text));
-  else for (const n of packBlocks(packOf.text)) body.appendChild(n);
+  else {
+    const blocks = packBlocks(packOf.text);
+    // The pictures go under the acceptance criteria, or at the end of a pack without them.
+    if (packOf.pictures.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...picturesPart(packOf.pictures)); }
+    for (const n of blocks) body.appendChild(n);
+  }
   return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), ...shipPart(t), body];
 }
 // 0133: an approved ticket's pack has a Ship button, above the pack. Clicking it is the user shipping (Gate 2), as
