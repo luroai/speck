@@ -1791,6 +1791,7 @@ function renderSettings() {
           mine ? machineLine(x) : null,
           x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null,
           edit && x.for_machine === true ? scopeQuestion(x.key) : null,
+          x.key === 'reviewer' && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288
           x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
           x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
@@ -1875,8 +1876,9 @@ function settingEditor(x) {
     const off = [...new Set([settingNow(x), typed])].filter(c => !choices.includes(c));
     for (const c of [...off, ...choices]) {
       const list = x.key === 'reviewer_model' ? reviewerModelList() : x.key === 'builder_model' ? builderModelList() : null;
-      const about = off.includes(c) ? null : (list || []).find(m => m.slug === c)?.about;
-      const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${c} (not offered)` : about ? `${c}: ${about}` : c);
+      const m = off.includes(c) ? null : (list || []).find(x => x.slug === c); // 0288: with its display name and description
+      const named = m && m.display_name && m.display_name !== c ? ` (${m.display_name})` : '';
+      const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${c} (not offered)` : `${c}${named}${m && m.description ? `: ${m.description}` : ''}`);
       o.value = c;
       if (off.includes(c)) o.disabled = true;
       input.appendChild(o);
@@ -1918,23 +1920,25 @@ function settingChosen(key) {
   return x ? settingNow(x) : '';
 }
 // 0276: the models the server read, while the reviewer chosen in the view is the one it read them for; otherwise null.
-// 0278: Claude's model names whenever claude-subagent is chosen, each with `about` and no `efforts` (null).
+// 0278: Claude's model names whenever claude-subagent is chosen, each with no `efforts` (null).
 function reviewerModelList() {
   const m = settingsView !== null ? settingsView.reviewer_models : null, claude = settingChosen('reviewer') === 'claude-subagent';
   const list = claude && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
     : m && typeof m === 'object' && Array.isArray(m.models) && settingChosen('reviewer') === m.reviewer ? m.models : null;
   if (list === null) return null;
   return list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug,
-    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude ? null : [],
-    about: typeof x.about === 'string' ? x.about : null }));
+    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude ? null : [], ...modelWords(x) }));
 }
-// 0279: the models the server read for the builder, which the view can't change, each with `about` when it has one;
+// 0279: the models the server read for the builder, which the view can't change, each with its words when it has them;
 // null when it couldn't list them.
 function builderModelList() {
   const m = settingsView !== null ? settingsView.builder_models : null;
   if (!m || typeof m !== 'object' || !Array.isArray(m.models)) return null;
-  return m.models.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, about: typeof x.about === 'string' ? x.about : null }));
+  return m.models.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
 }
+// 0288: a model's display name and description, each null when the agent gives none.
+const modelWords = x => ({ display_name: typeof x.display_name === 'string' && x.display_name ? x.display_name : null,
+  description: typeof x.description === 'string' && x.description ? x.description : null });
 // 0279: why builder_model is a box to type in rather than a list, in one line, or null.
 function builderModelsWhy() {
   const m = settingsView !== null ? settingsView.builder_models : null;
