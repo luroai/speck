@@ -1,7 +1,7 @@
 ---
 id: "0284"
 title: "Go with a blocked ticket's recommendation from the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0285"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:54:45.451Z"
 approved: "2026-10-18T13:05:15.354Z"
+finished: "2026-10-18T13:07:24.673Z"
 
 ---
 # 0284 · Go with a blocked ticket's recommendation from the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Clearing a blocked ticket means messaging an agent "go with the recommendation" or resuming its session by hand, even when the build has already said what it recommends.
