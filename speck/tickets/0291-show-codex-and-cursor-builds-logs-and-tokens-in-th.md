@@ -1,7 +1,7 @@
 ---
 id: "0291"
 title: "Show Codex and Cursor builds' logs and tokens in the panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T12:05:34.361Z"
 ---
 # 0291 · Show Codex and Cursor builds' logs and tokens in the panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel reads build logs and builder spend only from Claude Code's `stream-json` output. A Codex or Cursor build's live log would show raw JSON, and its tokens wouldn't be counted.
@@ -52,7 +52,11 @@ The panel shows a Codex or Cursor build's log as readably as a Claude Code one, 
 - The reader is `scripts/build-log.mjs`; spend is `scripts/spend.mjs`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When Codex or Cursor builds a ticket, the panel's live log now reads like a Claude Code one: what the agent says, and one line for each command it runs, with a cross under a command that failed. Before, these logs showed almost nothing useful. Once such a build ends, its tokens are recorded and shown in the shipped ticket's details, as Claude Code's are. Codex and Cursor don't say what a build cost, so no cost figure appears for them, rather than a misleading $0.
+
+To see it, let Codex or Cursor build a ticket with speck run on, open its log in the panel, and once it has shipped, open its Details.
+
+Worth keeping an eye on: if a Cursor build is stopped and picked up again, its token count may only cover the last part. That hasn't been checked yet, and it's in the inbox.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -62,3 +66,68 @@ The panel shows a Codex or Cursor build's log as readably as a Claude Code one, 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Whether Cursor's usage covers a resumed chat, and what its result text holds: `speck/ideas/2026-10-18-count-a-resumed-cursor-build-s-tokens.md`.
+- Codex and Cursor tool calls other than shell commands (file changes, reads) are left out of the log, as the ticket asked. Showing them as Claude Code's tool calls are shown would be a small later change.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "38982d1199a3a539742a0d91a64978bef56b0c9d",
+    "thread_id": "01a14eea-837f-78d0-8730-e870a238afc7",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 151895,
+      "cached_input_tokens": 105344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 676,
+      "reasoning_output_tokens": 59
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T12:09:39.499Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/build-log.mjs readable() renders Codex agent_message and command_execution items and omits other events. Passing 0291 AC1 tests cover messages, commands, failures, malformed items and the board's log tail."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/build-log.mjs readable() renders Cursor assistant messages and started shell calls, with completed-call failures. Passing 0291 AC2 tests cover readable output, result handling and failed commands."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/spend.mjs builderSpend() counts the documented Codex and Cursor usage fields. scripts/run.mjs recordExit() saves its output through the existing shared spend path. Passing 0291 AC3 tests verify totals, resumed Codex usage and panel tokens without a $0 cost."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Claude's existing message and usage handling remains intact. The passing 0291 AC4 regression test checks messages, tool calls, failures, result deduplication, modelUsage totals and usage-only totals."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Codex and Cursor build logs now show readable messages and commands, and their token counts use the existing panel reporting path. Unreported costs stay unknown. The supplied tests passed, Claude behaviour is preserved, and I found no blocking issues."
+  }
+}
+```
+
+</details>
