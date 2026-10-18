@@ -1,7 +1,7 @@
 ---
 id: "0306"
 title: "Bring the README and its picture up to date"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-18
 ---
 # 0306 · Bring the README and its picture up to date
 
-**Status:** 📋 ready
+**Status:** 📝 draft
 
 ## Problem
 The README describes speck as it was at 0.5.4, and its picture (0249) shows the panel's old look. Since then speck has gained a Settings view, the Foreman, builds with Codex and Cursor, a Claude Code reviewer, pull request mode and pictures in review packs, and the panel has the LCD look (0302–0305). Someone reading the README sees neither.
