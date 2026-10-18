@@ -12,6 +12,7 @@ import { shipChecks } from './ship.mjs';
 import { plainPack } from './pack.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { sharedCacheDir } from './turns.mjs';
+import { pushDone } from './pr-done.mjs';
 
 export const SHIP_MODES = Object.freeze(['local', 'pr']);
 export const prMode = cfg => cfg?.ship_mode === 'pr';
@@ -54,7 +55,7 @@ function existing(gh, repo, branch, base) {
   return pr ? pr.url : null;
 }
 
-// Pushes the ticket's branch and opens its pull request, or finds the one it already has, once the checks speck ship
+// Pushes the ticket's branch, with the commit that files it as done on top (0315), and opens its pull request, or finds the one it already has, once the checks speck ship
 // makes before merging pass: the reviewer approved it, and nothing outside speck/ changed since. Returns { url, found,
 // remote }, or throws a SpeckError of one line saying why, having merged and changed nothing on the base branch.
 // `at` is the folder its branch is checked out in.
@@ -70,7 +71,8 @@ function openPullRequest(repo, cfg, pad, branch, at, gh) {
   if (auth.status !== 0) throw new SpeckError(`gh isn't signed in to GitHub, so speck couldn't open ${pad}'s pull request. Run \`gh auth login\`, then \`speck pr ${pad}\`.`);
   const remote = sh('git', ['config', `branch.${base}.remote`], { cwd: repo }).stdout.trim();
   if (!remote) throw new SpeckError(`${base} has no remote set, so speck can't push ${branch} for a pull request. Set one with \`git branch --set-upstream-to=origin/${base} ${base}\`, then run \`speck pr ${pad}\`.`);
-  const push = sh('git', ['push', '-q', remote, `refs/heads/${branch}:refs/heads/${branch}`], { cwd: repo });
+  // 0315: with the commit that files the ticket as done on top, so merging the pull request is what makes it done.
+  const push = pushDone(repo, remote, branch, pad);
   if (push.status !== 0) throw new SpeckError(`Couldn't push ${branch} to ${remote}, so no pull request was opened: ${lastLine(push)}`);
   let url = existing(gh, repo, branch, base);
   if (url) return { url, found: true, remote };
@@ -138,7 +140,7 @@ export function openAndKeep(repo, cfg, id, { gh = 'gh' } = {}) {
       writeField(t, 'pull_request', pr.url);
       const commit = commitTicketOnly(folder.at, t.file, original, `speck(${pad}): pull request`);
       if (commit.status !== 0) throw fail(`Opened ${pad}'s pull request, ${pr.url}, but couldn't write its link on the ticket: ${lastLine(commit)}. Run \`speck pr ${pad}\` to try again.`, pr.url);
-      sh('git', ['push', '-q', pr.remote, `refs/heads/${branch}:refs/heads/${branch}`], { cwd: repo });
+      pushDone(repo, pr.remote, branch, pad);
     }
     saveRecord(repo, pad, { url: pr.url });
     return pr;

@@ -9,7 +9,6 @@ import { spawnSync } from 'node:child_process';
 import { openAndKeep } from '../scripts/pull-request.mjs';
 import { whyNotMergeable, prLook } from '../scripts/pr-ship.mjs';
 import { prQueue } from '../scripts/pr-queue.mjs';
-import { shipState } from '../scripts/ship.mjs';
 import { gIn, BRANCH } from './support/ship.mjs';
 import { prRepo, runs } from './support/pr.mjs';
 import { gitEnv } from './support/panel.mjs';
@@ -36,7 +35,9 @@ function assertTidied(r) {
   assert.equal(r.sha(BRANCH), '', 'the local branch is deleted');
   assert.equal(r.remoteHas(BRANCH), '', 'the remote branch is deleted');
   assert.ok(!fs.existsSync(r.wt), 'the worktree is removed');
-  assert.equal(r.remoteHas('main'), r.sha('main'), 'main is pushed');
+  // 0315: main isn't pushed: GitHub's main has the done ticket from the pull request, and the local one has caught up with it.
+  assert.ok(gIn(r.dir, 'merge-base', '--is-ancestor', r.remoteHas('main'), 'main').status === 0, 'main has the remote\'s main');
+  assert.match(gIn(r.bare, 'show', `main:${DONE}`).stdout, /^status: done/m, 'the merge on GitHub filed the ticket as done');
   assert.equal(r.g('status', '--porcelain'), '');
 }
 
@@ -45,7 +46,7 @@ function assertTidied(r) {
 test('0296 AC1: speck ship merges the pull request with gh once its checks pass, then tidies up as a local ship does', () => {
   const r = opened();
   r.gh.edit(URL1, { statusCheckRollup: [{ name: 'test', status: 'COMPLETED', conclusion: 'SUCCESS' }] });
-  const head = r.sha(BRANCH);
+  const head = r.remoteHas(BRANCH); // 0315: the branch with the commit filing the ticket as done on top
   const shipped = r.cli(r.dir, 'ship', '1');
   assert.equal(shipped.status, 0, shipped.stderr);
   const [merge] = merges(r);
@@ -103,25 +104,6 @@ test('0296 AC1: when gh only queues the merge, nothing is tidied up until GitHub
   const tidied = r.cli(r.dir, 'ship', '1');
   assert.equal(tidied.status, 0, tidied.stderr);
   assertTidied(r);
-});
-
-test('0296 AC1: a refused push of the done ticket, as on a protected branch, is kept in the ship record for the panel', () => {
-  const r = opened();
-  const hook = path.join(r.bare, 'hooks', 'pre-receive');
-  fs.writeFileSync(hook, '#!/bin/sh\nwhile read o n ref; do [ "$ref" = refs/heads/main ] && { echo "protected branch hook declined" >&2; exit 1; }; done\nexit 0\n', { mode: 0o755 });
-  const shipped = r.cli(r.dir, 'ship', '1');
-  assert.notEqual(shipped.status, 0);
-  assert.match(shipped.stderr.trim(), /^0001's pull request is merged and its ticket is done on your main, but pushing main to origin failed .*Run `git push origin main`/);
-  assert.ok(!shipped.stderr.trim().includes('\n'), 'one line');
-  assert.equal(r.gh.prs()[0].state, 'MERGED');
-  assert.ok(fs.existsSync(path.join(r.dir, DONE)));
-  assert.equal(r.sha(BRANCH), '');
-  assert.equal(shipState(runs(r.dir), '1')?.unpushed, true);
-  const said = [];
-  const q = prQueue(r.dir, r.cfg, { say: l => said.push(l), look: () => ({ state: 'MERGED', key: 'm' }), launch: () => {},
-    ship: (repo, id, log, done) => { fs.writeFileSync(log, `${shipped.stderr.trim()}\n`); done(1); } });
-  q.check(approved());
-  assert.match(said.at(-1), /^0001's pull request is merged, but its done ticket wasn't pushed: 0001's pull request is merged/);
 });
 
 // ---------- AC2: already merged on GitHub ----------
