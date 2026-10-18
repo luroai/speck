@@ -414,9 +414,10 @@ test('0029 AC1: an approved ticket in a worktree shows as approved', () => {
 
 test('0029 AC3: with no other worktrees, speck status output is unchanged', () => {
   const r = startRepo({ config: { worktrees: 'false' } });
-  assert.equal(r.run('status').stdout, '\nREADY (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
+  // 0285: after the Foreman's status, with speck run off
+  assert.equal(r.run('status').stdout, 'FOREMAN: Off\n  0001 ready, not building: speck run is off\n\nREADY (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
   assert.equal(r.run('start', '1').status, 0); // a branch in this checkout, no other worktree
-  assert.equal(r.run('status').stdout, '\nBUILDING (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
+  assert.equal(r.run('status').stdout, 'FOREMAN: Off\n\nBUILDING (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
 });
 
 test('0029 AC4: the status skill says to resume an in-progress ticket in its worktree and name the path', () => {

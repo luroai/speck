@@ -439,9 +439,13 @@ function notPushed(runs, { remote, base, sha } = {}) {
 
 // True while a ship of any ticket but `pad` runs in the repo, whoever started it, from the ship records in `runs`.
 export function otherShipRunning(runs, pad = null) {
+  return shipsRunning(runs, pad).length > 0;
+}
+// The ids of the tickets being shipped, whoever started each, from the ship records in `runs`, leaving out `pad` (0285).
+export function shipsRunning(runs, pad = null) {
   let names = [];
-  try { names = fs.readdirSync(runs); } catch { return false; }
-  return names.some(f => { const m = f.match(/^(\d+)\.ship\.json$/); return !!m && m[1] !== pad && shipState(runs, m[1])?.running === true; });
+  try { names = fs.readdirSync(runs); } catch { return []; }
+  return names.flatMap(f => { const m = f.match(/^(\d+)\.ship\.json$/); return m && m[1] !== pad && shipState(runs, m[1])?.running === true ? [m[1]] : []; }).sort();
 }
 
 // Takes the ticket's ship record for this process, or refuses, changing nothing, while another ship of it runs. The

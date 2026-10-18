@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, exitOf, round, page, queueRows } from './support/panel.mjs';
+import { T, switchPage, exitOf, round, page, queueRows } from './support/panel.mjs';
 
 // ---------- 0199: the header button is only the Auto-build switch ----------
 
@@ -25,9 +25,10 @@ const ALL = [READY, BUILDING, CHECKING, REVIEWING, PAUSED, SHIPPING, TO_SHIP, WA
 const SETS = [[], [READY], ...ALL.slice(1).map(t => [t]), ALL, [BLOCKED, BUILDING], [TO_SHIP, SHIPPING]];
 
 const state = (tickets, run = RUN) => ({ tickets, ideas: [], resume_command: '', ...(run ? { run } : {}) });
-const runOf = p => p.byId('run');
-const builderIn = p => p.all(runOf(p)).find(n => n.tagName === 'canvas');
-const shows = async (tickets, run = RUN) => { const p = fakePage([state(tickets, run)]); await p.settle(); return p; };
+// 0285: the Auto-build switch is in Settings now (runSwitch), and the header button shows the Foreman, with the builder.
+const runOf = p => p.runSwitch();
+const builderIn = p => p.all(p.byId('run')).find(n => n.tagName === 'canvas');
+const shows = async (tickets, run = RUN) => { const p = switchPage([state(tickets, run)]); await p.settle(); return p; };
 const ids = tickets => tickets.map(t => t.id).join(' ') || 'none';
 
 test('0199 AC1: on, the button says "Auto-build on", and off, "Auto-build off", whatever the tickets are doing', async () => {
@@ -40,7 +41,7 @@ test('0199 AC1: on, the button says "Auto-build on", and off, "Auto-build off", 
 test('0199 AC1: while it switches, it says "Starting…" or "Pausing…"', async () => {
   const hang = new Promise(() => {});
   for (const [run, text] of [[RUN, 'Pausing…'], [null, 'Starting…']]) {
-    const p = fakePage([state([BLOCKED, BUILDING], run), hang]);
+    const p = switchPage([state([BLOCKED, BUILDING], run), hang]);
     await p.settle();
     p.press(runOf(p));
     await p.settle();
@@ -55,7 +56,7 @@ test('0199 AC2: it never names a ticket, a build step or that something needs yo
     for (const text of [r.textContent, r.title]) {
       assert.doesNotMatch(text, /\b03\d\d\b|needs you|Building|Build\b|Self-check|Review|Ship\b|Shipping/, where);
     }
-    assert.deepEqual(r.className.split(' '), ['run-state', run ? 'run-on' : 'run-off'], where);
+    assert.deepEqual(r.className.split(' '), ['run-switch', run ? 'run-on' : 'run-off'], where);
   }
   const js = page().match(/<script>([\s\S]*?)<\/script>/)[1];
   assert.doesNotMatch(js, /function runLabel\(/, 'nothing works out a ticket to name');
@@ -74,7 +75,7 @@ test('0199 AC3: its builder hops while any build or ship is at work, and stands 
 
 test('0199 AC3: a ship started from the panel and not yet answered counts as a ship at work', async () => {
   const st = state([TO_SHIP]), never = new Promise(() => {});
-  const p = fakePage([], {
+  const p = switchPage([], {
     fetch: async url => {
       if (/\/ship$/.test(url)) return never;
       const body = /\/log$/.test(url) ? { text: '', truncated: false } : /\/pack$/.test(url) ? { pack: '## 0306 · Ticket 0306\n' } : st;
@@ -101,7 +102,7 @@ test('0199 AC4: the tooltip says only what a click does, and a click switches Au
     assert.equal(runOf(await shows(tickets)).title, ON, `on: ${ids(tickets)}`);
     assert.equal(runOf(await shows(tickets, null)).title, OFF, `off: ${ids(tickets)}`);
   }
-  const p = fakePage([state([BUILDING, BLOCKED]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
+  const p = switchPage([state([BUILDING, BLOCKED]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
   await p.settle();
   const button = runOf(p);
   assert.equal(button.attrs['aria-pressed'], 'true');

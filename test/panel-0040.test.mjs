@@ -184,7 +184,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
     // Each refresh puts a new square in the Auto-build button (0150), so a square that isn't the one marked is a refresh since.
     const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').firstChild`); await b.until(`document.getElementById('run').firstChild !== window.seen`, what); };
     await refreshed('a refresh'); await refreshed('a second refresh');
-    assert.match(await autoBuild(), /^Auto-build/, 'the Auto-build button is still updated');
+    assert.match(await autoBuild(), /^(Off|Idle)$/, 'the header button is still updated (0285: with the Foreman\'s status)');
     assert.equal(await sel(), 'Export button', 'kept through refreshes');
     // AC2: other tickets change, and the changes show.
     draft('0001', 'A new draft before it', 'Something else.');

@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, switchPage, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
 import { loadBadge, recorder, eye } from './support/badge.mjs';
 
 // ---------- 0163: the running build in the Auto-build button ----------
@@ -25,17 +25,19 @@ const AUTO = T('0160', 'approved', { started: ago(900), approved: ago(60), self_
 const READY = T('0161', 'ready');
 
 const state = (tickets, run = RUN) => ({ tickets, ideas: [], resume_command: '', ...(run ? { run } : {}) });
-const runOf = p => p.byId('run');
-const parts = p => runOf(p).children;
-const badgeIn = p => p.all(runOf(p)).find(n => n.tagName === 'canvas');
-const labelIn = p => p.all(runOf(p)).find(n => /\blabel\b/.test(n.className || ''));
-const shows = async (tickets, run = RUN) => { const p = fakePage([state(tickets, run)]); await p.settle(); return p; };
+// 0285: the Auto-build switch is in Settings now (runSwitch), and the header button shows the Foreman, with the builder.
+const runOf = p => p.runSwitch();
+const headerOf = p => p.byId('run');
+const parts = p => headerOf(p).children;
+const badgeIn = p => p.all(headerOf(p)).find(n => n.tagName === 'canvas');
+const labelIn = p => p.all(headerOf(p)).find(n => /\blabel\b/.test(n.className || ''));
+const shows = async (tickets, run = RUN) => { const p = switchPage([state(tickets, run)]); await p.settle(); return p; };
 
 test('0163 AC1: while Auto-build is on and a ticket is building, reviewing or shipping, the button reads "Auto-build on" (0199)', async () => {
   for (const t of [BUILDING, CHECKING, REVIEWING, PAUSED, SHIPPING]) {
     const p = await shows([READY, t]);
     assert.equal(runOf(p).textContent, 'Auto-build on', t.id);
-    assert.equal(labelIn(p).textContent, 'Auto-build on', `${t.id}: in its own label, which can be shortened`);
+    assert.equal(labelIn(p).textContent, 'Idle', `${t.id}: the header's own label, which can be shortened, is the Foreman's (0285)`);
     assert.match(runOf(p).className, /\brun-on\b/);
     assert.doesNotMatch(runOf(p).className, /\brun-(bad|wait)\b/, `${t.id}: in the button's usual colour`);
   }
@@ -85,7 +87,7 @@ test('0163 AC3: in place of the square, the builder: bouncing while a build is r
     [[TO_SHIP], RUN, 'still'], [[], RUN, 'still'], [[BUILDING], null, 'hop'], [[], null, 'still']]; // 0199: any build at work hops, on or off
   for (const [tickets, run, pose] of cases) {
     const p = await shows(tickets, run);
-    assert.equal(p.all(runOf(p)).filter(n => /\blive\b/.test(n.className || '')).length, 0, 'no square');
+    assert.equal(p.all(headerOf(p)).filter(n => /\blive\b/.test(n.className || '')).length, 0, 'no square');
     const b = badgeIn(p);
     assert.ok(b, 'a drawn builder');
     assert.deepEqual(b.className.split(' '), ['mini', pose], `${tickets.map(t => t.id)} ${run ? 'on' : 'off'}: ${pose}`);
@@ -116,7 +118,7 @@ test('0163 AC3: the builder is drawn without its tile, filling the space, and on
 });
 
 test('0163 AC4: clicking still starts or pauses Auto-build, and the tooltip says only what a click will do (0199)', async () => {
-  const p = fakePage([state([BUILDING]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
+  const p = switchPage([state([BUILDING]), { ok: true, run: { on: false, pid: null } }, { ok: true, run: { on: true, pid: 9 } }]);
   await p.settle();
   assert.equal(runOf(p).title, ON);
   assert.equal(runOf(p).attrs['aria-pressed'], 'true');
@@ -131,12 +133,12 @@ test('0163 AC4: clicking still starts or pauses Auto-build, and the tooltip says
   assert.equal(p.calls.at(-1).url, '/api/run/on');
   assert.equal(runOf(p).attrs['aria-pressed'], 'true');
   const q = await shows([BLOCKED]);
-  assert.equal(q.byId('run').title, ON);
+  assert.equal(q.runSwitch().title, ON);
 });
 
 test('0163 AC4: while a click is going through, it says "Pausing…" as today', async () => {
   const answer = new Promise(() => {});
-  const p = fakePage([state([BUILDING]), answer]);
+  const p = switchPage([state([BUILDING]), answer]);
   await p.settle();
   p.press(runOf(p));
   await p.settle();
@@ -217,7 +219,7 @@ test('0163 AC4: in a real browser at 375 px, the label stays on one line, beside
       assert.ok(Math.abs(g.run.top - g.theme.top) < 1, `${where}: on light/dark's row`);
       assert.ok(g.run.left >= 16 && g.theme.right <= 375 - 16 + .5, `${where}: within the header's padding`);
       if (!slim) assert.ok(g.repo.width > 0 && Math.abs(g.repo.top - g.logo.top) < 12 && g.run.top > g.logo.bottom, 'the project stays beside speck, above the button');
-      assert.equal(g.title, ON, `${where}: the tooltip says what a click does`);
+      assert.equal(g.title, 'What speck run is doing, and what is waiting', `${where}: the tooltip says what pressing it shows (0285: it's the Foreman's status)`);
     }, { width: 375 });
   }
 });

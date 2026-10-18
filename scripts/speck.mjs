@@ -18,7 +18,8 @@ import { cmdConfig } from './config.mjs';
 import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
-import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
+import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
+import { foremanView, foremanLines, readForeman } from './foreman.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
@@ -494,6 +495,9 @@ function cmdStatus(args = []) {
   const cfg = loadConfig(repo), runs = runsOf(repo);
   const tickets = statusTickets(repo, cfg);
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
+  // 0285: the Foreman, as the panel's header shows it, from speck run's own record. Blocked tickets are listed below.
+  const board = tickets.map(t => ({ id: t.fm.id, status: t.fm.status, title: t.fm.title, blocked_question: null }));
+  for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board }))) console.log(line);
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
     const group = tickets.filter(t => t.fm.status === s).map(t => ({ t, id: t.fm.id, type: ticketType(t), priority: ticketPriority(t) })).sort(byPriority);

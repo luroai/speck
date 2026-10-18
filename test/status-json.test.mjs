@@ -25,7 +25,8 @@ function jsonRepo() {
 test('0030 AC1: speck status --json prints one JSON object with tickets and ideas, and plain status is unchanged', () => {
   const r = startRepo({ config: { worktrees: 'false' } });
   const plain = r.run('status').stdout;
-  assert.equal(plain, '\nREADY (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
+  // 0285: after the Foreman's status, with speck run off
+  assert.equal(plain, 'FOREMAN: Off\n  0001 ready, not building: speck run is off\n\nREADY (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
   const res = r.run('status', '--json');
   assert.equal(res.status, 0);
   const out = JSON.parse(res.stdout);
