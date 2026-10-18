@@ -38,6 +38,7 @@ With the Foreman's Fixing setting on, speck run takes the recommendation for a b
 
 ## Notes
 - Never: set a ticket ready, approve work, or ship beyond what `auto_ship` covers.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
