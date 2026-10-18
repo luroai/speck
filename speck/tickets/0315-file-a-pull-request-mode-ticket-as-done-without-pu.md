@@ -37,6 +37,7 @@ In pull request mode, a ticket is filed as done without anything being pushed st
 
 ## Notes
 - From `speck/ideas/2026-10-18-file-a-pull-request-mode-ticket-as-done-on-a-protected-branch.md` (inbox, from 0296).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
