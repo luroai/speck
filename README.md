@@ -66,7 +66,7 @@ Then `/speck-review` starts the review loop. The builder (Claude Code by default
 
 Read a one-page review pack, then ship. Or let low-risk work ship itself.
 
-Every approved ticket has a review pack (`speck pack <id>`, or the ticket in the panel), written for someone who doesn't read code. When a ticket changes how something looks, the build takes pictures of the result in a real browser, and the pack shows them. Read it, then run `/speck-ship <id>` or click the Ship button in the review pack. That's Gate 2. Agents never merge or ship unless you do one of those, or you turn on `auto_ship` in `speck/config.yml`. With `auto_ship` on, `speck run` ships each approved ticket whose risk is listed in `auto_ship_risk` (`[low]` by default) as soon as the reviewer approves it, while it's on. With `ship_mode: pr`, speck merges nothing itself: once a ticket is approved, it pushes the ticket's branch and opens a GitHub pull request for it with `gh`, with its review pack, and the panel shows the link.
+Every approved ticket has a review pack (`speck pack <id>`, or the ticket in the panel), written for someone who doesn't read code. When a ticket changes how something looks, the build takes pictures of the result in a real browser, and the pack shows them. Read it, then run `/speck-ship <id>` or click the Ship button in the review pack. That's Gate 2. Agents never merge or ship unless you do one of those, or you turn on `auto_ship` in `speck/config.yml`. With `auto_ship` on, `speck run` ships each approved ticket whose risk is listed in `auto_ship_risk` (`[low]` by default) as soon as the reviewer approves it, while it's on. With `ship_mode: pr`, once a ticket is approved, speck pushes the ticket's branch and opens a GitHub pull request for it with `gh`, with its review pack, and the panel shows the link. Shipping then merges that pull request on GitHub once its checks pass, instead of merging locally, and tidies up as a local ship does. If you merge it on GitHub yourself, shipping it, or `speck run`, only tidies up.
 
 Shipping runs `speck ship <id>`. It refuses, changing nothing, unless the reviewer approved the ticket, nothing outside `speck/` changed after that approval, the working tree is clean and the whole test suite passes on the ticket merged with the base branch as it is now. Then it sets the ticket to `done`, merges the branch into `main`, pushes it if you have a remote, and deletes the branch. No GitHub needed. Everything happens in your local repo.
 
@@ -161,7 +161,7 @@ speck needs the following on your machine.
 - Node.js 20 or newer, which your agent can install for you
 - Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise [Claude Code](https://claude.com/claude-code) (`reviewer: claude`), any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
 
-Not yet: Windows (speck says so and suggests WSL), Jira or GitHub Issues sync, pull requests as the way to ship, and hosted or cloud builds.
+Not yet: Windows (speck says so and suggests WSL), Jira or GitHub Issues sync, and hosted or cloud builds.
 
 ## Without an agent
 
