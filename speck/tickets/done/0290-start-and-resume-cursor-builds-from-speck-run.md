@@ -1,7 +1,7 @@
 ---
 id: "0290"
 title: "Start and resume Cursor builds from speck run"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0289"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:05:55.735Z"
 approved: "2026-10-18T12:11:41.644Z"
+finished: "2026-10-18T12:14:15.327Z"
 
 ---
 # 0290 · Start and resume Cursor builds from speck run
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck lists Cursor as a builder, but speck run can't start or resume a Cursor build without a hand-written `build_command`, and it can't resume one at all, since it only resumes by Claude Code's `--session-id`.
