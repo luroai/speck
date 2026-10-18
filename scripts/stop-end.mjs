@@ -20,7 +20,7 @@ const CHECK = `try {
 // The build's processes still running, among `known` and any found now. Listing every process can be slow on a busy
 // machine and can't be cut short in this process, so it runs in one of its own, ended after `ms`: null if it was (0218).
 export function checkBuild(b, known, ms) {
-  const env = { ...process.env, SPECK_CHECK: JSON.stringify({ run: new URL('./run.mjs', import.meta.url).href, pid: b.pid, session: b.rec.session ?? '', known }) };
+  const env = { ...process.env, SPECK_CHECK: JSON.stringify({ run: new URL('./run.mjs', import.meta.url).href, pid: b.pid, session: b.rec.env_session ?? b.rec.session ?? '', known }) };
   const r = spawnSync(process.execPath, ['--input-type=module', '-e', CHECK], { env, encoding: 'utf8', timeout: Math.max(1, Math.ceil(ms)), killSignal: 'SIGKILL', maxBuffer: 64 * 1024 * 1024 });
   if (r.error?.code === 'ETIMEDOUT') return null;
   if (r.error || r.status !== 0) throw new SpeckError(`Couldn't list ${b.id ?? 'the build'}'s processes (${(r.stderr || '').trim() || r.error?.message || `it exited with ${r.status}`}).`);
