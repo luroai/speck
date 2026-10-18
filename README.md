@@ -109,7 +109,7 @@ These sections explain how speck works inside: the review loop, where it keeps i
 
 The builder owns the loop. It starts the reviewer with the ticket, the diff against the base branch and a summary of the test output. The reviewer returns a structured verdict: a `pass`, `fail` or `unclear` for each acceptance criterion with its evidence, findings marked `blocking` or `minor`, and `approve`, `changes_requested` or `escalate`. The builder answers each blocking finding as `fixed`, `disputed` with a reason, or `needs_pm` for a question only you can answer. The next round resumes the same reviewer session (for Codex, `codex exec resume`), so the reviewer remembers its earlier findings and re-checks each fix and dispute.
 
-The loop ends when the reviewer approves with no blocking findings and every criterion passing. It blocks the ticket with one question for you after `max_review_rounds`, default 3, unless the last round left no more than one blocking finding open, which earns one extra round. It escalates to you sooner when the same finding is disputed in two consecutive rounds (`escalate_after_repeat_disputes`), when the reviewer escalates, or on `needs_pm`. Minor findings never block: they go into the ticket's Delivery log, and those worth a ticket into your inbox. A reviewer from the builder's own family, such as `claude-subagent` reviewing a Claude build, is allowed only when `builder_model` and the reviewer's model are both set and differ, unless you set `allow_same_model_review: true`.
+The loop ends when the reviewer approves with no blocking findings and every criterion passing. It blocks the ticket with one question for you after `max_review_rounds`, default 3, unless the last round left no more than one blocking finding open, which earns one extra round. It escalates to you sooner when the same finding is disputed in two consecutive rounds (`escalate_after_repeat_disputes`), when the reviewer escalates, or on `needs_pm`. Minor findings never block: they go into the ticket's Delivery log, and those worth a ticket into your inbox. A reviewer from the builder's own family, such as `claude` or `claude-subagent` reviewing a Claude build, is allowed only when `builder_model` and the reviewer's model are both set and differ, unless you set `allow_same_model_review: true`.
 
 ### Where state lives
 
@@ -156,7 +156,7 @@ speck needs the following on your machine.
 - [Claude Code](https://claude.com/claude-code), or another builder: any coding agent that reads skills from `.agents/skills/` or `.claude/skills/`, such as [Codex](https://github.com/openai/codex) or [Cursor](https://cursor.com/docs/cli/installation). Set it as `builder:` in `speck/config.yml`, so `speck doctor` checks the right tool. Claude Code is the default and the one most tested.
 - git
 - Node.js 20 or newer, which your agent can install for you
-- Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
+- Optional: [Codex CLI](https://github.com/openai/codex) as the reviewer (the default). Otherwise [Claude Code](https://claude.com/claude-code) (`reviewer: claude`), any agent with a non-interactive mode set up as a reviewer command in config (see below), or a Claude subagent reviewer if you allow it
 
 Not yet: Windows (speck says so and suggests WSL), Jira or GitHub Issues sync, pull requests as the way to ship, and hosted or cloud builds.
 
@@ -222,7 +222,9 @@ reviewer_options:
     command: "cursor-agent -p --output-format json --mode ask --model {model}"
 ```
 
-For Claude Code, use `"claude -p --output-format json --permission-mode plan --model {model} --effort {effort}"`, and set `allow_same_model_review: true` if Claude is also the builder, unless `builder_model` and `reviewer_model` are both set and differ. To let later rounds continue the reviewer's own session instead of resending everything, add `session_id_path: session_id` and `resume_command: "claude -p --output-format json --permission-mode plan --resume {session} --model {model} --effort {effort}"`. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode as above. Flags change, so check your tool's current ones.
+To let later rounds continue the reviewer's own session instead of resending everything, add `session_id_path` (where the session id is in its output) and a `resume_command` with `{session}`. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode. Flags change, so check your tool's current ones.
+
+Claude Code needs no command: set `reviewer: claude` and speck runs it for you, whatever the builder, so a Codex or Cursor build can be reviewed by Claude. It runs without a person in Claude Code's `dontAsk` permission mode, which runs read-only commands and denies anything else rather than asking, with its file-writing tools taken away and without your own Claude Code settings, so no allow rule in them lets it change files. Later rounds resume the same session. Set `allow_same_model_review: true` if Claude is also the builder, unless `builder_model` and `reviewer_model` are both set and differ.
 
 ## Repo layout
 

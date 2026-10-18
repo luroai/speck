@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
-import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong } from './reviewers.mjs';
+import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong, reviewerOptions } from './reviewers.mjs';
 import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 
@@ -329,14 +329,14 @@ export function cmdReview(args) {
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
   const reviewer = t.fm.reviewer || cfg.reviewer;
-  const command = cfg.reviewer_options?.[reviewer]?.command;
+  const command = reviewerOptions(cfg, reviewer).command;
   const opts = { tests: opt('tests'), response: opt('response') };
   // A bad review_timeout_minutes is refused before the ticket changes or any reviewer runs (0180).
   if ((typeof command === 'string' && command.trim()) || reviewer === 'codex') reviewTimeoutMs(cfg);
   let rec;
   if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
   else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));
-  else throw new SpeckError(`speck review runs the codex adapter, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
+  else throw new SpeckError(`speck review runs the codex and claude reviewers, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
