@@ -1,7 +1,7 @@
 ---
 id: "0289"
 title: "Start and resume Codex builds from speck run"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T10:41:59.157Z"
 ---
 # 0289 · Start and resume Codex builds from speck run
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck run can only start and resume builds with Claude Code: it gives each build a session id up front (`--session-id {session}`) and resumes it by that id. Codex chooses its own session id, so with Codex as the builder, speck run can't resume a build after a hand-back or a stop, and `builder_model` isn't passed to it.
@@ -54,3 +54,79 @@ With `builder: codex`, speck run starts each build with Codex, passing `builder_
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "95034ecd0285dac0070347fba812968df2aae2bd",
+    "thread_id": "01a14ea3-032c-7681-9089-fecd6ac0cd5c",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 210103,
+      "cached_input_tokens": 150912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1044,
+      "reasoning_output_tokens": 172
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T10:51:40.832Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/run.mjs selects codexStartWords only for Codex with an explicitly blank build_command. AC1 tests cover command arguments and builder_model; the process test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/codex-build.mjs threadId and fillSession read the first thread.started event and persist its session. Passing AC2 tests exercise log parsing, record persistence and matching marks."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "resumeFor correctly uses the recorded agent for automatic resumes, with passing killed-build and hand-back tests. However, statusData chooses one panel resume command from current configuration, while buildSession discards the recorded agent. Existing sessions can therefore receive the wrong panel command after configuration changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "resumeFor returns a specific reason when a Codex session is absent. The passing AC4 test checks both hand-back refusal and a real speck run reporting the problem once without launching Codex."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Claude launch arguments and resumeArgv remain unchanged. The passing AC5 test checks model handling, resume arguments, messages and default hints; existing Claude process tests were also reported passing."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/speck.mjs",
+        "issue": "The panel selects the resume command from today's configuration rather than the build's recorded agent. For example, start a Codex build, then change builder to claude: its stopped ticket now offers claude --resume with a Codex thread id. Conversely, switching to Codex makes older Claude sessions show a Codex command. buildSession returns only id and cwd, so resumeOf cannot distinguish them. The panel test only checks a matching configuration and session.",
+        "suggested_fix": "Preserve the recorded agent in ticket session data and select the default resume command per ticket, retaining explicit custom resume settings. Add coverage for existing Codex and Claude sessions after changing builder or build_command.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Codex builds start, capture their session and resume automatically as intended. The passing tests cover these paths well. One fix is needed: after builder settings change, the panel can show a resume command for the wrong agent, preventing users from reopening an existing build."
+  }
+}
+```
+
+</details>

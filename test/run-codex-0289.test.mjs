@@ -139,6 +139,30 @@ test('0289 AC3: the resume command speck says and the panel shows for a Codex bu
     "cd /tmp/x && codex exec resume t-4 --json --dangerously-bypass-approvals-and-sandbox '$speck-build 0004: carry on from where you left off.'");
 });
 
+test('0289 AC3: the panel offers each build the resume command of the agent that ran it, whatever the builder is now', () => {
+  const r = codexRepo({ status: 'blocked' }), runs = runsOf(r.dir);
+  fs.mkdirSync(runs, { recursive: true });
+  const rec = agent => save(path.join(runs, '0001.json'), { id: '0001', session: 's-1', ...(agent ? { agent } : {}), cwd: '/tmp/x', pid: deadPid(), exited: '2026-10-18T10:30:00.000Z', exit_code: 0 });
+  const setConfig = (from, to) => fs.writeFileSync(r.cfgFile, fs.readFileSync(r.cfgFile, 'utf8').replace(from, to));
+  const shown = () => {
+    const state = statusData(r.dir);
+    return panelModel()(state).queue[0].resume.text;
+  };
+  rec(null);
+  assert.equal(statusData(r.dir).tickets[0].session.resume_command, DEFAULT_RESUME_COMMAND, 'a Claude Code build under a Codex builder');
+  assert.match(shown(), /^cd \/tmp\/x && claude --resume s-1$/);
+  rec('codex');
+  assert.deepEqual(statusData(r.dir).tickets[0].session, { id: 's-1', cwd: '/tmp/x' }, 'the board\'s own command: nothing added');
+  setConfig(/^builder: codex$/m, 'builder: claude');
+  assert.equal(statusData(r.dir).tickets[0].session.resume_command, CODEX_RESUME_COMMAND, 'a Codex build after the builder changed to claude');
+  assert.equal(statusData(r.dir).resume_command, DEFAULT_RESUME_COMMAND);
+  assert.match(shown(), /^cd \/tmp\/x && codex exec resume s-1 .*'\$speck-build 0001: carry on/);
+  setConfig(/^resume_command:.*$/m, 'resume_command: "my-tool {session}"');
+  assert.equal(shown(), 'cd /tmp/x && my-tool s-1', 'a resume_command of their own is kept');
+  const t = T('0004', 'building', { build_stopped: true, session: { id: 'abc', cwd: '/repo' } });
+  assert.equal(panelModel()({ tickets: [t], resume_command: 'claude --resume {session}' }).queue[0].resume.text, 'cd /repo && claude --resume abc', 'a session without its own command takes the board\'s');
+});
+
 test('0289 AC3: speck run resumes a killed Codex build in its own session, from the folder it started in', async () => {
   const r = codexRepo({ status: 'building' }), codex = fakeCodex();
   fs.mkdirSync(runsOf(r.dir), { recursive: true });
