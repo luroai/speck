@@ -28,11 +28,13 @@ const POSES = { '0401': 'type', '0402': 'check', '0403': 'review', '0404': 'stil
 
 // The page with a stand-in for the design's renderer, which records each badge it makes and each pose it's set to.
 // `board()` gives the board each time the page asks for it, so a test can change it between refreshes.
-function fake(board) {
+// `motion` is the reduced-motion setting the page sees, which a test can change.
+function fake(board, motion = { reduce: false }) {
   const made = [];
-  const SpeckLCD = { badge(canvas, pose) { const b = { canvas, pose, sets: [] }; made.push(b); return { set(p) { b.sets.push(p); } }; } };
+  const SpeckLCD = { badge(canvas, pose, o) { const b = { canvas, pose, o, sets: [] }; made.push(b); return { set(p) { b.sets.push(p); } }; } };
   const p = fakePage([], {
     SpeckLCD,
+    matchMedia: q => ({ matches: q === '(prefers-reduced-motion: reduce)' && motion.reduce, addEventListener() {} }), devicePixelRatio: 1,
     fetch: async url => ({ ok: true, status: 200, json: async () => (/\/log$/.test(url) ? { text: '', truncated: false } : JSON.parse(JSON.stringify({ tickets: board(), ideas: [], run: { on: true } }))) }),
   });
   return { p, made };
@@ -96,6 +98,18 @@ test('0302 AC2: a change of pose calls the same badge\'s set(pose); a refresh th
   await refresh(p);
   assert.notEqual(canvasOf(p, '0402'), first, 'a new badge');
   assert.equal(made.length, Object.keys(POSES).length + 1);
+});
+
+test('0302 AC2: a badge made after reduced motion is turned on holds still, as the renderer reads the setting only as the page loads', async () => {
+  let tickets = TICKETS.filter(t => t.id !== '0402');
+  const motion = { reduce: false };
+  const { p, made } = fake(() => tickets, motion);
+  await p.settle();
+  assert.ok(made.length > 0 && made.every(b => b.o.still === false), 'the first badges move');
+  motion.reduce = true;
+  tickets = TICKETS;
+  await refresh(p);
+  assert.equal(made.find(b => b.canvas === canvasOf(p, '0402')).o.still, true, 'the new one holds still');
 });
 
 test('0302 AC2: without the renderer (it didn\'t load), the cards still show, with their badges named for what they show', async () => {
