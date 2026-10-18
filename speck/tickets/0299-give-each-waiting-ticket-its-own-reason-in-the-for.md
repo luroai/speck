@@ -39,6 +39,7 @@ The Foreman's detail gives each waiting ticket its own reason, says once what is
 ## Notes
 - The reasons are recorded by speck run (`run.foreman.json`) and read by `foremanView` in `scripts/foreman.mjs`. The detail is drawn in `templates/panel.html` (search for "Ready, not building").
 - Failing before this build: none
+- Self-check: no changes. Reordered speck run's own-reason checks (after, unstarted, stopped, uncommitted) ahead of the build-slots check, so a ticket's own reason wins over all slots in use too. Changed two 0285 tests for the new behaviour: the ship state now also has `waiting`, and `speck status` gives the hold once, first.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

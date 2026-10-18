@@ -15,7 +15,7 @@ import { cursorBuilds, cursorCli, cursorStartWords, createChat } from './cursor-
 import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
-import { saveForeman } from './foreman.mjs';
+import { saveForeman, switchingReady } from './foreman.mjs';
 import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
 import { pidAlive, codeHash, launchedBefore, codeSwitch, awaitGo } from './run-switch.mjs';
@@ -377,7 +377,24 @@ function runOn(worker) {
   // run isn't read as this one's.
   const lock = worker ? process.ppid : process.pid;
   const foreman = (tickets, ready, switching = null) =>
-    saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: ships.state(tickets) });
+    saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: ships.state(tickets, { switching: !!switching }) });
+  // 0299: what holds a ready ticket up of its own, as { kind, why }, or null: checked before anything that holds up
+  // every build, such as all build slots in use or switching to new code, so its line gives its own reason.
+  const ownWait = t => {
+    if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
+    if (launched.has(t.id)) return { kind: 'unstarted', why: 'its build ended without starting it, so speck run won\'t launch it again' };
+    if (heldByStop(repo, t)) {
+      if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
+      held.add(t.id);
+      return { kind: 'stopped', why: 'ended by speck stop: set it ready again and commit it to build it' };
+    }
+    if (!readyOnBase(repo, cfg.base_branch, t.path)) {
+      if (!uncommitted.has(t.id)) console.log(`${t.id} is ready but not committed as ready on ${cfg.base_branch}, so speck run is waiting for it to be committed before launching it.`);
+      uncommitted.add(t.id);
+      return { kind: 'uncommitted', why: `not committed as ready on ${cfg.base_branch}` };
+    }
+    return null;
+  };
   const readTickets = () => {
     try { const tickets = statusData(repo).tickets; lastError = null; return tickets; } catch (e) {
       const msg = e instanceof SpeckError ? e.message : String(e?.message || e);
@@ -394,8 +411,7 @@ function runOn(worker) {
       const tickets = readTickets() || [], builds = [...running], ship = ships.running();
       const names = [...builds.map(id => `the build of ${id}`), ...(ship ? [`the ship of ${ship}`] : [])];
       const why = `speck run is switching to new code${names.length ? ` once ${names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`} ${names.length === 1 ? 'ends' : 'end'}` : ''}`;
-      const ready = tickets.filter(t => t.status === 'ready' && !running.has(t.id)).map(t => ({ id: t.id, kind: 'switching', why }));
-      return foreman(tickets, ready, { builds, ship });
+      return foreman(tickets, switchingReady(tickets, running, ownWait), { builds, ship, why });
     }
     const tickets = readTickets();
     if (!tickets) return;
@@ -418,22 +434,10 @@ function runOn(worker) {
     const wait = (t, kind, why) => ready.push({ id: t.id, kind, why });
     for (const t of tickets) {
       if (t.status !== 'ready' || running.has(t.id)) continue;
-      if ((t.waiting_on || []).length) { wait(t, 'after', `waiting for ${t.waiting_on.join(', ')}`); continue; }
-      if (launched.has(t.id)) { wait(t, 'unstarted', 'its build ended without starting it, so speck run won\'t launch it again'); continue; }
+      const own = ownWait(t);
+      if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (running.size >= max) { wait(t, 'slots', `all ${max} build slot${max === 1 ? '' : 's'} in use`); continue; }
-      if (heldByStop(repo, t)) {
-        if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
-        held.add(t.id);
-        wait(t, 'stopped', 'ended by speck stop: set it ready again and commit it to build it');
-        continue;
-      }
-      if (!readyOnBase(repo, cfg.base_branch, t.path)) {
-        if (!uncommitted.has(t.id)) console.log(`${t.id} is ready but not committed as ready on ${cfg.base_branch}, so speck run is waiting for it to be committed before launching it.`);
-        uncommitted.add(t.id);
-        wait(t, 'uncommitted', `not committed as ready on ${cfg.base_branch}`);
-        continue;
-      }
       launch(t.id);
       if (!launched.has(t.id) && chatFailed.has(t.id)) wait(t, 'chat', chatFailed.get(t.id));
     }

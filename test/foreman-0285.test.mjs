@@ -92,7 +92,7 @@ test('0285 AC2: the ship queue records its hold and each refusal waiting for a n
   const q = shipQueue(r.dir, { base_branch: 'main', branch_prefix: 'speck/' }, { say: () => {}, launch: (repo, id, log, done) => launches.push({ id, done }) });
   const A = (id, o = {}) => ({ id, status: 'approved', auto_ship: true, type: '', approved: '2026-10-15T10:00:00.000Z', build_running: false, ...o });
   q.check([A('0001')]);
-  assert.deepEqual(q.state([A('0001')]), { running: '0001', hold: null, refused: [] });
+  assert.deepEqual(q.state([A('0001')]), { running: '0001', hold: null, refused: [], waiting: [] });
   fs.writeFileSync(path.join(r.dir, 'ship.log'), '');
   launches[0].done(1);
   q.check([A('0001')]);
@@ -225,7 +225,7 @@ test('0285 AC5: speck status shows the same as the panel, from speck run\'s reco
   const v = foremanView({ run: { on: true, pid: process.pid }, record, tickets: [T('0001', 'ready'), T('0002', 'blocked')] });
   assert.equal(v.word, 'Needs you 1');
   for (const line of foremanLines(v)) assert.ok(out.includes(line), `speck status has "${line}":\n${out}`);
-  assert.match(out, /^FOREMAN: Needs you 1\n {2}0001 ready, not building: all 2 build slots in use\n {2}Shipping on hold until main/m);
+  assert.match(out, /^FOREMAN: Needs you 1\n {2}Shipping is on hold until main.*\n {2}0001 ready, not building: all 2 build slots in use\n/m); // 0299: the hold once, first
 });
 
 test('0285 AC5: the record is saved only when it changes, and isn\'t taken for a build\'s run record', () => {

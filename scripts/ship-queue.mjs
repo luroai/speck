@@ -9,6 +9,7 @@ import { shipState, otherShipRunning, shipsRunning } from './ship.mjs';
 import { sharedCacheDir } from './turns.mjs';
 import { foremanOnly } from './foreman-agent.mjs';
 
+const list = v => (Array.isArray(v) ? v : []);
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
 // The approved tickets speck run may ship, from `speck status --json`'s tickets, in the order it ships them: fix
@@ -151,19 +152,35 @@ export function shipQueue(repo, cfg, { say = console.log, launch = launchShip, h
 
   // 0285: shipping's state: the ship running, whoever started it (this queue, the panel's Ship button or speck ship),
   // the hold and each ticket refused that waits for a new commit, with its message. A ticket the hold covers is left
-  // out of `refused`, and one waiting for its hand-back says so.
-  const state = tickets => {
-    const shipping = current || shipsRunning(runs)[0] || null, refused = [];
-    for (const t of shipOrder(tickets)) {
-      if (t.id === shipping || (hold !== null && t.type !== 'fix')) continue;
-      if (waiting(t.id)) { refused.push({ id: t.id, message: 'handed back to its build, which is working on it' }); continue; }
+  // out of `refused`, and one waiting for its hand-back says so. 0299: `waiting` gives every approved ticket auto_ship
+  // covers that isn't shipping now, in the order they'd ship, with why: its hand-back or its build, the hold, its last
+  // try's refusal, speck run switching to new code (`switching`), another ship running, or that it's next.
+  const state = (tickets, { switching = false } = {}) => {
+    const shipping = current || shipsRunning(runs)[0] || null, refused = [], queued = [];
+    const order = shipOrder(tickets), building = list(tickets).filter(t => t.status === 'approved' && t.auto_ship === true && t.build_running);
+    let next = null;
+    for (const t of [...order, ...building]) {
+      if (t.id === shipping) continue;
+      const wait = (kind, why) => queued.push({ id: t.id, kind, why });
+      if (waiting(t.id)) {
+        refused.push({ id: t.id, message: 'handed back to its build, which is working on it' });
+        wait('handback', 'handed back to its build, which is working on it');
+        continue;
+      }
+      if (t.build_running) { wait('build', 'its build is still running'); continue; }
+      if (hold !== null && t.type !== 'fix') { wait('hold', 'shipping is on hold'); continue; }
       const prev = last.get(t.id);
-      if (!prev) continue;
-      const refs = refsOf(repo, cfg, t.id);
-      if (!forced.has(t.id) && same(t.id, prev, refs))
-        refused.push({ id: t.id, message: `waiting for a new commit on ${base} or its branch. Its last try: ${said.get(t.id) || 'it didn\'t ship'}` });
+      if (prev && !forced.has(t.id) && same(t.id, prev, refsOf(repo, cfg, t.id))) {
+        const message = `waiting for a new commit on ${base} or its branch. Its last try: ${said.get(t.id) || 'it didn\'t ship'}`;
+        refused.push({ id: t.id, message });
+        wait('refused', message);
+        continue;
+      }
+      if (switching) wait('switching', 'waiting for speck run to switch to new code');
+      else if (shipping) wait('running', `waiting for the ship of ${shipping} to end`);
+      else { wait('next', next ? `next to ship after ${next}` : 'next to ship'); next = t.id; }
     }
-    return { running: shipping, hold: hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` }, refused };
+    return { running: shipping, hold: hold === null ? null : { message: `on hold until ${base} has a new commit: ${holdWhy}. Only a fix ticket ships meanwhile.` }, refused, waiting: queued };
   };
 
   const again = id => { forced.add(String(id)); };
