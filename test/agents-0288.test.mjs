@@ -8,7 +8,7 @@ import { panelRepo } from './support/panel.mjs';
 import { settingsPage, openSettings, rowOf, controlOf } from './support/settings.mjs';
 import { speck } from './support/cli.mjs';
 import { findAgents, findAgentsAsync, parseCursorModels, AGENTS_TIMEOUT_MS } from '../scripts/agents.mjs';
-import { panelSettings, CLAUDE_MODELS } from '../scripts/settings.mjs';
+import { panelSettings, builderModels, CLAUDE_MODELS } from '../scripts/settings.mjs';
 
 // ---------- 0288: find the agents and models on this machine ----------
 
@@ -186,6 +186,31 @@ test('0288 AC3: the view offers the reviewers the panel sent and shows why the o
   const q = settingsPage([view()]);
   await openSettings(q);
   assert.ok(!q.all(rowOf(q, 'reviewer')).some(n => n.tagName === 'p' && /Not offered/.test(n.textContent)));
+});
+
+test('0288 AC3: with builder cursor, builder_model offers the models Cursor lists, with their names', async () => {
+  const r = panelRepo();
+  const cfg = path.join(r.dir, 'speck', 'config.yml');
+  fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf8').replace(/^builder: .*$/m, 'builder: cursor'));
+  const built = await onlyOnPathAsync(fakeAgents(READY), () => builderModels(r.dir));
+  assert.deepEqual(built, { builder: 'cursor', models: [
+    { slug: 'auto', display_name: 'Auto' },
+    { slug: 'opus-4.6-thinking', display_name: 'Claude 4.6 Opus (Thinking)' },
+    { slug: 'sonnet-4.6', display_name: 'Claude 4.6 Sonnet' },
+  ] });
+  const p = settingsPage([{ ...view(), builder_models: built }]);
+  await openSettings(p);
+  const text = optionText(p, 'builder_model');
+  assert.deepEqual(Object.keys(text), ['', 'auto', 'opus-4.6-thinking', 'sonnet-4.6']);
+  assert.match(text['opus-4.6-thinking'], /Claude 4\.6 Opus \(Thinking\)/);
+  // Not installed, or a list it can't read: a box to type in, saying why.
+  const none = await onlyOnPathAsync(fakeAgents({}), () => builderModels(r.dir));
+  assert.equal(none.models, undefined);
+  assert.match(none.why, /Cursor isn't installed/);
+  const q = settingsPage([{ ...view(), builder_models: none }]);
+  await openSettings(q);
+  assert.equal(controlOf(q, 'builder_model').tagName, 'input');
+  assert.ok(q.all(rowOf(q, 'builder_model')).some(n => n.tagName === 'p' && /Cursor isn't installed/.test(n.textContent)));
 });
 
 test('0288 AC5: speck agents prints the same as plain lines', () => {

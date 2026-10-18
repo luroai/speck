@@ -79,8 +79,9 @@ function* cursor(opts) {
   return { ...base, installed: true, signed_in: signed, ...why, models: read.models || [], ...(read.why ? { models_why: read.why } : {}) };
 }
 
-const AGENTS = [claude, codex, cursor];
+const AGENTS = { claude, codex, cursor };
 const options = ({ timeoutMs = AGENTS_TIMEOUT_MS, models = true } = {}) => ({ timeoutMs, models });
+const which = ({ only } = {}) => Object.entries(AGENTS).filter(([id]) => !only || id === only).map(([, agent]) => agent);
 
 function runSync([cmd, args], ms) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', timeout: ms, maxBuffer: MAX_BUFFER, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -102,7 +103,7 @@ function runAsync([cmd, args], ms) {
 // `models: false` leaves out the models, and the commands that list them.
 export function findAgents(opts) {
   const o = options(opts);
-  return { agents: AGENTS.map(agent => {
+  return { agents: which(opts).map(agent => {
     const g = agent(o);
     let step = g.next();
     while (!step.done) step = g.next(runSync(step.value, o.timeoutMs));
@@ -113,12 +114,21 @@ export function findAgents(opts) {
 // The same, every agent at once, without waiting: for the panel's server.
 export async function findAgentsAsync(opts) {
   const o = options(opts);
-  return { agents: await Promise.all(AGENTS.map(async agent => {
+  return { agents: await Promise.all(which(opts).map(async agent => {
     const g = agent(o);
     let step = g.next();
     while (!step.done) step = g.next(await runAsync(step.value, o.timeoutMs));
     return step.value;
   })) };
+}
+
+// One agent's models, read without waiting, in the shape the Settings view takes: { models: [{ slug, display_name?,
+// description? }] }, or { why } in one line when there are none.
+export async function agentModelsAsync(id, opts) {
+  const { agents } = await findAgentsAsync({ ...opts, only: id });
+  const a = agents[0];
+  if (!a.models.length) return { why: `${a.models_why || a.why || `${a.name} lists no models.`} Type the model's name instead.` };
+  return { models: a.models.map(m => ({ slug: m.name, ...(m.display_name ? { display_name: m.display_name } : {}), ...(m.description ? { description: m.description } : {}) })) };
 }
 
 // `speck agents` as plain lines.
