@@ -1,7 +1,7 @@
 ---
 id: "0300"
 title: "See every build, however it was started"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0287"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T13:44:56.380Z"
 approved: "2026-10-18T13:54:56.073Z"
+finished: "2026-10-18T13:59:03.392Z"
 
 ---
 # 0300 · See every build, however it was started
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck run looks for builds it didn't start only when it starts up or switches to new code. A build started afterwards with `/speck-build` in a conversation, or a build resumed by hand, isn't counted towards `max_parallel_builds`, isn't watched for stopping partway, and can show in the panel as stopped while it's running, because its run record says it exited. Seen on 2026-10-18 with 0290 and 0291, resumed by hand.
