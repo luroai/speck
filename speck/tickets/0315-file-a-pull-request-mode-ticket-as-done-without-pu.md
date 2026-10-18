@@ -38,6 +38,8 @@ In pull request mode, a ticket is filed as done without anything being pushed st
 ## Notes
 - From `speck/ideas/2026-10-18-file-a-pull-request-mode-ticket-as-done-on-a-protected-branch.md` (inbox, from 0296).
 - Failing before this build: none
+- Design: the local ticket branch keeps the ticket `approved` (so the board, `shipChecks` and `speck run`'s queue are unchanged); what `speck pr` pushes to GitHub is the branch plus one `speck(<id>): ship` commit filing the ticket as done, made from the tip alone with the tip's names and dates, so the same tip always gives the same commit. Ship merges with `--match-head-commit` that commit, so a hand merge on GitHub files the ticket too.
+- Self-check: no code changes. Checked a missing ticket on the branch, an unreachable remote, a stale done commit after a new branch commit (replaced with a lease), someone else's commit on the remote branch (kept, push refused), and a pull request opened before this change (done commit pushed first, merged on the next ship).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
