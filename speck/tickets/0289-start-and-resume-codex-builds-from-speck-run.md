@@ -40,6 +40,7 @@ With `builder: codex`, speck run starts each build with Codex, passing `builder_
 - From `speck/ideas/2026-10-17-build-with-any-agent.md`. Covers `speck/ideas/2026-10-17-pass-builder-model-to-codex-builds.md`.
 - Checked 2026-10-17: in a scratch repo, `codex exec --json --dangerously-bypass-approvals-and-sandbox` ran shell commands with no prompts; `$<skill>` in the prompt ran a skill from `.agents/skills/`; the first `--json` line was `{"type":"thread.started","thread_id":"…"}`; and `codex exec resume <thread_id> '<message>'` carried on that session (codex-cli 0.159.0).
 - Starting and resuming are in `scripts/run.mjs` and `resumeArgv` in `scripts/hand-back.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
