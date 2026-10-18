@@ -46,6 +46,7 @@ With `builder: cursor`, speck run starts each build with Cursor's CLI, passing `
   - On a free Cursor plan only the `auto` model works: a named model fails with "ActionRequiredError: Named models unavailable Free plans can only use Auto". A chat keeps the model it was first run with. So when `builder_model` is blank, speck passes `--model auto` rather than no `--model`.
   - `agent models` prints "Available models", a blank line, then one `<id> - <display name>` per line, with "(current, default)" after the default.
 - Checked 2026-10-18: a resumed chat remembers earlier turns (two `-p --resume <id>` runs on one chat from `agent create-chat`: the second recalled a word given in the first).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
