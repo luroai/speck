@@ -1,7 +1,7 @@
 ---
 id: "0311"
 title: "Clear builder_model when the builder is switched"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:32:27.950Z"
 approved: "2026-10-18T22:45:13.491Z"
+finished: "2026-10-18T22:53:52.925Z"
 
 ---
 # 0311 · Clear builder_model when the builder is switched
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Switching the builder, in the Settings view or with `speck config set builder`, leaves `builder_model` as it was. Switching from Claude Code to Codex with `builder_model: opus` left set means every Codex build is started with a model Codex doesn't have.
