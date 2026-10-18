@@ -42,10 +42,23 @@ export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_re
 const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
 
+// 0299: a ticket's line while speck run switches to new code and nothing of its own holds it up. The detail says once,
+// above its sections, what the switch is waiting for.
+export const SWITCHING = 'waiting for speck run to switch to new code';
+// 0299: the ready list speck run records while it switches to new code: each ready ticket not building, with its own
+// reason when `own` gives one ({ kind, why } or null), such as tickets in its after: list not done yet.
+export function switchingReady(tickets, running, own) {
+  return list(tickets).filter(t => t.status === 'ready' && !running.has(t.id)).map(t => {
+    const o = own(t);
+    return o ? { id: t.id, kind: o.kind, why: o.why } : { id: t.id, kind: 'switching', why: SWITCHING };
+  });
+}
+
 // What the Foreman shows: `run` is speck run's state ({ on, pid }, see runState), `record` its last record (readForeman)
 // and `tickets` the board's, each with its id, status, title and blocked_question. A record counts only while the
 // speck run that wrote it holds the lock: one left by an earlier speck run is out of date. Returns
-// { word, tone, building, ready: [{ id, why }], ship: { running, hold, refused: [{ id, message }] } | null,
+// { word, tone, building, ready: [{ id, why }], held: [message], ship: { running, hold, refused: [{ id, message }],
+// waiting: [{ id, why }] } | null,
 // blocked: [{ id, title, question }] }, word being the status in one or two words and tone its colour:
 // off, idle, ok (building or shipping), warn (waiting) or bad (needs you). 0286: `fixing` is foreman_fixing: with off,
 // blocked tickets aren't counted under Needs you. 0287: `agent` is the Foreman agent's (agentView), given back as it is,
@@ -67,10 +80,18 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
     hold: s.hold && typeof s.hold === 'object' ? { message: text(s.hold.message) } : null,
     refused: list(s.refused).filter(r => r && typeof r.id === 'string').map(r => ({ id: r.id, message: text(r.message) })),
   } : null;
+  // 0299: every approved ticket auto_ship covers that isn't shipping now, with why. A record without the list (older
+  // code) gives the refusals it had.
+  if (ship) ship.waiting = Array.isArray(s.waiting) ? s.waiting.filter(w => w && typeof w.id === 'string').map(w => ({ id: w.id, why: text(w.why) }))
+    : ship.refused.map(r => ({ id: r.id, why: r.message }));
   const switching = rec && rec.switching && typeof rec.switching === 'object';
+  // 0299: what holds up every build or ship, said once above the detail's sections rather than on each ticket's line.
+  const held = [];
+  if (switching) held.push(text(rec.switching.why) || 'speck run is switching to new code');
+  if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
-  const view = (word, tone) => ({ word, tone, building, ready: ready.map(({ id, why }) => ({ id, why })), ship, blocked, agent: ag });
+  const view = (word, tone) => ({ word, tone, building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, agent: ag });
   if (!on) return view('Off', 'off');
   if ((blocked.length && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? blocked.length : 0) + asks.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');
@@ -84,9 +105,9 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
 // Blocked tickets aren't repeated: speck status lists them with their questions.
 export function foremanLines(v) {
   const lines = [`FOREMAN: ${v.word}`];
+  for (const h of v.held || []) lines.push(`  ${h}`); // 0299: once, before the tickets it holds up
   for (const r of v.ready) lines.push(`  ${r.id} ready, not building: ${r.why}`);
-  if (v.ship && v.ship.hold) lines.push(`  Shipping ${v.ship.hold.message}`);
-  for (const r of v.ship ? v.ship.refused : []) lines.push(`  ${r.id} waiting to ship: ${r.message}`);
+  for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);
   const a = v.agent; // 0287: the Foreman agent
   if (a?.running) lines.push(`  The Foreman is looking into ${a.running.id}: ${a.running.what}`);
   for (const q of a?.asks || []) lines.push(`  The Foreman asks you about ${q.id}: ${q.question}`);
