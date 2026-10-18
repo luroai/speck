@@ -9,6 +9,7 @@ import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHe
 import { resumeFor, handBackQueue } from './hand-back.mjs';
 import { goWithQueue } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
+import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { codexBuilds, codexStartWords, fillSession } from './codex-build.mjs';
 import { cursorBuilds, cursorCli, cursorStartWords, createChat } from './cursor-build.mjs';
 import { countStop } from './stop-wait.mjs';
@@ -134,7 +135,7 @@ function runOn(worker) {
   const held = new Set(); // ready tickets whose last build speck stop ended, each reported once
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
   // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
-  const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id) });
+  const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id), stuck: x => agents.stuck(x) });
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
@@ -175,10 +176,20 @@ function runOn(worker) {
     } else {
       console.log(`${id} build exited with ${signal ? `signal ${signal}` : `code ${code}`}.`);
       // A build killed by a signal is left without an exit, so the next check can resume it.
-      if (!signal || !killedInHand(id)) recordExit(id, recordFile, signal ? null : code);
+      const inHand = signal && killedInHand(id);
+      if (!inHand) recordExit(id, recordFile, signal ? null : code);
+      reportIfStillReady(id, log);
+      if (!inHand) lookInto(id, log);
     }
-    if (!failed) reportIfStillReady(id, log);
     tick();
+  };
+
+  // 0287: a build that ended leaving its ticket neither approved nor blocked, for the Foreman agent to look into.
+  const lookInto = (id, log) => {
+    let status = null;
+    try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { return; }
+    const what = buildStuck(status);
+    if (what) agents.stuck({ id, what, log });
   };
 
   // A build that ended with its ticket still ready never started it: say so, with the end of its log.
@@ -219,11 +230,12 @@ function runOn(worker) {
       b.session = fill(id)?.session ?? b.session;
       adopted.delete(id);
       running.delete(id);
-      const byStop = stoppedBySpeck(b.file);
-      if (!killedInHand(id)) recordExit(id, b.file, null);
+      const byStop = stoppedBySpeck(b.file), inHand = killedInHand(id);
+      if (!inHand) recordExit(id, b.file, null);
       if (byStop) { console.log(`${id} build (session ${b.session}) ended by \`speck stop\`.`); continue; }
       console.log(`${id} build (session ${b.session}, process ${b.pid}) stopped.`);
       reportIfStillReady(id, b.log);
+      if (!inHand) lookInto(id, b.log);
     }
   };
 
@@ -312,6 +324,8 @@ function runOn(worker) {
   const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
   const goWiths = goWithQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) }); // 0284
   const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }); // 0286
+  // 0287: the Foreman agent, for stops speck has no steps for
+  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), words, cfg, max, running, startBuild, ships });
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => [[...running], ships.running()], launched: () => [...launched], stopLoop: () => clearInterval(loop) });
   // 0285: the Foreman's record of this check: the builds running, why each ready ticket isn't building and shipping's
@@ -343,6 +357,7 @@ function runOn(worker) {
     ships.check(tickets);
     foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
+    agents.check(tickets); // 0287: the Foreman agent's next look, and the builds it asked to resume
     // Builds that were killed with their ticket in hand: each resumed once.
     const runs = runsDir(repo);
     for (const t of tickets) {
