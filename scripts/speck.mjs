@@ -18,7 +18,7 @@ import { cmdConfig } from './config.mjs';
 import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
-import { cmdRun, cmdPause, cmdPlay, cmdStop, DEFAULT_RESUME_COMMAND, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
+import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint } from './run.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
 import { removeScratch } from './scratch.mjs';
@@ -362,13 +362,16 @@ function buildExit(runs, id) {
 
 // The session a build launched by `speck run` ran in, from its run record: {id, cwd}, where cwd is the folder the build
 // started from (where its session is kept), or null when there's no record, it can't be read or it lacks either.
-function buildSession(runs, id) {
+// 0289: with resume_command too when the agent that ran the build resumes it with another command than `board`'s.
+function buildSession(runs, id, cfg, board) {
   id = String(id ?? '');
   if (!/^[\w-]+$/.test(id)) return null;
   let rec;
   try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
   const text = v => typeof v === 'string' && v !== '';
-  return rec && typeof rec === 'object' && text(rec.session) && text(rec.cwd) ? { id: rec.session, cwd: rec.cwd } : null;
+  if (!rec || typeof rec !== 'object' || !text(rec.session) || !text(rec.cwd)) return null;
+  const own = resumeCommandOf(cfg, rec.agent === 'codex');
+  return { id: rec.session, cwd: rec.cwd, ...(own !== board ? { resume_command: own } : {}) };
 }
 
 // True while a build launched by `speck run` is paused: `speck pause` left a <id>.paused file beside its run record
@@ -457,7 +460,7 @@ export function statusData(repo) {
       waiting_on: after.filter(id => !done.has(padId(id))),
       // 0217: once a build of it has started again, a stopped build is no longer shown as stopped.
       build_exit: stop?.counted ? null : buildExit(runs, t.fm.id),
-      session: buildSession(runs, t.fm.id),
+      session: buildSession(runs, t.fm.id, cfg, resumeCommandOf(cfg)),
       paused: buildPaused(runs, t.fm.id),
       paused_at: (at => (at === null ? null : new Date(at).toISOString()))(buildPaused(runs, t.fm.id) ? pausedSince(path.join(runs, `${t.fm.id}.paused`)) : null),
       build_running: buildRunning(runs, t.fm.id, leads),
@@ -473,9 +476,9 @@ export function statusData(repo) {
     const text = fs.readFileSync(path.join(dir, f), 'utf8');
     return { path: `speck/ideas/${f}`, title: (text.match(/^# (.+)$/m) || [])[1]?.trim() || f, status: ideaStatus(text) || null, body: text };
   });
-  // The command that reopens a build's session, for the panel. A config without the setting gets the default.
-  const resume = !Object.hasOwn(cfg, 'resume_command') ? DEFAULT_RESUME_COMMAND : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
-  return { tickets: entries, ideas, resume_command: resume };
+  // The command that reopens a build's session, for the panel. A config without the setting gets the default (0289:
+  // Codex's, for Codex builds).
+  return { tickets: entries, ideas, resume_command: resumeCommandOf(cfg) };
 }
 
 function cmdStatus(args = []) {
