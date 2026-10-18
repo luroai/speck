@@ -1,7 +1,7 @@
 ---
 id: "0289"
 title: "Start and resume Codex builds from speck run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T10:41:59.157Z"
+approved: "2026-10-18T10:53:56.755Z"
 
 ---
 # 0289 · Start and resume Codex builds from speck run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck run can only start and resume builds with Claude Code: it gives each build a session id up front (`--session-id {session}`) and resumes it by that id. Codex chooses its own session id, so with Codex as the builder, speck run can't resume a build after a hand-back or a stop, and `builder_model` isn't passed to it.
@@ -54,9 +55,15 @@ Worth keeping an eye on: these builds run Codex with its approvals and sandbox t
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The panel selects the resume command from today's configuration rather than the build's recorded agent.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 566,286
+- Elapsed since build started: 12 min
+- Changed lines: 208 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - The same-model check and the "only passed to Claude Code builds" wording don't yet count `builder_model` on Codex builds: `speck/ideas/2026-10-18-same-model-check-counts-builder-model-on-codex-builds.md`.
