@@ -1,7 +1,7 @@
 ---
 id: "0293"
 title: "Switch the builder from the panel and in setup"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0292", "0290"]               # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T12:14:23.327Z"
+approved: "2026-10-18T12:23:04.621Z"
 
 ---
 # 0293 · Switch the builder from the panel and in setup
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `builder` is read-only in the panel, because changing it needs a `build_command` that starts that agent, and setup asks the user to write one. Someone with Codex or Cursor can't switch to it without editing `speck/config.yml` by hand.
@@ -56,9 +57,14 @@ Worth keeping an eye on: after a switch, automatic builds use the new builder fo
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 205,703
+- Elapsed since build started: 9 min
+- Changed lines: 171 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - `speck run` builds every ready ticket with the configured builder, not the one a ticket records: `speck/ideas/2026-10-18-build-older-tickets-with-the-builder-they-were-made-with.md`.
