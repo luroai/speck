@@ -4,6 +4,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { sh, findTicket, worktreeList } from './core.mjs';
+import { splitCommand } from './reviewers.mjs';
+import { codexBuilds, CODEX_RESUME_COMMAND } from './codex-build.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { sessionInUse } from './build-procs.mjs';
 
@@ -12,14 +14,25 @@ export const DEFAULT_RESUME_COMMAND = 'claude --resume {session}';
 // A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
 const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);
 
-// How to resume a killed build by hand, from resume_command in speck/config.yml (the default if it isn't set).
+// The command that resumes a build's session by hand, {session} standing for it and {id} for its ticket: resume_command
+// in speck/config.yml, or the default if it isn't set. 0289: for a Codex build (`codex`, which speck run's own Codex
+// command builds), the Codex default, unless resume_command is set to something other than Claude Code's.
+export function resumeCommandOf(cfg, codex = codexBuilds(cfg)) {
+  const cmd = !Object.hasOwn(cfg, 'resume_command') ? null : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
+  let first = '';
+  try { first = splitCommand(cmd ?? '')[0] ?? ''; } catch { /* an unclosed quote: used as it is */ }
+  if (codex && (cmd === null || path.basename(first) === 'claude')) return CODEX_RESUME_COMMAND;
+  return cmd ?? DEFAULT_RESUME_COMMAND;
+}
+
+// How to resume a killed build by hand, with resumeCommandOf.
 export function resumeHint(cfg, rec) {
   const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
   if (!session) return 'Run /speck-build to carry it on.';
-  const cmd = !Object.hasOwn(cfg, 'resume_command') ? DEFAULT_RESUME_COMMAND : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
+  const cmd = resumeCommandOf(cfg, rec.agent === 'codex');
   if (!cmd) return `Resume session ${session} to carry it on.`;
   const cwd = typeof rec.cwd === 'string' && rec.cwd ? `cd ${shellWord(rec.cwd)} && ` : '';
-  return `To carry it on, run: ${cwd}${cmd.split('{session}').join(shellWord(session))}`;
+  return `To carry it on, run: ${cwd}${cmd.split('{session}').join(shellWord(session)).split('{id}').join(String(rec.id ?? ''))}`;
 }
 
 // Written to a temporary file and renamed into place, so nothing reading it sees half of it.

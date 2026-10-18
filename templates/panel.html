@@ -729,13 +729,15 @@ function chains(tickets) {
 // A word for a POSIX shell: as it is when it's only letters, digits, /, ., _ and -, otherwise in single quotes.
 const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`);
 // How to reopen a blocked or killed (`stopped`) build's session: `cd <folder> && <resume_command>` with {session}
-// put in, or only "session <id>" when resume_command is blank. null for any other ticket, or one with no session.
+// and {id} (its ticket, 0289) put in, or only "session <id>" when resume_command is blank. 0289: the session's own
+// resume_command, for the agent that ran its build, when it has one. null for any other ticket, or one with no session.
 function resumeOf(t, resumeCommand, stopped) {
   const s = t.session;
   if ((t.status !== 'blocked' && !stopped) || !s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id || typeof s.cwd !== 'string' || !s.cwd) return null;
-  const cmd = typeof resumeCommand === 'string' ? resumeCommand.trim() : '';
+  const own = typeof s.resume_command === 'string' ? s.resume_command : resumeCommand;
+  const cmd = typeof own === 'string' ? own.trim() : '';
   if (!cmd) return { text: `session ${s.id}`, command: false };
-  return { text: `cd ${shellWord(s.cwd)} && ${cmd.split('{session}').join(shellWord(s.id))}`, command: true };
+  return { text: `cd ${shellWord(s.cwd)} && ${cmd.split('{session}').join(shellWord(s.id)).split('{id}').join(String(t.id))}`, command: true };
 }
 // An in-flight ticket's time since started, as MM:SS: minutes padded to two digits and counting past 59, never below 00:00.
 function counter(ms) {

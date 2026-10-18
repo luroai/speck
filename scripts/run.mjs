@@ -6,7 +6,8 @@ import { spawn } from 'node:child_process';
 import { builderSpend, waitFields, addPaused, pausedSince } from './core.mjs';
 import { builderMismatch } from './install.mjs';
 import { SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, findTicket, splitCommand, worktreeList, readableLog, buildPaused, statusData, replaceSection, commitTicketOnly, shipQueue } from './speck.mjs';
-import { resumeArgv, handBackQueue } from './hand-back.mjs';
+import { resumeFor, handBackQueue } from './hand-back.mjs';
+import { codexBuilds, codexStartWords, fillSession } from './codex-build.mjs';
 import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
@@ -17,7 +18,7 @@ export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
 import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket } from './build-records.mjs';
-export { DEFAULT_RESUME_COMMAND, resumeHint, buildKilled, buildTicket } from './build-records.mjs';
+export { DEFAULT_RESUME_COMMAND, resumeHint, resumeCommandOf, buildKilled, buildTicket } from './build-records.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
 
@@ -101,10 +102,12 @@ function runOn(worker) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
-  if (!command)
-    throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${DEFAULT_BUILD_COMMAND}'`);
+  const codex = codexBuilds(cfg); // 0289: builder codex with build_command blank builds with speck's own Codex command
+  if (!command && !codex)
+    throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${cfg.builder === 'codex' ? '' : DEFAULT_BUILD_COMMAND}'${cfg.builder === 'codex' ? '\nA blank build_command starts each build with Codex.' : ''}`);
   let words;
-  try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
+  if (codex) words = codexStartWords(cfg);
+  else try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
   const mismatch = builderMismatch(cfg);
   if (mismatch) throw new SpeckError(`speck run won't start: ${mismatch.problem} ${mismatch.fix}`);
   words = withBuilderModel(words, cfg); // 0279: every build it starts, resumes or hands back runs on builder_model
@@ -157,6 +160,7 @@ function runOn(worker) {
 
   const finished = (id, log, code, signal, failed, recordFile) => {
     running.delete(id);
+    fill(id);
     if (failed) console.log(`${id} build couldn't start: ${failed}`);
     else if (stoppedBySpeck(recordFile)) {
       console.log(`${id} build ended by \`speck stop\`.`);
@@ -190,6 +194,7 @@ function runOn(worker) {
     const dir = runsDir(repo);
     for (const name of fs.readdirSync(dir).filter(f => /^[^.]+\.json$/.test(f)).sort()) {
       const id = name.slice(0, -'.json'.length), file = path.join(dir, name);
+      fill(id);
       let rec;
       try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { continue; }
       if (!rec || typeof rec !== 'object' || Array.isArray(rec) || Object.hasOwn(rec, 'exited')) continue;
@@ -205,6 +210,7 @@ function runOn(worker) {
   const checkAdopted = () => {
     for (const [id, b] of adopted) {
       if (pidAlive(b.pid)) continue;
+      b.session = fill(id)?.session ?? b.session;
       adopted.delete(id);
       running.delete(id);
       const byStop = stoppedBySpeck(b.file);
@@ -215,20 +221,25 @@ function runOn(worker) {
     }
   };
 
+  // A Codex build (0289) chooses its own session, so its record has none until it's read from its log (fill). It's
+  // marked `agent: codex`, and its processes are found by the fresh UUID in their environment (env_session).
   const launch = id => {
-    const session = crypto.randomUUID();
-    const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, session));
+    const tag = crypto.randomUUID(), session = codex ? null : tag;
+    const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, tag));
     const started = new Date().toISOString();
-    const record = pid => `${JSON.stringify({ id, session, cwd: repo, started, pid, command: argv }, null, 2)}\n`;
-    startBuild(id, argv, repo, session, 'w', record);
+    const own = codex ? { agent: 'codex', env_session: tag } : {};
+    const record = pid => `${JSON.stringify({ id, session, ...own, cwd: repo, started, pid, command: argv }, null, 2)}\n`;
+    startBuild(id, argv, repo, session, 'w', record, tag);
   };
+
+  // 0289: a Codex build's session id, read from its log into its run record once Codex has written it. Its record.
+  const fill = id => fillSession(runsDir(repo), id, saveRecord);
 
   // Carries on a build that was killed, once: its own session, from the folder it started in, logging to the end of
   // its log. Its record keeps everything, with the time it was resumed added, so it's never resumed a second time.
   const resumeKilled = (id, rec) => {
-    const argv = resumeArgv(words, id, rec.session);
-    if (!argv)
-      return reportStopped(id, rec, `speck run can't resume it: ${typeof rec.session === 'string' && rec.session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session'}`);
+    const { argv, why } = resumeFor(words, cfg, id, rec);
+    if (!argv) return reportStopped(id, rec, `speck run can't resume it: ${why}`);
     const recordFile = path.join(runsDir(repo), `${id}.json`);
     // 0217: the time it waited, stopped, is left out of its build time, counted while it can't be writing the ticket.
     const note = countStop(repo, id);
@@ -238,7 +249,7 @@ function runOn(worker) {
     try { saveRecord(recordFile, resumed); } catch (e) { return reportStopped(id, rec, `speck run couldn't save its run record (${e.message}), so it wasn't resumed`); }
     const cwd = typeof rec.cwd === 'string' && fs.existsSync(rec.cwd) ? rec.cwd : repo;
     console.log(`${id} build (session ${rec.session}) stopped unexpectedly, so speck run is resuming it once.`);
-    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...resumed, pid: pid ?? rec.pid }, null, 2)}\n`);
+    startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...resumed, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
   };
 
   // A killed build speck run won't resume, said once per speck run, with the command that resumes it by hand.
@@ -250,8 +261,9 @@ function runOn(worker) {
   };
 
   // Starts a build in its own process group, logging to <id>.log (opened with `flags`), and keeps its run record:
-  // record(pid) is its text, written with pid null before it starts and again with its pid once it has.
-  const startBuild = (id, argv, cwd, session, flags, record) => {
+  // record(pid) is its text, written with pid null before it starts and again with its pid once it has. `shown` is the
+  // session it reports, and `session` the one in its environment (buildEnv): the same, unless it's a Codex build's (0289).
+  const startBuild = (id, argv, cwd, shown, flags, record, session = shown) => {
     launched.add(id);
     running.add(id);
     const dir = runsDir(repo);
@@ -271,16 +283,17 @@ function runOn(worker) {
     child.unref();
     if (child.pid) {
       try { fs.writeFileSync(recordFile, record(child.pid)); } catch (e) {
-        console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${session}.`);
+        console.error(`${id}: couldn't save its process id in ${path.relative(repo, recordFile)} (${e.message}). The build is running as process ${child.pid}, session ${shown ?? 'not known yet'}.`);
       }
-      console.log(`${flags === 'a' ? 'Resumed' : 'Launched'} ${id} (session ${session}). Log: ${path.relative(repo, log)}`);
+      console.log(`${flags === 'a' ? 'Resumed' : 'Launched'} ${id} (session ${shown ?? 'read from its log once Codex writes it'}). Log: ${path.relative(repo, log)}`);
     }
   };
 
-  const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) });
+  const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => [[...running], ships.running()], launched: () => [...launched], stopLoop: () => clearInterval(loop) });
   function tick() {
+    for (const id of running) fill(id);
     checkAdopted();
     if (switchWhenIdle()) return;
     let tickets;
