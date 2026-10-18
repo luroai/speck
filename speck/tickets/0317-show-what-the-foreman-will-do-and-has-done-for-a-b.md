@@ -37,6 +37,7 @@ The panel shows whether the Foreman's Fixing is on, what it will do about each b
 
 ## Notes
 - From `speck/ideas/2026-10-18-show-what-the-foreman-answered.md` (inbox, from 0286) and the user's report on 0305. Taking a recommendation is in `scripts/go-with.mjs` (`FOREMAN_CHOSE`); the status is `scripts/foreman.mjs` and `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
