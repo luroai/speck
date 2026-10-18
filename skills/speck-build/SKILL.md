@@ -133,7 +133,7 @@ The base branch's own tests are failing. Change no code: not in this ticket's br
 While getting a ship through, apart from blocking a ticket handed back again (above), ask the user only when two tickets contradict each other, or when `speck next <id>` says `block` during a merge round. Nothing else is a reason to ask.
 
 1. If you stopped partway through resolving a merge (two tickets contradict each other), undo it first with `git merge --abort`. That puts the ticket branch back as the reviewer approved it, without choosing either ticket's side, and lets the next steps commit. Don't commit a half-resolved merge.
-2. Write one question under `## Blocked question` in the ticket. Write it in plain words, without git terms (no merge, branch, conflict or commit): say what each ticket wants, the options, and which one you recommend and why. Make it answerable in a sentence.
+2. Write one question under `## Blocked question` in the ticket. Write it in plain words, without git terms (no merge, branch, conflict or commit): say what each ticket wants, the options, and which one you recommend and why. Make it answerable in a sentence. Below it, add the three lines in section 6 step 1: the option you recommend, whether any option changes what you'd notice, and whether your recommendation is a clear winner.
 3. Run `speck set <id> status blocked`, then commit the ticket and any work in progress, staged by name.
 4. Stop, and tell the user the question and how to resume: answer it, then run `/speck-build <id>`. On resuming after an undone merge, record the answer in the ticket's Notes and start "Conflict" again from step 1, resolving the clash the way the user chose.
 
@@ -141,7 +141,16 @@ While getting a ship through, apart from blocking a ticket handed back again (ab
 
 Use this when the review loop says `block`, the size guard trips, or a product question comes up that you can't answer from the ticket or the code:
 
-1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation.
+1. Write one specific question under `## Blocked question` in the ticket. Make it answerable in a sentence, with the options and your recommendation. Below it, add these three lines, each on its own line, so speck and the panel can read them:
+
+   ```markdown
+   Recommended: <the option you recommend, in a few words>
+   Changes what you'd notice: <yes or no>
+   Clear winner: <yes or no>
+   ```
+
+   - `Changes what you'd notice`: `yes` when any of the options would change something the user would notice: what speck does, shows or ships. `no` when every option only changes how it's built, such as which test to fix or how the code is laid out.
+   - `Clear winner`: `yes` when your recommendation is clearly better than the other options, `no` when they're close and it's a judgement call.
 2. Run `speck set <id> status blocked`, then commit your changes, staged by name, including the ticket with its review rounds.
 3. Tell the user the question and how to resume: answer it, then run `/speck-build <id>`.
 
