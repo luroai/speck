@@ -12,8 +12,8 @@ import { FOREMAN_AGENTS } from './foreman-agent.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
-import { agentModelsAsync } from './agents.mjs';
-import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand } from './builder-switch.mjs';
+import { agentModelsAsync, offeredModels, offeredModelsAsync } from './agents.mjs';
+import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 
 export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
@@ -39,7 +39,7 @@ export const SETTING_GROUPS = [
   ] },
   { title: 'Building and reviewing', settings: [
     { key: 'builder', default: 'claude',
-      explain: 'The agent that builds each ticket, writing its tests and code: claude, codex or cursor, offered when it\'s installed and signed in. New tickets take it from here, so changing it changes who builds tickets made from now on, and sets build_command to the new builder\'s own, asking first when that was set by hand.' },
+      explain: 'The agent that builds each ticket, writing its tests and code: claude, codex or cursor, offered when it\'s installed and signed in. New tickets take it from here, so changing it changes who builds tickets made from now on, and sets build_command to the new builder\'s own, asking first when that was set by hand. It clears builder_model when the new builder doesn\'t offer it, or its models can\'t be read.' },
     { key: 'builder_model', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, to Codex builds when build_command is blank, and to Cursor builds when it is blank too. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
@@ -233,7 +233,9 @@ const each = (changes, why) => Object.fromEntries(changes.map(c => [c.key, why])
 // as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
 // 0293: a change to builder sets build_command to the new builder's own in the same commit. One set by hand is replaced
 // only when `replace` is it, exactly as the file has it, as the page read it when you confirmed.
-export function panelSaveSettings(repo, changes, { confirmed = null, replace = null } = {}) {
+// 0311: and clears a builder_model the new builder doesn't offer, unless builder_model is changed in the same Save,
+// giving why in `cleared`. `offered`: { builder, models }, the new builder's models as read already, or they're read now.
+export function panelSaveSettings(repo, changes, { confirmed = null, replace = null, offered = null } = {}) {
   const twice = changes.find((c, i) => changes.findIndex(d => d.key === c.key) !== i);
   if (twice) return { status: 400, body: { error: `${twice.key} is given more than once. Reload the panel, then try again.` } };
   const file = path.join(repo, 'speck', 'config.yml');
@@ -241,6 +243,12 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   const checked = changes.map(c => ({ ...c, ...checkChange(repo, text, cfg, c) }));
   const bad = checked.filter(c => c.error !== undefined);
   if (bad.length) return refusal(bad[0].status, Object.fromEntries(bad.map(c => [c.key, c.error])));
+  const switched = checked.find(c => c.key === 'builder' && !c.machine && !c.same), cleared = {};
+  if (switched && !checked.some(c => c.key === 'builder_model')) {
+    const to = String(switched.want);
+    const why = clearsBuilderModel(parseYaml(text).builder_model, to, () => offered?.builder === to ? offered.models : offeredModels(to));
+    if (why !== null) { checked.push({ key: 'builder_model', want: '', machine: false, same: false }); cleared.builder_model = why; }
+  }
   // 0280: a reviewer of the builder's own family is refused only when the two would run the same model, or might, as
   // the settings would be once saved. So a change to builder_model or reviewer_model can be refused too.
   // 0293: and so can a change to builder, saying which reviewer would be from another family.
@@ -297,7 +305,7 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
     undo();
     return { status: 500, body: { error: `Couldn't save the settings, so nothing was saved: ${e.message}` } };
   }
-  return { status: 200, body: { ok: true, changed: [...toFile, ...toMachine].map(c => c.key) } };
+  return { status: 200, body: { ok: true, changed: [...toFile, ...toMachine].map(c => c.key), ...(Object.keys(cleared).length ? { cleared } : {}) } };
 }
 
 // One setting's change, saved as panelSaveSettings saves several, with `changed` true when it changed anything.
@@ -324,7 +332,7 @@ export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null, sc
 // repo:<key>=<value> for the repo or machine:<key>=<value> for this machine only, and confirm=<risks> once you've
 // confirmed a change that lets more tickets ship by themselves (0259). 0293: replace=<build_command> once you've
 // confirmed that switching the builder replaces one set by hand.
-export function panelSaveRequest(repo, query) {
+export function panelSaveRequest(repo, query, { offered = null } = {}) {
   const changes = [];
   let confirmed = null, replace = null;
   for (const [name, value] of new URLSearchParams(query)) {
@@ -334,6 +342,18 @@ export function panelSaveRequest(repo, query) {
     else if (m) changes.push({ key: m[2], value, machine: m[1] === 'machine' });
     else return { status: 400, body: { error: `The panel doesn't save ${JSON.stringify(name)}. Reload the panel, then try again.` } };
   }
-  try { return panelSaveSettings(repo, changes, { confirmed, replace }); }
+  try { return panelSaveSettings(repo, changes, { confirmed, replace, offered }); }
   catch (e) { return { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }; }
+}
+
+// 0311: the same, for the panel's server, reading the models of the builder it switches to first without waiting,
+// and only when there's a builder_model to check.
+export async function panelSaveRequestAsync(repo, query, find) {
+  let offered = null;
+  try {
+    const to = new URLSearchParams(query).get('repo:builder'), cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
+    if (to !== null && to !== String(cfg.builder ?? 'claude') && clearsBuilderModel(cfg.builder_model, to, () => []) !== null)
+      offered = { builder: to, models: await offeredModelsAsync(to, find) };
+  } catch { /* panelSaveRequest says what's wrong */ }
+  return panelSaveRequest(repo, query, { offered });
 }

@@ -131,6 +131,19 @@ export async function agentModelsAsync(id, opts) {
   return { models: a.models.map(m => ({ slug: m.name, ...(m.display_name ? { display_name: m.display_name } : {}), ...(m.description ? { description: m.description } : {}) })) };
 }
 
+// 0311: the names of the models `id` offers, as `speck agents` lists them, or null when there are none to read: it
+// isn't installed, lists none, or isn't an agent speck knows.
+const namesOf = found => {
+  const a = found?.agents?.[0];
+  return a && Array.isArray(a.models) && a.models.length ? a.models.map(m => String(m.name)) : null;
+};
+export function offeredModels(id, find = findAgents) {
+  try { return namesOf(find({ only: id })); } catch { return null; }
+}
+export async function offeredModelsAsync(id, find = findAgentsAsync) {
+  try { return namesOf(await find({ only: id })); } catch { return null; }
+}
+
 // `speck agents` as plain lines.
 export function agentLines({ agents }) {
   const lines = [];

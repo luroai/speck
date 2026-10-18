@@ -398,6 +398,7 @@
   /* 0274: the view's one Save, kept at the bottom of the pane however far it's scrolled */
   #settings .savebar { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); margin: 16px 0 0; padding: 10px 0 calc(16px + env(safe-area-inset-bottom)); background: var(--panel); border-top: .5px solid var(--line-soft); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
   #settings .savebar p.bad { flex: 1 1 100%; margin: 0; color: var(--bad); }
+  #settings .savebar p.said { flex: 1 1 100%; margin: 0; color: var(--text); }
   #settings .save-all { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text); background: var(--raise); border: .5px solid var(--text); padding: 4px 14px; cursor: pointer; }
   #settings .save-all:disabled { color: var(--faint); border-color: var(--line); background: none; cursor: default; }
   /* 0268: the info button beside a setting's name, and its explanation under the setting's line while it's open */
@@ -1756,6 +1757,7 @@ let settingTyped = new Map(), settingRefused = new Map(); // key → what was ty
 let settingScope = new Map(); // 0261: key → 'machine' or 'repo', where a change to a setting this machine can hold goes
 let settingClear = new Set(); // 0261: keys whose machine value is cleared on Save
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
+let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
 let settingsBar = null, settingAsks = new Map();
 let settingControls = new Map(); // 0276: key → its control, as drawn // 0274: the Save button, and where each machine setting's question goes, as drawn
 // 0268: each setting's explanation sits behind an info button beside its name. It shows while the pointer is over the
@@ -1843,7 +1845,7 @@ function closeSettings() {
   settingRefused = new Map();
   settingScope = new Map();
   settingClear = new Set();
-  settingsFailed = null;
+  settingsFailed = settingsSaid = null;
   renderSettings();
   const back = $('settings-open');
   if (back.focus) back.focus();
@@ -2125,7 +2127,7 @@ function saveBar() {
   save.type = 'button';
   save.addEventListener('click', saveSettings);
   settingsBar = save;
-  return el('div', 'savebar', null, settingsFailed !== null ? el('p', 'bad', settingsFailed) : null, save);
+  return el('div', 'savebar', null, settingsFailed !== null ? el('p', 'bad', settingsFailed) : null, settingsSaid !== null ? el('p', 'said', settingsSaid) : null, save);
 }
 // After each change: Save is pressable only while something differs and nothing is being saved, and each machine
 // setting asks where its change goes only while it's changed.
@@ -2196,9 +2198,9 @@ async function sendSettings() {
   }
   settingsView.saving = true;
   settingRefused = new Map();
-  settingsFailed = null;
+  settingsFailed = settingsSaid = null;
   refreshSettings();
-  let refused = null, why = null, ask = false, again = false;
+  let refused = null, why = null, ask = false, again = false, said = null;
   const query = [...changes.map(c => `${c.machine ? 'machine' : 'repo'}%3A${encodeURIComponent(c.key)}=${encodeURIComponent(c.value)}`),
     ...(more !== null ? [`confirm=${encodeURIComponent(more.risks)}`] : []),
     ...(replacing !== null ? [`replace=${encodeURIComponent(replacing.value)}`] : [])].join('&');
@@ -2211,6 +2213,11 @@ async function sendSettings() {
       refused = body && body.refused !== null && typeof body.refused === 'object' ? body.refused : null;
       ask = res.status === 409 && body !== null && body.confirm === true;
       again = res.status === 409 && body !== null && body.replace === true; // 0293: build_command changed since
+    } else {
+      let body = null;
+      try { body = await res.json(); } catch { /* saved all the same */ }
+      const cleared = body && body.cleared !== null && typeof body.cleared === 'object' ? body.cleared.builder_model : undefined;
+      if (typeof cleared === 'string' && cleared) said = `builder_model was cleared, because ${cleared}.`; // 0311
     }
   } catch { why = "Couldn't reach the panel server, so nothing was saved."; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -2226,6 +2233,7 @@ async function sendSettings() {
     return;
   }
   // Saved: forget what was sent, keeping any change made while it was being saved, which Save sends next.
+  settingsSaid = said;
   for (const c of changes) {
     if (c.clear) settingClear.delete(c.key);
     else if (settingTyped.get(c.key) === c.value) { settingTyped.delete(c.key); settingScope.delete(c.key); }
