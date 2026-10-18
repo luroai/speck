@@ -39,6 +39,9 @@ In pull request mode, shipping a ticket merges its pull request on GitHub and ti
 ## Notes
 - Checked 2026-10-18: `gh pr merge <number> --merge` and `gh pr view <number> --json state,mergeable,statusCheckRollup` behave as needed: gh 2.101.0 has `pr merge -m/--merge` (it enables auto-merge instead only on a branch that requires a merge queue) and `pr view --json` offers `state`, `mergeable`, `mergeStateStatus`, `reviewDecision` and `statusCheckRollup`.
 - Failing before this build: none
+- Self-check: a pull request whose head commit gh doesn't give is now refused with a plain message, instead of being treated as behind the branch.
+- Pictures: none, because the only change in the panel is the wording of ship_mode's explanation in the Settings view, with no change to any layout.
+- The speck-ship skill doesn't mention pull request mode: an older test (ship.test.mjs AC1) keeps "pull request" out of the build, review and ship skills, so that's left as a follow-up rather than loosening it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

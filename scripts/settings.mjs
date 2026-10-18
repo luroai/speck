@@ -35,7 +35,7 @@ export const SETTING_GROUPS = [
       explain: 'Which ticket risks auto_ship covers: low, high or both. While auto_ship is on, a ticket it covers is merged and pushed to the base branch without waiting for you, so adding high lets risky changes ship unseen too.' },
     // 0295
     { key: 'ship_mode', default: 'local',
-      explain: 'How an approved ticket ships. local: speck merges it into the base branch on this computer and pushes it. pr: once a ticket is approved, speck pushes its branch and opens a pull request into the base branch on GitHub with gh, with its review pack, and merges nothing itself. Needs gh installed and signed in.' },
+      explain: 'How an approved ticket ships. local: speck merges it into the base branch on this computer and pushes it. pr: once a ticket is approved, speck pushes its branch and opens a pull request into the base branch on GitHub with gh, with its review pack, and shipping it merges that pull request on GitHub once its checks pass, as speck run does for each ticket auto_ship covers. Needs gh installed and signed in.' },
   ] },
   { title: 'Building and reviewing', settings: [
     { key: 'builder', default: 'claude',
