@@ -45,6 +45,7 @@ The panel shows a Codex or Cursor build's log as readably as a Claude Code one, 
   - `agent models` prints "Available models", a blank line, then one `<id> - <display name>` per line, with "(current, default)" after the default.
 - Not checked, and not needed for this ticket: that a resumed Cursor chat remembers earlier turns (a quick check printed no result line).
 - Cursor's tokens: `inputTokens` + `outputTokens`, plus the cache fields counted as Claude Code's are. No cost.
+- Failing before this build: none
 - The reader is `scripts/build-log.mjs`; spend is `scripts/spend.mjs`.
 
 ## In plain words
