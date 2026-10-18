@@ -35,6 +35,8 @@
     --bg: #faf9f5; --panel: #ffffff; --raise: #f0eee6; --line: #87847d; --line-soft: #e8e7e3;
     --text: #141413; --muted: #3d3d3a; --faint: #4d4c48;
     --accent: #853123; --ok: #3f522e; --warn: #67460b; --bad: #921f2d; --run: #304f6d; --idea: #623f6c;
+    /* 0302: the builder badge's LCD screen, from the design (docs/design/lcd/) */
+    --lcd-bg: #c3c9b1; --lcd-off: #b8bea6; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .22);
     --inbox: #22544c; /* the inbox's own colour */
     --bug: #7a3553; /* the bug tag's own colour */
     --fix: #584c0e; /* the fix tag's own colour */
@@ -181,12 +183,14 @@
   .act b { color: var(--text); font-weight: 400; }
   .act.to-ship { color: var(--idea); }
   /* 0168: an in-flight ticket's progress, under its title and tags, which keep the card's full width: the builder badge,
-     then a sentence saying what's happening and the current stage's name, with the timer at the right of that row. The
-     badge is drawn on a canvas from the colour tokens (badgeColours). */
+     then a sentence saying what's happening and the current stage's name, with the timer at the right of that row. 0302:
+     the badge is the design's LCD screen, drawn by its renderer (lcd.js), framed purple waiting for you and crimson blocked. */
   .q .top:has(> .badgerow) .line { grid-area: 1 / 1 / 2 / 3; }
   .q .top .badgerow { grid-area: 3 / 1; display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 12px; align-items: center; margin-top: 8px; }
   .q .top:has(> .badgerow) .sub { grid-area: 3 / 2; align-self: center; }
-  .q .top .badge { display: block; width: 56px; height: 56px; }
+  .q .top .badge { display: block; width: 56px; height: 56px; image-rendering: pixelated; outline: 1px solid var(--line); outline-offset: -1px; }
+  .q .top .badge.wait { outline-color: var(--idea); }
+  .q .top .badge.bad { outline-color: var(--bad); }
   .q .top .badgetext { display: grid; gap: 2px; min-width: 0; }
   .q .top .say { font-size: 13px; color: var(--text); }
   .q .top .badgetext.ship-line { display: block; } /* 0201: "Shipping · 00:04" on one line */
@@ -481,6 +485,7 @@
     --accent: #e5a495; --ok: #a5bb8e; --warn: #daac5d; --bad: #f39ba5; --run: #97b7d8; --idea: #c3abd1;
     --inbox: #82bfb5; --bug: #e0a2bf; --fix: #c9b65c;
     --accent-bg: #2e2320; --idea-bg: #2a2430; --inbox-bg: #1d2a28; --bad-bg: #341d21;
+    --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
     color-scheme: dark;
   }
   :root[data-theme="dark"] #full-backdrop { background: rgba(0, 0, 0, .45); }
@@ -634,6 +639,7 @@
 <div id="settings-unsaved" hidden></div>
 <div id="tag-tip" role="tooltip" hidden></div>
 
+<script src="/lcd.js"></script>
 <script>
 'use strict';
 
@@ -2353,249 +2359,59 @@ function queueItem(t) {
 // 0201: a shipping ticket says so once, followed on the same line by how long its ship has been running (0153), with no
 // stage's name.
 function progressOf(top, t, d) {
-  const tone = d.tone ? ` ${d.tone}` : '', b = badgeOf(t, d), now = t.steps.find(s => s.state === 'now');
-  const badge = el('canvas', `badge ${b.pose}`);
-  badge.setAttribute('role', 'img');
-  badge.setAttribute('aria-label', b.label);
+  const tone = d.tone ? ` ${d.tone}` : '', now = t.steps.find(s => s.state === 'now');
+  const badge = badgeFor(String(t.id), badgeOf(t, d));
   const ships = d.sentence === 'Shipping';
   top.insertBefore(el('div', 'badgerow', null, badge, el('div', ships ? 'badgetext ship-line' : 'badgetext', null, el('span', `say${tone}`, d.sentence),
     ships ? (t.ship_counter !== null ? el('span', 'ship-at', ' · ', el('span', 'ship-time', t.ship_counter)) : null)
       : now ? el('span', `stage${tone}`, now.label) : null)), child(top, 'sub'));
-  drawBadges(badge);
 }
-// 0168: the builder badge, speck's character, drawn on a 56 px canvas from the panel's colour tokens, so it follows the
-// light and dark looks. The drawing and timings come from the design reference. (0, 0) is between the builder's feet;
-// the tile is 56 units square and the builder is drawn at 0.64 of its size, its feet near the tile's bottom.
+// 0302: each in-flight ticket's builder badge, by its id: its canvas, the design's LCD renderer drawing on it
+// (SpeckLCD.badge, from lcd.js) and the pose it shows. A card made again keeps its ticket's badge, so a refresh leaves it
+// running as it was, and a new pose blends in with the badge's own set(pose). Without the renderer (lcd.js didn't load)
+// the badge stays blank, and its name still says what it shows.
+const badges = new Map();
+function badgeFor(id, b) {
+  let kept = badges.get(id);
+  if (!kept) badges.set(id, kept = { canvas: el('canvas'), lcd: null, pose: b.pose });
+  else if (kept.pose !== b.pose) { kept.pose = b.pose; if (kept.lcd) kept.lcd.set(b.pose); }
+  kept.canvas.className = `badge ${b.pose}`;
+  kept.canvas.setAttribute('role', 'img');
+  kept.canvas.setAttribute('aria-label', b.label);
+  return kept.canvas;
+}
+// After the queue is drawn: a ticket out of flight, or whose card has gone, loses its badge, and each new one starts
+// drawing, now that its canvas is on the page and has the look's colours.
+function startBadges(inFlight) {
+  for (const [id, b] of badges) if (!inFlight.has(id) || b.canvas.isConnected === false) badges.delete(id);
+  const LCD = globalThis.SpeckLCD, still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (LCD) for (const b of badges.values()) if (!b.lcd) b.lcd = LCD.badge(b.canvas, b.pose, { still });
+}
+// The renderer reads the reduced-motion setting once, as the page loads, so each new badge is given it as it is now,
+// and a change to it holds the badges already drawn still or lets them move again.
+if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
+  for (const b of badges.values()) if (b.lcd) { b.lcd.cast.still = b.lcd.scr.still = e.matches; b.lcd.scr.dirty = true; }
+});
+// 0163: the Auto-build button's builder, speck's character, drawn on a 28 px canvas from the panel's colour tokens, so
+// it follows the light and dark looks. (0, 0) is between the builder's feet. The badges are the LCD screen's since 0302.
 const BADGE = (() => {
   const C = {};
-  const clamp01 = v => Math.max(0, Math.min(1, v));
-  const seg = (p, a, b) => clamp01((p - a) / (b - a));
-  const lerp = (a, b, k) => a + (b - a) * k;
-  const io = k => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
-  const sine = k => -(Math.cos(Math.PI * k) - 1) / 2;
-  const out = k => 1 - Math.pow(1 - k, 3);
-  const back = k => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
   const hop = (k, n, h) => { const q = (k * n) % 1, s = Math.sin(q * Math.PI); return { y: -s * h, tuck: s }; };
-  const rnd = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  const win = (p, a, b, f = .2) => { if (p < a || p > b) return 0; const k = (p - a) / (b - a); return Math.min(1, k / f, (1 - k) / f); };
   const blinkAt = (t, phase = 0) => ((t + phase * 1000) % 3700) < 120;
   const ln = (g, x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
-  const rr = (g, x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
-  const pt = (a, b, k) => ({ x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) });
-  const GL = '{}<>;/=()[]*';
-  // A finished block of work.
-  function box(g, cx, by, o) {
-    const s = o.s * 16; if (s <= .5) return;
-    g.save(); g.globalAlpha *= o.a; g.translate(cx, by - s / 2); g.rotate(o.rot);
-    g.fillStyle = C.paper; g.strokeStyle = C.ink; g.lineWidth = 1.7; g.beginPath(); g.rect(-s / 2, -s / 2, s, s); g.fill(); g.stroke(); g.restore();
-  }
-  // 0169: a green tick, drawn k of the way.
-  function tick(g, x, y, k, a = 1) {
-    if (k <= 0 || a <= 0) return;
-    g.save(); g.globalAlpha *= a; g.strokeStyle = C.ok; g.lineWidth = 2.6; g.lineCap = 'round'; g.lineJoin = 'round';
-    g.setLineDash([19.2 * k, 100]); g.beginPath(); g.moveTo(x - 6, y); g.lineTo(x - 2, y + 4); g.lineTo(x + 7, y - 6); g.stroke(); g.restore();
-  }
   // The builder: an ensō-shaped round body open at the top left, two round ears, two short legs and the speck as its eye.
-  // 0172: with short straight arms when a pose gives it them, each a shoulder and a hand: `backArms` behind its body,
-  // `arms` in front.
   function builder(g, P) {
     g.save(); g.translate(P.x || 0, P.y || 0); g.rotate(P.rot || 0); g.scale(1, P.sy || 1);
     g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.ink; g.lineWidth = 2.2;
     const tk = P.tuck || 0;
-    for (const a of P.backArms || []) ln(g, a.s.x, a.s.y, a.h.x, a.h.y);
     ln(g, -7, -5, -9 + tk * 2, -tk * 3); ln(g, 7, -5, 9 - tk * 2, -tk * 3);
     g.fillStyle = C.paper;
     for (const sx of [-1, 1]) { g.beginPath(); g.arc(sx * 12, -40 - (sx === 1 ? P.ear || 0 : 0), 5.5, 0, 7); g.fill(); g.stroke(); }
     g.beginPath(); g.arc(0, -24, 20, 0, Math.PI * 2); g.fill();
     g.beginPath(); g.arc(0, -24, 20, -2.0, -2.35 + Math.PI * 2); g.stroke();
-    for (const a of P.arms || []) ln(g, a.s.x, a.s.y, a.h.x, a.h.y);
-    if (P.flag != null) {
-      g.save(); g.translate(17, -34); g.rotate(P.flag); ln(g, 0, 0, 0, -26);
-      g.beginPath(); g.moveTo(0, -26); g.quadraticCurveTo(8, -24 + (P.flagWave || 0), 16, -21); g.lineTo(0, -16); g.closePath(); g.fillStyle = C.wait; g.fill(); g.restore();
-    }
     const ex = (P.lookX || 0) * 8, ey = -26 + (P.lookY || 0) * 6;
     g.save(); g.translate(ex, ey); g.scale(1, blinkAt(P.t) ? .15 : 1); g.beginPath(); g.arc(0, 0, 4.5, 0, 7); g.fillStyle = C.speck; g.fill(); g.restore();
-    if (P.q) { g.save(); g.translate(P.q.x, P.q.y); g.scale(P.q.s, P.q.s); g.fillStyle = C.bad; g.font = '600 24px "Shippori Mincho", "Noto Serif JP", Georgia, serif'; g.textAlign = 'center'; g.fillText('?', 0, 0); g.restore(); }
     g.restore();
-  }
-  // 0169: the reviewer, taller and squarer than the builder, with two small eyes and a mouth. (0, 0) is between its feet.
-  function reviewer(g, R) {
-    g.save(); g.translate(R.x, R.y || 0); g.rotate(R.rot || 0); g.scale(1, R.sy || 1);
-    g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.ink; g.lineWidth = 2.2;
-    ln(g, -7, -4, -8, 0); ln(g, 7, -4, 8, 0);
-    g.beginPath(); g.moveTo(-15, -4); g.lineTo(-16, -50); g.quadraticCurveTo(-15, -58, -6, -58); g.lineTo(8, -57); g.quadraticCurveTo(16, -56, 15, -48); g.lineTo(14, -4); g.closePath();
-    g.fillStyle = C.paper; g.fill(); g.stroke();
-    const dx = (R.lookX || 0) * 4, dy = (R.lookY || 0) * 4, b = blinkAt(R.t, 1.9) ? .15 : 1;
-    g.fillStyle = C.ink;
-    for (const x of [-5, 5]) { g.save(); g.translate(x + dx, -40 + dy); g.scale(1, b); g.beginPath(); g.arc(0, 0, 2.4, 0, 7); g.fill(); g.restore(); }
-    if (R.talk) { g.beginPath(); g.ellipse(dx, -30, 4, 1 + R.talk * 2.4, 0, 0, 7); g.stroke(); } // open while it talks
-    else if (R.mouth) { g.beginPath(); g.moveTo(-6 + dx, -31); g.quadraticCurveTo(dx, -26, 6 + dx, -31); g.stroke(); } // a smile
-    else ln(g, -6 + dx, -30, 6 + dx, -30);
-    g.restore();
-  }
-  // 0169: one character of code hanging in the air, in faint ink: larger and green once checked, ringed while it's discussed.
-  function glyph(g, x, y, ch, o) {
-    g.save(); g.translate(x, y); g.scale(o.s || 1, o.s || 1); g.globalAlpha *= o.a ?? .45;
-    if (o.ring) { g.strokeStyle = C.code; g.lineWidth = 1.1; g.beginPath(); g.arc(0, -3, 5.6, 0, 7); g.stroke(); }
-    g.fillStyle = o.good ? C.ok : C.code; g.font = '600 9px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.fillText(ch, 0, 0); g.restore();
-  }
-  const POSES = {
-    // At the laptop, from behind its lid, a loop of 2.8 seconds: paws slapping the lid's top edge in turn with bits of code
-    // flying off both sides, a pause with its eye up and away, both paws up, one slam, and a finished block pops out.
-    type(g, t) {
-      const CY = 2800, p = (t % CY) / CY;
-      const P = { t, lookX: 0, lookY: .3 };
-      let lh = -17, rh = -17;
-      if (p < .62) {
-        const k = t / 105, a = Math.max(0, Math.sin(k * Math.PI)), b = Math.max(0, Math.sin(k * Math.PI + Math.PI));
-        lh = -16 - a * 9; rh = -16 - b * 9; P.sy = 1 + .02 * Math.abs(Math.sin(k * Math.PI)); P.lookX = .25 * Math.sin(t / 420);
-      } else if (p < .76) {
-        const k = sine(seg(p, .62, .70)); P.lookX = lerp(0, -.6, k); P.lookY = lerp(.3, -.7, k); P.rot = -.04 * sine(seg(p, .62, .76));
-      } else if (p < .84) {
-        const k = io(seg(p, .76, .84)); lh = rh = -17 - 21 * k; P.lookY = lerp(-.7, .3, k); P.lookX = lerp(-.6, 0, k); P.sy = 1 + .05 * k;
-      } else if (p < .87) {
-        const k = out(seg(p, .84, .87)); lh = rh = lerp(-38, -13, k); P.sy = lerp(1.05, .9, k); P.lookY = .6;
-      } else { const k = sine(seg(p, .87, 1)); lh = rh = lerp(-13, -17, k); P.sy = lerp(.9, 1, k); P.lookY = .4; }
-      builder(g, P);
-      g.lineWidth = 2; g.strokeStyle = C.ink; g.fillStyle = C.paper;
-      for (const [x, y] of [[-10, lh], [10, rh]]) { g.beginPath(); g.ellipse(x, y - 1, 5, 4.2, 0, 0, 7); g.fill(); g.stroke(); }
-      // The lid, in front, with an ensō sticker.
-      g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = 2.2;
-      rr(g, -24, -16, 48, 16, 3); g.fillStyle = C.paper; g.fill(); g.stroke();
-      g.lineWidth = 1.4; g.beginPath(); g.arc(0, -8, 3.4, -2.0, -2.35 + Math.PI * 2); g.stroke();
-      const step = 120, life = 650;
-      g.font = '600 9px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.fillStyle = C.ink;
-      for (let i = Math.floor((t - life) / step) + 1; i <= Math.floor(t / step); i++) {
-        const te = i * step, pe = (te % CY) / CY, k = (t - te) / life;
-        if (i < 0 || pe >= .6 || k < 0 || k > 1) continue;
-        const side = i % 2 ? 1 : -1, x = side * (25 + rnd(i + 3) * 9) + side * k * 4;
-        g.globalAlpha = (1 - k) * .85; g.fillText(GL[Math.floor(rnd(i) * GL.length)], x, -18 - k * 26);
-      }
-      g.globalAlpha = 1;
-      if (p >= .86) { const k = seg(p, .86, 1), e = out(k); box(g, lerp(4, 24, e), lerp(-16, -52, e), { s: Math.min(1, back(seg(k, 0, .4))) * .8, rot: .4 * e, a: 1 - seg(k, .7, 1) }); }
-    },
-    // 0169: self-check. Nine faint characters of code hang in a loose ring around it, drifting. Its eye moves to one at
-    // random every 0.64 seconds, the body turning a beat later and an ear twitching now and then, and each character it
-    // looks at turns green for a moment. Every seventh glance, a small hop and a green tick.
-    check(g, t) {
-      const N = 9, G = 640, n = Math.floor(t / G), k = (t % G) / G;
-      const pos = i => {
-        const ang = -Math.PI + (i + .5) / N * Math.PI + (rnd(i + 40) - .5) * .25, R = 33 + rnd(i + 50) * 7;
-        return { x: Math.cos(ang) * R + Math.sin(t / 1400 + i) * 1.6, y: -28 + Math.sin(ang) * R * .95 + Math.cos(t / 1100 + i * 1.7) * 1.6 };
-      };
-      const pick = j => Math.floor(rnd(j) * N);
-      const dir = i => { const q = pos(i), dx = q.x, dy = q.y + 26, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d }; };
-      const from = dir(pick(n - 1)), to = dir(pick(n)), m = io(seg(k, 0, .3)), body = io(seg(k, .08, .55));
-      const P = { t, x: lerp(from.x, to.x, body) * 2.5, lookX: lerp(from.x, to.x, m), lookY: lerp(from.y, to.y, m) };
-      P.rot = lerp(from.x, to.x, body) * .09; P.sy = 1 - .03 * Math.sin(seg(k, 0, .3) * Math.PI);
-      if (rnd(n + 7) > .7) P.ear = 2.5 * Math.sin(seg(k, .3, .6) * Math.PI);
-      const hopping = n % 7 === 6;
-      if (hopping) { const h = hop(k, 1, 7); P.y = h.y; P.tuck = h.tuck; P.lookX = 0; P.lookY = -.3; }
-      builder(g, P);
-      for (let i = 0; i < N; i++) {
-        let glow = 0; // from the glances that ended in the last 1.5 seconds, none before the loop began
-        for (let j = n; j > n - 4 && j >= 0; j--) if (pick(j) === i) { const since = t - (j * G + G * .3); if (since >= 0) glow = Math.max(glow, 1 - since / 1500); }
-        const q = pos(i);
-        glyph(g, q.x, q.y, GL[Math.floor(rnd(i + 60) * GL.length)], { a: .45 + .55 * glow, s: 1 + .3 * glow, good: glow > .05 });
-      }
-      if (hopping) tick(g, 0, -74, out(seg(k, 0, .5)), 1 - seg(k, .8, 1));
-    },
-    // 0169: review, a loop of 6.2 seconds. The reviewer slides in from the right, and seven faint characters float above
-    // the two of them. Three times, the reviewer looks at one and talks, and a ring goes round it; then the builder looks
-    // at the same one and answers with a bounce and an ear flick, and it turns green. Then the reviewer smiles and nods,
-    // the builder hops, and the reviewer slides out.
-    review(g, t) {
-      const CY = 6200, p = (t % CY) / CY, cycle = Math.floor(t / CY), N = 7;
-      const rx = p < .07 ? lerp(74, 30, out(seg(p, 0, .07))) : p < .93 ? 30 : lerp(30, 74, io(seg(p, .93, 1)));
-      const pos = i => ({ x: -36 + (i / (N - 1)) * 50 + (rnd(i + 5) - .5) * 5 + Math.sin(t / 1300 + i) * 1.5, y: -53 - rnd(i + 9) * 9 + Math.cos(t / 1000 + i * 1.3) * 1.2 });
-      const focus = [0, 1, 2].map(e => Math.floor(rnd(cycle * 3 + e + 1) * N));
-      const turns = [['R', .09, .22, 0], ['B', .24, .36, 0], ['R', .38, .47, 1], ['B', .49, .61, 1], ['R', .63, .71, 2], ['B', .73, .79, 2]];
-      const B = { t, x: -13, lookX: .6, lookY: -.6 }, R = { t, x: rx, lookX: -.6, lookY: -.6, rot: -.05 };
-      const aim = (who, i) => { const q = pos(i), dx = q.x - who.x, dy = q.y - (who === B ? -26 : -40), d = Math.hypot(dx, dy) || 1; who.lookX = dx / d; who.lookY = dy / d; };
-      const ring = new Set(), good = new Set();
-      for (const [who, a, b, e] of turns) {
-        if (p >= a && who === 'R') ring.add(focus[e]);
-        if (p >= b && who === 'B') { ring.delete(focus[e]); good.add(focus[e]); }
-        const w = win(p, a, b, .18);
-        if (w <= 0) continue;
-        const bounce = Math.abs(Math.sin(seg(p, a, b) * Math.PI * 5)) * w;
-        aim(B, focus[e]); aim(R, focus[e]);
-        if (who === 'R') { R.sy = 1 + .04 * bounce; R.rot = -.05 - .1 * w; R.talk = bounce; }
-        else { B.sy = 1 + .06 * bounce; B.rot = .08 * w; B.ear = 2.5 * bounce; }
-      }
-      if (p > .81 && p < .93) { const k = seg(p, .81, .93); R.mouth = 1; R.rot = -.05 - .1 * Math.abs(Math.sin(k * Math.PI * 2)); R.lookX = -1; R.lookY = .2; const h = hop(seg(p, .83, .91), 1, 7); B.y = h.y; B.tuck = h.tuck; B.lookX = .8; B.lookY = -.2; }
-      builder(g, B); reviewer(g, R);
-      for (let i = 0; i < N; i++) {
-        const q = pos(i), r = ring.has(i), ok = good.has(i);
-        glyph(g, q.x, q.y, GL[Math.floor(rnd(i + cycle * 11 + 60) * GL.length)], { a: r || ok ? 1 : .45, s: r ? 1.15 : ok ? 1.1 : 1, good: ok, ring: r });
-      }
-    },
-    // 0172: shipping, a loop of 3.2 seconds. A finished block with a green tick sits on a small paper boat on a thin line
-    // of water in front of the builder. It puts both hands on the boat's stern, leans back, shoves, and the boat slides
-    // off to the right and out of the tile, the block on it. Its eye follows it, and a new boat pops up for the next loop.
-    ship(g, t) {
-      const CY = 3200, p = (t % CY) / CY, P = { t, x: -18, lookX: .6, lookY: .5 };
-      let bx = 18; // the boat's middle, on the water
-      if (p >= .42 && p < .5) bx = lerp(18, 24, io(seg(p, .42, .5)));
-      else if (p >= .5) { const k = seg(p, .5, 1); bx = 24 + 40 * (.6 * k + .4 * (1 - (1 - k) * (1 - k))); } // a shove, then a steady glide
-      const bs = p < .12 ? Math.min(1.08, back(seg(p, 0, .12))) : 1;
-      if (p >= .3 && p < .42) { const k = io(seg(p, .3, .42)); P.rot = -.05 * k; P.sy = 1 + .03 * k; P.lookX = .8; P.lookY = .4; }
-      else if (p >= .42 && p < .5) { const k = out(seg(p, .42, .5)); P.rot = lerp(-.05, .1, k); P.x = lerp(-18, -15, k); P.sy = lerp(1.03, .96, k); P.lookX = 1; P.lookY = .3; }
-      else if (p >= .5 && p < .62) { const k = sine(seg(p, .5, .62)); P.rot = lerp(.1, .03, k); P.x = lerp(-15, -16, k); P.sy = lerp(.96, 1, k); P.lookX = 1; P.lookY = lerp(.3, 0, k); }
-      else if (p >= .62) { const k = sine(seg(p, .88, 1)); P.rot = .03 * (1 - k); P.x = lerp(-16, -18, k); P.lookX = lerp(1, .6, k); P.lookY = lerp(0, .5, k); }
-      // From the tile into the builder's own turned and squashed frame, so its hands land on the boat's stern.
-      const local = w => { const dx = w.x - P.x, dy = w.y, r = -(P.rot || 0), c = Math.cos(r), s = Math.sin(r); return { x: dx * c - dy * s, y: (dx * s + dy * c) / (P.sy || 1) }; };
-      const restF = { s: { x: 18, y: -16 }, h: { x: 21, y: -7 } }, restB = { s: { x: -18, y: -16 }, h: { x: -21, y: -7 } };
-      const pushF = { x: 15, y: -11 }, pushB = { x: 11, y: -8 };
-      const stern = x => [local({ x: x - 15, y: -9 }), local({ x: x - 12.5, y: -3 })];
-      let F = restF, Bk = restB;
-      if (p >= .14 && p < .5) {
-        const k = sine(seg(p, .14, .28)), [hf, hb] = stern(bx);
-        F = { s: pt(restF.s, pushF, k), h: pt(restF.h, hf, k) }; Bk = { s: pt(restB.s, pushB, k), h: pt(restB.h, hb, k) };
-      } else if (p >= .5 && p < .66) {
-        const k = sine(seg(p, .5, .66)), [hf, hb] = stern(24);
-        F = { s: pt(pushF, restF.s, k), h: pt(hf, restF.h, k) }; Bk = { s: pt(pushB, restB.s, k), h: pt(hb, restB.h, k) };
-      }
-      P.arms = [F]; P.backArms = [Bk];
-      // The water, from in front of the builder's feet to near the tile's right edge.
-      g.save(); g.strokeStyle = C.ink; g.lineWidth = 1.4; g.globalAlpha *= .55; g.beginPath();
-      for (let x = -4; x <= 30; x += 2) { const y = 1 + Math.sin(x / 4 + t / 240) * .5; x === -4 ? g.moveTo(x, y) : g.lineTo(x, y); }
-      g.stroke(); g.restore();
-      builder(g, P);
-      // The boat, folded from paper: a hull with pointed ends turned up and a crease at each fold, its peak behind the block.
-      if (bs < .05) return; // the new boat has yet to pop up
-      g.save(); g.translate(bx, 0); g.scale(bs, bs); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = C.ink; g.fillStyle = C.paper; g.lineWidth = 1.8;
-      g.beginPath(); g.moveTo(-7, -4); g.lineTo(0, -23); g.lineTo(7, -4); g.closePath(); g.fill(); g.stroke();
-      g.beginPath(); g.moveTo(-17, -11); g.lineTo(-9, -4); g.lineTo(9, -4); g.lineTo(17, -11); g.lineTo(11, 1); g.lineTo(-11, 1); g.closePath(); g.fill(); g.stroke();
-      g.lineWidth = 1.1; ln(g, -9, -4, -7, 1); ln(g, 9, -4, 7, 1);
-      box(g, 0, -4, { s: .8, rot: 0, a: 1 });
-      g.translate(0, -10.4); g.scale(.6, .6); tick(g, 0, 0, out(seg(p, .06, .2)));
-      g.restore();
-    },
-    // Facing front, waving a small purple flag that ripples a moment behind the wave, with a hop every few seconds.
-    wait(g, t) {
-      const hp = (t % 3800) / 3800, P = { t, x: -6, lookX: 0, lookY: .1, flag: -.18 + .32 * Math.sin(t / 280), flagWave: 3 * Math.sin(t / 280 - 1), rot: .025 * Math.sin(t / 560), sy: 1 + .015 * Math.sin(t / 520) };
-      if (hp < .14) { const h = hop(seg(hp, 0, .14), 2, 6); P.y = h.y; P.tuck = h.tuck; }
-      builder(g, P);
-    },
-    // Facing front with a crimson "?" over its head, tilting; now and then it glances side to side.
-    bad(g, t) {
-      const p = (t % 4200) / 4200, look = p > .55 && p < .8 ? Math.sin(seg(p, .55, .8) * Math.PI * 2) * .8 : 0;
-      builder(g, { t, x: -4, lookX: look, lookY: .1, rot: .06 * Math.sin(t / 320), q: { x: 21, y: -52 - 2.5 * Math.sin(t / 230), s: 1 + .08 * Math.sin(t / 460) } });
-    },
-    // Paused: still, facing front.
-    still(g, t) { builder(g, { t, lookX: 0, lookY: .1 }); },
-  };
-  // The time each pose is drawn at when nothing moves: with reduced motion, and always for a paused build. None blinks.
-  // Self-check looks at one green character; in review both look at one ringed character (0169). Shipping has both hands
-  // on the boat, the block ticked (0172).
-  const STILL_AT = { type: 300, check: 300, review: 1700, ship: 1100, wait: 1000, bad: 1000, still: 1000 };
-  // Draws the tile and the pose at time t into a 56-unit square. Unclipped, for the test that nothing reaches its edge.
-  function draw(g, pose, t, clip = true) {
-    const edge = pose === 'wait' ? C.wait : pose === 'bad' ? C.bad : C.line;
-    g.save(); rr(g, 1, 1, 54, 54, 12); g.fillStyle = C.tile; g.fill(); g.lineWidth = 1.4; g.strokeStyle = edge; g.stroke();
-    if (clip) g.clip();
-    g.translate(28, 52); g.scale(.64, .64); POSES[pose](g, t); g.restore();
   }
   // 0163: the builder alone, without its tile, filling a 56-unit square, as the Auto-build button shows it: hopping
   // gently while `moving`, otherwise still and facing front.
@@ -2604,33 +2420,30 @@ const BADGE = (() => {
     if (moving) { const h = hop((t % 1400) / 1400, 1, 3); P.y = h.y; P.tuck = h.tuck * .5; }
     g.save(); g.translate(28, 53); builder(g, P); g.restore();
   }
-  return { C, POSES, STILL_AT, draw, bare };
+  return { C, bare };
 })();
-// The badge's colours, read from the panel's tokens each frame, so a change of look shows at once.
+// The builder's colours, read from the panel's tokens each frame, so a change of look shows at once.
 function badgeColours() {
   const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(`--${k}`).trim();
-  Object.assign(BADGE.C, { ink: v('text'), paper: v('panel'), speck: v('accent'), line: v('line'), wait: v('idea'), bad: v('bad'), tile: v('raise'), ok: v('ok'), code: v('text') });
+  Object.assign(BADGE.C, { ink: v('text'), paper: v('panel'), speck: v('accent') });
   return Object.values(BADGE.C).join();
 }
-// Draws one badge at time `now`. One that doesn't move (a paused build, or every badge with reduced motion) is drawn
-// again only when its pose, size or colours change. Returns whether it moves. 0163: a `mini` one is the Auto-build
-// button's builder, 28 px and without its tile, hopping or still.
+// Draws the Auto-build button's builder (0163) at time `now`, hopping or still. One that doesn't move (still, or with
+// reduced motion) is drawn again only when its pose, size or colours change. Returns whether it moves.
 function paintBadge(c, now, colours) {
-  const [kind, name] = c.className.split(' '), mini = kind === 'mini';
-  const pose = mini ? (name === 'hop' ? 'hop' : 'still') : Object.hasOwn(BADGE.POSES, name) ? name : 'still';
+  const pose = c.className.split(' ')[1] === 'hop' ? 'hop' : 'still';
   const fixed = matchMedia('(prefers-reduced-motion: reduce)').matches || pose === 'still';
-  const size = Math.round((mini ? 28 : 56) * (devicePixelRatio || 1)), key = `${pose} ${size} ${colours}`;
+  const size = Math.round(28 * (devicePixelRatio || 1)), key = `${pose} ${size} ${colours}`;
   if (fixed && c.dataset.drawn === key) return false;
   if (c.width !== size) { c.width = size; c.height = size; }
   const g = c.getContext('2d');
   if (!g) return false; // the browser won't draw on it: the badge stays blank, and its name still says what it shows
   g.setTransform(size / 56, 0, 0, size / 56, 0, 0); g.clearRect(0, 0, 56, 56);
-  if (mini) BADGE.bare(g, now, !fixed);
-  else BADGE.draw(g, pose, fixed ? BADGE.STILL_AT[pose] : now);
+  BADGE.bare(g, now, !fixed);
   c.dataset.drawn = fixed ? key : '';
   return !fixed;
 }
-// Draws a new badge at once, so it's never blank, then every badge on the page each frame while one of them moves.
+// Draws a new builder at once, so it's never blank, then each frame while it moves.
 let badgeFrame = null;
 function drawBadges(fresh) {
   if (typeof requestAnimationFrame !== 'function' || typeof HTMLCanvasElement !== 'function') return; // no browser to draw in
@@ -2639,16 +2452,23 @@ function drawBadges(fresh) {
   badgeFrame = requestAnimationFrame(function frame(now) {
     const colours = badgeColours();
     let moving = false;
-    for (const c of document.querySelectorAll('canvas.badge, canvas.mini')) moving = paintBadge(c, now, colours) || moving;
+    for (const c of document.querySelectorAll('canvas.mini')) moving = paintBadge(c, now, colours) || moving;
     badgeFrame = moving ? requestAnimationFrame(frame) : null;
   });
 }
 // A change of look, of the reduced-motion setting or of the screen's pixels per CSS pixel (a zoom, or another screen)
-// draws the badges again.
+// draws the Auto-build builder again. 0302: a zoom gives each badge its new size too, which its renderer doesn't see, as
+// the badge's size on the page stays the same.
 if (typeof MutationObserver === 'function') new MutationObserver(() => drawBadges()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 if (typeof matchMedia === 'function') {
   matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => drawBadges());
-  (function zoomed() { matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => { drawBadges(); zoomed(); }, { once: true }); })();
+  (function zoomed() {
+    matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => {
+      drawBadges();
+      for (const b of badges.values()) if (b.lcd) b.lcd.scr.size();
+      zoomed();
+    }, { once: true });
+  })();
 }
 // An open building or reviewing ticket whose build speck run launched and is running or paused has a Stop build button.
 // It asks first, and opens or closes nothing.
@@ -3046,6 +2866,7 @@ function render() {
     unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
+  startBadges(new Set(m.queue.filter(t => t.inFlight).map(t => String(t.id))));
   $('queue').hidden = !m.queue.length; // 0162: an empty Build is one line, the message beside its heading
   startCounters(m.queue.flatMap((t, i) => [...(t.counter !== null && t.held_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : []),
     ...(t.ship_counter !== null ? [[shipTime(rows[i]), t.ship_since, false]] : [])]));

@@ -420,6 +420,11 @@ export async function panelServer() {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
+    // 0302: the design's LCD renderer, which draws the builder badges, served as it is.
+    if (where === '/lcd.js') {
+      try { return send(res, 200, 'text/javascript', fs.readFileSync(path.join(TEMPLATES, 'lcd.js'))); }
+      catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(TEMPLATES, 'lcd.js')}: ${e.message}\nPut the file back, then reload.\n`); }
+    }
     if (Object.hasOwn(icons, where)) {
       let body;
       try { body = fs.readFileSync(path.join(iconsDir, where.slice(1))); }
