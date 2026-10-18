@@ -39,7 +39,7 @@ export const SETTING_GROUPS = [
   ] },
   { title: 'Building and reviewing', settings: [
     { key: 'builder', default: 'claude',
-      explain: 'The agent that builds each ticket, writing its tests and code: claude, codex or cursor, offered when it\'s installed and signed in. New tickets take it from here, so changing it changes who builds tickets made from now on, and sets build_command to the new builder\'s own, asking first when that was set by hand. It clears builder_model when the new builder doesn\'t offer it, or its models can\'t be read.' },
+      explain: 'The agent that builds each ticket, writing its tests and code: claude, codex or cursor, offered when it\'s installed and signed in. New tickets take it from here, so changing it changes who builds tickets made from now on, sets build_command to the new builder\'s own, asking first when that was set by hand, and clears builder_model when the new builder doesn\'t offer it or its models can\'t be read.' },
     { key: 'builder_model', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, to Codex builds when build_command is blank, and to Cursor builds when it is blank too. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
