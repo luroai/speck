@@ -13,16 +13,21 @@ import { changelogSection, releaseMismatches, setupPromptProblems } from './supp
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const notes = () => read('docs/releases/v0.5.4.md');
 
-test('0254 AC1: package.json is version 0.5.4', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '0.5.4');
+// 0282 (release 0.6.0) made the checks below that named 0.5.4 as the current version check the current version instead.
+const version = () => JSON.parse(read('package.json')).version;
+const esc = v => v.replace(/\./g, '\\.');
+
+test('0254 AC1: package.json has the current release version', () => {
+  assert.match(version(), /^\d+\.\d+\.\d+$/);
+  assert.ok(changelogSection(read('CHANGELOG.md'), version()), 'with a changelog section of its own');
 });
 
-test('0254 AC1: speck init prints speck 0.5.4', () => {
+test('0254 AC1: speck init prints speck and the current version', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
   spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   const r = spawnSync('node', [CLI, 'init', '--skip-checks'], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^speck 0\.5\.4: /m);
+  assert.match(r.stdout, new RegExp(`^speck ${esc(version())}: `, 'm'));
 });
 
 test('0254 AC2: CHANGELOG.md has a 0.5.4 section', () => {
@@ -31,8 +36,8 @@ test('0254 AC2: CHANGELOG.md has a 0.5.4 section', () => {
   assert.match(s, /npx github:luroai\/speck#v0\.5\.4 init/, 'it says how to install this release');
 });
 
-test('0254 AC3: the README and the brief name 0.5.4', () => {
-  for (const f of ['README.md', 'docs/brief.md']) assert.ok(read(f).includes('0.5.4'), f);
+test('0254 AC3: the README and the brief name the current version', () => {
+  for (const f of ['README.md', 'docs/brief.md']) assert.ok(read(f).includes(version()), f);
 });
 
 test('0254 AC3: the setup prompt still installs the latest release, as 0253 left it', () => {
@@ -65,9 +70,8 @@ test('0254 AC4: the release notes use none of the private words', () => {
   for (const w of words) assert.ok(!n.includes(w), 'a private word is in the release notes');
 });
 
-test('0254 AC5: package.json and the newest changelog section name 0.5.4', () => {
+test('0254 AC5: package.json and the newest changelog section name the same version', () => {
   assert.deepEqual(releaseMismatches({ pkg: read('package.json'), changelog: read('CHANGELOG.md') }), []);
-  assert.equal(JSON.parse(read('package.json')).version, '0.5.4');
 });
 
 test('0254 AC4: the release notes name speck/config.yml', () => {

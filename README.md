@@ -17,7 +17,7 @@ You can trust the result without reading the code because every ticket goes thro
   <img alt="An agent conversation on the left, with speck's panel open beside it on the right, showing tickets being planned, built and waiting to ship." src="docs/images/demo-light.png">
 </picture>
 
-> Status: 0.5.4, a public preview. It works end to end on a local machine. Expect rough edges.
+> Status: 0.6.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -113,15 +113,15 @@ The loop ends when the reviewer approves with no blocking findings and every cri
 
 ### Where state lives
 
-The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. A ticket's status, priority, size, risk, builder, reviewer and `after:` list are in its frontmatter. Each review round is a collapsed block in the ticket's `## Review rounds`, which only speck writes, with a one-line summary in its `## Review log`. Its `## Delivery log` keeps the actuals and follow-ups. Shipped and cancelled tickets move to `speck/tickets/done/`, keeping all of it. `speck/.cache/`, which git ignores, holds working files for reviews in progress, recorded test results, `speck run`'s logs and the record of flaky tests.
+The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. A ticket's status, priority, size, risk, builder, reviewer and `after:` list are in its frontmatter. Each review round is a collapsed block in the ticket's `## Review rounds`, which only speck writes, with a one-line summary in its `## Review log`. Its `## Delivery log` keeps the actuals and follow-ups. Shipped and cancelled tickets move to `speck/tickets/done/`, keeping all of it. `speck/.cache/`, which git ignores, holds working files for reviews in progress, recorded test results, `speck run`'s logs, the record of flaky tests and this machine's own settings, in `speck/.cache/machine/config.yml`.
 
 ### Which tests run when
 
-A build never runs the whole suite. Before it changes anything, it reads the result recorded for the same code with `speck test --recorded` and writes the tests already failing as `Failing before this build:` in the ticket's Notes. After that it runs only test files, with `speck test --files <file>…`: the ticket's own while it builds, and before every review round the ticket's own, any existing ones it changed and those of any test that failed last time. The reviewer sees a summary of that run. The whole suite runs in `speck ship`, on the ticket merged with the base branch, which is what lands. A full run on code that hasn't changed reuses the recorded result, and a test that fails in a full run then passes on a second try is logged as flaky.
+A build never runs the whole suite. Before it changes anything, it reads the result recorded for the same code with `speck test --recorded` and writes the tests already failing as `Failing before this build:` in the ticket's Notes. After that it runs only test files, with `speck test --files <file>…`: the ticket's own while it builds, and before every review round the ticket's own, any existing ones it changed and those of any test that failed last time. Every such run also runs the project's quick checks of rules for the whole repo, the test files listed in `commands.checks`. The reviewer sees a summary of that run. The whole suite runs in `speck ship`, on the ticket merged with the base branch, which is what lands. A full run on code that hasn't changed reuses the recorded result, and a test that fails in a full run then passes on a second try is logged as flaky.
 
 ### Builds and the ship queue
 
-`speck run` keeps up to `max_parallel_builds` builds going, 1 unless you raise it, each on its own branch in its own worktree, so a build never touches your checkout and you keep writing ideas and tickets on the base branch. Builds end at `approved`. One ship queue in `speck run` ships approved tickets one at a time, so ships never race each other for `main`, and each ship tests the ticket as it would land on the base branch as it is then. If that fails, the queue hands the ticket back to its build: to merge `main` in, to fix tests that fail with `main`'s newer changes, or to raise a fix ticket when `main`'s own tests fail. A build that was killed before it finished is resumed once. `speck pause <id>`, `speck play <id>` and `speck stop <id>` hold, carry on or end a build.
+`speck run` keeps up to `max_parallel_builds` builds going, 1 unless you raise it for the project or for this machine, each on its own branch in its own worktree, so a build never touches your checkout and you keep writing ideas and tickets on the base branch. Builds end at `approved`. One ship queue in `speck run` ships approved tickets one at a time, so ships never race each other for `main`, and each ship tests the ticket as it would land on the base branch as it is then. If that fails, the queue hands the ticket back to its build: to merge `main` in, to fix tests that fail with `main`'s newer changes, or to raise a fix ticket when `main`'s own tests fail. While the queue is paused because `main`'s own tests fail, it still ships approved fix tickets. When `main` on your remote has moved on while yours has commits of its own, `speck ship` merges the remote's in first, or stops, changing nothing, when it can't do that cleanly. A build that was killed before it finished is resumed once. `speck pause <id>`, `speck play <id>` and `speck stop <id>` hold, carry on or end a build.
 
 ## Who it's for
 
@@ -143,6 +143,7 @@ The panel shows your tickets, builds and shipped work in your browser, and lets 
 
 - **Plan:** your draft tickets, ideas and inbox, in full. Set a draft ready or change its priority with a click.
 - **Build:** the queue, with each build's log as it runs. Turn `speck run` on or off from the header. Stop a build, see which builds are paused (`speck pause <id>` and `speck play <id>` hold and carry them on), and see blocked tickets with their questions and how to resume them. Read an approved ticket's review pack, and ship it from there with its Ship button, which asks first and does what `/speck-ship` does. A ticket being shipped says "Shipping" once, beside its builder, with how long the ship has been running, whoever started it, and an auto-ship that didn't finish says so.
+- **Settings:** the settings people tune, from the Settings button in the header, each with its value and an explanation. Change them and save them all with one button. A change that lets more tickets ship without you asks first, naming them, and `max_parallel_builds` and `max_parallel_tests` can be saved for this machine only.
 - **Shipped:** what's shipped and when, with the median time, review rounds and tokens per ticket, for the reviewer and the builder.
 
 To use the panel from your phone, put it behind a private tunnel that makes you log in, such as `tailscale serve` or Cloudflare Tunnel with Cloudflare Access, and start it with that address: `node .speck/scripts/speck.mjs panel --url https://<hostname>`. The panel then also serves that one address and accepts its button presses. Add it to your phone's home screen to open it full screen as an app called speck, with speck's logo as its icon. Never expose it openly: anyone who can load the page can start builds and ship.
@@ -187,7 +188,7 @@ In your agent:
 
 | Skill | What it does |
 |---|---|
-| `/speck-setup` | Takes you through setting speck up in a conversation: checks what's there, explains each choice (base branch, test command, builder and reviewer, whether `speck run` builds skip permission prompts), asks before changing anything, and finishes once `speck doctor` passes. It's hidden from the `/` menu: the setup prompt above starts it |
+| `/speck-setup` | Takes you through setting speck up in a conversation: checks what's there, explains each choice (base branch, test command, builder and reviewer, whether `speck run` builds skip permission prompts), goes through the settings in the panel's Settings view, such as `auto_ship` and the ticket size limits, asks before changing anything, and finishes once `speck doctor` passes. It's hidden from the `/` menu: the setup prompt above starts it |
 | `/speck-capture` | Saves an idea or the current conversation to `speck/ideas/` |
 | `/speck-ticket` | Turns an idea into small, numbered draft tickets that pass the size rules, or triages the inbox down to at most three decisions |
 | `/speck-build <id>` | Builds one ready ticket: tests from the acceptance criteria, then code, then the review loop. Ends with the ticket `approved`, for `speck run` to ship if `auto_ship` allows it |
@@ -206,7 +207,8 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | `status` | Tickets by status, blocked first (`--json` for programs) |
 | `pack <id>` | The review pack for a ticket |
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
-| `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first |
+| `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first. `config set --machine <key> <value>` sets `max_parallel_builds` or `max_parallel_tests` for this machine only |
+| `config show` | The main settings by group, with each one's value, whether it's the default and what it does |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
 
 ## Using another reviewer
@@ -241,9 +243,9 @@ speck/
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **239 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
-- **14 minutes** median from a build starting to its ticket shipping.
-- **1 review round** median. 123 tickets were approved in the first round.
+- **265 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **13 minutes** median from a build starting to its ticket shipping.
+- **1 review round** median. 136 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 

@@ -44,6 +44,10 @@ speck is ready to be released as 0.6.0.
 - After it ships, check that the `v0.6.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.6.0 --target main --title "speck 0.6.0" --notes-file docs/releases/v0.6.0.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Built from main at `speck(0281): Draw every Settings control's border on all four sides`: 265 shipped, 16 cancelled, 13 minutes median, 1 round median, 136 approved in the first round, worked out as 0254 did. 0267 made tests stop reading this repo's `speck/` folder and pinning wording, so the figures test reads the done tickets at that commit with git and looks for each figure in the README; it skips when that commit isn't in the checkout's history, as in 0267's rewording check.
+- "The 0.5.4 and earlier sections are unchanged" is checked against the `v0.5.4` tag's changelog, skipped when the tag isn't there.
+- 0254's checks that named 0.5.4 as the current version now check the current version, as 0254 did for 0248.
+- Self-check: README's setup and ship-queue sentences narrowed to what 0263, 0265 and 0269 do; release notes no longer say the machine values live in `speck/config.yml`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
