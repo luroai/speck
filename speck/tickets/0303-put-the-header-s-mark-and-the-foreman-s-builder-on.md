@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0302"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T21:51:29.988Z"
-approved: "2026-10-18T22:01:15.353Z"
+approved: "2026-10-18T22:06:11.263Z"
 
 ---
 # 0303 · Put the header's mark and the Foreman's builder on the LCD screen
@@ -49,12 +49,13 @@ The little speck logo before "speck" at the top of the panel, and the builder in
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 130,459
-- Elapsed since build started: 10 min
+- Reviewer tokens: 373,886
+- Elapsed since build started: 15 min
 - Changed lines: 124 (limit 5000)
 - Follow-ups: none.
 
@@ -114,6 +115,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The header mark and Foreman's builder now use the LCD renderer, with correct colours in both themes. The builder moves during builds and stays still otherwise, respecting reduced motion. The reported tests passed, including browser checks. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d7692e67631c1d58ac3dc3f5b76e61c2e7659399",
+    "merge": true,
+    "thread_id": "01a15108-1e07-7782-8a62-96e1ba801760",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 242259,
+      "cached_input_tokens": 183936,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1168,
+      "reasoning_output_tokens": 25
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:06:07.937Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html headerMark uses the exact tile arguments; .logo .mark sets 19 px dimensions and the required transparent and colour tokens. All corresponding panel-0303 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "builderFor() calls the mini renderer's set(true/false) when activity changes; render() places its retained canvas before the status. CSS sets 28 px dimensions. Passing 0303 tests exercise creation and transitions; previously passing 0163 browser tests check actual motion and stillness."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The renderer's Screen.look() and relook() apply theme tokens to both canvases. The 0303 browser test passed for opening in each theme and switching between them."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reviewed the current implementation and changes since round 1: header changes remain confined to the mark and builder. This round changes only related tests and ticket records."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The LCD mark and builder still meet every criterion. The two updated tests appropriately accommodate the new renderer and retained canvas without removing their intended checks. This round passed with no failures; no blocking concerns remain."
   }
 }
 ```
