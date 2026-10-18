@@ -1,7 +1,7 @@
 ---
 id: "0320"
 title: "Use the design's new logo in the header and app icons"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-18T22:51:57.759Z"
 
 ---
 # 0320 · Use the design's new logo in the header and app icons
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The user has updated the LCD design since it was copied into `docs/design/lcd/`. It now has its own logo: a hand-drawn 16 × 16 mark (the ring open at the top left, two ears and the speck), with a header version, a browser-tab icon that follows light and dark by itself, and an app icon showing the handheld with the mark on its screen. The panel's header mark (0303, 0309) and app icons (0305, 0308) were made from the first version and don't match it.
