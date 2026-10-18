@@ -1,7 +1,7 @@
 ---
 id: "0317"
 title: "Show what the Foreman will do and has done for a blocked ticket"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-18T22:36:46.607Z"
 ---
 # 0317 · Show what the Foreman will do and has done for a blocked ticket
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 With the Foreman's Fixing set to `fix`, a blocked ticket looks the same as one waiting for you, though the Foreman is about to take its recommendation, and once it has, the panel doesn't say so: it's only in the ticket's Notes and speck run's log. On 2026-10-18, 0305 showed as blocked and then carried on, with nothing on the board to say why. Its Notes also said "chosen by the user in the panel", which may not be how it was chosen.
@@ -45,7 +45,9 @@ The panel shows whether the Foreman's Fixing is on, what it will do about each b
 - Self-check: the header passed null to replaceChildren when Fixing wasn't fix, which a browser shows as the word "null": fixed. The blocked card's progress line said "it has a question for you" on a ticket the Foreman will take: it now says the Foreman will take its recommendation.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the Foreman is set to answer questions itself, the panel now says so: "Fixing on" sits beside its status at the top, and opening it says what that setting does. Each blocked ticket says either that the Foreman will take its recommendation or that it's waiting for you, and only the ones waiting for you count under Needs you. Once a recommendation has been taken, the ticket says who took it, the Foreman or you with the button, which option and when, until the ticket is approved. The Foreman's detail lists what it took in the last day, and `speck status` shows all of this too.
+
+To see it, set the Foreman's Fixing to fix in Settings and look at a blocked ticket. Worth knowing: while speck run is off, a ticket can still say the Foreman will take it, though nothing happens until speck run is on. On 0305, the record was right: its question changed something you'd notice, so the Foreman couldn't take it, and it was the button that did.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +57,67 @@ The panel shows whether the Foreman's Fixing is on, what it will do about each b
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up (inbox): speck/ideas/2026-10-18-foreman-will-take-it-while-speck-run-is-off.md, a blocked card says the Foreman will take its recommendation even while speck run is off.
+- Known limit: the Notes give a choice's time to the minute, so a choice made in the same minute as an approval is taken to be before it, and the card doesn't show it.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "84cafd5350bedc66c679adddc624237eca15328f",
+    "thread_id": "01a15133-f03a-71a3-b973-091d2c77d826",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 239689,
+      "cached_input_tokens": 186112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 906,
+      "reasoning_output_tokens": 257
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-18T22:49:05.568Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html render() and renderForeman() show Fixing on and its setting. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/foreman-took.mjs foremanFacts() checks eligibility, previous choices and resumability; queueItem() renders the corresponding message. All four AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanFacts() controls choice visibility; foremanView() collects recent choices; panel rendering and foremanTicketLines() show option and time. Both AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The panel explicitly passes by: 'user'; foremanFixQueue() passes by: 'foreman'. Notes attribution is parsed and displayed in the panel and status output. Both AC4 tests passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel now shows when Fixing is on, which blocked tickets the Foreman will handle, and who took each recommendation and when. The command-line status shows the same information. The tests exercise these behaviours and reported 182 passes, no failures and three skips. No blocking issues found."
+  }
+}
+```
+
+</details>
