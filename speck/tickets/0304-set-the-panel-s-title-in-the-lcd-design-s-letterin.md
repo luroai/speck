@@ -37,7 +37,7 @@ The panel's header shows "speck" in the design's dot-matrix lettering.
 
 ## Notes
 - The design's pages load Doto from Google Fonts (`family=Doto:wght@500;700;900`) and set names with `font: 900 … "Doto", "Silkscreen", ui-monospace, monospace`.
-- Unverified: Doto's licence (expected to be the SIL Open Font License, as Google Fonts' fonts are, which allows bundling it). Check before adding the file.
+- Checked 2026-10-18: Doto's licence is the SIL Open Font License 1.1 (google/fonts ofl/doto/OFL.txt), with no Reserved Font Name, so bundling the font file with its licence is allowed.
 - The header is `.logo` in `templates/panel.html`; fonts are served by `scripts/panel.mjs` like the icons in `templates/icons/`.
 
 ## In plain words
