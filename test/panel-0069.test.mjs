@@ -74,11 +74,11 @@ test('0069 AC2: a blocked ticket says "Answer the question, then run /speck-buil
   assert.deepEqual(shape(row), ['top', 'question', 'resume', 'act']);
   assert.equal(row.children[1].textContent, 'A or B?');
   assert.match(row.children[2].textContent, /^cd \/tmp\/x && claude --resume abc/);
-  assert.equal(row.children[3].textContent, 'Answer the question, then run /speck-build 0004');
+  assert.equal(row.children[3].textContent, 'Waiting for you. Answer the question, then run /speck-build 0004');
   assert.ok(!row.textContent.includes('blocked'), 'no status word');
   await open(p, '0004');
   assert.deepEqual(shape(rowOf(p, '0004')), ['top', 'question', 'resume', 'act', 'full-open', 'log'], 'open: the rest as before');
-  assert.equal(rowOf(p, '0004').children[3].textContent, 'Answer the question, then run /speck-build 0004');
+  assert.equal(rowOf(p, '0004').children[3].textContent, 'Waiting for you. Answer the question, then run /speck-build 0004');
 });
 
 test('0069 AC2: a blocked ticket with no question or session still gets the line, with its own id', async () => {
@@ -86,7 +86,7 @@ test('0069 AC2: a blocked ticket with no question or session still gets the line
   await p.settle();
   const [row] = queueRows(p);
   assert.deepEqual(shape(row), ['top', 'act']);
-  assert.equal(row.children[1].textContent, 'Answer the question, then run /speck-build 0042');
+  assert.equal(row.children[1].textContent, 'Waiting for you. Answer the question, then run /speck-build 0042');
 });
 
 test('0069 AC3: a ready ticket\'s Queued line is unchanged', async () => {

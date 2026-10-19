@@ -22,6 +22,7 @@ import { cmdTest } from './turns.mjs';
 import { cmdPanel, panelServer } from './panel.mjs';
 import { cmdRun, cmdPause, cmdPlay, cmdStop, resumeCommandOf, pidAlive, processRows, buildKilled, resumeHint, runState } from './run.mjs';
 import { foremanView, foremanLines, readForeman, fixingOf } from './foreman.mjs';
+import { withForeman, foremanBoard, foremanTicketLines } from './foreman-took.mjs';
 import { agentView, cmdForeman } from './foreman-agent.mjs';
 import { logTail } from './build-log.mjs';
 import { buildStop, countStop } from './stop-wait.mjs';
@@ -418,7 +419,7 @@ export function statusData(repo) {
   const tickets = statusTickets(repo, cfg);
   const done = new Set(tickets.filter(t => t.fm.status === 'done').map(t => padId(t.fm.id)));
   const runs = runsOf(repo);
-  const leads = groupLeader();
+  const leads = groupLeader(), fixing = fixingOf(cfg);
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
@@ -426,7 +427,7 @@ export function statusData(repo) {
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null;
-    return {
+    return withForeman(t, fixing, { // 0317
       ...t.fm,
       type: ticketType(t),
       priority: ticketPriority(t),
@@ -471,7 +472,7 @@ export function statusData(repo) {
       ship: shipState(runs, t.fm.id),
       pull_request: prShown(runs, t.fm.id, t.fm), // 0295: its pull request's link, or why it couldn't be opened
       ...(spent => ({ builder_tokens: spent.tokens, builder_cost_usd: spent.cost_usd }))(builderSpent(runs, t.fm.id)),
-    };
+    });
   });
   entries.sort(byPriority);
   const dir = path.join(repo, 'speck', 'ideas');
@@ -491,7 +492,7 @@ function cmdStatus(args = []) {
   const tickets = statusTickets(repo, cfg);
   if (!tickets.length) return console.log('No tickets yet. Capture an idea, then run /speck-ticket.');
   // 0285: the Foreman, as the panel's header shows it, from speck run's own record. Blocked tickets are listed below.
-  const board = tickets.map(t => ({ id: t.fm.id, status: t.fm.status, title: t.fm.title, blocked_question: null }));
+  const board = foremanBoard(tickets, cfg, runs), foremanOn = new Map(board.map(b => [b.id, b])); // 0317
   for (const line of foremanLines(foremanView({ run: runState(runs), record: readForeman(runs), tickets: board, fixing: fixingOf(cfg), agent: agentView(runs, board) }))) console.log(line);
   const order = ['approved', 'blocked', 'reviewing', 'building', 'ready', 'draft', 'done', 'cancelled'];
   for (const s of order) {
@@ -503,10 +504,7 @@ function cmdStatus(args = []) {
       if (t.at) console.log(`        ↳ being built in ${t.at}`);
       const killed = inHand(t) ? buildKilled(runs, t.fm.id) : null;
       if (killed) console.log(`        ! Build stopped unexpectedly. ${resumeHint(cfg, killed)}`);
-      if (s === 'blocked') {
-        const q = contentLines(t.sections['blocked question']).join(' ');
-        if (q) console.log(`        ? ${q}`);
-      }
+      for (const line of foremanTicketLines(foremanOn.get(t.fm.id), contentLines(t.sections['blocked question']).join(' '))) console.log(line); // 0317
       if (s === 'cancelled' && !blank(t.fm.cancel_reason)) console.log(`        ❌ ${t.fm.cancel_reason}`);
     }
   }
