@@ -46,7 +46,7 @@ The same-model check compares the models of a Codex builder and reviewer as it d
 - Went with the recommendation: keep counting it for Claude builds (chosen by the user in the panel, 2026-10-19 05:44 UTC).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If Codex both builds and reviews your tickets, you can now keep them apart by giving each its own model, as you already could with Claude. Set a builder model and a different reviewer model, and speck accepts it without the "allow the same model" switch. To see it, set the builder to codex with its build command left blank, pick two different models, and set a ticket ready: it's accepted. With the same model on both, or one left blank, it's still refused. If you've written your own build command for Codex, speck can't tell which model it runs, so it still asks for the switch. Claude builds work as before.
 
 ## Blocked question
 Criterion 3 says that when build_command is set, builder_model isn't counted for any builder, but speck always adds builder_model to a Claude Code build_command, so it does know what Claude builds run. Should Claude builders keep counting it, with only Codex (and other builders) not counting it when build_command is set, or should it stop counting for Claude too, which would refuse the usual Claude builder with a claude-subagent reviewer on two different models unless allow_same_model_review is on? I recommend keeping it for Claude, and rewording criterion 3 to say so.
@@ -59,6 +59,7 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +126,74 @@ Clear winner: yes
     ],
     "escalation_question": "Should criterion 3 preserve counting builder_model for Claude custom commands, since speck adds --model to them, and exclude it only for Codex custom commands?",
     "summary": "The Codex change works on the tested paths, and the reported run has no failures. Approval needs one product decision: the builder preserved Claude behaviour that criterion 3 explicitly says to change."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cd2080acb2d5ea70a374669041f24c190205433c",
+    "thread_id": "01a152a9-aa66-7252-abe2-26a9b3f10a2a",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 213372,
+      "cached_input_tokens": 167680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1609,
+      "reasoning_output_tokens": 74
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:45:23.689Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/same-model.mjs counts builder_model for native Codex builds. Passing 0313 AC1 tests exercise lint, set ready, Settings saves and switching builders."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0313 AC2 tests exercise identical models, case differences, blank models, allow_same_model_review and refusals through set ready and Settings."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "sameModelProblem excludes builder_model for custom Codex commands and preserves it for Claude, matching the amended criterion. Both 0313 AC3 tests passed, including the new Claude custom-command test."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs explains allow_same_model_review without a Claude-only restriction. The passing 0313 AC4 test checks that restriction is absent."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/same-model.mjs",
+        "issue": "The original criterion 3 contradicted the preserved Claude behaviour. The recorded owner decision and amended criterion now explicitly permit it.",
+        "suggested_fix": "Completed: criterion clarified and a passing regression test added for Claude custom commands.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Codex builds now accept a Codex reviewer using a different specified model, while retaining safeguards for identical or unspecified models. Claude behaviour remains unchanged as agreed. All four criteria pass; the test run reports 128 passed, none failed and three skipped."
   }
 }
 ```
