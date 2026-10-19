@@ -22,6 +22,7 @@ import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
+import { recordedRun, keepsLock } from './run-lock.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
@@ -53,13 +54,14 @@ function takeRunLock(repo) {
   const link = to => { try { fs.linkSync(mine, to); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; } };
   const holder = f => { try { return fs.readFileSync(f, 'utf8').trim(); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } };
   const busy = pid => { const n = Number(pid); return Number.isInteger(n) && n > 0 && n !== process.pid && pidAlive(n); };
+  const already = pid => new SpeckError(`speck run is already running in this repo (process ${pid}). Stop that one first, or leave it running. If it isn't speck run, delete ${path.relative(repo, lock)}.`);
   try {
+    const recorded = recordedRun(repo, dir); if (recorded) throw already(recorded); // 0321: one the Foreman's record names, its lock gone
     for (let tries = 0; tries < 5; tries++) {
       if (link(lock)) return lock;
       const pid = holder(lock);
       if (pid === null) continue; // removed just now: try again
-      if (busy(pid))
-        throw new SpeckError(`speck run is already running in this repo (process ${pid}). Stop that one first, or leave it running. If it isn't speck run, delete ${path.relative(repo, lock)}.`);
+      if (busy(pid)) throw already(pid);
       // A stale lock. Take it over only while holding the recovery lock, and only if it's still the same stale one.
       if (!link(recover)) {
         const other = holder(recover);
@@ -388,7 +390,8 @@ function runOn(worker) {
   // state. `lock` is the pid holding speck run's lock (the process you started), so a record left by an earlier speck
   // run isn't read as this one's.
   const lock = worker ? process.ppid : process.pid;
-  const foreman = (tickets, ready, switching = null) =>
+  const holding = keepsLock(() => runsDir(repo), lock, stop); // 0321: one no longer holding the lock stops, leaving its builds and ship running
+  const foreman = (tickets, ready, switching = null) => holding() && // 0321: only the speck run holding the lock writes it
     saveForeman(runsDir(repo), { lock, max, building: [...running].sort(), switching, ready, ship: { ...ships.state(tickets, { switching: !!switching }), ...(prs ? { waiting: [] } : {}) } }); // 0299; 0295: none waits to ship in pull request mode
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
@@ -415,6 +418,7 @@ function runOn(worker) {
     }
   };
   function tick() {
+    if (!holding()) return;
     // Handing over to new code, which watches the builds from now on: nothing is checked or started meanwhile.
     if (switchWhenIdle()) {
       const tickets = readTickets() || [], builds = [...running], ship = ships.running();
