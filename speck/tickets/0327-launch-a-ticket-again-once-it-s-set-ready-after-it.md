@@ -1,7 +1,7 @@
 ---
 id: "0327"
 title: "Launch a ticket again once it's set ready after its build never started"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-19T08:42:45.847Z"
 ---
 # 0327 · Launch a ticket again once it's set ready after its build never started
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a build ends without starting its ticket (it stopped to ask about the ticket before changing anything), speck run won't launch that ticket again until speck run itself restarts, even after the ticket is fixed and set ready again. On 2026-10-19, 0322's criterion was corrected and the ticket set ready again, but it only built after speck run was restarted by hand.
@@ -44,7 +44,7 @@ A ticket whose build never started is launched again as soon as it's set ready a
 - Pictures: none, because nothing anyone sees changes apart from speck run's log lines and the Foreman's detail text.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a build stops before it has started its ticket, for example to ask about the ticket, speck run no longer needs restarting to try it again. Once you set the ticket ready again, or commit a change to it such as a corrected criterion, speck run picks it up on its next check. To see it, let a build stop without starting its ticket, fix the ticket and set it ready: it starts again within a few seconds, with speck run still running. Until then speck run says it's waiting for the ticket to be set ready again and committed. A build ended with speck stop still needs speck run restarting, which is saved as a follow-up.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,71 @@ A ticket whose build never started is launched again as soon as it's set ready a
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up: a ticket ended by `speck stop` stays held in the same speck run even once set ready again and committed, as it stays in `launched`; saved to the inbox as `speck/ideas/2026-10-19-launch-a-stopped-ticket-again-without-restarting-speck-run.md`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "96a05182526bf5e7c897819191d297f55f5a71a8",
+    "thread_id": "01a15357-857c-7d20-b5cd-585a1a036e96",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 135196,
+      "cached_input_tokens": 93184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 837,
+      "reasoning_output_tokens": 219
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T08:47:14.072Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "test/run-0327.test.mjs: passing AC1 tests check unchanged tickets, uncommitted edits and unrelated commits remain held. The integration test confirms no repeat launch across several checks."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing AC2/AC4 integration test verifies repeated launches in the same running process after manual status changes and speck set, once committed. run.mjs ownWait releases the launch hold and checks readyOnBase before launching."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing AC3 test commits a criterion edit while the ticket remains ready and verifies readyAgain returns true. ownWait uses that result to release the launch hold."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing integration test verifies the Foreman changes from unstarted to uncommitted when the original hold clears, then confirms the ticket launches after commitment."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC5 test verifies readyAgain does not release records marked as stopped. The existing heldByStop commit comparison is unchanged; test/stop-0072.test.mjs covers holding stopped tickets until a subsequent ticket commit."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Tickets whose builds ended before starting can now run again after a committed ticket change, without restarting speck run. Unchanged tickets remain held, and the existing stop safeguards remain intact. The reported tests passed; no blocking issues found."
+  }
+}
+```
+
+</details>
