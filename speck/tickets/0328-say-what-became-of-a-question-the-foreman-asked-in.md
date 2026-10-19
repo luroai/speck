@@ -42,6 +42,7 @@ Each question the Foreman asked, in its recent actions, says what became of it: 
 - Seen 2026-10-19: 0322's dismissed question still showed as "The Foreman asked you for 0322" in `speck status` after 0322 shipped.
 - Decision: keep the question in the recent actions with its outcome rather than hiding it, so the history stays readable.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
