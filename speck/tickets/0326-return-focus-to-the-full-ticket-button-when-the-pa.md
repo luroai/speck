@@ -37,6 +37,7 @@ Closing the full ticket pane puts the keyboard focus back on the Full ticket but
 
 ## Notes
 - From `speck/ideas/2026-10-09-return-focus-after-the-full-ticket-pane-closes.md`. The pane is in `templates/panel.html` (0060).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
