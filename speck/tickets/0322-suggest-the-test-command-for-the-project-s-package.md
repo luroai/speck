@@ -37,6 +37,7 @@ created: 2026-10-19
 ## Notes
 - From `speck/ideas/2026-10-10-suggest-the-test-command-for-the-project-s-package-manager.md`. Decided: `packageManager` wins over the lockfile when they disagree, as it's what the project says it uses.
 - The suggestion is in `suggestCommands` in `scripts/detect.mjs`, which picks the install command from the first lockfile it finds.
+- The Foreman (2026-10-19 07:09 UTC) asked you: For bun projects, should speck detect suggest 'bun run test' (recommended, as 'bun test' starts Bun's own test runner instead of the project's test script) rather than 'bun test' as criterion 1 says?. Why: The build found that criterion 1's 'bun test' would run the wrong tests for bun projects, and changing a criterion is the user's call, so it stopped without starting.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
