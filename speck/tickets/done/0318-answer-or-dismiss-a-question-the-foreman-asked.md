@@ -1,7 +1,7 @@
 ---
 id: "0318"
 title: "Answer or dismiss a question the Foreman asked"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0317"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-19T05:45:08.195Z"
 approved: "2026-10-19T05:54:40.460Z"
+finished: "2026-10-19T05:58:17.643Z"
 
 ---
 # 0318 · Answer or dismiss a question the Foreman asked
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the Foreman agent (0287) asks you a question about a stuck ticket, the question waits until the ticket's status changes. There's no way to answer it, or to say it doesn't matter, from the panel or the command line.
