@@ -37,6 +37,7 @@ In pull request mode, a pull request that GitHub says conflicts is handed back t
 
 ## Notes
 - From `speck/ideas/2026-10-18-hand-back-a-pull-request-github-says-conflicts.md`. `whyNotMergeable` in `scripts/pr-ship.mjs` refuses a `CONFLICTING` or `DIRTY` pull request before ship's own landing test, which gives exit 13, is reached.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
