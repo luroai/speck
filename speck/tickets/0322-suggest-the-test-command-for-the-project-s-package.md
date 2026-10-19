@@ -41,6 +41,7 @@ started: "2026-10-19T07:27:12.678Z"
 - The Foreman (2026-10-19 07:09 UTC) asked you: For bun projects, should speck detect suggest 'bun run test' (recommended, as 'bun test' starts Bun's own test runner instead of the project's test script) rather than 'bun test' as criterion 1 says?. Why: The build found that criterion 1's 'bun test' would run the wrong tests for bun projects, and changing a criterion is the user's call, so it stopped without starting.
 - Checked 2026-10-19: `bun test` runs Bun's built-in test runner, while `bun run test` runs `package.json`'s `test` script; `pnpm test` and `yarn test` run the script (found by the 0322 build).
 - You dismissed the Foreman's question (2026-10-19 07:26 UTC): For bun projects, should speck detect suggest 'bun run test' (recommended, as 'bun test' starts Bun's own test runner instead of the project's test script) rather than 'bun test' as criterion 1 says?
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
