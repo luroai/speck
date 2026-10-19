@@ -79,9 +79,11 @@ function read(dir, name) {
 // npm writes this test script into a new package.json, so it isn't a real one.
 const NPM_DEFAULT_TEST = /no test specified/;
 
-function npmTest(dir) {
-  let pkg;
-  try { pkg = JSON.parse(read(dir, 'package.json')); } catch { return false; }
+function packageJson(dir) {
+  try { return JSON.parse(read(dir, 'package.json')); } catch { return null; }
+}
+
+function npmTest(pkg) {
   const scripts = pkg && typeof pkg === 'object' ? pkg.scripts : null;
   const test = scripts && typeof scripts === 'object' && Object.hasOwn(scripts, 'test') ? scripts.test : null;
   return typeof test === 'string' && test.trim() !== '' && !NPM_DEFAULT_TEST.test(test);
@@ -140,20 +142,36 @@ function makeTest(dir) {
   return /^(?:[^\s:#=]+[ \t]+)*test(?:[ \t]+[^\s:#=]+)*[ \t]*::?(?!=)/m.test(read(dir, 'Makefile') || '');
 }
 
-// The first lockfile found decides, in this order.
+// The first lockfile found decides, in this order, unless package.json's packageManager names a package manager.
 const LOCKFILES = [
-  ['pnpm-lock.yaml', 'pnpm install --frozen-lockfile'],
-  ['yarn.lock', 'yarn install --frozen-lockfile'],
-  ['bun.lockb', 'bun install'],
-  ['bun.lock', 'bun install'],
-  ['package-lock.json', 'npm ci'],
-  ['npm-shrinkwrap.json', 'npm ci'],
+  ['pnpm-lock.yaml', 'pnpm', 'pnpm install --frozen-lockfile'],
+  ['yarn.lock', 'yarn', 'yarn install --frozen-lockfile'],
+  ['bun.lockb', 'bun', 'bun install'],
+  ['bun.lock', 'bun', 'bun install'],
+  ['package-lock.json', 'npm', 'npm ci'],
+  ['npm-shrinkwrap.json', 'npm', 'npm ci'],
 ];
 
+// Each runs package.json's test script. `bun test` would start Bun's own test runner instead.
+const TEST_COMMANDS = { npm: 'npm test', pnpm: 'pnpm test', yarn: 'yarn test', bun: 'bun run test' };
+
+// The package manager package.json's packageManager field names, such as `pnpm@9.1.0`, or null.
+function namedManager(pkg) {
+  const field = pkg && typeof pkg === 'object' && Object.hasOwn(pkg, 'packageManager') ? pkg.packageManager : null;
+  const m = typeof field === 'string' && /^(npm|pnpm|yarn|bun)(?:@|$)/.exec(field);
+  return m ? m[1] : null;
+}
+
 export function suggestCommands(dir) {
-  const test_command = npmTest(dir) ? 'npm test' : usesPytest(dir) ? 'pytest' : makeTest(dir) ? 'make test' : null;
-  const lock = LOCKFILES.find(([f]) => isFile(path.join(dir, f)));
-  return { test_command, worktree_setup: lock ? lock[1] : null };
+  const pkg = packageJson(dir);
+  const named = namedManager(pkg);
+  const locks = LOCKFILES.filter(([f]) => isFile(path.join(dir, f)));
+  const lock = named ? locks.find(([, pm]) => pm === named) : locks[0];
+  const manager = named || (lock ? lock[1] : 'npm');
+  // A lockfile of another package manager than packageManager names gets a plain install, so both commands name the same one.
+  const worktree_setup = lock ? lock[2] : locks.length ? `${named} install` : null;
+  const test_command = npmTest(pkg) ? TEST_COMMANDS[manager] : usesPytest(dir) ? 'pytest' : makeTest(dir) ? 'make test' : null;
+  return { test_command, worktree_setup };
 }
 
 function isDir(f) {
