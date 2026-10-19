@@ -1,7 +1,7 @@
 ---
 id: "0326"
 title: "Return focus to the Full ticket button when the pane closes"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-return-focus-after-the-full-ticket-pane-clo
 after: []                # ticket ids that must be done first
 created: 2026-10-19
 started: "2026-10-19T07:09:07.388Z"
+approved: "2026-10-19T07:14:29.741Z"
 
 ---
 # 0326 · Return focus to the Full ticket button when the pane closes
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the full ticket pane closes, by Close, Escape or a click outside, the keyboard focus falls to the page itself, so someone using the keyboard has to Tab from the top of the page to get back to the ticket they were on.
@@ -52,9 +53,14 @@ Worth knowing: opening the view from a Shipped ticket's title or a Review pack b
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 188,054
+- Elapsed since build started: 5 min
+- Changed lines: 39 (limit 5000)
 Follow-ups:
 - Return focus to a Shipped title or Review pack button when the pane closes: `speck/ideas/2026-10-19-return-focus-to-a-shipped-title-or-review-pack.md`.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
