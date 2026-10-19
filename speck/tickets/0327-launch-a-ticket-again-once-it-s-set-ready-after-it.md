@@ -40,6 +40,8 @@ A ticket whose build never started is launched again as soon as it's set ready a
 - speck run keeps the tickets it has launched in `launched` in `scripts/run.mjs`, and a ticket whose build ended without starting stays there (search for "the build never started it"). Tickets ended by `speck stop` already wait for the ticket to be set ready again and committed (search for "set ready again and committed"); the same check can apply here.
 - `speck set <id> status ready` on a ticket that's already ready leaves the file unchanged, so criterion 3 is what makes a fixed ticket count.
 - Failing before this build: none
+- Self-check: no changes
+- Pictures: none, because nothing anyone sees changes apart from speck run's log lines and the Foreman's detail text.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
