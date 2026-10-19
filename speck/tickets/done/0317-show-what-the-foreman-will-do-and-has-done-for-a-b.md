@@ -1,7 +1,7 @@
 ---
 id: "0317"
 title: "Show what the Foreman will do and has done for a blocked ticket"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0308", "0309"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:36:46.607Z"
 approved: "2026-10-19T05:37:49.505Z"
+finished: "2026-10-19T05:42:51.952Z"
 
 ---
 # 0317 · Show what the Foreman will do and has done for a blocked ticket
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 With the Foreman's Fixing set to `fix`, a blocked ticket looks the same as one waiting for you, though the Foreman is about to take its recommendation, and once it has, the panel doesn't say so: it's only in the ticket's Notes and speck run's log. On 2026-10-18, 0305 showed as blocked and then carried on, with nothing on the board to say why. Its Notes also said "chosen by the user in the panel", which may not be how it was chosen.
