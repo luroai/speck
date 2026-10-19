@@ -1,10 +1,11 @@
-// 0312: each ticket is built with the builder its `builder:` field records. With build_command blank, speck run starts a
+// 0312: each ticket is built with the builder its `builder:` field records. With build_command blank (0324: or exactly
+// Claude Code's own, as switching the builder to Claude Code sets it), speck run starts a
 // ticket's build with that builder's own command: Codex's (0289), Cursor's (0290) or Claude Code's (the build_command
 // speck sets up for it). builder_model is passed only when the ticket's builder is the one in speck/config.yml, as it's
 // in that builder's own format. A builder that isn't installed, or that speck has no command for, isn't started.
 import crypto from 'node:crypto';
 import { splitCommand } from './speck.mjs';
-import { DEFAULT_BUILD_COMMAND, withBuilderModel, configBuilder } from './build-model.mjs';
+import { DEFAULT_BUILD_COMMAND, withBuilderModel, configBuilder, buildsEachTicket } from './build-model.mjs';
 import { codexStartWords } from './codex-build.mjs';
 import { cursorStartWords, cursorCli, createChat } from './cursor-build.mjs';
 import { onPath } from './install.mjs';
@@ -37,7 +38,7 @@ export function buildPlan(cfg, t, installed = onPath) {
 }
 
 // How speck run launches ticket `t`: { agent, words, tag }, with build_command's `words` and no agent when `command` is
-// set, `tag` being the build's session (a Cursor build's chat, made for it here). null when it can't be started now: the
+// one you've written yourself (0324), `tag` being the build's session (a Cursor build's chat, made for it here). null when it can't be started now: the
 // reason is said once until it changes, and kept in `failed` as { kind, why } for the Foreman's record. `chat` makes a
 // Cursor chat and `installed` checks the PATH, so tests can stand in.
 export function launchPlan(cfg, t, { command, words, repo, failed, chat = createChat, installed = onPath }) {
@@ -46,7 +47,7 @@ export function launchPlan(cfg, t, { command, words, repo, failed, chat = create
     failed.set(t.id, { kind, why });
     return null;
   };
-  const plan = command ? { agent: null, words } : buildPlan(cfg, t, installed);
+  const plan = !buildsEachTicket(command ?? '') ? { agent: null, words } : buildPlan(cfg, t, installed);
   if (plan.why) return stay('builder', plan.why);
   let tag = crypto.randomUUID();
   if (plan.agent === 'cursor') {
@@ -58,13 +59,13 @@ export function launchPlan(cfg, t, { command, words, repo, failed, chat = create
   return { ...plan, tag };
 }
 
-// The one line speck run says as it starts when build_command is set and a ticket on the board records a builder other
+// The one line speck run says as it starts when build_command is one you've written yourself (0324) and a ticket on the board records a builder other
 // than the one in speck/config.yml, or null.
 export function ignoredBuildersNote(cfg, tickets) {
   const command = typeof cfg?.build_command === 'string' ? cfg.build_command.trim() : '';
-  if (!command) return null;
+  if (buildsEachTicket(command)) return null;
   const builder = configBuilder(cfg);
   const others = (tickets || []).filter(t => !['done', 'cancelled'].includes(t.status) && name(t.builder) && name(t.builder) !== builder).map(t => t.id);
   if (!others.length) return null;
-  return `build_command is set in speck/config.yml, so every build starts with it, and the builder each ticket records is ignored: ${others.join(', ')} ${others.length === 1 ? 'records' : 'record'} a builder other than ${builder}. Set build_command blank to build each ticket with its own builder.`;
+  return `build_command is set in speck/config.yml, so every build starts with it, and the builder each ticket records is ignored: ${others.join(', ')} ${others.length === 1 ? 'records' : 'record'} a builder other than ${builder}. Set build_command blank, or to Claude Code's own command, to build each ticket with its own builder.`;
 }
