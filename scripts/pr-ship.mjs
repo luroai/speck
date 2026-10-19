@@ -44,6 +44,9 @@ export function findPr(gh, repo, pad, branch, base) {
 const FAILED = new Set(['FAILURE', 'ERROR', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'STARTUP_FAILURE', 'STALE']);
 const checkName = c => c?.name || c?.context || 'a check';
 
+// Whether GitHub says an open pull request conflicts with its base branch.
+const conflicts = v => String(v.mergeable).toUpperCase() === 'CONFLICTING' || String(v.mergeStateStatus).toUpperCase() === 'DIRTY';
+
 // Why GitHub won't merge an open pull request yet, in a few words, or '' when nothing stands in the way.
 export function whyNotMergeable(v) {
   const checks = Array.isArray(v.statusCheckRollup) ? v.statusCheckRollup.filter(c => c && typeof c === 'object') : [];
@@ -52,7 +55,7 @@ export function whyNotMergeable(v) {
   const pending = checks.filter(c => c.status ? String(c.status).toUpperCase() !== 'COMPLETED' : ['PENDING', 'EXPECTED'].includes(String(c.state).toUpperCase())).map(checkName);
   if (pending.length) return `its checks haven't finished (${pending.join(', ')})`;
   if (v.isDraft === true) return 'it\'s a draft';
-  if (String(v.mergeable).toUpperCase() === 'CONFLICTING' || String(v.mergeStateStatus).toUpperCase() === 'DIRTY') return 'it conflicts with the base branch';
+  if (conflicts(v)) return 'it conflicts with the base branch';
   const review = String(v.reviewDecision || '').toUpperCase();
   if (review === 'REVIEW_REQUIRED') return 'GitHub requires an approving review first';
   if (review === 'CHANGES_REQUESTED') return 'a reviewer on GitHub asked for changes';
@@ -175,6 +178,12 @@ export function shipPrTicket(repo, id, { auto = false, gh = 'gh' } = {}) {
       if (v.headRefOid !== head) throw new SpeckError(isAncestor(repo, v.headRefOid, local) || pushedEarlier(repo, v.headRefOid, branch, pad)
         ? `${branch} has commits its pull request doesn't, so it wasn't merged. Run \`speck pr ${pad}\` to push them, then ship again. Nothing was changed.`
         : `${pad}'s pull request, ${v.url}, has commits that aren't on ${branch}, so the reviewer hasn't seen them and it wasn't merged. Nothing was changed.`);
+      // 0323: a conflict comes first, whatever else holds it, and has a conflict's exit code, so speck run hands the
+      // ticket back to its build to merge the base branch in, as a conflict found by ship's own merge is (0194).
+      if (conflicts(v)) {
+        sh('git', ['fetch', '-q', remote, base], { cwd: folder.at }); // so the build merges the remote's base as it is now
+        throw new SpeckError(`${pad}'s pull request, ${v.url}, conflicts with ${remote}/${base} on GitHub, so it wasn't merged. Merge ${remote}/${base} into ${branch}, resolve the conflicts, get the result reviewed, then ship again. Nothing was changed.`, 13);
+      }
       const held = whyNotMergeable(v);
       if (held) throw new SpeckError(`${pad}'s pull request, ${v.url}, can't be merged yet: ${held}. Nothing was changed.`);
       testLanding(folder.at, cfg, pad, branch, remote);
