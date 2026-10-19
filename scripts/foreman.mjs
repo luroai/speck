@@ -122,7 +122,7 @@ export function foremanLines(v) {
   for (const w of v.ship ? v.ship.waiting : []) lines.push(`  ${w.id} waiting to ship: ${w.why}`);
   const a = v.agent; // 0287: the Foreman agent
   if (a?.running) lines.push(`  The Foreman is looking into ${a.running.id}: ${a.running.what}`);
-  for (const q of a?.asks || []) lines.push(`  The Foreman asks you about ${q.id}: ${q.question}`);
+  for (const q of a?.asks || []) lines.push(`  The Foreman asks you about ${q.id}: ${q.question}`, `    Answer with speck foreman answer ${q.id} "<your answer>", or dismiss it with speck foreman dismiss ${q.id}`); // 0318
   for (const d of a?.did || []) lines.push(`  The Foreman ${d.did} for ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${d.why}`);
   for (const w of v.took || []) lines.push(`  The Foreman went with the recommendation for ${w.id}: ${w.option} (${w.at.slice(0, 16).replace('T', ' ')} UTC)`);
   return lines;

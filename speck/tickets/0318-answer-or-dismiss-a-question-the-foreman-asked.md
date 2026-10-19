@@ -39,6 +39,7 @@ You can answer or dismiss a question the Foreman asked, from the panel or the co
 ## Notes
 - From `speck/ideas/2026-10-18-answer-or-dismiss-the-foreman-s-question.md` (inbox, from 0287). The Foreman's agent is in `scripts/foreman-fix.mjs` and the `speck-foreman` skill.
 - Failing before this build: none
+- Self-check: an answer starting with -- on the command line is kept rather than dropped, and a question whose record has no time is refused rather than left answerable for ever.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
