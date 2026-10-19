@@ -1,6 +1,6 @@
 # Keep the Claude reviewer off your connectors
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0292
 
 ## What

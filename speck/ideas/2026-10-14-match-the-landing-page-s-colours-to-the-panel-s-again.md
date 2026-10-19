@@ -1,6 +1,6 @@
 # Match the landing page's colours to the panel's again
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 From ticket: 0161
 
 ## What

@@ -1,6 +1,6 @@
 # Give a running build room in a narrow Build column
 
-Captured: 2026-10-14 · Status: inbox
+Captured: 2026-10-14 · Status: dropped
 From ticket: 0156
 
 ## What

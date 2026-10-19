@@ -1,6 +1,6 @@
 # Say in the README's run row that more builds can run at once
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 From ticket: 0225
 
 ## What

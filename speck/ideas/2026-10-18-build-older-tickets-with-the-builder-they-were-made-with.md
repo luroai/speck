@@ -1,6 +1,6 @@
 # Build older tickets with the builder they were made with
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0293
 
 ## What

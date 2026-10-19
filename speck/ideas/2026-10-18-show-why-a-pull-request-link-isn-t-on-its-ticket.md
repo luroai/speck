@@ -1,6 +1,7 @@
 # Show why a pull request link isn't on its ticket
 
 Captured: 2026-10-18 · Status: inbox
+Triaged: 1
 From ticket: 0295
 
 ## What

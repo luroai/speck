@@ -1,7 +1,7 @@
 # Say plainly when a file given to speck is missing
 
-Captured: 2026-10-10 · Status: inbox
-Triaged: 1
+Captured: 2026-10-10 · Status: dropped
+Triaged: 2
 From ticket: 0078
 
 ## What

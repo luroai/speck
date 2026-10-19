@@ -1,6 +1,6 @@
 # Answer or dismiss the Foreman's question
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0287
 
 ## What

@@ -1,7 +1,7 @@
 # Keep a scrolled-up log reader's place
 
-Captured: 2026-10-09 · Status: inbox
-Triaged: 1
+Captured: 2026-10-09 · Status: dropped
+Triaged: 2
 From ticket: 0052
 
 ## What

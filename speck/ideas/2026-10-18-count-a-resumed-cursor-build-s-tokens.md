@@ -1,6 +1,7 @@
 # Count a resumed Cursor build's tokens
 
 Captured: 2026-10-18 · Status: inbox
+Triaged: 1
 From ticket: 0291
 
 ## What

@@ -1,7 +1,7 @@
 # Refuse a type change that leaves priority 0 on a non-fix ticket
 
-Captured: 2026-10-10 · Status: inbox
-Triaged: 1
+Captured: 2026-10-10 · Status: dropped
+Triaged: 2
 From ticket: 0100
 
 ## What

@@ -1,6 +1,6 @@
 # Return focus after the full ticket pane closes
 
-Captured: 2026-10-09 · Status: inbox
+Captured: 2026-10-09 · Status: ticketed (0326)
 Triaged: 1
 From ticket: 0060
 
