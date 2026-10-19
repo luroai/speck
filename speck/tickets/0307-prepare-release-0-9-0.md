@@ -43,6 +43,11 @@ speck is ready to be released as 0.9.0.
 - After it ships, check that the `v0.9.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.9.0 --target main --title "speck 0.9.0" --notes-file docs/releases/v0.9.0.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.8.0`: 0302–0306 and 0308–0321.
+- Built from main at `speck(0306): Bring the README and its picture up to date`: 304 shipped, 16 cancelled, 13 minutes median, 2 rounds median, 147 approved in the first round, worked out as 0298 did, with its figures test. The README now says "2 review rounds".
+- 0298's checks that named 0.8.0 as the current version now check the current version, and its figures test checks only the figures 0.8.0 was built from, as 0298 did for 0297.
+- README: 0306 already brought it up to date with every ticket shipped since `v0.8.0`, so only its status line and figures change here.
+- Self-check: the release notes no longer say a Codex build is never started with a Claude model, as `builder_model` can still be set by hand; they say it isn't left over from a switch.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
