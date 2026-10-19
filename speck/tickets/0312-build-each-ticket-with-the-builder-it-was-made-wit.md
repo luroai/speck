@@ -1,7 +1,7 @@
 ---
 id: "0312"
 title: "Build each ticket with the builder it was made with"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0319", "0317"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-19T05:43:06.442Z"
+approved: "2026-10-19T05:52:16.723Z"
 
 ---
 # 0312 · Build each ticket with the builder it was made with
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A ticket records the builder it was made with, but `speck run` builds every ready ticket with the builder in `speck/config.yml`. After switching the builder, tickets that still say `builder: claude` are built with the new one, which the ticket doesn't say.
@@ -55,9 +56,15 @@ Worth keeping an eye on: with a build command set by hand, which is how Claude C
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The same-model review guard still treats builder_model as applying to every Claude ticket, although this change deliberately removes it when the configured builder differs.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 657,275
+- Elapsed since build started: 9 min
+- Changed lines: 144 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - With `builder: claude`, `build_command` is set, so tickets made with Codex or Cursor are built by Claude Code, while the Settings view says tickets keep their builder: speck/ideas/2026-10-19-build-codex-tickets-with-codex-after-switching-to-claude.md.
