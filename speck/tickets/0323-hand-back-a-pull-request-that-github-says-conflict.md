@@ -1,7 +1,7 @@
 ---
 id: "0323"
 title: "Hand back a pull request that GitHub says conflicts"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-19
 ---
 # 0323 · Hand back a pull request that GitHub says conflicts
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 In pull request mode, when GitHub says a ticket's pull request conflicts with the base branch, `speck ship` refuses with an ordinary error instead of a conflict (exit 13). `speck run` then doesn't hand the ticket back to its build to merge the base branch in, so an auto-shipped ticket sits approved with a conflict until someone notices.
