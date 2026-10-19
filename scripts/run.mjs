@@ -27,7 +27,7 @@ import { recordedRun, keepsLock } from './run-lock.mjs';
 export { pidAlive, runState } from './run-switch.mjs';
 import { processRows, signalBuild, carryOn } from './build-procs.mjs';
 export { processRows, buildProcesses, sessionInUse, runningPids } from './build-procs.mjs';
-import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase } from './build-records.mjs';
+import { resumeHint, saveRecord, stoppedBySpeck, buildKilled, lastTicketCommit, buildTicket, readyOnBase, markStillReady, readyAgain } from './build-records.mjs';
 export { DEFAULT_RESUME_COMMAND, resumeHint, resumeCommandOf, buildKilled, buildTicket } from './build-records.mjs';
 
 // ---------- run (start a non-interactive build for each ready ticket) ----------
@@ -204,15 +204,17 @@ function runOn(worker) {
     if (what) agents.stuck({ id, what, log });
   };
 
-  // A build that ended with its ticket still ready never started it: say so, with the end of its log.
+  // A build that ended with its ticket still ready never started it: say so, with the end of its log. 0327: its run
+  // record keeps the ticket's last commit, so it's launched again once the ticket is committed since (ownWait).
   const reportIfStillReady = (id, log) => {
-    let status = null;
+    let t = null;
     // From the same reading as the board, so a build's own worktree copy of the ticket counts.
-    try { status = statusData(repo).tickets.find(t => t.id === id)?.status ?? null; } catch { /* unreadable: nothing to say */ }
-    if (status !== 'ready') return;
-    let tail = '';
+    try { t = statusData(repo).tickets.find(x => x.id === id) ?? null; } catch { /* unreadable: nothing to say */ }
+    if (t?.status !== 'ready') return;
+    let tail = '', again = 'until its ticket is set ready again and committed';
     try { tail = readableLog(fs.readFileSync(log, 'utf8')).replace(/\s+$/, '').split('\n').slice(-5).join('\n'); } catch { /* no log */ }
-    console.log(`${id} is still ready, so the build never started it. speck run won't launch it again. Last lines of ${path.relative(repo, log)}:\n${tail}`);
+    try { markStillReady(runsDir(repo), id, lastTicketCommit(t.worktree || repo, t.path)); } catch { again = 'until speck run restarts, as its run record couldn\'t be updated'; }
+    console.log(`${id} is still ready, so the build never started it. speck run won't launch it again ${again}. Last lines of ${path.relative(repo, log)}:\n${tail}`);
   };
 
   // Builds an earlier speck run launched: each run file with no exit recorded. One whose process is still running is
@@ -391,7 +393,8 @@ function runOn(worker) {
   // 0299: a ready ticket's own hold-up ({ kind, why } or null), checked before what holds up every build
   const ownWait = t => {
     if ((t.waiting_on || []).length) return { kind: 'after', why: `waiting for ${t.waiting_on.join(', ')}` };
-    if (launched.has(t.id)) return { kind: 'unstarted', why: 'its build ended without starting it, so speck run won\'t launch it again' };
+    if (launched.has(t.id) && readyAgain(repo, runsDir(repo), t)) launched.delete(t.id); // 0327: committed since its build ended still ready
+    if (launched.has(t.id)) return { kind: 'unstarted', why: 'its build ended without starting it: set it ready again and commit it to build it' };
     if (heldByStop(repo, t)) {
       if (!held.has(t.id)) console.log(`${t.id} was ended by \`speck stop\`, so speck run won't launch it again until its ticket is set ready again and committed.`);
       held.add(t.id);
