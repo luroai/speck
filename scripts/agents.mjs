@@ -5,7 +5,7 @@
 
 import { spawnSync, execFile } from 'node:child_process';
 import { SpeckError } from './core.mjs';
-import { onPath } from './install.mjs';
+import { onPath, CURSOR_CLIS } from './install.mjs';
 import { parseCodexModels } from './codex-models.mjs';
 import { CLAUDE_MODELS } from './settings.mjs';
 
@@ -65,7 +65,7 @@ function* codex(opts) {
 
 function* cursor(opts) {
   // Cursor's CLI is `agent`, and was `cursor-agent`.
-  const command = ['agent', 'cursor-agent'].find(onPath);
+  const command = CURSOR_CLIS.find(onPath);
   const base = { id: 'cursor', name: 'Cursor', command: command || 'agent' };
   if (!command) return { ...base, installed: false, signed_in: false, models: [], why: 'Cursor isn\'t installed.', models_why: 'Cursor isn\'t installed.' };
   const status = yield [command, ['status']];
@@ -129,6 +129,19 @@ export async function agentModelsAsync(id, opts) {
   const a = agents[0];
   if (!a.models.length) return { why: `${a.models_why || a.why || `${a.name} lists no models.`} Type the model's name instead.` };
   return { models: a.models.map(m => ({ slug: m.name, ...(m.display_name ? { display_name: m.display_name } : {}), ...(m.description ? { description: m.description } : {}) })) };
+}
+
+// 0311: the names of the models `id` offers, as `speck agents` lists them, or null when there are none to read: it
+// isn't installed, lists none, or isn't an agent speck knows.
+const namesOf = found => {
+  const a = found?.agents?.[0];
+  return a && Array.isArray(a.models) && a.models.length ? a.models.map(m => String(m.name)) : null;
+};
+export function offeredModels(id, find = findAgents) {
+  try { return namesOf(find({ only: id })); } catch { return null; }
+}
+export async function offeredModelsAsync(id, find = findAgentsAsync) {
+  try { return namesOf(await find({ only: id })); } catch { return null; }
 }
 
 // `speck agents` as plain lines.
