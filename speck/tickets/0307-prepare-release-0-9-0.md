@@ -1,7 +1,7 @@
 ---
 id: "0307"
 title: "Prepare release 0.9.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0302", "0303", "0304", "0305", "0306", "0308", "0309", "0310", "0311", "0312", "0313", "0314", "0315", "0316", "0317", "0318", "0319", "0320", "0321"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-19T06:09:32.538Z"
+approved: "2026-10-19T06:13:48.751Z"
 
 ---
 # 0307 · Prepare release 0.9.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once 0302–0306 ship, the panel has the LCD look from the Luro design (its badges, mark, title and app icon), and the README and its picture describe speck as it is now. Anyone following the setup prompt, or updating speck on another machine, gets 0.8.0 without it.
@@ -56,9 +57,15 @@ speck is ready to be released as 0.9.0. The changelog and the GitHub release not
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new tests assert document heading order at line 35 and exact historical changelog prose at lines 40–44.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 436,287
+- Elapsed since build started: 4 min
+- Changed lines: 88 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Tidy-up: 0297's and 0298's release tests still check that each changelog section sits above the one before and that older sections match their tag, which the build rules now forbid as tests of a document's wording or order. 0307's tests leave those to review.
