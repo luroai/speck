@@ -1,7 +1,7 @@
 ---
 id: "0313"
 title: "Count builder_model in the same-model check for Codex builds"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ started: "2026-10-19T05:33:53.327Z"
 blocked_at: ""
 waited_seconds: 431
 approved: "2026-10-19T05:45:33.781Z"
+finished: "2026-10-19T05:48:01.630Z"
 
 ---
 # 0313 · Count builder_model in the same-model check for Codex builds
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck run passes `builder_model` to Codex builds (0289), but the same-model check (0280) counts it only for Claude Code. A Codex builder and a Codex reviewer on two different models are refused unless `allow_same_model_review` is on, while the same pair on Claude Code is allowed.
