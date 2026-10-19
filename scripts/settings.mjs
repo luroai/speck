@@ -14,6 +14,7 @@ import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
+import { buildsEachTicket } from './build-model.mjs';
 
 export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
@@ -116,9 +117,10 @@ export function panelSettings(repo, { models, builderModels, agents } = {}) {
     const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file);
     const { choices, missing } = (s.key === 'reviewer' || s.key === 'builder') && agents ? readyReviewers(all, agents, String(value ?? ''), s.key === 'builder') : { choices: all };
     // 0293: build_command as the file has it, whether it was set by hand, and each builder's own, for the view to say
-    // what switching the builder sets it to, and to ask first when it replaces one set by hand.
+    // what switching the builder sets it to, and to ask first when it replaces one set by hand. 0324: and whether speck
+    // run builds each ticket with its own builder with it, so the view says when it doesn't.
     const build = s.key !== 'builder' ? {} : { build_command: { value: file.build_command === undefined || file.build_command === null ? null : String(file.build_command),
-      hand_set: handSetBuildCommand(file), own: OWN_BUILD_COMMANDS } };
+      hand_set: handSetBuildCommand(file), each_ticket: buildsEachTicket(file.build_command ?? ''), own: OWN_BUILD_COMMANDS } };
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
