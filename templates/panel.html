@@ -631,11 +631,11 @@
 <div class="run-error" id="run-error" hidden></div>
 
 <main>
-  <section id="shaping-section" class="shaping tickets">
+  <section id="shaping-section" class="shaping tickets" tabindex="-1">
     <div class="sh"><h2>Plan</h2><span class="toggles" id="shaping-toggle"></span></div>
     <div id="shaping"></div>
   </section>
-  <section>
+  <section id="build-section" tabindex="-1">
     <div class="sh"><h2>Build</h2><span class="n" id="queue-n"></span></div>
     <div id="queue"></div>
   </section>
@@ -1291,6 +1291,8 @@ const planRefused = new Map(); // id → why the server refused to move it back 
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
 const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
+let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened the pane, or null when something else did
+let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
 let shippingId = null; // the id whose Ship request hasn't been answered yet: one ship at a time
 let runSwitching = null; // 'on' or 'off' while the speck run switch's request hasn't been answered yet
@@ -1394,7 +1396,7 @@ function readiness(t, criteria, withFull) {
   }
   if (!after.length) line('ok', true, 'no after: tickets');
   ready.appendChild(setReadyButton(t, errors.length || (t.lint && t.lint.errors) || 0));
-  if (withFull) ready.appendChild(fullButton(t));
+  if (withFull) ready.appendChild(fullButton(t, 'shaping'));
   if (refused.has(t.id)) ready.appendChild(el('div', 'bad refused', refused.get(t.id)));
   return ready;
 }
@@ -1412,13 +1414,14 @@ function setReadyButton(t, lintErrors) {
   });
   return b;
 }
-// Shows the whole ticket in the side pane, leaving the ticket open in the list.
-function fullButton(t) {
+// Shows the whole ticket in the side pane, leaving the ticket open in the list. `list` is the id of the list it's in.
+function fullButton(t, list) {
   const b = el('button', 'full-open', 'Full ticket');
   b.type = 'button';
+  b.fullOf = String(t.id); // 0326: so the focus can come back to it, or to the button drawn in its place
   b.addEventListener('click', e => {
     e.stopPropagation();
-    openFull(t);
+    openFull(t, { id: String(t.id), list });
   });
   return b;
 }
@@ -1452,9 +1455,10 @@ function fullLink(t) {
   });
   return a;
 }
-function openFull(t) {
+function openFull(t, from = null) {
   fullId = String(t.id);
   packOf = null;
+  fullFrom = from;
   render();
   const pane = $('full-ticket');
   if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
@@ -1466,6 +1470,7 @@ function packButton(t) {
   b.addEventListener('click', e => {
     e.stopPropagation(); // the click is for the button, not the ticket
     fullId = String(t.id);
+    fullFrom = null;
     packOf = { id: fullId, state: 'loading' };
     shipRefused.delete(fullId);
     shipped.delete(fullId);
@@ -1681,6 +1686,7 @@ let fullBuilt = null, readyBuilt = null, tagsBuilt = null; // the signatures of 
 function renderFull(m) {
   const pane = $('full-ticket'), find = ts => ts.find(d => String(d.id) === fullId);
   const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
+  if (!t && fullId !== null && within(document.activeElement, pane)) focusBack = true; // 0326: it closed with the focus in it
   if (!t) { fullId = null; packOf = null; }
   const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
@@ -1709,7 +1715,18 @@ function renderFull(m) {
     if (now) head.appendChild(now);
   }
 }
-function closeFull() { fullId = null; packOf = null; render(); }
+function closeFull() { fullId = null; packOf = null; focusBack = true; render(); }
+// 0326: once the pane has closed and the board is drawn, the focus goes back to the Full ticket button that opened it,
+// the one drawn in its place since, or, when its ticket has none on the board now, to the top of the list it was in.
+function returnFocus() {
+  const from = fullFrom;
+  focusBack = false;
+  fullFrom = null;
+  if (!from) return;
+  const find = n => { if (n.fullOf === from.id) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
+  const to = find($(from.list)) || find($(from.list === 'queue' ? 'shaping' : 'queue')) || $(from.list === 'queue' ? 'build-section' : 'shaping-section');
+  if (to.focus) to.focus();
+}
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
@@ -2359,7 +2376,7 @@ function queueItem(t) {
     const ask = foremanAskOf(id); // 0318: a build that ended without starting it
     if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
     if (isOpen) {
-      q.appendChild(fullButton(t));
+      q.appendChild(fullButton(t, 'queue'));
       q.appendChild(backToPlanButton(t));
       if (planRefused.has(id)) q.appendChild(el('div', 'plan-refused', planRefused.get(id)));
       q.appendChild(logBox(id));
@@ -2385,7 +2402,7 @@ function queueItem(t) {
   if (went) q.appendChild(el('div', 'act went-with', `${went.by === 'foreman' ? 'The Foreman went with the recommendation' : 'You went with the recommendation'}: ${went.option} · ${tookAt(went.at)}`));
   if (isOpen) {
     if (t.worktree) q.appendChild(el('div', 'act path', `worktree ${t.worktree}`)); // only when open, so the row stays short
-    q.appendChild(fullButton(t));
+    q.appendChild(fullButton(t, 'queue'));
     if (t.status === 'approved' || t.shipping) q.appendChild(packButton(t));
     if (t.pausable) {
       q.appendChild(stopButton(t));
@@ -3004,6 +3021,7 @@ function render() {
     try { again.setSelectionRange(typing.selectionStart, typing.selectionEnd); } catch { /* nothing selected */ }
   }
   if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
+  if (focusBack && fullId === null) returnFocus(); // 0326
 }
 $('run').addEventListener('click', e => {
   e.stopPropagation();
