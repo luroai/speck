@@ -232,7 +232,7 @@ test('0321 AC1: a speck run\'s folder is read on macOS as well as Linux, so eith
   try {
     assert.ok(await watching(run), run.out());
     const real = fs.realpathSync(r.dir);
-    assert.equal(processCwd(run.child.pid, 'linux'), real);
+    if (process.platform === 'linux') assert.equal(processCwd(run.child.pid, 'linux'), real); // /proc is Linux's only
     assert.equal(processCwd(run.child.pid, 'darwin'), real, 'with lsof, as on macOS');
     assert.equal(processCwd(99999999, 'darwin'), null);
   } finally { await stop(run); }
