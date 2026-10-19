@@ -1,7 +1,7 @@
 ---
 id: "0322"
 title: "Suggest the test command for the project's package manager"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-19T07:27:12.678Z"
 ---
 # 0322 · Suggest the test command for the project's package manager
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck detect` suggests `npm test` for any project whose `package.json` has a real test script, even when the project uses pnpm, yarn or bun. Setup then offers a test command the project doesn't normally use, and the user has to correct it: Carbon, which uses pnpm, is one.
@@ -46,7 +46,7 @@ started: "2026-10-19T07:27:12.678Z"
 - Self-check: made the packageManager match strict (`name@version` or a bare name, as Corepack writes it) instead of allowing spaces.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you set speck up in a project that uses pnpm, yarn or bun, setup now offers that tool's test command (`pnpm test`, `yarn test` or `bun run test`) instead of always offering `npm test`. If the project says in its package file which tool it uses, speck goes by that, even when an older lock file from another tool is lying around. The install command it offers always names the same tool as the test command. Projects without a test script in their package file get the same suggestion as before. To see it, run speck's detect step in a pnpm project, such as Carbon, and look at the suggested test command. Worth watching: when the package file names one tool but only another tool's lock file is there, the install suggestion is a plain install, which may update the lock file the first time.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,4 +55,68 @@ started: "2026-10-19T07:27:12.678Z"
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Inbox: suggest `yarn install --immutable` for Yarn 2 and later (speck/ideas/2026-10-19-suggest-yarn-s-own-install-command-for-yarn-2-and-later.md).
+  - Known limit: a `packageManager` speck doesn't know (such as `deno@2`) is ignored, and the lockfile decides.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6de198267549ed6e03cee93e0a689336a24c6f90",
+    "thread_id": "01a15310-74f3-7c63-bcac-33f75c654c70",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 91363,
+      "cached_input_tokens": 54272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 509,
+      "reasoning_output_tokens": 22
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T07:29:26.865Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/detect.mjs: suggestCommands uses TEST_COMMANDS for all four managers. Passing 0322 AC1 tests cover every lockfile, the npm default and the pnpm CLI result."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "namedManager and suggestCommands prioritise packageManager, then the existing lockfile order. Both passing 0322 AC2 tests cover explicit names, conflicts, absent fields and unusable values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "suggestCommands selects both commands from the same manager and uses a plain install when only another manager's lockfile exists. Passing 0322 AC3 tests exercise manager and lockfile combinations."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "npmTest retains the existing real-script checks and suggestCommands retains pytest, Makefile and null fallbacks. Passing 0322 AC4 and existing detect-0086 tests cover these behaviours."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change suggests the project's package manager for test scripts, including the correct Bun script command. Explicit package manager declarations take priority over lockfiles, and install suggestions stay consistent. Existing test fallbacks are preserved. The recorded checks passed; no blocking issues found."
+  }
+}
+```
+
+</details>
