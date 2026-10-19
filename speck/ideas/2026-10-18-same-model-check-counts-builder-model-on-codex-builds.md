@@ -1,6 +1,6 @@
 # Same-model check counts builder_model on Codex builds
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0289
 
 ## What

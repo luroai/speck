@@ -1,6 +1,6 @@
 # Clear builder_model when the builder is switched
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0293
 
 ## What

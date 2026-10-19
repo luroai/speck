@@ -1,7 +1,7 @@
 # Summarise test output for claude-subagent later rounds
 
-Captured: 2026-10-11 · Status: inbox
-Triaged: 1
+Captured: 2026-10-11 · Status: dropped
+Triaged: 2
 From ticket: 0119
 
 ## What

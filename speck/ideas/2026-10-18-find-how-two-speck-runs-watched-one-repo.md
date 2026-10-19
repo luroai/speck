@@ -1,6 +1,6 @@
 # Find how two speck runs watched one repo
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0319
 
 ## What

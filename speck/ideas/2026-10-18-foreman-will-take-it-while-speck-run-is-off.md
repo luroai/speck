@@ -1,6 +1,6 @@
 # Say the Foreman waits for speck run when it's off
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0317
 
 ## What

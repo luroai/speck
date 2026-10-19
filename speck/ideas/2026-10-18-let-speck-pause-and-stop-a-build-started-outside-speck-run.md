@@ -1,6 +1,7 @@
 # Let speck pause and stop a build started outside speck run
 
 Captured: 2026-10-18 · Status: inbox
+Triaged: 1
 From ticket: 0300
 
 ## What

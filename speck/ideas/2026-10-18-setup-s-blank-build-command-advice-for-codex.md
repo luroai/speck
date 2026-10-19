@@ -1,6 +1,7 @@
 # Setup's blank build_command advice for Codex
 
 Captured: 2026-10-18 · Status: inbox
+Triaged: 1
 From ticket: 0289
 
 ## What

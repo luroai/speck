@@ -1,6 +1,7 @@
 # Refuse built-in names as speck commands
 
 Captured: 2026-10-15 · Status: inbox
+Triaged: 1
 From ticket: 0231
 
 ## What

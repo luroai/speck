@@ -1,6 +1,7 @@
 # Say what a merge-round run re-reviewed when it blocks
 
 Captured: 2026-10-16 · Status: inbox
+Triaged: 1
 From ticket: 0241
 
 ## What

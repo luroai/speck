@@ -1,6 +1,7 @@
 # Keep the Settings view's buttons' borders whole on a phone
 
 Captured: 2026-10-17 · Status: inbox
+Triaged: 1
 From ticket: 0281
 
 ## What

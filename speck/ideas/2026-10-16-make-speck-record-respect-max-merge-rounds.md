@@ -1,6 +1,7 @@
 # Make speck record respect max_merge_rounds
 
 Captured: 2026-10-16 · Status: inbox
+Triaged: 1
 From ticket: 0242
 
 ## What
