@@ -40,6 +40,7 @@ Only one speck run is ever working in a repo, however it was started and whether
 - The lock is `run.lock` in `speck/.cache/runs/` (`takeRunLock` and `holdRunLock` in `scripts/run.mjs`). The switch to new code (0247, 0301) is in `scripts/run-switch.mjs`: the process you start hosts a worker on the new code. The Settings view's switch starts speck run with `panelRunOn` in `scripts/panel.mjs`.
 - Seen 2026-10-18: `run.lock` named 1571492 while 434685 and its worker 2456375 kept working, and the Foreman's record (`run.foreman.json`) alternated between `"lock": 434685` and `"lock": 1571492`. Stopping 434685 with SIGINT ended it cleanly, leaving its four builds and one ship running.
 - How the second one got the lock is not known yet; finding out is part of the build.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
