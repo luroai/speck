@@ -6,6 +6,10 @@
 // The build_command that starts Claude Code builds, as speck/config.yml has it when speck sets it up.
 export const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
 
+// 0324: true when speck run builds each ticket with the builder it records: build_command blank, or exactly Claude
+// Code's own, which switching the builder to Claude Code sets. Any other build_command is used for every ticket.
+export const buildsEachTicket = cmd => typeof cmd === 'string' && (cmd.trim() === '' || cmd.trim() === DEFAULT_BUILD_COMMAND);
+
 // 0312: the builder speck/config.yml names: claude when it names none.
 export const configBuilder = cfg => (typeof cfg?.builder === 'string' ? cfg.builder.trim() : '') || 'claude';
 
