@@ -1,7 +1,7 @@
 ---
 id: "0306"
 title: "Bring the README and its picture up to date"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-19T06:00:41.454Z"
 ---
 # 0306 · Bring the README and its picture up to date
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The README describes speck as it was at 0.5.4, and its picture (0249) shows the panel's old look. Since then speck has gained a Settings view, the Foreman, builds with Codex and Cursor, a Claude Code reviewer, pull request mode and pictures in review packs, and the panel has the LCD look (0302–0305). Someone reading the README sees neither.
@@ -54,3 +54,79 @@ The README describes what speck does now, and its picture shows the panel as it 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "10a2e0d48693474d95ee5a7cb3569bdab3c2e6ec",
+    "thread_id": "01a152c3-5564-7d80-94dd-6b6bfad05c18",
+    "seconds": 34,
+    "usage": {
+      "input_tokens": 147970,
+      "cached_input_tokens": 98560,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1236,
+      "reasoning_output_tokens": 33
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T06:05:29.468Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md covers Settings under ‘The panel’, Foreman status and recovery under ‘The clever bits’, builders under ‘Requirements’, Claude review under ‘Using another reviewer’, and PR mode and pictures under ‘Your second decision’. These match shipped tickets including 0287, 0293, 0294, 0296, 0312, 0314 and 0315."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "README.md’s builder and reviewer descriptions agree with shipped ticket 0312 and scripts/reviewers.mjs, including Claude reviewer isolation. The release version and historical figures remain reserved for 0307."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both pictures visibly show LCD badges, mark, title and Foreman status with fictional tickets. Independently inspected files are 3000×1880, 305176 and 293939 bytes, containing only IHDR, IDAT and IEND chunks. The reported passing test ‘0306 AC3’ exercises these file facts."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Both docs/images/demo-light.png and demo-dark.png show ‘shop’ as the project name in the conversation header, composer footer and panel header (‘shop · base main’)."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Reported verification has 437 passes, no failures and three skips. Changes are confined to the README, pictures, ticket and PNG tests; the added test checks file facts without enforcing document wording."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "docs/images/demo-light.png and docs/images/demo-dark.png",
+        "issue": "Both pictures display the project name ‘shop’. Criterion 4 explicitly prohibits any client or project name other than speck, even a fictional one.",
+        "suggested_fix": "Change the demo’s project labels to speck and retake both pictures, preserving the required dimensions, size and metadata restrictions.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The README describes the current features, and both refreshed pictures show the new panel design. Checks pass, but the pictures must be retaken because they display ‘shop’ as a project name, which the ticket explicitly forbids."
+  }
+}
+```
+
+</details>
