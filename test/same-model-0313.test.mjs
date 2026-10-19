@@ -110,3 +110,10 @@ test('0313 AC1 self-check: switching the builder to codex in the Settings view c
   const s = repoWith({ builder_model: 'a', reviewer: 'codex', reviewer_model: 'a' });
   assert.equal(panelSaveSettings(s.dir, [{ key: 'builder', value: 'codex' }], { offered: { builder: 'codex', models: ['a'] } }).status, 422);
 });
+
+test('0313 AC3: a Claude builder still counts builder_model with build_command set, as speck adds --model to it', () => {
+  const sub = (o = {}) => ticket(fm({ builder: 'claude', reviewer: 'claude-subagent', ...o }), good);
+  const c = { ...cfg, builder: 'claude', build_command: 'my-claude-wrapper {id}', builder_model: 'opus' };
+  assert.deepEqual(errorsOf(sub({ reviewer_model: 'fable' }), c), [], 'different models');
+  assert.equal(errorsOf(sub({ reviewer_model: 'opus' }), c).length, 1, 'same model');
+});
