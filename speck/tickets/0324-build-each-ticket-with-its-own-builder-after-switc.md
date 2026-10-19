@@ -1,7 +1,7 @@
 ---
 id: "0324"
 title: "Build each ticket with its own builder after switching to Claude Code"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-19
 ---
 # 0324 · Build each ticket with its own builder after switching to Claude Code
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck run` builds each ticket with the builder it records only when `build_command` is blank (0312). Switching the builder to Claude Code sets `build_command` to Claude Code's own command, because a blank one means "don't start builds" for Claude Code. So after switching back to Claude Code, tickets made with Codex or Cursor are built by Claude Code, though the Settings view says tickets keep the builder they were made with.
