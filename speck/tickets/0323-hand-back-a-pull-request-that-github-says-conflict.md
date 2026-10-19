@@ -38,6 +38,9 @@ In pull request mode, a pull request that GitHub says conflicts is handed back t
 ## Notes
 - From `speck/ideas/2026-10-18-hand-back-a-pull-request-github-says-conflicts.md`. `whyNotMergeable` in `scripts/pr-ship.mjs` refuses a `CONFLICTING` or `DIRTY` pull request before ship's own landing test, which gives exit 13, is reached.
 - Failing before this build: none
+- Changed an existing test: 0296 AC3's conflict case in `test/pr-ship-0296.test.mjs` now expects the conflict refusal AC1 asks for, instead of "can't be merged yet: it conflicts with the base branch".
+- Before refusing a conflict, ship fetches the remote's base branch (as its landing test already does), so `<remote>/<base>`, the ref its message tells the build to merge, is up to date. That moves only the remote-tracking ref.
+- Self-check: no changes. Noted one gap outside the ticket: once a handed-back build merges and is approved again, nothing in speck run pushes the new commits to the pull request, so the next ship says to run `speck pr`. Saved as a follow-up.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
