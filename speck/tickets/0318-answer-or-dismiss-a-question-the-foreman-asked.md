@@ -42,7 +42,9 @@ You can answer or dismiss a question the Foreman asked, from the panel or the co
 - Self-check: an answer starting with -- on the command line is kept rather than dropped, and a question whose record has no time is refused rather than left answerable for ever.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the Foreman gets stuck and asks you a question, you can now reply to it straight away. The question shows on the ticket's card and in the Foreman's detail, with a box to type your answer and Answer and Dismiss buttons. The same works from the command line. An answer is written into the ticket and speck picks the work up again with it: it carries the build on, or tries an approved ticket's ship again. Dismissing it just notes that you did and leaves the ticket alone. Each question can be dealt with once: a second try says it already has been.
+
+To see it, open the Foreman's detail or the ticket's card while the Foreman has a question waiting. Worth knowing: an answer is carried out only while speck run is on, and only if the ticket hasn't moved on since you answered.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,6 +54,8 @@ You can answer or dismiss a question the Foreman asked, from the panel or the co
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limits: an answer waits for speck run's next check, so with speck run off nothing happens until it's turned on. A reply interrupted between being taken and being noted (the process killed in that moment) leaves its question counted as dealt with, without a note.
+- No follow-ups went to the inbox.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +135,87 @@ You can answer or dismiss a question the Foreman asked, from the panel or the co
     ],
     "escalation_question": "",
     "summary": "Answering and dismissing work through the panel and command line in the tested cases. Before merge, fix a waiting answer that can restart work after its ticket has moved on, and remove a test's dependency on exact documentation wording."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c8f79211b54d6099f2de008729fb366dab2db916",
+    "thread_id": "01a152b8-ab75-7c42-8bbf-0449b77b49b4",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 384171,
+      "cached_input_tokens": 307712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1796,
+      "reasoning_output_tokens": 93
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:54:30.251Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html renders foremanAskBox on ticket cards and in renderForeman. Passing AC1 tests check the question, Answer box and Dismiss button in both places."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanReply records answers and clears questions; foremanAgentQueue.check resumes builds or requests reshipping. Passing AC2 tests cover both paths and now verify that answers waiting for capacity are dropped when the ticket moves on."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanReply records dismissal without changing status; agentView hides the question. The passing AC3 test verifies no build resumes or ship requests."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdForemanReply uses the same foremanReply implementation as the panel. Passing CLI tests exercise answering, dismissing and answers beginning with --."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Exclusive claim-file creation and completed-reply checks prevent repeated handling. Passing AC5 tests cover all answer/dismiss combinations and an existing concurrent claim."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/foreman-agent.mjs:268",
+        "issue": "Queued user answers previously lost their status guard while waiting for build capacity.",
+        "suggested_fix": "Implemented: queued resumes retain the expected status and each check removes stale entries before starting builds. The new passing regression test covers waiting, status changes and permanent removal.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/foreman-answer-0318.test.mjs:279",
+        "issue": "The documentation test previously depended on exact prose in the Foreman skill.",
+        "suggested_fix": "Implemented: the test checks each command name independently; the behavioural test still verifies that the Foreman cannot reply to itself.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All five criteria are met, and both previous findings are resolved. Users can answer or dismiss Foreman questions from the panel or command line, with replies recorded once. Waiting answers are safely discarded if the ticket moves on. The reported tests have no failures."
   }
 }
 ```
