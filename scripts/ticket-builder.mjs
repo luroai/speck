@@ -4,7 +4,7 @@
 // in that builder's own format. A builder that isn't installed, or that speck has no command for, isn't started.
 import crypto from 'node:crypto';
 import { splitCommand } from './speck.mjs';
-import { DEFAULT_BUILD_COMMAND, withBuilderModel } from './build-model.mjs';
+import { DEFAULT_BUILD_COMMAND, withBuilderModel, configBuilder } from './build-model.mjs';
 import { codexStartWords } from './codex-build.mjs';
 import { cursorStartWords, cursorCli, createChat } from './cursor-build.mjs';
 import { onPath } from './install.mjs';
@@ -12,9 +12,7 @@ import { onPath } from './install.mjs';
 const LABELS = { claude: 'Claude Code', codex: 'Codex', cursor: 'Cursor' };
 const OWN = Object.keys(LABELS);
 const name = v => (typeof v === 'string' ? v.trim() : '');
-
-// The builder speck/config.yml names: claude when it names none.
-export const configBuilder = cfg => name(cfg?.builder) || 'claude';
+export { configBuilder };
 
 // The builder a ticket records in its `builder:` field, or the one in speck/config.yml when it records none.
 export const ticketBuilder = (t, cfg) => name(t?.builder) || configBuilder(cfg);

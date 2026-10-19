@@ -11,6 +11,7 @@ import { resumeFor } from '../scripts/hand-back.mjs';
 import { resumeCommandOf, DEFAULT_RESUME_COMMAND } from '../scripts/build-records.mjs';
 import { readForeman, foremanView, foremanLines } from '../scripts/foreman.mjs';
 import { splitCommand } from '../scripts/speck.mjs';
+import { ticketSameModelProblem } from '../scripts/same-model.mjs';
 
 // ---------- 0312: build each ticket with the builder it was made with ----------
 
@@ -125,4 +126,13 @@ test('0312 AC5: resumed and handed-back builds carry on with the builder the bui
   assert.deepEqual(resumeFor([], codexCfg, '0002', codexRec, 'm').argv, ['codex', 'exec', 'resume', 'thread-2', ...BYPASS, '-m', 'gpt-6.1-sol', 'm']);
   assert.equal(resumeCommandOf({ resume_command: 'codex resume {session}' }, 'claude'), DEFAULT_RESUME_COMMAND, 'resumed by hand with Claude Code too');
   assert.equal(resumeCommandOf({ resume_command: 'claude --resume {session} --verbose' }, 'claude'), 'claude --resume {session} --verbose');
+});
+
+test('0312 AC1: the same-model check counts builder_model only for a ticket whose builder is the configured one', () => {
+  const cfg = { builder: 'codex', build_command: '', builder_model: 'gpt-6.1-sol' };
+  const fm = { builder: 'claude', reviewer: 'claude', reviewer_model: 'sonnet' };
+  assert.match(ticketSameModelProblem(fm, cfg), /only passed to tickets built with the codex builder, so the claude builder runs its default model/,
+    'Claude Code starts on its default, which could be sonnet');
+  assert.equal(ticketSameModelProblem(fm, { ...cfg, builder: 'claude', builder_model: 'opus' }), null, 'the configured builder is given opus');
+  assert.ok(ticketSameModelProblem({ ...fm }, { builder: 'claude', builder_model: 'sonnet' }), 'both on sonnet');
 });
