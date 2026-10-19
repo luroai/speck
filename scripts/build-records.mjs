@@ -26,6 +26,8 @@ export function resumeCommandOf(cfg, agent = ownBuilder(cfg)) {
   try { first = splitCommand(cmd ?? '')[0] ?? ''; } catch { /* an unclosed quote: used as it is */ }
   if ((agent === 'codex' || agent === 'cursor') && (cmd === null || path.basename(first) === 'claude'))
     return agent === 'codex' ? CODEX_RESUME_COMMAND : cursorResumeCommand();
+  // 0312: a Claude Code build speck run started with its own command, while resume_command resumes another agent's
+  if (agent === 'claude' && cmd && path.basename(first) !== 'claude') return DEFAULT_RESUME_COMMAND;
   return cmd ?? DEFAULT_RESUME_COMMAND;
 }
 

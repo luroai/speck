@@ -48,7 +48,7 @@ function fakeCodex() {
 
 // A speck run repo with builder codex, build_command blank and builder_model as given, its ticket 0001 in `status`.
 function codexRepo({ model = '', status = 'ready' } = {}) {
-  const r = runRepo({ tickets: [['0001', { status }]], command: null });
+  const r = runRepo({ tickets: [['0001', { status, builder: 'codex' }]], command: null }); // 0312: a ticket made with Codex
   let text = fs.readFileSync(r.cfgFile, 'utf8').replace(/^builder:.*$/m, 'builder: codex').replace(/^builder_model:.*$/m, '');
   text += `build_command: ""\nbuilder_model: "${model}"\n`;
   fs.writeFileSync(r.cfgFile, text);

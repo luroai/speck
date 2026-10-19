@@ -39,6 +39,10 @@ A ticket records the builder it was made with, but `speck run` builds every read
 ## Notes
 - From `speck/ideas/2026-10-18-build-older-tickets-with-the-builder-they-were-made-with.md` (inbox, from 0293). Builds start in `scripts/run.mjs`.
 - Failing before this build: none
+- With `build_command` blank, a ticket recording `claude` is started with the `build_command` speck sets up for Claude Code. A config whose own builder is `claude` with `build_command` blank is still refused when `speck run` starts, as today (AC2), so this applies when the config's builder is Codex or Cursor.
+- AC3's line is said only when a ticket that isn't done or cancelled records a builder other than the config's, so the default Claude Code setup, which sets `build_command`, isn't told about it on every start.
+- The Codex and Cursor `speck run` tests in 0289 and 0290 now give their ticket `builder: codex` and `builder: cursor`: with `builder: claude`, as before, it's now built with Claude Code.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
