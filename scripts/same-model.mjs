@@ -4,20 +4,21 @@
 // as different.
 
 import { blank, modelFamily, reviewerSettings } from './core.mjs';
-import { modelOf } from './build-model.mjs';
+import { modelOf, codexBuilds } from './build-model.mjs';
 
 // Why `builder` and `reviewer` can't review each other without allow_same_model_review, or null when they can.
-// `cfg` gives builder_model, which only Claude Code builds are given, and `reviewerModel` is the reviewer's model as
-// the ticket and speck/config.yml resolve it, blank for the reviewer's default.
+// `cfg` gives builder_model, which counts only when speck gives it to the build: always for Claude Code, which has it
+// added to build_command, and for Codex only when build_command is blank, so speck starts the build itself (0313).
+// `reviewerModel` is the reviewer's model as the ticket and speck/config.yml resolve it, blank for the reviewer's default.
 export function sameModelProblem(builder, reviewer, cfg, reviewerModel) {
   if (blank(builder) || modelFamily(builder) !== modelFamily(reviewer)) return null;
-  const set = modelOf(cfg), b = builder === 'claude' ? set : '', r = blank(reviewerModel) ? '' : String(reviewerModel).trim();
+  const set = modelOf(cfg), b = builder === 'claude' || (builder === 'codex' && codexBuilds(cfg)) ? set : '', r = blank(reviewerModel) ? '' : String(reviewerModel).trim();
   if (b && r && b.toLowerCase() !== r.toLowerCase()) return null;
   const who = builder === reviewer ? `builder and reviewer are both "${builder}"` : `builder "${builder}" and reviewer "${reviewer}" are the same model family`;
   const fix = 'Set builder_model and reviewer_model to two different models, use a reviewer from another family or set allow_same_model_review: true.';
   if (b && r) return `${who}, and both would run "${b}" (builder_model "${b}", reviewer_model "${r}"). ${fix}`;
   const builderSide = b ? `builder_model is "${b}"`
-    : set ? `builder_model ("${set}") is only passed to Claude Code builds, so the ${builder} builder runs its default model`
+    : set ? `builder_model ("${set}") is only passed to Claude Code builds, and to Codex builds when build_command is blank, so the ${builder} builder runs its default model`
     : 'builder_model isn\'t set, so the builder runs its default model';
   const reviewerSide = r ? `reviewer_model is "${r}"` : 'reviewer_model isn\'t set, so the reviewer runs its default model';
   return `${who}, and ${builderSide} and ${reviewerSide}, which could be the same. ${fix}`;

@@ -258,6 +258,9 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   const models = checked.filter(c => !c.machine && ['builder', 'reviewer', 'builder_model', 'reviewer_model'].includes(c.key));
   if (models.length && cfg.allow_same_model_review !== true) {
     const will = { ...cfg, ...Object.fromEntries(models.map(c => [c.key, c.want])) };
+    // 0313: with the build_command switching the builder gives it, which decides whether builder_model counts for Codex.
+    const own = switched ? ownBuildCommand(String(switched.want)) : null;
+    if (own !== null) will.build_command = own;
     const problem = sameModelProblem(String(will.builder ?? ''), String(will.reviewer ?? ''), will, will.reviewer_model);
     const switching = models.some(c => c.key === 'builder' && !c.same);
     if (problem) return refusal(422, each(models, switching
