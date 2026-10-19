@@ -37,4 +37,5 @@ When you're unsure, ask. After the action, stop: you get one action a run, and `
 - Never ship, merge or push yourself: `reship` asks `speck run` to ship it once, and it ships only what `auto_ship` covers.
 - Never change code, tests, settings or any file by hand, and never commit. `speck foreman` writes the ticket's note and commits it.
 - Never run `speck set`, `speck start`, `speck close`, `speck ship`, `speck review` or `speck record`.
+- Never answer or dismiss your own question: `speck foreman answer` and `speck foreman dismiss` are the user's, and refuse you.
 - Look into the ticket your brief names, and no other.

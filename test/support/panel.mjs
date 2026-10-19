@@ -270,7 +270,8 @@ export const badgeOf = row => inRow(row, /^badge\b/);
 export const stageOf = row => inRow(row, /^stage\b/);
 export const steps = t => t.steps.map(s => s.state || '');
 
-export function post(port, pathName, { origin = `http://127.0.0.1:${port}`, token, host = `127.0.0.1:${port}`, method = 'POST' } = {}) {
+// `body`, when given, is sent as the request's body (0318).
+export function post(port, pathName, { origin = `http://127.0.0.1:${port}`, token, host = `127.0.0.1:${port}`, method = 'POST', body: sent } = {}) {
   return new Promise((resolve, reject) => {
     const headers = { Host: host };
     if (origin !== null) headers.Origin = origin;
@@ -282,7 +283,7 @@ export function post(port, pathName, { origin = `http://127.0.0.1:${port}`, toke
       res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
     });
     req.on('error', reject);
-    req.end();
+    req.end(sent);
   });
 }
 export const tokenOf = html => (html.match(/const TOKEN = '([0-9a-f]+)';/) || [])[1];
