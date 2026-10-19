@@ -42,6 +42,8 @@ started: "2026-10-19T07:27:12.678Z"
 - Checked 2026-10-19: `bun test` runs Bun's built-in test runner, while `bun run test` runs `package.json`'s `test` script; `pnpm test` and `yarn test` run the script (found by the 0322 build).
 - You dismissed the Foreman's question (2026-10-19 07:26 UTC): For bun projects, should speck detect suggest 'bun run test' (recommended, as 'bun test' starts Bun's own test runner instead of the project's test script) rather than 'bun test' as criterion 1 says?
 - Failing before this build: none
+- Criterion 4 is read as the test suggestion: with a packageManager that disagrees with the lockfile, the install command now follows packageManager too, so criterion 3 holds (a plain `<manager> install` when that manager has no lockfile).
+- Self-check: made the packageManager match strict (`name@version` or a bare name, as Corepack writes it) instead of allowing spaces.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
