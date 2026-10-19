@@ -1,7 +1,7 @@
 ---
 id: "0326"
 title: "Return focus to the Full ticket button when the pane closes"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-09-return-focus-after-the-full-ticket-pane-closes.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-19
+started: "2026-10-19T07:09:07.388Z"
 
 ---
 # 0326 · Return focus to the Full ticket button when the pane closes
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When the full ticket pane closes, by Close, Escape or a click outside, the keyboard focus falls to the page itself, so someone using the keyboard has to Tab from the top of the page to get back to the ticket they were on.
