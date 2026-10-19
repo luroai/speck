@@ -1,7 +1,7 @@
 ---
 id: "0318"
 title: "Answer or dismiss a question the Foreman asked"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0317"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-19T05:45:08.195Z"
+approved: "2026-10-19T05:54:40.460Z"
 
 ---
 # 0318 · Answer or dismiss a question the Foreman asked
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the Foreman agent (0287) asks you a question about a stuck ticket, the question waits until the ticket's status changes. There's no way to answer it, or to say it doesn't matter, from the panel or the command line.
@@ -50,9 +51,15 @@ To see it, open the Foreman's detail or the ticket's card while the Foreman has 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 A queued user answer can resume work after the ticket has moved on.; F2 The new documentation test requires the exact prose '`speck foreman answer` and `speck foreman dismiss` are the user's'.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 625,136
+- Elapsed since build started: 10 min
+- Changed lines: 280 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limits: an answer waits for speck run's next check, so with speck run off nothing happens until it's turned on. A reply interrupted between being taken and being noted (the process killed in that moment) leaves its question counted as dealt with, without a note.
 - No follow-ups went to the inbox.
