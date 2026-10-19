@@ -38,28 +38,23 @@ const builderIn = p => p.byId('run').children.find(n => n.tagName === 'canvas');
 // The page's CSS rule for a selector, as written.
 const rule = sel => (page().match(new RegExp(`\\n\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`)) || [])[1] || '';
 
-test('0303 AC1: the header\'s mark is a canvas before "speck", hidden from screen readers, in place of the old drawing', () => {
+// 0320: the mark is the design's logo now, an svg written into the page (checked in logo-0320.test.mjs), in place of
+// 0303's canvas drawn with the renderer's tile().
+test('0303 AC1: the header\'s mark comes before "speck", hidden from screen readers', () => {
   const logo = (page().match(/<div class="logo">([\s\S]*?)<\/div>/) || [])[1] || '';
-  assert.match(logo, /^<canvas class="mark" id="mark" aria-hidden="true"><\/canvas><b class="name">speck<\/b> <span>control panel<\/span>$/, 'with speck in its own element since 0304');
-  assert.doesNotMatch(logo, /<svg\b/, 'the old drawing is gone');
+  assert.match(logo, /^<svg [^>]*class="mark" id="mark" aria-hidden="true">[\s\S]*?<\/svg><b class="name">speck<\/b> <span>control panel<\/span>$/, 'with speck in its own element since 0304');
 });
 
-test('0303 AC1: the mark is drawn once with tile(canvas, PANEL, \'still\', the design\'s options)', async () => {
-  const { p, tiles, PANEL } = fake(() => [READY]);
+test('0303 AC1: since 0320 the page draws no tile for the mark', async () => {
+  const { p, tiles } = fake(() => [READY]);
   await p.settle();
-  assert.equal(tiles.length, 1);
-  const [t] = tiles;
-  assert.equal(t.canvas, p.byId('mark'), 'on the header\'s mark');
-  assert.equal(t.poses, PANEL, 'the renderer\'s PANEL poses');
-  assert.equal(t.state, 'still');
-  assert.deepEqual({ ...t.o }, { cols: 16, rows: 16, k: .3, ox: 8, oy: 15, still: true });
   await refresh(p);
-  assert.equal(tiles.length, 1, 'a refresh doesn\'t draw it again');
+  assert.equal(tiles.length, 0);
 });
 
-test('0303 AC1: at 32 px since 0309, with the screen and unlit dots transparent, the ink the text colour and the speck --dot', () => {
+test('0303 AC1: at 32 px since 0309, the ink the text colour and the speck --dot (since 0320, as the logo\'s --speck)', () => {
   const css = rule('.logo .mark');
-  for (const d of ['width: 32px', 'height: 32px', '--lcd-bg: transparent', '--lcd-off: transparent', '--lcd-ink: var(--text)', '--lcd-red: var(--dot)', '--lcd-shadow: transparent']) {
+  for (const d of ['width: 32px', 'height: 32px', '--speck: var(--dot)']) {
     assert.ok(css.includes(d), `${d} in .logo .mark { ${css} }`);
   }
   const root = (page().match(/:root \{([\s\S]*?)\}/) || [])[1] || '', dark = (page().match(/:root\[data-theme="dark"\] \{([\s\S]*?)\}/) || [])[1] || '';
@@ -134,11 +129,11 @@ const COLOURS = `(() => {
     for (let i = 0; i < d.length; i += 4) if (d[i + 3] === 255) { const k = hex(d[i], d[i + 1], d[i + 2]); n.set(k, (n.get(k) || 0) + 1); }
     return { colours: [...n.keys()], clear: d.filter((v, i) => i % 4 === 3 && v === 0).length, width: c.getBoundingClientRect().width }; };
   const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(k).trim();
-  return { mark: of(document.getElementById('mark')), mini: of(document.querySelector('#run canvas.mini')),
-    text: v('--text'), dot: v('--dot'), bg: v('--lcd-bg'), off: v('--lcd-off'), ink: v('--lcd-ink') };
+  return { mini: of(document.querySelector('#run canvas.mini')), ink: v('--lcd-ink'), off: v('--lcd-off') };
 })()`;
 
-test('0303 AC3: in a real browser, the mark and the builder follow the light and dark looks, from the start and when switched', skip, async () => {
+// 0320: the mark is an svg in the page's own colours now, checked in a real browser in logo-0320.test.mjs.
+test('0303 AC3: in a real browser, the builder follows the light and dark looks, from the start and when switched', skip, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   try {
@@ -157,15 +152,11 @@ test('0303 AC3: in a real browser, the mark and the builder follow the light and
           let x;
           for (let i = 0; i < 50; i++) { // the renderer redraws on its next frame
             x = await b.js(COLOURS);
-            if (x.mark.colours.includes(x.text) && x.mini.colours.includes(x.ink) && x.mini.colours.includes(x.off)) break;
+            if (x.mini.colours.includes(x.ink) && x.mini.colours.includes(x.off)) break;
             await new Promise(res => setTimeout(res, 50));
           }
           const where = `${look}, opened ${first}`;
-          assert.equal(x.mark.width, 32, `${where}: the mark is 32 px, since 0309`);
           assert.equal(x.mini.width, 28, `${where}: the builder is 28 px`);
-          assert.ok(x.mark.colours.includes(x.text), `${where}: the mark's ink is the text colour ${x.text}: ${JSON.stringify(x)}`);
-          assert.ok(x.mark.colours.includes(x.dot), `${where}: the speck is ${x.dot}: ${JSON.stringify(x)}`);
-          assert.ok(x.mark.clear > 0 && !x.mark.colours.includes(x.bg) && !x.mark.colours.includes(x.off), `${where}: no screen or unlit dots behind the mark`);
           assert.ok(x.mini.colours.includes(x.ink) && x.mini.colours.includes(x.off) && x.mini.clear === 0, `${where}: the builder is on the look's LCD screen: ${JSON.stringify(x)}`);
         }
       } finally { await b.close(); }
