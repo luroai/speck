@@ -44,7 +44,7 @@ The README describes what speck does now, and its picture shows the panel as it 
 - Self-check: dropped two tests that checked the README's wording (the 0267 check fails on them), and changed the Foreman paragraph's heading so it doesn't promise one word when the status can be two.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The README now covers the few things that had shipped without being described: in pull request mode speck never pushes straight to your main branch, the Foreman's status in the panel's header tells you at a glance where things stand, only one speck run can work in a project at a time, each ticket is built with the agent it was made for, and the Claude reviewer runs without your MCP servers or connectors. Setup's description also mentions the pull request choice. Its picture, in both the light and dark look, now shows the panel as it is: the LCD badges, the new mark and title, and the Foreman's "Building 1 | Fixing on" status. Open the README on GitHub to see it, switching your system between light and dark. The version line and the "Built with speck" figures are left for the 0.9.0 release ticket (0307) to update.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,8 @@ The README describes what speck does now, and its picture shows the panel as it 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. The README's status line (0.8.0) and "Built with speck" figures are left for 0307, whose criteria 3 and 5 cover them.
+- The demo outside the repo (`speck-assets/readme/demo/`) now serves the panel's LCD script and font, works out the header's Foreman status with speck's own code, and labels the project speck, so it can take the pictures again for later releases.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +127,79 @@ The README describes what speck does now, and its picture shows the panel as it 
     ],
     "escalation_question": "",
     "summary": "The README describes the current features, and both refreshed pictures show the new panel design. Checks pass, but the pictures must be retaken because they display ‘shop’ as a project name, which the ticket explicitly forbids."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4b625fc0ad36b613acf21ce2b24c5015041f4fff",
+    "thread_id": "01a152c3-5564-7d80-94dd-6b6bfad05c18",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 254710,
+      "cached_input_tokens": 196864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2010,
+      "reasoning_output_tokens": 33
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T06:06:42.781Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "README.md remains unchanged since round 1. Its panel, Foreman, requirements, reviewer and shipping sections cover all requested features and match shipped tickets 0287, 0293, 0294, 0296, 0312, 0314 and 0315."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The previously reviewed README.md is unchanged. Its builder and reviewer descriptions match the implementation and shipped tickets; no new inaccurate claims were introduced."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both retaken pictures visibly show LCD badges, mark, title and Foreman status with fictional tickets. Independent file inspection confirms 3000×1880 dimensions, sizes of 306273 and 295127 bytes, and only IHDR, IDAT and IEND chunks. The reported AC3 test passes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Visual inspection of both pictures confirms project labels now say speck. Neither shows a person's name, account, email address, other project name, Disconnected banner or speck version."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh reported run has 437 passes, zero failures and three skips. Since round 1, only the pictures and ticket record changed; tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "docs/images/demo-light.png and docs/images/demo-dark.png",
+        "issue": "The pictures previously displayed ‘shop’ as the project name. Both now display speck in all visible project labels.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The README describes the current features, and both refreshed pictures show the new panel design. The prohibited project labels have been corrected, image checks pass, and no blocking concerns remain."
   }
 }
 ```
