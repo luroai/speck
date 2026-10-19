@@ -6,7 +6,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { ROOT, page } from './support/panel.mjs';
-import { ICONS, PNGS, readPng } from './support/icons.mjs';
 
 // ---------- 0308: a lighter LCD screen in the panel's light look (shade C) ----------
 
@@ -66,34 +65,13 @@ test('0308 AC2: the badges and the Foreman\'s builder are drawn in shade C, and 
   }
 });
 
-// The icon's dots as they were before this ticket: icon.svg without its background, and each PNG's non-screen pixels.
-const SVG_DOTS = 'debb96f37294889e0f1566ecebc5e64d7ebe8b455bf7a3d7d8c643d2ad506b32';
-const PNG_DOTS = {
-  'icon-192.png': '9cc84f4b022abed34966a279d22fe8738c49c4a309b560a93eeeae6a294d4dfe',
-  'icon-512.png': '830d1619ba83f0b944098982dae3aaa5c9c1831d912d3b7913ce4e900aa4e170',
-  'apple-touch-icon.png': '4e1c792a3a4d25f38bd02a44d1e306cc2fba55a0550ce75212af4652b2a3d257',
-};
-
-test('0308 AC3: the app icon\'s background is shade C, with its dots unchanged', () => {
-  const svg = fs.readFileSync(path.join(ICONS, 'icon.svg'), 'utf8');
-  const bg = /^ {2}<rect width="180" height="180" fill="(#[0-9a-f]{6})"\/>\n/m;
-  assert.equal(svg.match(bg)?.[1], '#e6e9db', 'icon.svg');
-  assert.equal(sha(svg.replace(bg, '')), SVG_DOTS, 'icon.svg: the same dots');
-  for (const name of Object.keys(PNGS)) {
-    const img = readPng(fs.readFileSync(path.join(ICONS, name))), out = [];
-    assert.deepEqual(img.at(0, 0), [0xe6, 0xe9, 0xdb], `${name}: its background`);
-    for (let y = 0; y < img.h; y++) for (let x = 0; x < img.w; x++) {
-      const p = img.at(x, y).join();
-      if (p !== '230,233,219') out.push(`${x},${y}:${p}`);
-    }
-    assert.equal(sha(out.join(';')), PNG_DOTS[name], `${name}: the same dots`);
-  }
-});
+// 0308 AC3 gave the app icon shade C's screen. Since 0320 the app icons are the design's logo in its own colours, so
+// they're checked in logo-0320.test.mjs.
 
 test('0308 AC4: the dark look\'s colours and the design\'s renderer are unchanged', () => {
   assert.deepEqual(darkRule(), DARK);
-  // The renderer as 0302 copied it from the design, and the panel's copy still the same file.
-  const SHA = '39c97086e87535110d8a5fc9e057aa275438a60ffaabb72e2175aa109dbfcf49';
+  // The renderer as copied from the design (since 0320, its new one with the logo), and the panel's copy the same file.
+  const SHA = '3b0b714a151bb0bcbf6b453a135e02c5474878960142baec2472648c4f7049fb';
   assert.equal(sha(fs.readFileSync(path.join(ROOT, 'docs', 'design', 'lcd', 'lcd.js'))), SHA);
   assert.equal(sha(fs.readFileSync(path.join(ROOT, 'templates', 'lcd.js'))), SHA);
 });

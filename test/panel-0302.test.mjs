@@ -8,7 +8,8 @@ import { ROOT, T, fakePage, queueRows, exitOf, round, page, panelRepo, freePort,
 
 // ---------- 0302: the builder badge on the LCD screen, drawn by the design's own renderer ----------
 
-const SHA = '39c97086e87535110d8a5fc9e057aa275438a60ffaabb72e2175aa109dbfcf49';
+// 0320: the design's new renderer, with its logo.
+const SHA = '3b0b714a151bb0bcbf6b453a135e02c5474878960142baec2472648c4f7049fb';
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 // One in-flight ticket for each pose, and a ready one.

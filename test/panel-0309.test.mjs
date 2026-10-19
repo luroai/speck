@@ -40,7 +40,7 @@ const MEASURE = `(async () => {
     return { shown, cut: e.scrollWidth > e.clientWidth + 0.5, ellipsis: getComputedStyle(e).textOverflow === 'ellipsis', top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height, mid: r.top + r.height / 2 }; };
   const c = document.getElementById('mark');
   return { header: box('header'), logo: box('.logo'), mark: box('.logo .mark'), name: box('.logo .name'), label: box('.logo span'), repo: box('.repo'),
-    theme: box('#theme'), settings: box('#settings-open'), canvas: [c.width, c.height], font: getComputedStyle(document.querySelector('.logo .name')).fontFamily,
+    theme: box('#theme'), settings: box('#settings-open'), viewBox: c.getAttribute('viewBox'), font: getComputedStyle(document.querySelector('.logo .name')).fontFamily,
     scroll: document.documentElement.scrollWidth, view: innerWidth };
 })()`;
 const apart = (a, b) => a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
@@ -56,13 +56,13 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
       await b.until(`document.readyState === 'complete' && !!document.querySelector('.logo .name')`, 'the panel');
       for (const look of ['light', 'dark']) {
         if ((await b.js('document.documentElement.dataset.theme')) !== look) await b.js(`document.querySelector('.theme').click()`);
-        await b.until(`document.documentElement.dataset.theme === '${look}' && document.getElementById('mark').width === 32`, `the ${look} look, with the mark drawn`);
+        await b.until(`document.documentElement.dataset.theme === '${look}' && document.getElementById('mark').getBoundingClientRect().width === 32`, `the ${look} look, with the mark drawn`);
         const m = await b.js(MEASURE);
         const at = `${width} px, ${look}: ${JSON.stringify(m)}`;
-        // AC1: 32 px on screen, drawn 32 × 32, so each of the 16 dots is 2 × 2
+        // AC1: 32 px on screen, and (since 0320, an svg) 16 dots across, so each is 2 × 2
         assert.equal(m.mark.width, 32, at);
         assert.equal(m.mark.height, 32, at);
-        assert.deepEqual(m.canvas, [32, 32], `drawn at two pixels a dot: ${at}`);
+        assert.equal(m.viewBox, '0 0 16 16', `drawn at two pixels a dot: ${at}`);
         // AC2: on the mark's line, centred with it
         assert.match(m.font, /^Doto,/, at);
         assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 0.5, `speck is centred on the mark: ${at}`);

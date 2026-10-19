@@ -1,5 +1,5 @@
 // 0149: the panel's PNG icons, and since 0305 its icon.svg too, with no dependencies, so the icons can be checked against
-// the design and made again when it changes: node -e "import('./test/support/icons.mjs').then(m => m.writeIcons())"
+// the design and made again when it changes (since 0320, from its renderer's logo): node -e "import('./test/support/icons.mjs').then(m => m.writeIcons())"
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -9,63 +9,81 @@ import { ROOT } from './panel.mjs';
 export const ICONS = path.join(ROOT, 'templates', 'icons');
 // Each PNG the panel serves, with its size in pixels.
 export const PNGS = { 'icon-192.png': 192, 'icon-512.png': 512, 'apple-touch-icon.png': 180 };
-// 0305: the light look's screen, ink and red, as the panel's tokens give them (the screen lighter since 0308).
-export const LCD = { bg: '#e6e9db', ink: '#20241d', red: '#d63f28' };
-// How much of the icon the mark's tallest side may take: the rest is the margin, so rounded corners miss it.
-const FILL = 0.75;
-
 const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
 
-// 0305: the header's mark (0303), read from the design's renderer: its 16 × 16 dots as rows of '.' (unlit), '#' (ink)
-// and 'R' (the speck's red). The renderer runs once here, with stand-ins for the browser, so the icon runs no script.
-export function markDots() {
+// 0320: the design's logo, from its renderer, run once here with stand-ins for the browser, so the icons run no script.
+export function logo() {
   const ctx = { window: {}, getComputedStyle: () => ({ getPropertyValue: () => '' }), performance: { now: () => 0 } };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'docs', 'design', 'lcd', 'lcd.js'), 'utf8'), ctx);
-  const L = ctx.window.SpeckLCD;
-  const { scr } = L.tile({ getContext: () => null, getBoundingClientRect: () => ({ width: 0 }) }, L.PANEL, 'still',
-    { cols: 16, rows: 16, k: .3, ox: 8, oy: 15, still: true });
-  scr.buf.v.fill(0); scr.draw(scr, scr.at, 16);
-  const mark = { [L.INK]: '#', [L.RED]: 'R' };
-  return Array.from({ length: scr.rows }, (_, y) => Array.from(scr.buf.v.subarray(y * scr.cols, (y + 1) * scr.cols), v => mark[v] || '.').join(''));
+  return ctx.window.SpeckLCD.logo;
 }
 
-// The lit dots, each with its column, row and colour, and the columns and rows they span.
-export function lit(dots = markDots()) {
-  const on = dots.flatMap((row, y) => [...row].flatMap((c, x) => (c === '.' ? [] : [{ x, y, fill: c === 'R' ? LCD.red : LCD.ink }])));
-  const xs = on.map(d => d.x), ys = on.map(d => d.y);
-  return { on, x: Math.min(...xs), y: Math.min(...ys), cols: Math.max(...xs) - Math.min(...xs) + 1, rows: Math.max(...ys) - Math.min(...ys) + 1 };
-}
+// 0320: icon.svg is the logo's browser-tab icon, as the renderer writes it.
+export const iconSvg = () => logo().faviconSVG();
 
-// Where the dots go in an icon `size` pixels square: each dot `pitch` pixels apart, `dot` pixels square (the gap
-// between them as the renderer leaves it), from `left`, `top`. Whole pixels, so each dot's edges are sharp, and the
-// pitch is chosen so the lit dots' edges sit as far from the left as the right, and from the top as the bottom.
-export function layout(size, M = lit()) {
-  const gap = p => (p >= 3 ? Math.max(1, Math.round(p * .16)) : 0);
-  let pitch = Math.floor(size * FILL / Math.max(M.cols, M.rows));
-  while (pitch > 1 && [M.cols, M.rows].some(n => (size - (n * pitch - gap(pitch))) % 2)) pitch--;
-  const dot = pitch - gap(pitch);
-  return { pitch, dot, left: (size - (M.cols * pitch - gap(pitch))) / 2, top: (size - (M.rows * pitch - gap(pitch))) / 2 };
-}
-
-// icon.svg: the screen, then each lit dot as a square, laid out as the 180 px icon, so it matches the apple-touch-icon.
-export function iconSvg(M = lit()) {
-  const S = 180, { pitch, dot, left, top } = layout(S, M);
-  const rect = d => `    <rect x="${left + (d.x - M.x) * pitch}" y="${top + (d.y - M.y) * pitch}" width="${dot}" height="${dot}"/>`;
-  const group = fill => [`  <g fill="${fill}">`, ...M.on.filter(d => d.fill === fill).map(rect), '  </g>'];
-  return [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" shape-rendering="crispEdges">`,
-    `  <rect width="${S}" height="${S}" fill="${LCD.bg}"/>`, ...group(LCD.ink), ...group(LCD.red), '</svg>', ''].join('\n');
-}
-
-// The icon at `size` pixels, as RGB rows: the screen colour, with each lit dot filled in.
-export function draw(size, M = lit()) {
-  const { pitch, dot, left, top } = layout(size, M), px = Buffer.alloc(size * size * 3), bg = rgb(LCD.bg);
-  for (let n = 0; n < size * size; n++) px.set(bg, n * 3);
-  for (const d of M.on) {
-    const c = rgb(d.fill), x0 = left + (d.x - M.x) * pitch, y0 = top + (d.y - M.y) * pitch;
-    for (let y = y0; y < y0 + dot; y++) for (let x = x0; x < x0 + dot; x++) px.set(c, (y * size + x) * 3);
+// The shapes an SVG from the renderer's logo paints, in order: its rects, and its paths, which are only squares and
+// runs of them (M x y h w v h h -w z), each with its fill and a group's translate. Anything else is refused, so a
+// change to how the design draws its icon can't be drawn wrong without a test failing.
+export function shapes(svg) {
+  const out = [], groups = [];
+  const attrs = s => Object.fromEntries([...s.matchAll(/([\w-]+)="([^"]*)"/g)].map(a => [a[1], a[2]]));
+  for (const [, close, tag, rest] of svg.matchAll(/<(\/?)(\w+)([^>]*?)\/?>/g)) {
+    if (tag === 'svg') { if (!close && attrs(rest).viewBox !== '0 0 100 100') throw new Error(`a viewBox of ${attrs(rest).viewBox}`); continue; }
+    if (tag === 'g') { if (close) groups.pop(); else groups.push(attrs(rest)); continue; }
+    const a = attrs(rest), g = groups.at(-1) || {}, fill = a.fill || g.fill;
+    const [tx, ty] = g.transform ? g.transform.match(/^translate\(([-\d.]+) ([-\d.]+)\)$/).slice(1).map(Number) : [0, 0];
+    if (tag === 'rect') out.push({ x: +(a.x || 0) + tx, y: +(a.y || 0) + ty, w: +a.width, h: +a.height, rx: +(a.rx || 0), fill });
+    else if (tag === 'path') {
+      for (const m of (a.d || '').matchAll(/M(-?[\d.]+) (-?[\d.]+)h(-?[\d.]+)v(-?[\d.]+)h(-?[\d.]+)z|(.)/g)) {
+        if (m[6] !== undefined) throw new Error(`a path the icon drawing can't read: ${a.d}`);
+        const [x, y, w, h, back] = m.slice(1, 6).map(Number);
+        if (back !== -w) throw new Error(`a path that isn't a rectangle: ${m[0]}`);
+        out.push({ x: x + tx, y: y + ty, w, h, rx: 0, fill });
+      }
+    } else throw new Error(`a <${tag}> the icon drawing can't read`);
   }
-  return px;
+  return out;
+}
+
+const colour = c => {
+  if (/^#[0-9a-f]{6}$/i.test(c)) return [...rgb(c), 1];
+  const m = c.match(/^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/);
+  if (!m) throw new Error(`a colour the icon drawing can't read: ${c}`);
+  return m.slice(1).map(Number);
+};
+// How much of the pixel at (px, py) a shape covers, from 0 to 1: the exact area for a square-cornered one, and 16 × 16
+// samples where a rounded corner crosses the pixel.
+function cover(s, px, py) {
+  const w = Math.max(0, Math.min(px + 1, s.x + s.w) - Math.max(px, s.x)), h = Math.max(0, Math.min(py + 1, s.y + s.h) - Math.max(py, s.y));
+  if (!w || !h || !s.rx) return w * h;
+  const r = s.rx, inCorner = (x, y) => (x < s.x + r || x > s.x + s.w - r) && (y < s.y + r || y > s.y + s.h - r);
+  if (!inCorner(px, py) && !inCorner(px + 1, py) && !inCorner(px, py + 1) && !inCorner(px + 1, py + 1)) return w * h;
+  let n = 0;
+  for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) {
+    const x = px + (i + .5) / 16, y = py + (j + .5) / 16;
+    if (x < s.x || x > s.x + s.w || y < s.y || y > s.y + s.h) continue;
+    const cx = Math.min(Math.max(x, s.x + r), s.x + s.w - r), cy = Math.min(Math.max(y, s.y + r), s.y + s.h - r);
+    if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) n++;
+  }
+  return n / 256;
+}
+
+// 0320: the app icon at `size` pixels, as RGB rows: the renderer's appIconSVG('light'), each shape painted in turn over
+// what's below it, by how much of each pixel it covers, as a browser draws it.
+export function draw(size, svg = logo().appIconSVG('light')) {
+  const k = size / 100, px = new Float64Array(size * size * 3);
+  for (const s0 of shapes(svg)) {
+    const s = { x: s0.x * k, y: s0.y * k, w: s0.w * k, h: s0.h * k, rx: s0.rx * k }, [r, g, b, a] = colour(s0.fill);
+    for (let y = Math.max(0, Math.floor(s.y)); y < Math.min(size, Math.ceil(s.y + s.h)); y++) {
+      for (let x = Math.max(0, Math.floor(s.x)); x < Math.min(size, Math.ceil(s.x + s.w)); x++) {
+        const t = a * cover(s, x, y), i = (y * size + x) * 3;
+        if (!t) continue;
+        px[i] += (r - px[i]) * t; px[i + 1] += (g - px[i + 1]) * t; px[i + 2] += (b - px[i + 2]) * t;
+      }
+    }
+  }
+  return Buffer.from(px.map(Math.round));
 }
 
 const CRC = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });

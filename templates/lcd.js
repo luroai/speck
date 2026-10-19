@@ -704,5 +704,57 @@
     return { scr, cast, set(p) { cast.set(p); scr.dirty = true; } };
   }
 
-  window.SpeckLCD = { Screen, Pen, Cast, PANEL, STATES, STILL_AT, STATE_AT, F3, F5, ICONS, OFF, FAINT, INK, RED, RM, render, blend, builder, handheld, badge, mini, tile, io };
+  // ---- The logo ----
+  // The mark is one 16 × 16 bitmap, drawn by hand so it's sharp in a browser tab: the ring open at the top left, two
+  // ears and the speck. At larger sizes it sits on the screen, one pixel of the bitmap to one dot.
+  const MARK = [
+    '................', '..##........##..', '.#...######...#.', '.#........##..#.', '...#........#...', '..#..........#..', '.##..........##.', '.#............#.',
+    '.#.....oo.....#.', '.#.....oo.....#.', '.#............#.', '.##..........##.', '..#..........#..', '...#........#...', '....##....##....', '.....######.....',
+  ];
+  const LOOKS = {
+    light: { shell: '#f2f1ec', bezel: '#262722', bg: '#c3c9b1', off: '#b8bea6', ink: '#20241d', red: '#d63f28', sh: 'rgba(30,40,15,.22)', mark: '#1c1d19', speck: '#c4402a' },
+    dark: { shell: '#1d1e1a', bezel: '#080907', bg: '#0d130f', off: '#151d17', ink: '#cfe6c6', red: '#ff5a3f', sh: null, mark: '#e8e7e1', speck: '#ff6a4d' },
+  };
+  const f3 = n => Math.round(n * 1000) / 1000;
+  const sq = (x, y, w, h = w) => `M${f3(x)} ${f3(y)}h${f3(w)}v${f3(h)}h${f3(-w)}z`;
+  // The bitmap as two paths, ink and speck: as pixels (runs of them, `s` equal to the pitch `p`), or as separate dots.
+  function markPaths(x0 = 0, y0 = 0, p = 1, s = p) {
+    let ink = '', red = '';
+    MARK.forEach((row, j) => {
+      for (let i = 0; i < row.length;) {
+        const ch = row[i]; if (ch === '.') { i++; continue; }
+        let n = 1; if (s >= p) while (row[i + n] === ch) n++;
+        const d = s >= p ? sq(x0 + i * p, y0 + j * p, n * p, p) : sq(x0 + i * p + (p - s) / 2, y0 + j * p + (p - s) / 2, s);
+        if (ch === 'o') red += d; else ink += d;
+        i += n;
+      }
+    });
+    return { ink, red };
+  }
+  const SVG = (view, body, o = {}) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${view}"${o.size ? ` width="${o.size}" height="${o.size}"` : ''}${o.crisp ? ' shape-rendering="crispEdges"' : ''}${o.attrs ? ' ' + o.attrs : ''}>${body}</svg>`;
+  // The mark in a page's own colours: the text colour, and the speck from --speck.
+  function markSVG(o = {}) { const { ink, red } = markPaths(); return SVG('0 0 16 16', `<path fill="${o.ink || 'currentColor'}" d="${ink}"/><path fill="${o.red || 'var(--speck, #c4402a)'}" d="${red}"/>`, { crisp: true, attrs: o.attrs }); }
+  // The browser tab's icon: one file that follows the browser's light or dark look by itself.
+  function faviconSVG() {
+    const { ink, red } = markPaths(), a = LOOKS.light, b = LOOKS.dark;
+    return SVG('0 0 16 16', `<style>.i{fill:${a.mark}}.s{fill:${a.speck}}@media (prefers-color-scheme:dark){.i{fill:${b.mark}}.s{fill:${b.speck}}}</style><path class="i" d="${ink}"/><path class="s" d="${red}"/>`, { crisp: true });
+  }
+  // A square of screen `w` wide with `cols` dots on a side, the mark set `off` dots in from the top left.
+  function screenDots(x0, y0, w, cols, off, L, rx = 0) {
+    const p = w / cols, s = p * .84, used = new Set();
+    MARK.forEach((row, j) => { for (let i = 0; i < row.length; i++) if (row[i] !== '.') used.add((j + off) * cols + i + off); });
+    let dim = '';
+    for (let j = 0; j < cols; j++) for (let i = 0; i < cols; i++) if (!used.has(j * cols + i)) dim += sq(x0 + i * p + (p - s) / 2, y0 + j * p + (p - s) / 2, s);
+    const m = markPaths(x0 + off * p, y0 + off * p, p, s), shift = f3(p * .16);
+    return `<rect x="${f3(x0)}" y="${f3(y0)}" width="${f3(w)}" height="${f3(w)}" rx="${rx}" fill="${L.bg}"/><path fill="${L.off}" d="${dim}"/>`
+      + (L.sh ? `<g transform="translate(${shift} ${shift})" fill="${L.sh}"><path d="${m.ink}"/><path d="${m.red}"/></g>` : '')
+      + `<path fill="${L.ink}" d="${m.ink}"/><path fill="${L.red}" d="${m.red}"/>`;
+  }
+  // The app icon: the handheld itself, its screen showing the mark. Square and full-bleed; the system rounds it.
+  function appIconSVG(look = 'light', size) { const L = LOOKS[look]; return SVG('0 0 100 100', `<rect width="100" height="100" fill="${L.shell}"/><rect x="12" y="12" width="76" height="76" rx="11" fill="${L.bezel}"/>${screenDots(18.5, 18.5, 63, 20, 2, L, 2.5)}`, { size }); }
+  // The GitHub avatar: all screen, so GitHub's circle crops only unlit dots.
+  function avatarSVG(look = 'light', size) { return SVG('0 0 100 100', screenDots(0, 0, 100, 22, 3, LOOKS[look]), { size }); }
+  const logo = { MARK, LOOKS, markSVG, faviconSVG, appIconSVG, avatarSVG };
+
+  window.SpeckLCD = { Screen, Pen, Cast, PANEL, STATES, STILL_AT, STATE_AT, F3, F5, ICONS, OFF, FAINT, INK, RED, RM, render, blend, builder, handheld, badge, mini, tile, io, logo };
 })();
