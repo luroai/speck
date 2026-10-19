@@ -52,7 +52,7 @@ function fakeCursor(names = ['agent']) {
 
 // A speck run repo with builder cursor, build_command blank and builder_model as given, its ticket 0001 in `status`.
 function cursorRepo({ model = '', status = 'ready' } = {}) {
-  const r = runRepo({ tickets: [['0001', { status }]], command: null });
+  const r = runRepo({ tickets: [['0001', { status, builder: 'cursor' }]], command: null }); // 0312: a ticket made with Cursor
   let text = fs.readFileSync(r.cfgFile, 'utf8').replace(/^builder:.*$/m, 'builder: cursor').replace(/^builder_model:.*$/m, '');
   text += `build_command: ""\nbuilder_model: "${model}"\n`;
   fs.writeFileSync(r.cfgFile, text);
