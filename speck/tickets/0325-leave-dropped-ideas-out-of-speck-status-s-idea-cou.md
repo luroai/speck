@@ -1,7 +1,7 @@
 ---
 id: "0325"
 title: "Leave dropped ideas out of speck status's idea count"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-09-speck-status-counts-dropped-ideas-as-waitin
 after: []                # ticket ids that must be done first
 created: 2026-10-19
 started: "2026-10-19T07:08:30.962Z"
+approved: "2026-10-19T07:12:42.283Z"
 
 ---
 # 0325 · Leave dropped ideas out of speck status's idea count
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck status` counts every idea that isn't ticketed as waiting, including ones triage has dropped, so its `IDEAS (…)` line overstates what's left to shape. Triage on 2026-10-19 dropped 18 notes in one go.
@@ -47,9 +48,14 @@ The ideas line at the bottom of speck status no longer counts ideas that triage 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 161,832
+- Elapsed since build started: 4 min
+- Changed lines: 29 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
