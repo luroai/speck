@@ -26,11 +26,11 @@ test('0030 AC1: speck status --json prints one JSON object with tickets and idea
   const r = startRepo({ config: { worktrees: 'false' } });
   const plain = r.run('status').stdout;
   // 0285: after the Foreman's status, with speck run off
-  assert.equal(plain, 'FOREMAN: Off\n  0001 ready, not building: speck run is off\n\nREADY (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 ticketed) in speck/ideas/\n');
+  assert.equal(plain, 'FOREMAN: Off\n  0001 ready, not building: speck run is off\n\nREADY (1)\n  0001  P3  S/low  Export bookings\n\nIDEAS (0: 0 waiting, 0 in the inbox, 0 ticketed) in speck/ideas/\n');
   const res = r.run('status', '--json');
   assert.equal(res.status, 0);
   const out = JSON.parse(res.stdout);
-  assert.deepEqual(Object.keys(out).sort(), ['ideas', 'resume_command', 'tickets']); // resume_command added by 0044
+  assert.deepEqual(Object.keys(out).sort(), ['idea_counts', 'ideas', 'resume_command', 'tickets']); // resume_command added by 0044, idea_counts by 0325
   assert.ok(Array.isArray(out.tickets) && Array.isArray(out.ideas));
   assert.equal(out.tickets.length, 1);
   assert.equal(r.run('status').stdout, plain, 'text output still the same');
@@ -38,7 +38,7 @@ test('0030 AC1: speck status --json prints one JSON object with tickets and idea
   // No tickets and no ideas folder.
   fs.rmSync(path.join(r.dir, 'speck', 'tickets'), { recursive: true, force: true });
   fs.rmSync(path.join(r.dir, 'speck', 'ideas'), { recursive: true, force: true });
-  assert.deepEqual(statusJson(r.run), { tickets: [], ideas: [], resume_command: 'claude --resume {session}' });
+  assert.deepEqual(statusJson(r.run), { tickets: [], ideas: [], idea_counts: { waiting: 0, inbox: 0, ticketed: 0 }, resume_command: 'claude --resume {session}' });
 });
 
 test('0030 AC2: each ticket has its frontmatter, path, worktree, acceptance criteria, blocked question and lint counts', () => {

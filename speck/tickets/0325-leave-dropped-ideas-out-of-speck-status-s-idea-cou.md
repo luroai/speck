@@ -38,6 +38,7 @@ started: "2026-10-19T07:08:30.962Z"
 ## Notes
 - From `speck/ideas/2026-10-09-speck-status-counts-dropped-ideas-as-waiting.md`. The line is printed in `scripts/speck.mjs` (search for `IDEAS (`).
 - Failing before this build: none
+- Self-check: no changes. The counting moved to its own module because `scripts/speck.mjs` was at the 600-line limit; the `speck-status` skill now says the line prints three counts.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
