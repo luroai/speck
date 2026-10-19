@@ -387,7 +387,7 @@ export async function panelServer() {
       if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
         return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
       try {
-        return wrote(res, goWith(repo, recommendation[1]));
+        return wrote(res, goWith(repo, recommendation[1], new Date(), { by: 'user' })); // 0317: only the button is you
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
     }
     const ship = where.match(/^\/api\/tickets\/(\d{1,4})\/ship$/);
