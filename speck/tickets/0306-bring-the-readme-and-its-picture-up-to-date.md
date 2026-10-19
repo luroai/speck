@@ -1,7 +1,7 @@
 ---
 id: "0306"
 title: "Bring the README and its picture up to date"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0287", "0293", "0294", "0296", "0304", "0305", "0308", "0309", "0310", "0311", "0312", "0313", "0314", "0315", "0316", "0317", "0318", "0319", "0320", "0321"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-19T06:00:41.454Z"
+approved: "2026-10-19T06:06:52.384Z"
 
 ---
 # 0306 · Bring the README and its picture up to date
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The README describes speck as it was at 0.5.4, and its picture (0249) shows the panel's old look. Since then speck has gained a Settings view, the Foreman, builds with Codex and Cursor, a Claude Code reviewer, pull request mode and pictures in review packs, and the panel has the LCD look (0302–0305). Someone reading the README sees neither.
@@ -50,9 +51,15 @@ The README now covers the few things that had shipped without being described: i
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Both pictures display the project name ‘shop’.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 405,926
+- Elapsed since build started: 6 min
+- Changed lines: 14 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. The README's status line (0.8.0) and "Built with speck" figures are left for 0307, whose criteria 3 and 5 cover them.
 - The demo outside the repo (`speck-assets/readme/demo/`) now serves the panel's LCD script and font, works out the header's Foreman status with speck's own code, and labels the project speck, so it can take the pictures again for later releases.
