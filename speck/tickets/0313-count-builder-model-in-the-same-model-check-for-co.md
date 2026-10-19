@@ -38,6 +38,9 @@ The same-model check compares the models of a Codex builder and reviewer as it d
 ## Notes
 - From `speck/ideas/2026-10-18-same-model-check-counts-builder-model-on-codex-builds.md` (inbox, from 0289). The check is in `scripts/lint.mjs` and `scripts/settings.mjs`.
 - Failing before this build: none
+- AC3 read as: builder_model counts only where speck gives it to the build. For Claude Code that is every build, as speck adds `--model` to build_command whatever it is (`withBuilderModel`), so a Claude builder is unchanged; for Codex only when build_command is blank. Counting it for no Claude build with build_command set would refuse the default Claude Code setup with a claude-subagent reviewer on two different models.
+- AC4 already held: the Settings view's `allow_same_model_review` explanation never said builder_model counts only for Claude Code. The refusal message did, and now says Codex builds count when build_command is blank. Its test guards it.
+- Self-check: saving a switch of the builder to codex in the Settings view now checks the models with the blank build_command the switch gives it, rather than the old one, so a Codex reviewer on a different model is accepted there too.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
