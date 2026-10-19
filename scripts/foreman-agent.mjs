@@ -41,6 +41,10 @@ const RECENT = 5; // how many of its actions the status detail shows
 export const foremanAgentOf = cfg => (FOREMAN_AGENTS.includes(cfg?.foreman) ? cfg.foreman
   : cfg?.builder === 'codex' ? 'codex' : 'claude');
 const textOf = v => (typeof v === 'string' ? v.trim() : '');
+const oneLine = v => textOf(v).replace(/\s+/g, ' ');
+const sentence = v => (/[.!?]$/.test(v) ? v : `${v}.`);
+// ' at YYYY-MM-DD HH:MM UTC', or '' for a time that can't be read.
+const utc = at => (typeof at === 'string' && Number.isFinite(Date.parse(at)) ? ` at ${new Date(at).toISOString().slice(0, 16).replace('T', ' ')} UTC` : '');
 
 // The skill the agent follows, as the agent finds it in the repo.
 export const skillPath = agent => `${agent === 'codex' ? '.agents' : '.claude'}/skills/speck-foreman/SKILL.md`;
@@ -129,17 +133,30 @@ export function readActions(runs) {
 
 // What the Foreman's status detail shows of the agent: the stop it's looking into, those waiting, its last actions
 // (newest first) and its questions still waiting for you: those whose ticket is still as it was when it asked, and that
-// you haven't answered or dismissed (0318).
+// you haven't answered or dismissed (0318). 0328: each question among its last actions has an outcome saying what became
+// of it, '' while it still waits for you.
 export function agentView(runs, tickets = []) {
   const s = readAgentState(runs), actions = readActions(runs), dealt = dealtWith(runs);
   const statusOf = new Map((Array.isArray(tickets) ? tickets : []).filter(t => t && typeof t === 'object').map(t => [String(t.id), t.status]));
   const latest = new Map(actions.map(a => [a.id, a]));
+  // 0328: what became of each question in its last actions: '' while it waits for you, otherwise a sentence saying so.
+  const replies = new Map(readReplies(runs).map(r => [r.key, r]));
+  const askOutcome = a => {
+    const key = askKey(a.id, a.at), r = replies.get(key);
+    if (r) return r.action === 'answer' ? `You answered it${utc(r.at)}${oneLine(r.text) ? `: ${sentence(oneLine(r.text))}` : '.'}` : `You dismissed it${utc(r.at)}.`;
+    if (dealt.has(key)) return 'No longer waiting: your reply is being noted.';
+    if (latest.get(a.id) !== a) return `No longer waiting: the Foreman has done something else about ${a.id} since.`;
+    if (!statusOf.has(a.id)) return `No longer waiting: ${a.id} is no longer on the board.`;
+    if (statusOf.get(a.id) !== a.status) return `No longer waiting: ${a.id} is ${statusOf.get(a.id)} now.`;
+    return '';
+  };
   const asks = [...latest.values()].filter(a => a.action === 'ask' && statusOf.has(a.id) && statusOf.get(a.id) === a.status && !dealt.has(askKey(a.id, a.at)))
     .map(a => ({ id: a.id, question: textOf(a.text), at: textOf(a.at) }));
   return {
     running: s.running ? { id: s.running.id, what: textOf(s.running.what) } : null,
     waiting: s.queue.map(q => q.id),
-    did: actions.slice(-RECENT).reverse().map(a => ({ id: a.id, action: a.action, did: ACTIONS[a.action], text: textOf(a.text), why: textOf(a.why), at: textOf(a.at), ...(a.fix_id ? { fix_id: a.fix_id } : {}) })),
+    did: actions.slice(-RECENT).reverse().map(a => ({ id: a.id, action: a.action, did: ACTIONS[a.action], text: textOf(a.text), why: textOf(a.why), at: textOf(a.at), ...(a.fix_id ? { fix_id: a.fix_id } : {}),
+      ...(a.action === 'ask' ? { outcome: askOutcome(a) } : {}) })),
     asks,
   };
 }

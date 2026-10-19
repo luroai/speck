@@ -47,6 +47,7 @@ export const fixable = t => !!t && t.status === 'blocked' && typeof t.blocked_re
 
 const list = v => (Array.isArray(v) ? v : []);
 const text = v => (typeof v === 'string' ? v : '');
+const sentence = v => (/[.!?]$/.test(v) ? v : `${v}.`);
 
 // 0299: a ticket's line while speck run switches to new code and nothing of its own holds it up. The detail says once,
 // above its sections, what the switch is waiting for.
@@ -123,7 +124,11 @@ export function foremanLines(v) {
   const a = v.agent; // 0287: the Foreman agent
   if (a?.running) lines.push(`  The Foreman is looking into ${a.running.id}: ${a.running.what}`);
   for (const q of a?.asks || []) lines.push(`  The Foreman asks you about ${q.id}: ${q.question}`, `    Answer with speck foreman answer ${q.id} "<your answer>", or dismiss it with speck foreman dismiss ${q.id}`); // 0318
-  for (const d of a?.did || []) lines.push(`  The Foreman ${d.did} for ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${d.why}`);
+  // 0328: a question is asked about its ticket, followed by what became of it once it no longer waits for you
+  for (const d of a?.did || []) {
+    const said = typeof d.outcome === 'string' && d.outcome ? ` ${d.outcome}` : '';
+    lines.push(`  The Foreman ${d.did} ${d.action === 'ask' ? 'about' : 'for'} ${d.id}${d.text ? `: ${d.text}` : ''}. Why: ${said && d.why ? sentence(d.why) : d.why}${said}`);
+  }
   for (const w of v.took || []) lines.push(`  The Foreman went with the recommendation for ${w.id}: ${w.option} (${w.at.slice(0, 16).replace('T', ' ')} UTC)`);
   return lines;
 }

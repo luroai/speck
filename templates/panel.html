@@ -3074,7 +3074,8 @@ function renderForeman(f, stale) {
   const a = f.agent, list = v => (Array.isArray(v) ? v : []), looked = [];
   if (a && a.running && typeof a.running === 'object') looked.push(item(String(a.running.id), `is being looked into: ${String(a.running.what || '')}`));
   for (const q of list(a && a.asks)) looked.push(item(String(q.id), foremanAskBox(String(q.id), String(q.question || ''), 'detail'))); // 0318
-  for (const d of list(a && a.did)) looked.push(item(String(d.id), `The Foreman ${String(d.did || d.action || '')}${d.text ? `: ${String(d.text)}` : ''}.`, d.why ? `Why: ${String(d.why)}` : ''));
+  for (const d of list(a && a.did)) looked.push(item(String(d.id), `The Foreman ${String(d.did || d.action || '')}${d.text ? `: ${String(d.text)}` : ''}.`, d.why ? `Why: ${String(d.why)}` : '',
+    ...(typeof d.outcome === 'string' && d.outcome ? [el('p', 'outcome', d.outcome)] : []))); // 0328: what became of a question, as the server says it
   kids.push(...section('Looked into', looked, 'The Foreman hasn\'t had to look into anything.'));
   box.replaceChildren(...kids);
 }
