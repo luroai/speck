@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-09-return-focus-after-the-full-ticket-pane-clo
 after: []                # ticket ids that must be done first
 created: 2026-10-19
 started: "2026-10-19T07:09:07.388Z"
-approved: "2026-10-19T07:14:29.741Z"
+approved: "2026-10-19T07:23:39.947Z"
 
 ---
 # 0326 · Return focus to the Full ticket button when the pane closes
@@ -54,13 +54,14 @@ Worth knowing: opening the view from a Shipped ticket's title or a Review pack b
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 188,054
-- Elapsed since build started: 5 min
-- Changed lines: 39 (limit 5000)
+- Reviewer tokens: 482,506
+- Elapsed since build started: 15 min
+- Changed lines: 38 (limit 5000)
 Follow-ups:
 - Return focus to a Shipped title or Review pack button when the pane closes: `speck/ideas/2026-10-19-return-focus-to-a-shipped-title-or-review-pack.md`.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
@@ -121,6 +122,66 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "Closing the full ticket pane returns keyboard focus to the ticket’s current Full ticket button. If the ticket has left the board, focus returns to its Plan or Build section. The tests cover all closing methods, board refreshes and existing pane behaviour. No blocking concerns found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c88c87df1faf01ad333809f428cea2a5e506d05d",
+    "merge": true,
+    "thread_id": "01a15302-5ae5-7f83-9318-816b482c4f8c",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 293300,
+      "cached_input_tokens": 238464,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1152,
+      "reasoning_output_tokens": 28
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T07:23:36.744Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: fullButton records the originating ticket; closeFull and returnFocus restore focus after rendering. All six AC1 tests pass for Close, Escape and outside clicks in Plan and Build."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html: returnFocus finds the currently rendered button by ticket id. Both AC2 refresh tests pass and verify that focus reaches the replacement button."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "templates/panel.html: returnFocus falls back to the originating Plan or Build section, both with tabindex=\"-1\". renderFull handles disappearance of the ticket. All four AC3 tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The merged implementation preserves existing opening and closing handlers and clears the return target for Shipped titles and Review packs. All three AC4 tests pass. The section outline suppression is removed; the unchanged 0161 focus-ring regression test now passes. Recorded results: 203 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change meets all acceptance criteria. Closing the pane restores focus to the ticket’s current button, or its section if the ticket has gone. The focus-ring regression is fixed without weakening tests. No blocking concerns remain."
   }
 }
 ```
