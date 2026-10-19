@@ -150,7 +150,7 @@ test('0296 AC3: failing checks, a conflict or a review GitHub requires: nothing 
   const cases = [
     [{ statusCheckRollup: [{ name: 'test', status: 'COMPLETED', conclusion: 'FAILURE' }] }, /can't be merged yet: its checks are failing \(test\)\. Nothing was changed\./],
     [{ statusCheckRollup: [{ context: 'ci/build', state: 'PENDING' }] }, /can't be merged yet: its checks haven't finished \(ci\/build\)/],
-    [{ mergeable: 'CONFLICTING', mergeStateStatus: 'DIRTY' }, /can't be merged yet: it conflicts with the base branch/],
+    [{ mergeable: 'CONFLICTING', mergeStateStatus: 'DIRTY' }, /conflicts with origin\/main on GitHub, so it wasn't merged\./], // 0323: refused as a conflict
     [{ reviewDecision: 'REVIEW_REQUIRED', mergeStateStatus: 'BLOCKED' }, /can't be merged yet: GitHub requires an approving review first/],
   ];
   for (const [change, said] of cases) {
