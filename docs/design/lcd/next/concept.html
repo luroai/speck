@@ -1,0 +1,584 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>speck LCD</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Layout: a product sheet for one small screen. A device-led hero, then bands that each show one property of the
+     screen, ending with the rules every surface shares. */
+  :root {
+    --bg: #e6e4de; --shell: #f2f1ec; --panel: #f7f6f2; --raise: #dcdad3; --ink: #1c1d19; --ink-2: #44453f; --ink-3: #6c6c65; --line: rgba(28, 29, 25, .14);
+    --speck: #c4402a; --wait: #623f6c; --bad: #921f2d; --bezel: #262722;
+    --lcd-bg: #c3c9b1; --lcd-off: #b8bea6; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .22);
+    --display: "Doto", "Silkscreen", ui-monospace, monospace; --sans: "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121310; --shell: #1d1e1a; --panel: #191a17; --raise: #262722; --ink: #e8e7e1; --ink-2: #bfbeb6; --ink-3: #8d8c85; --line: rgba(255, 255, 255, .1);
+      --speck: #ff6a4d; --wait: #c3abd1; --bad: #f39ba5; --bezel: #080907;
+      --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121310; --shell: #1d1e1a; --panel: #191a17; --raise: #262722; --ink: #e8e7e1; --ink-2: #bfbeb6; --ink-3: #8d8c85; --line: rgba(255, 255, 255, .1);
+    --speck: #ff6a4d; --wait: #c3abd1; --bad: #f39ba5; --bezel: #080907;
+    --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font: 400 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; font-weight: 700; }
+  p { margin: 0; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--speck); outline-offset: 2px; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  canvas.lcd { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+  .mono { font-family: var(--mono); }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+
+  .top { display: flex; align-items: center; gap: 12px; padding-block: 18px; }
+  .top .mark { flex: none; color: var(--ink); }
+  .top .mark svg { display: block; width: 32px; height: 32px; }
+  .top b { font: 900 21px/1 var(--display); letter-spacing: .02em; }
+  .top nav { margin-left: auto; display: flex; gap: 18px; font-size: 14.5px; flex-wrap: wrap; justify-content: flex-end; }
+  .top nav a { text-decoration: none; color: var(--ink-2); }
+  .top nav a:hover { color: var(--ink); }
+
+  /* The hero: the device itself, with what it is beside it. */
+  .hero { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 48px; align-items: center; padding-block: 28px 64px; }
+  .hero h1 { font: 900 clamp(40px, 6.4vw, 76px)/.98 var(--display); letter-spacing: -.01em; margin: 16px 0 18px; }
+  .hero .lede { color: var(--ink-2); font-size: 17px; max-width: 46ch; }
+  .picker { margin-top: 26px; }
+  .picker .eyebrow { margin-bottom: 10px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 6px 12px; font: 500 13px/1.2 var(--mono); cursor: pointer; color: var(--ink-2); }
+  .chip:hover { border-color: var(--ink-3); color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .auto { border: 0; background: none; padding: 0; font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .auto i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid currentColor; }
+  .auto[aria-pressed="true"] { color: var(--speck); }
+  .auto[aria-pressed="true"] i { background: currentColor; }
+  .go { display: flex; gap: 20px; margin-top: 28px; flex-wrap: wrap; font-size: 15px; }
+  .go a { text-underline-offset: 3px; }
+
+  .device { background: var(--shell); border-radius: 34px; padding: 22px 22px 24px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 0 rgba(0, 0, 0, .05), 0 40px 70px -40px rgba(20, 20, 10, .55); }
+  .bezel { background: var(--bezel); border-radius: 16px; padding: 10px 12px 12px; }
+  .bezel .print { display: flex; justify-content: space-between; font: 500 9.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: #8a8c83; padding: 2px 2px 9px; }
+  .bezel .print span:first-child::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--lcd-red); margin-right: 7px; vertical-align: 1px; }
+  .glass { position: relative; border-radius: 5px; overflow: hidden; }
+  .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 10px rgba(0, 0, 0, .3); pointer-events: none; border-radius: inherit; }
+  .controls { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 22px; padding-inline: 6px; }
+  .btns { display: flex; gap: 22px; }
+  .btn { display: flex; flex-direction: column; align-items: center; gap: 9px; font: 500 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .btn button { width: 54px; height: 54px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 3px 0 rgba(0, 0, 0, .16), inset 0 1px 0 rgba(255, 255, 255, .55); cursor: pointer; font: 700 15px/1 var(--mono); color: var(--ink-2); transition: transform .08s, box-shadow .08s; }
+  .btn button.red { background: var(--speck); color: #fff; border-color: transparent; }
+  .btn button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .16); }
+  .grille { width: 54px; height: 30px; background: radial-gradient(circle, var(--ink-3) 1.4px, transparent 1.8px) 0 0 / 9px 9px; opacity: .45; margin-bottom: 14px; }
+  .now { margin-top: 14px; font-size: 14px; color: var(--ink-3); padding-inline: 6px; min-height: 1.6em; }
+  .now b { font-weight: 500; color: var(--ink); }
+
+  /* Bands */
+  .band { padding-block: 64px; border-top: 1px solid var(--line); }
+  .band.alt { background: var(--panel); }
+  .bhead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 40px; align-items: end; margin-bottom: 30px; }
+  .bhead h2 { font: 900 clamp(30px, 4.2vw, 46px)/1 var(--display); margin-top: 12px; }
+  .bhead p { color: var(--ink-2); max-width: 58ch; }
+  .card { background: var(--shell); border: 1px solid var(--line); border-radius: 18px; padding: 16px; min-width: 0; }
+  .band.alt .card { background: var(--bg); }
+  .screenframe { background: var(--bezel); border-radius: 10px; padding: 8px; }
+  .screenframe canvas { border-radius: 3px; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .spec { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 14px 2px 0; font-size: 14px; }
+  .spec dt { font: 500 12px/1.9 var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; }
+  .spec dd { margin: 0; }
+  .compare h3 { font: 500 13px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin: 2px 2px 12px; }
+
+  .strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+  .strip figure { margin: 0; }
+  .strip figcaption { font: 500 11.5px/1 var(--mono); color: var(--ink-3); margin-top: 8px; text-align: center; font-variant-numeric: tabular-nums; }
+  .tricks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+  .tricks h3, .rules h3 { font-size: 17px; margin-bottom: 6px; }
+  .tricks p, .rules p { color: var(--ink-2); font-size: 15px; }
+
+  .states { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .state { padding: 10px; }
+  .state h3 { font: 700 16px/1.2 var(--mono); margin: 12px 2px 4px; }
+  .state p { font-size: 13.5px; color: var(--ink-2); margin: 0 2px 2px; }
+
+  .poses { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .pose { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .pose .big { border-radius: 8px; overflow: hidden; outline: 1px solid var(--line); }
+  .pose .big.wait, .tile.wait { outline-color: var(--wait); }
+  .pose .big.bad, .tile.bad { outline-color: var(--bad); }
+  .row56 { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
+  canvas.tile { width: 56px; height: 56px; outline: 1px solid var(--line); outline-offset: -1px; }
+  .say { font-size: 13.5px; line-height: 1.35; }
+  .say.wait { color: var(--wait); } .say.bad { color: var(--bad); }
+  .stage { font: 400 12px/1.4 var(--mono); color: var(--ink-3); }
+  .pose p { font-size: 13.5px; color: var(--ink-2); }
+  .run { grid-column: span 1; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
+  .runbtn { display: inline-flex; align-items: center; gap: 4px; height: 34px; padding: 0 12px 0 8px; border: .5px solid var(--ink-3); font: 400 12px/1 var(--mono); color: var(--ink-2); background: var(--bg); align-self: flex-start; }
+  .runbtn canvas { width: 28px; }
+
+  .journey { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 28px; align-items: center; margin-top: 16px; padding: 22px; }
+  .journey .big { border-radius: 10px; overflow: hidden; outline: 1px solid var(--line); transition: outline-color .3s; }
+  .journey .big.wait { outline-color: var(--wait); }
+  .steps { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 10px; }
+  .steps span { font: 500 12px/1 var(--mono); padding: 6px 10px; border: 1px solid var(--line); color: var(--ink-3); border-radius: 99px; }
+  .steps span.done { color: var(--ink-2); }
+  .steps span.now { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .journey h3 { font: 900 28px/1.1 var(--display); }
+  .journey .say { font-size: 16px; margin-top: 4px; }
+
+  .rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .rule { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .rule .k { font: 500 11.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--speck); }
+  .looks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .looks figure { margin: 0; }
+  .looks figcaption { font: 400 11.5px/1 var(--mono); color: var(--ink-3); margin-top: 6px; }
+  .look-light { --lcd-bg: #c3c9b1; --lcd-off: #b8bea6; --lcd-ink: #20241d; --lcd-red: #d63f28; --lcd-shadow: rgba(30, 40, 15, .22); }
+  .look-dark { --lcd-bg: #0d130f; --lcd-off: #151d17; --lcd-ink: #cfe6c6; --lcd-red: #ff5a3f; --lcd-shadow: transparent; }
+  .emph figcaption { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; font: 400 11.5px/1.3 var(--mono); color: var(--ink-3); margin-top: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  .pitch td, .pitch th { text-align: left; padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .pitch th { font: 500 11.5px/1.6 var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; padding-right: 10px; }
+  .pitch tr:last-child td, .pitch tr:last-child th { border-bottom: 0; }
+  .pitch td { font-variant-numeric: tabular-nums; }
+  /* Logos. The mock browsers, phones, headers and GitHub pages show one fixed look each, so their colours are fixed. */
+  .markcard { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 32px; align-items: center; padding: 24px; }
+  .bigmark { aspect-ratio: 1; color: var(--ink); background: linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 6.25% 6.25%, linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 6.25% 6.25%; outline: 1px solid var(--line); }
+  .bigmark svg { display: block; width: 100%; height: 100%; }
+  .markinfo { display: grid; gap: 12px; }
+  .markinfo h3 { font: 900 26px/1.1 var(--display); }
+  .markinfo p { color: var(--ink-2); font-size: 15px; max-width: 58ch; }
+  .chipboxes { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chipbox { display: flex; align-items: flex-end; gap: 18px; padding: 16px 18px 12px; border-radius: 12px; flex: 1 1 260px; }
+  .chipbox.l { background: #f2f1ec; color: #1c1d19; --speck: #c4402a; }
+  .chipbox.d { background: #1d1e1a; color: #e8e7e1; --speck: #ff6a4d; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+  .chipbox figure { margin: 0; display: grid; justify-items: center; gap: 6px; font: 400 11px/1 var(--mono); }
+  .chipbox figcaption { opacity: .7; }
+  .chipbox svg { display: block; }
+  .logogrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+  .asset { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .asset .k { font: 500 11.5px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--speck); }
+  .asset p { color: var(--ink-2); font-size: 14.5px; }
+  .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+  .copy { font: 500 12px/1 var(--mono); padding: 9px 13px; border: 1px solid var(--line); background: var(--panel); border-radius: 99px; cursor: pointer; color: var(--ink-2); }
+  .copy:hover { color: var(--ink); border-color: var(--ink-3); }
+  .svgout { width: 100%; height: 140px; margin-top: 12px; font: 400 11px/1.4 var(--mono); background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  .browser { border-radius: 10px; overflow: hidden; font: 400 12.5px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", "Zen Kaku Gothic New", sans-serif; }
+  .browser .tabs { display: flex; gap: 2px; padding: 7px 8px 0; }
+  .browser .tab { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 8px 8px 0 0; flex: 0 1 210px; min-width: 0; white-space: nowrap; }
+  .browser .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .browser .x { opacity: .55; }
+  .browser .fav svg { display: block; width: 16px; height: 16px; }
+  .browser .omni { padding: 7px 10px 9px; } .browser .omni span { display: block; height: 22px; border-radius: 99px; }
+  .browser.l { background: #dee1e6; color: #1f1f1f; } .browser.l .on, .browser.l .omni { background: #ffffff; } .browser.l .omni span { background: #e9ebee; }
+  .browser.d { background: #1f2023; color: #e3e3e3; } .browser.d .on, .browser.d .omni { background: #3c3c3c; } .browser.d .omni span { background: #282828; }
+  .icons { display: flex; gap: 18px; flex-wrap: wrap; }
+  .icons figure { margin: 0; display: grid; justify-items: center; gap: 8px; font: 400 11.5px/1 var(--mono); color: var(--ink-3); }
+  .ico { width: 104px; aspect-ratio: 1; border-radius: 22.37%; overflow: hidden; box-shadow: 0 10px 22px -12px rgba(0, 0, 0, .55); }
+  .ico svg { display: block; width: 100%; height: 100%; }
+  .home { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .home > div { border-radius: 14px; padding: 16px 14px 12px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: start; justify-items: center; }
+  .home .l { background: linear-gradient(160deg, #d8d2c4, #aeb8a6); } .home .d { background: linear-gradient(160deg, #2a2c33, #0e0f12); }
+  .home .app { display: grid; justify-items: center; gap: 5px; font: 500 10.5px/1 -apple-system, BlinkMacSystemFont, "Zen Kaku Gothic New", sans-serif; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); width: 100%; }
+  .home .app .ico { width: min(52px, 100%); box-shadow: none; }
+  .home i { width: min(52px, 100%); aspect-ratio: 1; border-radius: 22.37%; background: rgba(255, 255, 255, .28); }
+  .home .d i { background: rgba(255, 255, 255, .1); }
+  .hdr { display: flex; align-items: center; gap: 9px; padding: 12px 14px; border-radius: 10px; min-width: 0; }
+  .hdr i svg { display: block; }
+  .hdr.site b { font: 900 22px/1 var(--display); letter-spacing: .01em; }
+  .hdr.site b span { font: 500 9.5px/1 var(--mono); letter-spacing: .16em; margin-left: 5px; vertical-align: 7px; opacity: .6; }
+  .hdr.site nav { margin-left: auto; display: flex; gap: 16px; font-size: 13.5px; opacity: .8; }
+  .hdr.site.l { background: #e6e4de; color: #1c1d19; --speck: #c4402a; box-shadow: inset 0 0 0 1px rgba(28, 29, 25, .12); } .hdr.site.d { background: #121310; color: #e8e7e1; --speck: #ff6a4d; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+  .hdr.panel { border-radius: 0; border-bottom: .5px solid; gap: 7px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .hdr.panel b { font: 900 19px/1 var(--display); }
+  .hdr.panel em { font: 400 11px/1 var(--mono); font-style: normal; text-transform: uppercase; letter-spacing: .14em; opacity: .7; margin-left: 3px; }
+  .hdr.panel .repo { margin-left: auto; font: 400 12px/1 var(--sans); opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .hdr.panel.l { background: #faf9f5; color: #141413; border-color: #87847d; --speck: #b0412e; } .hdr.panel.d { background: #181818; color: #e4e4e4; border-color: #737373; --speck: #d4664e; }
+  .gh { border-radius: 12px; padding: 14px; display: grid; gap: 12px; border: 1px solid; font: 400 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", "Zen Kaku Gothic New", sans-serif; }
+  .gh.l { background: #ffffff; color: #1f2328; border-color: #d1d9e0; } .gh.d { background: #0d1117; color: #f0f6fc; border-color: #3d444d; }
+  .gh .pair { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .gh figure { margin: 0; display: grid; justify-items: center; gap: 5px; font-size: 11px; opacity: .85; }
+  .gh .av { width: 56px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(127, 127, 127, .3); }
+  .gh .av svg { display: block; width: 100%; height: 100%; }
+  .gh .av.sm { width: 20px; flex: none; }
+  .gh .name { margin-left: 6px; } .gh .name b { display: block; font-size: 17px; } .gh .name span { opacity: .65; }
+  .gh .commit { display: flex; gap: 8px; align-items: center; font-size: 13px; padding-top: 10px; border-top: 1px solid; border-color: inherit; min-width: 0; }
+  .gh .commit span { opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .gh.l .commit { border-color: #d1d9e0; } .gh.d .commit { border-color: #3d444d; }
+
+  .changes { margin-top: 28px; padding: 22px 24px; }
+  .changes h3 { font: 900 24px/1.1 var(--display); margin-bottom: 12px; }
+  .changes ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; color: var(--ink-2); }
+  .changes li::marker { font-family: var(--mono); color: var(--ink-3); }
+  footer { padding-block: 36px 56px; color: var(--ink-3); font-size: 14px; border-top: 1px solid var(--line); }
+
+  @media (max-width: 980px) {
+    .logogrid { grid-template-columns: 1fr; }
+    .hero, .bhead { grid-template-columns: 1fr; gap: 28px; }
+    .hero { padding-top: 8px; }
+    .states { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .poses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rules, .tricks { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .markcard { grid-template-columns: 1fr; gap: 20px; padding: 16px; }
+    .bigmark { max-width: 220px; }
+    .home { grid-template-columns: 1fr; }
+    .hdr.panel .repo { display: none; }
+    .compare, .rules, .tricks { grid-template-columns: 1fr; }
+    .states { grid-template-columns: 1fr 1fr; }
+    .strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .journey { grid-template-columns: 1fr; padding: 14px; }
+    .device { padding: 14px 14px 18px; border-radius: 26px; }
+    .btns { gap: 14px; }
+    .btn button { width: 48px; height: 48px; }
+    .band { padding-block: 48px; }
+  }
+  @media (max-width: 420px) { .poses { grid-template-columns: 1fr; } .grille { display: none; } .controls { justify-content: center; } }
+</style>
+
+<header class="wrap top">
+  <span class="mark" id="mark" aria-hidden="true"></span>
+  <b>speck LCD</b>
+  <nav aria-label="Pages"><a href="landing.html">Landing page</a><a href="panel.html">Panel mock</a></nav>
+</header>
+
+<section class="wrap hero">
+  <div>
+    <div class="eyebrow">luro-pet · the LCD direction</div>
+    <h1>speck, on a screen of dots</h1>
+    <p class="lede">One character for the Luro AI landing page and the speck panel, drawn on a dot-matrix LCD. It has twice the dots of the first sketch and moves smoothly from one state to the next.</p>
+    <div class="picker">
+      <div class="eyebrow"><span>Pick a state</span><button class="auto" id="auto" aria-pressed="true"><i></i>AI picks</button></div>
+      <div class="chips" id="chips" role="group" aria-label="States"></div>
+    </div>
+    <div class="go"><a href="landing.html">Open the landing page →</a><a href="panel.html">Open the panel mock →</a></div>
+  </div>
+  <div>
+    <div class="device">
+      <div class="bezel">
+        <div class="print"><span>speck</span><span>dot matrix · 160 × 96</span></div>
+        <div class="glass"><canvas class="lcd" id="hero" role="img" aria-label="speck on the LCD"></canvas></div>
+      </div>
+      <div class="controls">
+        <div class="btns">
+          <div class="btn"><button class="red" data-act="eating" aria-label="A: tea">A</button>Tea</div>
+          <div class="btn"><button data-act="cleaning" aria-label="B: tidy">B</button>Tidy</div>
+          <div class="btn"><button data-act="playing" aria-label="C: play">C</button>Play</div>
+        </div>
+        <div class="grille" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="now" aria-live="polite">speck is <b id="caption">checking yesterday’s commits, one at a time</b></p>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <div class="bhead">
+      <div><div class="eyebrow">Fidelity</div><h2>More dots, same screen</h2></div>
+      <p>The first sketch drew the ring 16 dots across and moved at two frames a second. This one fits two and a half times as many dots across the same width, so curves come out round and small parts like the ears and lids have room to act.</p>
+    </div>
+    <div class="compare">
+      <div class="card">
+        <h3>First sketch</h3>
+        <div class="screenframe"><canvas class="lcd" id="old" role="img" aria-label="speck at the first sketch's resolution"></canvas></div>
+        <dl class="spec"><dt>Screen</dt><dd>64 × 38 dots</dd><dt>Ring</dt><dd>16 dots across, a 1-dot line</dd><dt>Motion</dt><dd>2 frames a second, nothing in between</dd></dl>
+      </div>
+      <div class="card">
+        <h3>Now</h3>
+        <div class="screenframe"><canvas class="lcd" id="new" role="img" aria-label="speck at the new resolution"></canvas></div>
+        <dl class="spec"><dt>Screen</dt><dd>160 × 96 dots</dd><dt>Ring</dt><dd>40 dots across, a 2-dot line</dd><dt>Motion</dt><dd>Every frame, with crisp dots</dd></dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="bhead">
+      <div><div class="eyebrow">Transitions</div><h2>From one state to the next</h2></div>
+      <p>Idle to celebrating, frame by frame. Every change of state takes 0.7 seconds, so the character never jumps from one drawing to another.</p>
+    </div>
+    <div class="strip" id="strip"></div>
+    <div class="tricks">
+      <div><h3>The pose blends</h3><p>Where it looks, how it leans, its arms and the ring’s opening all travel between the two states. Arms grow out of the shoulder, and fold back into it.</p></div>
+      <div><h3>It blinks and hops</h3><p>A small hop through the change and a blink at its midpoint, so the switch reads as a decision. The blink also hides the moment the eye changes shape.</p></div>
+      <div><h3>The dots stay crisp</h3><p>Each dot switches on at once and clears within a frame, so even the fast parts stay sharp. Props dissolve in and out through a 4 × 4 dither.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <div class="bhead">
+      <div><div class="eyebrow">The landing page</div><h2>Ten states</h2></div>
+      <p>What visitors can see it doing. The AI only ever picks one of these and writes the caption; the drawing always comes from this set.</p>
+    </div>
+    <div class="states" id="states"></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="bhead">
+      <div><div class="eyebrow">The speck panel</div><h2>The builder badge</h2></div>
+      <p>The same seven poses the panel’s badge has now, with the same timings, redrawn on 28 × 28 dots in the same 56 px tile. Each card shows it large, then at real size as a ticket shows it.</p>
+    </div>
+    <div class="poses" id="poses"></div>
+    <div class="card journey">
+      <div class="big" id="jbig"><canvas class="lcd" id="journey" role="img" aria-label="The builder working through a build"></canvas></div>
+      <div>
+        <div class="eyebrow">A build, start to finish</div>
+        <div class="steps" id="steps"></div>
+        <h3 id="jtitle">Writing tests and code</h3>
+        <p class="say" id="jsay">The builder moves from one pose to the next as the ticket moves on, with the same blend as the landing page.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt" id="logos">
+  <div class="wrap">
+    <div class="bhead">
+      <div><div class="eyebrow">Logos</div><h2>One mark, every size</h2></div>
+      <p>The mark is one 16 × 16 bitmap, drawn by hand so it’s sharp in a browser tab. At larger sizes it sits on the LCD, one pixel of the bitmap to one dot. Everywhere it appears has a light and a dark version.</p>
+    </div>
+    <div class="card markcard">
+      <div class="bigmark" id="bigmark" role="img" aria-label="The mark on its 16 by 16 grid"></div>
+      <div class="markinfo">
+        <h3>The mark</h3>
+        <p>speck’s ring, open at the top left, its two ears and the vermilion speck, with nothing else. Below 64 px it’s used as pixels at whole multiples (16, 32, 48, 64) so no dot ever falls between two screen pixels.</p>
+        <div class="chipboxes">
+          <div class="chipbox l" id="sizes-l"></div>
+          <div class="chipbox d" id="sizes-d"></div>
+        </div>
+      </div>
+    </div>
+    <div class="logogrid">
+      <article class="card asset">
+        <span class="k">Browser tab</span>
+        <div class="browser l"><div class="tabs"><div class="tab on"><i class="fav"></i><span class="t">speck · control panel</span><span class="x">×</span></div><div class="tab"><i class="fav"></i><span class="t">Luro AI</span><span class="x">×</span></div></div><div class="omni"><span></span></div></div>
+        <div class="browser d"><div class="tabs"><div class="tab on"><i class="fav"></i><span class="t">speck · control panel</span><span class="x">×</span></div><div class="tab"><i class="fav"></i><span class="t">Luro AI</span><span class="x">×</span></div></div><div class="omni"><span></span></div></div>
+        <p>One SVG for both sites. It carries both looks inside it and switches to the pale mark when the browser is dark; the speck stays vermilion.</p>
+        <div class="acts"><button class="copy" data-copy="favicon">Copy favicon SVG</button></div>
+      </article>
+      <article class="card asset">
+        <span class="k">App icon</span>
+        <div class="icons"><figure><div class="ico" data-icon="light"></div><figcaption>Light</figcaption></figure><figure><div class="ico" data-icon="dark"></div><figcaption>Dark</figcaption></figure></div>
+        <div class="home"><div class="l"><div class="app"><div class="ico" data-icon="light"></div>speck</div><i></i><i></i><i></i></div><div class="d"><div class="app"><div class="ico" data-icon="dark"></div>speck</div><i></i><i></i><i></i></div></div>
+        <p>The handheld itself, its screen showing the mark. It’s drawn square and full-bleed, because the phone rounds the corners. It replaces the panel’s home-screen icons at 180, 192 and 512 px.</p>
+        <div class="acts"><button class="copy" data-copy="app-light">Copy light SVG</button><button class="copy" data-copy="app-dark">Copy dark SVG</button></div>
+      </article>
+      <article class="card asset">
+        <span class="k">Website and panel headers</span>
+        <div class="hdr site l"><i class="hm"></i><b>luro<span>AI</span></b><nav><span>Projects</span><span>About</span></nav></div>
+        <div class="hdr site d"><i class="hm"></i><b>luro<span>AI</span></b><nav><span>Projects</span><span>About</span></nav></div>
+        <div class="hdr panel l"><i class="pm"></i><b>speck</b><em>control panel</em><span class="repo">luroai/speck · main</span></div>
+        <div class="hdr panel d"><i class="pm"></i><b>speck</b><em>control panel</em><span class="repo">luroai/speck · main</span></div>
+        <p>The Luro AI site sets the mark at 32 px beside “luro” in Doto, with AI in small grey capitals so the speck stays the only red. The panel, and speck’s own site, use the mark at 16 px beside “speck”.</p>
+      </article>
+      <article class="card asset">
+        <span class="k">GitHub avatar</span>
+        <div class="gh l"><div class="pair"><figure><div class="av" data-av="light"></div><figcaption>Light</figcaption></figure><figure><div class="av" data-av="dark"></div><figcaption>Dark</figcaption></figure><div class="name"><b>Luro AI</b><span>luroai</span></div></div><div class="commit"><div class="av sm" data-av="light"></div><b>luroai</b><span>Draw the builder badge on the LCD screen</span></div></div>
+        <div class="gh d"><div class="pair"><figure><div class="av" data-av="light"></div><figcaption>Light</figcaption></figure><figure><div class="av" data-av="dark"></div><figcaption>Dark</figcaption></figure><div class="name"><b>Luro AI</b><span>luroai</span></div></div><div class="commit"><div class="av sm" data-av="light"></div><b>luroai</b><span>Draw the builder badge on the LCD screen</span></div></div>
+        <p>All screen, so GitHub’s circle crops only unlit dots. GitHub shows one avatar in both of its looks, so it takes one of these. The light one holds up on both, which is why the commit rows use it.</p>
+        <div class="acts"><button class="copy" data-copy="avatar-light">Copy light SVG</button><button class="copy" data-copy="avatar-dark">Copy dark SVG</button></div>
+      </article>
+    </div>
+    <textarea id="svgout" class="svgout" readonly hidden aria-label="SVG code to copy"></textarea>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="bhead">
+      <div><div class="eyebrow">One system</div><h2>The same screen everywhere</h2></div>
+      <p>The landing page, the panel and anything built with speck after them use one screen, one character and one set of rules.</p>
+    </div>
+    <div class="rules">
+      <div class="card rule">
+        <span class="k">The screen</span><h3>Reflective by day, backlit by night</h3>
+        <div class="looks"><figure class="look-light"><div class="screenframe"><canvas class="lcd" id="look1"></canvas></div><figcaption>Light look</figcaption></figure><figure class="look-dark"><div class="screenframe"><canvas class="lcd" id="look2"></canvas></div><figcaption>Dark look</figcaption></figure></div>
+        <p>In the light look it’s a reflective LCD, its dots casting a faint shadow on the glass behind. In the dark look it turns negative, pale dots on a dark screen, like a backlit car stereo.</p>
+      </div>
+      <div class="card rule">
+        <span class="k">The dot</span><h3>One unit of speck, one dot</h3>
+        <table class="pitch"><tbody>
+          <tr><th>Landing</th><td>160 × 96 dots, a 4 px dot, 1 dot per unit</td></tr>
+          <tr><th>Badge</th><td>28 × 28 dots in 56 px, 0.32 dots per unit</td></tr>
+          <tr><th>Auto-build</th><td>14 × 14 dots in 28 px</td></tr>
+          <tr><th>Mark</th><td>16 × 16 dots, still</td></tr>
+        </tbody></table>
+        <p>The drawing is defined once, in the panel’s units, and drawn at whatever size the screen has.</p>
+      </div>
+      <div class="card rule">
+        <span class="k">The line</span><h3>One weight, snapped to the grid</h3>
+        <p>Every line is two dots wide on the big screens and one in the panel, and it keeps that weight as it moves because strokes snap to the dots. The ring is always open at the top left. It closes only to celebrate.</p>
+      </div>
+      <div class="card rule">
+        <span class="k">Colour</span><h3>Ink, and one vermilion speck</h3>
+        <p>The screen has one colour besides its ink: the speck’s vermilion eye. Status colour stays off the screen and goes on its frame. A badge waiting for you gets a purple frame, and one that needs you gets a crimson one, the panel’s own colours for those states.</p>
+      </div>
+      <div class="card rule">
+        <span class="k">Emphasis</span><h3>Solid, blinking, then inverted</h3>
+        <figure class="emph" style="margin:0"><div class="screenframe"><canvas class="lcd" id="emph" role="img" aria-label="A character of code faint, solid, blinking and inverted"></canvas></div><figcaption><span>waiting</span><span>looked at</span><span>discussed</span><span>checked</span></figcaption></figure>
+        <p>A screen this small can’t rely on colour to show state. Code the builder looks at goes solid, a line under discussion blinks, and anything checked or approved turns inverted. This replaces the panel’s green.</p>
+      </div>
+      <div class="card rule">
+        <span class="k">Motion</span><h3>Blend, hop, blink</h3>
+        <p>States blend over 0.7 s with a hop and a blink, and props dissolve through a dither. Dots switch on at once and clear within a frame, so nothing smears. With reduced motion on, each state is a single still frame.</p>
+      </div>
+    </div>
+    <div class="card changes">
+      <h3>What the panel would change</h3>
+      <ol>
+        <li>The badge’s canvas drawing is replaced by this renderer. The seven poses, their timings, their labels and the 56 px tile stay as they are.</li>
+        <li>A ticket moving from one stage to the next blends its badge into the new pose instead of cutting to it.</li>
+        <li>Four new colour tokens, for the screen, its unlit dots, its ink and the speck, in both looks.</li>
+        <li>Checked code turns inverted instead of green. In review, the floating characters become one small page of code: a line blinks while it’s discussed, and the page inverts when it’s approved. The shipping boat loses its tick.</li>
+        <li>The Auto-build button’s hopping builder uses the same screen, and the header, the favicon and the home-screen icons take the new mark.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">A design direction for the Luro AI landing page and the speck panel. Everything on this page is drawn live by one small renderer, shared with the landing page and panel mocks.</footer>
+
+<script src="lcd.js"></script>
+<script>
+  const L = SpeckLCD;
+  const STATES = Object.keys(L.STATES);
+  const CAP = {
+    idle: 'checking yesterday’s commits, one at a time', eating: 'having a tea, at exactly 82 degrees', messy: 'leaving crumbs in the build again',
+    cleaning: 'sweeping up stray semicolons', playing: 'thinking three moves ahead', sleeping: 'asleep; builds resume at 7',
+    grumpy: 'annoyed: someone force-pushed to main', building: 'writing the tests for Contained', celebrating: 'celebrating: ticket 0262 shipped', confused: 'not sure what you meant, but thinking about it',
+  };
+  const DESC = {
+    idle: 'Breathing, glancing about, blinking. An ear twitches now and then.', eating: 'A mug on the floor, steam rising. Its eye closes to savour it.', messy: 'Crumbs about its feet, a smudge, a fly. It looks down, embarrassed.',
+    cleaning: 'Sweeping with both hands, dust kicked up behind.', playing: 'A pawn hops along three squares. Its eye follows it.', sleeping: 'Eye closed, ears down, a Z that grows as it rises.',
+    grumpy: 'Lid down, ears flat, its own small raincloud.', building: 'At the laptop, the same pose as the panel’s.', celebrating: 'The ring closes. Arms up, hops, sparks and confetti.', confused: 'Head tilted, one lid up, a shrug and a “?”.',
+  };
+  const ICON = { eating: 'tea', cleaning: 'tidy', playing: 'play', confused: 'idea', sleeping: 'sleep' };
+
+  // The mark, in this page's own colours.
+  const LG = L.logo;
+  document.getElementById('mark').innerHTML = LG.markSVG();
+
+  // Logos: the mark at its sizes, and each place it's used, in a light and a dark version.
+  const LOOK = LG.LOOKS;
+  const fixedMark = look => LG.markSVG({ ink: LOOK[look].mark, red: LOOK[look].speck });
+  document.getElementById('bigmark').innerHTML = LG.markSVG();
+  for (const look of ['light', 'dark']) document.getElementById(`sizes-${look[0]}`).innerHTML = [16, 32, 48, 64].map(px => `<figure>${fixedMark(look).replace('<svg ', `<svg width="${px}" height="${px}" aria-hidden="true" `)}<figcaption>${px}</figcaption></figure>`).join('');
+  document.querySelectorAll('.browser').forEach(b => b.querySelectorAll('.fav').forEach(f => { f.innerHTML = fixedMark(b.classList.contains('d') ? 'dark' : 'light'); }));
+  document.querySelectorAll('[data-icon]').forEach(d => { d.innerHTML = LG.appIconSVG(d.dataset.icon); });
+  document.querySelectorAll('[data-av]').forEach(d => { d.innerHTML = LG.avatarSVG(d.dataset.av); });
+  document.querySelectorAll('.hdr').forEach(h => {
+    const dark = h.classList.contains('d'), px = h.classList.contains('site') ? 32 : 16;
+    h.querySelector('i').innerHTML = LG.markSVG({ red: 'var(--speck)' }).replace('<svg ', `<svg width="${px}" height="${px}" aria-hidden="true" `);
+    h.setAttribute('aria-label', `${h.classList.contains('site') ? 'Luro AI site' : 'speck panel'} header, ${dark ? 'dark' : 'light'}`);
+  });
+  // Copy buttons: the SVG goes to the clipboard, or into a box to copy by hand where the clipboard isn't allowed.
+  const ASSETS = { favicon: () => LG.faviconSVG(), 'app-light': () => LG.appIconSVG('light', 1024), 'app-dark': () => LG.appIconSVG('dark', 1024), 'avatar-light': () => LG.avatarSVG('light', 460), 'avatar-dark': () => LG.avatarSVG('dark', 460) };
+  const out = document.getElementById('svgout');
+  document.getElementById('logos').addEventListener('click', e => {
+    const b = e.target.closest('[data-copy]'); if (!b) return;
+    const text = ASSETS[b.dataset.copy](), label = b.dataset.label || (b.dataset.label = b.textContent);
+    const manual = () => { out.hidden = false; out.value = text; out.focus(); out.select(); b.textContent = 'Select the code below'; };
+    try { navigator.clipboard.writeText(text).then(() => { b.textContent = 'Copied'; out.hidden = true; }, manual); } catch { manual(); }
+    setTimeout(() => { b.textContent = label; }, 2200);
+  });
+
+  // The hero.
+  const hero = L.handheld(document.getElementById('hero'), { state: 'idle', caption: CAP.idle });
+  const chips = document.getElementById('chips'), cap = document.getElementById('caption'), autoBtn = document.getElementById('auto');
+  chips.innerHTML = STATES.map(s => `<button class="chip" data-s="${s}" aria-pressed="${s === 'idle'}">${s}</button>`).join('');
+  function show(s) {
+    hero.set(s); hero.say(CAP[s]); hero.active(ICON[s] || null); cap.textContent = CAP[s];
+    chips.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.s === s)));
+  }
+  let auto = true, ai = 0;
+  const ORDER = ['idle', 'building', 'confused', 'celebrating', 'eating', 'idle', 'playing', 'messy', 'cleaning', 'grumpy', 'sleeping'];
+  const setAuto = on => { auto = on; autoBtn.setAttribute('aria-pressed', String(on)); };
+  setInterval(() => { if (!auto || document.hidden) return; ai = (ai + 1) % ORDER.length; show(ORDER[ai]); }, 6000);
+  chips.addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; setAuto(false); show(c.dataset.s); });
+  autoBtn.addEventListener('click', () => setAuto(!auto));
+  document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => { setAuto(false); show(b.dataset.act); }));
+
+  // Fidelity: the first sketch's resolution at two frames a second, and this one.
+  L.tile(document.getElementById('old'), L.STATES, 'idle', { cols: 64, rows: 38, k: .4, ox: 32, oy: 35, step: 500, persist: false });
+  L.tile(document.getElementById('new'), L.STATES, 'idle', { cols: 160, rows: 96, k: 1, ox: 80, oy: 88 });
+
+  // The filmstrip: idle into celebrating, at seven moments of the 0.7 s blend.
+  const strip = document.getElementById('strip');
+  for (let n = 0; n < 7; n++) {
+    const f = document.createElement('figure'), fr = document.createElement('div'), c = document.createElement('canvas');
+    fr.className = 'screenframe'; c.className = 'lcd'; c.setAttribute('role', 'img'); c.setAttribute('aria-label', `Frame ${n + 1} of 7`);
+    fr.append(c); f.append(fr); f.insertAdjacentHTML('beforeend', `<figcaption>${Math.round(n / 6 * 700)} ms</figcaption>`); strip.append(f);
+    const k = L.io(n / 6);
+    new L.Screen(c, { cols: 104, rows: 80, still: true, draw(s) { L.render(s.pen(.8, 52, 74), L.blend(L.STATES.idle(1500), L.STATES.celebrating(380), k)); } });
+  }
+
+  // The ten states.
+  document.getElementById('states').innerHTML = STATES.map(s => `<article class="card state"><div class="screenframe"><canvas class="lcd" data-state="${s}" role="img" aria-label="speck, ${s}"></canvas></div><h3>${s}</h3><p>${DESC[s]}</p></article>`).join('');
+  document.querySelectorAll('canvas[data-state]').forEach((c, i) => L.tile(c, L.STATES, c.dataset.state, { cols: 128, rows: 80, k: 1, ox: 64, oy: 77, offset: i * 777 }));
+
+  // The panel's seven poses, large and at real size.
+  const POSES = [
+    ['type', 'Writing tests and code', 'Build', 'At the laptop. Code flies off as it types, and now and then a finished block pops out.'],
+    ['check', 'Checking its own work', 'Self-check', 'Looks over the code around it, one character at a time. Each one it checks turns inverted.'],
+    ['review', 'Codex is reviewing · round 2', 'Review 2', 'The reviewer slides in beside a small page of code. It points out three lines in turn, the builder rewrites each one, and the page turns solid when it’s approved.'],
+    ['ship', 'Shipping', '· 0:42', 'Pushes the finished block off the screen on a paper boat.'],
+    ['wait', 'Approved · waiting for you to ship it', 'Ship', 'Waves a flag. The tile’s frame turns purple.'],
+    ['bad', 'Blocked · it has a question for you', 'Build', 'A question mark over its head. The frame turns crimson.'],
+    ['still', 'Paused', 'Build', 'Still, facing front. It doesn’t blink.'],
+  ];
+  const tone = p => (p === 'wait' ? ' wait' : p === 'bad' ? ' bad' : '');
+  document.getElementById('poses').innerHTML = POSES.map(([p, say, stage, d]) => `<article class="card pose">
+      <div class="big${tone(p)}"><canvas class="lcd" data-pose="${p}" role="img" aria-label="${say}"></canvas></div>
+      <div class="row56"><canvas class="lcd tile${tone(p)}" data-pose="${p}" aria-hidden="true"></canvas><div><div class="say${tone(p)}">${say}</div><div class="stage">${stage}</div></div></div>
+      <p>${d}</p></article>`).join('') + `<article class="card pose run">
+      <div class="big"><canvas class="lcd" id="minibig" role="img" aria-label="The Auto-build button's builder, hopping"></canvas></div>
+      <span class="runbtn"><canvas class="lcd" id="mini" aria-hidden="true"></canvas>Auto-build on</span>
+      <p>The Auto-build button’s builder, on 14 × 14 dots, hops while builds run.</p></article>`;
+  document.querySelectorAll('canvas[data-pose]').forEach(c => L.badge(c, c.dataset.pose));
+  L.mini(document.getElementById('mini')); L.mini(document.getElementById('minibig'));
+
+  // A build, start to finish.
+  const J = [['type', 'Writing tests and code', 0, 5600], ['check', 'Checking its own work', 1, 4500], ['review', 'Codex is reviewing · round 1', 2, 6200], ['wait', 'Approved · waiting for you to ship it', 3, 4200], ['ship', 'Shipping', 3, 3200]];
+  const STEPS = ['Build', 'Self-check', 'Review 1', 'Ship'];
+  const jb = L.badge(document.getElementById('journey'), 'type'), steps = document.getElementById('steps'), jbig = document.getElementById('jbig'), jtitle = document.getElementById('jtitle');
+  let jn = 0;
+  function journey() {
+    const [p, say, at, ms] = J[jn];
+    jb.set(p); jtitle.textContent = say; jtitle.style.color = p === 'wait' ? 'var(--wait)' : '';
+    jbig.className = `big${tone(p)}`;
+    steps.innerHTML = STEPS.map((s, i) => `<span class="${i < at ? 'done' : i === at ? 'now' : ''}">${s}</span>`).join('');
+    jn = (jn + 1) % J.length; setTimeout(journey, ms);
+  }
+  journey();
+
+  // The two looks, and emphasis.
+  L.tile(document.getElementById('look1'), L.STATES, 'idle', { cols: 64, rows: 48, k: .7, ox: 32, oy: 44 });
+  L.tile(document.getElementById('look2'), L.STATES, 'idle', { cols: 64, rows: 48, k: .7, ox: 32, oy: 44, offset: 3000 });
+  new L.Screen(document.getElementById('emph'), { cols: 52, rows: 15, draw(s, t) {
+    const p = s.pen(), f = L.F5;
+    [['faint', 6.5], ['solid', 19.5], ['blink', 32.5], ['inv', 45.5]].forEach(([kind, x]) => {
+      const b = p.textBox('{', x, 7.5, { font: f });
+      if (kind === 'inv') { p.dots(b.left - 1, b.top - 1, b.W + 2, b.H + 2, L.INK); p.textAt('{', b, L.OFF); return; }
+      if (kind === 'blink' && !s.still && Math.floor(t / 320) % 2) return;
+      p.textAt('{', b, kind === 'faint' ? L.FAINT : L.INK);
+    });
+  } });
+</script>
+
+</body></html>

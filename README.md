@@ -210,7 +210,7 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | `status` | Tickets by status, blocked first (`--json` for programs) |
 | `pack <id>` | The review pack for a ticket |
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
-| `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first. `config set --machine <key> <value>` sets `max_parallel_builds` or `max_parallel_tests` for this machine only. `config set builder <name>` sets `build_command` to that builder's own too, for `claude`, `codex` or `cursor`, and `--replace` lets it replace one set by hand |
+| `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first. `config set --machine <key> <value>` sets `max_parallel_builds` or `max_parallel_tests` for this machine only. `config set builder <name>` sets `build_command` to that builder's own too, for `claude`, `codex` or `cursor`, and `--replace` lets it replace one set by hand. It clears `builder_model` when the new builder doesn't offer it, as `speck agents` lists its models, or they can't be read |
 | `config show` | The main settings by group, with each one's value, whether it's the default and what it does |
 | `agents` | Says whether each of Claude Code, Codex and Cursor is installed and signed in, and lists its models (`--json` for programs) |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
