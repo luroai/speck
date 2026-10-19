@@ -1,7 +1,7 @@
 ---
 id: "0307"
 title: "Prepare release 0.9.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-19T06:09:32.538Z"
 ---
 # 0307 · Prepare release 0.9.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Once 0302–0306 ship, the panel has the LCD look from the Luro design (its badges, mark, title and app icon), and the README and its picture describe speck as it is now. Anyone following the setup prompt, or updating speck on another machine, gets 0.8.0 without it.
@@ -60,3 +60,79 @@ speck is ready to be released as 0.9.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "77f9300de9e0b101816843cb51fc48fd07a4dd42",
+    "thread_id": "01a152ca-3533-76c2-ade5-536ce8b53102",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 161066,
+      "cached_input_tokens": 109696,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1146,
+      "reasoning_output_tokens": 147
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T06:13:01.974Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.9.0; both 0307 AC1 tests passed, including invoking speck init."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.9.0 above 0.8.0 and covers shipped tickets 0302–0306 and 0308–0321. The reported comparison against v0.8.0 passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md name 0.9.0 as a public preview. The setup-prompt tests passed; README workflow descriptions agree with the shipped changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.9.0.md describes the release, changes, installation in each project and upgrade implications, with the changelog link. Claims agree with the shipped tickets; no person's name appears."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The figures test passed. Independent reading of current done tickets confirms 304 shipped, 16 cancelled, median 2 rounds and 147 first-round approvals. Reported tests: 132 passed, zero failed; version/changelog agreement passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0307.test.mjs:35",
+        "issue": "The new tests assert document heading order at line 35 and exact historical changelog prose at lines 40–44. The review rules explicitly prohibit adding tests of document wording or heading order, even though these checks reflect ticket requirements.",
+        "suggested_fix": "Remove these ordering and prose-equality assertions and leave those requirements to review. Retain tests of factual content such as versions, commands, settings and links.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release content and version updates meet the acceptance criteria, and the reported tests pass. Before approval, remove the new tests that lock document prose and heading order; the review rules explicitly forbid them."
+  }
+}
+```
+
+</details>
