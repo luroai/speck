@@ -39,6 +39,7 @@ The README describes what speck does now, and its picture shows the panel as it 
 ## Notes
 - 0249's pictures were made with the demo in `speck-assets/readme/demo/` beside this checkout, outside the repo: `server.mjs` serves the real panel page from a speck checkout with made-up tickets inside a mock agent app (`frame.html`), and `shoot.mjs` takes the screenshot at 2× with headless Chromium. Don't commit that folder or its paths.
 - Waits for everything it describes, so the README and picture match what ships.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
