@@ -572,6 +572,8 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck pr <id>                       push an approved ticket's branch and open its pull request with gh (ship_mode: pr)
   speck foreman <action> <id> ...     what the Foreman agent speck run starts may do: resume, reship, fix or ask
                                       (only that agent may run it)
+  speck foreman answer <id> "<text>"  answer the Foreman's question about a ticket (speck foreman dismiss <id>:
+                                      dismiss it)
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,

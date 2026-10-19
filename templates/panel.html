@@ -284,6 +284,14 @@
   .foreman ul { margin: 0; padding-left: 18px; }
   .foreman p { margin: 2px 0; }
   .foreman .stale, .foreman .held { color: var(--warn); }
+  /* 0318: the Foreman's question, with an Answer box and Answer and Dismiss buttons, on its ticket's card and in its detail */
+  .foreman-ask { margin: 6px 0 6px; white-space: normal; }
+  .foreman-ask .ask-answer { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 4px 0 0; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: .5px solid var(--line); resize: vertical; }
+  .foreman-ask .ask-buttons { display: flex; gap: 8px; margin: 6px 0 0; }
+  .foreman-ask .ask-reply { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 10px; background: transparent; color: var(--text); border: .5px solid var(--line); cursor: pointer; }
+  .foreman-ask .ask-reply:hover { border-color: var(--text); }
+  .foreman-ask .ask-reply:disabled { cursor: default; opacity: .6; }
+  .foreman-ask .ask-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .foreman .reload, #settings .run-switch { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
   #settings .run-switch:disabled { cursor: default; opacity: .6; }
   #settings .run-row { padding: 8px 12px; }
@@ -571,7 +579,7 @@
        anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
     .q .top .tag:not(.pick) { z-index: 1; }
     .q .full-open { min-height: 44px; }
-    .q .stop-build, .q .back-to-plan, .q .go-with { min-width: 44px; min-height: 44px; }
+    .q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply { min-width: 44px; min-height: 44px; }
     .resume { flex-wrap: wrap; }
     .resume .cmd { min-width: 0; }
     .resume .copy { min-width: 44px; min-height: 44px; }
@@ -1274,6 +1282,10 @@ const stopping = new Set(); // ids whose stop request hasn't been answered yet
 const stopRefused = new Map(); // id → why the server refused to stop its build, until the next click on its Stop build button
 const goingWith = new Set(); // 0284: ids whose Go with the recommendation request hasn't been answered yet
 const goWithRefused = new Map(); // 0284: id → why the server refused it, until the next click on its button
+const askDrafts = new Map(); // 0318: id → the answer typed so far to the Foreman's question, kept through redraws
+const askPending = new Map(); // 0318: id → 'answer' or 'dismiss' while the server is at it
+const askRefused = new Map(); // 0318: id → why the server refused, until the next press
+const askBoxes = new Map(); // 0318: `<where>:<id>` → its latest Answer box, so a redraw keeps the focus in it
 const unreadying = new Set(); // ids whose Back to Plan request hasn't been answered yet
 const planRefused = new Map(); // id → why the server refused to move it back to Plan, until the next click on its Back to Plan button
 const copied = new Map(); // id → [copy number, 'Copied' or why it couldn't], until 2 seconds after the latest copy
@@ -2338,6 +2350,8 @@ function queueItem(t) {
   else progressOf(top, t, d);
   if (!t.inFlight) {
     q.appendChild(queuedLine(t));
+    const ask = foremanAskOf(id); // 0318: a build that ended without starting it
+    if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
     if (isOpen) {
       q.appendChild(fullButton(t));
       q.appendChild(backToPlanButton(t));
@@ -2348,6 +2362,8 @@ function queueItem(t) {
   }
   const facts = t.status === 'blocked' ? questionFacts(t) : null;
   if (t.status === 'blocked' && (t.blocked_question || facts)) q.appendChild(el('div', 'question', t.blocked_question, facts, goWithButton(t), goWithRefusal(t)));
+  const ask = foremanAskOf(id); // 0318
+  if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
   if (t.resume) q.appendChild(resumeLine(t));
   if (t.paused) q.appendChild(el('div', 'act', `Paused · carry it on with speck play ${t.id}`));
   if (t.exit_label) {
@@ -2511,6 +2527,60 @@ async function goWithIt(id, option) {
     goWithRefused.set(id, "Couldn't reach the panel server, so nothing changed.");
   }
   goingWith.delete(id);
+  render();
+}
+// 0318: the Foreman agent's question about a ticket, as the server gives it, or null.
+function foremanAskOf(id) {
+  const a = state && state.foreman && typeof state.foreman === 'object' ? state.foreman.agent : null;
+  return (a && Array.isArray(a.asks) ? a.asks : []).find(q => q && String(q.id) === String(id) && typeof q.question === 'string' && q.question) || null;
+}
+// 0318: the question with an Answer box and Answer and Dismiss buttons, on the ticket's card (`where` 'card') and in the
+// Foreman's detail ('detail'). The server notes your reply in the ticket's Notes, and speck run carries an answer out.
+function foremanAskBox(id, question, where) {
+  const pending = askPending.get(id) || null;
+  const box = el('textarea', 'ask-answer');
+  box.value = askDrafts.get(id) || '';
+  box.placeholder = 'Your answer';
+  box.rows = 2;
+  box.disabled = !!pending;
+  box.setAttribute('aria-label', `Your answer to the Foreman's question about ${id}`);
+  box.askKey = `${where}:${id}`;
+  askBoxes.set(box.askKey, box);
+  box.addEventListener('input', () => askDrafts.set(id, String(box.value ?? '')));
+  box.addEventListener('click', e => e.stopPropagation()); // typing in it neither opens nor closes the card
+  const press = (label, doing, action) => {
+    const b = el('button', 'ask-reply', pending === action ? doing : label);
+    b.type = 'button';
+    b.disabled = !!pending;
+    b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) replyToForeman(id, action, question); });
+    return b;
+  };
+  const answer = press('Answer', 'Answering…', 'answer'), dismiss = press('Dismiss', 'Dismissing…', 'dismiss');
+  answer.title = 'Send your answer: speck run carries the work on with it';
+  dismiss.title = 'Dismiss the question, leaving the ticket as it is';
+  return el('div', 'foreman-ask', null, el('p', 'question', `The Foreman asks you: ${question}`), box, el('div', 'ask-buttons', null, answer, dismiss),
+    askRefused.has(id) ? el('div', 'ask-refused', askRefused.get(id)) : null);
+}
+async function replyToForeman(id, action, question) {
+  if (askPending.has(id)) return;
+  const text = String(askDrafts.get(id) || '').trim();
+  askRefused.delete(id);
+  if (action === 'answer' && !text) { askRefused.set(id, 'Write your answer in the box first.'); render(); return; }
+  if (action === 'dismiss' && (typeof confirm !== 'function' || !confirm(`Dismiss the Foreman's question about ${id}: "${question}"? It's noted in the ticket's Notes, and the ticket is left as it is.`))) return;
+  askPending.set(id, action);
+  render();
+  try {
+    const res = await fetch(`/api/foreman/${encodeURIComponent(id)}/${action}`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+    if (res.ok) askDrafts.delete(id);
+    else {
+      let why = null;
+      try { why = (await res.json()).error; } catch { /* no JSON: say what we know */ }
+      askRefused.set(id, typeof why === 'string' && why ? why : `The server refused (${res.status}).`);
+    }
+  } catch {
+    askRefused.set(id, "Couldn't reach the panel server, so nothing changed.");
+  }
+  askPending.delete(id);
   render();
 }
 // An open ready ticket in the queue has a Back to Plan button: the server sets it back to draft and commits it, and
@@ -2832,6 +2902,11 @@ function render() {
   for (const id of planRefused.keys()) if (!m.queue.some(t => String(t.id) === id && !t.inFlight)) planRefused.delete(id);
   // 0284: and a refused Go with the recommendation once its ticket isn't blocked.
   for (const id of goWithRefused.keys()) if (!m.queue.some(t => String(t.id) === id && t.status === 'blocked')) goWithRefused.delete(id);
+  // 0318: and what's kept for the Foreman's question once it's gone. A redraw that replaces the Answer box being typed
+  // in puts the focus back in the new one, where it was.
+  for (const ids of [askDrafts, askRefused]) for (const id of ids.keys()) if (!foremanAskOf(id)) ids.delete(id);
+  const typing = typeof document.activeElement === 'object' && document.activeElement && document.activeElement.askKey ? document.activeElement : null;
+  askBoxes.clear();
   if (shapingView === 'inbox') fill('shaping', keptItems('shaping', m.inbox, i => `n:${i.path}`, i => openInbox.has(i.path), inboxItem), 'Inbox is empty.');
   else if (shapingView === 'ideas') fill('shaping', keptItems('shaping', m.ideas, i => `i:${i.path}`, i => openIdeas.has(i.path), ideaItem), 'No ideas waiting.');
   else fill('shaping', keptItems('shaping', m.drafts, t => `t:${t.id}`,
@@ -2842,7 +2917,8 @@ function render() {
   // The counter comes from the clock, not the ticket, so it is put right on a kept row.
   // A log box is kept through the refresh while its ticket is unchanged, and each new log is put in it in place (showLog).
   const rows = keptItems('queue', m.queue, t => String(t.id), t => [openQueue.has(String(t.id)), shippingId === String(t.id), stopping.has(String(t.id)), stopRefused.get(String(t.id)) ?? null,
-    unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null], queueItem,
+    unreadying.has(String(t.id)), planRefused.get(String(t.id)) ?? null, goingWith.has(String(t.id)), goWithRefused.get(String(t.id)) ?? null,
+    foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
   startBadges(new Set(m.queue.filter(t => t.inFlight).map(t => String(t.id))));
@@ -2916,6 +2992,11 @@ function render() {
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
   renderForeman(f, stale);
   drawRunSwitch();
+  const again = typing && typing.isConnected === false ? askBoxes.get(typing.askKey) : null; // 0318
+  if (again && again !== typing) {
+    again.focus();
+    try { again.setSelectionRange(typing.selectionStart, typing.selectionEnd); } catch { /* nothing selected */ }
+  }
   if (tipTag !== null && tipTag.isConnected === false) closeTip(); // 0165: its tag has left the page, so it goes too
 }
 $('run').addEventListener('click', e => {
@@ -2968,7 +3049,7 @@ function renderForeman(f, stale) {
   // 0287: what the Foreman agent is looking into, its questions to you and what it did lately, and why
   const a = f.agent, list = v => (Array.isArray(v) ? v : []), looked = [];
   if (a && a.running && typeof a.running === 'object') looked.push(item(String(a.running.id), `is being looked into: ${String(a.running.what || '')}`));
-  for (const q of list(a && a.asks)) looked.push(item(String(q.id), 'The Foreman asks you:', el('p', 'question', String(q.question || ''))));
+  for (const q of list(a && a.asks)) looked.push(item(String(q.id), foremanAskBox(String(q.id), String(q.question || ''), 'detail'))); // 0318
   for (const d of list(a && a.did)) looked.push(item(String(d.id), `The Foreman ${String(d.did || d.action || '')}${d.text ? `: ${String(d.text)}` : ''}.`, d.why ? `Why: ${String(d.why)}` : ''));
   kids.push(...section('Looked into', looked, 'The Foreman hasn\'t had to look into anything.'));
   box.replaceChildren(...kids);

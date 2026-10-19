@@ -19,10 +19,11 @@ import { panelSettings, panelSettingRequest, panelSaveRequestAsync, reviewerMode
 import { codexModelsAsync } from './codex-models.mjs';
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
+import { panelForemanReply } from './foreman-answer.mjs';
 import { findAgentsAsync } from './agents.mjs';
 import { goWith } from './go-with.mjs';
 
-// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, Ship, the speck run switch and a setting) ----------
+// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, the speck run switch and a setting) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -225,7 +226,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -389,6 +390,20 @@ export async function panelServer() {
       try {
         return wrote(res, goWith(repo, recommendation[1], new Date(), { by: 'user' })); // 0317: only the button is you
       } catch (e) { return wrote(res, { status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }); }
+    }
+    const reply = where.match(/^\/api\/foreman\/(\d{1,4})\/(answer|dismiss)$/); // 0318: your reply to the Foreman's question
+    if (req.method === 'POST' && reply) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      const chunks = [];
+      let size = 0, tooBig = false;
+      req.on('data', c => { size += c.length; if (size > 65536) tooBig = true; else chunks.push(c); });
+      req.on('end', () => {
+        if (tooBig) return send(res, 413, 'application/json', JSON.stringify({ error: 'That answer is too long. Shorten it and try again.' }));
+        try { return wrote(res, panelForemanReply(repo, reply[1], reply[2], Buffer.concat(chunks).toString('utf8'))); }
+        catch (e) { return wrote(res, { status: 500, body: { error: String(e?.message || e) } }); }
+      });
+      return;
     }
     const ship = where.match(/^\/api\/tickets\/(\d{1,4})\/ship$/);
     if (req.method === 'POST' && ship) {
