@@ -7,8 +7,8 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
-import { stopBuild, runState } from './run.mjs';
-import { panelShip, panelRunOn, panelRunOff } from './panel-run.mjs';
+import { stopBuild } from './run.mjs';
+import { panelShip, panelRunOn, panelRunOff, panelRunState } from './panel-run.mjs';
 export { panelRunOn } from './panel-run.mjs';
 import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
@@ -291,7 +291,7 @@ export async function panelServer() {
     // run is there only while speck run is on, as restart_error is only while there is one: without it, speck run is off.
     // 0285: the Foreman's status, from speck run's own record, and the stamp of the page's code now.
     try {
-      const run = runState(runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets) });
+      const run = panelRunState(repo, runs), foreman = foremanView({ run, record: readForeman(runs), tickets: out.board && out.board.tickets, fixing: fixingNow(), agent: agentView(runs, out.board && out.board.tickets) });
       const snap = boards.snapshot({ ...panelBoard(out.board), ...(run.on ? { run } : {}), ...(restartError ? { restart_error: restartError } : {}), foreman, ...pageNow() });
       return { status: 200, body: snap.body, snap };
     }
