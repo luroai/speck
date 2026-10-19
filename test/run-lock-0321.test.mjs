@@ -8,8 +8,8 @@ import { spawn, spawnSync } from 'node:child_process';
 import { runRepo, until, alive, killAll, env } from './support/run.mjs';
 import { cliCopy } from './support/panel.mjs';
 import { startRun, stop, lockPid, childrenOf, count, edit, SWITCHED, mark, watching } from './support/run-switch.mjs';
-import { panelRunOn, panelRunOff } from '../scripts/panel-run.mjs';
-import { lockLost, recordedRun, keepsLock, isSpeckRun } from '../scripts/run-lock.mjs';
+import { panelRunOn, panelRunOff, panelRunState } from '../scripts/panel-run.mjs';
+import { lockLost, recordedRun, keepsLock, isSpeckRun, processCwd } from '../scripts/run-lock.mjs';
 
 // ---------- 0321: never run two speck runs for one repo ----------
 
@@ -224,4 +224,64 @@ test('0321 AC4: only the speck run holding the lock writes the Foreman\'s status
     assert.equal(await Promise.race([run.exited, new Promise(res => setTimeout(() => res('still running'), 8000))]), 0, run.out());
     assert.equal(fs.existsSync(foremanFile(r.dir)), false, 'it wrote no status once it no longer held the lock');
   } finally { killAll([thief]); await stop(run); }
+});
+
+test('0321 AC1: a speck run\'s folder is read on macOS as well as Linux, so either can tell which repo it works in', { skip: spawnSync('lsof', ['-v']).error ? 'no lsof here' : false }, async () => {
+  const r = runRepo({ tickets: [] });
+  const run = startRun(r.dir, cliCopy().cli, { SPECK_RUN_POLL_MS: '60000' });
+  try {
+    assert.ok(await watching(run), run.out());
+    const real = fs.realpathSync(r.dir);
+    assert.equal(processCwd(run.child.pid, 'linux'), real);
+    assert.equal(processCwd(run.child.pid, 'darwin'), real, 'with lsof, as on macOS');
+    assert.equal(processCwd(99999999, 'darwin'), null);
+  } finally { await stop(run); }
+});
+
+// Starts the stand-in speck run in `r` holding its lock, and gives it with its worker's pid.
+async function standIn(r) {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'speck-0321-'));
+  fs.writeFileSync(path.join(bin, 'speck.mjs'), STANDIN);
+  const workerFile = path.join(bin, 'worker');
+  const host = spawn(process.execPath, [path.join(bin, 'speck.mjs'), 'run'], { cwd: r.dir, detached: true, stdio: 'ignore', env: { ...env, WORKER_FILE: workerFile } });
+  assert.ok(await until(() => fs.existsSync(workerFile) && fs.readFileSync(workerFile, 'utf8')), 'the worker started');
+  fs.mkdirSync(runs(r.dir), { recursive: true });
+  fs.writeFileSync(lockFile(r.dir), String(host.pid));
+  const exited = new Promise(res => host.on('exit', res));
+  return { host, worker: Number(fs.readFileSync(workerFile, 'utf8')), exited };
+}
+
+test('0321 AC2: every page shows speck run on while its worker is still stopping, after the process you started has gone, and Turn on is refused meanwhile', async () => {
+  const r = runRepo({ tickets: [] });
+  const { host, worker, exited } = await standIn(r);
+  try {
+    const off = panelRunOff(r.dir);
+    await exited;
+    // Its lock is gone with it (the stand-in leaves it, so remove it as speck run does), but the worker is still running.
+    fs.rmSync(lockFile(r.dir), { force: true });
+    assert.deepEqual(panelRunState(r.dir), { on: true, pid: worker });
+    const on = await panelRunOn(r.dir);
+    assert.equal(on.status, 409, JSON.stringify(on.body));
+    assert.match(on.body.error, new RegExp(`speck run \\(process ${worker}\\) is still stopping`));
+    killAll([worker]);
+    assert.equal((await off).status, 200);
+    assert.deepEqual(panelRunState(r.dir), { on: false, pid: null });
+  } finally { killAll([host.pid, worker]); }
+});
+
+test('0321 AC2: once the wait for it has run out, it still shows on until all of it has stopped, and turning it off again asks what is left to stop', async () => {
+  const r = runRepo({ tickets: [] });
+  const { host, worker, exited } = await standIn(r);
+  try {
+    const res = await panelRunOff(r.dir, { ms: 300 });
+    assert.equal(res.status, 500, JSON.stringify(res.body));
+    assert.match(res.body.error, new RegExp(`process ${worker}\\) is still stopping`));
+    await exited;
+    fs.rmSync(lockFile(r.dir), { force: true });
+    assert.equal(panelRunState(r.dir).on, true);
+    // The worker stops on Ctrl+C now, so turning it off again ends it.
+    const again2 = await panelRunOff(r.dir);
+    assert.equal(again2.status, 200, JSON.stringify(again2.body));
+    assert.deepEqual(panelRunState(r.dir), { on: false, pid: null });
+  } finally { killAll([host.pid, worker]); }
 });

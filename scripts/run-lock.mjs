@@ -8,16 +8,25 @@ import { pidAlive } from './run-switch.mjs';
 import { processRows } from './build-procs.mjs';
 import { readForeman } from './foreman.mjs';
 
+// A process's folder, or null when it can't be read: from /proc on Linux, and from lsof elsewhere, such as macOS.
+export function processCwd(pid, platform = process.platform) {
+  if (platform === 'linux') { try { return fs.realpathSync(`/proc/${pid}/cwd`); } catch { return null; } }
+  const r = sh('lsof', ['-a', '-p', String(pid), '-d', 'cwd', '-Fn']);
+  const line = r.status === 0 ? r.stdout.split('\n').find(l => l.startsWith('n')) : null;
+  try { return line ? fs.realpathSync(line.slice(1)) : null; } catch { return null; }
+}
+
 // True when the process is `speck run`, from its command line, so a pid since reused by another program never counts.
-// Given `repo`, it must also be working in that repo: its folder is the repo or one inside it. That's read from /proc,
-// so only on Linux; anywhere else, or when its folder can't be read, it doesn't count.
+// Given `repo`, it must also be working in that repo: its folder is the repo or one inside it. One whose folder can't
+// be read doesn't count.
 export function isSpeckRun(pid, repo = null) {
   const r = sh('ps', ['-ww', '-o', 'args=', '-p', String(pid)]);
   if (r.status !== 0 || !/speck(\.mjs)?\s+run(\s|$)/.test(r.stdout.trim())) return false;
   if (!repo) return true;
-  let cwd, root;
-  try { cwd = fs.realpathSync(`/proc/${pid}/cwd`); root = fs.realpathSync(repo); } catch { return false; }
-  return cwd === root || cwd.startsWith(root + path.sep);
+  const cwd = processCwd(pid);
+  let root;
+  try { root = fs.realpathSync(repo); } catch { return false; }
+  return cwd !== null && (cwd === root || cwd.startsWith(root + path.sep));
 }
 
 // A speck run still working in this repo though its lock is gone or names a process that has gone: the one the

@@ -1,7 +1,7 @@
 ---
 id: "0321"
 title: "Never run two speck runs for one repo"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-19T05:33:51.917Z"
 ---
 # 0321 · Never run two speck runs for one repo
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 `speck run` keeps a lock so only one runs per repo, yet on 2026-10-18 two ran in this repo for about eight hours. One was the speck run started on 2026-10-16 (process 434685), which had switched to new code and was working through a worker process (2456375) it started. The other (1571492) was started at 14:54 from the Settings view's switch and held `run.lock`. Both launched builds and ships, saw each other's builds as "outside speck run", and took turns writing the Foreman's status, so the header changed every two or three seconds. Two speck runs can start the same build or ship twice.
@@ -56,3 +56,87 @@ Only one speck run is ever working in a repo, however it was started and whether
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "901800297957da8f03fd8a93dbbc7664f1b4d37f",
+    "thread_id": "01a152b2-4ac1-7312-894a-77e2dace8dc2",
+    "seconds": 43,
+    "usage": {
+      "input_tokens": 263350,
+      "cached_input_tokens": 209152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1565,
+      "reasoning_output_tokens": 76
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:47:01.430Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "The reported passing AC1 tests cover Linux refusal with and without run.lock. However, scripts/run-lock.mjs:isSpeckRun(pid, repo) requires /proc/<pid>/cwd, so recordedRun always ignores the existing run on supported macOS when its lock disappears."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The two reported passing AC2 tests exercise panelRunOff's response timing. They do not exercise panel state: scripts/panel.mjs:stateOf still uses run-switch.mjs:runState, which reports off once the host exits or its lock disappears, even while a tracked worker remains alive."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/run.mjs:tick checks keepsLock before scheduling work; stop exits without stopping detached builds or ships. Reported passing AC3 tests cover replacement of the lock, disappearance after switching code, one message and process exit."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/run.mjs:foreman checks holding() before saveForeman. The reported passing AC4 test replaces the lock and verifies that no Foreman record is written afterwards."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported passing AC3/AC5 test verifies build survival and adoption without relaunch. Shutdown uses the existing stop path; scripts/ship-queue.mjs:launchShip retains detached shipping and existing ship detection. test/run-0193.test.mjs also contains a shipping-survival regression test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run-lock.mjs",
+        "issue": "Recovery from a missing lock does not refuse a second run on macOS. isSpeckRun(pid, repo) reads /proc/<pid>/cwd and returns false when unavailable. macOS is supported, but recordedRun therefore ignores its live incumbent, allowing another run to take the missing lock and begin work before the incumbent's next check.",
+        "suggested_fix": "Implement repo identification on supported macOS as well as Linux, and add coverage for refusing a second run when the incumbent's lock is missing on that platform.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/panel.mjs",
+        "issue": "Waiting in panelRunOff only delays the requesting page's response. Board snapshots still derive on/off solely from run.lock and its host PID. If the host exits before its worker, another open or refreshed Settings page shows Auto-build off while the worker remains alive. After a shutdown timeout, the requesting page can also show off despite the surviving worker.",
+        "suggested_fix": "Make the panel's shared run state account for workers still stopping, including timeout handling. Add a panel-state test that reads a snapshot after the host exits but before its worker stops; the existing stand-in test checks only the endpoint response.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change detects lost locks and preserves ongoing builds, with the reported tests passing. Two gaps remain: duplicate-start protection fails on macOS when the lock disappears, and Settings can show speck run as off while a worker is still running."
+  }
+}
+```
+
+</details>
