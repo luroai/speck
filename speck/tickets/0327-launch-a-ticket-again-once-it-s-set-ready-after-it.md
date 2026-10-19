@@ -1,7 +1,7 @@
 ---
 id: "0327"
 title: "Launch a ticket again once it's set ready after its build never started"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-19
+started: "2026-10-19T08:42:45.847Z"
 
 ---
 # 0327 · Launch a ticket again once it's set ready after its build never started
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When a build ends without starting its ticket (it stopped to ask about the ticket before changing anything), speck run won't launch that ticket again until speck run itself restarts, even after the ticket is fixed and set ready again. On 2026-10-19, 0322's criterion was corrected and the ticket set ready again, but it only built after speck run was restarted by hand.
