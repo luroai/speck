@@ -48,7 +48,7 @@ test('0317 AC1: with Fixing fix, the header says "Fixing on" beside the status w
 
 test('0317 AC1: the Foreman\'s detail says which setting Fixing has, and speck status says Fixing is on', async () => {
   for (const fixing of ['fix', 'tell', 'off']) assert.match(detail(await opened(view([], { fixing }))).textContent, new RegExp(`Fixing: ${fixing}\\. The Foreman`));
-  assert.doesNotMatch(detail(await opened({ ...view([]), fixing: 'constructor' })).textContent, /Fixing:/, 'a setting speck doesn\'t know isn\'t shown');
+  assert.doesNotMatch(detail(await opened(view([], { fixing: 'constructor' }))).textContent, /Fixing:/, 'a setting speck doesn\'t know isn\'t shown');
   const lines = foremanLines(view([], { fixing: 'fix' }));
   assert.equal(lines[0], 'FOREMAN: Idle · Fixing on');
   assert.match(lines[1], /^ {2}Fixing: fix\. /);

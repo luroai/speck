@@ -102,7 +102,7 @@ export function foremanView({ run, record, tickets, fixing = 'tell', agent = nul
   if (ship && ship.hold) held.push(`Shipping is ${ship.hold.message}`);
   const ag = agent && typeof agent === 'object' ? agent : { running: null, waiting: [], did: [], asks: [] };
   const asks = list(ag.asks).filter(a => a && !blocked.some(b => b.id === a.id));
-  const view = (word, tone) => ({ word, tone, fixing, building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
+  const view = (word, tone) => ({ word, tone, fixing, fixing_says: Object.hasOwn(FIXING_SAYS, fixing) ? FIXING_SAYS[fixing] : '', building, ready: ready.map(({ id, why }) => ({ id, why })), held, ship, blocked, took, agent: ag });
   if (!on) return view('Off', 'off');
   if ((yours && fixing !== 'off') || asks.length) return view(`Needs you ${(fixing !== 'off' ? yours : 0) + asks.length}`, 'bad');
   if (ship && ship.running) return view(`Shipping ${ship.running}`, 'ok');

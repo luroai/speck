@@ -273,7 +273,7 @@
   .run-state { gap: 6px; max-width: 100%; min-width: 0; }
   .run-state .mini { display: block; flex: none; width: 28px; height: 28px; margin-left: -4px; image-rendering: pixelated; }
   .run-state .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .run-state .fixing { flex: none; font-size: 11px; color: var(--muted); border-left: .5px solid var(--line); padding-left: 6px; } /* 0317 */
+  .run-state .fixing { flex: none; font-size: 12px; color: var(--muted); border-left: .5px solid var(--line); padding-left: 6px; } /* 0317 */
   /* 0285: the Foreman's status, coloured by its tone, and its detail under the header */
   .run-state.fm-ok { color: var(--ok); border-color: var(--ok); }
   .run-state.fm-warn { color: var(--warn); border-color: var(--warn); }
@@ -2928,12 +2928,6 @@ $('run').addEventListener('click', e => {
 // 0285: the Foreman's status and detail, as the server worked them out from speck run's own record. A server without
 // it (older code) gets what the page can tell: on or off.
 let foremanOpen = false; // whether the Foreman's detail is open
-// 0317: what each Fixing setting has the Foreman do, as scripts/foreman.mjs says it
-const FIXING_SAYS = {
-  off: 'off. The Foreman leaves blocked questions to you, without counting them under Needs you.',
-  tell: 'tell. The Foreman leaves blocked questions to you, and counts them under Needs you.',
-  fix: 'fix. The Foreman takes the recommendation of a blocked question that changes nothing you\'d notice and has a clear winner, once per ticket.',
-};
 function foremanOf(st) {
   const f = st && st.foreman && typeof st.foreman === 'object' ? st.foreman : null;
   const on = !!(st && st.run && st.run.on), list = v => (Array.isArray(v) ? v : []);
@@ -2941,7 +2935,7 @@ function foremanOf(st) {
   return { word: f && typeof f.word === 'string' ? f.word : on ? 'Idle' : 'Off', tone, on,
     building: list(f && f.building), ready: list(f && f.ready), held: list(f && f.held), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
     agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null, // 0287: the Foreman agent's work
-    fixing: f && typeof f.fixing === 'string' ? f.fixing : null, took: list(f && f.took) }; // 0317
+    fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took) }; // 0317
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
@@ -2959,7 +2953,7 @@ function renderForeman(f, stale) {
   }
   const item = (id, ...rest) => el('li', null, null, el('code', null, id), ...rest.map(r => (typeof r === 'string' ? el('span', null, ` ${r}`) : r)));
   const section = (title, items, none) => [el('h4', null, title), items.length ? el('ul', null, null, ...items) : el('p', 'none', none)];
-  if (f.fixing && Object.hasOwn(FIXING_SAYS, f.fixing)) kids.push(el('p', 'fixing-says', `Fixing: ${FIXING_SAYS[f.fixing]}`)); // 0317
+  if (f.fixing_says) kids.push(el('p', 'fixing-says', `Fixing: ${f.fixing_says}`)); // 0317: which setting Fixing has, as the server says it
   for (const h of f.held) kids.push(el('p', 'held', String(h))); // 0299: what holds up every build or ship, said once
   kids.push(...section('Building', f.building.map(id => item(String(id))), 'Nothing is building.'));
   kids.push(...section('Ready, not building', f.ready.map(r => item(String(r.id), String(r.why || ''))), 'No ready ticket is waiting.'));
