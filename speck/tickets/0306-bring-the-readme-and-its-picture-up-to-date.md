@@ -40,6 +40,8 @@ The README describes what speck does now, and its picture shows the panel as it 
 - 0249's pictures were made with the demo in `speck-assets/readme/demo/` beside this checkout, outside the repo: `server.mjs` serves the real panel page from a speck checkout with made-up tickets inside a mock agent app (`frame.html`), and `shoot.mjs` takes the screenshot at 2× with headless Chromium. Don't commit that folder or its paths.
 - Waits for everything it describes, so the README and picture match what ships.
 - Failing before this build: none
+- Tests: AC1, AC2 and AC4 are about how the README reads and what the pictures show, so review checks them by reading the README and looking at `docs/images/`. `test/readme-0306.test.mjs` checks AC3's file facts (width, size, no text or EXIF chunks). The pictures were taken again with the 0249 demo, updated to serve the panel's LCD script and font and to give the header the Foreman's status, worked out by speck's own code.
+- Self-check: dropped two tests that checked the README's wording (the 0267 check fails on them), and changed the Foreman paragraph's heading so it doesn't promise one word when the status can be two.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
