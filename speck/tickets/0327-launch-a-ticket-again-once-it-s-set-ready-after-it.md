@@ -1,7 +1,7 @@
 ---
 id: "0327"
 title: "Launch a ticket again once it's set ready after its build never started"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-19
 started: "2026-10-19T08:42:45.847Z"
+approved: "2026-10-19T08:47:34.427Z"
 
 ---
 # 0327 · Launch a ticket again once it's set ready after its build never started
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build ends without starting its ticket (it stopped to ask about the ticket before changing anything), speck run won't launch that ticket again until speck run itself restarts, even after the ticket is fixed and set ready again. On 2026-10-19, 0322's criterion was corrected and the ticket set ready again, but it only built after speck run was restarted by hand.
@@ -50,9 +51,14 @@ When a build stops before it has started its ticket, for example to ask about th
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 136,033
+- Elapsed since build started: 5 min
+- Changed lines: 41 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: a ticket ended by `speck stop` stays held in the same speck run even once set ready again and committed, as it stays in `launched`; saved to the inbox as `speck/ideas/2026-10-19-launch-a-stopped-ticket-again-without-restarting-speck-run.md`.
 
