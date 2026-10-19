@@ -140,3 +140,92 @@ Only one speck run is ever working in a repo, however it was started and whether
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e7b851db51468af0237e12aafbc52035564c806a",
+    "thread_id": "01a152b2-4ac1-7312-894a-77e2dace8dc2",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 386523,
+      "cached_input_tokens": 321792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2501,
+      "reasoning_output_tokens": 188
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:50:07.145Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run-lock.mjs:processCwd now supports lsof as well as /proc. Reported passing AC1 tests exercise both lookup paths, refusal with a missing lock, refusal after switching code, and exclusion of another repo."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panel-run.mjs:panelRunState retains the on state while tracked workers survive, including after timeout; panel.mjs:stateOf uses it. Reported passing AC2 tests cover host-first exit, shared state, refusal to restart and retrying shutdown."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "run.mjs:tick checks keepsLock before scheduling; stop exits without killing detached work. Reported passing AC3 tests cover replaced and missing locks, switched workers, exit and a single diagnostic."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "run.mjs:foreman checks holding() before saveForeman. The reported passing AC4 test verifies no record is written after lock replacement."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported passing AC3/AC5 test checks build survival and adoption without duplication. The existing detached ship launch and ship detection remain unchanged, and shutdown retains the existing stop path."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run-lock.mjs",
+        "issue": "The original missing macOS process-folder lookup is fixed: processCwd now uses lsof outside Linux.",
+        "suggested_fix": "No further production-code change required for this finding.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/panel.mjs",
+        "issue": "Shared panel state now accounts for surviving workers during shutdown and after a timeout.",
+        "suggested_fix": "No further change required for the reported shutdown-state issue.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/run-lock-0321.test.mjs",
+        "issue": "The new macOS lookup test fails on macOS itself. It unconditionally asserts that processCwd(run.child.pid, 'linux') returns the repo folder, but that branch reads /proc, which macOS does not provide. Since macOS normally has lsof, the test runs rather than skips and fails.",
+        "suggested_fix": "Run the /proc assertion only on Linux. Keep the lsof assertion on supported platforms where lsof is available.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both previously identified behaviour gaps are fixed, and the reported tests pass. One test correction remains: the new macOS check currently fails when run on macOS because it also requires Linux’s process filesystem."
+  }
+}
+```
+
+</details>
