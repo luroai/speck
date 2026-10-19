@@ -74,7 +74,7 @@ test('0009 AC4: speck status shows ideas as waiting or ticketed', () => {
   r.write('c.md', '# No status line\n');
   r.write('d.md', ideaNote('ticketed (0006)'));
   r.run('new', 'Something');
-  assert.match(r.run('status').stdout, /^IDEAS \(4: 3 waiting, 1 ticketed\) in speck\/ideas\/$/m);
+  assert.match(r.run('status').stdout, /^IDEAS \(4: 3 waiting, 0 in the inbox, 1 ticketed\) in speck\/ideas\/$/m);
 });
 
 test('0009 AC1/AC2: ticketedStatus replaces other values, extends the list and keeps any note after it', () => {
