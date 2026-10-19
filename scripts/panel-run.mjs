@@ -4,8 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { SpeckError, sh, findTicket, padId, runsOf } from './speck.mjs';
+import { SpeckError, findTicket, padId, runsOf } from './speck.mjs';
 import { runState, runsDir, pidAlive, refusalFile, takeRefusal } from './run.mjs';
+import { isSpeckRun, runProcesses } from './run-lock.mjs';
 
 // 0133: the Ship button in an approved ticket's review pack. It's the user shipping (Gate 2), so it runs `speck ship <id>`
 // as /speck-ship does, in its own process, since a ship runs the tests and can take minutes. Resolves with { status,
@@ -32,6 +33,8 @@ export async function panelShip(repo, id) {
 const RUN_SWITCH_MS = 10000, RUN_SWITCH_POLL_MS = 50;
 
 export function panelRunOn(repo) {
+  const still = stillStopping(repo);
+  if (still) return Promise.resolve({ status: 409, body: { error: stillSays(still) } });
   const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
   const log = path.join(runsDir(repo), 'run.log'), refusal = refusalFile(repo);
   let from = 0, fd, child;
@@ -57,28 +60,52 @@ export function panelRunOn(repo) {
   });
 }
 
-// True when the process is `speck run`, from its command line, so a lock left with a pid that has since been reused by
-// another program never gets that program stopped.
-function isSpeckRun(pid) {
-  const r = sh('ps', ['-ww', '-o', 'args=', '-p', String(pid)]);
-  return r.status === 0 && /speck(\.mjs)?\s+run(\s|$)/.test(r.stdout.trim());
+// 0321: each speck run being turned off, by repo: { pid, left }, the pid its lock held and its processes still to stop.
+// While any of them is alive the panel shows speck run on, with or without its lock, so no page shows it off before
+// all of it has stopped, even once the wait for it has run out. Kept by this panel server, so a restart forgets it.
+const stopping = new Map();
+function stillStopping(repo) {
+  const s = stopping.get(repo);
+  if (!s) return null;
+  s.left = s.left.filter(pidAlive);
+  if (s.left.length) return s;
+  stopping.delete(repo);
+  return null;
+}
+const stillSays = s => `speck run (process${s.left.length === 1 ? '' : 'es'} ${s.left.join(', ')}) is still stopping. Wait for it to stop, or turn it off again.`;
+
+// speck run's state as the panel shows it: on while its lock names a live process, or while one being turned off is
+// still stopping, with the pid it's known by.
+export function panelRunState(repo, runs = runsOf(repo)) {
+  const run = runState(runs);
+  if (run.on) return run;
+  const s = stillStopping(repo);
+  return s ? { on: true, pid: s.left.includes(s.pid) ? s.pid : s.left[0] } : run;
 }
 
 // Turning it off stops the running `speck run`, from the panel or a terminal, as Ctrl+C does: SIGINT, which it answers by
-// stopping and leaving its builds running. Resolves once it has stopped.
-export function panelRunOff(repo) {
-  const run = runState(runsOf(repo));
-  if (!run.on) return Promise.resolve({ status: 409, body: { error: 'speck run is off already.' } });
-  if (!isSpeckRun(run.pid))
+// stopping and leaving its builds running. Resolves once it has stopped, with each speck run on new code it hosts (0321),
+// or with an error after `ms`. isSpeckRun keeps a lock left with a pid since reused by another program from getting that
+// program stopped. Turned off again while still stopping, it asks whatever is left to stop.
+export function panelRunOff(repo, { ms = RUN_SWITCH_MS } = {}) {
+  const run = runState(runsOf(repo)), was = stillStopping(repo);
+  if (!run.on && !was) return Promise.resolve({ status: 409, body: { error: 'speck run is off already.' } });
+  if (run.on && !isSpeckRun(run.pid))
     return Promise.resolve({ status: 409, body: { error: `speck run's lock names process ${run.pid}, which isn't speck run, so it wasn't stopped. If no speck run is running, delete ${path.relative(repo, path.join(runsOf(repo), 'run.lock'))}.` } });
-  try { process.kill(run.pid, 'SIGINT'); }
-  catch (e) { return Promise.resolve({ status: 500, body: { error: `Couldn't stop speck run (process ${run.pid}): ${e.message}` } }); }
-  const end = Date.now() + RUN_SWITCH_MS;
+  // Its processes, listed before it's asked to stop and again on each check while it's there, as it may be switching.
+  const pid = run.on ? run.pid : was.pid;
+  const listed = () => { try { return runProcesses(pid); } catch { return [pid]; } };
+  const s = { pid, left: [...new Set([...(was ? was.left : []), ...(pidAlive(pid) ? listed() : [])])] };
+  stopping.set(repo, s);
+  for (const p of pidAlive(pid) ? [pid] : s.left) {
+    try { process.kill(p, 'SIGINT'); } catch (e) { if (p === pid) return Promise.resolve({ status: 500, body: { error: `Couldn't stop speck run (process ${pid}): ${e.message}` } }); }
+  }
+  const end = Date.now() + ms;
   return new Promise(resolve => {
     const check = setInterval(() => {
-      const now = runState(runsOf(repo));
-      if (!pidAlive(run.pid) || now.pid !== run.pid) { clearInterval(check); resolve({ status: 200, body: { ok: true, run: { on: false, pid: null } } }); }
-      else if (Date.now() > end) { clearInterval(check); resolve({ status: 500, body: { error: `speck run (process ${run.pid}) was asked to stop but is still running after ${RUN_SWITCH_MS / 1000} seconds. Try again, or stop it from its terminal.` } }); }
+      s.left = [...new Set([...s.left, ...(pidAlive(pid) ? listed() : [])])].filter(pidAlive);
+      if (!s.left.length) { clearInterval(check); stopping.delete(repo); resolve({ status: 200, body: { ok: true, run: { on: false, pid: null } } }); }
+      else if (Date.now() > end) { clearInterval(check); resolve({ status: 500, body: { error: `${stillSays(s)} It was asked to stop ${ms / 1000} seconds ago. Try again, or stop it from its terminal.` } }); }
     }, RUN_SWITCH_POLL_MS);
   });
 }
