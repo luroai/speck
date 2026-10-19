@@ -43,6 +43,12 @@ speck is ready to be released as 0.9.1.
 - After it ships, check that the `v0.9.1` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.9.1 --target main --title "speck 0.9.1" --notes-file docs/releases/v0.9.1.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.9.0`: 0322–0328.
+- Built from main at `speck(0328): Say what became of a question the Foreman asked in its recent actions`: 312 shipped, 16 cancelled, 13 minutes median, 2 rounds median, 152 approved in the first round, worked out as 0307 did, with its figures test.
+- 0307's checks that named 0.9.0 as the current version now check the current version, and its figures test checks only the figures 0.9.0 was built from, as 0307 did for 0298.
+- README: no ticket since `v0.9.0` left it saying anything untrue (0324 updated its `build_command` line), so only its status line and figures change here.
+- Self-check: the changelog no longer says the Foreman's detail tells you a ticket whose build never started is waiting to be set ready again: it's `speck run`'s log that says so.
+- Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
