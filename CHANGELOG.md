@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.9.1 · 19 October 2026
+
+What's fixed since 0.9.0. A bug-fix release: setup suggests the right test command for pnpm, yarn and bun projects, tickets keep their builder after you switch back to Claude Code, a pull request that clashes on GitHub goes back to its build, and `speck run`, `speck status`, the Foreman and the panel each say or do what they should in a few more cases.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.9.1 init`.
+- `speck detect`, which setup reads, now suggests the test command for the package manager the project uses: `pnpm test`, `yarn test` or `bun run test`, and `npm test` otherwise. Before, it suggested `npm test` for every project with a test script. It goes by the `packageManager` field in `package.json` when there is one, and by the lockfile otherwise, and the install command it suggests always names the same package manager. A project without a test script gets the same suggestion as before.
+
+### Building
+
+- Switching the builder back to Claude Code no longer has Claude Code build the tickets you made with Codex or Cursor. With `build_command` set to speck's own command for Claude Code, each ticket is built by the builder in its `builder:` field, as with `build_command` blank. A `build_command` you've written yourself is still used for every ticket, and the Settings view now says so under the builder, with how to go back to each ticket keeping its builder.
+- When a build stops before it has started its ticket, for example to ask about the ticket, `speck run` no longer needs restarting to try it again. Once you set the ticket ready again, or commit a change to it such as a corrected criterion, `speck run` starts it on its next check. Until then, `speck run`'s log says it won't start it again until the ticket is set ready again and committed.
+
+### Shipping through pull requests
+
+- With `ship_mode: pr`, a pull request that GitHub says conflicts with the main branch is now refused as a conflict, and `speck run` hands the ticket back to its build to bring in the newer work and be reviewed again, as it does with a conflict it finds itself. Before, it was refused with an ordinary error and the ticket sat approved until someone noticed. Pull requests GitHub can't merge for other reasons, such as failing checks or a review it needs, are refused as before. Once the build has been approved again, the next ship asks you to run `speck pr` for the ticket to send the new work up to its pull request.
+
+### speck status and the Foreman
+
+- The `IDEAS` line in `speck status` no longer counts ideas that triage has dropped. It now gives three counts, ideas waiting to be shaped, notes in the inbox and ideas ticketed, and they match the panel's Ideas and Inbox tabs. `speck status --json` gives the same counts as `idea_counts`.
+- A question the Foreman asked now says, in its recent actions in `speck status` and the panel's Foreman detail, what became of it: that you dismissed it and when, that you answered it, when and with what, or that it no longer waits for you and why. Before, an answered or dismissed question still read as if it were waiting for you. A question still waiting for you, and the Needs you count, are as before.
+
+### The panel
+
+- Closing a ticket's full view, with Close, Escape or a click outside it, puts the keyboard focus back on that ticket's Full ticket button, or on the top of its section when the ticket has left the board, so you can carry on with the keyboard from where you were. Opening the full view from a Shipped ticket's title or a Review pack button still leaves the focus on the page when it closes.
+
 ## 0.9.0 · 19 October 2026
 
 What's new since 0.8.0. A minor release that gives the panel the look of the speck design, a dot-matrix LCD screen, lets you answer the Foreman's questions and see what it will do, builds each ticket with the agent it was made for, and ships through pull requests to a main branch that only takes them.
