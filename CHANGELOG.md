@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.9.0 · 19 October 2026
+
+What's new since 0.8.0. A minor release that gives the panel the look of the speck design, a dot-matrix LCD screen, lets you answer the Foreman's questions and see what it will do, builds each ticket with the agent it was made for, and ships through pull requests to a main branch that only takes them.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.9.0 init`.
+- `speck detect`, which setup reads, now finds Cursor's command-line tool under its new name, `agent`, as well as its old one, `cursor-agent`, as `speck agents` already did. Before, setup could say Cursor wasn't installed when it was.
+- When the project's main branch only takes pull requests, or you say your team works through them, setup explains pull request mode and offers to turn it on, instead of warning that speck can't work there. Otherwise it asks whether you want it, recommending local shipping for someone working alone.
+- The README describes speck as it is now, with new pictures of the panel in its light and dark looks.
+
+### The panel's new look
+
+- Every builder badge on the Build list is drawn on a small green dot-matrix LCD screen by the design's own renderer. When a ticket moves on, its builder hops and blinks into its new pose instead of jumping. A badge waiting for you has a purple frame, and a blocked one a crimson frame. A badge scrolled off screen pauses until you scroll back to it.
+- The Foreman's button shows a small builder on its own LCD screen. It hops while builds are running and stands still otherwise, and with reduced motion turned on it doesn't move.
+- The header shows the design's logo, a hand-drawn ring with two ears and the red speck, beside "speck" in Doto, the design's dot-matrix lettering. Both are larger than the old mark and title. The panel serves the font itself, so it looks the same with no internet connection. On a phone, the small "control panel" label no longer shows, so the name and your project's name both fit.
+- In the light look, the LCD screens are a paler green-grey, so they don't look heavy on the white cards. The dark look is as the design draws it.
+- The browser tab's icon is the logo, and it follows your browser's light or dark look by itself. The icon on a phone's or computer's home screen is a small handheld with the logo on its screen, in the design's own colours. A browser may keep showing the old icon until it clears its stored copy.
+
+### The Foreman
+
+- With Fixing set to `fix`, the Foreman's status in the header says "Fixing on" beside its status word, and its detail says which setting Fixing has.
+- Each blocked ticket says on its card either that the Foreman will take its recommendation or that it's waiting for you, and only the ones waiting for you count under Needs you.
+- Once a recommendation has been taken, the ticket's card says who took it, the Foreman or you with the "Go with the recommendation" button, which option and when, until the ticket moves on. The Foreman's detail lists what it took in the last 24 hours. `speck status` shows the same.
+- A question the Foreman agent asked about a stuck ticket shows on the ticket's card and in the Foreman's detail, with an Answer box and a Dismiss button. `speck foreman answer <id> "<text>"` and `speck foreman dismiss <id>` do the same from the command line. Answering writes your answer in the ticket's Notes and picks the work up again with it, carrying the build on or trying the ship again. Dismissing notes that you did and leaves the ticket as it is. Each question can be dealt with once: a second try says it already has been. An answer is carried out only while `speck run` is on, and only if the ticket hasn't moved on since.
+
+### Building with Claude Code, Codex or Cursor
+
+- With `build_command` blank, `speck run` builds each ticket with the builder in its own `builder:` field, rather than whichever one `speck/config.yml` names today, and passes `builder_model` only when that's the builder in `speck/config.yml`. A ticket with no `builder:` field uses the one in `speck/config.yml`. A ticket whose builder isn't installed isn't started, and the Foreman's detail says why. A build carried on after a stop or a hand-back carries on with the builder it started with. With `build_command` set, every ticket still uses it, and `speck run` says once, as it starts, that the tickets' own builders are ignored.
+- Switching the builder, in the Settings view or with `speck config set builder`, clears `builder_model` when the new builder doesn't offer that model, or when its models can't be read, and tells you why. A model the new builder does offer is kept.
+- A Codex builder and a Codex reviewer on two different models are now accepted without `allow_same_model_review`, as a Claude Code pair already was, when `build_command` is blank and `builder_model` is set. The same model on both, or either left blank, is still refused unless `allow_same_model_review` is on.
+
+### Reviewing
+
+- The built-in Claude reviewer (`reviewer: claude`) now runs with no MCP servers or claude.ai connectors, such as Gmail or Google Drive, in every round. It keeps its other limits, model and effort, and its verdict is recorded as before.
+
+### Shipping through pull requests
+
+- With `ship_mode: pr`, the ticket's move to done is now part of its pull request, so merging the pull request is what files the ticket away. speck no longer pushes anything straight to your main branch, so a main branch that only takes pull requests works, whether speck merges the pull request or you merge it yourself on GitHub. A pull request opened before this change gets that extra commit the first time you ship it, and is merged on a later try once GitHub has run its checks.
+- `/speck-ship` explains that with `ship_mode: pr` shipping merges the ticket's pull request on GitHub, and what to do when GitHub can't merge it. The brief lists `ship_mode` with the other settings.
+
+### speck run
+
+- Only one `speck run` works in a repo now, before or after it has switched to new code. Starting another, from a terminal or the Settings view's switch, is refused with a message naming the one that's running. A `speck run` that finds it has lost the repo's lock stops starting builds and ships, says so once in its log and exits, and the builds and any ship it had going carry on and are picked up by the one that remains. Only the `speck run` holding the lock writes the Foreman's status, so the header no longer flickers between two.
+- Turning `speck run` off in the Settings view stops all of it, including the copy running newer code after a switch, and the switch shows it off only once all of it has stopped.
+- `speck run` no longer says a build it launched or resumed is "being built outside speck run". Builds you start from a conversation, or resume by hand, are still reported that way, once.
+
 ## 0.8.0 · 18 October 2026
 
 What's new since 0.7.0. A minor release that gives speck a Foreman, one status for the whole pipeline that can also clear technical blockages itself, shows pictures of a visual change before you ship it, and can ship through GitHub pull requests.

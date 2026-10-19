@@ -17,7 +17,7 @@ You can trust the result without reading the code because every ticket goes thro
   <img alt="An agent conversation on the left, with speck's panel open beside it on the right, showing tickets being planned, built and waiting to ship." src="docs/images/demo-light.png">
 </picture>
 
-> Status: 0.8.0, a public preview. It works end to end on a local machine. Expect rough edges.
+> Status: 0.9.0, a public preview. It works end to end on a local machine. Expect rough edges.
 
 ## Get started
 
@@ -251,9 +251,9 @@ speck/
 
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
-- **284 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
+- **304 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
 - **13 minutes** median from a build starting to its ticket shipping.
-- **1 review round** median. 141 tickets were approved in the first round.
+- **2 review rounds** median. 147 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
 
