@@ -1,7 +1,6 @@
 # One Inbox for my ideas and agent notes
 
 Captured: 2026-10-09 · Status: idea
-Triaged: 1
 
 ## What
 Merge the panel's Ideas and Inbox tabs into one view called **Inbox**. It lists the user's own ideas (from conversations with the agent) and the inbox notes build agents raise, with the agent ones labelled simply "agent". Each item gets a **Cancel** button so the user can clear out what's no longer wanted, and a short hint to talk to an agent to turn it into tickets. There's no Promote button. The folders stay as they are: everything in `speck/ideas/`. Tickets made from an idea start as `draft`, at P3 like every new ticket.
