@@ -50,7 +50,7 @@ speck is ready to be released as 0.9.0.
 - Self-check: the release notes no longer say a Codex build is never started with a Claude model, as `builder_model` can still be set by hand; they say it isn't left over from a switch.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to be released as 0.9.0. The changelog and the GitHub release notes describe what's new since 0.8.0: the panel's LCD look and new logo, answering the Foreman's questions and seeing what it will do, each ticket built by the agent it was made for, pull request mode on a main branch that only takes pull requests, a Claude reviewer without your connected services, and only ever one speck run per project. The README and the product brief say 0.9.0, and the README's "Built with speck" figures are up to date: 304 tickets shipped, with a median of 2 review rounds. Once this ships, the release should appear on GitHub by itself: check that it did, and on your other machines run the install command again in each project to update.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +60,9 @@ speck is ready to be released as 0.9.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Tidy-up: 0297's and 0298's release tests still check that each changelog section sits above the one before and that older sections match their tag, which the build rules now forbid as tests of a document's wording or order. 0307's tests leave those to review.
+- After it ships, check that the `v0.9.0` tag and its GitHub release page appeared (see Notes).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +134,79 @@ speck is ready to be released as 0.9.0.
     ],
     "escalation_question": "",
     "summary": "The release content and version updates meet the acceptance criteria, and the reported tests pass. Before approval, remove the new tests that lock document prose and heading order; the review rules explicitly forbid them."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "4723f2b2956a00485d358f4515ad72e8ac94bcbe",
+    "thread_id": "01a152ca-3533-76c2-ade5-536ce8b53102",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 272272,
+      "cached_input_tokens": 212992,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1803,
+      "reasoning_output_tokens": 147
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T06:13:37.600Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.9.0. Both AC1 tests passed, including invoking speck init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md describes the shipped changes in plain English. Read-only comparison confirms 0.9.0 is above 0.8.0 and all historical sections match v0.8.0 unchanged. The factual-content test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say 0.9.0, a public preview. The latest-release setup prompt remains unchanged and its tests passed. The README's workflow descriptions remain consistent with the shipped tickets reviewed in round 1."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.9.0.md retains the verified release summary, changes and benefits, install command, per-project update instructions, upgrade implications and changelog link. No person's name appears. All AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The figures test passed with 304 shipped, 16 cancelled, 13 minutes median, 2 review rounds median and 147 first-round approvals. Version/changelog agreement passed. The reported run had 131 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0307.test.mjs",
+        "issue": "The previous tests asserted changelog heading order and exact historical prose. Both prohibited assertions have now been removed; the remaining checks cover facts.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Release 0.9.0 is ready for the owner's merge decision. The version, release notes, status lines and usage figures meet the criteria. The test issue is fixed, and the reported tests pass."
   }
 }
 ```
