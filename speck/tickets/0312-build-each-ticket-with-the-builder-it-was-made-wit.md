@@ -38,6 +38,7 @@ A ticket records the builder it was made with, but `speck run` builds every read
 
 ## Notes
 - From `speck/ideas/2026-10-18-build-older-tickets-with-the-builder-they-were-made-with.md` (inbox, from 0293). Builds start in `scripts/run.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
