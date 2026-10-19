@@ -1,7 +1,7 @@
 ---
 id: "0325"
 title: "Leave dropped ideas out of speck status's idea count"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-19
 started: "2026-10-19T07:08:30.962Z"
 approved: "2026-10-19T07:16:45.056Z"
+finished: "2026-10-19T07:24:38.414Z"
 
 ---
 # 0325 · Leave dropped ideas out of speck status's idea count
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck status` counts every idea that isn't ticketed as waiting, including ones triage has dropped, so its `IDEAS (…)` line overstates what's left to shape. Triage on 2026-10-19 dropped 18 notes in one go.
