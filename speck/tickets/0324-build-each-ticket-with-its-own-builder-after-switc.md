@@ -37,6 +37,8 @@ With Claude Code's own build command, tickets made with Codex or Cursor are stil
 
 ## Notes
 - From `speck/ideas/2026-10-19-build-codex-tickets-with-codex-after-switching-to-claude.md`. Each ticket's builder is chosen in `scripts/ticket-builder.mjs`; Claude Code's own command is `DEFAULT_BUILD_COMMAND` in `scripts/build-model.mjs` and `OWN_BUILD_COMMANDS` in `scripts/builder-switch.mjs`.
+- Failing before this build: none
+- Self-check: no changes. Checked that resumed and handed-back builds carry on with the agent their run record names, that `speck run` still refuses a Codex builder with Claude Code's command, and that a Claude Code ticket now checks Claude Code is installed before starting, as Codex and Cursor tickets already did.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
