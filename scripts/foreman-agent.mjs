@@ -105,7 +105,7 @@ export function codeKey(repo, cfg, id) {
 const readObject = file => { try { const v = JSON.parse(fs.readFileSync(file, 'utf8')); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; } };
 
 // speck run's record of the Foreman agent: { running: { id, token, pid, key, what, started } | null, queue: [{ id, key,
-// what, log }], tried: { <id>: key }, resumes: [{ id, message, by?, question? }], answered: [askKey] }. 0318: answered
+// what, log }], tried: { <id>: key }, resumes: [{ id, message, by?, question?, status? }], answered: [askKey] }. 0318: answered
 // lists your answers to its questions already carried out, and a resume `by` 'user' carries one out.
 export function readAgentState(runs) {
   const s = readObject(path.join(runs, STATE)) || {};
@@ -265,8 +265,12 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
       const t = tickets.find(y => String(y.id) === x.id);
       if (!t || t.status !== x.status) { say(`${x.id}: your answer to the Foreman wasn't carried out, as the ticket has moved on since.`); continue; }
       if (x.carry === 'reship') { ships.again(x.id); say(`${x.id}: speck run is shipping it again, once, as you answered the Foreman.`); }
-      else s.resumes = [...s.resumes.filter(y => y.id !== x.id), { id: x.id, message: x.text, by: 'user', question: x.question }];
+      else s.resumes = [...s.resumes.filter(y => y.id !== x.id), { id: x.id, message: x.text, by: 'user', question: x.question, status: x.status }];
     }
+    // An answer waiting for a build slot is dropped once its ticket has moved on.
+    const stale = s.resumes.filter(x => x.by === 'user' && !tickets.some(t => String(t.id) === x.id && t.status === x.status));
+    for (const x of stale) say(`${x.id}: your answer to the Foreman wasn't carried out, as the ticket has moved on since.`);
+    if (stale.length) { s.resumes = s.resumes.filter(x => !stale.includes(x)); changed = true; }
     for (const t of tickets) {
       if (!s.resumes.some(x => x.id === t.id) || running.has(t.id) || t.build_running) continue;
       if (running.size >= max) break;

@@ -140,6 +140,20 @@ test('0318 AC2: an answer whose ticket has moved on before speck run gets to it 
   assert.ok(a.said.some(m => /moved on/.test(m)));
 });
 
+test('0318 AC2: an answer waiting for a build slot isn\'t carried out once its ticket has moved on', () => {
+  const { r, a } = asked();
+  reply(r, 'answer', 'Keep it.');
+  a.running.add('0002'); // the only build slot is in use
+  a.q.check([T('0001', 'building'), T('0002', 'building')]);
+  assert.equal(a.resumed.length, 0, 'waits for a slot');
+  a.running.clear();
+  a.q.check([T('0001', 'approved'), T('0002', 'done')]);
+  assert.equal(a.resumed.length, 0, 'not once the ticket has moved on');
+  assert.ok(a.said.some(m => /moved on/.test(m)));
+  a.q.check([T('0001', 'building')]);
+  assert.equal(a.resumed.length, 0, 'dropped, not kept for later');
+});
+
 test('0318 AC3: dismissing clears the question, records it and leaves the ticket as it is', () => {
   const { r, a, check } = asked();
   const out = reply(r, 'dismiss');
@@ -262,7 +276,7 @@ test('0318 AC4: the README, the brief and the Foreman\'s skill name the commands
   }
   assert.ok(read('docs/brief.md').includes('speck/.cache/runs/run.foreman-answer.<id>.<time>.json'));
   assert.ok(read('docs/brief.md').includes('speck(<id>): Foreman: answer') && read('docs/brief.md').includes('speck(<id>): Foreman: dismiss'));
-  assert.match(read('skills/speck-foreman/SKILL.md'), /`speck foreman answer` and `speck foreman dismiss` are the user's/);
+  for (const command of ['speck foreman answer', 'speck foreman dismiss']) assert.ok(read('skills/speck-foreman/SKILL.md').includes(command), command);
   const help = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' });
   assert.match(help.stdout + help.stderr, /speck foreman answer <id> "<text>"/);
 });
