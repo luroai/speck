@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0319", "0317"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-19T05:43:06.442Z"
-approved: "2026-10-19T05:52:16.723Z"
+approved: "2026-10-19T05:56:57.211Z"
 
 ---
 # 0312 · Build each ticket with the builder it was made with
@@ -58,13 +58,14 @@ Worth keeping an eye on: with a build command set by hand, which is how Claude C
 ## Review log
 Round 1 (codex): changes requested: F1 The same-model review guard still treats builder_model as applying to every Claude ticket, although this change deliberately removes it when the configured builder differs.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 657,275
-- Elapsed since build started: 9 min
-- Changed lines: 144 (limit 5000)
+- Reviewer tokens: 1,206,079
+- Elapsed since build started: 14 min
+- Changed lines: 143 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - With `builder: claude`, `build_command` is set, so tickets made with Codex or Cursor are built by Claude Code, while the Settings view says tickets keep their builder: speck/ideas/2026-10-19-build-codex-tickets-with-codex-after-switching-to-claude.md.
@@ -213,6 +214,80 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Each ticket now uses its recorded builder, missing installations are explained, and resumed builds retain their original builder. The independent-review safeguard has also been corrected. All criteria pass, with no blocking findings remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3428b30ecf5073d93683842a3b1687749c206d11",
+    "merge": true,
+    "thread_id": "01a152b5-4876-7911-80cc-6b629f3b14a6",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 546483,
+      "cached_input_tokens": 463616,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2321,
+      "reasoning_output_tokens": 318
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:56:54.349Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ticket-builder.mjs buildPlan/configFor select each ticket's builder and restrict builder_model to the configured builder. Passing AC1 tests cover command selection and the review guard. The merged sameModelProblem preserves main's Codex model handling and this ticket's model suppression."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketBuilder falls back to configBuilder when the ticket records no builder. The passing AC2 test covers missing, blank and null values."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "launchPlan preserves explicit build_command; runOn prints ignoredBuildersNote once at startup under the ticket's stated conditions. The passing AC3 process test checks both behaviours."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "buildPlan checks installation; launchPlan records the reason and runOn forwards it to the Foreman. The passing AC4 process test verifies no build starts and the detail explains why."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "runOn records the selected agent, and resumeFor dispatches using that record for resumed builds and hand-backs. Passing AC5 and existing Codex/Cursor tests cover session continuation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/same-model.mjs",
+        "issue": "The review guard previously counted a model setting that the ticket's builder would not receive. The merged implementation retains the fix while preserving main's support for configured Codex models.",
+        "suggested_fix": "No further change required; the regression test passes.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merge preserves both changes correctly. Tickets use their recorded builders, missing installations are explained, and resumed builds retain their original builder. All five criteria pass, and the independent-review safeguard remains fixed. No blocking findings remain."
   }
 }
 ```
