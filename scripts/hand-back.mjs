@@ -6,6 +6,7 @@ import { refsOf } from './ship-queue.mjs';
 import { shipState } from './ship.mjs';
 import { codexResumeArgv } from './codex-build.mjs';
 import { cursorResumeArgv } from './cursor-build.mjs';
+import { claudeStartWords, configBuilder } from './ticket-builder.mjs';
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
@@ -45,7 +46,8 @@ export const resumedRecord = ({ seen: _, ...rec }) => rec;
 // How speck run resumes a build from its run record `rec`, with `message` (a killed build's by default): { argv }, or
 // { argv: null, why } saying in a few words why it can't. A Codex build (0289) carries on its own session with
 // `codex exec resume`, once its session id has been read from its log; a Cursor build (0290) its chat with `agent -p
-// --resume`; any other with build_command (resumeArgv).
+// --resume`; a Claude Code build speck run started with its own command (0312) with that command; any other with
+// build_command (resumeArgv). 0312: builder_model is passed only when the build's agent is the configured builder.
 export function resumeFor(words, cfg, id, rec, message) {
   const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
   if (rec?.agent === 'cursor') {
@@ -53,9 +55,11 @@ export function resumeFor(words, cfg, id, rec, message) {
     return argv ? { argv } : { argv: null, why: 'its run record has no session' };
   }
   if (rec?.agent === 'codex') {
-    const argv = codexResumeArgv(cfg, session, message ?? resumeMessage(id, '$speck-build'));
+    const own = configBuilder(cfg) === 'codex' ? cfg : { ...cfg, builder_model: '' };
+    const argv = codexResumeArgv(own, session, message ?? resumeMessage(id, '$speck-build'));
     return argv ? { argv } : { argv: null, why: 'no session id has been read from its log yet, as Codex stopped before writing one' };
   }
+  if (rec?.agent === 'claude') words = claudeStartWords(cfg);
   const argv = resumeArgv(words, id, session, message ?? resumeMessage(id));
   return argv ? { argv } : { argv: null, why: session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session' };
 }
