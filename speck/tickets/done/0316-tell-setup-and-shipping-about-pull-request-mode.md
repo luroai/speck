@@ -1,7 +1,7 @@
 ---
 id: "0316"
 title: "Tell setup and shipping about pull request mode"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0315"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:47:16.757Z"
 approved: "2026-10-18T22:52:22.182Z"
+finished: "2026-10-19T05:38:30.802Z"
 
 ---
 # 0316 · Tell setup and shipping about pull request mode
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Pull request mode has shipped (0295, 0296), but the skills don't know about it: setup still warns that speck can't work with a base branch that requires pull requests, and `/speck-ship` describes only merging locally.
