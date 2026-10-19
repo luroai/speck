@@ -26,8 +26,10 @@ test('AC1: the build ends at approved, with no PR and no GitHub CLI', () => {
   assert.match(approvedStep, /speck close <id>/);
   assert.match(approvedStep, /commits only the ticket \(`speck\(<id>\): approved`\)/);
   assert.ok(approvedStep.indexOf('Review log') < approvedStep.indexOf('speck ship'), 'logs are filled in before shipping');
-  for (const n of ['speck-build', 'speck-review', 'speck-ship'])
+  for (const n of ['speck-build', 'speck-review'])
     assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'skills', n, 'SKILL.md'), 'utf8'), /\bgh\s|pull request|gh pr/i, n);
+  // 0316: /speck-ship merges a pull request only in pull request mode
+  assert.match(fs.readFileSync(path.join(ROOT, 'skills', 'speck-ship', 'SKILL.md'), 'utf8'), /`ship_mode: pr`/);
 });
 
 test('AC2: speck ship refuses, changing nothing, unless every check passes', () => {
