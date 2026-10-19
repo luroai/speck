@@ -1,7 +1,7 @@
 ---
 id: "0322"
 title: "Suggest the test command for the project's package manager"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-19
 ---
 # 0322 · Suggest the test command for the project's package manager
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 `speck detect` suggests `npm test` for any project whose `package.json` has a real test script, even when the project uses pnpm, yarn or bun. Setup then offers a test command the project doesn't normally use, and the user has to correct it: Carbon, which uses pnpm, is one.
