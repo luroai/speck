@@ -97,7 +97,27 @@ export function buildKilled(runs, id) {
 // The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.
 export const lastTicketCommit = (dir, rel) => { const r = sh('git', ['log', '-1', '--format=%H', '--', rel], { cwd: dir }); return r.status === 0 ? r.stdout.trim() : ''; };
 
-// Where the ticket's build keeps it: the checkout its branch is in, or the main checkout before the build has started it.
+// 0327: a build that ended with its ticket still ready never started it. Its run record keeps the ticket's last commit
+// as it ended, so speck run can tell once the ticket has been committed since: set ready again, or changed while ready.
+export function markStillReady(runs, id, commit) {
+  const file = path.join(runs, `${id}.json`);
+  const rec = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!rec || typeof rec !== 'object' || Array.isArray(rec)) throw new Error('it isn\'t a JSON object');
+  saveRecord(file, { ...rec, still_ready_commit: commit });
+}
+
+// True once the ticket `t` has a commit other than the one its last build kept as it ended still ready. False when
+// none was kept, or `speck stop` ended that build (heldByStop decides those).
+export function readyAgain(repo, runs, t) {
+  const file = path.join(runs, `${t.id}.json`);
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return false; }
+  if (typeof rec?.still_ready_commit !== 'string' || stoppedBySpeck(file)) return false;
+  const now = lastTicketCommit(t.worktree || repo, t.path);
+  return now !== '' && now !== rec.still_ready_commit;
+}
+
+// Where the ticket's build keeps it:the checkout its branch is in, or the main checkout before the build has started it.
 export function buildTicket(repo, cfg, id) {
   const list = worktreeList(repo);
   const branch = new RegExp(`^${cfg.branch_prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${id}-`);
