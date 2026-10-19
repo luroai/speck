@@ -43,6 +43,7 @@ Each question the Foreman asked, in its recent actions, says what became of it: 
 - Decision: keep the question in the recent actions with its outcome rather than hiding it, so the history stays readable.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: an answer with no text, a reply time that can't be read and a question with no reason still read as a sentence; a question about a ticket no longer on the board says so; the panel adds no empty line for an action with no outcome.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
