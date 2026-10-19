@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0308", "0309"]  # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-18T22:36:46.607Z"
-approved: "2026-10-18T22:49:21.083Z"
+approved: "2026-10-19T05:37:49.505Z"
 
 ---
 # 0317 · Show what the Foreman will do and has done for a blocked ticket
@@ -55,13 +55,14 @@ To see it, set the Foreman's Fixing to fix in Settings and look at a blocked tic
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 240,595
-- Elapsed since build started: 13 min
-- Changed lines: 140 (limit 5000)
+- Reviewer tokens: 632,775
+- Elapsed since build started: 421 min
+- Changed lines: 134 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (inbox): speck/ideas/2026-10-18-foreman-will-take-it-while-speck-run-is-off.md, a blocked card says the Foreman will take its recommendation even while speck run is off.
 - Known limit: the Notes give a choice's time to the minute, so a choice made in the same minute as an approval is taken to be before it, and the card doesn't show it.
@@ -122,6 +123,66 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "The panel now shows when Fixing is on, which blocked tickets the Foreman will handle, and who took each recommendation and when. The command-line status shows the same information. The tests exercise these behaviours and reported 182 passes, no failures and three skips. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "333d5bbe4a74ba240fa9bbdb3bde1e75857614b1",
+    "merge": true,
+    "thread_id": "01a15133-f03a-71a3-b973-091d2c77d826",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 390831,
+      "cached_input_tokens": 259072,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1349,
+      "reasoning_output_tokens": 265
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:37:47.131Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html render() shows Fixing on at 12px; foremanView() supplies fixing_says and renderForeman() displays it. Both 0317 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/foreman-took.mjs foremanFacts() checks the setting, question facts, previous choices and resumability. queueItem() displays who will answer. All four 0317 AC2 tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanFacts() controls how long the choice appears; foremanView() collects recent recommendations; panel and CLI render the option and time. Both 0317 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The panel passes by: 'user' and foremanFixQueue() passes by: 'foreman'. goWith() records attribution, which the panel and CLI display. Both 0317 AC4 tests passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The merged change still meets all four criteria. The font size and shared Fixing description fixes preserve the intended behaviour, and the merged code retains main’s changes. The reported test run has 247 passes, no failures and three skips. No blocking issues found."
   }
 }
 ```
