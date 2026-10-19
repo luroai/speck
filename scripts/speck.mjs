@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ideaCounts } from './idea-counts.mjs';
 import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
@@ -482,7 +483,7 @@ export function statusData(repo) {
   });
   // The command that reopens a build's session, for the panel. A config without the setting gets the default (0289:
   // Codex's, for Codex builds).
-  return { tickets: entries, ideas, resume_command: resumeCommandOf(cfg) };
+  return { tickets: entries, ideas, idea_counts: ideaCounts(repo), resume_command: resumeCommandOf(cfg) };
 }
 
 function cmdStatus(args = []) {
@@ -508,12 +509,8 @@ function cmdStatus(args = []) {
       if (s === 'cancelled' && !blank(t.fm.cancel_reason)) console.log(`        ❌ ${t.fm.cancel_reason}`);
     }
   }
-  // Notes filed in speck/ideas/done/ count as ticketed, whatever their status says.
-  const mdIn = d => (fs.existsSync(d) ? fs.readdirSync(d).filter(f => f.endsWith('.md')) : []);
-  const notes = mdIn(ideasDir(repo)), filed = mdIn(doneIdeasDir(repo)).length;
-  const ticketed = filed + notes.filter(f => ideaStatus(fs.readFileSync(path.join(ideasDir(repo), f), 'utf8')).startsWith('ticketed')).length;
-  const total = notes.length + filed;
-  console.log(`\nIDEAS (${total}: ${total - ticketed} waiting, ${ticketed} ticketed) in speck/ideas/`);
+  const { waiting, inbox, ticketed } = ideaCounts(repo);
+  console.log(`\nIDEAS (${waiting + inbox + ticketed}: ${waiting} waiting, ${inbox} in the inbox, ${ticketed} ticketed) in speck/ideas/`);
 }
 
 function cmdDiffstat() {

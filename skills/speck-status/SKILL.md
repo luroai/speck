@@ -12,5 +12,5 @@ description: Show speck tickets by status, with approved tickets waiting to ship
    - **Ready:** list by priority, and suggest `/speck-build <id>` for the top one.
    - **Cancelled:** list them with their reason, so the user can see what was already considered and turned down. Don't suggest reviving one unless they ask.
    - **Drafts:** list any that need the user's decision to become ready.
-   - **Ideas:** give the counts of waiting and ticketed ideas (`speck status` prints both), and offer `/speck-ticket` if there are ideas waiting.
+   - **Ideas:** give the counts of waiting, inbox and ticketed ideas (`speck status` prints all three), and offer `/speck-ticket` if there are ideas waiting.
 3. For a ticket in `building` or `reviewing`, run `speck next <id>` to see whether the review loop is mid-flight, and say how to resume it. If `speck status` shows a `↳ being built in <path>` line under a ticket, it's in progress in that worktree: tell the user to resume in that worktree, naming the path (open a session there, then run `/speck-build <id>`), and never to start it again from here.

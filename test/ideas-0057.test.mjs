@@ -134,7 +134,7 @@ test('0057 AC4: speck status counts filed notes as ticketed; --json lists only s
   r.write('speck/ideas/done/c.md', note('ticketed (0002)'));
   r.write('speck/ideas/done/d.md', note('ticketed (0003)'));
   r.run('new', 'Something');
-  assert.match(r.run('status').stdout, /^IDEAS \(4: 1 waiting, 3 ticketed\) in speck\/ideas\/$/m);
+  assert.match(r.run('status').stdout, /^IDEAS \(4: 1 waiting, 0 in the inbox, 3 ticketed\) in speck\/ideas\/$/m);
   const json = JSON.parse(r.run('status', '--json').stdout);
   assert.deepEqual(json.ideas.map(i => i.path), ['speck/ideas/a.md', 'speck/ideas/b.md']);
 });
