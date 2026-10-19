@@ -45,7 +45,11 @@ A ticket records the builder it was made with, but `speck run` builds every read
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck builds tickets on its own, each ticket is now built by the coding agent it was made with, such as Claude Code or Codex, rather than whichever one is set in the settings today. This applies when no build command is set by hand, which is how Codex and Cursor are set up. A ticket whose agent isn't installed on this machine isn't started: speck says why, and the Foreman's detail shows it. A build that is carried on later, after it stopped or was handed back, carries on with the agent it started with.
+
+To see it, set the builder to Codex, leave a ready ticket that says it was made with Claude Code, and turn speck run on: that ticket is built by Claude Code, and a Codex ticket by Codex.
+
+Worth keeping an eye on: with a build command set by hand, which is how Claude Code is set up, every ticket still uses that command. speck run then says once, as it starts, that the agent each ticket records is ignored.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +59,9 @@ A ticket records the builder it was made with, but `speck run` builds every read
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- With `builder: claude`, `build_command` is set, so tickets made with Codex or Cursor are built by Claude Code, while the Settings view says tickets keep their builder: speck/ideas/2026-10-19-build-codex-tickets-with-codex-after-switching-to-claude.md.
+- Skipped, a duplicate: the same-model check still treats builder_model as not passed to Codex and Cursor builds, matching speck/ideas/2026-10-18-same-model-check-counts-builder-model-on-codex-builds.md.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -126,6 +133,79 @@ A ticket records the builder it was made with, but `speck run` builds every read
     ],
     "escalation_question": "",
     "summary": "The builder selection, missing-installation reporting and session resumption meet the ticket's criteria. One safeguard needs updating: a ticket can now pass the independent-review check using a model setting that its builder never receives, allowing the same model to build and review it."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "65fc1865ac164cf8e6f074c5b18127ecc8315e6c",
+    "thread_id": "01a152b5-4876-7911-80cc-6b629f3b14a6",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 385354,
+      "cached_input_tokens": 323712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1792,
+      "reasoning_output_tokens": 318
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:51:51.301Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/ticket-builder.mjs buildPlan/configFor choose the ticket's builder and pass builder_model only for the configured builder. Passing AC1 unit and process tests cover command selection; the new regression test covers the review guard."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "ticketBuilder falls back to configBuilder for missing or blank builder fields. The passing AC2 test exercises these cases."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "launchPlan uses the explicit build_command; runOn prints ignoredBuildersNote once at startup. The passing AC3 process test checks both behaviours."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "buildPlan checks installation and launchPlan records the refusal for the Foreman. The passing AC4 process test verifies no build starts and the detail explains why."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "runOn stores the selected agent in the run record; resumeFor uses that agent for resumed builds and hand-backs. Passing AC5 tests cover configuration changes, with existing Cursor tests covering chat resumption."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/same-model.mjs",
+        "issue": "The review guard previously counted a configured builder_model that the ticket's builder would not receive. ticketSameModelProblem now treats that builder as using its default model and refuses potentially identical reviewers.",
+        "suggested_fix": "Implemented, with a passing regression test covering the mixed-builder case.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Each ticket now uses its recorded builder, missing installations are explained, and resumed builds retain their original builder. The independent-review safeguard has also been corrected. All criteria pass, with no blocking findings remaining."
   }
 }
 ```
