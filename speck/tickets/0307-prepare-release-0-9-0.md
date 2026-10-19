@@ -1,7 +1,7 @@
 ---
 id: "0307"
 title: "Prepare release 0.9.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0302", "0303", "0304", "0305", "0306", "0308", "0309", "0310", "0311", "0312", "0313", "0314", "0315", "0316", "0317", "0318", "0319", "0320", "0321"]  # ticket ids that must be done first
 created: 2026-10-18
+started: "2026-10-19T06:09:32.538Z"
 
 ---
 # 0307 · Prepare release 0.9.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Once 0302–0306 ship, the panel has the LCD look from the Luro design (its badges, mark, title and app icon), and the README and its picture describe speck as it is now. Anyone following the setup prompt, or updating speck on another machine, gets 0.8.0 without it.
