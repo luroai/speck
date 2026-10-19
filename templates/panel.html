@@ -2088,9 +2088,15 @@ function builderCommandWords(x, builder) {
   if (typeof own !== 'string') return null;
   return own === '' ? `blank, so speck run starts each build with ${BUILDER_NAMES[builder] || builder}'s own command` : `${BUILDER_NAMES[builder] || builder}'s own command`;
 }
+// 0324: while the builder isn't being switched, a build_command you've written yourself builds every ticket, whichever
+// builder it was made with, so the view says so.
 function builderSwitchLine(x) {
   const picked = settingChosen('builder');
-  if (picked === settingNow(x)) return null;
+  if (picked === settingNow(x)) {
+    const b = x.build_command;
+    if (!b || b.each_ticket !== false) return null;
+    return el('p', null, `build_command is one you've written yourself, '${typeof b.value === 'string' ? b.value : ''}', so speck run builds every ticket with it, whichever builder the ticket was made with. Set it to ${BUILDER_NAMES[settingNow(x)] || settingNow(x)}'s own command to build each ticket with its own builder.`);
+  }
   const sets = builderCommandWords(x, picked);
   return el('p', null, `Tickets already made keep the builder they were made with, ${settingNow(x)}. Saving changes who builds tickets made from now on${sets ? `, and sets build_command to ${sets}` : ''}.`);
 }
