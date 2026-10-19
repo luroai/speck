@@ -1,7 +1,7 @@
 ---
 id: "0328"
 title: "Say what became of a question the Foreman asked in its recent actions"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-19
 started: "2026-10-19T09:39:37.821Z"
+approved: "2026-10-19T09:43:17.168Z"
 
 ---
 # 0328 · Say what became of a question the Foreman asked in its recent actions
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Once you answer or dismiss a question the Foreman asked, `speck status` and the panel's Foreman detail still list it among the Foreman's recent actions as "The Foreman asked you for <id>: …", with nothing to say it's been dealt with. It reads as a question still waiting for you: 0322's question showed this way after it was dismissed and after 0322 shipped.
@@ -52,9 +53,14 @@ When the Foreman has asked you a question, its list of recent actions now says w
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 99,828
+- Elapsed since build started: 4 min
+- Changed lines: 31 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Tidy-up (review F1, minor): a question the Foreman asked with no reason prints an empty "Why:" before its outcome ("Why:  You answered it."). Leave out the empty "Why:" label for such a question. Delivery log only: cosmetic, and the empty label was there before this ticket.
