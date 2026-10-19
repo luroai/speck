@@ -143,7 +143,7 @@ function runOn(worker) {
   const uncommitted = new Set(); // ready tickets not yet committed as ready on the base branch, each reported once
   // The builds running, and the approved tickets to ship (0193), handing back each that needs work on it (0194).
   const running = new Set(), ships = shipQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id), stuck: x => agents.stuck(x) });
-  const prs = prMode(cfg) ? prQueue(repo, cfg) : null; // 0295: in pull request mode, it opens pull requests instead of shipping
+  const prs = prMode(cfg) ? prQueue(repo, cfg, { handBack: h => handBacks.keep(h), waiting: id => handBacks.waiting(id) }) : null; // 0295: in pull request mode, it opens pull requests instead of shipping; 0323: handing back a conflict
   const pollMs = Number(process.env.SPECK_RUN_POLL_MS) > 0 ? Number(process.env.SPECK_RUN_POLL_MS) : RUN_POLL_MS;
   let lastError = null;
 
