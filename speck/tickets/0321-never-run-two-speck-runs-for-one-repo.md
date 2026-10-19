@@ -1,7 +1,7 @@
 ---
 id: "0321"
 title: "Never run two speck runs for one repo"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-18
 started: "2026-10-19T05:33:51.917Z"
+approved: "2026-10-19T05:50:55.337Z"
 
 ---
 # 0321 · Never run two speck runs for one repo
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck run` keeps a lock so only one runs per repo, yet on 2026-10-18 two ran in this repo for about eight hours. One was the speck run started on 2026-10-16 (process 434685), which had switched to new code and was working through a worker process (2456375) it started. The other (1571492) was started at 14:54 from the Settings view's switch and held `run.lock`. Both launched builds and ships, saw each other's builds as "outside speck run", and took turns writing the Foreman's status, so the header changed every two or three seconds. Two speck runs can start the same build or ship twice.
@@ -56,9 +57,16 @@ Worth watching: what removed the lock on 2026-10-18 isn't known for sure (see No
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Recovery from a missing lock does not refuse a second run on macOS.; F2 Waiting in panelRunOff only delays the requesting page's response.
+Round 2 (codex): changes requested: F3 The new macOS lookup test fails on macOS itself.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,108,855
+- Elapsed since build started: 17 min
+- Changed lines: 146 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (known limits, no inbox notes):
 - The panel remembers a speck run it's turning off only in its own server process, so a panel restart in the middle of a stop forgets it, and the switch then follows the lock alone.
