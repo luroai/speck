@@ -1,7 +1,7 @@
 ---
 id: "0324"
 title: "Build each ticket with its own builder after switching to Claude Code"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 2              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-19-build-codex-tickets-with-codex-after-switch
 after: []                # ticket ids that must be done first
 created: 2026-10-19
 started: "2026-10-19T07:08:29.241Z"
+approved: "2026-10-19T07:13:34.458Z"
 
 ---
 # 0324 · Build each ticket with its own builder after switching to Claude Code
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck run` builds each ticket with the builder it records only when `build_command` is blank (0312). Switching the builder to Claude Code sets `build_command` to Claude Code's own command, because a blank one means "don't start builds" for Claude Code. So after switching back to Claude Code, tickets made with Codex or Cursor are built by Claude Code, though the Settings view says tickets keep the builder they were made with.
@@ -51,9 +52,14 @@ If you've written your own build command, it's still used for every ticket. The 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 215,659
+- Elapsed since build started: 5 min
+- Changed lines: 39 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
