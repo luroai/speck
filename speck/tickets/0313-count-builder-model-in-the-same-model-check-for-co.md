@@ -31,7 +31,7 @@ The same-model check compares the models of a Codex builder and reviewer as it d
 ## Acceptance criteria
 1. With `builder: codex`, `build_command` blank, `builder_model` set and a Codex reviewer with a different model, `speck lint`, `speck set <id> status ready` and saving in the Settings view accept it without `allow_same_model_review`.
 2. With the same model on both, or either left blank, it's refused as today unless `allow_same_model_review` is true.
-3. When `build_command` is set, `builder_model` isn't counted for any builder, since speck doesn't know what the command runs.
+3. When `build_command` is set, `builder_model` isn't counted for a Codex builder, since speck doesn't know what the command runs. A Claude builder still counts it, as speck adds it to any Claude `build_command` (the user's answer to the blocked question, 2026-10-19).
 4. The `allow_same_model_review` explanation in the Settings view no longer says `builder_model` counts only for Claude Code.
 
 ## Out of scope
