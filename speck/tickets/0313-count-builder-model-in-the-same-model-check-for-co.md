@@ -37,6 +37,7 @@ The same-model check compares the models of a Codex builder and reviewer as it d
 
 ## Notes
 - From `speck/ideas/2026-10-18-same-model-check-counts-builder-model-on-codex-builds.md` (inbox, from 0289). The check is in `scripts/lint.mjs` and `scripts/settings.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
