@@ -41,6 +41,9 @@ Only one speck run is ever working in a repo, however it was started and whether
 - Seen 2026-10-18: `run.lock` named 1571492 while 434685 and its worker 2456375 kept working, and the Foreman's record (`run.foreman.json`) alternated between `"lock": 434685` and `"lock": 1571492`. Stopping 434685 with SIGINT ended it cleanly, leaving its four builds and one ship running.
 - How the second one got the lock is not known yet; finding out is part of the build.
 - Failing before this build: none
+- How the second one got the lock, as far as the evidence shows: `run.log` has 434685 starting from the Settings view's switch, and 1571492 starting at 14:54 without a refusal, about a minute after the ship of 0298 ended (14:52:53), with no line between saying 434685 had stopped. So by 14:54 `run.lock` was gone or named a process that had gone: the panel showed the switch off and the new one took the lock. The only code that removes `run.lock` is the exit handler (only when it names its own pid) and the take-over of a stale lock (only when the process it names has gone), so nothing in speck removes it while its holder is alive. It was most likely removed from outside that code, for example by hand or by an agent following the "delete run.lock" advice. The exact cause can't be found from what's left, so the build makes the outcome hold whatever removed it: the speck run holding the lock checks it on each check and stops once it no longer holds it, and one starting also counts the live speck run the Foreman's record names (`scripts/run-lock.mjs`).
+- Self-check: a process whose folder can't be read, or isn't this repo, no longer counts as this repo's speck run, so a pid reused by a speck run in another repo never gets a start refused. Added a test.
+- Pictures: none needed. The Settings switch looks the same; only when it shows off changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
