@@ -46,7 +46,11 @@ Only one speck run is ever working in a repo, however it was started and whether
 - Pictures: none needed. The Settings switch looks the same; only when it shows off changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Only one speck run can work in a repo now. If you try to start a second one, from a terminal or from the switch in Settings, it's refused and tells you which one is running, even if the first one's lock file has gone missing. A speck run that finds it has lost its lock stops starting new builds and ships, says so once in its log and stops, while the builds and any ship it had going carry on and are picked up by the speck run that remains. Turning speck run off in Settings now waits for every part of it to stop, including the copy running newer code after an update, and every open page keeps showing it on until then.
+
+To see it: with speck run on, run `speck run` in a terminal and read the refusal. Turn it off in Settings and watch the switch go off only once it has fully stopped.
+
+Worth watching: what removed the lock on 2026-10-18 isn't known for sure (see Notes). Whatever it was, it can no longer lead to two speck runs at once.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +60,10 @@ Only one speck run is ever working in a repo, however it was started and whether
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no inbox notes):
+- The panel remembers a speck run it's turning off only in its own server process, so a panel restart in the middle of a stop forgets it, and the switch then follows the lock alone.
+- After a Turn off that ran out of time, the pages switch to off only at the panel's next reading once the last process has gone (any change on the board, or a reload), not the moment it goes.
+- The exact cause of the lost lock on 2026-10-18 wasn't found (see Notes). The refusal's advice to delete `run.lock` "if it isn't speck run" is one way a live lock could be removed by hand or by an agent. It's now harmless, but the wording could be looked at.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -224,6 +232,95 @@ Only one speck run is ever working in a repo, however it was started and whether
     ],
     "escalation_question": "",
     "summary": "Both previously identified behaviour gaps are fixed, and the reported tests pass. One test correction remains: the new macOS check currently fails when run on macOS because it also requires Linux’s process filesystem."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b1a293dfa956e41e14ef6717fb9b85cef652b4d2",
+    "thread_id": "01a152b2-4ac1-7312-894a-77e2dace8dc2",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 451788,
+      "cached_input_tokens": 385152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3128,
+      "reasoning_output_tokens": 188
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-19T05:50:41.081Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "run-lock.mjs:recordedRun and processCwd supplement the atomic lock with repo-specific process identification. Passing AC1 tests cover terminal and Settings refusal, code switching, missing locks, another repo and both process-folder lookup paths."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelRunOff tracks the host and its workers; panelRunState supplies shared panel state until they stop. Passing AC2 tests cover switched workers, host-first exit, timeout, restart refusal and shutdown retry."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "run.mjs:tick checks keepsLock before scheduling work and exits through stop on lock loss. Passing AC3 tests verify exit, one diagnostic, worker shutdown and preservation of running builds."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "run.mjs:foreman checks holding() before saveForeman. The passing AC4 test verifies no Foreman record is written after lock replacement."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The passing AC3/AC5 test verifies build survival and subsequent adoption without relaunch. Detached shipping and existing ship detection remain unchanged; shutdown uses the existing stop path covered by the shipping-survival regression test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/run-lock.mjs",
+        "issue": "The missing macOS process-folder lookup is fixed through lsof.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/panel.mjs",
+        "issue": "Shared panel state now accounts for workers surviving their host during shutdown, including after timeout.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F3",
+        "severity": "blocking",
+        "file": "test/run-lock-0321.test.mjs",
+        "issue": "The /proc assertion is now restricted to Linux, while the lsof assertion remains enabled wherever lsof is installed.",
+        "suggested_fix": "None required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change refuses duplicate runs, stops scheduling when lock ownership is lost, and keeps Settings on until shutdown finishes. Existing builds and ships carry on. All findings are resolved; the reported checks passed with no failures."
   }
 }
 ```
