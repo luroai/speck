@@ -1,6 +1,7 @@
 # Leave chance failures out of a hand-back
 
 Captured: 2026-10-17 · Status: inbox
+Triaged: 1
 From ticket: 0264
 
 ## What

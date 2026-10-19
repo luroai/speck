@@ -1,6 +1,6 @@
 # speck detect finds Cursor as agent
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0288
 
 ## What

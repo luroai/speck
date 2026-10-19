@@ -1,6 +1,6 @@
 # Pass builder_model to Codex builds
 
-Captured: 2026-10-17 · Status: inbox
+Captured: 2026-10-17 · Status: dropped
 From ticket: 0279
 
 ## What

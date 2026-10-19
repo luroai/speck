@@ -1,6 +1,6 @@
 # Hand back a pull request GitHub says conflicts
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: ticketed (0323)
 From ticket: 0316
 
 ## What

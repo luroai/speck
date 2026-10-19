@@ -1,6 +1,7 @@
 # Copy the test repos that test files set up by hand
 
 Captured: 2026-10-15 · Status: inbox
+Triaged: 1
 From ticket: 0230
 
 ## What

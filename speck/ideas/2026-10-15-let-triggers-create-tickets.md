@@ -1,6 +1,7 @@
 # Let triggers create tickets
 
 Captured: 2026-10-15 · Status: idea
+Triaged: 1
 
 ## What
 Set up triggers that create work in speck by themselves. For example, an email inbox watcher that drafts a reply, or leaves a ticket for it in the Plan queue, so speck becomes a to-do list. Or a Zoom meeting summary that arrives and creates discovery tickets for what came up in the meeting.

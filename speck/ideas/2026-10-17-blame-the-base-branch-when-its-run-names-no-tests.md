@@ -1,6 +1,7 @@
 # Blame the base branch when its failing run names no tests
 
 Captured: 2026-10-17 · Status: inbox
+Triaged: 1
 From ticket: 0264
 
 ## What

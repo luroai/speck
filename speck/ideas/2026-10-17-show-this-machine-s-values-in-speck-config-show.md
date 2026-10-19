@@ -1,6 +1,7 @@
 # Show this machine's values in speck config show
 
 Captured: 2026-10-17 · Status: inbox
+Triaged: 1
 From ticket: 0261
 
 ## What

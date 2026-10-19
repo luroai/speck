@@ -1,6 +1,6 @@
 # Stop 0270's test failing builds that change a test file
 
-Captured: 2026-10-17 · Status: inbox
+Captured: 2026-10-17 · Status: dropped
 From ticket: 0272
 
 ## What

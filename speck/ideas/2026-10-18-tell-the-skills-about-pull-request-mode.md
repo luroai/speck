@@ -1,6 +1,6 @@
 # Tell the skills about pull request mode
 
-Captured: 2026-10-18 · Status: inbox
+Captured: 2026-10-18 · Status: dropped
 From ticket: 0296
 
 ## What

@@ -1,6 +1,6 @@
 # Build Codex tickets with Codex after switching to Claude Code
 
-Captured: 2026-10-19 · Status: inbox
+Captured: 2026-10-19 · Status: ticketed (0324)
 From ticket: 0312
 
 ## What

@@ -1,6 +1,7 @@
 # Let speck stop see a build end while its process check is slow
 
 Captured: 2026-10-16 · Status: inbox
+Triaged: 1
 From ticket: 0218
 
 ## What

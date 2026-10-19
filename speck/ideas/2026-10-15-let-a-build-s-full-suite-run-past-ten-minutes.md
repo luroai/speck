@@ -1,6 +1,6 @@
 # Let a build's full suite run past ten minutes
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 From ticket: 0227
 
 ## What

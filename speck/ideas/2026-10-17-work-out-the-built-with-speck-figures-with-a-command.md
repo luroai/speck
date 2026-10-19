@@ -1,6 +1,7 @@
 # Work out the Built with speck figures with a command
 
 Captured: 2026-10-17 · Status: inbox
+Triaged: 1
 From ticket: 0267
 
 ## What

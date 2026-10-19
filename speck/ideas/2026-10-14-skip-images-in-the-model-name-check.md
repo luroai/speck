@@ -1,6 +1,7 @@
 # Skip images in the model-name check
 
 Captured: 2026-10-14 · Status: inbox
+Triaged: 1
 From ticket: 0170
 
 ## What

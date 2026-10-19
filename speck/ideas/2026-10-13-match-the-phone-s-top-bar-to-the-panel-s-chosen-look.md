@@ -1,6 +1,7 @@
 # Match the phone's top bar to the panel's chosen look
 
 Captured: 2026-10-13 · Status: inbox
+Triaged: 1
 From ticket: 0149
 
 ## What

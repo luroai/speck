@@ -1,6 +1,6 @@
 # Know when a stopped build starts again
 
-Captured: 2026-10-15 · Status: inbox
+Captured: 2026-10-15 · Status: dropped
 From ticket: 0217
 
 ## What

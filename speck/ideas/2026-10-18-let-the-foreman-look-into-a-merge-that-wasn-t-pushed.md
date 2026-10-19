@@ -1,6 +1,7 @@
 # Let the Foreman look into a merge that wasn't pushed
 
 Captured: 2026-10-18 · Status: inbox
+Triaged: 1
 From ticket: 0287
 
 ## What
