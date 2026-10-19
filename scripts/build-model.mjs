@@ -6,6 +6,9 @@
 // The build_command that starts Claude Code builds, as speck/config.yml has it when speck sets it up.
 export const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
 
+// 0312: the builder speck/config.yml names: claude when it names none.
+export const configBuilder = cfg => (typeof cfg?.builder === 'string' ? cfg.builder.trim() : '') || 'claude';
+
 // builder_model as speck/config.yml has it, trimmed, a number read as YAML gives it (builder_model: 5) included: ''
 // when it's blank or missing.
 export const modelOf = cfg => typeof cfg.builder_model === 'string' || typeof cfg.builder_model === 'number' ? String(cfg.builder_model).trim() : '';

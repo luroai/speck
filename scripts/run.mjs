@@ -11,7 +11,7 @@ import { goWithQueue } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { codexBuilds, codexStartWords, fillSession } from './codex-build.mjs';
-import { cursorBuilds, cursorCli, cursorStartWords, createChat } from './cursor-build.mjs';
+import { cursorBuilds, cursorCli, cursorStartWords } from './cursor-build.mjs';
 import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
@@ -20,6 +20,7 @@ import { prMode } from './pull-request.mjs';
 import { prQueue } from './pr-queue.mjs';
 import { buildEnv } from './build-env.mjs';
 import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
+import { launchPlan, ignoredBuildersNote } from './ticket-builder.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
 import { recordedRun, keepsLock } from './run-lock.mjs';
@@ -299,24 +300,18 @@ function runOn(worker) {
   // A Codex build (0289) chooses its own session, so its record has none until it's read from its log (fill). It's
   // marked `agent: codex`, and its processes are found by the fresh UUID in their environment (env_session). A Cursor
   // build (0290) runs in a chat made for it first, whose id is its session; when that can't be made, the ticket stays
-  // ready, said once until the reason changes, and the next check tries again.
-  const chatFailed = new Map();
-  const launch = id => {
-    let tag = crypto.randomUUID();
-    if (cursor) {
-      const chat = createChat(cursor, repo);
-      if (!chat.session) {
-        if (chatFailed.get(id) !== chat.why) console.log(`${id} wasn't started, and stays ready: ${chat.why}. speck run tries again on its next check.`);
-        chatFailed.set(id, chat.why);
-        return;
-      }
-      chatFailed.delete(id);
-      tag = chat.session;
-    }
-    const session = codex ? null : tag;
-    const argv = words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, tag));
+  // ready, said once until the reason changes, and the next check tries again. 0312: with build_command blank, each
+  // ticket is built with the builder it records (launchPlan), marked with its agent, so it's resumed as one; a ticket
+  // whose builder can't be started stays ready the same way.
+  const failed = new Map();
+  const launch = t => {
+    const plan = launchPlan(cfg, t, { command, words, repo, failed });
+    if (!plan) return;
+    const id = t.id, tag = plan.tag;
+    const session = plan.agent === 'codex' ? null : tag;
+    const argv = plan.words.map(w => w.replace(/\{id\}/g, id).replace(/\{session\}/g, tag));
     const started = new Date().toISOString();
-    const own = codex ? { agent: 'codex', env_session: tag } : cursor ? { agent: 'cursor' } : {};
+    const own = plan.agent === 'codex' ? { agent: 'codex', env_session: tag } : plan.agent ? { agent: plan.agent } : {};
     const record = pid => `${JSON.stringify({ id, session, ...own, cwd: repo, started, pid, command: argv }, null, 2)}\n`;
     startBuild(id, argv, repo, session, 'w', record, tag);
   };
@@ -453,8 +448,8 @@ function runOn(worker) {
       if (own) { wait(t, own.kind, own.why); continue; }
       if (t.ship?.running === true) continue; // 0196: a ship of it is running, whatever its copy here says
       if (running.size >= max) { wait(t, 'slots', `all ${max} build slot${max === 1 ? '' : 's'} in use`); continue; }
-      launch(t.id);
-      if (!launched.has(t.id) && chatFailed.has(t.id)) wait(t, 'chat', chatFailed.get(t.id));
+      launch(t);
+      if (!launched.has(t.id) && failed.has(t.id)) wait(t, failed.get(t.id).kind, failed.get(t.id).why);
     }
     foreman(tickets, ready);
   }
@@ -463,6 +458,8 @@ function runOn(worker) {
   if (worker) return awaitGo(adoptEarlierBuilds, watchBoard, stop);
   const modelNote = builderModelNote(cfg);
   if (modelNote) console.log(modelNote);
+  const ignored = ignoredBuildersNote(cfg, readTickets()); // 0312
+  if (ignored) console.log(ignored);
   console.log(`speck run: watching for ready tickets every ${pollMs / 1000}s, up to ${max} build${max === 1 ? '' : 's'} at a time. Press Ctrl+C to stop.`);
   adoptEarlierBuilds();
   watchBoard();

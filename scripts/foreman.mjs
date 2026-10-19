@@ -27,7 +27,7 @@ export function readForeman(runs) {
 }
 
 // The reason a ready ticket isn't building, in a word or two, for the status: by the kind speck run recorded.
-const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new code', uncommitted: 'not committed', stopped: 'stopped', unstarted: 'not started', chat: 'Cursor chat' };
+const SHORT = { after: 'other tickets', slots: 'build slots', switching: 'new code', uncommitted: 'not committed', stopped: 'stopped', unstarted: 'not started', chat: 'Cursor chat', builder: 'builder' };
 
 // 0286: foreman_fixing, what the Foreman does with a blocked question: off (nothing), tell (counts it under Needs you)
 // or fix (takes the recommendation of one that changes nothing you'd notice and has a clear winner). tell by default,
