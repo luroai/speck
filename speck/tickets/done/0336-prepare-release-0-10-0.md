@@ -1,7 +1,7 @@
 ---
 id: "0336"
 title: "Prepare release 0.10.0"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0330","0331","0332","0333","0334","0335"]                # ticket ids t
 created: 2026-10-20
 started: "2026-10-20T12:34:34.527Z"
 approved: "2026-10-20T12:37:43.753Z"
+finished: "2026-10-20T12:40:12.389Z"
 
 ---
 # 0336 · Prepare release 0.10.0
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0330 to 0335 make an all-Cursor setup work from setup's questions alone: Cursor builds on Auto, a built-in Cursor reviewer on a chosen model, the Foreman on Cursor, models picked from the account's list, and a test command for folders without tests. Anyone following the setup prompt gets 0.9.1 without them, and the user is waiting for this release to test speck in Cursor on their work laptop.
