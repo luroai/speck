@@ -41,6 +41,7 @@ Lines in a Codex build's log show when they happened, as Claude Code and Cursor 
 - Builds are started detached, with stdout and stderr written straight to `speck/.cache/runs/<id>.log` (`scripts/run.mjs`, around line 363), so that they outlive speck run. Whatever records the times must keep that: a build mustn't stop, or stop being found by speck run, because speck run did.
 - After 0341, which changes the same reader (`scripts/build-log.mjs`).
 - Checked 2026-10-20: a Codex build (`codex exec --json`, the CLI on this machine) emitted `thread.started`, `turn.started`, `item.started`, `item.completed` and `turn.completed` events with no time field on any of them or their items.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
