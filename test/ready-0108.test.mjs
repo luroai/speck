@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { CLI, ROOT, env, good, fm, runRepo, startRun, until, killAll, stopRun } from './support/run.mjs';
+import { waitingLine } from './support/ready.mjs';
 
 // ---------- 0108: build only tickets whose ready status is committed ----------
 
@@ -139,8 +140,6 @@ test('0108 AC1: other speck set changes still don\'t commit', () => {
 });
 
 // ---------- AC2: speck run launches only tickets ready in the base branch's latest commit ----------
-
-const waitingLine = /0001[^\n]*commit/i;
 
 test('0108 AC2: a ticket set ready but not committed isn\'t launched, and speck run says once that it\'s waiting', async () => {
   const r = runRepo({ tickets: [['0001', { status: 'draft' }]] });
