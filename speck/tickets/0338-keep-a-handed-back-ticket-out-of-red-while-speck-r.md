@@ -1,7 +1,7 @@
 ---
 id: "0338"
 title: "Keep a handed-back ticket out of red while speck run is handling it"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T12:54:58.974Z"
 ---
 # 0338 · Keep a handed-back ticket out of red while speck run is handling it
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When an auto-ship fails, the ticket's row in the Build list turns red and says "Ship it from its review pack", even when speck run has already handed it back to its build and will ship it again by itself. On 2026-10-20, 0335 sat red, asking the user to act, through two failed ships while its build looked into them and a fix ticket (0337) mended main, then shipped with nobody's help. Red should mean the user is needed.
@@ -56,3 +56,87 @@ A ticket whose auto-ship failed is red only when nothing in speck run will carry
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9e1cd597da2fbee46dcf2e292c82106f1a733eaf",
+    "thread_id": "01a15964-7b4f-7da2-9f6e-f64c89f2e06e",
+    "seconds": 50,
+    "usage": {
+      "input_tokens": 130364,
+      "cached_input_tokens": 93184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1171,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:59:29.533Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelModel and queueItem implement the running-build state; the passing 0338 AC1 fake-page test checks colour, hint and explanation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing 0338 AC2 test exercises each other-ticket status: ready, building, reviewing and approved."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "Direct panelModel reproduction shows an approved running build remains non-red without a Ship hint when run.on=false. A blocked ticket is red but also has no Ship hint."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Direct panelModel reproduction with a blocked ticket and a failed auto-ship message returns exit_message=null and exit_label=null. The AC4 test omits blocked tickets."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The saved test output confirms 145 passed, zero failed and three skipped across the reported tests and checks. No existing tests were changed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "carried_by ignores runOn while build_running is true, so turning speck run off leaves the ticket non-red with no Ship hint, contrary to AC3. The AC1 test explicitly asserts this conflicting behaviour.",
+        "suggested_fix": "Require speck run to be on before suppressing red and the Ship hint. Update the running-build/run-off test to verify AC3.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "auto_failed only recognises approved tickets. Once a handed-back ticket becomes blocked, its failed ship message and Ship hint disappear, violating AC3 and AC4. The blocked tests check only red and carried_by.",
+        "suggested_fix": "Retain the failed ship message and required Ship hint for blocked tickets, while keeping them red. Extend the fake-page tests to verify both are actually displayed for blocked tickets with running and ended builds.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The two automatic recovery states work and the reported tests pass. Two required fallback cases need fixing: switching speck run off can still hide the need for user action, and blocked tickets lose the failed ship explanation and Ship hint."
+  }
+}
+```
+
+</details>
