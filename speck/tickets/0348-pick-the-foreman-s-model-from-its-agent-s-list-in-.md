@@ -1,7 +1,7 @@
 ---
 id: "0348"
 title: "Pick the Foreman's model from its agent's list in the Settings view"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T21:33:21.240Z"
 ---
 # 0348 · Pick the Foreman's model from its agent's list in the Settings view
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In the panel's Settings view, `foreman_model` is a box to type in for every agent, where `builder_model` is a list of the builder's models. Someone choosing the Foreman's model has to know its exact name as that agent writes it.
@@ -54,3 +54,79 @@ The Settings view offers the Foreman agent's models for `foreman_model` in a lis
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "80a02d3c5aa0baf7cf1f3d4ea1677153e6afb917",
+    "thread_id": "01a15b3e-2440-75d1-9cd3-da6d52b7472b",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 151604,
+      "cached_input_tokens": 109696,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 809,
+      "reasoning_output_tokens": 10
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T21:36:26.132Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs foremanModels selects Claude, Codex or Cursor models; templates/panel.html foremanModelList and settingEditor render names. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanModels uses foremanAgentOf; foremanAgentChosen mirrors its fallback rules. The AC2 test exercises all three server fallbacks and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanModelList returns null on discovery failure, producing an input; foremanModelsWhy displays the reason. The AC3 test checks missing Cursor and the rendered explanation and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "foremanModelsWhy supplies the save-and-reopen message for a changed agent; the AC4 test exercises switching and restoring the saved agent and passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied test log confirms 186 passed, zero failed and three skipped across the eight reported test files. No regression is evident in the implementation."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/settings-foreman-0348.test.mjs:115",
+        "issue": "The brief test requires the exact word 'offers' and requires foreman_model, codex debug models and agent models to appear in a particular order within one sentence. This tests document wording and sentence structure, which the review rules explicitly prohibit.",
+        "suggested_fix": "Remove this assertion or replace it with independent checks of documented setting and command names that permit rewording and reordering.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Foreman model picker works as requested, including agent defaults and a text box when models cannot be read. The reported tests pass. One documentation test must change because harmless edits to the brief would break it."
+  }
+}
+```
+
+</details>
