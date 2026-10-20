@@ -428,7 +428,7 @@ function runOn(worker) {
     if ([...adopted.values()].some(b => b.seen)) { const tickets = readTickets(); if (tickets) releaseSeen(tickets); }
     const tickets = readTickets();
     if (!tickets) return;
-    adoptSeen(tickets); sleeps.check(tickets); // 0344: time asleep since the last check isn't build time for the builds running then
+    adoptSeen(tickets); sleeps.check(tickets); // 0344: time asleep since the last check isn't build time for builds in hand through it
     if (prs) prs.check(tickets); else ships.check(tickets);
     foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
