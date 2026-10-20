@@ -37,6 +37,7 @@ The 0108 AC2 test passes on main again, still checking that a ticket committed a
 ## Notes
 <!-- Constraints, links and decisions. Optional. -->
 - Found while handing back 0335 on 2026-10-20: `speck ship` said main's tests pass, but this test failed 6/6 on a checkout of main run on its own.
+- Failing before this build: none (the recorded result for this code passed)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
