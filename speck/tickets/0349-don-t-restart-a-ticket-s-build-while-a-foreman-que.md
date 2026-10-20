@@ -1,7 +1,7 @@
 ---
 id: "0349"
 title: "Don't restart a ticket's build while a Foreman question on it is waiting"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0344"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T22:04:16.668Z"
+approved: "2026-10-20T22:06:23.709Z"
 
 ---
 # 0349 · Don't restart a ticket's build while a Foreman question on it is waiting
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a build ends with its ticket still ready, speck run launches it again only once the ticket has been committed since (0327), as setting it ready again does. But a note the Foreman commits to the ticket, such as a question for you, counts as that commit too. So each question the Foreman asked about 0344 (2026-10-20) restarted its build, which stopped at the same unanswered question, and the Foreman asked again: eight times in nine minutes, each costing a build's tokens.
@@ -50,9 +51,14 @@ When a build stops because its ticket was never started, speck run waits for the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 127,602
+- Elapsed since build started: 2 min
+- Changed lines: 29 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
