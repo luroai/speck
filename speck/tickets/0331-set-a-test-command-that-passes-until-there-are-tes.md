@@ -44,6 +44,8 @@ In an existing folder with no tests, setup sets a test command that passes while
 - `node --test` also picks up files such as `*.test.js` written for another runner (Jest, say) and fails on them, which is why AC1 sets it only if it passes.
 - The skills are instructions to agents, not documents, so tests may check their wording (`docs/brief.md`, "Criteria about documents").
 - Failing before this build: none
+- `.claude/skills/speck-setup` (and `.agents/skills/speck-setup`) are symlinks to `skills/speck-setup`, so AC4 holds without copying; the test compares their contents.
+- Self-check: added what to do when `node --test` fails (test files for another runner): show the output and ask how they run those tests.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
