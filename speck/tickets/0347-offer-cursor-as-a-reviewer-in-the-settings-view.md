@@ -1,7 +1,7 @@
 ---
 id: "0347"
 title: "Offer Cursor as a reviewer in the Settings view"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-20-offer-cursor-as-a-reviewer-in-the-settings-
 after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T21:23:05.085Z"
+approved: "2026-10-20T21:27:31.950Z"
 
 ---
 # 0347 · Offer Cursor as a reviewer in the Settings view
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0332, `reviewer: cursor` needs no command, but the panel's Settings view doesn't offer it as a reviewer, and with a Cursor reviewer its `reviewer_model` is a box to type in, where the builder's model is a list of Cursor's models. Someone setting speck up in Cursor, with its many models, has to know each model's exact name.
@@ -52,9 +53,14 @@ Cursor can now be picked as the reviewer in the panel's Settings, when it's inst
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 182,792
+- Elapsed since build started: 4 min
+- Changed lines: 28 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (tidy-up, not sent to the inbox): the brief's Settings paragraph still says `builder_model` is a box to type in for any builder other than claude and codex, though since 0288 a Cursor builder gets a list of its models.
 
