@@ -46,7 +46,7 @@ A ticket whose auto-ship failed is red only when nothing in speck run will carry
 - Self-check: no changes (the run-record reader went into `scripts/hand-back.mjs` rather than `scripts/speck.mjs`, which the 600-line check caps)
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When an automatic ship fails and speck run has already handed the ticket back to its build, the ticket's row in the Build list no longer turns red or tells you to ship it yourself. It says its build is working on it. Once that build has finished, the row says the ticket will be shipped again when main or its branch gets a new commit. The row only says that while speck run is on and another ticket is still on its way. In every case the failed ship's own message stays on the row. The row is red, with the hint to ship it yourself, only when speck run is off or nothing else is coming. A ticket that gets blocked after a failed ship is red as before, asks its question and now keeps showing the ship's message too. Worth watching: if two approved tickets both fail to ship, each counts the other as on its way, so neither turns red (saved as an idea).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,7 +55,10 @@ A ticket whose auto-ship failed is red only when nothing in speck run will carry
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Count only tickets that can ship as on their way: two approved tickets whose auto-ships both failed keep each other out of red (`speck/ideas/2026-10-20-count-only-tickets-that-can-ship-as-on-their-way.md`).
+  - Known limit: a hand-back that speck run has kept but not yet started, because no build slot is free, still shows red with the Ship hint until its build starts.
+  - Known limit: the row says "main" whatever `base_branch` is, as the panel's "broken main" tag already does.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -135,6 +138,87 @@ A ticket whose auto-ship failed is red only when nothing in speck run will carry
     ],
     "escalation_question": "",
     "summary": "The two automatic recovery states work and the reported tests pass. Two required fallback cases need fixing: switching speck run off can still hide the need for user action, and blocked tickets lose the failed ship explanation and Ship hint."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "70629be0a9e9eb408111a90bf433824a59ccc121",
+    "thread_id": "01a15964-7b4f-7da2-9f6e-f64c89f2e06e",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 216953,
+      "cached_input_tokens": 134656,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1914,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T13:00:53.135Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelModel sets carried_by for a running handed-back build while speck run is on. The passing AC1 fake-page test verifies no red, no Ship hint and the working explanation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing AC2 fake-page test checks the retry explanation, absence of red and absence of the Ship hint for all four qualifying other-ticket statuses."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "carried_by now requires runOn. AC3 tests cover run off with running and ended builds, no qualifying other tickets, and blocked tickets. Accepted the blocked-hint dispute: 'as today' preserves the existing question prompt; shipChecks refuses blocked tickets and queueItem provides no review-pack button for them."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "panelModel now retains the ship message through blocked_failed. The passing AC4 fake-page test verifies the message in both recovery states, run-off cases, no-other-ticket cases and blocked cases with running and ended builds."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh saved test output reports 145 passed, zero failed and three skipped across the reported test files and checks. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The running-build recovery state previously hid the need for user action when speck run was off.",
+        "suggested_fix": "Implemented: require runOn for carried_by, with running-build/run-off coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Blocked tickets previously lost the failed ship message. The message is now retained. Accepted the dispute over adding a Ship hint: blocked tickets cannot ship, and retaining their existing question prompt fits 'as today'.",
+        "suggested_fix": "The message fix and expanded blocked-state tests address the actionable defect; no Ship hint change is required.",
+        "state": "dispute_accepted"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The recovery states now show when speck run is handling a failed ship, while cases needing user action remain red. Blocked tickets retain the failure explanation and their existing question prompt. All reported tests pass."
   }
 }
 ```
