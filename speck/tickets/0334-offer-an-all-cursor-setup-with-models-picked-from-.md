@@ -41,6 +41,7 @@ When the builder is Cursor, setup offers an all-Cursor setup in one question, wi
 - The skills are instructions to agents, not documents, so tests may check their wording (`docs/brief.md`, "Criteria about documents").
 - Checked 2026-10-20: `agent models` lists names such as `claude-opus-5-5-high` and `gpt-5.6-sol-high`, where the effort is part of the name (user's work laptop and this machine).
 - Failing before this build: none
+- Self-check: also corrected two sentences in section 5 that the all-Cursor setup would contradict (a Cursor reviewer passing only when both models are set, and builder_model being used only by Claude Code builds).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
