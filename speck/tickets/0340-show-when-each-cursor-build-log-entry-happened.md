@@ -1,7 +1,7 @@
 ---
 id: "0340"
 title: "Show when each Cursor build log entry happened"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
+started: "2026-10-20T20:26:02.603Z"
 
 ---
 # 0340 · Show when each Cursor build log entry happened
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A Cursor build's log in the panel has no times on its lines, while a Claude Code build's lines each start with `HH:MM:SS` (0080). The log reader only reads an ISO `timestamp` string, and Cursor's stream-json events carry `timestamp_ms`, a number of milliseconds since 1970, instead. Its shell-command lines get no time either way. Someone following a Cursor build can't tell when anything happened or whether it's stuck.
