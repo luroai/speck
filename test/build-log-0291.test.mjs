@@ -51,9 +51,10 @@ const CURSOR = log([
 test('0291 AC1: a Codex log reads as its messages and one line per command, other events left out', () => {
   assert.equal(readableLog(CODEX), [
     'I will run the tests.', '',
-    '→ Shell: npm test',
-    "→ Shell: echo 'hi' && false",
+    '→ Bash: npm test',
+    "→ Bash: echo 'hi' && false",
     '  ✗ exit code 1',
+    '→ Edit: a.js', // 0341
     'All done.', '',
   ].join('\n'));
 });
@@ -73,13 +74,13 @@ test('0291 AC1: odd Codex items are left out rather than shown as JSON or breaki
     { type: 'item.completed', item: { type: 'command_execution', command: ['git', 'status'], exit_code: 0 } },
     { type: 'item.completed', item: { type: '__proto__', text: 'x' } },
   ]));
-  assert.equal(out, '→ Shell\n→ Shell: git status');
+  assert.equal(out, '→ Bash\n→ Bash: git status');
 });
 
 test('0291 AC1: the end of a Codex log reads the same way on the board', () => {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'log-')), 'x.log');
   fs.writeFileSync(file, `${CODEX}\n`);
-  assert.equal(logTail(file, 3), "→ Shell: echo 'hi' && false\n  ✗ exit code 1\nAll done.");
+  assert.equal(logTail(file, 4), "→ Bash: echo 'hi' && false\n  ✗ exit code 1\n→ Edit: a.js\nAll done.");
   const { lines } = readablePiece(CODEX);
   assert.ok(!lines.some(l => l.startsWith('{')), 'no raw JSON');
 });
@@ -89,9 +90,10 @@ test('0291 AC1: the end of a Codex log reads the same way on the board', () => {
 test('0291 AC2: a Cursor log reads as its messages and one line per command, other events left out', () => {
   assert.equal(readableLog(CURSOR), [
     'I will run the tests.', '',
-    '→ Shell: npm test',
-    '→ Shell: false',
+    '→ Bash: npm test',
+    '→ Bash: false',
     '  ✗ exit code 1',
+    '→ Read: a.js', // 0341
     'All done.', '',
   ].join('\n'));
 });
@@ -107,7 +109,7 @@ test('0291 AC2: a Cursor result that says something new is shown, and a failed o
 test('0291 AC2: a Cursor shell call that fails without an exit code is shown as failed', () => {
   const out = readableLog(log([shell('started', 'rm x'), shell('completed', 'rm x', { failure: { message: 'rejected' } }),
     { type: 'tool_call', subtype: 'started', tool_call: { shellToolCall: null } }, { type: 'tool_call', subtype: 'started', tool_call: null }]));
-  assert.equal(out, '→ Shell: rm x\n  ✗ failed');
+  assert.equal(out, '→ Bash: rm x\n  ✗ failed');
 });
 
 // ---------- AC3 ----------

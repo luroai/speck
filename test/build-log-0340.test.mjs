@@ -23,18 +23,18 @@ test('0340 AC1: a Cursor agent message and a shell command starting begin with t
   assert.deepEqual(timed([
     said('I will run the tests.', AT),
     shell('started', 'npm test', null, LATE),
-  ]), ['17:26:45 I will run the tests.', '', '01:35:09 → Shell: npm test']);
+  ]), ['17:26:45 I will run the tests.', '', '01:35:09 → Bash: npm test']);
 });
 
 test('0340 AC1: without times asked for, Cursor lines carry no time', () => {
-  assert.deepEqual(readablePiece(log([said('Hi.', AT), shell('started', 'ls', null, AT)])).lines, ['Hi.', '', '→ Shell: ls']);
+  assert.deepEqual(readablePiece(log([said('Hi.', AT), shell('started', 'ls', null, AT)])).lines, ['Hi.', '', '→ Bash: ls']);
 });
 
 test('0340 AC2: a Cursor event with no timestamp_ms, or one that is not a usable number, has no time and the rest shows as before', () => {
   // JSON has no NaN or Infinity, so a number out of a date's range stands in for an unusable one.
   for (const bad of [undefined, null, '1792511607818', 'soon', 1e20, -1e20, true, {}, []]) {
     assert.deepEqual(timed([said('Starting.', bad), shell('started', 'ls', null, bad), said('Then this.', AT)]),
-      ['Starting.', '', '→ Shell: ls', '17:26:45 Then this.', ''], JSON.stringify(bad) ?? 'missing');
+      ['Starting.', '', '→ Bash: ls', '17:26:45 Then this.', ''], JSON.stringify(bad) ?? 'missing');
   }
 });
 
@@ -48,8 +48,8 @@ test('0340 AC3: other lines of a multi-line message, blank lines, a failed comma
     { type: 'result', subtype: 'error', is_error: true, result: 'Gave up.', session_id: 's', usage: { inputTokens: 1 }, timestamp_ms: AT },
   ]).join('\n'), [
     '17:26:45 First line.', '', 'Third line.', '',
-    '17:26:45 → Shell: false', '  ✗ exit code 1',
-    '17:26:45 → Shell: nope', '  ✗ failed',
+    '17:26:45 → Bash: false', '  ✗ exit code 1',
+    '17:26:45 → Bash: nope', '  ✗ failed',
     'Gave up.', 'Build ended: error',
   ].join('\n'));
 });
@@ -71,5 +71,5 @@ test('0340 AC4: Claude Code and Codex build logs show exactly as before', () => 
     { type: 'item.completed', item: { type: 'command_execution', command: "/bin/bash -lc 'false'", exit_code: 1 } },
     { type: 'turn.failed', error: { message: 'stopped' } },
   ]);
-  assert.equal(readableLog(codex, { times: true }), ['I will run the tests.', '', '→ Shell: false', '  ✗ exit code 1', 'Build ended: stopped'].join('\n'));
+  assert.equal(readableLog(codex, { times: true }), ['I will run the tests.', '', '→ Bash: false', '  ✗ exit code 1', 'Build ended: stopped'].join('\n'));
 });
