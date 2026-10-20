@@ -40,6 +40,7 @@ When the builder is Cursor, setup offers an all-Cursor setup in one question, wi
 - Needs 0330 (Auto building with a pinned reviewer model passes the same-model check), 0332 (`reviewer: cursor` with no command) and 0333 (`foreman: cursor`), so it's after all three, and after 0331, which changes the same skill.
 - The skills are instructions to agents, not documents, so tests may check their wording (`docs/brief.md`, "Criteria about documents").
 - Checked 2026-10-20: `agent models` lists names such as `claude-opus-5-5-high` and `gpt-5.6-sol-high`, where the effort is part of the name (user's work laptop and this machine).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
