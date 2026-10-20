@@ -8,6 +8,7 @@ import path from 'node:path';
 import { addWaited } from './core.mjs';
 import { loadConfig, commitTicketOnly, runsOf } from './speck.mjs';
 import { buildKilled, buildTicket, pidAlive, sessionInUse } from './run.mjs';
+export { sleepQueue, sleepWatch } from './sleep-wait.mjs'; // 0344: time asleep, which waits like time stopped
 
 const readObject = file => { try { const v = JSON.parse(fs.readFileSync(file, 'utf8')); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; } };
 const saveMark = (file, mark) => {
