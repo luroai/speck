@@ -225,12 +225,14 @@ Any agent that can run non-interactively can review. Give it a name and a comman
 reviewer: cursor
 reviewer_options:
   cursor:
-    command: "cursor-agent -p --output-format json --mode ask --model {model}"
+    command: "agent -p --mode ask --trust --output-format json --model {model}"
 ```
 
 To let later rounds continue the reviewer's own session instead of resending everything, add `session_id_path` (where the session id is in its output) and a `resume_command` with `{session}`. `{model}` and `{effort}` come from `reviewer_model` and `reviewer_effort`; if one is blank, it's left out with its flag. The reviewer is asked to stay read-only, but speck doesn't sandbox it, so use the tool's read-only mode. Flags change, so check your tool's current ones.
 
 Claude Code needs no command: set `reviewer: claude` and speck runs it for you, whatever the builder, so a Codex or Cursor build can be reviewed by Claude. It runs without a person in Claude Code's `dontAsk` permission mode, which runs read-only commands and denies anything else rather than asking, with its file-writing tools taken away, without your own Claude Code settings, so no allow rule in them lets it change files, and without your MCP servers or connectors. Later rounds resume the same session. Set `allow_same_model_review: true` if Claude is also the builder, unless `builder_model` and `reviewer_model` are both set and differ.
+
+Cursor needs no command either: set `reviewer: cursor` and speck runs Cursor's CLI, `agent`, or `cursor-agent` when only that is installed, without a person in its read-only ask mode, with `--trust` so it doesn't stop at Cursor's Workspace Trust prompt in a folder it hasn't been told to trust. It runs on `reviewer_model`, or Cursor's own default when that's blank. Cursor's model names carry the effort, such as `claude-opus-5-5-high`, so `reviewer_effort` isn't passed. Later rounds carry on the same Cursor chat. A `command` of your own under `reviewer_options.cursor` replaces it, as the example above does.
 
 ## Repo layout
 
