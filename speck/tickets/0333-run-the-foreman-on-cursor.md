@@ -41,6 +41,7 @@ The Foreman can run on Cursor, on `foreman_model` when it's set, and is Cursor b
 - `foremanAgentOf` and `foremanArgv` in `scripts/foreman-agent.mjs`; the Settings view's choices come from `FOREMAN_AGENTS` (`scripts/settings.mjs`). The Foreman's brief points at `.claude/skills/speck-foreman/SKILL.md` for any agent but Codex (`skillPath`), which Cursor reads.
 - Cursor builds already start as `agent -p --force --trust --output-format stream-json` (`scripts/cursor-build.mjs`), so the Foreman's output is read like a Cursor build's.
 - Checked 2026-10-20: Cursor's CLI takes `--model`, `--force`, `--trust` and `--output-format stream-json` (`agent --help` on this machine).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
