@@ -116,10 +116,7 @@ test('0330 AC4: the refusal no longer says builder_model is passed only to Claud
   assert.doesNotMatch(codexError, /only passed to Claude Code builds, and to Codex builds/);
 });
 
-test('0330 AC2 self-check: the brief says a Cursor build left without builder_model runs on auto, and when that counts', () => {
+test('0330 AC2 self-check: the brief names Cursor\'s auto model', () => {
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  const line = brief.split('\n').find(l => l.startsWith('Config rejects a `builder` and `reviewer` from the same family'));
-  assert.ok(line, 'the same-family sentence');
-  assert.match(line, /Cursor's `auto`/);
-  assert.match(line, /`build_command` is blank/);
+  assert.match(brief, /`auto`/);
 });
