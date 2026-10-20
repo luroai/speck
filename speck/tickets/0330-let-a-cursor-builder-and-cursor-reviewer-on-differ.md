@@ -1,7 +1,7 @@
 ---
 id: "0330"
 title: Accept a Cursor build reviewed by Cursor on a chosen model                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T12:00:50.848Z"
 ---
 # 0330 · Accept a Cursor build reviewed by Cursor on a chosen model
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Someone who only has Cursor (on a work laptop, say) can build with one model and review with another, as Cursor offers many. But the same-model check counts `builder_model` only for Claude Code and Codex builds (0280, 0313), so a Cursor builder with a Cursor reviewer is always refused unless `allow_same_model_review` turns the check off for the whole project.
@@ -57,3 +57,79 @@ A Cursor builder and a Cursor reviewer pass the same-model check when the review
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "23f0b830252d229cbdac1e93b7f485bb4495048f",
+    "thread_id": "01a15932-0909-7ff2-9a5b-fb40598f8bf9",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 96613,
+      "cached_input_tokens": 56960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 793,
+      "reasoning_output_tokens": 18
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:04:00.511Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/same-model.mjs builderModel and sameModelProblem count Cursor's configured model and compare ignoring case. Passing 0330 AC1 tests exercise lint, set ready and Settings saves."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "builderModel uses auto for a blank Cursor builder model, including another configured builder's ticket. Passing 0330 AC2 tests cover lint, set ready and Settings saves."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0330 AC3 tests cover matching models, case differences, blank/auto reviewer models, custom or missing build_command, and allow_same_model_review. CLI and Settings refusal paths are also exercised."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "sameModelProblem's refusal now includes Cursor among supported builds. The passing 0330 AC4 test checks Cursor and Codex refusals."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0330-tests.txt records 129 tests, 126 passed, 3 skipped and no failures. Existing 0313 regression tests remain unchanged."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/same-model-0330.test.mjs:118",
+        "issue": "The documentation self-check requires the exact prose opening 'Config rejects a `builder` and `reviewer` from the same family' and requires both facts on that same line. Rewording or wrapping the paragraph would fail the suite without changing any documented fact. This violates the explicit rule against tests that pin document wording or structure.",
+        "suggested_fix": "Remove the prose-dependent selector and same-line requirement. Either check only stable technical facts across the document or leave the explanation to document review.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Cursor model checks meet the ticket's requirements, and the recorded tests pass. One test must change before approval: it would reject harmless rewording or wrapping of the product brief."
+  }
+}
+```
+
+</details>
