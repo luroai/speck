@@ -40,6 +40,7 @@ A build that ended with its ticket still ready is launched again only when someo
 - `readyAgain` and `lastTicketCommit` in `scripts/build-records.mjs`, and `markStillReady`'s caller in `scripts/run.mjs`. The Foreman's commit subjects come from `foremanSubject` in `scripts/foreman-agent.mjs`; `codeKey` there already skips them the same way (`git log --invert-grep`).
 - After 0344, which also changes `scripts/run.mjs`.
 - Goes in 0.10.3 (0346).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
