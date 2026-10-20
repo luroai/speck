@@ -8,7 +8,7 @@ import { sameModelProblem } from './same-model.mjs';
 import { checkConfigValue, setConfigText, yamlValue } from './config.mjs';
 import { commitTicketOnly } from './close.mjs';
 import { FIXING } from './foreman.mjs';
-import { FOREMAN_AGENTS } from './foreman-agent.mjs';
+import { FOREMAN_AGENTS, foremanAgentOf } from './foreman-agent.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
@@ -25,7 +25,7 @@ export const SETTING_GROUPS = [
     { key: 'foreman', default: '',
       explain: 'The agent the Foreman runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex or cursor. Blank uses the builder when that\'s codex or cursor, and claude otherwise.' },
     { key: 'foreman_model', default: '',
-      explain: 'The model the Foreman agent runs on, written as that agent names it. Blank leaves it to the agent\'s own default.' },
+      explain: 'The model the Foreman agent runs on, picked from that agent\'s models or written as it names it. Blank leaves it to the agent\'s own default.' },
     { key: 'foreman_effort', default: '',
       explain: 'How hard the Foreman agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.' },
   ] },
@@ -109,9 +109,10 @@ function valueIn(text, repo, key) {
 // 0276: `models`, from reviewerModels, is given back as `reviewer_models`, for the view to offer the reviewer's models.
 // 0278: and Claude's model names as `claude_models`, for when claude-subagent (or 0292's claude) is picked in the view.
 // 0279: `builderModels`, from builderModels, is given back as `builder_models`, for the view to offer the builder's.
+// 0348: `foremanModels`, from foremanModels, is given back as `foreman_models`, for the view to offer the Foreman agent's.
 // 0288: with `agents`, from findAgentsAsync, reviewer offers only the reviewers whose agent is installed and signed in,
 // and the current value, with why the others are left out in `missing`, one line.
-export function panelSettings(repo, { models, builderModels, agents } = {}) {
+export function panelSettings(repo, { models, builderModels, foremanModels, agents } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
     const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file);
@@ -125,7 +126,8 @@ export function panelSettings(repo, { models, builderModels, agents } = {}) {
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
-  }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}), claude_models: CLAUDE_MODELS };
+  }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
+    ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS };
 }
 
 // 0278: the model names a claude-subagent reviewer (or 0292's claude) takes, each meaning the newest model of its kind. Claude Code has no
@@ -171,6 +173,14 @@ export async function builderModels(repo, read = codexModelsAsync, readCursor = 
   if (builder === 'cursor') return { builder, ...await readCursor() };
   if (builder !== 'codex') return { builder, why: `${builder || 'This builder'} can't list its models, so type the model's name as it names it.` };
   return { builder, ...await read() };
+}
+
+// 0348: the models of the agent the Foreman runs on (foremanAgentOf), read now, for the Settings view: { foreman, models }
+// with Claude's model names for claude and the models Codex or Cursor lists, or { foreman, why } in one line when it can't.
+export async function foremanModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
+  const foreman = foremanAgentOf(loadConfig(repo));
+  if (foreman === 'claude') return { foreman, models: CLAUDE_MODELS };
+  return { foreman, ...await (foreman === 'cursor' ? readCursor() : read()) };
 }
 
 const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : String(v);
