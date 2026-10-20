@@ -1,7 +1,7 @@
 ---
 id: "0336"
 title: "Prepare release 0.10.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0330","0331","0332","0333","0334","0335"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:34:34.527Z"
+approved: "2026-10-20T12:37:43.753Z"
 
 ---
 # 0336 · Prepare release 0.10.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0330 to 0335 make an all-Cursor setup work from setup's questions alone: Cursor builds on Auto, a built-in Cursor reviewer on a chosen model, the Foreman on Cursor, models picked from the account's list, and a test command for folders without tests. Anyone following the setup prompt gets 0.9.1 without them, and the user is waiting for this release to test speck in Cursor on their work laptop.
@@ -57,9 +58,14 @@ speck is ready to go out as 0.10.0, the release that lets you run speck entirely
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 213,933
+- Elapsed since build started: 3 min
+- Changed lines: 60 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none new. The Settings view not offering Cursor as the reviewer is already in the inbox (from 0332). The README's review-loop paragraph says a same-family reviewer needs both models set; for Cursor, a blank `builder_model` runs on `auto`, which counts as set, as the brief explains.
 
