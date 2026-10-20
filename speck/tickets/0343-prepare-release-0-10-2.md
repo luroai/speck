@@ -1,7 +1,7 @@
 ---
 id: "0343"
 title: "Prepare release 0.10.2"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0340","0341","0342"]                # ticket ids that must be done first
 created: 2026-10-20
+started: "2026-10-20T20:56:29.718Z"
 
 ---
 # 0343 · Prepare release 0.10.2
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0340 to 0342 make a build's log in the panel read the same whichever agent builds it: Cursor and Codex lines get times, and their reads, edits and searches show as Claude Code's do. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.1 without the fixes.
