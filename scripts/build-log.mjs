@@ -7,7 +7,8 @@ import fs from 'node:fs';
 // session and rate-limit events) are left out. Any other line, such as plain `claude -p` output or an error, is kept as is.
 // With `times`, each agent message, tool call and failed tool result starts with its event's local time (`HH:MM:SS `),
 // when the event has an ISO 8601 timestamp that reads as a date. A Cursor event's agent message and shell command starting
-// do too, from its `timestamp_ms` number (0340).
+// do too, from its `timestamp_ms` number (0340), and so does each line a Codex event starts, from the `speck_at` time
+// speck run's build wrote it with (0342).
 // A Codex build's log (`codex exec --json`) and a Cursor one (`--output-format stream-json`) read the same way (0291):
 // the agent's messages and one line per tool call, named as Claude Code names its own (0341): "→ Bash: npm test" for a
 // shell command, with "  ✗ exit code N" after one that fails, "→ Read", "→ Edit", "→ Write" (a new file), "→ Grep" and
@@ -42,7 +43,7 @@ function readable(text, times, last) {
     let e = null;
     if (line.startsWith('{')) { try { e = JSON.parse(line); } catch { /* not an event */ } }
     if (!e || typeof e !== 'object' || typeof e.type !== 'string') { out.push(line); continue; }
-    const at = clock(e.timestamp) || clock(e.timestamp_ms, true);
+    const at = times ? clock(e.timestamp) || clock(e.timestamp_ms, true) || clock(e.speck_at) : '';
     if (e.type === 'assistant' && Array.isArray(e.message?.content)) {
       for (const b of e.message.content) {
         if (b?.type === 'text' && typeof b.text === 'string' && b.text.trim()) { out.push(at + b.text.trim(), ''); last = b.text.trim(); }
@@ -60,17 +61,17 @@ function readable(text, times, last) {
       }
     } else if (e.type === 'item.completed' && e.item && typeof e.item === 'object') { // Codex
       const i = e.item;
-      if (i.type === 'agent_message' && typeof i.text === 'string' && i.text.trim()) { out.push(i.text.trim(), ''); last = i.text.trim(); }
+      if (i.type === 'agent_message' && typeof i.text === 'string' && i.text.trim()) { out.push(at + i.text.trim(), ''); last = i.text.trim(); }
       else if (i.type === 'command_execution') {
-        out.push(shellLine(i.command, short));
+        out.push(at + shellLine(i.command, short));
         if (typeof i.exit_code === 'number' && i.exit_code !== 0) out.push(`  ✗ exit code ${i.exit_code}`);
       } else if (i.type === 'file_change') { // one line per file, Write for one it adds
-        for (const c of Array.isArray(i.changes) ? i.changes : []) if (c && typeof c === 'object') out.push(toolLine(c.kind === 'add' ? 'Write' : 'Edit', c.path, short));
+        for (const c of Array.isArray(i.changes) ? i.changes : []) if (c && typeof c === 'object') out.push(at + toolLine(c.kind === 'add' ? 'Write' : 'Edit', c.path, short));
         if (i.status === 'failed') out.push('  ✗ failed');
-      } else if (i.type === 'mcp_tool_call') out.push(toolLine(typeof i.tool === 'string' && i.tool.trim() ? i.tool.trim() : i.type, '', short));
-      else if (i.type === 'web_search') out.push(toolLine(i.type, '', short));
+      } else if (i.type === 'mcp_tool_call') out.push(at + toolLine(typeof i.tool === 'string' && i.tool.trim() ? i.tool.trim() : i.type, '', short));
+      else if (i.type === 'web_search') out.push(at + toolLine(i.type, '', short));
     } else if (e.type === 'turn.failed') { // Codex
-      out.push(`Build ended: ${short(e.error?.message ?? '') || 'error'}`);
+      out.push(`${at}Build ended: ${short(e.error?.message ?? '') || 'error'}`);
     } else if (e.type === 'tool_call' && e.tool_call && typeof e.tool_call === 'object') { // Cursor
       const kind = Object.keys(e.tool_call).find(k => k.endsWith('ToolCall') && e.tool_call[k] && typeof e.tool_call[k] === 'object');
       const c = kind ? e.tool_call[kind] : null;
