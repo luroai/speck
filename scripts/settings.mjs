@@ -50,7 +50,7 @@ export const SETTING_GROUPS = [
     { key: 'reviewer_effort', default: '',
       explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
     { key: 'allow_same_model_review', default: false,
-      explain: 'Whether the builder and reviewer may be the same model, needed only when they are in the same family (such as a Claude builder and a claude-subagent reviewer) and would run the same model, or when either model is left at its default. Leave it false so a different model checks the work: true lets a model review work like its own, which tends to catch less.' },
+      explain: 'Whether the builder and reviewer may be the same model, needed only when they are in the same family (such as a Claude builder and a claude-subagent reviewer) and would run the same model, or when either model is left at its default (a Cursor build left at its default runs on auto, which counts as a model of its own when speck starts the build). Leave it false so a different model checks the work: true lets a model review work like its own, which tends to catch less.' },
   ] },
   { title: 'How much runs at once', settings: [
     { key: 'max_parallel_builds', default: 1,
