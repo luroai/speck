@@ -1,7 +1,7 @@
 ---
 id: "0331"
 title: "Set a test command that passes until there are tests in a folder without any"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
+started: "2026-10-20T12:00:51.494Z"
 
 ---
 # 0331 · Set a test command that passes until there are tests in a folder without any
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Setting speck up in an existing folder with no tests, such as a folder of documents with a small dashboard, leaves `commands.test` blank. `speck ship` refuses unless `commands.test` is set and passes, so nothing built there can ever ship, and setup doesn't say so. It happened on the user's first Cursor setup on their work laptop (2026-10-20), where Cursor recommended leaving it blank.
