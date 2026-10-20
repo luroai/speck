@@ -1,7 +1,7 @@
 ---
 id: "0345"
 title: "Offer a first ticket that sets up tests for an existing folder's code"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T21:23:07.590Z"
 approved: "2026-10-20T21:24:56.309Z"
+finished: "2026-10-20T21:27:34.936Z"
 
 ---
 # 0345 · Offer a first ticket that sets up tests for an existing folder's code
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 In an existing folder with code but no tests, setup now sets `commands.test` to `node --test` (0331), but nothing sets up tests for the code that's there. So the first feature ticket builds the test setup itself: on the user's work laptop (2026-10-20), a ticket to add a keyboard shortcut took 20 minutes, most of it setting up a test runner and a fake page to test with, and moving the code into a module it could test.
