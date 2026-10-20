@@ -1,7 +1,7 @@
 ---
 id: "0338"
 title: "Keep a handed-back ticket out of red while speck run is handling it"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
+started: "2026-10-20T12:54:58.974Z"
 
 ---
 # 0338 · Keep a handed-back ticket out of red while speck run is handling it
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 When an auto-ship fails, the ticket's row in the Build list turns red and says "Ship it from its review pack", even when speck run has already handed it back to its build and will ship it again by itself. On 2026-10-20, 0335 sat red, asking the user to act, through two failed ships while its build looked into them and a fix ticket (0337) mended main, then shipped with nobody's help. Red should mean the user is needed.
