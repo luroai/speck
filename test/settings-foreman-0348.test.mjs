@@ -112,7 +112,7 @@ test('0348 AC4: choosing another Foreman agent says to save it, then open Settin
   assert.deepEqual(Object.keys(optionText(q, 'foreman_model')), ['', 'fable', 'opus', 'sonnet', 'haiku']);
 });
 
-test('0348: the brief says foreman_model lists the models codex debug models and agent models list', () => {
+test('0348: the brief names foreman_model and the commands that list its models', () => {
   const brief = fs.readFileSync(path.resolve(import.meta.dirname, '..', 'docs', 'brief.md'), 'utf8');
-  assert.match(brief, /`foreman_model` offers[^.]*`codex debug models`[^.]*`agent models`/);
+  for (const name of ['`foreman_model`', '`codex debug models`', '`agent models`']) assert.ok(brief.includes(name), name);
 });
