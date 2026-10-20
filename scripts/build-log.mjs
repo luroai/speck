@@ -9,8 +9,9 @@ import fs from 'node:fs';
 // when the event has an ISO 8601 timestamp that reads as a date. A Cursor event's agent message and shell command starting
 // do too, from its `timestamp_ms` number (0340).
 // A Codex build's log (`codex exec --json`) and a Cursor one (`--output-format stream-json`) read the same way (0291):
-// the agent's messages and one line per shell command it runs ("→ Shell: npm test"), with "  ✗ exit code N" after a
-// command that fails, and the rest (reasoning, thinking, file changes and other tools) left out.
+// the agent's messages and one line per tool call, named as Claude Code names its own (0341): "→ Bash: npm test" for a
+// shell command, with "  ✗ exit code N" after one that fails, "→ Read", "→ Edit", "→ Write" (a new file), "→ Grep" and
+// "→ Glob", and any other tool call by its own name. The rest (reasoning, thinking, to-do lists) is left out.
 const LOG_DETAIL = 200;
 export function readableLog(text, { times = false } = {}) {
   return readable(text, times, null).out.join('\n');
@@ -63,16 +64,37 @@ function readable(text, times, last) {
       else if (i.type === 'command_execution') {
         out.push(shellLine(i.command, short));
         if (typeof i.exit_code === 'number' && i.exit_code !== 0) out.push(`  ✗ exit code ${i.exit_code}`);
-      }
+      } else if (i.type === 'file_change') { // one line per file, Write for one it adds
+        for (const c of Array.isArray(i.changes) ? i.changes : []) if (c && typeof c === 'object') out.push(toolLine(c.kind === 'add' ? 'Write' : 'Edit', c.path, short));
+        if (i.status === 'failed') out.push('  ✗ failed');
+      } else if (i.type === 'mcp_tool_call') out.push(toolLine(typeof i.tool === 'string' && i.tool.trim() ? i.tool.trim() : i.type, '', short));
+      else if (i.type === 'web_search') out.push(toolLine(i.type, '', short));
     } else if (e.type === 'turn.failed') { // Codex
       out.push(`Build ended: ${short(e.error?.message ?? '') || 'error'}`);
-    } else if (e.type === 'tool_call' && e.tool_call?.shellToolCall && typeof e.tool_call.shellToolCall === 'object') { // Cursor
-      const c = e.tool_call.shellToolCall;
-      if (e.subtype === 'started') out.push(at + shellLine(c.args?.command, short));
-      else if (e.subtype === 'completed' && c.result && typeof c.result === 'object') {
-        const code = c.result.success?.exitCode;
-        if (typeof code === 'number' && code !== 0) out.push(`  ✗ exit code ${code}`);
-        else if (!c.result.success) out.push('  ✗ failed');
+    } else if (e.type === 'tool_call' && e.tool_call && typeof e.tool_call === 'object') { // Cursor
+      const kind = Object.keys(e.tool_call).find(k => k.endsWith('ToolCall') && e.tool_call[k] && typeof e.tool_call[k] === 'object');
+      const c = kind ? e.tool_call[kind] : null;
+      const args = c?.args && typeof c.args === 'object' ? c.args : {};
+      const result = c?.result && typeof c.result === 'object' ? c.result : null;
+      if (!c) { /* not a tool call speck can read */ }
+      else if (kind === 'shellToolCall') {
+        if (e.subtype === 'started') out.push(at + shellLine(args.command, short));
+        else if (e.subtype === 'completed' && result) {
+          const code = result.success?.exitCode;
+          if (typeof code === 'number' && code !== 0) out.push(`  ✗ exit code ${code}`);
+          else if (!result.success) out.push('  ✗ failed');
+        }
+      } else if (kind === 'editToolCall') {
+        // Only a finished edit shows whether the file was new, so its line waits for it.
+        if (e.subtype === 'completed' && result) {
+          const diff = result.success?.diffString;
+          out.push(at + toolLine(typeof diff === 'string' && diff.startsWith('--- /dev/null') ? 'Write' : 'Edit', args.path, short));
+          if (!result.success) out.push('  ✗ failed');
+        }
+      } else if (e.subtype === 'started') {
+        const named = CURSOR_TOOLS[kind];
+        if (named) out.push(at + toolLine(named[0], args[named[1]], short));
+        else { const n = kind.slice(0, -'ToolCall'.length); out.push(at + toolLine(n ? n[0].toUpperCase() + n.slice(1) : 'tool', '', short)); }
       }
     } else if (e.type === 'result') {
       const r = typeof e.result === 'string' ? e.result.trim() : '';
@@ -86,14 +108,25 @@ function readable(text, times, last) {
   return { out, unsure, last };
 }
 
-// A shell command's line in a Codex or Cursor log. Codex runs each command as `/bin/bash -lc '<command>'`, so that is
-// shown as the command alone.
+// Cursor's tool calls that Claude Code has its own name for, each with the argument its line shows (0341).
+const CURSOR_TOOLS = { readToolCall: ['Read', 'path'], grepToolCall: ['Grep', 'pattern'], globToolCall: ['Glob', 'globPattern'] };
+
+// A tool call's line in a Codex or Cursor log: its name, then what it works on when that is a string.
+function toolLine(name, what, short) {
+  const w = typeof what === 'string' ? short(what) : '';
+  const n = short(name);
+  return w ? `→ ${n}: ${w}` : `→ ${n}`;
+}
+
+// A shell command's line in a Codex or Cursor log. Codex runs each command as `/bin/bash -lc <command>`, with the
+// command in single quotes, double quotes or none, so that is shown as the command alone.
 function shellLine(command, short) {
   let c = Array.isArray(command) ? command.join(' ') : typeof command === 'string' ? command : '';
-  const m = c.match(/^(?:\S*\/)?(?:ba|z)?sh -l?c '((?:[^']|'\\'')*)'$/);
-  if (m) c = m[1].replaceAll("'\\''", "'");
-  c = short(c);
-  return c ? `→ Shell: ${c}` : '→ Shell';
+  const m = c.match(/^(?:\S*\/)?(?:ba|z)?sh -l?c (?:'((?:[^']|'\\'')*)'|"((?:[^"\\]|\\.)*)"|([^'"\s].*))$/s);
+  if (m?.[1] !== undefined) c = m[1].replaceAll("'\\''", "'");
+  else if (m?.[2] !== undefined) c = m[2].replace(/\\(["\\$`])/g, '$1'); // in double quotes, \ escapes only these
+  else if (m?.[3] !== undefined) c = m[3];
+  return toolLine('Bash', c, short);
 }
 
 // The last n lines of a build log as readableLog shows them, trailing blank lines dropped, or null when there are none.

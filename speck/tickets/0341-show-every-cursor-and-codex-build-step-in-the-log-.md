@@ -48,6 +48,8 @@ Each step a Cursor or Codex build takes shows in its log as the same kind of lin
 
 - You answered the Foreman (2026-10-20 20:32 UTC): I'm happy with your recommendation. So Cursor's file lines are written when the change finishes, and a new file shows as Write.
 - Failing before this build: none
+- Self-check: a Codex file change's empty or broken entries are skipped rather than shown as a bare Edit line, and a long MCP tool name is cut short like any other detail.
+- Tests this ticket changes: 0291's and 0340's tests pinned the old `→ Shell` name, and left out the file read and change their sample logs hold; they now expect `→ Bash`, `→ Read` and `→ Edit`, as AC1 and AC2 ask.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
