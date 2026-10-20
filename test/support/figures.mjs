@@ -5,7 +5,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './panel.mjs';
 
-// Shipped (status done) and cancelled counts, the median minutes from a build's `started` to its `finished`, rounded,
+// Shipped (status done) and cancelled counts, the median minutes from a build's `started` to its `finished`, less its
+// waited_seconds as the panel's Shipped median leaves it out (0344), rounded,
 // and the median of the Delivery log's "Review rounds" with how many were approved in round 1. Tickets without a time
 // or rounds are left out of those medians.
 export function builtWithSpeckFigures(tickets) {
@@ -18,7 +19,8 @@ export function builtWithSpeckFigures(tickets) {
     if (status !== 'done') continue;
     shipped++;
     const start = t.match(/^started:\s*"?([^"\n]+)"?/m)?.[1], end = t.match(/^finished:\s*"?([^"\n]+)"?/m)?.[1];
-    if (start && end) minutes.push((Date.parse(end) - Date.parse(start)) / 60000);
+    const waited = Number(t.match(/^waited_seconds:\s*"?([\d.]+)/m)?.[1]);
+    if (start && end) minutes.push((Date.parse(end) - Date.parse(start)) / 60000 - (Number.isFinite(waited) && waited > 0 ? waited / 60 : 0));
     const r = t.match(/^- Review rounds:\s*(\d+)/m)?.[1];
     if (r) { rounds.push(Number(r)); if (r === '1') firstRound++; }
   }

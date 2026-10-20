@@ -12,7 +12,7 @@ import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
 import { codexBuilds, codexStartWords, fillSession, timedArgv } from './codex-build.mjs';
 import { cursorBuilds, cursorCli, cursorStartWords } from './cursor-build.mjs';
-import { countStop } from './stop-wait.mjs';
+import { countStop, sleepQueue, sleepWatch } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
 import { endBuild } from './stop-end.mjs';
 import { saveForeman, switchingReady } from './foreman.mjs';
@@ -377,9 +377,9 @@ function runOn(worker) {
 
   const handBacks = handBackQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo), fill });
   const goWiths = goWithQueue({ repo, cfg, words, max, running, startBuild, saveRecord, resumeHint, runs: () => runsDir(repo) }); // 0284
+  const sleeps = sleepQueue({ repo, readConfig: () => loadConfig(repo), running, runs: () => runsDir(repo), watch: sleepWatch({ pollMs }) }); // 0344
   const foremanFixes = foremanFixQueue({ repo, running, readConfig: () => loadConfig(repo) }); // 0286
-  // 0287: the Foreman agent, for stops speck has no steps for
-  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), words, cfg, max, running, startBuild, ships });
+  const agents = foremanAgentQueue({ repo, runs: () => runsDir(repo), readConfig: () => loadConfig(repo), words, cfg, max, running, startBuild, ships }); // 0287: the Foreman agent, for stops speck has no steps for
 
   const switchWhenIdle = codeSwitch({ worker, code, busy: () => ships.running(), launched: () => [...launched], running: () => [...running],
     stopLoop: () => clearInterval(loop), handOver: () => { kept = []; }, stayed: () => { const ends = kept || []; kept = null; for (const end of ends) endOf(...end); } });
@@ -428,7 +428,7 @@ function runOn(worker) {
     if ([...adopted.values()].some(b => b.seen)) { const tickets = readTickets(); if (tickets) releaseSeen(tickets); }
     const tickets = readTickets();
     if (!tickets) return;
-    adoptSeen(tickets);
+    adoptSeen(tickets); sleeps.check(tickets); // 0344: time asleep since the last check isn't build time for builds in hand through it
     if (prs) prs.check(tickets); else ships.check(tickets);
     foremanFixes.check(tickets); // 0286: the Foreman takes the recommendation of each blocked ticket it may, for goWiths to resume
     goWiths.check(tickets); // 0284: blocked tickets you went with the recommendation for, before any killed build's resume
