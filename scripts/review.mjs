@@ -336,7 +336,7 @@ export function cmdReview(args) {
   let rec;
   if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
   else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));
-  else throw new SpeckError(`speck review runs the codex and claude reviewers, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
+  else throw new SpeckError(`speck review runs the codex, claude and cursor reviewers, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }

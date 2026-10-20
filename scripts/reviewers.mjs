@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TEMPLATES, SpeckError, sh, git, reviewerSettings, settingsMeta, posix } from './core.mjs';
 import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt } from './review.mjs';
+import { cursorCli } from './cursor-build.mjs';
 
 const LIMIT_SCRIPT = fileURLToPath(new URL('./limit.mjs', import.meta.url));
 
@@ -75,8 +76,13 @@ export function commandArgs(cmd, values) {
 // command that writes. 0314: --strict-mcp-config with no --mcp-config loads no MCP servers or claude.ai connectors.
 // A reviewer_options entry with a command of its own is used instead.
 const CLAUDE_ARGS = '-p --permission-mode dontAsk --setting-sources= --strict-mcp-config --disallowedTools "Edit Write NotebookEdit" --output-format json --model {model} --effort {effort}';
+// 0332: Cursor's CLI (`agent`, or `cursor-agent` when only that is installed) runs without a person in ask mode, which
+// is read-only. --trust gets past the Workspace Trust prompt that would otherwise stop it in a folder Cursor hasn't been
+// told to trust. Not --sandbox enabled: it won't start where the OS doesn't support Cursor's sandbox.
+const CURSOR_ARGS = '-p --mode ask --trust --output-format json --model {model}';
 const BUILT_IN = Object.freeze({
-  claude: Object.freeze({ command: `claude ${CLAUDE_ARGS}`, resume_command: `claude --resume {session} ${CLAUDE_ARGS}`, session_id_path: 'session_id' }),
+  claude: () => ({ command: `claude ${CLAUDE_ARGS}`, resume_command: `claude --resume {session} ${CLAUDE_ARGS}`, session_id_path: 'session_id' }),
+  cursor: (cli = cursorCli()) => ({ command: `${cli} ${CURSOR_ARGS}`, resume_command: `${cli} --resume {session} ${CURSOR_ARGS}`, session_id_path: 'session_id' }),
 });
 
 // The options a reviewer runs with: its own under reviewer_options when they give a command, or speck's built-in ones.
@@ -84,7 +90,7 @@ export function reviewerOptions(cfg, name) {
   const own = cfg.reviewer_options?.[name];
   const mine = own && typeof own === 'object' ? own : {};
   if (typeof mine.command === 'string' && mine.command.trim()) return mine;
-  return Object.hasOwn(BUILT_IN, name) ? BUILT_IN[name] : mine;
+  return Object.hasOwn(BUILT_IN, name) ? BUILT_IN[name]() : mine;
 }
 
 // A JSON object from text that is JSON, or holds a ```json fenced block.

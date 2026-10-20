@@ -42,6 +42,8 @@ Claude Code and Codex review with no setup, but a Cursor reviewer needs a comman
 - Not `--sandbox enabled`: it fails to start where the OS doesn't support Cursor's sandbox ("Sandbox mode is enabled but not available on this system", Linux with AppArmor on this machine). Ask mode alone is read-only.
 - Checked 2026-10-20 (Cursor CLI on this machine): `agent -p --mode ask --trust --output-format json --model auto` reads the prompt from stdin and prints one JSON object with `result` and `session_id`; `--resume <session_id>` carries on that chat; asked in ask mode to create a file and run `touch`, it refused and nothing was written. Without `--trust`, `agent -p` in an untrusted folder prints "Workspace Trust Required" and stops (user's work laptop).
 - Failing before this build: none
+- AC5 has no test of its own: `speck ship` runs the whole suite.
+- Self-check: the review and setup skills still said a Cursor reviewer needs a command written by hand, so `/speck-build` would not have known to run `speck review` for it; both now say speck runs Cursor itself.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
