@@ -1,7 +1,7 @@
 ---
 id: "0344"
 title: "Leave the time a machine was asleep out of a build's time"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0342"]                # ticket ids that must be done first
 created: 2026-10-20
+blocked_at: "2026-10-20T21:33:42.401Z"
 
 ---
 # 0344 · Leave the time a machine was asleep out of a build's time
 
-**Status:** 📋 ready
+**Status:** ⛔ blocked
 
 ## Problem
 When a laptop's lid is closed during a build, every process sleeps with it, but the wall clock carries on, so the build's time counts the hours asleep. The user saw build timers of 300 minutes after closing their laptop during Cursor builds (2026-10-20). That skews the panel's Shipped figures and the README's "Built with speck" figures, which are speck's proof of how fast it is.
@@ -55,7 +56,11 @@ Time the machine spent asleep during a build doesn't count towards the build's t
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+How should 0344 catch sleep on macOS, where Node's clock keeps counting while the Mac sleeps: (1) the Linux clock gap plus the Mac's recorded sleep and wake times, with the Mac part marked unconfirmed in Notes (recommended, as it covers both machines speck runs on), (2) Linux only, with macOS out of scope, or (3) just the README figures (criterion 4)?
+
+Recommended: Linux clock gap plus the Mac's recorded sleep and wake times
+Changes what you'd notice: yes
+Clear winner: no
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
