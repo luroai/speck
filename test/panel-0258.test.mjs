@@ -32,7 +32,7 @@ test('0258 AC1: the eight settings can be changed, with reviewer and reviewer_ef
   const s = byKey(panelSettings(r.dir));
   for (const [, keys] of GROUPS) for (const k of keys) assert.equal(s[k].editable, KEYS.includes(k) || k.startsWith('auto_ship') || k === 'builder_model' || k === 'builder' || k === 'ship_mode', k);
   assert.deepEqual(s.reviewer_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
-  assert.deepEqual([...s.reviewer.choices].sort(), ['claude', 'claude-subagent', 'codex', 'my-reviewer']); // 0292 added claude
+  assert.deepEqual([...s.reviewer.choices].sort(), ['claude', 'claude-subagent', 'codex', 'cursor', 'my-reviewer']); // 0292 added claude, 0347 cursor
   assert.equal(s.reviewer_model.choices, undefined, 'a free value');
 });
 
