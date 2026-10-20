@@ -1826,7 +1826,7 @@ async function loadSettings() {
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
     next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null,
-      claude_models: body.claude_models ?? null, builder_models: body.builder_models ?? null }
+      claude_models: body.claude_models ?? null, builder_models: body.builder_models ?? null, foreman_models: body.foreman_models ?? null }
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -1931,6 +1931,7 @@ function renderSettings() {
           x.key === 'builder' ? builderSwitchLine(x) : null,
           x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
           x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
+          x.key === 'foreman_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
           settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
           tip));
       }
@@ -1979,7 +1980,7 @@ function settingEditor(x) {
   const typing = value => {
     settingTyped.set(x.key, value);
     // 0276: the reviewer and its model decide what the model and effort lists offer, so those are drawn again.
-    if (x.key === 'reviewer' || x.key === 'builder' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) {
+    if (x.key === 'reviewer' || x.key === 'builder' || x.key === 'foreman' || (x.key === 'reviewer_model' && reviewerModelList() !== null)) { // 0348: and foreman
       renderSettings();
       const again = settingControls.get(x.key);
       if (again && again.focus) again.focus();
@@ -2014,7 +2015,7 @@ function settingEditor(x) {
     // offered, but can't be picked again.
     const off = [...new Set([settingNow(x), typed])].filter(c => !choices.includes(c));
     for (const c of [...off, ...choices]) {
-      const list = x.key === 'reviewer_model' ? reviewerModelList() : x.key === 'builder_model' ? builderModelList() : null;
+      const list = x.key === 'reviewer_model' ? reviewerModelList() : x.key === 'builder_model' ? builderModelList() : x.key === 'foreman_model' ? foremanModelList() : null;
       const m = off.includes(c) ? null : (list || []).find(x => x.slug === c); // 0288: with its display name and description
       const named = m && m.display_name && m.display_name !== c ? ` (${m.display_name})` : '';
       const o = el('option', null, c === '' ? '(default)' : off.includes(c) ? `${c} (not offered)` : `${c}${named}${m && m.description ? `: ${m.description}` : ''}`);
@@ -2042,6 +2043,10 @@ function settingChoices(x) {
   if (x.key === 'builder_model') { // 0279: the builder's models, or a box to type in
     const built = builderModelList();
     return built !== null ? ['', ...built.map(m => m.slug)] : null;
+  }
+  if (x.key === 'foreman_model') { // 0348: the Foreman agent's models, or a box to type in
+    const listed = foremanModelList();
+    return listed !== null ? ['', ...listed.map(m => m.slug)] : null;
   }
   const models = x.key === 'reviewer_model' || x.key === 'reviewer_effort' ? reviewerModelList() : null;
   if (models !== null && x.key === 'reviewer_model') return ['', ...models.map(m => m.slug)];
@@ -2075,6 +2080,30 @@ function builderModelList() {
   const m = settingsView !== null ? settingsView.builder_models : null;
   if (!m || typeof m !== 'object' || !Array.isArray(m.models)) return null;
   return m.models.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
+}
+// 0348: the agent the Foreman runs on as chosen in the view, as foremanAgentOf in foreman-agent.mjs reads it: foreman
+// when it's set, otherwise the builder when that's Codex or Cursor, otherwise Claude Code.
+function foremanAgentChosen() {
+  const foreman = settingChosen('foreman'), builder = settingChosen('builder');
+  return ['claude', 'codex', 'cursor'].includes(foreman) ? foreman : ['codex', 'cursor'].includes(builder) ? builder : 'claude';
+}
+// 0348: the models of that agent: Claude's model names for claude, otherwise the ones the server read, while it read
+// them for that agent; null when there are none to offer.
+function foremanModelList() {
+  const m = settingsView !== null ? settingsView.foreman_models : null, agent = foremanAgentChosen();
+  const list = agent === 'claude' && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
+    : m && typeof m === 'object' && Array.isArray(m.models) && m.foreman === agent ? m.models : null;
+  return list === null ? null : list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
+}
+// 0348: why foreman_model is a box to type in rather than a list, in one line, or null when it's a list or the server
+// didn't say.
+function foremanModelsWhy() {
+  const m = settingsView !== null ? settingsView.foreman_models : null;
+  if (!m || typeof m !== 'object' || foremanModelList() !== null) return null;
+  const agent = foremanAgentChosen();
+  if (agent === m.foreman || !m.foreman) return typeof m.why === 'string' && m.why ? m.why : null; // '': the server couldn't tell
+  return ['claude', 'codex', 'cursor'].includes(settingChosen('foreman')) ? `Save ${agent} as the Foreman agent, then open Settings again to pick from its models.`
+    : `Save these settings, then open Settings again to pick from ${agent}'s models.`;
 }
 // 0288: a model's display name and description, each null when the agent gives none.
 const modelWords = x => ({ display_name: typeof x.display_name === 'string' && x.display_name ? x.display_name : null,
