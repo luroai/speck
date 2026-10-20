@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.10.0 · 20 October 2026
+
+What's new since 0.9.1. A minor release that lets you set speck up to run entirely in Cursor from setup's questions alone: Cursor builds, a Cursor reviewer on a model you pick, the Foreman on Cursor, and a test command that lets tickets ship in a folder with no tests yet.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.10.0 init`.
+- When you pick Cursor as the builder, setup offers an all-Cursor setup in one question: builds on Cursor's `auto`, the reviewer on Cursor with a model you pick, and the Foreman on Cursor or another agent you have installed. It offers only models from your own account's list, as `speck agents --json` reads them, never a made-up name, and makes every setting with `speck config set`, so you don't edit `speck/config.yml` by hand or turn on `allow_same_model_review`. With the builder on `auto`, any reviewer model is accepted; with a builder model set, it recommends a reviewer model from another provider.
+- When setup runs in an agent's chat that walls off the network, as Cursor's does, and so can't read your agents' models, it runs `speck agents --json` again outside that sandbox, asking you first if its tool needs your approval. If that doesn't work either, it asks you to run `agent models` in your own terminal and paste the list, and offers models only from that. Builds that `speck run` starts aren't affected.
+- In a folder with no tests, such as a folder of documents, setup recommends `node --test` as `commands.test` rather than leaving it blank, after running it once to check it passes. It passes while there are no tests and runs the tests later tickets add, so tickets can ship from the start. Setup says that with `commands.test` blank nothing can ship, and that changes to documents are checked by the reviewer instead. If you still want it blank, it offers a draft ticket to add a test runner, as before.
+
+### Reviewing with Cursor
+
+- `reviewer: cursor` needs no command of your own. speck runs Cursor's CLI, `agent`, or `cursor-agent` when only that is installed, in its read-only ask mode, on `reviewer_model`, or Cursor's own default when that's blank. Later rounds carry on the same Cursor chat. It passes `--trust`, so a review no longer stops at Cursor's Workspace Trust prompt in a folder Cursor hasn't been told to trust. A `reviewer_options.cursor.command` of your own is still used instead, and the README's example of one now has `--trust` too.
+- A Cursor build reviewed by Cursor passes the same-model check without `allow_same_model_review`, when the reviewer has a model of its own: with `builder_model` set and a different `reviewer_model`, or with `builder_model` blank, so the build runs on Cursor's `auto`, and `reviewer_model` set to anything but `auto`. `speck lint`, setting a ticket ready and saving the Settings view all accept it. It's still refused when both are given the same model, when `reviewer_model` is blank or `auto`, or when `build_command` is set, as speck then can't tell what model the build runs on.
+
+### The Foreman
+
+- The Foreman can run on Cursor: set `foreman` to `cursor` with `speck config set` or in the Settings view's Foreman group. It runs on `foreman_model` when that's set, and Cursor's own default otherwise. `foreman_effort` isn't passed, as Cursor's model names carry the effort. With `foreman` blank and Cursor as the builder, the Foreman now runs on Cursor rather than Claude Code. A Cursor Foreman can run any command, as Cursor builds can, and only its instructions keep it to speck's own commands.
+
 ## 0.9.1 · 19 October 2026
 
 What's fixed since 0.9.0. A bug-fix release: setup suggests the right test command for pnpm, yarn and bun projects, tickets keep their builder after you switch back to Claude Code, a pull request that clashes on GitHub goes back to its build, and `speck run`, `speck status`, the Foreman and the panel each say or do what they should in a few more cases.

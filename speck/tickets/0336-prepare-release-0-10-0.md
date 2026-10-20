@@ -43,6 +43,12 @@ speck is ready to be released as 0.10.0, the Cursor-native release.
 - After it ships, check that the `v0.10.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.10.0 --target main --title "speck 0.10.0" --notes-file docs/releases/v0.10.0.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.9.1`: 0330–0335, and 0337, which fixed one of speck's own tests and changes nothing anyone using speck notices, so the changelog and release notes leave it out.
+- Built from main at `speck(0335): Read the agents' models outside the setup agent's sandbox`: 320 shipped, 16 cancelled, 13 minutes median, 1.5 rounds median, 158 approved in the first round, worked out as 0307 did, with its figures test.
+- 0329's checks that named 0.9.1 as the current version now check the current version, and its figures test checks only the figures 0.9.1 was built from, as 0329 did for 0307.
+- README: only its status line and figures change here. 0332 and 0333 already updated its Cursor reviewer and Foreman text.
+- Self-check: the release notes' upgrade line on `allow_same_model_review` now names every condition 0330 needs (`build_command` blank, a reviewer model other than `auto` and the builder's), and the line on the Settings view says it offers Cursor as the reviewer only with a `reviewer_options.cursor` command.
+- Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
