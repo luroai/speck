@@ -1,7 +1,7 @@
 ---
 id: "0339"
 title: "Prepare release 0.10.1"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T13:04:07.132Z"
 ---
 # 0339 · Prepare release 0.10.1
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 0338 stops the panel turning a ticket red, and asking the user to ship it, while speck run is already handling a failed auto-ship. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.0 without the fix.
@@ -46,7 +46,6 @@ speck is ready to be released as 0.10.1.
 - Covers every ticket shipped since `v0.10.0`: only 0338. 0337 shipped before 0.10.0 was built, and 0336 covered it.
 - Built from main at `speck(0338): Keep a handed-back ticket out of red while speck run is handling it`: 322 shipped, 16 cancelled, 13 minutes median, 1.5 rounds median, 159 approved in the first round, worked out as 0307 did, with its figures test.
 - 0336's checks that named 0.10.0 as the current version now check the current version, and its figures test checks only the figures 0.10.0 was built from, as 0336 did for 0329.
-- AC2's "0.10.0 and earlier sections are unchanged" is also checked by a test, against the `v0.10.0` tag's `CHANGELOG.md` (skipped when the tag isn't in the checkout).
 - Self-check: dropped a sentence from the release notes' upgrade list saying to reload the panel, which nothing in 0338 backs.
 - Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
@@ -61,3 +60,79 @@ speck is ready to be released as 0.10.1.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0a0fe9a6f6639c59cf2ecdbb4177ae1cd92ee34b",
+    "thread_id": "01a1596b-699f-7753-bcd0-b0d5d06cda28",
+    "seconds": 33,
+    "usage": {
+      "input_tokens": 97422,
+      "cached_input_tokens": 70656,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 936,
+      "reasoning_output_tokens": 82
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T13:06:46.680Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.10.1. The passing release-0339 AC1 tests check the version and invoke speck init to verify its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.10.1 above 0.10.0 and describes the panel recovery states, retained failure message and handed_back field from shipped ticket 0338. Earlier sections are unchanged in the diff."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say 0.10.1, a public preview. Passing AC3 tests check both versions and verify the setup prompt still installs the latest release."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.10.1.md explains the bug fixes, update command, per-project updates, upgrade implications and changelog link without naming anyone. Claims match ticket 0338 and the existing update and run-switch behaviour. AC4 tests cover the command, setting names and link."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent calculation using builtWithSpeckFigures on the current done tickets returns 322 shipped, 16 cancelled, 13 minutes median, 1.5 rounds median and 159 first-round approvals, matching README.md. Reported checks passed with zero failures, including release-version consistency."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0339.test.mjs",
+        "issue": "The new test comparing the 0.10.0 and earlier changelog sections uses exact text equality against the tag. This locks document wording and fails on subsequent edits to those sections, contrary to the explicit review rule against document wording tests.",
+        "suggested_fix": "Remove the exact-text test. Verify preservation of earlier changelog sections by reviewing the diff; retain tests of release facts such as versions, commands and links.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The release content accurately describes the shipped fix, the version and figures agree, and the reported checks pass. Before approval, remove one test that locks older changelog wording; the review rules explicitly prohibit such tests."
+  }
+}
+```
+
+</details>
