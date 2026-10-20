@@ -42,6 +42,7 @@ Lines in a Cursor build's log show when they happened, as Claude Code builds' li
 - Builds on 0080. The reader is `readable` in `scripts/build-log.mjs`: `clock` takes only an ISO `timestamp` string, and the Cursor shell branch (`tool_call` with `shellToolCall`) adds no time.
 - Checked 2026-10-20: a real Cursor stream (`agent -p --force --trust --output-format stream-json --model auto`, the CLI on this machine) gave `timestamp_ms` numbers such as `1792511607818` on its `thinking`, `assistant` and `tool_call` events, and none on `system`, `user`, the last `assistant` event or `result`. Read through `readablePiece` with `times: true`, its lines came out as `I'll run \`ls\`, then reply with done.` and `→ Shell: ls` with no time, while a Claude Code event with `timestamp` gave `13:00:05 Reading the ticket.`.
 - Test it by calling `readablePiece` directly with Cursor-shaped events.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
