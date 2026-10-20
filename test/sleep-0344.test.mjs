@@ -7,8 +7,8 @@ import path from 'node:path';
 import { panelRepo, gitEnv } from './support/panel.mjs';
 import { runsPath } from './support/ticker.mjs';
 import { builtWithSpeckFigures } from './support/figures.mjs';
-import { parseTicket, loadConfig } from '../scripts/speck.mjs';
-import { addPaused, pausedSince } from '../scripts/core.mjs';
+import { parseTicket, loadConfig, statusData } from '../scripts/speck.mjs';
+import { addPaused, pausedSince, waitFields, setField } from '../scripts/core.mjs';
 import { clockGap, macGap, sysctlTime, macSleepTimes, sleepWatch, sleepQueue, SLACK_MS } from '../scripts/sleep-wait.mjs';
 
 Object.assign(process.env, gitEnv); // countSleep commits in this process
@@ -30,7 +30,7 @@ function setup({ platform = 'linux', times = () => null } = {}) {
   const k = fakeClocks(), logs = [], running = new Set();
   const q = sleepQueue({ repo: r.dir, readConfig: () => loadConfig(r.dir), running, runs: () => runsPath(r.dir, ''),
     watch: sleepWatch({ read: k.read, platform, times, pollMs: 5000 }), log: s => logs.push(s) });
-  const tickets = () => [{ id: '0001', status: fmOf(r.file).status }];
+  const tickets = () => statusData(r.dir).tickets; // as speck run reads them on each check
   const fields = (f = {}) => {
     let text = fs.readFileSync(r.file, 'utf8');
     for (const [key, v] of Object.entries(f)) {
@@ -239,6 +239,47 @@ test('0344 AC3: a ticket approved before the sleep, whose build time has ended, 
   s.k.awake(2000); s.k.asleep(HOUR); s.k.awake(1000);
   s.check();
   assert.equal(s.waited(), 0);
+});
+
+// Resumes the ticket's wait at the fake clock's time, as its build carries on: unblocked, or played with its pause added.
+const resume = s => {
+  const raw = fs.readFileSync(s.file, 'utf8'), fm = parseTicket(raw).fm, mark = runsPath(s.dir, '0001.paused');
+  const text = fm.status === 'blocked' ? waitFields(setField(raw, 'status', 'building'), 'blocked', 'building', s.k.c.wall)
+    : addPaused({ raw, fm }, pausedSince(mark), s.k.c.wall);
+  fs.writeFileSync(s.file, text); s.g('commit', '-qam', 'resumed'); fs.rmSync(mark, { force: true });
+};
+const pauseAt = (s, ms) => fs.writeFileSync(runsPath(s.dir, '0001.paused'), JSON.stringify({ session: 's1', pid: process.pid, paused: iso(ms) }));
+
+test('0344 AC3 F1: a pause or block resumed after waking but before the next check has the sleep counted once', () => {
+  for (const how of ['paused', 'blocked']) for (const since of ['before', 'after']) { // waiting from before the last check, or after it
+    const s = setup();
+    s.build('building');
+    const wait = () => (how === 'paused' ? pauseAt(s, s.k.c.wall) : (assert.equal(s.run('set', '1', 'status', 'blocked').status, 0), s.fields({ blocked_at: iso(s.k.c.wall) })));
+    if (since === 'before') wait();
+    s.check();
+    s.k.awake(2000);
+    if (since === 'after') wait();
+    s.k.awake(1000); s.k.asleep(2 * HOUR); s.k.awake(1000);
+    resume(s);
+    s.k.awake(500);
+    s.check();
+    const w = s.waited();
+    assert.ok(Math.abs(w - (2 * 3600 + (since === 'after' ? 2 : 3))) <= 1, `${how} from ${since} the last check: ${w}`);
+  }
+});
+
+test('0344 AC3: a pause or block resumed before the sleep still has the sleep added, as its build was at work through it', () => {
+  for (const how of ['paused', 'blocked']) {
+    const s = setup();
+    s.build('building');
+    if (how === 'paused') pauseAt(s, s.k.c.wall); else { assert.equal(s.run('set', '1', 'status', 'blocked').status, 0); s.fields({ blocked_at: iso(s.k.c.wall) }); }
+    s.check();
+    s.k.awake(3000);
+    resume(s);
+    s.k.awake(1000); s.k.asleep(HOUR); s.k.awake(1000);
+    s.check();
+    assert.ok(Math.abs(s.waited() - (3600 + 3)) <= 1, `${how}: ${s.waited()}`);
+  }
 });
 
 // ---------- AC4 ----------
