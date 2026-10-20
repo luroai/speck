@@ -42,6 +42,9 @@ Lines in a Codex build's log show when they happened, as Claude Code and Cursor 
 - After 0341, which changes the same reader (`scripts/build-log.mjs`).
 - Checked 2026-10-20: a Codex build (`codex exec --json`, the CLI on this machine) emitted `thread.started`, `turn.started`, `item.started`, `item.completed` and `turn.completed` events with no time field on any of them or their items.
 - Failing before this build: none
+- Self-check: added a test that a Codex build leaving a process that holds its output still ends about 2 seconds after Codex exits, rather than waiting for that process.
+- Known limit: when the `codex` command can't be found, the build now starts (its times wrapper does) and exits with code 127, the reason in its log, rather than speck run saying the build couldn't start.
+- Pictures: none, because the change adds times to Codex log lines only, and no Codex build log was made here to show; the panel's look is unchanged.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
