@@ -1,7 +1,7 @@
 ---
 id: "0337"
 title: "Make the 0108 launch test pass again on main"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:27:19.846Z"
 approved: "2026-10-20T12:29:05.591Z"
+finished: "2026-10-20T12:32:12.079Z"
 
 ---
 # 0337 · Make the 0108 launch test pass again on main
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 On main, the test `0108 AC2: a ticket committed as ready on the base branch is launched as before` (`test/ready-0108.test.mjs`) fails every time it runs, so every ticket's ship fails on it (0335 was handed back for it on 2026-10-20). It checks that speck run's output has no line matching `/0001[^\n]*commit/i`. Since 96a05182 (0327), when the test's fake build exits at once with the ticket still ready, speck run prints `0001 is still ready, so the build never started it. speck run won't launch it again until its ticket is set ready again and committed. …`, which matches. The test passes on the commit before 96a05182 and fails on 96a05182 and on main.
