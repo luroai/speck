@@ -2060,13 +2060,14 @@ function settingChosen(key) {
 }
 // 0276: the models the server read, while the reviewer chosen in the view is the one it read them for; otherwise null.
 // 0278: Claude's model names whenever claude-subagent (or 0292's claude) is chosen, each with no `efforts` (null).
+// 0347: Cursor's have no `efforts` either: their names carry the effort, so reviewer_effort offers speck's own.
 function reviewerModelList() {
   const m = settingsView !== null ? settingsView.reviewer_models : null, claude = ['claude', 'claude-subagent'].includes(settingChosen('reviewer'));
   const list = claude && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
     : m && typeof m === 'object' && Array.isArray(m.models) && settingChosen('reviewer') === m.reviewer ? m.models : null;
   if (list === null) return null;
   return list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug,
-    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude ? null : [], ...modelWords(x) }));
+    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude || m.reviewer === 'cursor' ? null : [], ...modelWords(x) }));
 }
 // 0279: the models the server read for the builder, which the view can't change, each with its words when it has them;
 // null when it couldn't list them.
@@ -2090,7 +2091,7 @@ function modelsWhy() {
   if (!m || typeof m !== 'object' || reviewerModelList() !== null) return null;
   const chosen = settingChosen('reviewer');
   if (chosen === m.reviewer) return typeof m.why === 'string' && m.why ? m.why : null;
-  return chosen === 'codex' ? 'Save codex as the reviewer, then open Settings again to pick from its models.'
+  return chosen === 'codex' || chosen === 'cursor' ? `Save ${chosen} as the reviewer, then open Settings again to pick from its models.` // 0347: cursor too
     : `${chosen} can't list its models, so type the model's name as it names it.`;
 }
 // 0293: what switching the builder does, said while a new one is picked, and the build_command it sets.

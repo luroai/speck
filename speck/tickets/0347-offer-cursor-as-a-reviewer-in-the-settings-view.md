@@ -42,6 +42,8 @@ The Settings view offers Cursor as a reviewer, and offers its models for `review
 - `reviewerModels` in `scripts/settings.mjs` lists models only for `claude`, `claude-subagent` and `codex`; `builderModels` reads Cursor's with `agentModelsAsync('cursor')`. The view's lists are `reviewerModelList` and `builderModelList` in `templates/panel.html`. The reviewer choices come from `REVIEWER_AGENTS` (builder's note on 0332).
 - Relies on nothing outside this repo: Cursor's models are read the way the builder's already are.
 - Failing before this build: none
+- 0288 AC3's fixture had Cursor never ready, and asserted no "Not offered" line with every other reviewer ready; with cursor now a reviewer, its all-ready case passes Cursor as ready too, keeping the same check.
+- Self-check: the brief now says `reviewer: cursor` lists Cursor's models and that a Cursor that can't list them gives a box, with a test; Cursor's models give reviewer_effort speck's own efforts rather than an empty list; the panel reads Cursor's models once when it's both builder and reviewer.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
