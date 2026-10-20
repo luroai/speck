@@ -1,7 +1,7 @@
 ---
 id: "0336"
 title: "Prepare release 0.10.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T12:34:34.527Z"
 ---
 # 0336 · Prepare release 0.10.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 0330 to 0335 make an all-Cursor setup work from setup's questions alone: Cursor builds on Auto, a built-in Cursor reviewer on a chosen model, the Foreman on Cursor, models picked from the account's list, and a test command for folders without tests. Anyone following the setup prompt gets 0.9.1 without them, and the user is waiting for this release to test speck in Cursor on their work laptop.
@@ -51,7 +51,7 @@ speck is ready to be released as 0.10.0, the Cursor-native release.
 - Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as 0.10.0, the release that lets you run speck entirely in Cursor. The changelog has a 0.10.0 section, led by the all-Cursor setup, and the release page's notes say what each change is for, how to update and what changes when upgrading from 0.9.1, such as the Foreman now running on Cursor when Cursor builds your tickets. The README and the brief now say 0.10.0, and the README's "Built with speck" figures are up to date: 320 tickets shipped and 158 approved in the first review round. Once this lands, the release page should appear on GitHub by itself. Worth checking that it did, as the ticket's Notes say how to publish it by hand if not.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,3 +61,71 @@ speck is ready to be released as 0.10.0, the Cursor-native release.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none new. The Settings view not offering Cursor as the reviewer is already in the inbox (from 0332). The README's review-loop paragraph says a same-family reviewer needs both models set; for Cursor, a blank `builder_model` runs on `auto`, which counts as set, as the brief explains.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c52493a41204af94707d547de0e9310bd7a893b9",
+    "thread_id": "01a15950-9ec9-77e2-ba5c-dff5792a59c1",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 212918,
+      "cached_input_tokens": 156416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1015,
+      "reasoning_output_tokens": 65
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:37:34.743Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.10.0. Passing 0336 AC1 tests check the version and invoke speck init to verify its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md leads with the all-Cursor setup and describes shipped tickets 0330–0335. The diff only prepends the new section; 0.9.1 and earlier entries are unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say 0.10.0, a public preview. Passing 0336 AC3 tests verify the version and the unchanged latest-release setup command."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.10.0.md includes the opening paragraph, six changes and their benefits, per-project update command, upgrade implications and changelog link. Claims match shipped tickets and the setup, reviewer, same-model and Foreman implementations. No person's name appears. Passing AC4 tests check technical facts, the command and link."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independent recalculation using builtWithSpeckFigures on the current done tickets matches the README: 320 shipped, 16 cancelled, 13 minutes median, 1.5 review rounds median and 158 first-round approvals. The recorded run has 129 passes, three skips and no failures; the version/changelog consistency test passes."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release is ready for the owner's merge decision. Version numbers, release notes and README figures agree with the shipped work. The recorded checks pass, earlier changelog entries are preserved, and no blocking concerns were found."
+  }
+}
+```
+
+</details>
