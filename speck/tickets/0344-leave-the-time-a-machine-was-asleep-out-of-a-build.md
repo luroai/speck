@@ -62,7 +62,7 @@ Time the machine spent asleep during a build doesn't count towards the build's t
 - The Foreman (2026-10-20 21:48 UTC) resumed its build: The user has answered the macOS question: go with option 1, the Linux clock gap plus the Mac's recorded sleep and wake times, with the Mac part marked unconfirmed in Notes (see the 'Went with the recommendation' note). Ignore the earlier instruction to block and end: 0344 is building now, so carry on building it to the acceptance criteria and through review.. Why: The user answered the macOS question, but the restarted build followed the Foreman's older instruction to block and end, so it stopped without building; it should now build the option the user chose.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If you close your laptop's lid while speck is building a ticket, the hours it spends asleep no longer count towards that build's time. The panel's timers and Shipped figures, and the README's "Built with speck" figures, now show only the time the build was actually at work. To see it, close the lid during a build while speck run is on, open it again later, and the build's timer carries on from roughly where it was. speck run's log says how long the machine was asleep. This works on Linux. On a Mac it uses the sleep and wake times the Mac records, which haven't been tried on a real Mac yet, so keep an eye on it there. Builds you start by hand with speck run off aren't covered, and builds already recorded with sleep in them stay as they are.
 
 ## Blocked question
 How should 0344 catch sleep on macOS, where Node's clock keeps counting while the Mac sleeps: (1) the Linux clock gap plus the Mac's recorded sleep and wake times, with the Mac part marked unconfirmed in Notes (recommended, as it covers both machines speck runs on), (2) Linux only, with macOS out of scope, or (3) just the README figures (criterion 4)?
@@ -76,6 +76,8 @@ Clear winner: no
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: confirming the macOS part on a real Mac went to the inbox (speck/ideas/2026-10-20-confirm-sleep-time-is-left-out-on-a-real-mac.md). Known limits, in Notes: the wall clock set forward by more than 5 seconds reads as sleep on Linux, a sleep while speck run switches to new code isn't counted, and the clock gap only estimates when a sleep began.
+- The panel's Go with the recommendation button couldn't record the user's choice, because the build had stopped before it made a branch. It was recorded by hand in Notes. Worth its own look if it happens again.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -236,6 +238,87 @@ Clear winner: no
     ],
     "escalation_question": "",
     "summary": "Builds started between checks now receive sleep credit correctly, and all reported tests pass. One blocking problem remains: resuming a paused or blocked build before the first check after waking can subtract the sleeping hours twice. The new tests do not cover that order of events."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "34ff5b67cda692f766a18c05b7e5a564a6a0a3db",
+    "thread_id": "01a15b4c-d67d-7610-a351-bdcb5d49b8fc",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 723017,
+      "cached_input_tokens": 633344,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3648,
+      "reasoning_output_tokens": 622
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T21:58:05.398Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "sleepWatch detects sleep and sleepQueue records it at the next check. Passing AC1 tests cover building, reviewing, launch between checks, exit after waking, simulated macOS detection and counting once."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "clockGap subtracts monotonic elapsed time from wall-clock elapsed time. Passing AC2 tests verify that late awake checks and old macOS sleep records add nothing."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "stateOf and inHandAsleep now track previously recorded waiting and its start. Passing F1 regression tests cover pauses and blocks begun before or after the previous check, resumed before the first post-wake check, plus waits resumed before sleep."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "builtWithSpeckFigures subtracts waited_seconds. The passing AC4 test checks both an individual ticket's duration and the median."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied targeted run reports 214 passed, 0 failed and 3 skipped. The changes do not weaken existing tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/sleep-wait.mjs:inHandAsleep",
+        "issue": "The previous duplicate accounting when a pause or block resumed before the post-wake check is addressed by comparing waited_seconds with the previous check's waiting state.",
+        "suggested_fix": "No further change required; the new regression tests exercise both resume orders.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/sleep-wait.mjs:sleepQueue",
+        "issue": "Builds launched between checks are evaluated from their current state and start time, so they no longer miss sleep solely because they were absent from the previous eligibility snapshot.",
+        "suggested_fix": "No further change required; the AC1 F2 regression test remains passing.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change is ready for the owner's merge decision. Sleep is excluded from build times, the README figures subtract recorded waiting, and both earlier timing bugs have regression coverage. All reported tests pass. macOS remains tested with simulated inputs, and the documented Linux clock-estimation limitations remain."
   }
 }
 ```
