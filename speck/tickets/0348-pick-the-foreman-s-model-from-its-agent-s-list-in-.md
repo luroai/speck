@@ -40,6 +40,7 @@ The Settings view offers the Foreman agent's models for `foreman_model` in a lis
 - From the user (2026-10-20), with 0347, which makes the Cursor reviewer's model a list.
 - After 0347, which changes the same Settings code (`scripts/settings.mjs`, `templates/panel.html`). `foremanAgentOf` in `scripts/foreman-agent.mjs` says which agent the Foreman runs on.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
