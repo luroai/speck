@@ -43,6 +43,7 @@ In an existing folder with no tests, setup sets a test command that passes while
 - Checked 2026-10-20: `node --test` in a folder with only a Markdown file prints `1..0`, `# tests 0` and exits 0 (Node 22.23.3 on this machine).
 - `node --test` also picks up files such as `*.test.js` written for another runner (Jest, say) and fails on them, which is why AC1 sets it only if it passes.
 - The skills are instructions to agents, not documents, so tests may check their wording (`docs/brief.md`, "Criteria about documents").
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
