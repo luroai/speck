@@ -41,6 +41,7 @@ In an existing folder with code but no tests, setup offers a first ticket that s
 - From the user's first ticket in Cursor on their work laptop, 2026-10-20: `commands.test` was `true`, so the builder switched it to `node --test` and wrote a fake-page test file so each criterion could fail first.
 - The skills are instructions to agents, not documents, so tests may check their wording (`docs/brief.md`, "Criteria about documents").
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
