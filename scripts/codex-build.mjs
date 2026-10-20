@@ -4,6 +4,7 @@
 // says later.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { modelOf, codexBuilds } from './build-model.mjs';
 export { codexBuilds };
 
@@ -52,4 +53,24 @@ export function fillSession(runs, id, save) {
     if (mark && mark.pid === rec.pid && (mark.session ?? null) === (rec.session ?? null)) try { save(markFile, { ...mark, session }); } catch { /* left as it was */ }
   }
   return next;
+}
+
+// 0342: Codex's --json events carry no time, so speck run starts each Codex build through codex-times.mjs, which
+// writes each line of its output with the time it was written, as `speck_at` (an ISO 8601 string), into the log.
+export const TIME_FIELD = 'speck_at';
+const TIMES_SCRIPT = fileURLToPath(new URL('./codex-times.mjs', import.meta.url));
+const startsCodex = argv => typeof argv[0] === 'string' && (argv[0] === 'codex' || argv[0].endsWith('/codex'));
+
+// The command speck run starts a build with: a Codex one through codex-times.mjs, any other as it is.
+export const timedArgv = argv => (startsCodex(argv) ? [process.execPath, TIMES_SCRIPT, ...argv] : argv);
+
+// A line of a Codex build's output with `at` added as its speck_at, when it's a JSON object without one. Any other
+// line is left as it is.
+export function stampLine(line, at) {
+  if (!line.startsWith('{')) return line;
+  let v;
+  try { v = JSON.parse(line); } catch { return line; }
+  if (!v || typeof v !== 'object' || Array.isArray(v) || Object.hasOwn(v, TIME_FIELD)) return line;
+  const rest = line.slice(1);
+  return `{${JSON.stringify(TIME_FIELD)}:${JSON.stringify(at)}${rest.trimStart().startsWith('}') ? '' : ','}${rest}`;
 }

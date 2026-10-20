@@ -10,7 +10,7 @@ import { resumeFor, resumedRecord, handBackQueue } from './hand-back.mjs';
 import { goWithQueue } from './go-with.mjs';
 import { foremanFixQueue } from './foreman-fix.mjs';
 import { foremanAgentQueue, buildStuck } from './foreman-agent.mjs';
-import { codexBuilds, codexStartWords, fillSession } from './codex-build.mjs';
+import { codexBuilds, codexStartWords, fillSession, timedArgv } from './codex-build.mjs';
 import { cursorBuilds, cursorCli, cursorStartWords } from './cursor-build.mjs';
 import { countStop } from './stop-wait.mjs';
 import { maxParallelBuilds } from './machine.mjs';
@@ -349,9 +349,9 @@ function runOn(worker) {
   // Starts a build in its own process group, logging to <id>.log (opened with `flags`), and keeps its run record:
   // record(pid) is its text, written with pid null before it starts and again with its pid once it has. `shown` is the
   // session it reports, and `session` the one in its environment (buildEnv): the same, unless it's a Codex build's (0289).
-  const startBuild = (id, argv, cwd, shown, flags, record, session = shown) => {
-    launched.add(id);
-    running.add(id);
+  const startBuild = (id, command, cwd, shown, flags, record, session = shown) => {
+    const argv = timedArgv(command); // 0342: a Codex build through codex-times.mjs, so its log has times
+    launched.add(id); running.add(id);
     const dir = runsDir(repo);
     const log = path.join(dir, `${id}.log`);
     const recordFile = path.join(dir, `${id}.json`);
