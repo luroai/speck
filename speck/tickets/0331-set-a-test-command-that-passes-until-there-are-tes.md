@@ -1,7 +1,7 @@
 ---
 id: "0331"
 title: "Set a test command that passes until there are tests in a folder without any"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T12:00:51.494Z"
 ---
 # 0331 · Set a test command that passes until there are tests in a folder without any
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Setting speck up in an existing folder with no tests, such as a folder of documents with a small dashboard, leaves `commands.test` blank. `speck ship` refuses unless `commands.test` is set and passes, so nothing built there can ever ship, and setup doesn't say so. It happened on the user's first Cursor setup on their work laptop (2026-10-20), where Cursor recommended leaving it blank.
@@ -48,7 +48,7 @@ In an existing folder with no tests, setup sets a test command that passes while
 - Self-check: added what to do when `node --test` fails (test files for another runner): show the output and ask how they run those tests.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you set speck up in a folder that has no tests yet, such as a folder of documents, setup no longer leaves the test step empty. It recommends a test command that passes while there are no tests and starts running tests once later work adds some, so finished tickets can ship straight away. It also explains that with no test command nothing can ship, and that changes to documents are checked by the reviewer reading them. You can still choose to leave it empty, and setup then offers a draft ticket to add tests, as before. To see it, run setup in a folder with no tests and watch the test step. Worth watching: a folder with test files written for another tool may make the recommended command fail, and setup then asks how you run those tests.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +58,71 @@ In an existing folder with no tests, setup sets a test command that passes while
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "dcdfb1964ec840068836729a9ff6676c7ba5a03d",
+    "thread_id": "01a15930-831d-7702-abb9-f39f40cca39c",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 86175,
+      "cached_input_tokens": 49792,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 637,
+      "reasoning_output_tokens": 10
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:02:17.691Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md, section 3 step 4, recommends node --test, requires running it once, and sets commands.test only if it passes. Covered by passing test '0331 AC1'."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Section 3 step 4 explicitly explains that blank commands.test prevents shipping and that the reviewer reads document changes instead of tests checking them. Covered by passing test '0331 AC2'."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Section 3 step 4 retains the user's option to leave it blank and offers a draft ticket to add a test runner after choosing agents. Covered by passing test '0331 AC3'."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": ".claude/skills/speck-setup links to ../../skills/speck-setup. Passing test '0331 AC4' compares installed and source contents."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded targeted run includes setup-0331, setup-0088 and repository checks: 135 tests, 132 passed, 3 skipped, zero failures. The change is confined to the setup instruction and its tests; existing tests were not weakened."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Setup now recommends a working test command for existing folders without tests, explains why leaving it blank prevents shipping, and preserves the user's choice to defer test setup. The installed skill matches, relevant tests pass, and no blocking issues were found."
+  }
+}
+```
+
+</details>
