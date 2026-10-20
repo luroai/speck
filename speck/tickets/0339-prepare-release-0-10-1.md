@@ -1,7 +1,7 @@
 ---
 id: "0339"
 title: "Prepare release 0.10.1"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0338"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T13:04:07.132Z"
+approved: "2026-10-20T13:07:21.482Z"
 
 ---
 # 0339 · Prepare release 0.10.1
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0338 stops the panel turning a ticket red, and asking the user to ship it, while speck run is already handling a failed auto-ship. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.0 without the fix.
@@ -56,9 +57,15 @@ speck is ready to go out as 0.10.1, a bug-fix release. Its one fix: when an auto
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new test comparing the 0.10.0 and earlier changelog sections uses exact text equality against the tag.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 284,428
+- Elapsed since build started: 3 min
+- Changed lines: 47 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
