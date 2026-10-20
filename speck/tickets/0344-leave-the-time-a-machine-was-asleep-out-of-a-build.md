@@ -1,7 +1,7 @@
 ---
 id: "0344"
 title: "Leave the time a machine was asleep out of a build's time"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ created: 2026-10-20
 blocked_at: ""
 started: "2026-10-20T21:44:44.530Z"
 waited_seconds: 662
+approved: "2026-10-20T21:58:21.957Z"
 
 ---
 # 0344 · Leave the time a machine was asleep out of a build's time
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a laptop's lid is closed during a build, every process sleeps with it, but the wall clock carries on, so the build's time counts the hours asleep. The user saw build timers of 300 minutes after closing their laptop during Cursor builds (2026-10-20). That skews the panel's Shipped figures and the README's "Built with speck" figures, which are speck's proof of how fast it is.
@@ -72,9 +73,16 @@ Changes what you'd notice: yes
 Clear winner: no
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Sleep can be counted twice if a ticket becomes paused or blocked between checks.; F2 A newly launched or resumed build can miss an entire sleep.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 1,521,392
+- Elapsed since build started: 14 min
+- Changed lines: 152 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: confirming the macOS part on a real Mac went to the inbox (speck/ideas/2026-10-20-confirm-sleep-time-is-left-out-on-a-real-mac.md). Known limits, in Notes: the wall clock set forward by more than 5 seconds reads as sleep on Linux, a sleep while speck run switches to new code isn't counted, and the clock gap only estimates when a sleep began.
 - The panel's Go with the recommendation button couldn't record the user's choice, because the build had stopped before it made a branch. It was recorded by hand in Notes. Worth its own look if it happens again.
