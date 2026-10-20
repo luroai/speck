@@ -1,7 +1,7 @@
 ---
 id: "0347"
 title: "Offer Cursor as a reviewer in the Settings view"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T21:23:05.085Z"
 ---
 # 0347 · Offer Cursor as a reviewer in the Settings view
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0332, `reviewer: cursor` needs no command, but the panel's Settings view doesn't offer it as a reviewer, and with a Cursor reviewer its `reviewer_model` is a box to type in, where the builder's model is a list of Cursor's models. Someone setting speck up in Cursor, with its many models, has to know each model's exact name.
@@ -46,7 +46,7 @@ The Settings view offers Cursor as a reviewer, and offers its models for `review
 - Self-check: the brief now says `reviewer: cursor` lists Cursor's models and that a Cursor that can't list them gives a box, with a test; Cursor's models give reviewer_effort speck's own efforts rather than an empty list; the panel reads Cursor's models once when it's both builder and reviewer.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Cursor can now be picked as the reviewer in the panel's Settings, when it's installed and signed in. With Cursor saved as the reviewer, the reviewer's model is a list of Cursor's models, each with its name, rather than a box where you had to type the exact name. If Cursor's models can't be read, it's a box again, with a line saying why. If you pick Cursor while another reviewer is saved, it tells you to save first, then open Settings again to choose a model. To see it, open Settings, choose cursor as the reviewer, save, and open Settings again. Cursor lists many models, so the list is long.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,71 @@ The Settings view offers Cursor as a reviewer, and offers its models for `review
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-up (tidy-up, not sent to the inbox): the brief's Settings paragraph still says `builder_model` is a box to type in for any builder other than claude and codex, though since 0288 a Cursor builder gets a list of its models.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cbd7a55b66e65bbafdb1da8a9fa10f0dc89f3ef6",
+    "thread_id": "01a15b35-d0fd-7f40-8ea6-6c4ea13e37fc",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 182044,
+      "cached_input_tokens": 148480,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 748,
+      "reasoning_output_tokens": 21
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T21:27:22.385Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs choicesOf and REVIEWER_AGENTS offer Cursor through the existing readiness filter. Passing 0347 AC1 tests ready, unavailable and saved Cursor reviewers."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewerModels reads agentModelsAsync('cursor'); reviewerModelList preserves display names. Passing 0347 AC2 exercises CLI model discovery and the rendered selector."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0347 AC3 exercises failed Cursor discovery and verifies a text input with a single-line explanation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "modelsWhy provides the save-and-reopen instruction. Passing 0347 AC4 changes the reviewer from Codex to Cursor and checks the rendered message."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified test output reports 126 passed, zero failed and three skipped across 129 tests. The existing readiness fixture adjustment preserves its assertion; no regression is evident in the changes."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Cursor is offered as a reviewer when available, with its models shown by display name. If models cannot be read, Settings provides a text box and explanation. The relevant tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
