@@ -254,7 +254,7 @@ speck/
 speck is built with speck. Since 8 October 2026, its features have gone through its own tickets, builds and independent reviews:
 
 - **326 tickets shipped** and 16 cancelled, each with its review rounds and delivery log in [`speck/tickets/done/`](speck/tickets/done/).
-- **13 minutes** median from a build starting to its ticket shipping.
+- **13 minutes** median from a build starting to its ticket shipping, leaving out time it waited for you or the machine was asleep.
 - **1.5 review rounds** median. 161 tickets were approved in the first round.
 
 That's why the commit history is long: each ticket leaves a trail of small, automatic commits as it moves from ready to shipped. The count isn't the point. Behind every ticket is a decision about what to build, and another about whether it was good enough to ship. In practice the agents keep up with you, not the other way round: by the time you've written the next ticket, the last one has often shipped.
