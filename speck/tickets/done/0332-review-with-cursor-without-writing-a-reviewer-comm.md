@@ -1,7 +1,7 @@
 ---
 id: "0332"
 title: "Review with Cursor without writing a reviewer command"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:00:51.170Z"
 approved: "2026-10-20T12:04:25.472Z"
+finished: "2026-10-20T12:07:24.916Z"
 
 ---
 # 0332 · Review with Cursor without writing a reviewer command
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Claude Code and Codex review with no setup, but a Cursor reviewer needs a command written by hand under `reviewer_options`. The README's example for it also leaves out `--trust`, so in a folder Cursor hasn't been told to trust, the review stops at Cursor's "Workspace Trust Required" prompt with nobody there to answer (found on the user's work laptop, 2026-10-20).
