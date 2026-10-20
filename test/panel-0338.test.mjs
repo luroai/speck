@@ -17,6 +17,8 @@ const failed = (o = {}) => T('0001', 'approved', { started: ago(3600), approved:
   ship: { running: false, auto: true, started: ago(300), ended: ago(60), message: MESSAGE }, handed_back: ago(30), ...o });
 const running = o => failed({ build_running: true, ...o });
 const ended = o => failed({ build_running: false, build_exit: { at: ago(10), code: 0, message: 'Stopped: main is failing.' }, ...o });
+const blocked = (o = {}) => T('0001', 'blocked', { started: ago(3600), approved: ago(600), blocked_question: 'Which one?', handed_back: ago(30),
+  build_running: false, ship: { running: false, auto: true, started: ago(300), ended: ago(60), message: MESSAGE }, ...o });
 const state = (tickets, on = true) => ({ tickets, ideas: [], run: { on } });
 
 const row = p => queueRows(p).find(r => r.textContent.includes('0001'));
@@ -28,7 +30,7 @@ async function shown(s) {
 }
 
 test('0338 AC1: handed back and its build running, it isn\'t red, has no Ship hint and says its build is working on it', async () => {
-  for (const s of [state([running()]), state([running()], false)]) { // speck run running the build, on or off
+  for (const s of [state([running()]), state([running(), T('0002', 'ready')])]) {
     const m = panelModel()(s).queue[0];
     assert.equal(m.red, false);
     assert.equal(m.ship_hint, null);
@@ -57,6 +59,7 @@ test('0338 AC2: its build ended, speck run on and another ticket on its way, it 
 test('0338 AC3: red with the Ship hint when speck run is off, nothing else is on its way, or it\'s blocked', async () => {
   const cases = {
     'speck run off': state([ended(), T('0002', 'ready')], false),
+    'speck run off, its build still running': state([running(), T('0002', 'ready')], false),
     'no other ticket': state([ended()]),
     'only done, draft and blocked others': state([ended(), T('0002', 'done'), T('0003', 'draft'), T('0004', 'blocked')]),
   };
@@ -69,12 +72,16 @@ test('0338 AC3: red with the Ship hint when speck run is off, nothing else is on
     assert.equal(v.red, true, name);
     assert.ok(v.has(SHIP_IT), name);
   }
-  const blocked = T('0001', 'blocked', { started: ago(3600), blocked_question: 'Which one?', handed_back: ago(30), build_running: false,
-    ship: { running: false, auto: true, started: ago(300), ended: ago(60), message: MESSAGE } });
-  for (const s of [state([blocked, T('0002', 'ready')]), state([{ ...blocked, build_running: true }, T('0002', 'ready')])]) {
+  // Blocked, it's red as every blocked ticket is. speck ship ships only an approved ticket, so it has no Ship hint,
+  // as before this change: it asks its question instead.
+  for (const s of [state([blocked(), T('0002', 'ready')]), state([blocked({ build_running: true }), T('0002', 'ready')])]) {
     const m = panelModel()(s).queue.find(t => t.id === '0001');
     assert.equal(m.red, true, 'blocked');
     assert.equal(m.carried_by, null, 'blocked');
+    const v = await shown(s);
+    assert.equal(v.red, true, 'blocked');
+    assert.ok(v.has('Which one?'), 'its question');
+    assert.ok(!v.has(WORKING) && !v.has(AGAIN), 'not said to be carried on');
   }
 });
 
@@ -87,7 +94,8 @@ test('0338 AC3: a hand-back from before the failed ship doesn\'t count', async (
 });
 
 test('0338 AC4: the failed ship\'s own message is still shown in every case', async () => {
-  const cases = [state([running()]), state([ended(), T('0002', 'ready')]), state([ended(), T('0002', 'ready')], false), state([ended()])];
+  const cases = [state([running()]), state([running()], false), state([ended(), T('0002', 'ready')]), state([ended(), T('0002', 'ready')], false),
+    state([ended()]), state([blocked(), T('0002', 'ready')]), state([blocked({ build_running: true })])];
   for (const s of cases) {
     assert.equal(panelModel()(s).queue.find(t => t.id === '0001').exit_message, MESSAGE);
     const v = await shown(s);
