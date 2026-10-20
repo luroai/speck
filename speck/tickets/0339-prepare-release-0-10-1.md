@@ -50,7 +50,7 @@ speck is ready to be released as 0.10.1.
 - Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as 0.10.1, a bug-fix release. Its one fix: when an automatic ship fails and speck run is already sorting it out, the ticket no longer turns red in the panel or asks you to ship it yourself. The changelog has a 0.10.1 section, and the release page's notes say what's fixed, how to update and the one new field in `speck status --json`. The README and the brief now say 0.10.1, and the README's "Built with speck" figures are up to date: 322 tickets shipped and 159 approved in the first review round. Once this lands, the release page should appear on GitHub by itself. Worth checking that it did: the ticket's Notes say how to publish it by hand if not.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -131,6 +131,79 @@ speck is ready to be released as 0.10.1.
     ],
     "escalation_question": "",
     "summary": "The release content accurately describes the shipped fix, the version and figures agree, and the reported checks pass. Before approval, remove one test that locks older changelog wording; the review rules explicitly prohibit such tests."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "828f20015f12da03b84b1101564cc36d98246cc6",
+    "thread_id": "01a1596b-699f-7753-bcd0-b0d5d06cda28",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 184574,
+      "cached_input_tokens": 150400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1496,
+      "reasoning_output_tokens": 82
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T13:07:15.165Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json has version 0.10.1. Both passing AC1 tests verify the version and invoke speck init to check that it prints speck 0.10.1."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md places 0.10.1 above 0.10.0 and describes shipped ticket 0338's panel fixes and handed_back field. The diff confirms that 0.10.0 and earlier sections are unchanged. The passing AC2 test checks the release section and install command."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md both say 0.10.1, a public preview. Passing AC3 tests verify the versions and that the setup prompt retains the latest-release install command."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.10.1.md contains the bug-fix introduction, fixes and their benefit, update command to rerun in each project, upgrade implications and changelog link. Its claims match shipped ticket 0338 and existing update behaviour, and it names no person. Passing AC4 tests check commands, setting names and the link."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README.md retains the independently verified figures: 322 shipped, 16 cancelled, 13 minutes median, 1.5 review rounds median and 159 first-round approvals. Both AC5 tests pass. The fresh reported run has 129 passed, zero failed and three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/release-0339.test.mjs",
+        "issue": "The exact-text comparison of older changelog sections has been removed. Preservation of those sections is now checked by review.",
+        "suggested_fix": "Completed; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Release 0.10.1 is ready for the owner's merge decision. The notes accurately describe the shipped fix, the version and figures agree, and all reported checks pass. The test issue from round 1 is resolved."
   }
 }
 ```
