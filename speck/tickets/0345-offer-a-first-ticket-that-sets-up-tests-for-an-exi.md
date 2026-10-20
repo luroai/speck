@@ -42,6 +42,7 @@ In an existing folder with code but no tests, setup offers a first ticket that s
 - The skills are instructions to agents, not documents, so tests may check their wording (`docs/brief.md`, "Criteria about documents").
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: section 8 now tells an existing project to read and approve the offered tests ticket first, rather than only pointing to `/speck-capture`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
