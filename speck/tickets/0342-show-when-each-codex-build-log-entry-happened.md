@@ -14,7 +14,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0341"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T20:41:14.876Z"
-approved: "2026-10-20T20:48:21.386Z"
+approved: "2026-10-20T20:53:38.368Z"
 
 ---
 # 0342 · Show when each Codex build log entry happened
@@ -55,13 +55,14 @@ A Codex build's log in the panel now shows the time of each step, as Claude Code
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 180,713
-- Elapsed since build started: 7 min
-- Changed lines: 81 (limit 5000)
+- Reviewer tokens: 498,198
+- Elapsed since build started: 12 min
+- Changed lines: 85 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (none sent to the inbox):
 - Known limit: with no `codex` command on the PATH, the build now exits with code 127 and the reason in its log, rather than speck run saying it couldn't start.
@@ -128,6 +129,71 @@ Follow-ups (none sent to the inbox):
     "findings": [],
     "escalation_question": "",
     "summary": "Codex build entries now show local times, including after speck run stops. The tests support that build controls and other agents’ logs still work. No blocking issues found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ff4188952e49cb31478ae0135b0fa927e4133f96",
+    "merge": true,
+    "thread_id": "01a15b11-ebc5-7fa2-b732-1f6667ef605c",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 316118,
+      "cached_input_tokens": 245248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1367,
+      "reasoning_output_tokens": 113
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T20:53:33.785Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "codex-times.mjs stamps events with speck_at; build-log.mjs renders local HH:MM:SS prefixes. All four 0342 AC1 tests pass, covering entry types, streamed output and timestamp handling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "run.mjs still launches the timestamp wrapper detached with output directed to the log. The passing 0342 AC2 test verifies later timestamped events after the starter exits."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "0342 AC3 tests pass for pause, continuation, stopping, final output, exit status and wrapped resume commands. Existing run-codex-0289 tests cover resumption and hand-back. timedArgv preserves the previous wrapper invocation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "timedArgv returns non-Codex commands unchanged, preserving buildEnv's Claude handling. Timestamp precedence remains unchanged. The 0342 AC4, existing log and run-0245 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified recorded output: 199 tests, 196 passed, three skipped, zero failures, including both tests reported by shipping. Existing tests were not weakened. The time-calculation guard preserves output while avoiding work when times are disabled."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The revised change still provides Codex log times and preserves build controls and other agents’ logs. Both failures reported during shipping now pass in the targeted checks. No blocking issues found; shipping will repeat the whole-suite check."
   }
 }
 ```
