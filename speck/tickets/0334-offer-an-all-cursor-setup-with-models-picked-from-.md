@@ -1,7 +1,7 @@
 ---
 id: "0334"
 title: "Offer an all-Cursor setup with models picked from the account's list"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0330","0331","0332","0333"]                # ticket ids that must be done first
 created: 2026-10-20
+started: "2026-10-20T12:16:00.587Z"
 
 ---
 # 0334 · Offer an all-Cursor setup with models picked from the account's list
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Setting speck up in Cursor on a work laptop took several hand edits to `speck/config.yml` (2026-10-20): the reviewer command, `allow_same_model_review` and model names the agent had to guess. Someone who uses Cursor, with its many models, should get a working all-Cursor setup from setup's questions alone.
