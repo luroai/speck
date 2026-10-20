@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.10.1 · 20 October 2026
+
+What's fixed since 0.10.0. A bug-fix release: a ticket whose automatic ship failed no longer asks you to ship it yourself while `speck run` is already dealing with it.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.10.1 init`.
+
+### The panel
+
+- When an automatic ship fails and `speck run` has handed the ticket back to its build, the ticket's row in the Build list is no longer red and no longer tells you to ship it from its review pack. While the build is running, it says the ticket was handed back to its build, which is working on it. Once the build has ended, with the ticket still approved, it says the ticket will be shipped again when main or its branch has a new commit. It says that only while `speck run` is on and another ticket is ready, building, reviewing or approved. Otherwise the row is red, with the hint to ship it yourself, as before.
+- The failed ship's own message stays on the row in each of these cases, and now also on a ticket that was blocked after its automatic ship failed. A blocked ticket is red and asks its question, as before.
+- `speck status --json` gives each ticket a `handed_back` field: when `speck run` last handed it back to its build after a ship it started, or null.
+
 ## 0.10.0 · 20 October 2026
 
 What's new since 0.9.1. A minor release that lets you set speck up to run entirely in Cursor from setup's questions alone: Cursor builds, a Cursor reviewer on a model you pick, the Foreman on Cursor, and a test command that lets tickets ship in a folder with no tests yet.

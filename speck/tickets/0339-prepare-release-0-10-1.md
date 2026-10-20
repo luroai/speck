@@ -43,6 +43,12 @@ speck is ready to be released as 0.10.1.
 - After it ships, check that the `v0.10.1` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.10.1 --target main --title "speck 0.10.1" --notes-file docs/releases/v0.10.1.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.10.0`: only 0338. 0337 shipped before 0.10.0 was built, though after 0336's notes were written, and 0.10.0's changelog leaves it out as it changes nothing anyone using speck notices.
+- Built from main at `speck(0338): Keep a handed-back ticket out of red while speck run is handling it`: 322 shipped, 16 cancelled, 13 minutes median, 1.5 rounds median, 159 approved in the first round, worked out as 0307 did, with its figures test.
+- 0336's checks that named 0.10.0 as the current version now check the current version, and its figures test checks only the figures 0.10.0 was built from, as 0336 did for 0329.
+- AC2's "0.10.0 and earlier sections are unchanged" is also checked by a test, against the `v0.10.0` tag's `CHANGELOG.md` (skipped when the tag isn't in the checkout).
+- Self-check: dropped a sentence from the release notes' upgrade list saying to reload the panel, which nothing in 0338 backs.
+- Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
