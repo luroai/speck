@@ -1,7 +1,7 @@
 ---
 id: "0341"
 title: Show each tool a Cursor or Codex build uses in its log, as for Claude Code                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0340"]                # ticket ids that must be done first
 created: 2026-10-20
+started: "2026-10-20T20:34:42.371Z"
 
 ---
 # 0341 · Show each tool a Cursor or Codex build uses in its log, as for Claude Code
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel's build log should read the same whichever agent builds. Today a Cursor build's log shows only its messages: its file reads, edits and searches aren't shown at all, as only its shell commands are read, and those show as `→ Shell: …` where Claude Code's show as `→ Bash: …`. A Codex build's file edits aren't shown, and some of its commands keep Codex's `/bin/bash -lc "…"` wrapper.
