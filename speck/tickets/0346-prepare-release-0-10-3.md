@@ -43,6 +43,11 @@ speck is ready to be released as 0.10.3.
 - After it ships, check that the `v0.10.3` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.10.3 --target main --title "speck 0.10.3" --notes-file docs/releases/v0.10.3.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.10.2`: 0344, 0345, 0347, 0348 and 0349, and no others.
+- Built from main at `speck(0349): Don't restart a ticket's build while a Foreman question on it is waiting`: 332 shipped, 16 cancelled, 12 minutes median (leaving out `waited_seconds`, as 0344 made the figures do), 1.5 rounds median, 164 approved in the first round, worked out as 0307 did, with its figures test.
+- 0343's checks that named 0.10.2 as the current version now check the current version, and its figures test checks only the figures 0.10.2 was built from, as 0343 did for 0339.
+- Self-check: the changelog's and release notes' opening said "two small additions" while listing three things, two of them fixes; reworded so the fixes and the additions are told apart. Narrowed the Settings line to choosing Cursor as the reviewer, or another Foreman agent, which 0347 and 0348 back.
+- Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
