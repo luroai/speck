@@ -1,7 +1,7 @@
 ---
 id: "0330"
 title: Accept a Cursor build reviewed by Cursor on a chosen model                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:00:50.848Z"
 approved: "2026-10-20T12:05:01.055Z"
+finished: "2026-10-20T12:09:46.233Z"
 
 ---
 # 0330 · Accept a Cursor build reviewed by Cursor on a chosen model
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Someone who only has Cursor (on a work laptop, say) can build with one model and review with another, as Cursor offers many. But the same-model check counts `builder_model` only for Claude Code and Codex builds (0280, 0313), so a Cursor builder with a Cursor reviewer is always refused unless `allow_same_model_review` turns the check off for the whole project.
