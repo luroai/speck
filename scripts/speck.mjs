@@ -32,6 +32,7 @@ import { roundRunning } from './review-running.mjs';
 import { runInProcess } from './in-process.mjs';
 import { questionFacts } from './question-facts.mjs';
 import { goWithResumable, goWithWaiting } from './go-with.mjs';
+import { handedBack } from './hand-back.mjs';
 import { buildSession } from './build-records.mjs';
 import { noteThisBuild } from './seen-builds.mjs';
 
@@ -468,6 +469,7 @@ export function statusData(repo) {
       paused: buildPaused(runs, t.fm.id),
       paused_at: (at => (at === null ? null : new Date(at).toISOString()))(buildPaused(runs, t.fm.id) ? pausedSince(path.join(runs, `${t.fm.id}.paused`)) : null),
       build_running: buildRunning(runs, t.fm.id, leads),
+      handed_back: handedBack(runs, t.fm.id),
       build_stopped: !!stop?.killed && !stop.counted,
       build_stopped_at: stop?.killed && !stop.counted && stop.since !== null ? new Date(stop.since).toISOString() : null,
       ship: shipState(runs, t.fm.id),
