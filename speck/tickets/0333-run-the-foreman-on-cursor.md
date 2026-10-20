@@ -1,7 +1,7 @@
 ---
 id: "0333"
 title: "Run the Foreman on Cursor"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0330","0332"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:09:59.495Z"
+approved: "2026-10-20T12:13:16.283Z"
 
 ---
 # 0333 · Run the Foreman on Cursor
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Foreman runs only on Claude Code or Codex (`FOREMAN_AGENTS` in `scripts/foreman-agent.mjs`). Someone set up with Cursor alone, as on a work laptop, can't use the Foreman at all, and with a Cursor builder and the Foreman left blank it falls back to Claude Code, which may not be installed.
@@ -55,9 +56,14 @@ Worth keeping an eye on: a Cursor Foreman can run any command, as Cursor builds 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 117,640
+- Elapsed since build started: 3 min
+- Changed lines: 31 (limit 5000)
 - Follow-ups: none. Known limit (out of scope by the ticket): a Cursor Foreman isn't limited to speck's own commands, as a Claude Code one is.
 
 ## Review rounds
