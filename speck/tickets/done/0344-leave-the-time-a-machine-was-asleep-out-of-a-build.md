@@ -1,7 +1,7 @@
 ---
 id: "0344"
 title: "Leave the time a machine was asleep out of a build's time"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ blocked_at: ""
 started: "2026-10-20T21:44:44.530Z"
 waited_seconds: 662
 approved: "2026-10-20T21:58:21.957Z"
+finished: "2026-10-20T22:00:42.125Z"
 
 ---
 # 0344 · Leave the time a machine was asleep out of a build's time
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a laptop's lid is closed during a build, every process sleeps with it, but the wall clock carries on, so the build's time counts the hours asleep. The user saw build timers of 300 minutes after closing their laptop during Cursor builds (2026-10-20). That skews the panel's Shipped figures and the README's "Built with speck" figures, which are speck's proof of how fast it is.
