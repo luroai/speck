@@ -35,6 +35,8 @@ This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effor
 
 **`claude`**: run the same `speck review` command as for Codex. speck runs Claude Code itself, without a person and read-only, with the reviewer model (`--model`) and effort (`--effort`) if they're set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
 
+**`cursor`**: run the same `speck review` command as for Codex. speck runs Cursor's CLI itself, without a person and read-only, with the reviewer model (`--model`) if it's set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
+
 **Any reviewer with a `command`** under `reviewer_options` in `speck/config.yml`
 
 ```
