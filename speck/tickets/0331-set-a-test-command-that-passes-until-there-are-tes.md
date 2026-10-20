@@ -1,7 +1,7 @@
 ---
 id: "0331"
 title: "Set a test command that passes until there are tests in a folder without any"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:00:51.494Z"
+approved: "2026-10-20T12:02:25.636Z"
 
 ---
 # 0331 · Set a test command that passes until there are tests in a folder without any
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Setting speck up in an existing folder with no tests, such as a folder of documents with a small dashboard, leaves `commands.test` blank. `speck ship` refuses unless `commands.test` is set and passes, so nothing built there can ever ship, and setup doesn't say so. It happened on the user's first Cursor setup on their work laptop (2026-10-20), where Cursor recommended leaving it blank.
@@ -54,9 +55,14 @@ When you set speck up in a folder that has no tests yet, such as a folder of doc
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 86,812
+- Elapsed since build started: 2 min
+- Changed lines: 3 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups: none.
 
