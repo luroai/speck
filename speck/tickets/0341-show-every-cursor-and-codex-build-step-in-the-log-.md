@@ -1,7 +1,7 @@
 ---
 id: "0341"
 title: Show each tool a Cursor or Codex build uses in its log, as for Claude Code                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0340"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T20:34:42.371Z"
+approved: "2026-10-20T20:38:31.009Z"
 
 ---
 # 0341 · Show each tool a Cursor or Codex build uses in its log, as for Claude Code
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's build log should read the same whichever agent builds. Today a Cursor build's log shows only its messages: its file reads, edits and searches aren't shown at all, as only its shell commands are read, and those show as `→ Shell: …` where Claude Code's show as `→ Bash: …`. A Codex build's file edits aren't shown, and some of its commands keep Codex's `/bin/bash -lc "…"` wrapper.
@@ -58,9 +59,14 @@ A build log in the panel now reads the same whichever agent is building. When Cu
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 100,892
+- Elapsed since build started: 4 min
+- Changed lines: 65 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none needed their own ticket):
 - Tidy-up, from review F1 (minor): a Codex file-change entry with no path shows as a bare `→ Edit` or `→ Write` line. It could be skipped instead.
