@@ -42,6 +42,7 @@ The Foreman can run on Cursor, on `foreman_model` when it's set, and is Cursor b
 - Cursor builds already start as `agent -p --force --trust --output-format stream-json` (`scripts/cursor-build.mjs`), so the Foreman's output is read like a Cursor build's.
 - Checked 2026-10-20: Cursor's CLI takes `--model`, `--force`, `--trust` and `--output-format stream-json` (`agent --help` on this machine).
 - Failing before this build: none
+- Self-check: no changes. The 0287 test listing the Foreman's choices as exactly blank, claude and codex now lists cursor too, as this ticket adds it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
