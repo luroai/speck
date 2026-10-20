@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-20-offer-cursor-as-a-reviewer-in-the-settings-
 after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T21:23:05.085Z"
-approved: "2026-10-20T21:27:31.950Z"
+approved: "2026-10-20T21:30:57.528Z"
 
 ---
 # 0347 · Offer Cursor as a reviewer in the Settings view
@@ -54,12 +54,13 @@ Cursor can now be picked as the reviewer in the panel's Settings, when it's inst
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 182,792
-- Elapsed since build started: 4 min
+- Reviewer tokens: 476,046
+- Elapsed since build started: 8 min
 - Changed lines: 28 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up (tidy-up, not sent to the inbox): the brief's Settings paragraph still says `builder_model` is a box to type in for any builder other than claude and codex, though since 0288 a Cursor builder gets a list of its models.
@@ -125,6 +126,71 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Cursor is offered as a reviewer when available, with its models shown by display name. If models cannot be read, Settings provides a text box and explanation. The relevant tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "84f16e2e487557dba65bd6b150797dd4ae111f18",
+    "merge": true,
+    "thread_id": "01a15b35-d0fd-7f40-8ea6-6c4ea13e37fc",
+    "seconds": 13,
+    "usage": {
+      "input_tokens": 292068,
+      "cached_input_tokens": 189568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1186,
+      "reasoning_output_tokens": 21
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T21:30:55.318Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs choicesOf and readyReviewers offer Cursor according to agent readiness. Passing 0347 AC1 covers available, unavailable and saved Cursor choices; updated 0258 AC1 retains an exact reviewer-list assertion."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "reviewerModels reads Cursor's models through agentModelsAsync; reviewerModelList preserves display names. Passing 0347 AC2 exercises discovery and the rendered model selector."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0347 AC3 exercises unavailable Cursor models and verifies a text input with a single-line explanation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html modelsWhy supplies the save-and-reopen instruction. Passing 0347 AC4 verifies it after switching from Codex to Cursor."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Fresh test output reports 135 passed, zero failed and three skipped. The previously failing 0258 assertion now includes Cursor while preserving its exact-list check; this directly reflects the ticket's intended change."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Cursor reviewer selection, model names and fallback guidance still work after merging main. The older test now expects the deliberately expanded reviewer list without weakening its checks. All tests run for this round passed; no blocking issues remain."
   }
 }
 ```
