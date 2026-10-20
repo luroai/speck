@@ -1,7 +1,7 @@
 ---
 id: "0330"
 title: Accept a Cursor build reviewed by Cursor on a chosen model                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:00:50.848Z"
+approved: "2026-10-20T12:05:01.055Z"
 
 ---
 # 0330 · Accept a Cursor build reviewed by Cursor on a chosen model
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Someone who only has Cursor (on a work laptop, say) can build with one model and review with another, as Cursor offers many. But the same-model check counts `builder_model` only for Claude Code and Codex builds (0280, 0313), so a Cursor builder with a Cursor reviewer is always refused unless `allow_same_model_review` turns the check off for the whole project.
@@ -53,9 +54,15 @@ If you build and review with Cursor, you no longer have to switch the same-model
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The documentation self-check requires the exact prose opening 'Config rejects a `builder` and `reviewer` from the same family' and requires both facts on that same line.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 278,984
+- Elapsed since build started: 4 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-20-same-model-check-counts-claude-s-own-build-command.md. With `build_command` set to Claude Code's own command, `speck run` still builds Cursor and Codex tickets with their own commands and `builder_model` (0324), but the check refuses them as if the command were the user's own.
