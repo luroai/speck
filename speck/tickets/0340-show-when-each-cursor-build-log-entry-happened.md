@@ -43,6 +43,8 @@ Lines in a Cursor build's log show when they happened, as Claude Code builds' li
 - Checked 2026-10-20: a real Cursor stream (`agent -p --force --trust --output-format stream-json --model auto`, the CLI on this machine) gave `timestamp_ms` numbers such as `1792511607818` on its `thinking`, `assistant` and `tool_call` events, and none on `system`, `user`, the last `assistant` event or `result`. Read through `readablePiece` with `times: true`, its lines came out as `I'll run \`ls\`, then reply with done.` and `→ Shell: ls` with no time, while a Claude Code event with `timestamp` gave `13:00:05 Reading the ticket.`.
 - Test it by calling `readablePiece` directly with Cursor-shaped events.
 - Failing before this build: none
+- Self-check: a number is read as a time only from `timestamp_ms`, never from `timestamp`, so a Claude Code event whose `timestamp` is a number still shows no time (0080's AC3 test caught the first version).
+- Pictures: none, because the change is only a time at the start of some log lines' text, with no change to the panel's layout or styles; the tests check the exact lines the panel shows.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

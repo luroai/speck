@@ -6,7 +6,8 @@ import fs from 'node:fs';
 // works: these become the agent's text and one line per tool call ("→ Bash: run the tests"), and the rest (tool output,
 // session and rate-limit events) are left out. Any other line, such as plain `claude -p` output or an error, is kept as is.
 // With `times`, each agent message, tool call and failed tool result starts with its event's local time (`HH:MM:SS `),
-// when the event has an ISO 8601 timestamp that reads as a date.
+// when the event has an ISO 8601 timestamp that reads as a date. A Cursor event's agent message and shell command starting
+// do too, from its `timestamp_ms` number (0340).
 // A Codex build's log (`codex exec --json`) and a Cursor one (`--output-format stream-json`) read the same way (0291):
 // the agent's messages and one line per shell command it runs ("→ Shell: npm test"), with "  ✗ exit code N" after a
 // command that fails, and the rest (reasoning, thinking, file changes and other tools) left out.
@@ -30,15 +31,17 @@ function readable(text, times, last) {
   let unsure = false;
   const short = s => { s = String(s).replace(/\s+/g, ' ').trim(); return s.length > LOG_DETAIL ? `${s.slice(0, LOG_DETAIL - 1)}…` : s; };
   const two = n => String(n).padStart(2, '0');
-  const clock = t => {
-    const d = times && typeof t === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(t) ? new Date(t) : null;
+  // An ISO timestamp string, or with ms a number of milliseconds since 1970 (Cursor's timestamp_ms, 0340).
+  const clock = (t, ms = false) => {
+    const d = !times ? null : ms ? (typeof t === 'number' && Number.isFinite(t) ? new Date(t) : null)
+      : typeof t === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(t) ? new Date(t) : null;
     return d && !Number.isNaN(d.getTime()) ? `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())} ` : '';
   };
   for (const line of String(text ?? '').split('\n')) {
     let e = null;
     if (line.startsWith('{')) { try { e = JSON.parse(line); } catch { /* not an event */ } }
     if (!e || typeof e !== 'object' || typeof e.type !== 'string') { out.push(line); continue; }
-    const at = clock(e.timestamp);
+    const at = clock(e.timestamp) || clock(e.timestamp_ms, true);
     if (e.type === 'assistant' && Array.isArray(e.message?.content)) {
       for (const b of e.message.content) {
         if (b?.type === 'text' && typeof b.text === 'string' && b.text.trim()) { out.push(at + b.text.trim(), ''); last = b.text.trim(); }
@@ -65,7 +68,7 @@ function readable(text, times, last) {
       out.push(`Build ended: ${short(e.error?.message ?? '') || 'error'}`);
     } else if (e.type === 'tool_call' && e.tool_call?.shellToolCall && typeof e.tool_call.shellToolCall === 'object') { // Cursor
       const c = e.tool_call.shellToolCall;
-      if (e.subtype === 'started') out.push(shellLine(c.args?.command, short));
+      if (e.subtype === 'started') out.push(at + shellLine(c.args?.command, short));
       else if (e.subtype === 'completed' && c.result && typeof c.result === 'object') {
         const code = c.result.success?.exitCode;
         if (typeof code === 'number' && code !== 0) out.push(`  ✗ exit code ${code}`);
