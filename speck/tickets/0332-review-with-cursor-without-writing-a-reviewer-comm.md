@@ -1,7 +1,7 @@
 ---
 id: "0332"
 title: "Review with Cursor without writing a reviewer command"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T12:00:51.170Z"
 ---
 # 0332 · Review with Cursor without writing a reviewer command
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Claude Code and Codex review with no setup, but a Cursor reviewer needs a command written by hand under `reviewer_options`. The README's example for it also leaves out `--trust`, so in a folder Cursor hasn't been told to trust, the review stops at Cursor's "Workspace Trust Required" prompt with nobody there to answer (found on the user's work laptop, 2026-10-20).
@@ -46,7 +46,7 @@ Claude Code and Codex review with no setup, but a Cursor reviewer needs a comman
 - Self-check: the review and setup skills still said a Cursor reviewer needs a command written by hand, so `/speck-build` would not have known to run `speck review` for it; both now say speck runs Cursor itself.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Cursor can now review tickets with no setup of your own: choose Cursor as the reviewer and speck runs it for you, read-only, on the reviewer model you've set, or Cursor's own default when none is set. Each later review round carries on the same Cursor chat, so it remembers what it said before. It no longer stops at Cursor's "Workspace Trust Required" prompt in a folder Cursor hasn't been told to trust. If you've already written your own Cursor reviewer command, speck still uses yours. To see it, set the reviewer to Cursor and build a ticket: its review rounds are recorded as Cursor's. Worth knowing: the panel's Settings view doesn't offer Cursor as a reviewer yet, and `speck doctor` doesn't check for it yet (both are in the inbox).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,4 +55,75 @@ Claude Code and Codex review with no setup, but a Cursor reviewer needs a comman
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: `speck/ideas/2026-10-20-check-cursor-s-cli-in-doctor-for-a-cursor-reviewer.md`
+- Inbox: `speck/ideas/2026-10-20-offer-cursor-as-a-reviewer-in-the-settings-view.md`
+- Inbox: `speck/ideas/2026-10-20-refuse-a-reviewer-name-with-spaces-in-config-set.md`
+- Note: this build changed the reviewer bullets in `skills/speck-setup/SKILL.md` section 5, which 0334 also edits; its builder should keep this build's Cursor reviewer bullet.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7ee907464c1be8d9b9d1d6dfc48cb452d059fb6f",
+    "thread_id": "01a15931-f369-7633-8e7e-29c3a48d859b",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 106604,
+      "cached_input_tokens": 61312,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 649,
+      "reasoning_output_tokens": 22
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:03:54.016Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/reviewers.mjs BUILT_IN.cursor supplies the required flags; cursorCli() selects agent or cursor-agent. Passing AC1 tests exercise CLI selection, stdin, model inclusion/omission and saved verdicts."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "BUILT_IN.cursor defines resume_command and session_id_path. runCommandReview saves and reuses thread_id. Passing AC2 tests check --resume chat-7, continued-session metadata and fallback after resume failure."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "reviewerOptions returns a user's non-blank command before selecting a built-in. The passing AC3 test verifies the custom command receives only its own arguments."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md Cursor reviewer examples include --trust, including the brief's adapter table. The passing AC4 test checks command configuration examples for that flag."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded test output confirms 133 passed, 0 failed and 3 skipped across 136 tests, including Cursor and existing Claude reviewer coverage. The diff shows no weakened existing tests or unrelated changes. Whole-suite verification remains with speck ship as specified."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Cursor can now review without a custom command, use the selected model and continue its chat across rounds. Custom commands still take precedence. Documentation includes the trust flag needed for unattended reviews. The relevant tests passed, and I found no blocking issues."
+  }
+}
+```
+
+</details>
