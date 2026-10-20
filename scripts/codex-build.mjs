@@ -61,8 +61,8 @@ export const TIME_FIELD = 'speck_at';
 const TIMES_SCRIPT = fileURLToPath(new URL('./codex-times.mjs', import.meta.url));
 const startsCodex = argv => typeof argv[0] === 'string' && (argv[0] === 'codex' || argv[0].endsWith('/codex'));
 
-// The command speck run starts a build with, as [file, args]: a Codex one through codex-times.mjs, any other as it is.
-export const timedCommand = argv => (startsCodex(argv) ? [process.execPath, [TIMES_SCRIPT, ...argv]] : [argv[0], argv.slice(1)]);
+// The command speck run starts a build with: a Codex one through codex-times.mjs, any other as it is.
+export const timedArgv = argv => (startsCodex(argv) ? [process.execPath, TIMES_SCRIPT, ...argv] : argv);
 
 // A line of a Codex build's output with `at` added as its speck_at, when it's a JSON object without one. Any other
 // line is left as it is.

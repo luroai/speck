@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readableLog, readablePiece } from '../scripts/build-log.mjs';
-import { stampLine, timedCommand, codexStartWords, codexResumeArgv, TIME_FIELD } from '../scripts/codex-build.mjs';
+import { stampLine, timedArgv, codexStartWords, codexResumeArgv, TIME_FIELD } from '../scripts/codex-build.mjs';
 import { buildProcesses, signalBuild, carryOn } from '../scripts/build-procs.mjs';
 import { BUILD_ENV } from '../scripts/build-env.mjs';
 import { until, alive, killAll } from './support/run.mjs';
@@ -48,11 +48,11 @@ function fakeDir() {
   fs.writeFileSync(path.join(dir, 'codex'), `#!/bin/sh\nexec "${process.execPath}" "${path.join(dir, 'fake.cjs')}" "$@"\n`, { mode: 0o755 });
   return dir;
 }
-// Starts the fake Codex as speck run starts a Codex build: timedCommand, detached, its output to a log of its own.
+// Starts the fake Codex as speck run starts a Codex build: timedArgv, detached, its output to a log of its own.
 function startTimed(env = {}) {
   const dir = fakeDir(), logFile = path.join(dir, 'build.log');
   const session = `s-${process.pid}-${Date.now()}`;
-  const [cmd, args] = timedCommand(['codex', 'exec', '--json', '$speck-build 0001']);
+  const [cmd, ...args] = timedArgv(['codex', 'exec', '--json', '$speck-build 0001']);
   const fd = fs.openSync(logFile, 'w');
   const child = spawn(cmd, args, { detached: true, stdio: ['ignore', fd, fd], env: { ...process.env, PATH: `${dir}${path.delimiter}${process.env.PATH}`, [BUILD_ENV]: session, ...env } });
   fs.closeSync(fd);
@@ -174,13 +174,13 @@ test('0342 AC3: a Codex build exits with its own exit code, and one that cannot 
 test('0342 AC3: starting, resuming and handing back a Codex build all go through its times', () => {
   const cfg = { builder: 'codex', build_command: '' };
   for (const argv of [codexStartWords(cfg), codexResumeArgv(cfg, 'sess-1', 'carry on'), ['/usr/local/bin/codex', 'exec', '--json']]) {
-    assert.deepEqual(timedCommand(argv), [process.execPath, [TIMES, ...argv]]);
+    assert.deepEqual(timedArgv(argv), [process.execPath, TIMES, ...argv]);
   }
 });
 
 test('0342 AC4: Claude Code and Cursor builds start as before, and their lines take their times from their own events', () => {
   for (const argv of [['claude', '-p', '/speck-build 0001'], ['/opt/bin/claude', '-p'], ['agent', '-p', '--output-format', 'stream-json'], ['codexx'], ['sh', '-c', 'codex exec']]) {
-    assert.deepEqual(timedCommand(argv), [argv[0], argv.slice(1)]);
+    assert.equal(timedArgv(argv), argv);
   }
   const claude = { type: 'assistant', timestamp: AT, speck_at: LATE, message: { content: [{ type: 'text', text: 'Hi.' }, { type: 'tool_use', name: 'Bash', input: { command: 'ls' } }] } };
   const cursor = { type: 'assistant', timestamp_ms: Date.parse(LATE), speck_at: AT, message: { content: [{ type: 'text', text: 'Yo.' }] } };
