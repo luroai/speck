@@ -42,6 +42,7 @@ A Cursor builder and a Cursor reviewer pass the same-model check when the review
 - AC2 is the user's decision (2026-10-20): Cursor choosing the builder's model is fine as long as the reviewer's model is chosen and the review runs in its own session. Auto could pick the reviewer's model, and the user accepts that: same model in a separate session is acceptable, a different model is better.
 - A ticket that records `builder: cursor` while `speck/config.yml` names another builder is built on `auto` (0312: `builder_model` is passed only to the configured builder's tickets). It counts as `auto` under AC2.
 - Checked 2026-10-20: Cursor's CLI takes `--model <model>` and lists models with `--list-models` (`agent --help`, installed CLI).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
