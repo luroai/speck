@@ -130,7 +130,8 @@ test('0288 AC2: Cursor\'s CLI found by its old name, cursor-agent, too', () => {
 const FOUND = (ready = {}) => ({ agents: [
   { id: 'claude', name: 'Claude Code', installed: true, signed_in: ready.claude ?? true, why: ready.claude === false ? 'Claude Code isn\'t signed in: run claude auth login.' : undefined },
   { id: 'codex', name: 'Codex', installed: ready.codex ?? true, signed_in: ready.codex ?? true, why: ready.codex === false ? 'Codex isn\'t installed.' : undefined },
-  { id: 'cursor', name: 'Cursor', installed: false, signed_in: false, why: 'Cursor isn\'t installed.' },
+  // 0347: Cursor is a reviewer too, so it's ready only when asked for.
+  { id: 'cursor', name: 'Cursor', installed: ready.cursor ?? false, signed_in: ready.cursor ?? false, why: ready.cursor ? undefined : 'Cursor isn\'t installed.' },
 ] });
 const reviewerRow = s => s.groups.flatMap(g => g.settings).find(x => x.key === 'reviewer');
 
@@ -138,7 +139,7 @@ test('0288 AC3: reviewer offers only agents installed and signed in, plus the cu
   const r = panelRepo();
   const cfg = path.join(r.dir, 'speck', 'config.yml');
   fs.writeFileSync(cfg, fs.readFileSync(cfg, 'utf8').replace(/^reviewer: .*$/m, 'reviewer: claude-subagent'));
-  const all = reviewerRow(panelSettings(r.dir, { agents: FOUND() }));
+  const all = reviewerRow(panelSettings(r.dir, { agents: FOUND({ cursor: true }) }));
   assert.ok(all.choices.includes('codex') && all.choices.includes('claude-subagent'));
   assert.equal(all.missing, undefined);
   const row = reviewerRow(panelSettings(r.dir, { agents: FOUND({ codex: false }) }));
