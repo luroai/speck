@@ -47,7 +47,7 @@ A Cursor builder and a Cursor reviewer pass the same-model check when the review
 - Pictures: none, because the only change anyone sees in the panel is one added clause in a setting's explanation text, with no change to layout or look.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+If you build and review with Cursor, you no longer have to switch the same-model safety check off for the whole project. Pick a model for the reviewer and speck accepts it, as long as it isn't the builder's model and isn't Cursor's automatic choice. You can leave the builder's model blank, so Cursor picks it. speck still refuses when both are given the same model, when the reviewer's model is blank or automatic, or when you've set your own build command, since speck can't tell what model that runs. To see it, set Cursor as both builder and reviewer, give the reviewer a model and mark a ticket ready. Worth knowing: with the builder on automatic, Cursor could still pick the reviewer's model. You've said that's acceptable, as the review runs in its own session.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +57,9 @@ A Cursor builder and a Cursor reviewer pass the same-model check when the review
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-20-same-model-check-counts-claude-s-own-build-command.md. With `build_command` set to Claude Code's own command, `speck run` still builds Cursor and Codex tickets with their own commands and `builder_model` (0324), but the check refuses them as if the command were the user's own.
+- Known limit: the refusal's suggested fix ("Set builder_model and reviewer_model to two different models") doesn't mention that a Cursor builder can leave `builder_model` blank.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -128,6 +131,79 @@ A Cursor builder and a Cursor reviewer pass the same-model check when the review
     ],
     "escalation_question": "",
     "summary": "The Cursor model checks meet the ticket's requirements, and the recorded tests pass. One test must change before approval: it would reject harmless rewording or wrapping of the product brief."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6a4e2110fead2a69f49e5e621694d4d79a3f4f95",
+    "thread_id": "01a15932-0909-7ff2-9a5b-fb40598f8bf9",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 180300,
+      "cached_input_tokens": 136960,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1278,
+      "reasoning_output_tokens": 18
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:04:39.392Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/same-model.mjs counts Cursor's builder_model with blank build_command and compares model names ignoring case. Passing 0330 AC1 tests exercise lint, set ready and Settings saves."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "builderModel treats a blank Cursor builder model as auto, including tickets belonging to another configured builder. Passing 0330 AC2 tests exercise lint, set ready and Settings saves."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0330 AC3 tests cover matching models, case differences, blank/auto reviewer models, set or missing build_command, and the allow_same_model_review override. CLI and Settings refusals are exercised."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "sameModelProblem's refusal includes Cursor among supported builds. The passing 0330 AC4 test checks Cursor and Codex refusal messages."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The latest /tmp/speck-0330-tests.txt records 129 tests: 126 passed, 3 skipped and none failed, including the existing 0313 regression tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/same-model-0330.test.mjs:119",
+        "issue": "The documentation test previously required an exact sentence opening and facts on the same line. It now checks only the technical model value `auto` anywhere in the brief, so harmless prose edits no longer break it.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Cursor model checks meet all acceptance criteria, and the recorded tests pass. The documentation test has been corrected. No blocking concerns remain."
   }
 }
 ```
