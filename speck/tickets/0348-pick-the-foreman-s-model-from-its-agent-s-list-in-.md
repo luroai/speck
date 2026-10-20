@@ -1,7 +1,7 @@
 ---
 id: "0348"
 title: "Pick the Foreman's model from its agent's list in the Settings view"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0347"]                # ticket ids that must be done first
 created: 2026-10-20
+started: "2026-10-20T21:33:21.240Z"
 
 ---
 # 0348 · Pick the Foreman's model from its agent's list in the Settings view
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In the panel's Settings view, `foreman_model` is a box to type in for every agent, where `builder_model` is a list of the builder's models. Someone choosing the Foreman's model has to know its exact name as that agent writes it.
