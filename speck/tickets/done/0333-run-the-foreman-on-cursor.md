@@ -1,7 +1,7 @@
 ---
 id: "0333"
 title: "Run the Foreman on Cursor"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0330","0332"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:09:59.495Z"
 approved: "2026-10-20T12:13:16.283Z"
+finished: "2026-10-20T12:15:46.498Z"
 
 ---
 # 0333 · Run the Foreman on Cursor
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The Foreman runs only on Claude Code or Codex (`FOREMAN_AGENTS` in `scripts/foreman-agent.mjs`). Someone set up with Cursor alone, as on a work laptop, can't use the Foreman at all, and with a Cursor builder and the Foreman left blank it falls back to Claude Code, which may not be installed.
