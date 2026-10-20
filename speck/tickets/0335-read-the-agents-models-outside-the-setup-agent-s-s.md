@@ -1,7 +1,7 @@
 ---
 id: "0335"
 title: "Read the agents' models outside the setup agent's sandbox"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0334"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:21:43.432Z"
+approved: "2026-10-20T12:23:26.443Z"
 
 ---
 # 0335 · Read the agents' models outside the setup agent's sandbox
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In Cursor's agent chat, `agent models` failed with an SSL error, because Cursor's sandbox blocked the network, while it worked in the user's own terminal and when Cursor ran it again outside its sandbox (2026-10-20). Setup runs `speck agents --json` from inside that chat, so it can't list Cursor's models there, and the agent guesses model names instead.
@@ -50,9 +51,14 @@ When you set speck up from an agent's chat that walls off the network, as Cursor
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 84,355
+- Elapsed since build started: 2 min
+- Changed lines: 4 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
