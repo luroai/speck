@@ -128,3 +128,14 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
 
   return { keep, check, waiting: id => !!pending(id)?.live };
 }
+
+// 0338: when speck run last handed the ticket back to its build after a ship it started (above), from the
+// build's run record, or null.
+export function handedBack(runs, id) {
+  id = String(id ?? '');
+  if (!/^[\w-]+$/.test(id)) return null;
+  let rec;
+  try { rec = JSON.parse(fs.readFileSync(path.join(runs, `${id}.json`), 'utf8')); } catch { return null; }
+  const at = rec && typeof rec === 'object' ? rec.handed_back : null;
+  return typeof at === 'string' && Number.isFinite(Date.parse(at)) ? at : null;
+}

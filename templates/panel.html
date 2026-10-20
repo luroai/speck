@@ -216,6 +216,7 @@
     @keyframes head-wide { from { opacity: 0; } }
   }
   .question.exit.to-ship { border-left-color: var(--idea); }
+  .question.exit.carried { border-left-color: var(--run); background: var(--raise); } /* 0338: speck run is carrying it on */
   .question.exit { border-left-color: var(--bad); max-height: 16em; overflow-y: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
   .resume { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
   .resume .cmd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
@@ -865,13 +866,25 @@ function panelModel(state) {
       const shipping = !!ship && ship.running === true;
       const ship_since = shipping ? time(ship.started) : null;
       const shipEnd = ship ? time(ship.ended) ?? time(ship.started) : null, approvedTime = time(t.approved);
-      const auto_failed = !!ship && ship.running === false && ship.auto === true && t.status === 'approved' && (approvedTime === null || (shipEnd !== null && shipEnd >= approvedTime));
+      const ship_failed = !!ship && ship.running === false && ship.auto === true && (approvedTime === null || (shipEnd !== null && shipEnd >= approvedTime));
+      const auto_failed = ship_failed && t.status === 'approved';
+      // 0338: a ticket blocked after its auto-ship didn't finish (handed back, its build asked you) still says so,
+      // with the ship's message, but has no Ship hint, as speck ship ships only an approved ticket.
+      const blocked_failed = ship_failed && t.status === 'blocked' && approvedTime !== null;
       // 0196: an approved ticket auto-ship covers is on its way out once its build has ended, until its ship starts,
       // unless its last auto-ship didn't finish: since 0194 a build ends at approved, and speck run's ship queue ships it.
       // 0203: with speck run off, nothing ships it until you turn Auto-build on, so it waits for you instead.
       const run_waiting = t.status === 'approved' && t.auto_ship === true && !shipping && !auto_failed && !runOn;
       const ship_waiting = t.status === 'approved' && t.auto_ship === true && !!exited && !shipping && !auto_failed && runOn;
-      const exit_label = shipping || ship_waiting || run_waiting ? null : auto_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
+      // 0338: one whose auto-ship didn't finish isn't waiting for you while speck run is on and carries it on: it was
+      // handed back to its build after that ship and the build is running, or the build has ended and another ticket is
+      // on its way, whose ship gives main a new commit and has the queue try this one again.
+      const handed_at = auto_failed ? time(t.handed_back) : null;
+      const handed = handed_at !== null && (shipEnd === null || handed_at >= shipEnd);
+      const others = tickets.some(o => String(o.id) !== String(t.id) && ['ready', 'building', 'reviewing', 'approved'].includes(o.status));
+      const carried_by = !handed || !runOn ? null : t.build_running === true ? 'Handed back to its build, which is working on it'
+        : others ? 'It will be shipped again when main or its branch has a new commit' : null;
+      const exit_label = shipping || ship_waiting || run_waiting ? null : auto_failed || blocked_failed ? "Auto-ship didn't finish" : stopped ? 'Build stopped unexpectedly' : !exited ? null : t.status === 'approved' ? 'Build finished without shipping'
         : t.status === 'building' || t.status === 'reviewing' ? 'Build stopped before finishing' : null;
       // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
@@ -884,10 +897,10 @@ function panelModel(state) {
       // 0217: and while its build has stopped before finishing, at its exit, or at when speck noticed it had been killed.
       const stopped_at = stopped ? time(t.build_stopped_at) : exit_label === 'Build stopped before finishing' ? time(t.build_exit.at) : null;
       const held_at = approved_at ?? (t.status === 'blocked' ? time(t.blocked_at) : null) ?? (paused ? time(t.paused_at) : null) ?? stopped_at;
-      return { ...t, inFlight, pausable, paused, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship), to_ship, exit_label, resume: resumeOf(t, state.resume_command, stopped),
-        exit_message: auto_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
+      return { ...t, inFlight, pausable, paused, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship && !carried_by), to_ship, carried_by, exit_label, resume: resumeOf(t, state.resume_command, stopped),
+        exit_message: auto_failed || blocked_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
           : exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
-        ship_hint: auto_failed ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,
+        ship_hint: auto_failed && !carried_by ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,
         shipping, ship_waiting, run_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight && start !== null ? start + waited(t) : null, approved_at, held_at, counter: inFlight && start !== null ? counter((held_at ?? Date.now()) - start - waited(t)) : null };
     }),
@@ -2390,8 +2403,9 @@ function queueItem(t) {
   if (t.resume) q.appendChild(resumeLine(t));
   if (t.paused) q.appendChild(el('div', 'act', `Paused · carry it on with speck play ${t.id}`));
   if (t.exit_label) {
-    q.appendChild(el('div', t.to_ship ? 'act to-ship' : 'act bad', t.exit_label));
-    if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : 'question exit', t.exit_message));
+    q.appendChild(el('div', t.to_ship ? 'act to-ship' : t.carried_by ? 'act' : 'act bad', t.exit_label));
+    if (t.carried_by) q.appendChild(el('div', 'act carried', t.carried_by)); // 0338
+    if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message));
   }
   if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
   // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
