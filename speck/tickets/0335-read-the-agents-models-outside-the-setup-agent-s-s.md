@@ -1,7 +1,7 @@
 ---
 id: "0335"
 title: "Read the agents' models outside the setup agent's sandbox"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T12:21:43.432Z"
 ---
 # 0335 · Read the agents' models outside the setup agent's sandbox
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In Cursor's agent chat, `agent models` failed with an SSL error, because Cursor's sandbox blocked the network, while it worked in the user's own terminal and when Cursor ran it again outside its sandbox (2026-10-20). Setup runs `speck agents --json` from inside that chat, so it can't list Cursor's models there, and the agent guesses model names instead.
@@ -44,7 +44,7 @@ When the setup agent's sandbox stops speck reading the agents' models, setup rea
 - Pictures: none needed: the change is to a skill's text, which nobody sees in the panel.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you set speck up from an agent's chat that walls off the network, as Cursor's does, setup could fail to read which models your Cursor or Codex account offers, and the agent then guessed model names. Now it tries again outside its walled-off space, asking you first if its tool needs your say-so, and if that still doesn't work it asks you to run the model list in your own terminal and paste it, then offers only those models. To see it, run setup from Cursor's chat and pick Cursor: you should be offered real model names or asked to paste the list, never a made-up one. Builds that `speck run` starts aren't affected.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -53,4 +53,71 @@ When the setup agent's sandbox stops speck reading the agents' models, setup rea
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "eed36c743218709fba2763e8c52f227a3952fcc9",
+    "thread_id": "01a15943-a8c4-7581-8987-cafa7eabcca7",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 83764,
+      "cached_input_tokens": 51456,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 591,
+      "reasoning_output_tokens": 29
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:23:18.351Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md section 5 explicitly checks missing models and network, SSL or certificate errors, then instructs retrying outside the sandbox with approval where required. Test 0335 AC1 passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Section 5 instructs requesting the agent's listing command output from the user's terminal and offering only pasted model names. It identifies Cursor's command and codex debug models. Test 0335 AC2 passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Section 5 explains that the setup tool's sandbox can block networking and explicitly says speck run builds aren't affected because they don't run in that sandbox. Test 0335 AC3 passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Direct comparison confirmed the installed and source skills match. Test 0335 AC4 also passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "/tmp/speck-0335-tests.txt confirms 121 tests: 118 passed, three skipped and zero failed. The change leaves scripts/agents.mjs untouched."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Setup now explains how to retry model discovery outside its sandbox and, if needed, use a model list pasted from the user's terminal. The installed skill matches, the reported tests passed, and no blocking issues were found."
+  }
+}
+```
+
+</details>
