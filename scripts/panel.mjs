@@ -15,7 +15,7 @@ import { panelPack } from './pack.mjs';
 import { pictureFile } from './pictures.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettings, panelSettingRequest, panelSaveRequestAsync, reviewerModels, builderModels } from './settings.mjs';
+import { panelSettings, panelSettingRequest, panelSaveRequestAsync, reviewerModels, builderModels, foremanModels } from './settings.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
@@ -474,15 +474,17 @@ export async function panelServer() {
     if (where === '/api/settings') {
       return (async () => {
         // 0279: and the builder's, asking Codex once when it's both
-        let models, built, agents, asked = null, cursorAsked = null;
+        let models, built, foreman, agents, asked = null, cursorAsked = null;
         const read = () => (asked ??= codexModelsAsync());
         const readCursor = () => (cursorAsked ??= agentModelsAsync('cursor')); // 0347: and Cursor once when it's both
         // 0288: and which agents are installed and signed in, for the reviewers it offers, at the same time
         const found = findAgentsAsync({ models: false }).catch(() => undefined);
         try { models = await reviewerModels(repo, read, readCursor); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
         try { built = await builderModels(repo, read, readCursor); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
+        // 0348: and the Foreman agent's
+        try { foreman = await foremanModels(repo, read, readCursor); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
         agents = await found;
-        try { send(res, 200, 'application/json', JSON.stringify(panelSettings(repo, { models, builderModels: built, agents }))); }
+        try { send(res, 200, 'application/json', JSON.stringify(panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents }))); }
         catch (e) { send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })); }
       })();
     }

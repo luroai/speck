@@ -41,6 +41,7 @@ The Settings view offers the Foreman agent's models for `foreman_model` in a lis
 - After 0347, which changes the same Settings code (`scripts/settings.mjs`, `templates/panel.html`). `foremanAgentOf` in `scripts/foreman-agent.mjs` says which agent the Foreman runs on.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: the view now shows the server's reason when it couldn't tell which agent the Foreman runs on, rather than saying to save one; the brief says how foreman_model is offered.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
