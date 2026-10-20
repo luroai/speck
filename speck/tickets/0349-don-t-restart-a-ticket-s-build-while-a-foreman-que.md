@@ -41,6 +41,7 @@ A build that ended with its ticket still ready is launched again only when someo
 - After 0344, which also changes `scripts/run.mjs`.
 - Goes in 0.10.3 (0346).
 - Failing before this build: none
+- Self-check: no changes (empty, unknown and option-like kept commits, other tickets' Foreman subjects and a Foreman subject later in the line were already covered by the tests).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
