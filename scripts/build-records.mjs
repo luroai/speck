@@ -97,6 +97,19 @@ export function buildKilled(runs, id) {
 // The last commit that changed a ticket file, as a hash ('' if none), in the checkout `dir` it's read from.
 export const lastTicketCommit = (dir, rel) => { const r = sh('git', ['log', '-1', '--format=%H', '--', rel], { cwd: dir }); return r.status === 0 ? r.stdout.trim() : ''; };
 
+// The subject every commit `speck foreman` makes to a ticket starts with.
+export const foremanSubject = id => `speck(${id}): Foreman:`;
+
+// 0349: the last commit at `rev` that changed a ticket file and isn't the Foreman's, as a hash ('' if none, or if git
+// doesn't know `rev`), so a note the Foreman commits doesn't count as the ticket being committed again.
+export function lastOwnTicketCommit(dir, rel, id, rev = 'HEAD') {
+  if (rev !== 'HEAD' && !/^[0-9a-f]{4,64}$/i.test(rev)) return '';
+  const r = sh('git', ['log', '--format=%H %s', rev, '--', rel], { cwd: dir });
+  if (r.status !== 0) return '';
+  const own = r.stdout.split('\n').find(l => l && !l.slice(l.indexOf(' ') + 1).startsWith(foremanSubject(id)));
+  return own ? own.split(' ')[0] : '';
+}
+
 // 0327: a build that ended with its ticket still ready never started it. Its run record keeps the ticket's last commit
 // as it ended, so speck run can tell once the ticket has been committed since: set ready again, or changed while ready.
 export function markStillReady(runs, id, commit) {
@@ -106,15 +119,17 @@ export function markStillReady(runs, id, commit) {
   saveRecord(file, { ...rec, still_ready_commit: commit });
 }
 
-// True once the ticket `t` has a commit other than the one its last build kept as it ended still ready. False when
-// none was kept, or `speck stop` ended that build (heldByStop decides those).
+// True once the ticket `t` has a commit other than the one its last build kept as it ended still ready, leaving out the
+// Foreman's (0349) on both sides. False when none was kept, or `speck stop` ended that build (heldByStop decides those).
 export function readyAgain(repo, runs, t) {
   const file = path.join(runs, `${t.id}.json`);
   let rec;
   try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return false; }
   if (typeof rec?.still_ready_commit !== 'string' || stoppedBySpeck(file)) return false;
-  const now = lastTicketCommit(t.worktree || repo, t.path);
-  return now !== '' && now !== rec.still_ready_commit;
+  const dir = t.worktree || repo;
+  const now = lastOwnTicketCommit(dir, t.path, t.id);
+  const then = lastOwnTicketCommit(dir, t.path, t.id, rec.still_ready_commit) || rec.still_ready_commit;
+  return now !== '' && now !== then;
 }
 
 // Where the ticket's build keeps it:the checkout its branch is in, or the main checkout before the build has started it.

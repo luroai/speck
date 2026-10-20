@@ -10,7 +10,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, sh, loadConfig, worktreeList, ticketBranches, findRepoRoot } from './core.mjs';
 import { replaceSection, commitTicketOnly } from './close.mjs';
-import { buildTicket, saveRecord } from './build-records.mjs';
+import { buildTicket, saveRecord, foremanSubject } from './build-records.mjs';
 import { readableLog } from './build-log.mjs';
 import { resumeFor, resumedRecord } from './hand-back.mjs';
 import { pidAlive } from './run-switch.mjs';
@@ -83,8 +83,8 @@ export function foremanArgv(cfg, brief, cli) {
     '--allowedTools', 'Read', 'Grep', 'Glob', 'Bash(node .speck/scripts/speck.mjs:*)', 'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)', 'Bash(git show:*)'];
 }
 
-// The subject of the commits `speck foreman` makes, which don't count as new commits on the ticket.
-export const foremanSubject = id => `speck(${id}): Foreman:`;
+// The subject of the commits `speck foreman` makes, which don't count as new commits on the ticket (kept in build-records).
+export { foremanSubject };
 const ref = (repo, name) => { const r = sh('git', ['rev-parse', '--verify', '-q', name], { cwd: repo }); return r.status === 0 ? r.stdout.trim() : ''; };
 
 // True when `to` is `from` with only `speck foreman`'s commits on top, so the ship queue doesn't take its notes as new
