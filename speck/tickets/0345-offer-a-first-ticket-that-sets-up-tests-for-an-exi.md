@@ -1,7 +1,7 @@
 ---
 id: "0345"
 title: "Offer a first ticket that sets up tests for an existing folder's code"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T21:23:07.590Z"
 ---
 # 0345 · Offer a first ticket that sets up tests for an existing folder's code
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 In an existing folder with code but no tests, setup now sets `commands.test` to `node --test` (0331), but nothing sets up tests for the code that's there. So the first feature ticket builds the test setup itself: on the user's work laptop (2026-10-20), a ticket to add a keyboard shortcut took 20 minutes, most of it setting up a test runner and a fake page to test with, and moving the code into a module it could test.
@@ -45,7 +45,7 @@ In an existing folder with code but no tests, setup offers a first ticket that s
 - Self-check: section 8 now tells an existing project to read and approve the offered tests ticket first, rather than only pointing to `/speck-capture`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you set speck up in a folder that already has code but no tests, setup now offers to write a first ticket that adds tests for that code, and explains why: without it, your first real feature has to set up testing too, which makes it slow. The ticket is left for you to read and approve, and is only saved if you say yes. Folders that hold only documents aren't offered one. To see it, run setup in a folder with a script or small app and no tests. At the end, setup also reminds you to approve that ticket before your first feature.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,4 +54,71 @@ In an existing folder with code but no tests, setup offers a first ticket that s
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "0e3c7ec5ad2fe43ddfd92310f5309dd129452106",
+    "thread_id": "01a15b33-7a6a-7ab0-a884-2814db36eaf0",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 154886,
+      "cached_input_tokens": 119040,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 831,
+      "reasoning_output_tokens": 39
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T21:24:48.292Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md section 3, step 4 offers the draft ticket for code without tests once commands.test is set. Covered by passing test '0345 AC1'."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The new bullet requires a passing test of existing code and commands.test running the added tests. Covered by passing test '0345 AC2'."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The bullet explains that otherwise the first feature ticket must build the test setup itself, making it slow. Covered by passing test '0345 AC3'."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The bullet specifies creation after sections 5 and 6, draft status, user agreement before committing, and no offer for document-only folders. Both '0345 AC4' tests passed; section 4's existing first-ticket instructions remain unchanged."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Direct comparison confirmed the installed skill matches the source. The '0345 AC5' equality test also passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Setup now offers existing projects without tests a draft ticket to test their code, explains why it helps, and preserves user approval before committing. All criteria are met. The reported test run had 227 passes, three skips and no failures."
+  }
+}
+```
+
+</details>
