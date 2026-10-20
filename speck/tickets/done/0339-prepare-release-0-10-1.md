@@ -1,7 +1,7 @@
 ---
 id: "0339"
 title: "Prepare release 0.10.1"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0338"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T13:04:07.132Z"
 approved: "2026-10-20T13:07:21.482Z"
+finished: "2026-10-20T13:09:52.946Z"
 
 ---
 # 0339 · Prepare release 0.10.1
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0338 stops the panel turning a ticket red, and asking the user to ship it, while speck run is already handling a failed auto-ship. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.0 without the fix.
