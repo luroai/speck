@@ -68,7 +68,8 @@ If `speck.installed` is true, speck is already here. Say which version, and carr
 4. **Test command.** speck runs the tests before every review and refuses to ship until they pass. If `suggestions.test_command` has a command, explain where it came from and ask whether it's the right one. If it's null, ask the user how they run their tests, or whether they have none yet. Run it once to confirm, and show the result:
    - If it passes, run `speck config set commands.test "<command>"`.
    - If it fails, show the end of the output. Ask whether to set it anyway (speck won't ship until it passes) or try another command.
-   - If they have no tests, leave it blank and offer a draft ticket to add a test runner. If they want one, make it after sections 5 and 6, as in section 4, step 5, so it records the agents they choose.
+   - If they have no tests, don't leave it blank: recommend `node --test`. Explain in plain words that with `commands.test` blank nothing can ship, because speck refuses to ship until the tests pass, and that `node --test` passes while there are no tests and runs the tests later tickets add. Changes to documents are checked by the reviewer, who reads them, instead of by tests. Run it once to confirm: if it passes, run `speck config set commands.test "node --test"`. If it fails, the folder has test files it can't run, such as ones written for another test runner: show the end of the output and ask how they run those tests instead.
+   - If they still want it blank, leave it blank and offer a draft ticket to add a test runner. If they want one, make it after sections 5 and 6, as in section 4, step 5, so it records the agents they choose.
 5. **Worktree setup.** If `suggestions.worktree_setup` has a command, explain that each build happens in a fresh copy of the project, which needs its dependencies installed first. Ask, then run `speck config set worktree_setup "<command>"`.
 6. Continue with section 5.
 
