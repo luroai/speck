@@ -44,9 +44,9 @@ export const SETTING_GROUPS = [
     { key: 'builder_model', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, to Codex builds when build_command is blank, and to Cursor builds when it is blank too. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
-      explain: 'The agent that reviews each build and decides whether it is approved: codex, claude (Claude Code, run by speck, for any builder), claude-subagent (a Claude Code subagent the builder starts, for Claude Code builders) or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
+      explain: 'The agent that reviews each build and decides whether it is approved: codex, claude (Claude Code, run by speck, for any builder), claude-subagent (a Claude Code subagent the builder starts, for Claude Code builders), cursor or a command you have set up. New tickets take it from here, so changing it changes who reviews tickets made from now on.' },
     { key: 'reviewer_model', default: '',
-      explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex offers or Claude\'s model names. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
+      explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex or Cursor offers or Claude\'s model names. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
     { key: 'reviewer_effort', default: '',
       explain: 'How hard the reviewer thinks: low, medium, high, xhigh or max, any other effort Codex offers for its model, or blank for the reviewer\'s own default. More effort takes longer and costs more, but can catch more.' },
     { key: 'allow_same_model_review', default: false,
@@ -83,7 +83,7 @@ const RISKS = ['low', 'high'];
 function choicesOf(key, file) {
   if (key === 'reviewer') {
     const options = file.reviewer_options !== null && typeof file.reviewer_options === 'object' ? Object.keys(file.reviewer_options) : [];
-    return [...new Set(['codex', 'claude', 'claude-subagent', ...options])];
+    return [...new Set(['codex', 'claude', 'claude-subagent', 'cursor', ...options])]; // 0347: and cursor
   }
   if (key === 'builder') return Object.keys(OWN_BUILD_COMMANDS); // 0293: the builders speck starts by itself
   if (key === 'reviewer_effort') return ['', ...EFFORTS];
@@ -138,7 +138,7 @@ export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku'].
 
 // 0288: the agent each built-in reviewer runs on. A reviewer set up as a command under reviewer_options is offered as
 // it is: speck can't tell what it runs. 0293: with `builders`, each choice is a builder, run on the agent of its name.
-const REVIEWER_AGENTS = { codex: 'codex', claude: 'claude', 'claude-subagent': 'claude' };
+const REVIEWER_AGENTS = { codex: 'codex', claude: 'claude', 'claude-subagent': 'claude', cursor: 'cursor' };
 function readyReviewers(choices, { agents }, current, builders = false) {
   const byId = new Map((Array.isArray(agents) ? agents : []).map(a => [a.id, a]));
   const left = [];
@@ -153,9 +153,11 @@ function readyReviewers(choices, { agents }, current, builders = false) {
 
 // 0276: the models the configured reviewer offers, read now, for the Settings view: { reviewer, models: [{ slug,
 // efforts }] } when it can list them (Codex, or Claude's names from 0278), or { reviewer, why } in one line when it can't.
-export async function reviewerModels(repo, read = codexModelsAsync) {
+// 0347: and the models Cursor lists for cursor, as builderModels reads them.
+export async function reviewerModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
   const reviewer = String(loadConfig(repo).reviewer ?? '');
   if (reviewer === 'claude' || reviewer === 'claude-subagent') return { reviewer, models: CLAUDE_MODELS };
+  if (reviewer === 'cursor') return { reviewer, ...await readCursor() };
   if (reviewer !== 'codex') return { reviewer, why: `${reviewer || 'This reviewer'} can't list its models, so type the model's name as it names it.` };
   return { reviewer, ...await read() };
 }
