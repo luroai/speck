@@ -1,7 +1,7 @@
 ---
 id: "0338"
 title: "Keep a handed-back ticket out of red while speck run is handling it"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:54:58.974Z"
+approved: "2026-10-20T13:01:12.718Z"
 
 ---
 # 0338 · Keep a handed-back ticket out of red while speck run is handling it
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When an auto-ship fails, the ticket's row in the Build list turns red and says "Ship it from its review pack", even when speck run has already handed it back to its build and will ship it again by itself. On 2026-10-20, 0335 sat red, asking the user to act, through two failed ships while its build looked into them and a fix ticket (0337) mended main, then shipped with nobody's help. Red should mean the user is needed.
@@ -52,9 +53,15 @@ When an automatic ship fails and speck run has already handed the ticket back to
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 carried_by ignores runOn while build_running is true, so turning speck run off leaves the ticket non-red with no Ship hint, contrary to AC3.; F2 auto_failed only recognises approved tickets.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 350,402
+- Elapsed since build started: 6 min
+- Changed lines: 41 (limit 5000)
 - Follow-ups:
   - Count only tickets that can ship as on their way: two approved tickets whose auto-ships both failed keep each other out of red (`speck/ideas/2026-10-20-count-only-tickets-that-can-ship-as-on-their-way.md`).
   - Known limit: a hand-back that speck run has kept but not yet started, because no build slot is free, still shows red with the Ship hint until its build starts.
