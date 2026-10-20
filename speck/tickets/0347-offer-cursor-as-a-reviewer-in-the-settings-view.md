@@ -41,6 +41,7 @@ The Settings view offers Cursor as a reviewer, and offers its models for `review
 - From the user (2026-10-20): the Cursor reviewer's and the Foreman's model should be lists like the builder's.
 - `reviewerModels` in `scripts/settings.mjs` lists models only for `claude`, `claude-subagent` and `codex`; `builderModels` reads Cursor's with `agentModelsAsync('cursor')`. The view's lists are `reviewerModelList` and `builderModelList` in `templates/panel.html`. The reviewer choices come from `REVIEWER_AGENTS` (builder's note on 0332).
 - Relies on nothing outside this repo: Cursor's models are read the way the builder's already are.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
