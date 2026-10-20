@@ -42,6 +42,7 @@ A ticket whose auto-ship failed is red only when nothing in speck run will carry
 - AC2's rule, another ticket ready or in flight, stands for "a new commit on main is on its way": when one ships, speck run's queue tries this ticket again. With none, nothing will change, so the user is needed.
 - Test it with the fake page from `fakePage()` in `test/support/panel.mjs`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
