@@ -1,7 +1,7 @@
 ---
 id: "0343"
 title: "Prepare release 0.10.2"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0340","0341","0342"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T20:56:29.718Z"
+approved: "2026-10-20T20:58:47.177Z"
 
 ---
 # 0343 · Prepare release 0.10.2
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0340 to 0342 make a build's log in the panel read the same whichever agent builds it: Cursor and Codex lines get times, and their reads, edits and searches show as Claude Code's do. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.1 without the fixes.
@@ -56,9 +57,14 @@ speck is ready to go out as 0.10.2, a bug-fix release. Its fixes make a build's 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 199,753
+- Elapsed since build started: 2 min
+- Changed lines: 51 (limit 5000)
 - Follow-ups: none.
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
