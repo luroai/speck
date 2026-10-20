@@ -44,7 +44,7 @@ The Settings view offers the Foreman agent's models for `foreman_model` in a lis
 - Self-check: the view now shows the server's reason when it couldn't tell which agent the Foreman runs on, rather than saying to save one; the brief says how foreman_model is offered.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In the panel's Settings, the Foreman's model is now picked from a list of the models its agent offers, each with its full name, rather than typed in by hand. The list follows whichever agent the Foreman runs on, including when that's left blank and it uses the builder's. To see it, open Settings and look at the Foreman group. If that agent's models can't be read, you get a box to type in with one line saying why. If you pick a different Foreman agent, it tells you to save first and open Settings again to see that agent's models.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,7 @@ The Settings view offers the Foreman agent's models for `foreman_model` in a lis
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -125,6 +126,79 @@ The Settings view offers the Foreman agent's models for `foreman_model` in a lis
     ],
     "escalation_question": "",
     "summary": "The Foreman model picker works as requested, including agent defaults and a text box when models cannot be read. The reported tests pass. One documentation test must change because harmless edits to the brief would break it."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bb6cc72204f64340e863fc837b7fd09193f00d99",
+    "thread_id": "01a15b3e-2440-75d1-9cd3-da6d52b7472b",
+    "seconds": 14,
+    "usage": {
+      "input_tokens": 241873,
+      "cached_input_tokens": 195072,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1318,
+      "reasoning_output_tokens": 10
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T21:36:53.451Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs foremanModels supplies the chosen agent's models; templates/panel.html foremanModelList and settingEditor render their display names. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanModels uses foremanAgentOf, and foremanAgentChosen mirrors its blank-setting fallback. The AC2 test checks Codex, Cursor and Claude fallbacks and passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanModelList falls back to an input when models are unavailable, and foremanModelsWhy displays the reason. The AC3 test exercises discovery failure and the rendered explanation and passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "foremanModelsWhy provides the save-and-reopen instruction when switching to an agent whose models were not loaded. The AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh test log reports 186 passed, zero failed and three skipped across the eight reported files. The only test change removes the brittle documentation assertion."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/settings-foreman-0348.test.mjs:115",
+        "issue": "The documentation test previously required particular wording and ordering within one sentence. It now checks only the setting and command names independently.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The Foreman model picker meets all acceptance criteria, including default agent selection and an explained text-entry fallback. The brittle documentation test is fixed, and all reported tests pass. Ready for the owner's merge decision."
   }
 }
 ```
