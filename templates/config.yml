@@ -15,9 +15,9 @@ auto_ship: false                 # true: the build ships a ticket as soon as the
 auto_ship_risk: [low]            # which ticket risks auto_ship covers: low, high or both
 ship_mode: local                 # local: speck ship merges an approved ticket into the base branch and pushes it. pr: once a ticket is approved, speck pushes its branch and opens a GitHub pull request for it with gh, with its review pack, and shipping merges that pull request
 foreman_fixing: tell             # what the Foreman does with a build's blocked question: off (leave it to you) | tell (also count it under Needs you) | fix (take the recommendation when no option changes anything you'd notice and it's a clear winner, once per ticket)
-foreman: ""                      # the agent the Foreman runs on to look into work that stops for a reason speck has no steps for, with foreman_fixing: fix: claude | codex, blank for the builder when it's codex, otherwise claude
+foreman: ""                      # the agent the Foreman runs on to look into work that stops for a reason speck has no steps for, with foreman_fixing: fix: claude | codex | cursor, blank for the builder when it's codex or cursor, otherwise claude
 foreman_model: ""                # blank: the Foreman agent's own default. Otherwise a model name in that agent's own format
-foreman_effort: ""               # blank: the Foreman agent's own default. Otherwise low | medium | high | xhigh | max
+foreman_effort: ""               # blank: the Foreman agent's own default. Otherwise low | medium | high | xhigh | max (not given to cursor)
 ship_wait_minutes: 30            # how long speck ship waits for staged changes in the base branch's checkout to be committed or unstaged before it refuses
 
 worktrees: true                  # true: each build gets its own git worktree beside your checkout (speck start). false: builds branch in your checkout

@@ -7,6 +7,7 @@ import { onPath, CURSOR_CLIS } from './install.mjs';
 export { cursorBuilds };
 
 const HEADLESS = ['-p', '--force', '--trust', '--output-format', 'stream-json'];
+export const CURSOR_HEADLESS = Object.freeze(HEADLESS); // 0333: the Foreman starts the same way
 
 // Cursor's CLI: `agent`, or `cursor-agent` when only that is installed. `agent` when neither is, so what fails names
 // the CLI Cursor installs today.
