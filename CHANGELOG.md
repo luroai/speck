@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.10.3 · 20 October 2026
+
+What's fixed since 0.10.2. A bug-fix release: a build's time no longer counts the hours a laptop spends asleep, and `speck run` no longer restarts a build each time the Foreman asks about its ticket. Setup and the panel's Settings view get small additions too.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.10.3 init`.
+- In a folder that already has code but no tests, setup now offers a first ticket that sets up tests for that code, and says why: without it, the first feature ticket has to set up testing itself, which makes it slow. It's left as a draft for you to approve, and saved only if you agree. A folder that holds only documents isn't offered one.
+
+### Build times
+
+- Time the machine spends asleep during a build, such as with a laptop's lid closed, no longer counts towards the build's time while `speck run` is on. `speck run` notices the sleep at its first check after waking, adds it to the ticket's waited time once and says in its log how long the machine was asleep. The panel's timers and Shipped figures leave it out.
+- This works on Linux. On a Mac, speck reads the sleep and wake times the Mac records, which haven't been tried on a real Mac yet.
+- Builds started by hand with `speck run` off aren't covered, and tickets already recorded with time asleep in them stay as they are.
+- The README's "Built with speck" figures now leave out the time a build waited for you or the machine was asleep, as the panel's Shipped median does.
+
+### speck run and the Foreman
+
+- When a build ends with its ticket still ready, a note or question the Foreman adds to the ticket no longer makes `speck run` start the build again. Before, each question the Foreman asked about such a ticket restarted its build, which stopped at the same unanswered question, so the Foreman asked again. Setting the ticket ready again, or editing it yourself, still starts it again.
+
+### Settings view in the panel
+
+- `cursor` is offered as a reviewer when Cursor is installed and signed in. With it saved as the reviewer, `reviewer_model` is a list of Cursor's models, each by its display name, as `builder_model` is for a Cursor builder.
+- `foreman_model` is a list of the models of the agent the Foreman runs on: Claude's for `claude`, the models Codex lists for `codex` and the models Cursor lists for `cursor`. With `foreman` blank, it lists the models of the agent the Foreman runs on then.
+- When those models can't be read, the setting is a box to type in, with one line saying why. Choosing Cursor as the reviewer, or another agent for the Foreman, while a different one is saved says to save it, then open Settings again to pick from its models.
+
 ## 0.10.2 · 20 October 2026
 
 What's fixed since 0.10.1. A bug-fix release: a build's log in the panel now reads the same whichever agent builds the ticket, with times on its lines and the same names for the steps Claude Code, Cursor and Codex take.
