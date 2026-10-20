@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.10.2 · 20 October 2026
+
+What's fixed since 0.10.1. A bug-fix release: a build's log in the panel now reads the same whichever agent builds the ticket, with times on its lines and the same names for the steps Claude Code, Cursor and Codex take.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.10.2 init`.
+
+### Build logs in the panel
+
+- A Cursor build's log shows the time each message and each command started, as `HH:MM:SS` in the panel machine's local time, as a Claude Code build's does. A line Cursor gives no time for, such as its final summary, shows without one.
+- A Codex build's log shows the time of each message, command and file change too. Codex doesn't say when things happen, so speck notes the time each line arrives. Logs from Codex builds made before 0.10.2 still have no times.
+- The steps a Cursor or Codex build takes show under the names a Claude Code build uses: `→ Bash` for a command, `→ Read`, `→ Edit` and `→ Write` for files, and `→ Grep` and `→ Glob` for searches. Before, a Cursor build's log showed only its messages and its commands, as `→ Shell`, and a Codex build's left out its file edits. Any other tool shows under its own name.
+- A Codex command no longer shows with the `/bin/bash -lc "…"` wrapper Codex puts round it.
+- A Cursor file edit shows once it has finished, so one cut off partway shows no line.
+- When the `codex` command can't be found, a Codex build now starts and ends straight away, with the reason in its log, rather than `speck run` saying the build couldn't start.
+
 ## 0.10.1 · 20 October 2026
 
 What's fixed since 0.10.0. A bug-fix release: a ticket whose automatic ship failed no longer asks you to ship it yourself while `speck run` is already dealing with it.
