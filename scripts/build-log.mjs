@@ -43,7 +43,7 @@ function readable(text, times, last) {
     let e = null;
     if (line.startsWith('{')) { try { e = JSON.parse(line); } catch { /* not an event */ } }
     if (!e || typeof e !== 'object' || typeof e.type !== 'string') { out.push(line); continue; }
-    const at = clock(e.timestamp) || clock(e.timestamp_ms, true) || clock(e.speck_at);
+    const at = times ? clock(e.timestamp) || clock(e.timestamp_ms, true) || clock(e.speck_at) : '';
     if (e.type === 'assistant' && Array.isArray(e.message?.content)) {
       for (const b of e.message.content) {
         if (b?.type === 'text' && typeof b.text === 'string' && b.text.trim()) { out.push(at + b.text.trim(), ''); last = b.text.trim(); }
