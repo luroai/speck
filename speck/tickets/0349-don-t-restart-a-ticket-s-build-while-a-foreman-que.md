@@ -1,7 +1,7 @@
 ---
 id: "0349"
 title: "Don't restart a ticket's build while a Foreman question on it is waiting"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-20
 ---
 # 0349 · Don't restart a ticket's build while a Foreman question on it is waiting
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a build ends with its ticket still ready, speck run launches it again only once the ticket has been committed since (0327), as setting it ready again does. But a note the Foreman commits to the ticket, such as a question for you, counts as that commit too. So each question the Foreman asked about 0344 (2026-10-20) restarted its build, which stopped at the same unanswered question, and the Foreman asked again: eight times in nine minutes, each costing a build's tokens.
