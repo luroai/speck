@@ -1,7 +1,7 @@
 ---
 id: "0340"
 title: "Show when each Cursor build log entry happened"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T20:26:02.603Z"
+approved: "2026-10-20T20:28:11.098Z"
 
 ---
 # 0340 · Show when each Cursor build log entry happened
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A Cursor build's log in the panel has no times on its lines, while a Claude Code build's lines each start with `HH:MM:SS` (0080). The log reader only reads an ISO `timestamp` string, and Cursor's stream-json events carry `timestamp_ms`, a number of milliseconds since 1970, instead. Its shell-command lines get no time either way. Someone following a Cursor build can't tell when anything happened or whether it's stuck.
@@ -53,9 +54,14 @@ When Cursor builds a ticket, its build log in the panel now shows the time each 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 91,814
+- Elapsed since build started: 2 min
+- Changed lines: 13 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
