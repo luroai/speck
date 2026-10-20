@@ -1,7 +1,7 @@
 ---
 id: "0334"
 title: "Offer an all-Cursor setup with models picked from the account's list"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T12:16:00.587Z"
 ---
 # 0334 · Offer an all-Cursor setup with models picked from the account's list
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Setting speck up in Cursor on a work laptop took several hand edits to `speck/config.yml` (2026-10-20): the reviewer command, `allow_same_model_review` and model names the agent had to guess. Someone who uses Cursor, with its many models, should get a working all-Cursor setup from setup's questions alone.
@@ -44,7 +44,7 @@ When the builder is Cursor, setup offers an all-Cursor setup in one question, wi
 - Self-check: also corrected two sentences in section 5 that the all-Cursor setup would contradict (a Cursor reviewer passing only when both models are set, and builder_model being used only by Claude Code builds).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When someone setting speck up picks Cursor to do the building, setup now offers to use Cursor for everything in one question: Cursor chooses the model for each build, the reviewer runs on Cursor with a model the user picks, and the agent that looks into stopped work runs on Cursor or another agent they have. The models on offer come from the user's own Cursor account, so nothing is guessed, and every setting is made through speck rather than by editing the settings file by hand. To see it, start setup in a project and choose Cursor as the builder. Worth watching: if Cursor's model list can't be read on a machine, setup asks the user to type the model's name instead.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,3 +54,71 @@ When the builder is Cursor, setup offers an all-Cursor setup in one question, wi
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d5aa1bbc28d1104a2edd08cdf26de41e94b2b1c6",
+    "thread_id": "01a1593f-2de1-7841-9242-53c4a3f6d8a4",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 130249,
+      "cached_input_tokens": 91648,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 780,
+      "reasoning_output_tokens": 167
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T12:18:15.982Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "skills/speck-setup/SKILL.md section 5 offers the all-Cursor question, auto builds, a chosen Cursor reviewer model and a Cursor or other installed Foreman. AC1 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Section 5 instructs agents to offer the relevant account model lists from speck agents --json, set selections by name and never invent names. AC2 test passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The all-Cursor instructions recommend another provider when builder_model is set and explain that auto builds accept a pinned reviewer model in its own chat. AC3 test passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The all-Cursor instructions list speck config set commands for all five settings, prohibit hand editing and leave allow_same_model_review unchanged. AC4 test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Direct comparison confirms the installed and source skills have identical contents. AC5 test passed."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Setup now offers Cursor users automatic model selection for builds, a reviewer model chosen from their account and a configurable Foreman. The instructions meet all five criteria. The recorded test run has no failures; no blocking issues found."
+  }
+}
+```
+
+</details>
