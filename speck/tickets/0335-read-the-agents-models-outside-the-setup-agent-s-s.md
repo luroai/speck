@@ -39,6 +39,7 @@ When the setup agent's sandbox stops speck reading the agents' models, setup rea
 ## Notes
 - After 0334, which changes the same section of the same skill.
 - Checked 2026-10-20: `models_why` holds the SSL error's text when `agent models` fails. Through a local proxy serving a self-signed certificate, `agent models` exited 1 with `Failed to load models: [internal] self-signed certificate; …`, and `speck agents --json` gave Cursor no models and `models_why: Cursor couldn't list its models (Failed to load models: [internal] self-signed certificate; …).` A refused connection gives `Failed to load models: [unavailable] connect ECONNREFUSED …` the same way.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
