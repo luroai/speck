@@ -42,6 +42,7 @@ speck is ready to be released as 0.10.0, the Cursor-native release.
 - Covers every ticket shipped since `v0.9.1`: 0330 to 0335, which it waits for (`after:`).
 - After it ships, check that the `v0.10.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.10.0 --target main --title "speck 0.10.0" --notes-file docs/releases/v0.10.0.md`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
