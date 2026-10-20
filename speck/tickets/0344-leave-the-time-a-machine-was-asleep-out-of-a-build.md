@@ -1,0 +1,55 @@
+---
+id: "0344"
+title: "Leave the time a machine was asleep out of a build's time"                # one outcome, no "and"
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
+size: M                  # S | M  (L is never ready; split it)
+risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
+type: bug                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
+builder: claude
+reviewer: codex
+reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
+reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
+source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
+after: ["0342"]                # ticket ids that must be done first
+created: 2026-10-20
+
+---
+# 0344 · Leave the time a machine was asleep out of a build's time
+
+**Status:** 📋 ready
+
+## Problem
+When a laptop's lid is closed during a build, every process sleeps with it, but the wall clock carries on, so the build's time counts the hours asleep. The user saw build timers of 300 minutes after closing their laptop during Cursor builds (2026-10-20). That skews the panel's Shipped figures and the README's "Built with speck" figures, which are speck's proof of how fast it is.
+
+## Outcome
+Time the machine spent asleep during a build doesn't count towards the build's time, in the panel or in speck's figures.
+
+## Acceptance criteria
+1. When the machine sleeps while speck run is on and a ticket is building or reviewing, speck run adds the time it was asleep to that ticket's `waited_seconds` once, at its first check after waking.
+2. A check that comes late while the machine stayed awake, for example on a busy machine, adds nothing.
+3. A ticket that was paused or blocked while the machine slept doesn't get that time added twice.
+4. The README's "Built with speck" figures leave each ticket's `waited_seconds` out of its time, as the panel's Shipped median already does.
+5. No test that passed before this change fails.
+
+## Out of scope
+- Tickets already recorded with time asleep in them: speck has no record of when they slept.
+- Builds started by hand, with speck run off.
+- The review pack's and delivery log's "Elapsed since build started", which is wall-clock time by its name.
+
+## Notes
+- `waited_seconds` already leaves blocked, paused and stopped time out (0166, `addWaited` in `scripts/core.mjs`, `scripts/stop-wait.mjs`, and pausing in `scripts/run.mjs`). The panel's timer and Shipped median subtract it (`waited` in `templates/panel.html`). The README figures come from `builtWithSpeckFigures` in `test/support/figures.mjs`, which uses `finished` minus `started`.
+- Unverified: that Node's monotonic clock (`process.hrtime`, `performance.now()`) stops while the machine sleeps, on both Linux (`CLOCK_MONOTONIC`) and macOS, so the gap between it and the wall clock is the time asleep. It can't be checked here, as this machine can't be put to sleep from a session. If the builder can't confirm it, it should say so in a blocked question rather than guess.
+- After 0342, which also changes `scripts/run.mjs`.
+
+## In plain words
+<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+
+## Blocked question
+<!-- Filled in by speck only when status is blocked. -->
+
+## Review log
+<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+
+## Delivery log
+<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
