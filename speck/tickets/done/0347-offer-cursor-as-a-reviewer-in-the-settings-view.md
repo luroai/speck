@@ -1,7 +1,7 @@
 ---
 id: "0347"
 title: "Offer Cursor as a reviewer in the Settings view"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T21:23:05.085Z"
 approved: "2026-10-20T21:30:57.528Z"
+finished: "2026-10-20T21:33:13.079Z"
 
 ---
 # 0347 · Offer Cursor as a reviewer in the Settings view
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0332, `reviewer: cursor` needs no command, but the panel's Settings view doesn't offer it as a reviewer, and with a Cursor reviewer its `reviewer_model` is a box to type in, where the builder's model is a list of Cursor's models. Someone setting speck up in Cursor, with its many models, has to know each model's exact name.
