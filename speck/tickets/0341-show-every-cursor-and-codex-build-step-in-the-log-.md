@@ -47,6 +47,7 @@ Each step a Cursor or Codex build takes shows in its log as the same kind of lin
 - You answered the Foreman (2026-10-20 20:32 UTC): I’m happy with your recommendation. Its question: Cursor only shows a file is new once the change finishes: should its file lines be written when they finish, so new files show as Write (recommended), or when they start, always as Edit?
 
 - You answered the Foreman (2026-10-20 20:32 UTC): I'm happy with your recommendation. So Cursor's file lines are written when the change finishes, and a new file shows as Write.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
