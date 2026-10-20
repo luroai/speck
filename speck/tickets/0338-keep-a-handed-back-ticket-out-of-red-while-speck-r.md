@@ -43,6 +43,7 @@ A ticket whose auto-ship failed is red only when nothing in speck run will carry
 - Test it with the fake page from `fakePage()` in `test/support/panel.mjs`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: no changes (the run-record reader went into `scripts/hand-back.mjs` rather than `scripts/speck.mjs`, which the 600-line check caps)
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
