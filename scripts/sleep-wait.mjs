@@ -76,10 +76,14 @@ export function sleepWatch({ read = clocks, platform = process.platform, times =
 
 // The ticket `t`'s build was in hand all through a sleep `s`: its build time had begun and not ended, and it wasn't
 // blocked or paused, which count that time as waiting already, or stopped, as an exited build's wait is counted from
-// its exit (0217). `rec` is its run record, and `paused` when its pause began, or null.
+// its exit (0217). `rec` is its run record, and `paused` when its pause began, or null. `was` is how the ticket was at
+// the check before, { waited, since }, since being when the wait it was in then began, or null: a wait resumed since
+// has added to its waited_seconds, so it ended that much after it began. One that wasn't waiting then but has added at
+// least the sleep's length since was waiting all through it.
 const at = v => { const ms = Date.parse(v); return Number.isFinite(ms) ? ms : null; };
+const num = v => { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : 0; };
 const IN_HAND = new Set(['building', 'reviewing', 'blocked', 'approved']);
-export function inHandAsleep(fm, rec, running, paused, s) {
+export function inHandAsleep(fm, rec, running, paused, s, was = null) {
   if (!IN_HAND.has(fm.status) || !rec) return false;
   const exited = Object.hasOwn(rec, 'exited') ? at(rec.exited) : null;
   if (!running && (exited === null || s.before(exited))) return false;
@@ -87,8 +91,14 @@ export function inHandAsleep(fm, rec, running, paused, s) {
   if (started === null || !s.before(started)) return false;
   if (fm.status === 'blocked' && (at(fm.blocked_at) === null || s.before(at(fm.blocked_at)))) return false;
   if (fm.status === 'approved' && (at(fm.approved) === null || s.before(at(fm.approved)))) return false;
-  return !(paused !== null && s.before(paused));
+  if (paused !== null && s.before(paused)) return false;
+  const added = was ? (num(fm.waited_seconds) - was.waited) * 1000 : 0;
+  if (added <= 0) return true;
+  return was.since !== null ? s.before(was.since + added) : added < s.ms - SLACK_MS;
 }
+
+// How a ticket from speck status is at a check: { waited, since }, since being when the wait it's in began, or null.
+const stateOf = t => ({ waited: num(t.waited_seconds), since: t.status === 'blocked' ? at(t.blocked_at) : t.paused ? at(t.paused_at) : null });
 
 // Adds `seconds` asleep to ticket `id`'s waited_seconds and commits it where its build keeps it. Returns a note to log
 // when it couldn't be recorded, or ''. `t` is the ticket as buildTicket reads it.
@@ -105,24 +115,25 @@ const readObject = file => { try { const v = JSON.parse(fs.readFileSync(file, 'u
 
 // speck run's side: check(tickets), first thing on each check after it has read the tickets, so before it starts or
 // resumes any build, adds the time asleep since its last check to each ticket whose build was in hand all through it
-// (inHandAsleep): one running now, or one whose build exited after waking.
+// (inHandAsleep): one running now, or one whose build exited after waking. `tickets` are as speck status gives them.
 export function sleepQueue({ repo, readConfig, running, runs, watch = sleepWatch(), log = console.log }) {
+  let last = new Map();
   return {
     check(tickets) {
-      const s = watch.check();
-      if (!s) return;
-      const seconds = s.ms / 1000;
-      for (const { id } of tickets) {
+      const s = watch.check(), now = new Map(tickets.map(t => [t.id, stateOf(t)]));
+      for (const { id } of s ? tickets : []) {
         if (!/^[\w-]+$/.test(String(id))) continue;
         const rec = readObject(path.join(runs(), `${id}.json`));
         if (!rec) continue;
         let where, t;
         try { ({ at: where, t } = buildTicket(repo, readConfig(), id)); } catch { continue; }
         const paused = buildPaused(runs(), id) ? pausedSince(path.join(runs(), `${id}.paused`)) : null;
-        if (!inHandAsleep(t.fm, rec, running.has(id), paused, s)) continue;
-        const note = countSleep(where, t, seconds);
-        log(`${id}: the machine was asleep for ${Math.round(seconds / 60)} min during its build, so that's left out of its build time.${note}`);
+        if (!inHandAsleep(t.fm, rec, running.has(id), paused, s, last.get(id) ?? null)) continue;
+        const note = countSleep(where, t, s.ms / 1000);
+        if (!note) now.set(id, { ...now.get(id), waited: num(t.fm.waited_seconds) + s.ms / 1000 });
+        log(`${id}: the machine was asleep for ${Math.round(s.ms / 60000)} min during its build, so that's left out of its build time.${note}`);
       }
+      last = now;
     },
   };
 }

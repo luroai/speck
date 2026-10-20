@@ -57,7 +57,7 @@ Time the machine spent asleep during a build doesn't count towards the build's t
 - Went with the recommendation: Linux clock gap plus the Mac's recorded sleep and wake times, with the Mac part marked unconfirmed in Notes (chosen by the user in the panel, 2026-10-20 UTC; the panel's button couldn't record it, as the build stopped before it had a branch).
 - Failing before this build: none
 - Self-check: no changes. Checked: a quoted or missing `waited_seconds` in the README figures, a pending Go with the recommendation (its ticket isn't counted, as its build isn't running, so its branch isn't moved under it), a killed build (`countStop` counts from after waking, so nothing overlaps), and a ticket that blocks or is approved just after waking (it was building while asleep, so it gets the time).
-- Known limits: on Linux, the wall clock set forward by more than 5 seconds between two checks reads as sleep. A sleep while `speck run` is switching to new code isn't counted, as the new code starts its own clock. From the clock gap alone, speck can't tell exactly when a sleep began, so it takes anything less than the sleep's length after the last check as before it, which is wrong only if the machine was awake longer than it then slept between two checks. A build paused before the sleep and played within the few seconds after waking, before speck run's next check, gets the sleep counted twice. Recording the time commits the ticket in its build's worktree while the build runs, as pausing does while it's held, so any change the build hasn't committed to its ticket goes into that commit.
+- Known limits: on Linux, the wall clock set forward by more than 5 seconds between two checks reads as sleep. A sleep while `speck run` is switching to new code isn't counted, as the new code starts its own clock. From the clock gap alone, speck can't tell exactly when a sleep began, so it takes anything less than the sleep's length after the last check as before it, which is wrong only if the machine was awake longer than it then slept between two checks. Recording the time commits the ticket in its build's worktree while the build runs, as pausing does while it's held, so any change the build hasn't committed to its ticket goes into that commit.
 - Tests ran: `test/sleep-0344.test.mjs` and the release tests that use `test/support/figures.mjs`.
 - The Foreman (2026-10-20 21:48 UTC) resumed its build: The user has answered the macOS question: go with option 1, the Linux clock gap plus the Mac's recorded sleep and wake times, with the Mac part marked unconfirmed in Notes (see the 'Went with the recommendation' note). Ignore the earlier instruction to block and end: 0344 is building now, so carry on building it to the acceptance criteria and through review.. Why: The user answered the macOS question, but the restarted build followed the Foreman's older instruction to block and end, so it stopped without building; it should now build the option the user chose.
 
@@ -155,6 +155,87 @@ Clear winner: no
     ],
     "escalation_question": "",
     "summary": "The README calculation works, and the tests pass. Sleep accounting still has two timing gaps: it can miss sleep just after a build starts, or subtract the same hours twice when a build is paused or blocked just before sleep. Both need fixing before merge. The macOS implementation remains unverified on a real Mac, as agreed in the ticket."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2588fa05d68d508305eec5ecdaa6c1884a7da760",
+    "thread_id": "01a15b4c-d67d-7610-a351-bdcb5d49b8fc",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 550158,
+      "cached_input_tokens": 469248,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2689,
+      "reasoning_output_tokens": 375
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T21:56:03.925Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "sleepQueue now reads current tickets and run records rather than using the previous eligibility snapshot. Passing AC1 tests cover building, reviewing, launch between checks, exit after waking and simulated macOS sleep."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing AC2 tests exercise late awake checks on both platforms. clockGap still subtracts monotonic elapsed time, and macGap rejects sleep records from before the interval."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "The new F1 tests cover a pause that remains marked until after sleepQueue runs. playBuild removes that mark when resuming, so a play before the first post-wake check still causes duplicate accounting. The builder acknowledges this in Notes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "builtWithSpeckFigures subtracts waited_seconds, and the passing AC4 test verifies both an individual duration and the resulting median."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied targeted run reports 212 passed, 0 failed and 3 skipped. No existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/sleep-wait.mjs:inHandAsleep",
+        "issue": "The duplicate-accounting fix is incomplete. If a paused build is played after waking but before speck run checks, countPause adds the whole pause and playBuild removes its mark. sleepQueue then sees a running build with no pause and adds the sleep again. A read-only invocation confirmed that inHandAsleep accepts this state for another 3,600 seconds of credit. The equivalent loss of blocked history can occur when a blocked ticket resumes before the check. Documenting this limitation does not satisfy criterion 3.",
+        "suggested_fix": "Retain enough pause and blocked interval history after resume to exclude sleep already counted as waiting. Add regression tests that resume before the first post-wake check and assert the final waited_seconds counts the sleep once.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/sleep-wait.mjs:sleepQueue",
+        "issue": "The previous eligibility snapshot excluded builds launched between checks. The snapshot has been removed, and current build state is now evaluated against the detected sleep.",
+        "suggested_fix": "No further change required for this finding; the passing AC1 F2 regression test exercises launch between checks followed by sleep.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Builds started between checks now receive sleep credit correctly, and all reported tests pass. One blocking problem remains: resuming a paused or blocked build before the first check after waking can subtract the sleeping hours twice. The new tests do not cover that order of events."
   }
 }
 ```
