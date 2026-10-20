@@ -23,11 +23,11 @@ export const SETTING_GROUPS = [
       explain: 'What the Foreman does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. With fix, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
     // 0287: the agent the Foreman looks into stops with
     { key: 'foreman', default: '',
-      explain: 'The agent the Foreman runs on when it looks into work that stopped for a reason speck has no steps for: claude or codex. Blank uses the builder when that\'s codex, and claude otherwise.' },
+      explain: 'The agent the Foreman runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex or cursor. Blank uses the builder when that\'s codex or cursor, and claude otherwise.' },
     { key: 'foreman_model', default: '',
       explain: 'The model the Foreman agent runs on, written as that agent names it. Blank leaves it to the agent\'s own default.' },
     { key: 'foreman_effort', default: '',
-      explain: 'How hard the Foreman agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default.' },
+      explain: 'How hard the Foreman agent thinks: low, medium, high, xhigh or max, or blank for the agent\'s own default. Cursor isn\'t given it, as its model names carry the effort.' },
   ] },
   { title: 'Shipping', settings: [
     { key: 'auto_ship', default: false,

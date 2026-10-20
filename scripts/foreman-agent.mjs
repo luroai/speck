@@ -19,6 +19,7 @@ import { processesWithEnv } from './build-procs.mjs';
 import { fixingOf } from './foreman.mjs';
 import { statusData } from './speck.mjs';
 import { askKey, dealtWith, readReplies, cmdForemanReply } from './foreman-answer.mjs';
+import { cursorCli, CURSOR_HEADLESS } from './cursor-build.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
@@ -28,7 +29,7 @@ const DID = 'run.foreman-did.jsonl'; // the agent's actions, one JSON object a l
 const LOG = 'run.foreman-agent.log'; // the agent's output, from its latest run
 
 // The agents the Foreman can run on, and what each action is.
-export const FOREMAN_AGENTS = Object.freeze(['claude', 'codex']);
+export const FOREMAN_AGENTS = Object.freeze(['claude', 'codex', 'cursor']);
 export const ACTIONS = Object.freeze({
   resume: 'resumed its build',
   reship: 'asked speck run to ship it again, once',
@@ -37,9 +38,10 @@ export const ACTIONS = Object.freeze({
 });
 const RECENT = 5; // how many of its actions the status detail shows
 
-// The agent the Foreman runs on: foreman when it's set, otherwise the builder when that's Codex, otherwise Claude Code.
+// The agent the Foreman runs on: foreman when it's set, otherwise the builder when that's Codex or Cursor (0333),
+// otherwise Claude Code.
 export const foremanAgentOf = cfg => (FOREMAN_AGENTS.includes(cfg?.foreman) ? cfg.foreman
-  : cfg?.builder === 'codex' ? 'codex' : 'claude');
+  : ['codex', 'cursor'].includes(cfg?.builder) ? cfg.builder : 'claude');
 const textOf = v => (typeof v === 'string' ? v.trim() : '');
 const oneLine = v => textOf(v).replace(/\s+/g, ' ');
 const sentence = v => (/[.!?]$/.test(v) ? v : `${v}.`);
@@ -68,9 +70,11 @@ export function foremanBrief({ id, what, log, tail, agent = 'claude' }) {
 }
 
 // The command that starts the agent with `brief`, on foreman_model and foreman_effort when they're set. Claude Code may
-// only read and run speck and read-only git commands; Codex has no such list, so it runs as Codex builds do.
-export function foremanArgv(cfg, brief) {
+// only read and run speck and read-only git commands; Codex has no such list, so it runs as Codex builds do. 0333: so
+// does Cursor, as `cli`, without foreman_effort, as Cursor's model names carry the effort.
+export function foremanArgv(cfg, brief, cli) {
   const agent = foremanAgentOf(cfg), model = textOf(cfg?.foreman_model), effort = textOf(cfg?.foreman_effort);
+  if (agent === 'cursor') return [cli ?? cursorCli(), ...CURSOR_HEADLESS, ...(model ? ['--model', model] : []), brief];
   if (agent === 'codex')
     return ['codex', 'exec', '--json', '--dangerously-bypass-approvals-and-sandbox', ...(model ? ['-m', model] : []),
       ...(effort ? ['-c', `model_reasoning_effort="${effort}"`] : []), brief];
