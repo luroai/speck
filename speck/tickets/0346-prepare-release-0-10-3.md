@@ -11,7 +11,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0344","0345","0347","0348"]                # ticket ids that must be done first
+after: ["0344","0345","0347","0348","0349"]                # ticket ids that must be done first
 created: 2026-10-20
 
 ---
@@ -20,7 +20,7 @@ created: 2026-10-20
 **Status:** 📋 ready
 
 ## Problem
-0344 leaves the time a machine was asleep out of a build's time, so closing a laptop's lid during a build no longer adds hours to the panel's and the README's figures, and 0345 has setup offer a first ticket that sets up tests for an existing folder's code, and 0347 and 0348 let the panel's Settings view offer a Cursor reviewer's and the Foreman's models in a list. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.2 without them.
+0344 leaves the time a machine was asleep out of a build's time, so closing a laptop's lid during a build no longer adds hours to the panel's and the README's figures, and 0345 has setup offer a first ticket that sets up tests for an existing folder's code, and 0347 and 0348 let the panel's Settings view offer a Cursor reviewer's and the Foreman's models in a list, and 0349 stops speck run restarting a build each time the Foreman asks a question about its ticket. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.2 without them.
 
 ## Outcome
 speck is ready to be released as 0.10.3.
@@ -38,7 +38,7 @@ speck is ready to be released as 0.10.3.
 
 ## Notes
 - Asked for 2026-10-20 as a patch release. Follows 0343 (0.10.2).
-- Covers every ticket shipped since `v0.10.2`: 0344, 0345, 0347 and 0348, which it waits for (`after:`), and any other that ships before this is built.
+- Covers every ticket shipped since `v0.10.2`: 0344, 0345, 0347, 0348 and 0349, which it waits for (`after:`), and any other that ships before this is built.
 - After it ships, check that the `v0.10.3` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.10.3 --target main --title "speck 0.10.3" --notes-file docs/releases/v0.10.3.md`.
 - Relies on nothing outside this repo.
 
