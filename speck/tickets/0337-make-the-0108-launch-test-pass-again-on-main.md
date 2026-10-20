@@ -38,6 +38,8 @@ The 0108 AC2 test passes on main again, still checking that a ticket committed a
 <!-- Constraints, links and decisions. Optional. -->
 - Found while handing back 0335 on 2026-10-20: `speck ship` said main's tests pass, but this test failed 6/6 on a checkout of main run on its own.
 - Failing before this build: none (the recorded result for this code passed)
+- Cause: the test, not speck run. Its fake build exits at once, so speck run rightly says 0001 is still ready and "won't launch it again until its ticket is set ready again and committed", and the test's pattern `/0001[^\n]*commit/i` took that for the waiting line. The pattern now matches only the waiting line ("not committed" or "waiting … commit"), shared in `test/support/ready.mjs`; speck run's messages are unchanged.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
