@@ -1,7 +1,7 @@
 ---
 id: "0332"
 title: "Review with Cursor without writing a reviewer command"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T12:00:51.170Z"
+approved: "2026-10-20T12:04:25.472Z"
 
 ---
 # 0332 · Review with Cursor without writing a reviewer command
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Claude Code and Codex review with no setup, but a Cursor reviewer needs a command written by hand under `reviewer_options`. The README's example for it also leaves out `--trust`, so in a folder Cursor hasn't been told to trust, the review stops at Cursor's "Workspace Trust Required" prompt with nobody there to answer (found on the user's work laptop, 2026-10-20).
@@ -52,9 +53,14 @@ Cursor can now review tickets with no setup of your own: choose Cursor as the re
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 107,253
+- Elapsed since build started: 4 min
+- Changed lines: 26 (limit 5000)
 Follow-ups:
 - Inbox: `speck/ideas/2026-10-20-check-cursor-s-cli-in-doctor-for-a-cursor-reviewer.md`
 - Inbox: `speck/ideas/2026-10-20-offer-cursor-as-a-reviewer-in-the-settings-view.md`
