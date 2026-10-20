@@ -1,7 +1,7 @@
 ---
 id: "0342"
 title: "Show when each Codex build log entry happened"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0341"]                # ticket ids that must be done first
 created: 2026-10-20
 started: "2026-10-20T20:41:14.876Z"
+approved: "2026-10-20T20:48:21.386Z"
 
 ---
 # 0342 · Show when each Codex build log entry happened
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Claude Code and Cursor builds' log lines show when they happened (0080, 0340), but Codex builds' can't: Codex's `--json` events carry no time at all. So a Codex build's log is the only one with no times, and someone following it can't tell when anything happened or whether it's stuck.
@@ -53,9 +54,14 @@ A Codex build's log in the panel now shows the time of each step, as Claude Code
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 180,713
+- Elapsed since build started: 7 min
+- Changed lines: 81 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (none sent to the inbox):
 - Known limit: with no `codex` command on the PATH, the build now exits with code 127 and the reason in its log, rather than speck run saying it couldn't start.
