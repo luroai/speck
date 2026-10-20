@@ -1,7 +1,7 @@
 ---
 id: "0342"
 title: "Show when each Codex build log entry happened"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-20T20:41:14.876Z"
 ---
 # 0342 · Show when each Codex build log entry happened
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Claude Code and Cursor builds' log lines show when they happened (0080, 0340), but Codex builds' can't: Codex's `--json` events carry no time at all. So a Codex build's log is the only one with no times, and someone following it can't tell when anything happened or whether it's stuck.
@@ -47,7 +47,7 @@ Lines in a Codex build's log show when they happened, as Claude Code and Cursor 
 - Pictures: none, because the change adds times to Codex log lines only, and no Codex build log was made here to show; the panel's look is unchanged.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A Codex build's log in the panel now shows the time of each step, as Claude Code and Cursor builds' logs already did, so you can tell when something happened and whether a build has gone quiet. speck notes the time each line arrives, since Codex itself doesn't say. To see it, build a ticket with Codex and open its log in the panel: each message, command and file change starts with a time like 14:05:31. Logs from Codex builds made before this change still have no times. One thing to keep an eye on: if Codex isn't installed, its build now shows as ending straight away with the reason in its log, rather than as never starting.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,73 @@ Lines in a Codex build's log show when they happened, as Claude Code and Cursor 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (none sent to the inbox):
+- Known limit: with no `codex` command on the PATH, the build now exits with code 127 and the reason in its log, rather than speck run saying it couldn't start.
+- Known limit: when Codex exits leaving a process that still holds its output, the times wrapper waits about 2 seconds for its last lines, then ends; anything that process writes later is lost, where before it reached the log.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7b3c0ed7d708907a0935d48a1afe077ad4b593d7",
+    "thread_id": "01a15b11-ebc5-7fa2-b732-1f6667ef605c",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 179900,
+      "cached_input_tokens": 124416,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 813,
+      "reasoning_output_tokens": 113
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-20T20:48:09.308Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/codex-times.mjs stamps emitted JSON lines; scripts/build-log.mjs formats speck_at in local HH:MM:SS time. Passing 0342 AC1 tests cover messages, commands, file changes, streamed output and invalid timestamps. scripts/panel.mjs requests times."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/run.mjs starts the wrapper detached with log file descriptors. The passing 0342 AC2 test verifies that it continues emitting timestamped events after its starter exits."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0342 AC3 tests exercise process discovery, pause, continuation, stop, final output and exit status. Existing run-codex-0289 tests cover killed-build resumption and hand-back; both paths use run.mjs startBuild and timedCommand."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "timedCommand leaves Claude Code and Cursor commands unchanged; build-log.mjs prioritises their existing timestamp fields. The 0342 AC4 test and existing log regression tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified recorded output: 186 tests, 183 passed, three skipped, zero failed. The scoped changes and exercised regression tests show no new failure; the whole-suite check remains with shipping."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Codex build entries now show local times, including after speck run stops. The tests support that build controls and other agents’ logs still work. No blocking issues found."
+  }
+}
+```
+
+</details>
