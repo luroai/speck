@@ -1,7 +1,7 @@
 ---
 id: "0351"
 title: "Name a document task's output folder inside outputs"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-21
 ---
 # 0351 · Name a document task's output folder inside outputs
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A document task's result goes in `outputs/`, which isn't in git. The user expects it to grow into a tree of its own projects (an emails folder, a strategy-2027 folder and so on), so each document ticket has to say where in that tree its document goes.
