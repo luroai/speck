@@ -4,7 +4,7 @@
 // A pull request already merged on GitHub only gets the tidying up. One that can't be merged changes nothing locally.
 // 0315: nothing is pushed straight to the base branch. The pull request files the ticket as done (pr-done.mjs), so the
 // merge on GitHub does that, and the local base branch gets it from there.
-import { SpeckError, sh, git, loadConfig, findTicket, placeTicket, writeField, isAncestor, padId } from './core.mjs';
+import { SpeckError, sh, git, loadConfig, findTicket, placeTicket, writeField, isAncestor, padId, ticketTask } from './core.mjs';
 import { shipChecks, ticketBranch, autoShipBlocker, deleteRemoteBranch, candidateMerge, testMerged, testFailure } from './ship.mjs';
 import { failingTests } from './tap.mjs';
 import { shipFolders, putBranchBack } from './ship-folders.mjs';
@@ -138,6 +138,8 @@ function testLanding(at, cfg, pad, branch, remote) {
   const target = git(['rev-parse', 'FETCH_HEAD'], at).trim(), tip = git(['rev-parse', branch], at).trim();
   const candidate = candidateMerge(at, branch, target, `speck(${pad}): test`);
   if (!candidate) throw new SpeckError(`${branch} conflicts with ${remote}'s ${base}, so ${pad}'s pull request wasn't merged. Merge ${base} into it, get it reviewed, then ship again. Nothing was changed.`, 13);
+  // 0355: a document task changes only speck/ (shipChecks), so there's nothing for the tests to check.
+  if (ticketTask(findTicket(at, pad)) === 'document') return console.log(`Ticket ${pad} is a document task, so no tests run before it ships.`);
   const r = testMerged(at, cfg, branch, candidate);
   if (!r.ok) throw testFailure(at, cfg, base, target, { moved: !isAncestor(at, target, tip), failing: failingTests(r.output) });
 }
