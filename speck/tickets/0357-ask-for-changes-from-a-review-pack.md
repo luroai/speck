@@ -38,6 +38,7 @@ An approved ticket's review pack in the panel has a box for a note and an "Ask f
 
 ## Notes
 - The Ship button (0133) is the pattern to follow: its route in `scripts/panel.mjs` and its place above the review pack in `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
