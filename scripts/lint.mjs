@@ -52,7 +52,7 @@ export function lintTicket(ticket, cfg) {
 }
 
 // 0351: what's wrong with a document task's output, or null. It names a folder inside outputs/ at the project root.
-function outputProblem(v) {
+export function outputProblem(v) {
   if (v === null) return 'A document ticket needs an output: the folder its document goes in, inside outputs/ (for example `output: emails`).';
   if (typeof v !== 'string') return `output must be a folder inside outputs/, such as emails or strategy-2027/pricing/ (got ${JSON.stringify(v)}).`;
   const p = v.trim().replace(/\\/g, '/');
