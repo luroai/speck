@@ -42,7 +42,7 @@ A document task's review pack opens with a button for its document, and pressing
 - From the user's trial of 0358 on 2026-10-21.
 - `documentsPart`, `openDocument` and `packPane` in `templates/panel.html`; `documentLines` in `scripts/output.mjs`, which `reviewPack` in `scripts/pack.mjs` places.
 - The link's click handler already calls `preventDefault`, yet a tab still opened, so cptr's browser most likely acts on links with `target="_blank"` before the page's own handler runs.
-- Unverified: how cptr's built-in browser opens links (seen by the user on 2026-10-21, not checked in cptr). Cursor's built-in browser may do the same; a button with no address avoids it in either.
+- Checked 2026-10-21: cptr's source isn't installed on this box, so how its built-in browser opens links couldn't be confirmed beyond what the user saw on 2026-10-21. It doesn't change the ticket: a button with no address gives any browser nothing to open. Cursor's built-in browser may do the same; a button with no address avoids it in either.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
