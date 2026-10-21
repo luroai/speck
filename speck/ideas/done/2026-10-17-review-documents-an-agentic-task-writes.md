@@ -1,6 +1,6 @@
 # Review the documents an agentic task writes
 
-Captured: 2026-10-17 · Status: idea
+Captured: 2026-10-17 · Status: ticketed (0350, 0351, 0352, 0353, 0354, 0355, 0356, 0357)
 
 ## What
 When speck builds agentic tasks, with writing documents as one of the main tasks, work out how to point the user at the documents to review. The whole document can't go in a review pack. Is a review pack even needed for tasks like these?
@@ -14,3 +14,5 @@ For code, the review pack lets someone who doesn't read code decide whether to s
 - Open: how the user gets to the document: a link from the panel to the rendered document on its branch, the document opened in the panel, or a diff of what changed?
 - Open: for a document, what does Gate 2 need beyond the document itself: the reviewer's verdict, the criteria checked by review, or nothing more?
 - Open: does a document task keep a review pack at all, or something lighter in its place?
+- 2026-10-19: Document is the first job kind on the roadmap (`speck/ideas/2026-10-19-add-job-kinds-one-at-a-time.md`), so these questions need answers before it's ticketed. For a document, Gate 2 is opening and reading the result, so the panel should open it in one tap, with the reviewer's verdict and the criteria it checked alongside.
+- 2026-10-21, answered with the user: the review pack stays, and links to each file in the document's output folder, which the panel opens (0354). The reviewer cites passages as evidence (0353). The user ships a document after reading it, as it never auto-ships (0355), or asks for changes on the same ticket (0356, 0357).
