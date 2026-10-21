@@ -101,10 +101,10 @@ export function reviewPack(repo, id, { pictures = true, documents = true } = {})
     `## ${t.fm.id} · ${t.fm.title}`,
     `**Verdict:** ${v.verdict === 'approve' ? '✅ Approved by reviewer' : `⛔ ${v.verdict}`} (${who(last.meta)}, ${last.meta.merge ? `merge round ${mergeRun(all)} of ${cfg.limits.max_merge_rounds}` : `round ${ordinaryRounds(all)} of ${cfg.limits.max_review_rounds}${last.meta.extra ? ', an extra round' : ''}`})`,
     ...(blind.length ? ['', ...blind.map(r => `${NO_INSPECT} (round ${r.meta.round})`)] : []),
-    '', `**Summary:** ${v.summary}`, '',
-    '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
+    '', `**Summary:** ${v.summary}`,
+    ...documentLines(repo, t, { links: documents }), // 0359: a document task's document first, before the criteria
+    '', '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
-    ...documentLines(repo, t, { links: documents }),
     ...(pictures ? picturesLines(repo, t.fm.id) : []),
     '', '### Risk', `- Ticket risk: **${t.fm.risk}**`,
     ...changeLines(t, cfg, diff),

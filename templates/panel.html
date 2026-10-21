@@ -473,6 +473,10 @@
   #full-ticket .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
   #full-ticket .ask-changes { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
   #full-ticket .ask-changes:disabled { cursor: default; opacity: .6; }
+  /* 0359: a document task's files, as buttons at the top of its review pack */
+  #full-ticket .pack-documents { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+  #full-ticket .pack-document { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+  #full-ticket .pack-document:hover { background: var(--panel); }
   /* 0354: the button back from a document task's file to its review pack */
   #full-ticket .full-open.back { margin: 0 0 10px; }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--text); }
@@ -1549,15 +1553,16 @@ function picturesPart(pictures) {
 // 0354: a document task's files the server listed with the pack, each with its path from the project root, served by the panel.
 const packDocuments = list => (Array.isArray(list) ? list : []).filter(d => d && typeof d.path === 'string' && typeof d.url === 'string' && /^\/api\/tickets\/\d+\/output\/./.test(d.url));
 const isMarkdown = d => /\.(md|markdown)$/i.test(d.path);
-// Each file as a link. Pressing a Markdown file shows it formatted in the side pane; any other opens in a new tab.
+// 0359: each file as a button at the top of the pack, labelled with its path. A button has no address, so a browser that
+// opens links itself has nothing to open: pressing a Markdown file shows it formatted in the side pane, and any other
+// opens in a new tab, served by the panel.
 function documentsPart(documents) {
-  return [el('h6', 'md-h3', 'Document'), el('ul', null, null, ...documents.map(d => {
-    const a = el('a', null, d.path);
-    a.href = d.url;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    if (isMarkdown(d)) a.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openDocument(d); });
-    return el('li', null, null, a);
+  return [el('div', 'pack-documents', null, ...documents.map(d => {
+    const b = el('button', 'pack-document', d.path);
+    b.type = 'button';
+    b.title = isMarkdown(d) ? 'Show it here, formatted' : 'Open it in a new tab';
+    b.addEventListener('click', e => { e.stopPropagation(); if (isMarkdown(d)) openDocument(d); else window.open(d.url, '_blank', 'noopener'); });
+    return b;
   }))];
 }
 // Fetches a Markdown file once, when it's pressed. An answer for a file that's been left, or replaced since, is dropped.
@@ -1606,11 +1611,11 @@ function packPane(t) {
     const blocks = packBlocks(packOf.text);
     // The pictures go under the acceptance criteria, or at the end of a pack without them.
     if (packOf.pictures.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...picturesPart(packOf.pictures)); }
-    // 0354: and a document task's files go above them.
-    if (packOf.documents.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...documentsPart(packOf.documents)); }
     for (const n of blocks) body.appendChild(n);
   }
-  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), ...shipPart(t), body];
+  // 0359: a document task's files go at the top, above Ship.
+  const documents = packOf.state === 'ok' && packOf.documents.length ? documentsPart(packOf.documents) : [];
+  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), ...documents, ...shipPart(t), body];
 }
 // 0133: an approved ticket's pack has a Ship button, above the pack. Clicking it is the user shipping (Gate 2), as
 // /speck-ship is: the server runs speck ship for it. Under it, that it's shipping, what speck ship said, or why it refused.
