@@ -1,7 +1,7 @@
 ---
 id: "0356"
 title: "Send your changes back to an approved ticket's build"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-21
 ---
 # 0356 · Send your changes back to an approved ticket's build
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When the user reads an approved result and wants it changed, the only way today is a new ticket. Documents will often need a revision or two, and a new ticket for each one goes round in circles.
