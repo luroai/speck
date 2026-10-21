@@ -254,6 +254,15 @@ function fileTicketedIdeas(repo) {
   }
 }
 
+// 0351: keep outputs/, where document tasks write, out of git. Adds /outputs/ to the root .gitignore unless a line already ignores it.
+export function ignoreOutputs(repo) {
+  const file = path.join(repo, '.gitignore');
+  const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  if (text.split(/\r?\n/).some(l => /^\/?outputs\/?$/.test(l.trim()))) return false;
+  fs.writeFileSync(file, text + (text && !text.endsWith('\n') ? '\n' : '') + '/outputs/\n');
+  return true;
+}
+
 export function cmdInit(args, platform = process.platform) {
   const repo = process.cwd();
   const force = args.includes('--force');
@@ -308,6 +317,7 @@ export function cmdInit(args, platform = process.platform) {
 
 ${AGENTS_SECTION.trimEnd().split('\n').map(l => l && `        ${l}`).join('\n')}
 `);
+  if (ignoreOutputs(repo)) console.log('updated .gitignore (keeps outputs/ out of git)');
   const claude = path.join(repo, 'CLAUDE.md');
   const claudeText = fs.existsSync(claude) ? fs.readFileSync(claude, 'utf8') : '';
   if (!claudeText.includes('@AGENTS.md') && !claudeText.includes('This repo uses speck')) {
