@@ -14,7 +14,7 @@ source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"
 after: ["0350"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T09:58:05.735Z"
-approved: "2026-10-21T10:02:18.194Z"
+approved: "2026-10-21T10:05:45.164Z"
 
 ---
 # 0351 · Name a document task's output folder inside outputs
@@ -55,12 +55,13 @@ A ticket that writes a document now has to say which folder inside the project's
 ## Review log
 Round 1 (codex): changes requested: F1 ignoreOutputs treats an indented line such as " /outputs/ " as an existing ignore rule.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 425,516
-- Elapsed since build started: 4 min
+- Reviewer tokens: 779,248
+- Elapsed since build started: 8 min
 - Changed lines: 28 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -210,6 +211,80 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Document tickets now require a valid folder inside outputs/, and init adds the git ignore rule without duplicating existing entries. The whitespace bug is fixed and covered by a regression test. All criteria pass, with no blocking concerns remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a8bae62a874e3ddb7ddd8835f1a22c0cb899a5d6",
+    "merge": true,
+    "thread_id": "01a15de7-bc9e-7352-ae10-232aa2f72e0a",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 351539,
+      "cached_input_tokens": 300928,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2193,
+      "reasoning_output_tokens": 220
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:05:42.470Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/lint.mjs outputProblem still rejects missing or blank output and explicitly names the output field. Both AC1 tests pass; code tickets require no output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "outputProblem retains absolute-path and normalised parent-traversal checks. Both AC2 tests pass for rejected paths and accepted single or nested folder names."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/install.mjs cmdInit calls ignoreOutputs. Passing AC3 tests cover creation, existing entries, repeated init and actual Git ignore behaviour, including indented entries."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md:24 instructs agents to set task: document and supply an output folder relative to outputs/, with single and nested examples."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded run includes test/output-0351.test.mjs and test/task-0350.test.mjs: 123 passed, 3 skipped, zero failures. The message change resolves the previous task-error filtering collision without weakening either test."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/install.mjs:262",
+        "issue": "The previous handling of indented ignore entries remains fixed: leading whitespace is preserved when recognising existing patterns.",
+        "suggested_fix": "Completed and covered by the passing Git ignore regression test.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "All criteria pass. The revised error message fixes the compatibility test failure while keeping document output validation intact. The earlier ignore-rule bug remains fixed, and no blocking concerns remain."
   }
 }
 ```
