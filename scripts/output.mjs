@@ -32,7 +32,6 @@ export function outputFolder(repo, id) {
 
 // 0353: what the reviewer prompt says about a document task's document: its folder and the files in it, or that it's
 // empty or missing, and how to judge the criteria. Makes nothing. '' for a code ticket, whose prompt is unchanged.
-const MAX_FILES = 200;
 export function documentSection(repo, t) {
   if (ticketTask(t) !== 'document') return '';
   const problem = outputProblem(ticketOutput(t));
@@ -50,8 +49,7 @@ function documentWhere(dir) {
     return `${where}\n\n${e.code === 'ENOENT' ? "The folder doesn't exist" : `The folder couldn't be read (${e.code || e.message})`}: the build has written nothing there.`;
   }
   if (!found.length) return `${where}\n\nThe folder is empty: the build has written nothing there.`;
-  const more = found.length > MAX_FILES ? [`- and ${found.length - MAX_FILES} more`] : [];
-  return [`${where}\n\nFiles in it:\n`, ...found.slice(0, MAX_FILES).map(f => `- \`${f}\``), ...more].join('\n');
+  return [`${where}\n\nFiles in it:\n`, ...found.map(f => `- \`${f}\``)].join('\n');
 }
 
 export function cmdOutput(args) {

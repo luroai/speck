@@ -1,7 +1,7 @@
 ---
 id: "0353"
 title: "Tell the reviewer what counts as evidence for a document"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-21T10:15:49.117Z"
 ---
 # 0353 · Tell the reviewer what counts as evidence for a document
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The reviewer is told to judge each criterion from code and tests. A document task has no tests, and its document is in the main checkout's `outputs/`, outside the branch the reviewer is shown, so the reviewer wouldn't know where to look or what counts as evidence.
@@ -54,3 +54,74 @@ For a document task, the reviewer reads the document and cites the passages that
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7a5a0c2db7cb5bc78cfba14992a35b6cee18da4c",
+    "thread_id": "01a15df8-6a30-75e1-b692-a9f1d4232be7",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 91031,
+      "cached_input_tokens": 55552,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 620,
+      "reasoning_output_tokens": 33
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:19:09.201Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/output.mjs documentWhere lists files recursively, but lines 35 and 53–54 cap the list at 200. The passing AC1 tests cover small folders, missing/empty folders and main-checkout resolution, but not truncation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/reviewer-document.md instructs: “Judge every acceptance criterion by reading the document as it is now”, cite “the file and the words”, and “Don't count a missing test against any criterion”."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "documentSection returns an empty string for code tickets. The passing '0353 AC3' test compares the resulting prompt byte for byte with the original template filled in."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded test output confirms 126 tests: 123 passed, 3 skipped and none failed. The change and supplied regression coverage show no further regression concern."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/output.mjs:53",
+        "issue": "Folders containing more than 200 files receive an incomplete inventory: remaining filenames are replaced with 'and N more'. AC1 requires listing the files in the output folder, with no such limit, and omitted files may contain evidence the reviewer needs.",
+        "suggested_fix": "Remove the inventory truncation and add a test with more than 200 files confirming that every filename appears.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The prompt now directs document reviewers to the correct folder and explains how to cite document evidence. Existing checks pass, and code-ticket prompts remain unchanged. One fix is needed: the file list currently hides filenames when a folder contains more than 200 files."
+  }
+}
+```
+
+</details>
