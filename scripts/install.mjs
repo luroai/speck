@@ -258,7 +258,8 @@ function fileTicketedIdeas(repo) {
 export function ignoreOutputs(repo) {
   const file = path.join(repo, '.gitignore');
   const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  if (text.split(/\r?\n/).some(l => /^\/?outputs\/?$/.test(l.trim()))) return false;
+  // Git ignores trailing spaces in a pattern but not leading ones, so an indented line doesn't count.
+  if (text.split(/\r?\n/).some(l => /^\/?outputs\/?$/.test(l.trimEnd()))) return false;
   fs.writeFileSync(file, text + (text && !text.endsWith('\n') ? '\n' : '') + '/outputs/\n');
   return true;
 }
