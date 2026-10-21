@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, ticketBranches } from './core.mjs';
+import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, ticketBranches, ticketTask } from './core.mjs';
 import { rounds, nextAction } from './review.mjs';
 import { testRun } from './results.mjs';
 import { failingTests } from './tap.mjs';
@@ -42,6 +42,13 @@ export function shipChecks(repo, cfg, pad, branch) { // 0295: and before opening
     .split('\n').filter(f => f && !f.startsWith('speck/')))];
   if (changed.length)
     throw new SpeckError(`These files changed after the reviewer approved: ${changed.join(', ')}. Run the review again so the reviewer sees them.`);
+  // 0355: a document task's document is in outputs/, outside git, so its branch only carries the ticket's own records.
+  if (ticketTask(t) === 'document') {
+    const outside = git(['diff', '--no-renames', '--name-only', '-z', `${cfg.base_branch}...${branch}`], repo)
+      .split('\0').filter(f => f && !f.startsWith('speck/'));
+    if (outside.length)
+      throw new SpeckError(`Ticket ${pad} is a document task, so its branch should change only files under speck/, but it changes ${outside.join(', ')}. Nothing was shipped. Take those changes off its branch, get it reviewed, then ship again.`);
+  }
 }
 
 // Runs the tests in `repo`: { ok, output }, output being what a failing run wrote. `branch` is the one the flaky log
@@ -222,8 +229,11 @@ export function shipTicket(repo, id) {
   try {
     shipChecks(work, cfg, pad, branch);
     const message = `speck(${pad}): ${findTicket(work, pad).fm.title}`;
+    const doc = ticketTask(findTicket(work, pad)) === 'document';
     for (let tries = 1; ; tries++) {
       tested = candidateMerge(work, branch, target, message);
+      // 0355: a document task changes only speck/, so there's nothing for the tests to check.
+      if (doc) { console.log(`Ticket ${pad} is a document task, so no tests run before it ships.`); break; }
       // A merge with conflicts can't be tested, so the branch alone is, as before: the merge then refuses with them.
       const r = tested ? testMerged(work, cfg, branch, tested) : runTests(work, cfg);
       if (!r.ok) throw testFailure(work, cfg, base, target, { moved: !!tested && !isAncestor(work, target, branchSha), failing: failingTests(r.output) });
@@ -371,12 +381,14 @@ export function deleteRemoteBranch(repo, remote, branch) {
 // Why an approved ticket can't ship without the user, or '' if config lets the builder ship it straight after approval.
 export function autoShipBlocker(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
-  if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
-  return autoShipWhyNot(cfg, pad, findTicket(repo, pad).fm.risk, rounds(repo, pad));
+  const t = findTicket(repo, pad);
+  return autoShipWhyNot(cfg, pad, t.fm.risk, rounds(repo, pad), ticketTask(t));
 }
 
 // The same, from a ticket's risk and its review rounds as already read, as `speck status --json` has them (0167).
-export function autoShipWhyNot(cfg, pad, risk, roundList) {
+// 0355: a document task never ships by itself, as reading it is its review.
+export function autoShipWhyNot(cfg, pad, risk, roundList, task = 'code') {
+  if (task === 'document') return `ticket ${pad} is a document task, and a document task waits for you to ship it`;
   if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
   const allowed = [].concat(cfg.auto_ship_risk ?? []).map(String);
   if (!allowed.includes(String(risk))) return `ticket ${pad} has risk "${risk}", and auto_ship_risk only allows ${allowed.length ? allowed.join(', ') : 'none'}`;
