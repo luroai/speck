@@ -1,7 +1,7 @@
 ---
 id: "0352"
 title: "Write a document task's document into outputs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"
 after: ["0351"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T10:08:13.414Z"
+approved: "2026-10-21T10:12:31.560Z"
 
 ---
 # 0352 · Write a document task's document into outputs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A build of a document task would write tests and code. And a document written in the build's worktree would be lost, because `outputs/` isn't in git, so nothing from it is ever merged.
@@ -53,9 +54,14 @@ A ticket that writes a document, rather than code, now has a home for it: speck 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 147,310
+- Elapsed since build started: 4 min
+- Changed lines: 63 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Tidy-up: `scripts/speck.mjs` is close to the 600-line rule again; `cmdDiffstat` was moved out to make room for this command.
