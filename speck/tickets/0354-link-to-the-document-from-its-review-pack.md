@@ -1,7 +1,7 @@
 ---
 id: "0354"
 title: "Link to the document from its review pack"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"
 after: ["0353"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T10:22:34.885Z"
+approved: "2026-10-21T10:29:30.741Z"
 
 ---
 # 0354 · Link to the document from its review pack
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 For a document, Gate 2 is reading the document itself, not a summary of it. Today the review pack shows the reviewer's verdict and evidence but gives no way to open what the build wrote.
@@ -49,9 +50,15 @@ When speck writes a document for you, its review pack now lists every file it wr
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 documentFile follows a symlink at the ticket's output folder, or any parent beneath outputs/, and treats its destination as the allowed boundary.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 430,060
+- Elapsed since build started: 7 min
+- Changed lines: 157 (limit 5000)
 - Known limits: only Markdown files open in the side pane; a plain text file opens in a new tab. A file that's a link inside the folder isn't listed or served, even when it points at another file in the folder.
 - Follow-ups: none for the inbox.
 
