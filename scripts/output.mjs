@@ -9,9 +9,11 @@ import { outputProblem } from './lint.mjs';
 // A document task's folder in the main checkout's outputs/, as an absolute path, without making it. The ticket's
 // output must already have passed lint.
 function outputPath(repo, t) {
-  let main = repo;
-  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
-  return path.join(main, 'outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')));
+  return path.join(mainCheckout(repo), outputRel(t));
+}
+const outputRel = t => path.join('outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')));
+function mainCheckout(repo) {
+  try { return worktreeList(repo)[0]?.path || repo; } catch { return repo; /* not a git checkout: this one */ }
 }
 
 // The ticket's folder, as an absolute path, made if it's missing. Refuses, making nothing, for a code ticket or an
@@ -50,6 +52,70 @@ function documentWhere(dir) {
   }
   if (!found.length) return `${where}\n\nThe folder is empty: the build has written nothing there.`;
   return [`${where}\n\nFiles in it:\n`, ...found.map(f => `- \`${f}\``)].join('\n');
+}
+
+// 0354: a document task's files, for its review pack: { where, files, why }, with `where` the folder's path from the
+// project root and `files` each regular file in it, from that folder, or `why` it has none. Makes nothing. null for a
+// code ticket.
+function outputFiles(repo, t) {
+  if (ticketTask(t) !== 'document') return null;
+  const problem = outputProblem(ticketOutput(t));
+  if (problem) return { why: `The ticket gives no folder for the document: ${problem}`, files: [] };
+  const where = path.posix.join('outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')), '/');
+  let files;
+  try {
+    const dir = unlinkedOutput(repo, t);
+    if (!dir) return { where, files: [], why: `\`${where}\`, or a folder it's in, is a link, so speck doesn't list or open what's in it.` };
+    files = fs.readdirSync(dir, { recursive: true, withFileTypes: true }).filter(e => e.isFile())
+      .map(e => path.relative(dir, path.join(e.parentPath ?? e.path, e.name)).split(path.sep).join('/')).sort();
+  } catch (e) {
+    const why = e.code === 'ENOENT' ? "doesn't exist" : e.code === 'ENOTDIR' ? 'is a file, not a folder' : `couldn't be read (${e.code || e.message})`;
+    return { where, files: [], why: `\`${where}\` ${why}, so the build has written nothing there.` };
+  }
+  return { where, files, why: files.length ? '' : `\`${where}\` is empty: the build has written nothing there.` };
+}
+
+// The ticket's output folder as an absolute path from the project root's real path, or null when the folder, or any
+// folder it's in from outputs/ down, is a link, which could lead outside it. Throws when it can't be read.
+function unlinkedOutput(repo, t) {
+  const dir = path.resolve(fs.realpathSync(mainCheckout(repo)), outputRel(t));
+  return fs.realpathSync(dir) === dir ? dir : null;
+}
+
+// The review pack's lines about a document task's files: a heading and each file's path from the project root, or why
+// there are none. None for a code ticket. `links: false` leaves out the files, for the panel, which links to them itself.
+export function documentLines(repo, t, { links = true } = {}) {
+  const out = outputFiles(repo, t);
+  if (!out || (!links && out.files.length)) return [];
+  return ['', '### Document', ...(out.files.length ? out.files.map(f => `- \`${path.posix.join(out.where, f)}\``) : [`- ${out.why}`])];
+}
+
+// The panel's list of a document task's files: each one's path from the project root and the address it's served at.
+export function panelDocuments(repo, t) {
+  const out = outputFiles(repo, t);
+  return out ? out.files.map(f => ({ path: path.posix.join(out.where, f),
+    url: `/api/tickets/${padId(t.fm.id)}/output/${f.split('/').map(encodeURIComponent).join('/')}` })) : [];
+}
+
+// The file at `rel` in ticket `id`'s output folder, as the panel serves it: { type, body }, or null when the ticket isn't
+// a document task, or `rel` isn't a regular file inside that folder, or leads outside it by `..` or by a link.
+const TYPES = { md: 'text/markdown; charset=utf-8', markdown: 'text/markdown; charset=utf-8', txt: 'text/plain; charset=utf-8',
+  csv: 'text/csv; charset=utf-8', html: 'text/html; charset=utf-8', htm: 'text/html; charset=utf-8', json: 'application/json',
+  pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml' };
+export function documentFile(repo, id, rel) {
+  try {
+    const t = findTicket(repo, id);
+    if (ticketTask(t) !== 'document' || outputProblem(ticketOutput(t)) || typeof rel !== 'string' || !rel || rel.includes('\0')) return null;
+    const dir = unlinkedOutput(repo, t);
+    const file = dir && path.resolve(dir, rel);
+    // Inside the folder, a regular file, and no link on the way to it, from outputs/ down.
+    if (!dir || !file.startsWith(dir + path.sep) || !fs.lstatSync(file).isFile() || fs.realpathSync(file) !== file) return null;
+    const ext = path.extname(file).slice(1).toLowerCase();
+    return { type: Object.hasOwn(TYPES, ext) ? TYPES[ext] : 'application/octet-stream', body: fs.readFileSync(file) };
+  } catch (e) {
+    if (e instanceof SpeckError || e.code) return null;
+    throw e;
+  }
 }
 
 export function cmdOutput(args) {

@@ -3,6 +3,7 @@
 import { RISKY, SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, parseTicket, lintTicket, changedLines, branchChangedLines, forkPoint, ticketBranches, contentLines, repoPath } from './core.mjs';
 import { ticketsRounds, NO_INSPECT, mergeRun, ordinaryRounds } from './review.mjs';
 import { picturesLines, panelPictures } from './pictures.mjs';
+import { documentLines, panelDocuments } from './output.mjs';
 
 // Whether a round continued the reviewer's session or started fresh. Command rounds record it. Codex rounds resume
 // whenever an earlier round saved a session, so that rule gives theirs.
@@ -81,8 +82,9 @@ function testsLines(r) {
 // What reviewPack and plainPack refuse with for a ticket that has no review rounds, so the panel can tell it apart.
 export const NO_ROUNDS = 'No review rounds recorded.';
 
-// `pictures: false` leaves out the pictures the builder took (0294), for the panel, which shows them itself.
-export function reviewPack(repo, id, { pictures = true } = {}) {
+// `pictures: false` leaves out the pictures the builder took (0294), and `documents: false` a document task's files
+// (0354), for the panel, which shows them itself.
+export function reviewPack(repo, id, { pictures = true, documents = true } = {}) {
   const cfg = loadConfig(repo);
   const { t, diff } = packSource(repo, cfg, id);
   const all = ticketsRounds(repo, t);
@@ -102,6 +104,7 @@ export function reviewPack(repo, id, { pictures = true } = {}) {
     '', `**Summary:** ${v.summary}`, '',
     '### Acceptance criteria', '| # | Criterion | Result | Evidence |', '|---|---|---|---|',
     ...v.criteria.map(c => `| ${c.id} | ${(ac[c.id - 1] || '').replace(/^\d+\.\s+/, '').replace(/\|/g, '\\|')} | ${icon[c.status] || c.status} | ${c.evidence.replace(/\n/g, ' ').replace(/\|/g, '\\|')} |`),
+    ...documentLines(repo, t, { links: documents }),
     ...(pictures ? picturesLines(repo, t.fm.id) : []),
     '', '### Risk', `- Ticket risk: **${t.fm.risk}**`,
     ...changeLines(t, cfg, diff),
@@ -162,12 +165,14 @@ export function cmdPack(args) {
 
 // A ticket's review pack for the panel's Review pack button: the text `speck pack <id>` prints from this checkout now,
 // or null when the ticket has no review rounds, which isn't an error. Reads only, writing nothing. With any pictures
-// the builder took (0294), the text leaves them out and `pictures` lists them, for the panel to show.
+// the builder took (0294), the text leaves them out and `pictures` lists them, for the panel to show. So with a document
+// task's files (0354): `documents` lists them, for the panel to link to.
 export function panelPack(repo, id) {
-  try { findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
+  let t;
+  try { t = findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
   try {
-    const pack = reviewPack(repo, id, { pictures: false }), pictures = panelPictures(repo, id);
-    return { status: 200, body: { pack, ...(pictures.length ? { pictures } : {}) } };
+    const pack = reviewPack(repo, id, { pictures: false, documents: false }), pictures = panelPictures(repo, id), documents = panelDocuments(repo, t);
+    return { status: 200, body: { pack, ...(documents.length ? { documents } : {}), ...(pictures.length ? { pictures } : {}) } };
   }
   catch (e) {
     if (!(e instanceof SpeckError)) throw e;

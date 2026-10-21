@@ -468,6 +468,8 @@
   #full-ticket .ship:disabled { cursor: default; opacity: .6; }
   #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad { color: var(--bad); }
+  /* 0354: the button back from a document task's file to its review pack */
+  #full-ticket .full-open.back { margin: 0 0 10px; }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--text); }
   /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */
   #full-ticket .pack-pictures { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 0 0 8px; }
@@ -1507,7 +1509,7 @@ async function loadPack(id) {
     let body = null;
     try { body = await res.json(); } catch { /* no JSON: say what we know */ }
     if (res.ok && body && body.pack === null) next = { state: 'none' };
-    else if (res.ok && body && typeof body.pack === 'string') next = { state: 'ok', text: body.pack, pictures: packPictures(body.pictures) };
+    else if (res.ok && body && typeof body.pack === 'string') next = { state: 'ok', text: body.pack, pictures: packPictures(body.pictures), documents: packDocuments(body.documents) };
     else next = { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `The server couldn't make the review pack (${res.status}).` };
   } catch {
     next = { state: 'error', text: "Couldn't reach the panel server, so the review pack can't be shown." };
@@ -1533,9 +1535,55 @@ function picturesPart(pictures) {
     return el('figure', null, null, a, el('figcaption', null, p.caption));
   }))];
 }
+// 0354: a document task's files the server listed with the pack, each with its path from the project root, served by the panel.
+const packDocuments = list => (Array.isArray(list) ? list : []).filter(d => d && typeof d.path === 'string' && typeof d.url === 'string' && /^\/api\/tickets\/\d+\/output\/./.test(d.url));
+const isMarkdown = d => /\.(md|markdown)$/i.test(d.path);
+// Each file as a link. Pressing a Markdown file shows it formatted in the side pane; any other opens in a new tab.
+function documentsPart(documents) {
+  return [el('h6', 'md-h3', 'Document'), el('ul', null, null, ...documents.map(d => {
+    const a = el('a', null, d.path);
+    a.href = d.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    if (isMarkdown(d)) a.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openDocument(d); });
+    return el('li', null, null, a);
+  }))];
+}
+// Fetches a Markdown file once, when it's pressed. An answer for a file that's been left, or replaced since, is dropped.
+async function openDocument(d) {
+  if (!packOf) return;
+  const id = packOf.id, mine = ++packSeq;
+  packOf = { ...packOf, doc: { path: d.path, state: 'loading' } };
+  render();
+  let next;
+  try {
+    const res = await fetch(d.url, { cache: 'no-store' });
+    next = res.ok ? { state: 'ok', text: await res.text() } : { state: 'error', text: `Couldn't open ${d.path}: the panel didn't find it (${res.status}).` };
+  } catch {
+    next = { state: 'error', text: `Couldn't reach the panel server, so ${d.path} can't be shown.` };
+  }
+  if (mine !== packSeq || !packOf || packOf.id !== id || !packOf.doc || packOf.doc.path !== d.path) return;
+  packOf = { ...packOf, doc: { path: d.path, ...next } };
+  render();
+}
+// The side pane with one of the pack's Markdown files, formatted, and a button back to the pack.
+function documentPane(t) {
+  const close = el('button', 'close', 'Close');
+  close.type = 'button';
+  close.addEventListener('click', closeFull);
+  const back = el('button', 'full-open back', 'Back to the review pack');
+  back.type = 'button';
+  back.addEventListener('click', e => { e.stopPropagation(); packSeq++; const { doc, ...pack } = packOf; packOf = pack; render(); });
+  const doc = packOf.doc, body = el('div', 'md');
+  if (doc.state === 'loading') body.appendChild(el('p', null, `Loading ${doc.path}…`));
+  else if (doc.state === 'error') body.appendChild(el('p', 'bad', doc.text));
+  else for (const n of mdBlocks(markdown(doc.text, { tables: true }))) body.appendChild(n);
+  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', doc.path), close), back, body];
+}
 // The side pane with a review pack: its Markdown formatted, tables included, and the findings in a <details> element
 // that folds away, as the pack's own <details> does where Markdown is shown with HTML.
 function packPane(t) {
+  if (packOf.doc) return documentPane(t);
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', closeFull);
@@ -1547,6 +1595,8 @@ function packPane(t) {
     const blocks = packBlocks(packOf.text);
     // The pictures go under the acceptance criteria, or at the end of a pack without them.
     if (packOf.pictures.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...picturesPart(packOf.pictures)); }
+    // 0354: and a document task's files go above them.
+    if (packOf.documents.length) { const at = blocks.findIndex(n => n.className === 'ac-table'); blocks.splice(at < 0 ? blocks.length : at + 1, 0, ...documentsPart(packOf.documents)); }
     for (const n of blocks) body.appendChild(n);
   }
   return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', 'Review pack'), close), ...shipPart(t), body];

@@ -13,6 +13,7 @@ export { panelRunOn } from './panel-run.mjs';
 import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
 import { pictureFile } from './pictures.mjs';
+import { documentFile } from './output.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
 import { panelSettings, panelSettingRequest, panelSaveRequestAsync, reviewerModels, builderModels, foremanModels } from './settings.mjs';
@@ -501,6 +502,19 @@ export async function panelServer() {
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the picture: ${e.message}\n`); }
       if (!found) return send(res, 404, 'text/plain', 'No such picture.\n');
       res.writeHead(200, { 'Content-Type': found.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...(stopping ? { Connection: 'close' } : {}) });
+      return res.end(found.body);
+    }
+    // 0354: a file in a document task's output folder, linked from its review pack. Only from inside that folder: a path
+    // that leads outside it, by .. or by a link, isn't found. A page the build wrote is sandboxed, so it can't act as the panel.
+    const output = where.match(/^\/api\/tickets\/(\d{1,4})\/output\/(.+)$/);
+    if (output) {
+      let rel = null, found;
+      try { rel = decodeURIComponent(output[2]); } catch { /* malformed: not found */ }
+      try { found = rel === null ? null : documentFile(repo, output[1], rel); }
+      catch (e) { return send(res, 500, 'text/plain', `Couldn't read the file: ${e.message}\n`); }
+      if (!found) return send(res, 404, 'text/plain', 'No such file.\n');
+      res.writeHead(200, { 'Content-Type': found.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
+        ...(/^(text\/html|image\/svg)/.test(found.type) ? { 'Content-Security-Policy': 'sandbox' } : {}), ...(stopping ? { Connection: 'close' } : {}) });
       return res.end(found.body);
     }
     return send(res, 404, 'text/plain', 'Not found.\n');
