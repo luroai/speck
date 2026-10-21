@@ -1,7 +1,7 @@
 ---
 id: "0353"
 title: "Tell the reviewer what counts as evidence for a document"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-21
 ---
 # 0353 · Tell the reviewer what counts as evidence for a document
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The reviewer is told to judge each criterion from code and tests. A document task has no tests, and its document is in the main checkout's `outputs/`, outside the branch the reviewer is shown, so the reviewer wouldn't know where to look or what counts as evidence.
