@@ -46,7 +46,7 @@ A document task names its folder inside `outputs/`, and `outputs/` is kept out o
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A ticket that writes a document now has to say which folder inside the project's outputs folder the document goes in, such as "emails" or "strategy-2027/pricing". speck won't let such a ticket be set ready without one, or with one that points outside the outputs folder. Setting speck up, or updating it, now also keeps the outputs folder out of git, adding the line to the project's ignore file only once. To see it, mark a draft ticket as a document task without a folder and check it: speck names the missing field. Worth a look: an ignore line written in an unusual way (indented, or with a "!" in front) isn't treated as already covering outputs, so speck adds its own line after it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,9 @@ A document task names its folder inside `outputs/`, and `outputs/` is kept out o
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: `ignoreOutputs` only recognises `outputs`, `/outputs`, `outputs/` and `/outputs/` lines. A broader pattern that already ignores the folder (such as `/out*/`) still gets `/outputs/` added, which is harmless. A later `!outputs/` line would undo it; speck doesn't look for one.
+- No inbox notes: nothing found that needs its own ticket.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -127,6 +130,79 @@ A document task names its folder inside `outputs/`, and `outputs/` is kept out o
     ],
     "escalation_question": "",
     "summary": "Document tickets now require a valid output folder, and the ticket-writing instructions explain it clearly. The tests pass, but init can leave outputs exposed to git when an existing ignore entry has leading spaces. Fix that case before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "885368da03c5c1f39813629745e742631367e90c",
+    "thread_id": "01a15de7-bc9e-7352-ae10-232aa2f72e0a",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 254185,
+      "cached_input_tokens": 208896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1662,
+      "reasoning_output_tokens": 220
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:02:07.457Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/lint.mjs lintTicket/outputProblem require output only for document tasks. Passing AC1 tests cover missing and blank values and code tickets without output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/lint.mjs outputProblem rejects absolute paths and normalised traversal outside outputs/. Passing AC2 tests cover invalid paths, nested folders and single names."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/install.mjs cmdInit calls ignoreOutputs, which creates or appends /outputs/ and preserves recognised existing entries. Passing AC3 tests cover repeated init, existing entries and Git ignoring output files, including the F1 regression."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "skills/speck-ticket/SKILL.md, step 4's Task guidance, explicitly requires task: document and an output folder relative to outputs/, with single-name and nested examples."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The recorded run reports 118 passing tests, 3 skipped and no failures. Existing tests remain unchanged; the implementation changes stay within scope."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/install.mjs:262",
+        "issue": "Indented ignore entries previously prevented init from adding an effective /outputs/ rule. The fix preserves significant leading whitespace, so those entries no longer count.",
+        "suggested_fix": "Implemented. The new regression test checks Git's ignore behaviour before and after ignoreOutputs adds the effective rule.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Document tickets now require a valid folder inside outputs/, and init adds the git ignore rule without duplicating existing entries. The whitespace bug is fixed and covered by a regression test. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
