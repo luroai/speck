@@ -41,6 +41,7 @@ A document task waits approved until the user ships it, and shipping it carries 
 - Agreed with the user 2026-10-21: documents never auto-ship to begin with.
 - The branch still merges, because it carries the ticket's status, review rounds and logs. The document itself is in `outputs/`, which isn't in git, so there's nothing to test.
 - `autoShipWhyNot` and `shipTicket` in `scripts/ship.mjs`; `scripts/ship-queue.mjs`. The panel's Ship button runs `speck ship`, so it needs no change.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
