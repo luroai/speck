@@ -7,6 +7,7 @@ import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, 
 import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong, reviewerOptions } from './reviewers.mjs';
 import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
+import { documentSection } from './output.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -172,19 +173,25 @@ export function saveRound(repo, id, verdict, meta) {
 
 export function reviewerPrompt(repo, ticket, cfg, round, extra) {
   const tpl = fs.readFileSync(path.join(TEMPLATES, 'reviewer-prompt.md'), 'utf8');
+  // A document task's document is outside the diff: where it is and how to judge it go before the diff (0353).
+  const doc = documentSection(repo, ticket.fm ? ticket : parseTicket(ticket.raw));
   if (round === 1) {
     const values = { TICKET: stripRounds(ticket.raw), BASE: cfg.base_branch, DIFF: extra.diff, TESTS: extra.tests };
     // Round 1's response file, when the builder gives one, says which test files it ran (0235). It goes before the
     // test output, which ends the prompt, so a saved round-1 prompt still gives its test output back (savedTests).
+    // Each part is filled on its own, so nothing inserted between them is filled in.
     const fill = s => s.replace(/\{\{(TICKET|BASE|DIFF|TESTS)\}\}/g, (_, k) => values[k]);
+    const diffAt = doc ? tpl.indexOf('## Diff against') : -1;
+    const withDoc = s => diffAt < 0 ? fill(s) : `${fill(s.slice(0, diffAt))}${doc}\n\n${fill(s.slice(diffAt))}`;
     const at = tpl.indexOf('## Test output (from the builder)');
-    if (!extra.response || at < 0) return fill(tpl);
-    return `${fill(tpl.slice(0, at))}## Builder response\n\n${extra.response.replace(/\n*$/, '')}\n\n${fill(tpl.slice(at))}`;
+    if (!extra.response || at < 0 || at < diffAt) return withDoc(tpl);
+    return `${withDoc(tpl.slice(0, at))}## Builder response\n\n${extra.response.replace(/\n*$/, '')}\n\n${fill(tpl.slice(at))}`;
   }
   return [
     `# Review round ${round}`,
     'The builder has responded to your previous findings. Keep finding ids stable. For each earlier finding, set state to resolved, dispute_accepted or dispute_rejected (or keep it open if the fix is incomplete). Raise new findings only for real problems introduced or missed.',
     '## Builder response', extra.response || '(none provided)',
+    ...(doc ? [doc] : []),
     ...(extra.merged ? [`This round follows a merge of ${cfg.base_branch} into the ticket branch, made to resolve a conflict when shipping. So the diff below is the branch's whole change against ${cfg.base_branch} as merged, which is what would ship, not only the changes since your last review. Check that each resolved file keeps the intent of both sides.`] : []),
     `## ${extra.merged ? `The whole change against ${cfg.base_branch} as merged` : 'Changes since your last review'} (${extra.sinceSha.slice(0, 8)}..HEAD)`, '```diff', extra.diff, '```',
     '## Test output', '```', extra.tests, '```',
