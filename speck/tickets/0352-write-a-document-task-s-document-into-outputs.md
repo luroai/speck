@@ -42,6 +42,7 @@ A build of a document task writes the document, from the sources the ticket name
 - Agreed with the user 2026-10-21: document tasks run through `/speck-build`, not a skill of their own, since everything but steps 2 and 3 is the same. The ticket, its review and its run record still go on its branch as usual.
 - Nothing in `outputs/` is in git, so there's no undo. That's why criterion 4 matters.
 - `scripts/speck.mjs` (the command and its help line), `.claude/skills/speck-build/SKILL.md` sections 2 and 3.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
