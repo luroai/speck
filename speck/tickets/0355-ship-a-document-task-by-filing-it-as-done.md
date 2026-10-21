@@ -1,7 +1,7 @@
 ---
 id: "0355"
 title: "Ship a document task by filing it as done"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0354"]                # ticket ids that must be done first
 created: 2026-10-21
+started: "2026-10-21T10:32:16.123Z"
 
 ---
 # 0355 · Ship a document task by filing it as done
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 `auto_ship` covers both risks in this project, so a document task would be approved and filed as done before the user had read it. For a document, reading it is the review, and every new task starts with the user holding Gate 2.
