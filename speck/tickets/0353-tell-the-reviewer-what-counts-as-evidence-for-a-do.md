@@ -44,7 +44,7 @@ For a document task, the reviewer reads the document and cites the passages that
 - Pictures: none, because nothing anyone sees in the panel or a page changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When the reviewer checks a ticket that writes a document rather than code, it's now told where that document is (the ticket's folder in `outputs/`) and which files are in it, or that the folder is empty or missing. It's also told to judge each criterion by reading the document and quoting the passage it relies on, and not to mark anything down for having no tests. Code tickets are reviewed exactly as before. To see it, build a document task: its review round should quote the document back at you. Worth watching: the reviewer reads the folder as it is at that moment, so anything changed there after a review isn't covered by it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -54,6 +54,8 @@ For a document task, the reviewer reads the document and cites the passages that
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (Delivery log only, none to the inbox):
+- A file name containing a backtick shows oddly in the prompt's file list, as each name is wrapped in backticks. Cosmetic.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -120,6 +122,74 @@ For a document task, the reviewer reads the document and cites the passages that
     ],
     "escalation_question": "",
     "summary": "The prompt now directs document reviewers to the correct folder and explains how to cite document evidence. Existing checks pass, and code-ticket prompts remain unchanged. One fix is needed: the file list currently hides filenames when a folder contains more than 200 files."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "af70432fddb829032621b3a85d6034698223053d",
+    "thread_id": "01a15df8-6a30-75e1-b692-a9f1d4232be7",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 166832,
+      "cached_input_tokens": 128000,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1071,
+      "reasoning_output_tokens": 33
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:19:41.667Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/output.mjs documentWhere now lists every discovered file without truncation. Passing tests in test/prompt-0353.test.mjs cover absolute paths, recursive listings, empty/missing folders, main-checkout resolution and all 250 filenames in a large folder."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/reviewer-document.md says to judge every criterion by reading the document, cite 'the file and the words', and 'Don't count a missing test against any criterion'."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "documentSection returns an empty string for code tickets. The passing AC3 test compares the code-ticket prompt byte for byte with the original filled template."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Verified recorded test totals: 127 tests, 124 passed, 3 skipped and no failures. No existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/output.mjs",
+        "issue": "The file inventory previously omitted filenames beyond the first 200. The limit has now been removed.",
+        "suggested_fix": "Completed: every file is listed, with a passing regression test checking all 250 filenames.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Document reviewers now receive the output folder’s absolute path, its complete file list and instructions to cite document passages as evidence. Code-ticket prompts remain unchanged. The earlier truncation issue is fixed, all reviewed criteria pass and no blocking concerns remain."
   }
 }
 ```
