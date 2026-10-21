@@ -1,7 +1,7 @@
 ---
 id: "0360"
 title: "Prepare release 0.11.0"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-21
 ---
 # 0360 · Prepare release 0.11.0
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 0350 to 0357 and 0359 add document tasks: a ticket can write a document instead of code, into a folder it names inside `outputs/`, which git ignores. The reviewer checks the document passage by passage, the review pack opens it, and it waits for the user to ship it or ask for changes. Anyone following the setup prompt, or updating speck on another machine, gets 0.10.3 without them.
