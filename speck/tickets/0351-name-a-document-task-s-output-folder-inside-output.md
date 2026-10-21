@@ -1,7 +1,7 @@
 ---
 id: "0351"
 title: "Name a document task's output folder inside outputs"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"
 after: ["0350"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T09:58:05.735Z"
+approved: "2026-10-21T10:02:18.194Z"
 
 ---
 # 0351 · Name a document task's output folder inside outputs
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A document task's result goes in `outputs/`, which isn't in git. The user expects it to grow into a tree of its own projects (an emails folder, a strategy-2027 folder and so on), so each document ticket has to say where in that tree its document goes.
@@ -52,9 +53,15 @@ A ticket that writes a document now has to say which folder inside the project's
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 ignoreOutputs treats an indented line such as " /outputs/ " as an existing ignore rule.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 425,516
+- Elapsed since build started: 4 min
+- Changed lines: 28 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: `ignoreOutputs` only recognises `outputs`, `/outputs`, `outputs/` and `/outputs/` lines. A broader pattern that already ignores the folder (such as `/out*/`) still gets `/outputs/` added, which is harmless. A later `!outputs/` line would undo it; speck doesn't look for one.
