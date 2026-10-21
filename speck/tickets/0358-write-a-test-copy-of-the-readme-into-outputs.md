@@ -40,6 +40,7 @@ A copy of the README sits in `outputs/tests/`, written and reviewed as a documen
 ## Notes
 - A trial run of the document task, asked for by the user 2026-10-21, to test on the Linux box before writing real documents.
 - Document tasks never auto-ship (0355), so this one should stop at approved. Then try the review pack's link (0354), `speck changes` or "Ask for changes" (0356, 0357), and `speck ship` (0355).
+- Failing before this build: not checked
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
