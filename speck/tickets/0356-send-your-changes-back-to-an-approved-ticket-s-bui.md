@@ -42,6 +42,8 @@ The user sends a note back to an approved ticket, its build revises the work, an
 - The ship queue's hand-backs (0194) already resume a build session with a message and hold the ticket from shipping meanwhile: `handBackQueue`, `handBackMessage` and `resumeFor` in `scripts/hand-back.mjs`. A new hand-back kind for the user's note fits there.
 - The reviewer prompt is built in `scripts/review.mjs` from `templates/reviewer-prompt.md`.
 - Failing before this build: none
+- AC4 has no test of its own: `speck ship` runs the whole suite. The related existing test files (close, review rounds, hand-backs, auto-ship, pull requests) pass with this change.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

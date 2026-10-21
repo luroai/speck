@@ -37,6 +37,8 @@ import { goWithResumable, goWithWaiting } from './go-with.mjs';
 import { handedBack } from './hand-back.mjs';
 import { buildSession } from './build-records.mjs';
 import { noteThisBuild } from './seen-builds.mjs';
+import { changesPending } from './changes-asked.mjs';
+import { cmdChanges } from './changes.mjs';
 
 // Every name speck.mjs exported before it was split into modules (0018, 0078) can still be imported from it.
 export { panelServer };
@@ -454,7 +456,7 @@ export function statusData(repo) {
       self_check: selfCheck(t.sections.notes),
       lint_messages: { errors: lint.errors, warnings: lint.warnings },
       // 0167: whether speck ship --auto would ship it once approved, so the panel knows an approved one is waiting for you
-      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketTask(t)) === '',
+      auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketTask(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0) === '', // 0356
       rounds: ticketRounds(t.raw).rounds.map(r => ({
         round: r?.meta?.round ?? null,
         reviewer: r?.meta?.reviewer ?? null,
@@ -561,6 +563,8 @@ const HELP = `speck: Ship code you can't read, and still trust it.
                                       (--clear instead of a file and caption: remove its pictures)
   speck output <id>                   print a document task's folder in the main checkout's outputs/, making it if missing
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
+  speck changes <id> "<note>"         send changes you want back to an approved ticket's build: speck run resumes
+                                      it to make them, and it's reviewed and approved again before it ships
   speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
   speck pr <id>                       push an approved ticket's branch and open its pull request with gh (ship_mode: pr)
@@ -571,7 +575,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, output: cmdOutput, 'merge-check': cmdMergeCheck, ship: cmdShip, pr: cmdPr, foreman: cmdForeman };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, output: cmdOutput, 'merge-check': cmdMergeCheck, changes: cmdChanges, ship: cmdShip, pr: cmdPr, foreman: cmdForeman };
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {

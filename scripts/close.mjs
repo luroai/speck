@@ -3,7 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, changedLines, posix, writeField } from './core.mjs';
-import { rounds, nextAction } from './review.mjs';
+import { rounds, ticketNext } from './review.mjs';
+import { changesAsked } from './changes-asked.mjs';
 import { who, reviewTotals, roundsLine } from './pack.mjs';
 import { prMode, openAndKeep } from './pull-request.mjs';
 
@@ -31,6 +32,13 @@ function reviewLogLines(all) {
     return `Round ${r.meta.round} (${r.meta.reviewer}${r.meta.merge ? ', merge round' : ''}${r.meta.extra ? ', extra round' : ''}): ${r.verdict.verdict.replace(/_/g, ' ')}${fresh.length ? `: ${fresh.map(f => `${f.id ?? '?'} ${firstSentence(f.issue ?? '')}`).join('; ')}` : ''}.`
       .replace(/\.\.$/, '.');
   });
+}
+
+// 0356: the round lines with each change the user asked for kept after the round it followed.
+function withChanges(lines, asked) {
+  const out = [];
+  lines.forEach((line, i) => { out.push(line); for (const c of asked) if (c.after === i + 1) out.push(c.line); });
+  return [...out, ...asked.filter(c => c.after < 1 || c.after > lines.length).map(c => c.line)];
 }
 
 // Paths named in `git status --porcelain -z` output, other than the ticket itself. A rename or copy names two paths
@@ -80,7 +88,7 @@ export function cmdClose(args) {
   if (['approved', 'done', 'cancelled'].includes(t.fm.status))
     throw new SpeckError(`Ticket ${pad} is already ${t.fm.status}, so there is nothing to close.`);
   const all = rounds(repo, pad);
-  const next = nextAction(all, cfg);
+  const next = ticketNext(t.raw, all, cfg);
   if (next.action !== 'ship')
     throw new SpeckError(`The review loop says "${next.action}", not "ship"${next.reason ? `: ${next.reason}` : ''}. Close the build once the reviewer has approved.`);
   const outside = changesOutside(repo, rel);
@@ -97,7 +105,7 @@ export function cmdClose(args) {
     `- ${elapsed}`,
     `- Changed lines: ${diff.total} (limit ${cfg.limits.max_changed_lines})`,
   ].join('\n');
-  let text = replaceSection(t.raw, 'Review log', () => reviewLogLines(all).join('\n'), rel);
+  let text = replaceSection(t.raw, 'Review log', () => withChanges(reviewLogLines(all), changesAsked(t.raw)).join('\n'), rel);
   // A re-review after merging the base branch closes again, so figures from an earlier close are replaced, not repeated.
   const fresh = old => old.replace(/^- (Review rounds|Reviewer|Reviewer tokens|Elapsed since build started|Elapsed|Changed lines): .*(\n|$)/gm, '').trim();
   text = replaceSection(text, 'Delivery log', old => `${figures}${fresh(old) ? `\n${fresh(old)}` : ''}`, rel);
