@@ -44,6 +44,7 @@ A document task's review pack opens with a button for its document, and pressing
 - The link's click handler already calls `preventDefault`, yet a tab still opened, so cptr's browser most likely acts on links with `target="_blank"` before the page's own handler runs.
 - Checked 2026-10-21: cptr's source isn't installed on this box, so how its built-in browser opens links couldn't be confirmed beyond what the user saw on 2026-10-21. It doesn't change the ticket: a button with no address gives any browser nothing to open. Cursor's built-in browser may do the same; a button with no address avoids it in either.
 - Failing before this build: not checked
+- Self-check: no changes. Checked a pack still loading or with no files shows no buttons, and a file the server lists with an address outside its folder gets no button. 0354's panel tests checked for links under the criteria, which this ticket replaces with buttons at the top: they now check the same things with the buttons.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
