@@ -1,7 +1,7 @@
 ---
 id: "0351"
 title: "Name a document task's output folder inside outputs"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0350"]                # ticket ids that must be done first
 created: 2026-10-21
+started: "2026-10-21T09:58:05.735Z"
 
 ---
 # 0351 · Name a document task's output folder inside outputs
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A document task's result goes in `outputs/`, which isn't in git. The user expects it to grow into a tree of its own projects (an emails folder, a strategy-2027 folder and so on), so each document ticket has to say where in that tree its document goes.
