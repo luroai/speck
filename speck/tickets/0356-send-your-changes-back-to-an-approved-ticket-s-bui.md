@@ -41,6 +41,7 @@ The user sends a note back to an approved ticket, its build revises the work, an
 - Agreed with the user 2026-10-21: one note per round on the same ticket, rather than a new ticket per revision. It works for code tickets as well as documents.
 - The ship queue's hand-backs (0194) already resume a build session with a message and hold the ticket from shipping meanwhile: `handBackQueue`, `handBackMessage` and `resumeFor` in `scripts/hand-back.mjs`. A new hand-back kind for the user's note fits there.
 - The reviewer prompt is built in `scripts/review.mjs` from `templates/reviewer-prompt.md`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
