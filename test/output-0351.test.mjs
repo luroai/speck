@@ -42,6 +42,7 @@ test('0351 AC2: lint accepts nested folders and a single name inside outputs/', 
     assert.deepEqual(outputErrors(doc(ok)), [], ok);
 });
 
+const ignored = (dir, file) => spawnSync('git', ['check-ignore', '-q', file], { cwd: dir, env }).status === 0;
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'speck-'));
 const lines = dir => fs.readFileSync(path.join(dir, '.gitignore'), 'utf8').split('\n');
 
@@ -60,12 +61,22 @@ test('0351 AC3: ignoreOutputs adds /outputs/ to an existing .gitignore once, kee
 });
 
 test('0351 AC3: ignoreOutputs leaves an existing /outputs/ or outputs/ line as it is', () => {
-  for (const text of ['/outputs/\n', 'a\noutputs/\nb\n', 'a\r\noutputs/\r\n', 'x\n  /outputs/  \n']) {
+  for (const text of ['/outputs/\n', 'a\noutputs/\nb\n', 'a\r\noutputs/\r\n', 'x\n/outputs/  \n']) {
     const dir = tmp();
     fs.writeFileSync(path.join(dir, '.gitignore'), text);
     ignoreOutputs(dir);
     assert.equal(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), text, JSON.stringify(text));
   }
+});
+
+test("0351 AC3: ignoreOutputs adds /outputs/ after an indented line, which git doesn't read as that pattern", () => {
+  const dir = tmp();
+  spawnSync('git', ['init', '-q', '-b', 'main'], { cwd: dir, env });
+  fs.writeFileSync(path.join(dir, '.gitignore'), 'x\n  /outputs/\n');
+  assert.ok(!ignored(dir, 'outputs/a.md'), 'the indented line alone ignores nothing');
+  ignoreOutputs(dir);
+  assert.deepEqual(lines(dir), ['x', '  /outputs/', '/outputs/', '']);
+  assert.ok(ignored(dir, 'outputs/strategy-2027/a.md'));
 });
 
 test('0351 AC3: speck init adds /outputs/ to the root .gitignore, and a second init adds no second line', () => {
@@ -76,6 +87,5 @@ test('0351 AC3: speck init adds /outputs/ to the root .gitignore, and a second i
     assert.equal(res.status, 0, res.stderr);
   }
   assert.equal(lines(dir).filter(l => l === '/outputs/').length, 1);
-  const check = spawnSync('git', ['check-ignore', '-q', 'outputs/strategy-2027/pricing/a.md'], { cwd: dir, env });
-  assert.equal(check.status, 0, 'git ignores a file inside outputs/');
+  assert.ok(ignored(dir, 'outputs/strategy-2027/pricing/a.md'), 'git ignores a file inside outputs/');
 });
