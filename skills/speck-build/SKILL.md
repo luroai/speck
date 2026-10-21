@@ -92,6 +92,7 @@ When a ship that `speck run`'s queue started is refused in a way this ticket's b
 - The tests failed on the ticket as it would land, merged with the base branch, while the base branch's own tests pass, or while the base branch is failing but those tests pass there (exited 16): follow "Tests fail together".
 - The base branch's own tests are failing (exited 14): follow "Base branch failing".
 - The message says `speck run` has handed it back twice already without it shipping: follow "Handed back again".
+- The user read the approved result and sent changes back with `speck changes`: follow "Changes asked for".
 
 ### Conflict
 
@@ -121,6 +122,14 @@ The tests failed on the ticket as it would land, merged with the base branch as 
 ### Handed back again
 
 `speck run` has handed this ticket back twice already, and its ship was refused again. Don't merge or fix again: block the ticket (section 6), with the conflicting files in the question, or the failing tests. Write it in plain words, without git terms: say that other shipped work keeps changing the same files or breaking the same tests, name them, and give the options and your recommendation.
+
+### Changes asked for
+
+The user read the approved result and asked for changes. The message gives their note, which is also in the ticket's `## Review log`, dated. Until a review round has looked at the changes and the ticket is approved again, `speck next <id>` says `review` and nothing ships it.
+
+1. Make the changes the note asks for, within the ticket's scope. A document task changes its files in its folder in `outputs/` (`speck output <id>`). Add or change tests as in sections 2 and 3, run the round's test files (`speck test --files <file>… 2>&1 | tee /tmp/speck-<id>-tests.txt`) and commit (`speck(<id>): changes asked for by the user`).
+2. Run the review loop again as in section 4, with a response file saying what you changed for the note and which test files you ran. `speck review` accepts the `approved` ticket and sets it to `reviewing`, and the reviewer's round is given the note to check as well as the acceptance criteria. It counts as a merge round, a re-review after an approval: it doesn't count towards `max_review_rounds`, and `max_merge_rounds` limits it.
+3. Once `speck next <id>` says `ship`, update the ticket's `## In plain words` if the change alters it, commit, run `speck close <id>`, and stop. It then waits to be shipped as before. On `block`, block the ticket (section 6).
 
 ### Base branch failing
 
