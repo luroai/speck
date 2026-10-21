@@ -1,7 +1,7 @@
 ---
 id: "0350"
 title: "Give a ticket a task: code or document"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-21T09:51:45.516Z"
 ---
 # 0350 · Give a ticket a task: code or document
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Every ticket is a code change today, so there's no way to say a ticket's job is to write a document instead. The document task (`speck/ideas/2026-10-19-add-job-kinds-one-at-a-time.md`, first on the roadmap) needs each ticket to say which task it is before anything can treat a document differently.
@@ -45,7 +45,7 @@ A ticket says its task, `code` or `document`, and it shows on the board.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Each ticket now says what its build makes: code, as before, or a document. New tickets start as code, and existing tickets count as code without any change. To see it, change a ticket's task to document: its card in the panel gets a purple "document" tag, as a bug ticket gets its "bug" tag. Nothing builds, reviews or ships a document ticket differently yet: later tickets do that.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,72 @@ A ticket says its task, `code` or `document`, and it shows on the board.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (no inbox notes: none needs its own ticket yet):
+  - The plain `speck status` list shows a bug or fix ticket's type after its id, but not a document task. Worth adding once the document task does something, alongside 0352 to 0355.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e47cd5271951940f79825f98adc54672686065ec",
+    "thread_id": "01a15de2-80de-7cd2-b31b-06b31c44fb1c",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 94405,
+      "cached_input_tokens": 55552,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 713,
+      "reasoning_output_tokens": 13
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T09:55:12.329Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/core.mjs ticketTask defaults missing and blank values to code; scripts/lint.mjs lintTicket validates against TASKS. Both AC1 tests passed, covering accepted values and invalid values with allowed names in the error."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/ticket.md includes task: code with the code | document comment. The passing AC2 test invokes speck new and checks the generated frontmatter."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs statusData sets task through ticketTask. The passing AC3 test invokes status --json and checks missing, quoted blank, bare blank, code and document values."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html taskTag renders only document tasks and is included wherever type tags appear. The passing AC4 test executes the panel script and checks document and code cards in Plan, Build and Shipped."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0350-tests.txt reports 329 passed, zero failed and three skipped across 332 tests. Existing tests were not changed, and the implementation introduces no apparent regression."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Tickets can now specify code or document, with existing tickets defaulting to code. New tickets include the field, status JSON reports it, and document tickets show a tag on the board. The tests exercise the requested behaviour and passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
