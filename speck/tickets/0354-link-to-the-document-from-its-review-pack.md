@@ -38,6 +38,7 @@ A document task's review pack links to each file in its output folder, and the p
 
 ## Notes
 - Agreed with the user 2026-10-21: the review pack links to the document; it doesn't paste it in.
+- Failing before this build: none
 - `reviewPack` and `panelPack` in `scripts/pack.mjs`; the routes in `scripts/panel.mjs` (the pictures route, 0294, is the nearest pattern); the review pack pane in `templates/panel.html`.
 
 ## In plain words
