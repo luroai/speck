@@ -45,6 +45,7 @@ speck is ready to be released as 0.11.0.
 - The two follow-up notes from 0356 and 0357 (the brief's description of Ask for changes, and calling the next round a changes round) are still ideas, not in this release.
 - After it ships, check that the `v0.11.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.11.0 --target main --title "speck 0.11.0" --notes-file docs/releases/v0.11.0.md`.
 - Relies on nothing outside this repo.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
