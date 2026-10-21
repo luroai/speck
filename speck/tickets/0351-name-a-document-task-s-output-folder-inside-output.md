@@ -41,6 +41,7 @@ A document task names its folder inside `outputs/`, and `outputs/` is kept out o
 - Agreed with the user 2026-10-21: outputs stay out of git (as decided 15 October), and each document ticket names its own folder inside `outputs/`, nested as deep as it likes.
 - `lintTicket` in `scripts/lint.mjs`; `cmdInit` in `scripts/install.mjs`; `.claude/skills/speck-ticket/SKILL.md`.
 - Checked 2026-10-21: a root `.gitignore` line `/outputs/` ignores `outputs/strategy-2027/pricing/a.md` but not `sub/outputs/b.md` (`git check-ignore -v`, git 2.53.0).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
