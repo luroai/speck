@@ -1,7 +1,7 @@
 ---
 id: "0357"
 title: "Ask for changes from a review pack"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"
 after: ["0356"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T10:52:50.899Z"
+approved: "2026-10-21T10:59:14.506Z"
 
 ---
 # 0357 · Ask for changes from a review pack
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Gate 2 happens in the panel, often on a phone. With `speck changes` (0356) only on the command line, a user reading a document in the panel can ship it but can't ask for changes there.
@@ -52,9 +53,14 @@ Worth keeping an eye on: the note only goes through for a ticket that Auto-build
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 101,166
+- Elapsed since build started: 6 min
+- Changed lines: 108 (limit 5000)
 Follow-ups:
 - Idea: describe the panel's Ask for changes button in the brief (speck/ideas/2026-10-21-describe-the-panel-s-ask-for-changes-button-in-the-brief.md).
 - Skipped as a duplicate: none.
