@@ -97,6 +97,7 @@
   .tag.high { color: var(--bad); border-color: var(--bad); }
   .tag.bug { color: var(--bug); border-color: var(--bug); }
   .tag.fix { color: var(--fix); border-color: var(--fix); }
+  .tag.document { color: var(--idea); border-color: var(--idea); }
   .prio { position: relative; display: inline-block; }
   .tag.pick { cursor: pointer; }
   .tag.pick:hover { color: var(--text); border-color: var(--muted); }
@@ -1198,6 +1199,8 @@ function chainIcon(t) {
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
 const typeTag = t => (t.type === 'bug' || t.type === 'fix'
   ? explained(el('span', `tag ${t.type}`, t.type), t.type === 'bug' ? 'Bug: fixes a defect' : 'Fix: fixes a broken main, built before anything else') : null);
+// 0350: a "document" tag for a ticket whose task is to write a document, or nothing for a code ticket.
+const taskTag = t => (t.task === 'document' ? explained(el('span', 'tag document', 'document'), 'Document: the build writes a document, not code') : null);
 // A ticket's priority, size and risk tags, each only when it has that field. `pick`: the priority tag opens the menu
 // that sets it (a draft in the Tickets list).
 function fieldTags(t, pick) {
@@ -1324,7 +1327,7 @@ function ticketItem(t) {
 // details stay on the page.
 function ticketHead(t) {
   const head = el('div', 'head', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)), el('span'),
-    el('div', 'row tag-row', null, ...fieldTags(t, true), typeTag(t), chainIcon(t)));
+    el('div', 'row tag-row', null, ...fieldTags(t, true), typeTag(t), taskTag(t), chainIcon(t)));
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
   const checks = el('div', 'checks');
@@ -1636,7 +1639,7 @@ function fullTicket(t, draft) {
 }
 // The pane's tags under the title, or nothing when the ticket has none.
 function paneTags(t) {
-  const tagged = [typeTag(t), ...fieldTags(t, false)].filter(Boolean);
+  const tagged = [typeTag(t), taskTag(t), ...fieldTags(t, false)].filter(Boolean);
   return tagged.length ? el('div', 'tags', null, ...tagged) : null;
 }
 // A heading and its Markdown, formatted, or nothing when the text is empty.
@@ -2407,7 +2410,7 @@ function queueItem(t) {
   const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : stage ? ` at-${stage}` : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
   // 0155: the id and title, the timer at the right of their row, then the tags on a row of their own, as in Plan.
   const top = el('div', 'top', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)),
-    el('div', 'row tag-row', null, ...fieldTags(t, false), typeTag(t), t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
+    el('div', 'row tag-row', null, ...fieldTags(t, false), typeTag(t), taskTag(t), t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
@@ -3018,8 +3021,8 @@ function render() {
     details.type = 'button';
     details.setAttribute('aria-expanded', String(isOpen));
     details.addEventListener('click', e => { e.stopPropagation(); flip(openShipped, id); });
-    const tag = typeTag(t);
-    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), fullLink(t)), tag && el('div', 'row tag-row', null, tag));
+    const tags = [typeTag(t), taskTag(t)].filter(Boolean);
+    const name = el('td', 'name', null, el('div', 'line', null, el('span', 'id', t.id), fullLink(t)), tags.length ? el('div', 'row tag-row', null, ...tags) : null);
     // 0204: merged, but the push of the base branch failed: what speck ship said, which says how to fix it.
     const unpushed = t.unpushed ? el('td', 'unpushed', null, el('div', 'unpushed-head', 'Merged, but not pushed'), t.unpushed_message ? el('div', 'unpushed-said', t.unpushed_message) : null) : null;
     return el('tr', null, null, name, t.end !== null ? el('td', 'when', `Shipped ${t.when}`) : null, unpushed, el('td', 'sum', null, line ? el('span', 'figline', line) : null, details),
