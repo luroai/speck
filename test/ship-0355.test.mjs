@@ -7,7 +7,11 @@ import path from 'node:path';
 import { autoShipWhyNot } from '../scripts/ship.mjs';
 import { shipOrder } from '../scripts/ship-queue.mjs';
 import { runIn, shipRepo } from './support/ship.mjs';
-import { docRepo, DOC_BRANCH } from './support/doc-ship.mjs';
+import { docRepo, docPrRepo, DOC_BRANCH } from './support/doc-ship.mjs';
+import { openAndKeep } from '../scripts/pull-request.mjs';
+import { gitEnv } from './support/panel.mjs';
+
+Object.assign(process.env, gitEnv); // the commits speck makes when the tests call it directly
 
 // A test command that leaves a mark in the main checkout when it runs, and fails, so a ship that ran it can't pass.
 const MARK = 'touch "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/tests-ran"; false';
@@ -71,12 +75,30 @@ test('0355 AC4: a code ticket still runs the tests when it ships, and still auto
   assert.equal(passing.statusIn(passing.dir), 'done');
 });
 
-test('0355 AC1, AC3: the brief says a document task never auto-ships and ships only files under speck/', () => {
+test('0355 AC2: in pull request mode, speck ship merges a document task\'s pull request without running the tests', () => {
+  const r = docPrRepo({ test: MARK });
+  openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh });
+  const out = r.cli(r.dir, 'ship', '1');
+  assert.equal(out.status, 0, out.stdout + out.stderr);
+  assert.ok(!fs.existsSync(path.join(r.dir, 'tests-ran')), 'the test command never ran');
+  assert.equal(r.gh.prs()[0].state, 'MERGED');
+  assert.equal(r.statusIn(r.dir), 'done');
+});
+
+test('0355 AC3: in pull request mode, a document task whose branch changes files outside speck/ gets no pull request and doesn\'t ship', () => {
+  const r = docPrRepo({ outside: ['extra.txt'] });
+  assert.throws(() => openAndKeep(r.dir, r.cfg, '1', { gh: r.gh.gh }), /document task.*extra\.txt/, 'no pull request is opened for it');
+  const main = r.sha('main');
+  const out = r.cli(r.dir, 'ship', '1');
+  assert.notEqual(out.status, 0);
+  assert.deepEqual(r.gh.prs(), [], 'nothing to merge');
+  assert.equal(r.sha('main'), main);
+  assert.equal(r.statusIn(r.wt), 'approved');
+});
+
+test('0355 AC1, AC3: the brief names the setting and the folders that decide how a document task ships', () => {
   const brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  const gate = brief.split('\n').find(l => l.startsWith('4. **Humans hold two gates.**'));
-  assert.match(gate, /document task/);
-  const ship = brief.split('\n').find(l => l.startsWith('| `/speck-ship <id>`'));
-  assert.match(ship, /document task/);
-  assert.match(ship, /`outputs\/`/);
-  assert.match(ship, /`speck\/`/);
+  const about = brief.split('\n').filter(l => /document task/.test(l));
+  assert.ok(about.some(l => l.includes('`auto_ship`')), 'auto_ship');
+  assert.ok(about.some(l => l.includes('`outputs/`') && l.includes('`speck/`')), 'outputs/ and speck/');
 });
