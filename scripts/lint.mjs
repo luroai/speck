@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { STATUSES, EFFORTS, TYPES, TASKS, blank, contentLines, ticketType, ticketTask, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
+import { STATUSES, EFFORTS, TYPES, TASKS, blank, contentLines, ticketType, ticketTask, ticketOutput, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ticketSameModelProblem } from './same-model.mjs';
 
@@ -18,6 +18,7 @@ export function lintTicket(ticket, cfg) {
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
   if (ticketType(ticket) !== null && !TYPES.includes(fm.type)) errors.push(`type must be blank, bug or fix (got "${fm.type}").`);
   if (!TASKS.includes(ticketTask(ticket))) errors.push(`task must be blank, ${TASKS.join(' or ')} (got ${JSON.stringify(fm.task)}).`);
+  if (ticketTask(ticket) === 'document') { const o = outputProblem(ticketOutput(ticket)); if (o) errors.push(o); }
   if (!validPriority(ticketPriority(ticket), fm.type))
     errors.push(fm.priority === 0
       ? 'priority must be blank or a whole number from 1 to 5 (got 0): priority 0 is only for a fix ticket.'
@@ -48,6 +49,17 @@ export function lintTicket(ticket, cfg) {
   errors.push(...priv.errors);
   warnings.push(...priv.warnings);
   return { errors, warnings, acceptanceCriteria: ac };
+}
+
+// 0351: what's wrong with a document task's output, or null. It names a folder inside outputs/ at the project root.
+function outputProblem(v) {
+  if (v === null) return 'A document ticket needs an output: the folder its document goes in, inside outputs/ (for example `output: emails`).';
+  if (typeof v !== 'string') return `output must be a folder inside outputs/, such as emails or strategy-2027/pricing/ (got ${JSON.stringify(v)}).`;
+  const p = v.trim().replace(/\\/g, '/');
+  if (p.startsWith('/') || /^[a-z]:/i.test(p)) return `output "${v}" must be relative to outputs/ at the project root, not an absolute path.`;
+  const inside = path.posix.normalize(p);
+  if (inside === '.' || inside === './' || inside === '..' || inside.startsWith('../')) return `output "${v}" must name a folder inside outputs/, not outputs/ itself or a place outside it.`;
+  return null;
 }
 
 // Each numbered acceptance criterion with the lines it wraps onto, without its number.
