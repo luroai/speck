@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.11.0 · 21 October 2026
+
+What's new since 0.10.3. A minor release that adds document tasks: a ticket can now have its build write a document, such as an email, a plan or a report, instead of changing code. It's reviewed against the ticket like code is, and it waits for you to read it before it ships. You can also send an approved ticket back with a note saying what to change, from the panel or the command line.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.11.0 init`.
+- Setting speck up, or updating it, adds `/outputs/` to the project's `.gitignore`, making the file if there isn't one. It adds the line only once, and leaves a line that already ignores `outputs/` as it is.
+
+### Document tasks
+
+- Each ticket now says what its build makes: `task: code`, as before, or `task: document`. New tickets start as `task: code`, and a ticket with no `task` counts as code, so existing tickets need no change.
+- To make one, ask `/speck-ticket` for a ticket that writes a document. It sets `task: document` and adds an `output:` line naming the folder the document goes in, inside `outputs/` at the project root, such as `output: emails` or `output: strategy-2027/pricing/`. `speck lint` won't let a document ticket be set ready without an `output`, or with one that is an absolute path or leads outside `outputs/`.
+- In the panel, a document ticket's card has a "document" tag, as a bug ticket has its "bug" tag.
+- A document task's build writes no tests. It writes the document from the sources the ticket names into the ticket's folder in `outputs/`, in your own copy of the project even when the build runs in a worktree of its own, where the document would be lost. `speck output <id>` prints that folder, making it if it's missing. The build only adds new files there or changes the files the ticket names: it never deletes, moves or overwrites any other file in it.
+- `outputs/` isn't in git, so what's written there can't be undone with git.
+
+### Reviewing a document
+
+- The reviewer is told where the document is and which files are in it, and judges each criterion by reading the document, quoting the passage it relies on as its evidence. Having no tests doesn't count against any criterion. Code tickets are reviewed as before.
+- The reviewer reads the folder as it is during its round, so a change made there after a review isn't covered by it.
+- A document task's review pack opens with a button for each file in its folder, above Ship and Ask for changes. Pressing a Markdown file's button shows it formatted in the panel's side pane, with a way back to the pack, and opens nothing else. Any other file, such as a PDF, opens in a new tab, served by the panel, and a web page the build wrote opens with its scripts switched off. The panel only opens files inside that ticket's own folder.
+- `speck pack <id>` lists the document's files, by their path from the project root, straight after the summary.
+
+### Shipping a document
+
+- A document task never ships by itself, whatever `auto_ship` and `auto_ship_risk` say: once it's approved, it waits for you to read it and ship it. The auto-ship message says so.
+- Shipping one runs no tests: it files the ticket as done. If its branch changes any file outside `speck/`, `speck ship` refuses and names those files.
+
+### Asking for changes
+
+- When you've read an approved result and want something changed, `speck changes <id> "<note>"` sends the note back to the ticket's build, rather than you writing a new ticket. This works for code tickets as well as documents. The note is added, dated, to the ticket's Review log.
+- With `speck run` on, the build session that made the work picks the note up, makes the changes and runs the review loop again. The reviewer checks them against your note as well as the acceptance criteria. Until it's approved again, nothing ships it, automatically or by hand.
+- In the panel, an approved ticket's review pack has a box for your note and an "Ask for changes" button beside Ship. The button can't be pressed while the box is empty. The panel shows what speck said, and if speck turns the note down, it shows why and keeps your note in the box.
+- `speck changes` refuses, changing nothing and saying why, for a ticket that isn't approved, an empty note, a ticket that already has changes waiting, or one whose build session can't be resumed, such as a ticket `speck run` didn't build.
+
 ## 0.10.3 · 20 October 2026
 
 What's fixed since 0.10.2. A bug-fix release: a build's time no longer counts the hours a laptop spends asleep, and `speck run` no longer restarts a build each time the Foreman asks about its ticket. Setup and the panel's Settings view get small additions too.
