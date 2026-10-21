@@ -43,7 +43,7 @@ A document task's review pack links to each file in its output folder, and the p
 - `reviewPack` and `panelPack` in `scripts/pack.mjs`; the routes in `scripts/panel.mjs` (the pictures route, 0294, is the nearest pattern); the review pack pane in `templates/panel.html`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When speck writes a document for you, its review pack now lists every file it wrote. In the panel, each one is a link: a Markdown file opens right in the side pane, laid out as the pack is, with a button to go back to the pack, and anything else, such as a PDF, opens in a new browser tab. To see it, open the review pack of an approved document ticket in the panel and press one of the files under Document. The panel only opens files inside that ticket's own folder; if that folder, or one it sits in, is a shortcut to somewhere else, the pack says so and opens nothing. A web page the build wrote opens with its scripts switched off.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -52,7 +52,8 @@ A document task's review pack links to each file in its output folder, and the p
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limits: only Markdown files open in the side pane; a plain text file opens in a new tab. A file that's a link inside the folder isn't listed or served, even when it points at another file in the folder.
+- Follow-ups: none for the inbox.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -119,6 +120,74 @@ A document task's review pack links to each file in its output folder, and the p
     ],
     "escalation_question": "",
     "summary": "The review pack lists document files, and the panel opens Markdown with a way back. The tested flows pass. One file-access boundary needs fixing: a linked output folder can expose files outside the ticket's intended folder."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "18ea1a58e1a533ed5a77e2529c949b95ad27159c",
+    "thread_id": "01a15e00-89bc-77d1-9493-154aa3d21e76",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 266120,
+      "cached_input_tokens": 212224,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1440,
+      "reasoning_output_tokens": 150
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:29:20.676Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/output.mjs outputFiles/documentLines list regular files recursively with project-relative paths; reviewPack includes them only for document tasks. Passing AC1 tests cover nested files, missing/empty folders and unchanged code-ticket packs."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelDocuments supplies links; templates/panel.html documentsPart, openDocument and documentPane implement formatted Markdown in the side pane with a back button and other files in a new tab. Passing AC2 tests cover these behaviours and actual server responses."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "unlinkedOutput now rejects output folders whose resolved location differs from their configured location. documentFile also checks containment and rejects linked files. Passing AC3 tests cover traversal, internal links, malformed addresses, and links at outputs/, an intermediate parent and the output folder itself."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The fresh recorded run reports 168 passed, zero failed and three skipped across 171 tests, including the ticket tests and relevant regression checks. No regression is evident from the code changes; shipping performs the whole-suite check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/output.mjs",
+        "issue": "A symlink at the output folder or one of its parents previously allowed external files to be listed and served.",
+        "suggested_fix": "Implemented: unlinkedOutput checks the configured folder against its real location before listing or serving. Regression tests exercise links at all three folder levels.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Document review packs now list files and let users open them from the panel, with Markdown shown in the side pane. The folder-boundary issue is fixed and covered by regression tests. All reviewed criteria pass."
   }
 }
 ```
