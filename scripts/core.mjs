@@ -161,6 +161,8 @@ export const ticketType = ticket => fieldValue(ticket, 'type');
 // 0350: a ticket's task: what its build makes. Missing or blank means "code".
 export const TASKS = ['code', 'document'];
 export const ticketTask = ticket => fieldValue(ticket, 'task') ?? 'code';
+// 0351: a document task's folder, relative to outputs/ at the project root. null when it's missing or blank.
+export const ticketOutput = ticket => fieldValue(ticket, 'output');
 // A ticket's priority: null (none) or its value, which is valid only as a whole number from 1 to 5, or 0 on a fix ticket.
 export const ticketPriority = ticket => fieldValue(ticket, 'priority');
 export const validPriority = (v, type) => v === null || (Number.isInteger(v) && v >= (type === 'fix' ? 0 : 1) && v <= 5);
