@@ -468,6 +468,11 @@
   #full-ticket .ship:disabled { cursor: default; opacity: .6; }
   #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
   #full-ticket .ship-said.bad { color: var(--bad); }
+  /* 0357: beside it, a box for a note and an Ask for changes button, which sends the note back to the build */
+  #full-ticket .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: .5px solid var(--line); resize: vertical; }
+  #full-ticket .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  #full-ticket .ask-changes { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
+  #full-ticket .ask-changes:disabled { cursor: default; opacity: .6; }
   /* 0354: the button back from a document task's file to its review pack */
   #full-ticket .full-open.back { margin: 0 0 10px; }
   #full-ticket .md a, #full-ticket .criteria a { color: var(--text); }
@@ -596,7 +601,7 @@
     td .full-open { min-height: 44px; }
 
     /* The full ticket and review pack */
-    #full-ticket .close, #full-ticket .ship { min-width: 44px; min-height: 44px; }
+    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes { min-width: 44px; min-height: 44px; }
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
     #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody,
     #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td { display: block; }
@@ -1316,6 +1321,10 @@ let shippingId = null; // the id whose Ship request hasn't been answered yet: on
 let runSwitching = null; // 'on' or 'off' while the speck run switch's request hasn't been answered yet
 const shipped = new Map(); // id → what speck ship printed when the panel shipped it
 const shipRefused = new Map(); // id → why speck ship refused it, until the next click on its Ship button or the pack is opened again
+const changesNotes = new Map(); // 0357: id → the note in its pack's box, kept while the pane is redrawn and after a refusal
+let changesSending = null; // the id whose Ask for changes request hasn't been answered yet
+const changesSaid = new Map(); // id → what speck changes printed when the panel sent its note
+const changesRefused = new Map(); // id → why speck changes refused it, until its next Ask for changes
 let copies = 0;
 const flip = (set, key) => { if (set.has(key)) set.delete(key); else set.add(key); render(); };
 const list = v => (Array.isArray(v) ? v : []);
@@ -1492,6 +1501,8 @@ function packButton(t) {
     packOf = { id: fullId, state: 'loading' };
     shipRefused.delete(fullId);
     shipped.delete(fullId);
+    changesSaid.delete(fullId); // 0357: the box comes back, holding any note that wasn't sent
+    changesRefused.delete(fullId);
     render();
     const pane = $('full-ticket');
     if (pane.focus) pane.focus({ preventScroll: true }); // so the keys scroll the pane, and none reach the page behind
@@ -1612,14 +1623,55 @@ function shipPart(t) {
   if (pending || (t.status === 'approved' && packOf.state === 'ok')) {
     const b = el('button', 'ship', pending ? 'Shipping…' : 'Ship');
     b.type = 'button';
-    b.disabled = shippingId !== null || t.shipping === true; // one ship at a time, and none while one runs from elsewhere (0153)
+    b.disabled = shippingId !== null || t.shipping === true || changesSending === id; // one ship at a time, and none while one runs from elsewhere (0153)
     b.title = 'Merge this ticket into the base branch and push it, as /speck-ship does';
     b.addEventListener('click', e => { e.stopPropagation(); if (!b.disabled) shipTicket(id); });
-    out.push(b);
+    // 0357: and, until it's shipping or its note has gone, a box for a note and an Ask for changes button beside Ship.
+    const asking = !pending && t.status === 'approved' && !changesSaid.has(id);
+    out.push(asking ? el('div', 'pack-actions', null, ...changesPart(id, b)) : b);
   }
   if (pending) out.push(el('div', 'ship-said', `Shipping ${id}: running the tests, then merging and pushing. This can take a few minutes.`));
   if (shipRefused.has(id)) out.push(el('div', 'ship-said bad', shipRefused.get(id)));
+  if (changesSaid.has(id)) out.push(el('div', 'ship-said', changesSaid.get(id)));
+  if (changesRefused.has(id)) out.push(el('div', 'ship-said bad', changesRefused.get(id)));
   return out;
+}
+// 0357: the note's box, and a row of the Ship button `ship` and Ask for changes, which can't be pressed while the box is
+// empty or only spaces. Typing changes only the button, so the pane isn't redrawn under it.
+function changesPart(id, ship) {
+  const box = el('textarea', 'changes-note'), sending = changesSending === id;
+  box.value = changesNotes.get(id) || '';
+  box.placeholder = 'What you want changed';
+  box.rows = 2;
+  box.disabled = sending;
+  box.setAttribute('aria-label', `What you want changed in ${id}`);
+  const b = el('button', 'ask-changes', sending ? 'Sending…' : 'Ask for changes');
+  b.type = 'button';
+  b.title = 'Send your note back to the build, as speck changes does: the ticket is built and reviewed again before it ships';
+  const can = () => !sending && changesSending === null && shippingId === null && String(box.value ?? '').trim() !== '';
+  b.disabled = !can();
+  box.addEventListener('input', () => { changesNotes.set(id, String(box.value ?? '')); b.disabled = !can(); });
+  box.addEventListener('click', e => e.stopPropagation());
+  b.addEventListener('click', e => { e.stopPropagation(); if (can()) askForChanges(id); });
+  return [box, el('div', 'pack-buttons', null, ship, b)];
+}
+async function askForChanges(id) {
+  const note = String(changesNotes.get(id) || '').trim();
+  if (changesSending !== null || !note) return;
+  changesRefused.delete(id);
+  changesSending = id;
+  render();
+  try {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/changes`, { method: 'POST', headers: { 'X-Speck-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ note }) });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    if (res.ok) { changesNotes.delete(id); changesSaid.set(id, body && typeof body.message === 'string' && body.message ? body.message : `Your note was sent back to ${id}'s build.`); }
+    else changesRefused.set(id, body && typeof body.error === 'string' && body.error ? body.error : `The server refused (${res.status}).`);
+  } catch {
+    changesRefused.set(id, "Couldn't reach the panel server, so your note wasn't sent. Try again.");
+  }
+  changesSending = null;
+  render();
 }
 // 0295: in pull request mode, the ticket's pull request, opening on GitHub when pressed, or why it couldn't be opened.
 function prPart(t) {
@@ -1754,7 +1806,7 @@ function renderFull(m) {
   const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
   if (!t && fullId !== null && within(document.activeElement, pane)) focusBack = true; // 0326: it closed with the focus in it
   if (!t) { fullId = null; packOf = null; }
-  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
+  const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
