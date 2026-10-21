@@ -142,6 +142,27 @@ test('0356 AC2: the reviewer\'s next round is given the note to check as well as
   assert.ok(!fs.readFileSync(prompt, 'utf8').includes(NOTE), 'not once a round has approved it');
 });
 
+test('0356 AC2: a commit on its branch before speck run gets to it doesn\'t lose the note: speck run still resumes the build with it', () => {
+  const r = changesRepo();
+  askForChanges(r.wt, '1', NOTE, AT);
+  r.work('edited by hand\n');
+  const started = [];
+  backs(r, started).check(statusData(r.dir).tickets);
+  assert.equal(started.length, 1);
+  assert.ok(started[0].argv[2].includes(NOTE));
+});
+
+test('0356 AC2: once a round has reviewed the changes some other way, speck run drops the note rather than resuming the build', () => {
+  const r = changesRepo();
+  askForChanges(r.wt, '1', NOTE, AT);
+  r.work('blue\n');
+  assert.equal(spawnReview(r.wt, 'approve').status, 0);
+  const started = [];
+  backs(r, started).check(statusData(r.dir).tickets.map(t => ({ ...t, status: 'approved' })));
+  assert.deepEqual(started, []);
+  assert.equal(Object.hasOwn(JSON.parse(r.rec()), 'hand_back'), false, 'dropped');
+});
+
 // ---------- AC3: refusals change nothing and say why ----------
 
 test('0356 AC3: speck changes refuses, changing nothing and saying why, for a ticket that isn\'t approved, an empty note or a build it can\'t resume', () => {

@@ -7,6 +7,9 @@ import { shipState } from './ship.mjs';
 import { codexResumeArgv } from './codex-build.mjs';
 import { cursorResumeArgv } from './cursor-build.mjs';
 import { claudeStartWords, configBuilder } from './ticket-builder.mjs';
+import { buildTicket } from './build-records.mjs';
+import { ticketRounds } from './core.mjs';
+import { changesPending } from './changes-asked.mjs';
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
@@ -102,7 +105,8 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
   };
 
-  // A ticket's hand-back from its run record: { file, rec, h, live }, live while its branch is where the ship found it.
+  // A ticket's hand-back from its run record: { file, rec, h, live }, live while its branch is where the ship found it,
+  // or, for changes the user asked for (0356), while no round has reviewed them, whatever was committed since.
   // null if it has none.
   const pending = id => {
     if (!/^[\w-]+$/.test(String(id))) return null;
@@ -111,7 +115,11 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
     const h = rec?.hand_back;
     if (!h || typeof h !== 'object' || !Object.hasOwn(HAND_BACK_STEPS, h.kind)) return null;
-    return { file, rec, h, live: h.head === refsOf(repo, cfg, id).head };
+    return { file, rec, h, live: h.kind === 'changes' ? changesWaiting(id) : h.head === refsOf(repo, cfg, id).head };
+  };
+
+  const changesWaiting = id => {
+    try { const { t } = buildTicket(repo, cfg, id); return changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0; } catch { return false; }
   };
 
   // Approved tickets with a hand-back waiting, each handed back while there's a free slot and no ship of it is running.
