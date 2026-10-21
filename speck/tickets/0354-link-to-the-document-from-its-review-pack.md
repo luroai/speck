@@ -1,7 +1,7 @@
 ---
 id: "0354"
 title: "Link to the document from its review pack"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-21T10:22:34.885Z"
 ---
 # 0354 · Link to the document from its review pack
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 For a document, Gate 2 is reading the document itself, not a summary of it. Today the review pack shows the reviewer's verdict and evidence but gives no way to open what the build wrote.
@@ -53,3 +53,74 @@ A document task's review pack links to each file in its output folder, and the p
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e2add7fe2939d6900dfffe485c27e907bb857fd8",
+    "thread_id": "01a15e00-89bc-77d1-9493-154aa3d21e76",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 161562,
+      "cached_input_tokens": 113152,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 938,
+      "reasoning_output_tokens": 150
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:28:15.008Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/output.mjs outputFiles/documentLines recursively list regular files with project-relative paths; reviewPack includes them. The AC1 tests in test/pack-0354.test.mjs passed, including code-ticket compatibility."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelDocuments supplies file URLs; documentsPart, openDocument and documentPane provide links, formatted Markdown and a back button. Passing AC2 tests exercise these behaviours and the real server's file responses."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "documentFile rejects symlinks beneath the resolved output directory, but fs.realpathSync(outputPath(repo, t)) follows symlinks at the output directory itself or its ancestors before establishing the boundary. Existing AC3 tests cover only links within that directory."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded test output reports 167 passed, zero failed and three skipped across 170 tests. The changes and regression tests provide no other evidence of regressions; the whole-suite check remains for shipping."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/output.mjs",
+        "issue": "documentFile follows a symlink at the ticket's output folder, or any parent beneath outputs/, and treats its destination as the allowed boundary. For example, if outputs/memos/pricing points to another directory, requesting output/secret.txt serves that directory's secret.txt. outputFiles also lists those external files. This bypasses the ticket's requirement to reject paths that escape by a link.",
+        "suggested_fix": "Check the configured output directory and its ancestors beneath the project root for symlinks before listing or serving files, rather than establishing the boundary from an already resolved destination. Add regression tests for a symlink replacing the output folder and a symlink at an intermediate parent; external files must not be listed and requests must return 404.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The review pack lists document files, and the panel opens Markdown with a way back. The tested flows pass. One file-access boundary needs fixing: a linked output folder can expose files outside the ticket's intended folder."
+  }
+}
+```
+
+</details>
