@@ -91,6 +91,7 @@ This resumes the same Codex session. The reviewer remembers its earlier findings
 Check `speck next <id>` after each round:
 - `ship`: the reviewer approved with every criterion passing and no open blocking findings. Go to the build skill's section 5 (Approved). Never merge or ship unless the user runs `/speck-ship`. `speck run`'s ship queue ships approved tickets when `auto_ship` in `speck/config.yml` allows it.
 - `fix`: take another turn. This includes the extra round: when the round at `max_review_rounds` asked for changes with no more than one blocking finding open, `speck next` says `fix` and `speck review` and `speck record` accept one more round. Take it like any other, without asking the user. A ticket gets only one extra round. Never change `limits.max_review_rounds` in `speck/config.yml` to get past a block.
+- `review`: the user asked for changes to the approved ticket with `speck changes`, and no round has looked at them yet. Make them and run a round, as the build skill's "Changes asked for" says.
 - `block`: max rounds reached (and the extra round, if the ticket had one), repeated disagreement on the same finding, or the reviewer escalated. Block the ticket with the reason as the question, using the build skill's section 6.
 
 speck overrides an `approve` that still has failing criteria or open blocking findings, so a lenient reviewer can't wave a change through.
