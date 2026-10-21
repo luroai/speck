@@ -1,7 +1,7 @@
 ---
 id: "0352"
 title: "Write a document task's document into outputs"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0351"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T10:08:13.414Z"
 approved: "2026-10-21T10:12:31.560Z"
+finished: "2026-10-21T10:15:04.201Z"
 
 ---
 # 0352 · Write a document task's document into outputs
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 A build of a document task would write tests and code. And a document written in the build's worktree would be lost, because `outputs/` isn't in git, so nothing from it is ever merged.
