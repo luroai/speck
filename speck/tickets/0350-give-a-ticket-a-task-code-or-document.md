@@ -41,6 +41,7 @@ A ticket says its task, `code` or `document`, and it shows on the board.
 ## Notes
 - Agreed with the user 2026-10-21: the field is called "task", not "kind". `code` is the default, so existing tickets need no change.
 - `TYPES` and `ticketType` in `scripts/core.mjs`, `lintTicket` in `scripts/lint.mjs`, `templates/ticket.md`, and `typeTag` in `templates/panel.html` for the tag.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
