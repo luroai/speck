@@ -45,7 +45,7 @@ A document task waits approved until the user ships it, and shipping it carries 
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A document task no longer ships by itself, even with auto-ship on for every risk: once the reviewer approves it, it waits for you to read the document and press Ship. Shipping it is quick, as no tests run: it just files the ticket as done. If its branch has changed anything outside speck's own records, shipping refuses and names those files. To see it, build a document task with auto-ship on: it stays approved, and the auto-ship message says a document task waits for you. Code tickets ship exactly as before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +55,7 @@ A document task waits approved until the user ships it, and shipping it carries 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. Round 1's two findings (pull request mode still ran the tests for a document task, and a docs test tied to the brief's wording) were fixed in round 2.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -134,6 +135,87 @@ A document task waits approved until the user ships it, and shipping it carries 
     ],
     "escalation_question": "",
     "summary": "Local document shipping works and automatic shipping is blocked. Two fixes remain: PR shipping still runs tests for documents, and a new documentation test would break on a harmless wording change."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "bd5409b279e5bb96accb2c56976cbfc0f9a91c73",
+    "thread_id": "01a15e08-1099-7251-bcd4-b02db33b0842",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 260585,
+      "cached_input_tokens": 203264,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1784,
+      "reasoning_output_tokens": 37
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:38:31.146Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "ship.mjs autoShipWhyNot blocks document tasks before checking configuration. statusData supplies the task type, and shipOrder excludes tickets with auto_ship false. Both AC1 behavioural tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "shipTicket skips tests for document tasks. pr-ship.mjs testLanding now also skips tests after checking merge conflicts. Local and PR integration tests passed with a test command that would leave a marker and fail if invoked; both verify the ticket becomes done."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "shipChecks rejects and names changes outside speck/ before shipping. Passing AC3 tests cover local refusal with unchanged branch tips and PR refusal without opening or merging a pull request."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The document-specific conditions leave code-ticket testing and shipping intact. The AC4 test and existing shipping regression tests passed, including code auto-shipping coverage."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported regression run passed 258 tests, with three skipped and no failures. Existing tests were not weakened; the whole-suite landing check remains the shipping gate for code tickets."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/pr-ship.mjs",
+        "issue": "PR shipping previously ran the suite for document tasks.",
+        "suggested_fix": "Implemented: testLanding skips the suite for document tasks while retaining the conflict check, with passing PR integration coverage.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/ship-0355.test.mjs",
+        "issue": "The documentation test previously depended on an exact numbered heading.",
+        "suggested_fix": "Implemented: assertions now check setting and folder names without depending on heading wording or numbering.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Document tasks now wait for you to ship them, skip tests in both local and PR shipping, and refuse changes outside speck/. Both previous findings are resolved, and the reported regression tests pass."
   }
 }
 ```
