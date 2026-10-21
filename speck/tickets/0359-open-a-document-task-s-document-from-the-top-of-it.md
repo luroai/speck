@@ -1,7 +1,7 @@
 ---
 id: "0359"
 title: "Open a document task's document from the top of its review pack"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T14:38:20.251Z"
+approved: "2026-10-21T14:43:36.513Z"
 
 ---
 # 0359 · Open a document task's document from the top of its review pack
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In the trial run (0358), the user found a document task's document hard to spot: the panel lists it under the acceptance criteria table, below the verdict, the summary and the criteria. And pressing it opened the document twice: formatted in the panel's side pane, as intended, and in a new tab of cptr's built-in browser as well. For a document, reading it is Gate 2, so opening it should be the first thing in the pack and happen once.
@@ -55,9 +56,14 @@ To see it, open the review pack of a document task, such as 0358, and press its 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 162,783
+- Elapsed since build started: 5 min
+- Changed lines: 35 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
