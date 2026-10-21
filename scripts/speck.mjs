@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketTask, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
@@ -432,6 +432,7 @@ export function statusData(repo) {
     return withForeman(t, fixing, { // 0317
       ...t.fm,
       type: ticketType(t),
+      task: ticketTask(t), // 0350
       priority: ticketPriority(t),
       path: posix(path.relative(t.at || repo, t.file)),
       worktree: t.at || null,
