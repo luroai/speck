@@ -39,6 +39,7 @@ For a document task, the reviewer reads the document and cites the passages that
 ## Notes
 - `templates/reviewer-prompt.md` and the prompt building in `scripts/review.mjs`. The reviewer prompt already has this rule for criteria marked `(checked by review)`.
 - Checked 2026-10-21: Codex's `read-only` sandbox can read files outside the worktree it runs in, such as the main checkout's `outputs/` (codex-cli 0.159.0, `codex exec --sandbox read-only` run in another folder read and listed files under `/tmp` and in the main checkout).
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
