@@ -6,11 +6,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketTask, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, changedLines, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketTask, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
 import { cmdPicture } from './pictures.mjs';
+import { cmdOutput } from './output.mjs';
+import { cmdDiffstat } from './diffstat.mjs';
 import { cmdClose, commitTicketOnly } from './close.mjs';
 import { SKILL_DIRS, cmdDoctor, cmdInit } from './install.mjs';
 import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
@@ -516,15 +518,6 @@ function cmdStatus(args = []) {
   console.log(`\nIDEAS (${waiting + inbox + ticketed}: ${waiting} waiting, ${inbox} in the inbox, ${ticketed} ticketed) in speck/ideas/`);
 }
 
-function cmdDiffstat() {
-  const repo = findRepoRoot();
-  const cfg = loadConfig(repo);
-  const { total, counted } = changedLines(repo, cfg.base_branch);
-  for (const r of counted) console.log(`  ${String(r.lines).padStart(5)}  ${r.file}`);
-  console.log(`${total} changed lines (limit ${cfg.limits.max_changed_lines}, excluding tests, lockfiles and speck/)`);
-  if (total > cfg.limits.max_changed_lines) throw new SpeckError('Over the size limit: stop and propose a split.', 2);
-}
-
 const HELP = `speck: Ship code you can't read, and still trust it.
 
   speck init                          set up speck in this repo, or update it (re-run any time)
@@ -566,6 +559,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
                                       doesn't read code)
   speck picture <id> <file> "<caption>"  keep a picture of a visual change with the ticket's review pack
                                       (--clear instead of a file and caption: remove its pictures)
+  speck output <id>                   print a document task's folder in the main checkout's outputs/, making it if missing
   speck merge-check <id>              what merging the base branch into the ticket's branch would conflict on, as JSON
   speck ship <id> [--auto]            merge an approved ticket into the base branch (the user's gate; --auto
                                       ships only if auto_ship in speck/config.yml allows it for this ticket)
@@ -577,7 +571,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
 `;
 
 const COMMANDS = { init: cmdInit, doctor: cmdDoctor, detect: cmdDetect, agents: cmdAgents, new: cmdNew, lint: cmdLint, set: cmdSet, config: args => args[0] === 'show' ? cmdConfigShow(args.slice(1)) : cmdConfig(args), start: cmdStart, cancel: cmdCancel, status: cmdStatus, panel: cmdPanel, run: cmdRun, pause: cmdPause, play: cmdPlay, stop: cmdStop, diffstat: cmdDiffstat, test: cmdTest,
-  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, 'merge-check': cmdMergeCheck, ship: cmdShip, pr: cmdPr, foreman: cmdForeman };
+  review: cmdReview, record: cmdRecord, prompt: cmdPrompt, 'reviewer-settings': cmdReviewerSettings, 'review-running': cmdReviewRunning, diff: cmdDiff, close: cmdClose, next: cmdNext, pack: cmdPack, picture: cmdPicture, output: cmdOutput, 'merge-check': cmdMergeCheck, ship: cmdShip, pr: cmdPr, foreman: cmdForeman };
 
 // Runs one command line, as `node speck.mjs <args>` does: a SpeckError it ends with is thrown.
 function dispatch([cmd, ...args]) {

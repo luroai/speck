@@ -43,6 +43,8 @@ A build of a document task writes the document, from the sources the ticket name
 - Nothing in `outputs/` is in git, so there's no undo. That's why criterion 4 matters.
 - `scripts/speck.mjs` (the command and its help line), `.claude/skills/speck-build/SKILL.md` sections 2 and 3.
 - Failing before this build: none
+- Self-check: no changes (tried a file where the folder goes, an unknown id, no id, `.`-style and Windows paths through lint, and running from a worktree). `cmdDiffstat` moved to `scripts/diffstat.mjs` so `scripts/speck.mjs` stays under the 600-line rule.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
