@@ -1,7 +1,7 @@
 ---
 id: "0353"
 title: "Tell the reviewer what counts as evidence for a document"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"
 after: ["0352"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T10:15:49.117Z"
+approved: "2026-10-21T10:19:50.755Z"
 
 ---
 # 0353 · Tell the reviewer what counts as evidence for a document
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The reviewer is told to judge each criterion from code and tests. A document task has no tests, and its document is in the main checkout's `outputs/`, outside the branch the reviewer is shown, so the reviewer wouldn't know where to look or what counts as evidence.
@@ -50,9 +51,15 @@ When the reviewer checks a ticket that writes a document rather than code, it's 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Folders containing more than 200 files receive an incomplete inventory: remaining filenames are replaced with 'and N more'.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 259,554
+- Elapsed since build started: 4 min
+- Changed lines: 54 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (Delivery log only, none to the inbox):
 - A file name containing a backtick shows oddly in the prompt's file list, as each name is wrapped in backticks. Cosmetic.
