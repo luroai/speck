@@ -1,7 +1,7 @@
 ---
 id: "0354"
 title: "Link to the document from its review pack"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0353"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T10:22:34.885Z"
 approved: "2026-10-21T10:29:30.741Z"
+finished: "2026-10-21T10:32:08.026Z"
 
 ---
 # 0354 · Link to the document from its review pack
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 For a document, Gate 2 is reading the document itself, not a summary of it. Today the review pack shows the reviewer's verdict and evidence but gives no way to open what the build wrote.
