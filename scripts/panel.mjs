@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, findTicket, checkSetValue, checkSetTicket, setTicketField, worktreeList, padId, readableLog, ticketShown, runsOf, commitTicketOnly } from './speck.mjs';
 import { stopBuild } from './run.mjs';
-import { panelShip, panelRunOn, panelRunOff, panelRunState } from './panel-run.mjs';
+import { panelShip, panelChanges, requestBody, panelRunOn, panelRunOff, panelRunState } from './panel-run.mjs';
 export { panelRunOn } from './panel-run.mjs';
 import { boardReader } from './panel-board.mjs';
 import { panelPack } from './pack.mjs';
@@ -24,7 +24,7 @@ import { panelForemanReply } from './foreman-answer.mjs';
 import { findAgentsAsync, agentModelsAsync } from './agents.mjs';
 import { goWith } from './go-with.mjs';
 
-// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, the speck run switch and a setting) ----------
+// ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch and a setting) ----------
 
 const PANEL_PORT = 4777;
 const htmlEscape = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -227,7 +227,7 @@ function codeHash() {
 }
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
-// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship and POST /api/run/on or /off. Every request reads the files afresh, the page
+// POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes and POST /api/run/on or /off. Every request reads the files afresh, the page
 // included, so a changed panel.html shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
@@ -416,6 +416,14 @@ export async function panelServer() {
       panelShip(repo, ship[1])
         .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } }))
         .then(out => { shipping = null; wrote(res, out); });
+      return;
+    }
+    const changes = where.match(/^\/api\/tickets\/(\d{1,4})\/changes$/); // 0357: Ask for changes, with the note
+    if (req.method === 'POST' && changes) {
+      if (!origins.has(String(req.headers.origin || '').toLowerCase()) || !sameToken(req.headers['x-speck-token'], token))
+        return send(res, 403, 'application/json', JSON.stringify({ error: 'Forbidden: only the panel page this server sent can do that. Reload it.' }));
+      requestBody(req).then(body => (body === null ? { status: 413, body: { error: 'That note is too long. Shorten it and try again.' } } : panelChanges(repo, changes[1], body)))
+        .catch(e => ({ status: 500, body: { error: e instanceof SpeckError ? e.message : String(e?.message || e) } })).then(out => wrote(res, out));
       return;
     }
     const runSwitch = where.match(/^\/api\/run\/(on|off)$/);

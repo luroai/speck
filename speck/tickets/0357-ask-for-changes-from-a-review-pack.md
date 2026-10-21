@@ -39,6 +39,7 @@ An approved ticket's review pack in the panel has a box for a note and an "Ask f
 ## Notes
 - The Ship button (0133) is the pattern to follow: its route in `scripts/panel.mjs` and its place above the review pack in `templates/panel.html`.
 - Failing before this build: none
+- Self-check: what speck said after a sent note stayed for the life of the page and hid the box, even once the ticket was approved again; opening the pack now clears it, as it does Ship's messages.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

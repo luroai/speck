@@ -1,4 +1,4 @@
-// The panel's writes that start or stop speck itself: the Ship button and the speck run switch.
+// The panel's writes that start or stop speck itself: the Ship and Ask for changes buttons and the speck run switch.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,6 +23,38 @@ export async function panelShip(repo, id) {
     child.on('close', code => resolve(code === 0
       ? { status: 200, body: { ok: true, message: out.trim() } }
       : { status: 409, body: { error: err.trim() || `speck ship stopped with exit code ${code}.` } }));
+  });
+}
+
+// 0357: an approved ticket's Ask for changes button runs `speck changes <id> "<note>"` (0356), as the Ship button runs
+// speck ship. `body` is the request's, {"note": "<note>"}. Resolves with { status, body }: 200 and what speck changes
+// said, or 409 and why it refused, which changes nothing.
+export async function panelChanges(repo, id, body) {
+  let v = null;
+  try { v = JSON.parse(body || ''); } catch { /* refused below */ }
+  if (!v || typeof v !== 'object' || Array.isArray(v) || typeof v.note !== 'string') return { status: 400, body: { error: 'The note didn\'t arrive as the panel sends it. Reload the page and try again.' } };
+  try { findTicket(repo, id); } catch (e) { if (e instanceof SpeckError) return { status: 404, body: { error: e.message } }; throw e; }
+  const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), 'speck.mjs');
+  return new Promise(resolve => {
+    const child = spawn(process.execPath, [cli, 'changes', padId(id), v.note], { cwd: repo, stdio: ['ignore', 'pipe', 'pipe'] });
+    let out = '', err = '';
+    child.stdout.setEncoding('utf8').on('data', d => { out += d; });
+    child.stderr.setEncoding('utf8').on('data', d => { err += d; });
+    child.on('error', e => resolve({ status: 500, body: { error: `Couldn't run speck changes: ${e.message}` } }));
+    child.on('close', code => resolve(code === 0
+      ? { status: 200, body: { ok: true, message: out.trim() } }
+      : { status: 409, body: { error: err.trim() || `speck changes stopped with exit code ${code}.` } }));
+  });
+}
+
+// A request's body as text, or null once it's over 64 KB.
+export function requestBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', c => { size += c.length; if (size <= 65536) chunks.push(c); });
+    req.on('end', () => resolve(size > 65536 ? null : Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
   });
 }
 
