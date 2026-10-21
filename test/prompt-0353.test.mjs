@@ -108,3 +108,14 @@ test('0353 AC1 self-check: a later review round lists the files in the folder as
   assert.match(first, /doesn't exist/);
   assert.ok(second.includes(folder(r)) && second.includes('memo.md'));
 });
+
+test('0353 AC1 F1: a folder with hundreds of files has every one listed', () => {
+  const r = docRepo();
+  const dir = path.join(r.dir, 'outputs', 'memos', 'pricing');
+  fs.mkdirSync(dir, { recursive: true });
+  for (let i = 0; i < 250; i++) fs.writeFileSync(path.join(dir, `part-${i}.md`), 'x\n');
+  const p = r.run('prompt', '1');
+  assert.equal(p.status, 0, p.stderr);
+  for (let i = 0; i < 250; i++) assert.ok(p.stdout.includes(`\`part-${i}.md\``), `part-${i}.md is listed`);
+  assert.doesNotMatch(p.stdout, /and \d+ more/);
+});
