@@ -1,7 +1,7 @@
 ---
 id: "0350"
 title: "Give a ticket a task: code or document"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,7 +17,7 @@ created: 2026-10-21
 ---
 # 0350 · Give a ticket a task: code or document
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 Every ticket is a code change today, so there's no way to say a ticket's job is to write a document instead. The document task (`speck/ideas/2026-10-19-add-job-kinds-one-at-a-time.md`, first on the roadmap) needs each ticket to say which task it is before anything can treat a document differently.
