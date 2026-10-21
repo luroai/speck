@@ -1,7 +1,7 @@
 ---
 id: "0357"
 title: "Ask for changes from a review pack"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ after: ["0356"]                # ticket ids that must be done first
 created: 2026-10-21
 started: "2026-10-21T10:52:50.899Z"
 approved: "2026-10-21T10:59:14.506Z"
+finished: "2026-10-21T11:01:53.158Z"
 
 ---
 # 0357 · Ask for changes from a review pack
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Gate 2 happens in the panel, often on a phone. With `speck changes` (0356) only on the command line, a user reading a document in the panel can ship it but can't ask for changes there.
