@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { STATUSES, EFFORTS, TYPES, blank, contentLines, ticketType, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
+import { STATUSES, EFFORTS, TYPES, TASKS, blank, contentLines, ticketType, ticketTask, ticketPriority, validPriority, ticketHeader, splitHeader, fmEnd, ticketRounds } from './core.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ticketSameModelProblem } from './same-model.mjs';
 
@@ -17,6 +17,7 @@ export function lintTicket(ticket, cfg) {
   if (fm.size === 'L') errors.push('size L can never be ready: split it into sibling tickets.');
   if (!['low', 'high'].includes(fm.risk)) errors.push(`risk must be low or high (got "${fm.risk}").`);
   if (ticketType(ticket) !== null && !TYPES.includes(fm.type)) errors.push(`type must be blank, bug or fix (got "${fm.type}").`);
+  if (!TASKS.includes(ticketTask(ticket))) errors.push(`task must be blank, ${TASKS.join(' or ')} (got ${JSON.stringify(fm.task)}).`);
   if (!validPriority(ticketPriority(ticket), fm.type))
     errors.push(fm.priority === 0
       ? 'priority must be blank or a whole number from 1 to 5 (got 0): priority 0 is only for a fix ticket.'
