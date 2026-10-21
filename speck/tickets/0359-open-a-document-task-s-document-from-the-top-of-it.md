@@ -1,7 +1,7 @@
 ---
 id: "0359"
 title: "Open a document task's document from the top of its review pack"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-21
 ---
 # 0359 · Open a document task's document from the top of its review pack
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 In the trial run (0358), the user found a document task's document hard to spot: the panel lists it under the acceptance criteria table, below the verdict, the summary and the criteria. And pressing it opened the document twice: formatted in the panel's side pane, as intended, and in a new tab of cptr's built-in browser as well. For a document, reading it is Gate 2, so opening it should be the first thing in the pack and happen once.
