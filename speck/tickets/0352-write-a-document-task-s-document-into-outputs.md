@@ -1,7 +1,7 @@
 ---
 id: "0352"
 title: "Write a document task's document into outputs"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -13,11 +13,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-17-review-documents-an-agentic-task-writes.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0351"]                # ticket ids that must be done first
 created: 2026-10-21
+started: "2026-10-21T10:08:13.414Z"
 
 ---
 # 0352 · Write a document task's document into outputs
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A build of a document task would write tests and code. And a document written in the build's worktree would be lost, because `outputs/` isn't in git, so nothing from it is ever merged.
