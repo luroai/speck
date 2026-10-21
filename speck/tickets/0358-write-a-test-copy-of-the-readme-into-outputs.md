@@ -1,7 +1,7 @@
 ---
 id: "0358"
 title: "Write a test copy of the README into outputs"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ output: tests
 ---
 # 0358 · Write a test copy of the README into outputs
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The document task (0350 to 0357) has shipped, but only its own tests have checked it. No real document ticket has gone through `speck run` yet: build, review, the review pack's link, and waiting to be shipped by hand.
