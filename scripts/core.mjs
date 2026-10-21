@@ -158,6 +158,9 @@ function fieldValue(ticket, key) {
 // A ticket's type: null or its value ("bug" or "fix", a fix for a broken base branch, are the only valid ones).
 export const TYPES = ['bug', 'fix'];
 export const ticketType = ticket => fieldValue(ticket, 'type');
+// 0350: a ticket's task: what its build makes. Missing or blank means "code".
+export const TASKS = ['code', 'document'];
+export const ticketTask = ticket => fieldValue(ticket, 'task') ?? 'code';
 // A ticket's priority: null (none) or its value, which is valid only as a whole number from 1 to 5, or 0 on a fix ticket.
 export const ticketPriority = ticket => fieldValue(ticket, 'priority');
 export const validPriority = (v, type) => v === null || (Number.isInteger(v) && v >= (type === 'fix' ? 0 : 1) && v <= 5);
