@@ -46,7 +46,9 @@ The user sends a note back to an approved ticket, its build revises the work, an
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you read an approved result and want something changed, you can now send a note back to it with `speck changes`, rather than writing a new ticket. The note is kept, dated, in the ticket's review history. While `speck run` is on, it hands the note to the same build session that made the work. That build makes the changes, and the reviewer checks them against your note as well as the ticket's original goals. Until it's approved again, nothing ships it, automatically or by hand.
+
+To see it, take an approved ticket that `speck run` built, run `speck changes <id> "what you want changed"`, and watch the ticket go back to reviewing and then approved again. It refuses, saying why, for a ticket that isn't approved, an empty note, or a build it can't pick up again. Worth knowing: the rounds that check your changes are labelled "merge rounds" in the history, even though nothing was merged, and there's no button for this in the panel yet (that's ticket 0357).
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +58,10 @@ The user sends a note back to an approved ticket, its build revises the work, an
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups:
+  - Rounds that check the user's changes are labelled "merge round": speck/ideas/2026-10-21-call-a-round-after-asked-for-changes-a-changes-round.md.
+  - Known limit: when a changes hand-back is dropped because a round already reviewed the changes, speck run says nothing about it in its log.
+  - Known limit: `speck status`'s text view doesn't show that changes are waiting on an approved ticket; the panel's box and button are 0357.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -122,6 +128,74 @@ The user sends a note back to an approved ticket, its build revises the work, an
     ],
     "escalation_question": "",
     "summary": "The normal revision flow works and prevents premature shipping. However, a commit made before the build resumes silently cancels its queued revision while leaving shipping blocked. Fix that lost-request case before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "c0a3d240c4acf04804cde4333744ea9e04bc5d21",
+    "thread_id": "01a15e13-0929-77f3-981c-65b35c4e7195",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 370211,
+      "cached_input_tokens": 304256,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1601,
+      "reasoning_output_tokens": 212
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:49:38.926Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "askForChanges commits the dated Review log note. ticketNext and autoShipWhyNot prevent shipping pending changes. Passing AC1 tests cover the CLI, ship queue and reapproval."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "handBackQueue preserves pending user requests across commits and resumes the build with handBackMessage. reviewerPrompt includes the note until approval. Passing AC2 tests exercise these behaviours, including the F1 regression."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "askForChanges validates refusals before writing. Passing AC3 tests verify explanatory errors and unchanged ticket contents, commit and run record."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reported round-2 results: 155 passed, zero failed, three skipped, including related hand-back and session tests. No weakened tests or unrelated changes found."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/hand-back.mjs",
+        "issue": "A commit before resumption previously discarded the queued user request, leaving shipping blocked.",
+        "suggested_fix": "Implemented: changes hand-backs remain live while the Review log request awaits review; shipping hand-backs retain their existing head check. Passing regression tests cover preservation and removal after review.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The revision flow now preserves requests across intervening commits, resumes the build with the note, and requires another review before shipping. The previous blocking issue is resolved, and all reported tests pass."
   }
 }
 ```
