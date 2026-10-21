@@ -7,17 +7,22 @@ import { shipState } from './ship.mjs';
 import { codexResumeArgv } from './codex-build.mjs';
 import { cursorResumeArgv } from './cursor-build.mjs';
 import { claudeStartWords, configBuilder } from './ticket-builder.mjs';
+import { buildTicket } from './build-records.mjs';
+import { ticketRounds } from './core.mjs';
+import { changesPending } from './changes-asked.mjs';
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
 
 // The steps in /speck-build's section 5 for each kind of hand-back (0194).
-const HAND_BACK_STEPS = { conflict: 'Conflict', tests: 'Tests fail together', base: 'Base branch failing' };
+const HAND_BACK_STEPS = { conflict: 'Conflict', tests: 'Tests fail together', base: 'Base branch failing', changes: 'Changes asked for' };
 
 // What a build's session is told when speck run hands its ticket back (0194): what the ship found, in speck ship's own
 // words, and which of /speck-build's steps to follow. `count` is how many conflict or failing-test hand-backs this one
 // makes for the ticket: the third asks the session to block the ticket instead of merging again.
+// 0356: kind 'changes' is the user's note from speck changes, as `why`: the session makes them and is reviewed again.
 export function handBackMessage({ id, kind, why, base, count }) {
+  if (kind === 'changes') return `The user read ticket ${id}'s approved result and asked for changes: ${why}\nIt's in the ticket's Review log, and ${id} won't ship until it's approved again. Follow the "Changes asked for" steps in section 5 of /speck-build for ${id}, in its worktree: make the changes, then run the review loop again, as the reviewer's next round checks the note as well as the acceptance criteria. Once it's approved again, close it and stop: it then waits to be shipped as before.`;
   const what = {
     conflict: `merging it into ${base} hit a conflict`,
     tests: `the tests failed on it as it would land, merged with ${base} as it is now, while ${base}'s own tests pass: its own change broke them, or it doesn't work with ${base}'s newer changes`,
@@ -90,7 +95,7 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
   // for conflicts and failing tests, so the third asks the session to block the ticket instead.
   const resumeHandBack = (id, file, rec) => {
     const { hand_back: h, exited: _e, exit_code: _c, ...kept } = rec;
-    const count = (Number.isInteger(rec.hand_backs) ? rec.hand_backs : 0) + (h.kind === 'base' ? 0 : 1);
+    const count = (Number.isInteger(rec.hand_backs) ? rec.hand_backs : 0) + (h.kind === 'base' || h.kind === 'changes' ? 0 : 1);
     const { argv, why } = resumeFor(words, cfg, id, rec, handBackMessage({ id, kind: h.kind, why: String(h.why ?? ''), base: cfg.base_branch, count }));
     const next = { ...resumedRecord(kept), handed_back: new Date().toISOString(), hand_backs: count, hand_back_command: argv };
     if (!argv) { try { saveRecord(file, { ...kept, exited: rec.exited, exit_code: rec.exit_code }); } catch { /* said below */ } return cantHandBack({ id, kind: h.kind }, rec, why); }
@@ -100,7 +105,8 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     startBuild(id, argv, cwd, rec.session, 'a', pid => `${JSON.stringify({ ...next, pid: pid ?? rec.pid }, null, 2)}\n`, rec.env_session ?? rec.session);
   };
 
-  // A ticket's hand-back from its run record: { file, rec, h, live }, live while its branch is where the ship found it.
+  // A ticket's hand-back from its run record: { file, rec, h, live }, live while its branch is where the ship found it,
+  // or, for changes the user asked for (0356), while no round has reviewed them, whatever was committed since.
   // null if it has none.
   const pending = id => {
     if (!/^[\w-]+$/.test(String(id))) return null;
@@ -109,7 +115,11 @@ export function handBackQueue({ repo, cfg, words, max, running, startBuild, save
     try { rec = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
     const h = rec?.hand_back;
     if (!h || typeof h !== 'object' || !Object.hasOwn(HAND_BACK_STEPS, h.kind)) return null;
-    return { file, rec, h, live: h.head === refsOf(repo, cfg, id).head };
+    return { file, rec, h, live: h.kind === 'changes' ? changesWaiting(id) : h.head === refsOf(repo, cfg, id).head };
+  };
+
+  const changesWaiting = id => {
+    try { const { t } = buildTicket(repo, cfg, id); return changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0; } catch { return false; }
   };
 
   // Approved tickets with a hand-back waiting, each handed back while there's a free slot and no ship of it is running.

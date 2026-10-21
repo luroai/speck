@@ -8,6 +8,7 @@ import { fullPrompt, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong,
 import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
+import { changesPending, changesToReview } from './changes-asked.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -162,6 +163,14 @@ export function nextAction(all, cfg) {
   return { action: 'fix' };
 }
 
+// 0356: nextAction for a ticket as written in `raw`: changes the user asked for since its last round need a review
+// round first, so it isn't closed or shipped as it was approved before them.
+export function ticketNext(raw, all, cfg) {
+  const pending = changesPending(raw, all);
+  if (pending.length) return { action: 'review', reason: `the user asked for changes after round ${pending.at(-1).after}. Make them, then run a review round` };
+  return nextAction(all, cfg);
+}
+
 // Round 1 also sets a building ticket to reviewing, and any round an approved one, in the same write, so a refused verdict changes nothing.
 export function saveRound(repo, id, verdict, meta) {
   const t = findTicket(repo, id);
@@ -191,12 +200,22 @@ export function reviewerPrompt(repo, ticket, cfg, round, extra) {
     `# Review round ${round}`,
     'The builder has responded to your previous findings. Keep finding ids stable. For each earlier finding, set state to resolved, dispute_accepted or dispute_rejected (or keep it open if the fix is incomplete). Raise new findings only for real problems introduced or missed.',
     '## Builder response', extra.response || '(none provided)',
+    ...changesSection(ticket.raw),
     ...(doc ? [doc] : []),
     ...(extra.merged ? [`This round follows a merge of ${cfg.base_branch} into the ticket branch, made to resolve a conflict when shipping. So the diff below is the branch's whole change against ${cfg.base_branch} as merged, which is what would ship, not only the changes since your last review. Check that each resolved file keeps the intent of both sides.`] : []),
     `## ${extra.merged ? `The whole change against ${cfg.base_branch} as merged` : 'Changes since your last review'} (${extra.sinceSha.slice(0, 8)}..HEAD)`, '```diff', extra.diff, '```',
     '## Test output', '```', extra.tests, '```',
     'Re-check every acceptance criterion against the code as it is now and return the full verdict JSON.',
   ].join('\n\n');
+}
+
+// 0356: the changes the user asked for after the last approval, for the reviewer to check until a round approves them.
+function changesSection(raw) {
+  const asked = changesToReview(raw, ticketRounds(raw).rounds);
+  if (!asked.length) return [];
+  return ['## Changes asked for by the user',
+    `The user read the approved result and asked for ${asked.length > 1 ? 'these changes' : 'this change'}:\n\n${asked.map(c => `- ${c.at}: ${c.note}`).join('\n')}`,
+    `Check that the change now does what ${asked.length > 1 ? 'each note asks' : 'the note asks'}, as well as every acceptance criterion. Raise a blocking finding for anything it asks that isn't done.`];
 }
 
 export const NO_INSPECT = '⚠️ Reviewer could not inspect the repo; reviewed the diff only';
@@ -381,7 +400,8 @@ export function cmdRecord(args) {
 export function cmdNext(args) {
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
-  const next = nextAction(rounds(repo, args[0]), cfg);
+  const t = findTicket(repo, args[0]);
+  const next = ticketNext(t.raw, ticketsRounds(repo, t), cfg);
   console.log(`${next.action}${next.reason ? `: ${next.reason}` : ''}`);
 }
 

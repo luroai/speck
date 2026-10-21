@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { SpeckError, sh, git, findRepoRoot, loadConfig, findTicket, placeTicket, writeField, isAncestor, ticketBranches, ticketTask } from './core.mjs';
-import { rounds, nextAction } from './review.mjs';
+import { rounds, ticketNext } from './review.mjs';
+import { changesPending } from './changes-asked.mjs';
 import { testRun } from './results.mjs';
 import { failingTests } from './tap.mjs';
 import { sharedCacheDir } from './turns.mjs';
@@ -31,7 +32,7 @@ export function shipChecks(repo, cfg, pad, branch) { // 0295: and before opening
   if (t.fm.status !== 'approved')
     throw new SpeckError(`Ticket ${pad} is "${t.fm.status}" on ${branch}, not "approved". Only a ticket the reviewer approved can be shipped.`);
   const all = rounds(repo, pad);
-  const next = nextAction(all, cfg);
+  const next = ticketNext(t.raw, all, cfg);
   if (next.action !== 'ship')
     throw new SpeckError(`The review loop says "${next.action}", not "ship"${next.reason ? `: ${next.reason}` : ''}. Finish the review first.`);
   const reviewed = all[all.length - 1].meta.reviewed_sha;
@@ -382,12 +383,15 @@ export function deleteRemoteBranch(repo, remote, branch) {
 export function autoShipBlocker(repo, cfg, id) {
   const pad = String(id).padStart(4, '0');
   const t = findTicket(repo, pad);
-  return autoShipWhyNot(cfg, pad, t.fm.risk, rounds(repo, pad), ticketTask(t));
+  const all = rounds(repo, pad);
+  return autoShipWhyNot(cfg, pad, t.fm.risk, all, ticketTask(t), changesPending(t.raw, all).length > 0);
 }
 
 // The same, from a ticket's risk and its review rounds as already read, as `speck status --json` has them (0167).
-// 0355: a document task never ships by itself, as reading it is its review.
-export function autoShipWhyNot(cfg, pad, risk, roundList, task = 'code') {
+// 0355: a document task never ships by itself, as reading it is its review. 0356: nor does one with changes the user
+// asked for (`changed`) that no round has reviewed yet.
+export function autoShipWhyNot(cfg, pad, risk, roundList, task = 'code', changed = false) {
+  if (changed) return `the user asked for changes to ticket ${pad}, and it waits for its build to make them and the reviewer to approve them`;
   if (task === 'document') return `ticket ${pad} is a document task, and a document task waits for you to ship it`;
   if (cfg.auto_ship !== true) return 'auto_ship is off in speck/config.yml';
   const allowed = [].concat(cfg.auto_ship_risk ?? []).map(String);
