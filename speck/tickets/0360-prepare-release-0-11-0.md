@@ -46,6 +46,11 @@ speck is ready to be released as 0.11.0.
 - After it ships, check that the `v0.11.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.11.0 --target main --title "speck 0.11.0" --notes-file docs/releases/v0.11.0.md`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.10.3`: 0350 to 0357 and 0359, with 0358 left out as the ticket says, and no others.
+- Built from main at `speck(0359): Open a document task's document from the top of its review pack`: 343 shipped, 16 cancelled, 12 minutes median, 1 review round median (written "1 review round", as the README had it before 0307), 170 approved in the first round, worked out as 0307 did, with its figures test.
+- 0346's checks that named 0.10.3 as the current version now check the current version, and its figures test checks only the figures 0.10.3 was built from, as 0346 did for 0343.
+- Self-check: narrowed the changelog's line on when `speck changes` refuses: a session that can't be resumed is the reason, of which a ticket `speck run` didn't build is one example.
+- Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
