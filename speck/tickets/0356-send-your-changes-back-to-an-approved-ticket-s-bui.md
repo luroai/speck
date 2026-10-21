@@ -1,7 +1,7 @@
 ---
 id: "0356"
 title: "Send your changes back to an approved ticket's build"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ started: "2026-10-21T10:41:24.475Z"
 ---
 # 0356 · Send your changes back to an approved ticket's build
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When the user reads an approved result and wants it changed, the only way today is a new ticket. Documents will often need a revision or two, and a new ticket for each one goes round in circles.
@@ -56,3 +56,74 @@ The user sends a note back to an approved ticket, its build revises the work, an
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "cbb7c5b4961184a709968d2ae7b688f722deeb85",
+    "thread_id": "01a15e13-0929-77f3-981c-65b35c4e7195",
+    "seconds": 44,
+    "usage": {
+      "input_tokens": 242382,
+      "cached_input_tokens": 181632,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1058,
+      "reasoning_output_tokens": 212
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-21T10:48:31.612Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "askForChanges commits a dated Review log entry. ticketNext and autoShipWhyNot hold shipping; the passing AC1 tests exercise CLI shipping and the ship queue."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The passing AC2 tests cover immediate resumption and reviewer prompts, but handBackQueue.check discards the request if any commit is made before resumption."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "askForChanges validates status, note and resumeFor before writing. The passing AC3 refusal test checks the ticket, commit and run record remain unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Reported test run: 119 passed, zero failed, three skipped. Related existing test files also reportedly pass; no test weakening or unrelated changes found."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/hand-back.mjs",
+        "issue": "handBackQueue.check deletes a changes hand-back whenever the branch head differs from the commit recorded with the note. For example, send a note while speck run is off, commit another ticket edit, then start speck run: the build is never resumed. The Review log still holds shipping, and speck changes refuses another note because the first remains pending, leaving the request stranded.",
+        "suggested_fix": "Keep user changes queued across subsequent commits while their Review log request still awaits review. Retain the existing stale-head handling for shipping hand-backs. Add a test that commits a ticket edit after askForChanges and verifies the queue still resumes the build with the note.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The normal revision flow works and prevents premature shipping. However, a commit made before the build resumes silently cancels its queued revision while leaving shipping blocked. Fix that lost-request case before merge."
+  }
+}
+```
+
+</details>
