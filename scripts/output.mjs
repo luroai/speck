@@ -9,9 +9,11 @@ import { outputProblem } from './lint.mjs';
 // A document task's folder in the main checkout's outputs/, as an absolute path, without making it. The ticket's
 // output must already have passed lint.
 function outputPath(repo, t) {
-  let main = repo;
-  try { main = worktreeList(repo)[0]?.path || repo; } catch { /* not a git checkout: this one */ }
-  return path.join(main, 'outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')));
+  return path.join(mainCheckout(repo), outputRel(t));
+}
+const outputRel = t => path.join('outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')));
+function mainCheckout(repo) {
+  try { return worktreeList(repo)[0]?.path || repo; } catch { return repo; /* not a git checkout: this one */ }
 }
 
 // The ticket's folder, as an absolute path, made if it's missing. Refuses, making nothing, for a code ticket or an
@@ -59,10 +61,11 @@ function outputFiles(repo, t) {
   if (ticketTask(t) !== 'document') return null;
   const problem = outputProblem(ticketOutput(t));
   if (problem) return { why: `The ticket gives no folder for the document: ${problem}`, files: [] };
-  const dir = outputPath(repo, t);
   const where = path.posix.join('outputs', path.posix.normalize(ticketOutput(t).trim().replace(/\\/g, '/')), '/');
   let files;
   try {
+    const dir = unlinkedOutput(repo, t);
+    if (!dir) return { where, files: [], why: `\`${where}\`, or a folder it's in, is a link, so speck doesn't list or open what's in it.` };
     files = fs.readdirSync(dir, { recursive: true, withFileTypes: true }).filter(e => e.isFile())
       .map(e => path.relative(dir, path.join(e.parentPath ?? e.path, e.name)).split(path.sep).join('/')).sort();
   } catch (e) {
@@ -70,6 +73,13 @@ function outputFiles(repo, t) {
     return { where, files: [], why: `\`${where}\` ${why}, so the build has written nothing there.` };
   }
   return { where, files, why: files.length ? '' : `\`${where}\` is empty: the build has written nothing there.` };
+}
+
+// The ticket's output folder as an absolute path from the project root's real path, or null when the folder, or any
+// folder it's in from outputs/ down, is a link, which could lead outside it. Throws when it can't be read.
+function unlinkedOutput(repo, t) {
+  const dir = path.resolve(fs.realpathSync(mainCheckout(repo)), outputRel(t));
+  return fs.realpathSync(dir) === dir ? dir : null;
 }
 
 // The review pack's lines about a document task's files: a heading and each file's path from the project root, or why
@@ -96,10 +106,10 @@ export function documentFile(repo, id, rel) {
   try {
     const t = findTicket(repo, id);
     if (ticketTask(t) !== 'document' || outputProblem(ticketOutput(t)) || typeof rel !== 'string' || !rel || rel.includes('\0')) return null;
-    const dir = fs.realpathSync(outputPath(repo, t));
-    const file = path.resolve(dir, rel);
-    // Inside the folder, a regular file, and no link on the way to it.
-    if (!file.startsWith(dir + path.sep) || !fs.lstatSync(file).isFile() || fs.realpathSync(file) !== file) return null;
+    const dir = unlinkedOutput(repo, t);
+    const file = dir && path.resolve(dir, rel);
+    // Inside the folder, a regular file, and no link on the way to it, from outputs/ down.
+    if (!dir || !file.startsWith(dir + path.sep) || !fs.lstatSync(file).isFile() || fs.realpathSync(file) !== file) return null;
     const ext = path.extname(file).slice(1).toLowerCase();
     return { type: Object.hasOwn(TYPES, ext) ? TYPES[ext] : 'application/octet-stream', body: fs.readFileSync(file) };
   } catch (e) {

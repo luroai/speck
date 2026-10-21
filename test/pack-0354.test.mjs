@@ -175,3 +175,21 @@ test('0354 AC2 AC3: the panel serves each file in the folder, and a 404 for any 
       assert.equal((await request(p.port, { pathName: bad })).status, 404, bad);
   } finally { await stop(p); }
 });
+
+test('0354 AC3: a link at the output folder, or at a folder it\'s in, lists nothing and serves nothing', () => {
+  for (const linked of ['outputs/memos/pricing', 'outputs/memos', 'outputs']) {
+    const r = docRepo({ files: false });
+    const elsewhere = fs.mkdtempSync(path.join(path.dirname(r.dir), 'speck-elsewhere-'));
+    // The folder the link points at holds what would be the ticket's folder, with a secret in it.
+    const inside = path.join(elsewhere, path.relative(path.join(r.dir, linked), r.out));
+    fs.mkdirSync(inside, { recursive: true });
+    fs.writeFileSync(path.join(inside, 'secret.txt'), 'Outside the project.\n');
+    fs.mkdirSync(path.dirname(path.join(r.dir, linked)), { recursive: true });
+    fs.symlinkSync(elsewhere, path.join(r.dir, linked));
+    assert.equal(fs.readFileSync(path.join(r.out, 'secret.txt'), 'utf8'), 'Outside the project.\n', 'the link leads there');
+    assert.equal(documentFile(r.dir, '1', 'secret.txt'), null, linked);
+    assert.ok(!reviewPack(r.dir, '1').includes('secret.txt'), linked);
+    assert.match(reviewPack(r.dir, '1'), /is a link/, linked);
+    assert.equal(panelPack(r.dir, '1').body.documents, undefined, linked);
+  }
+});
