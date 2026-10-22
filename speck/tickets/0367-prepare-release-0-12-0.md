@@ -1,7 +1,7 @@
 ---
 id: "0367"
 title: "Prepare release 0.12.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0366"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T16:23:48.883Z"
+approved: "2026-10-22T16:27:20.702Z"
 
 ---
 # 0367 · Prepare release 0.12.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0361 to 0366 make the panel calmer in a narrow pane, such as Cursor's or the Claude desktop app's: a finished document task is a short row, a document opens in a pop-up you can ship it from, the header is one row with the project always shown, and the Foreman's status scrolls across a dot-matrix notice board whose detail opens in a pop-up. Anyone following the setup prompt, or updating speck on another machine, gets 0.11.0 without them.
@@ -58,9 +59,14 @@ speck is ready to go out as version 0.12.0, the release with the panel changes f
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 155,393
+- Elapsed since build started: 4 min
+- Changed lines: 64 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
