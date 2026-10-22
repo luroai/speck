@@ -48,6 +48,7 @@ A review round that runs longer than 10 minutes still finishes and is recorded. 
 - Waits for 0383: both change `scripts/reviewers.mjs`.
 - A priority 0 fix: a slow reviewer stalls every build it reviews.
 - Failing before this build: none
+- Self-check: a waiting command no longer trusts a round's record forever: one whose process is gone, or that started longer ago than its reviewer could run (so its pid may be another process's now), is reported as stopped and cleared. Also passed `--tests=` and `--response=` through to the round's process as given.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
