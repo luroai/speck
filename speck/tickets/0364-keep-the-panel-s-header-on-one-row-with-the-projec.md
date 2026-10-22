@@ -1,7 +1,7 @@
 ---
 id: "0364"
 title: "Keep the panel's header on one row with the project always shown"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-keep-the-panel-s-header-compact-all-the-time.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0363"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T15:26:17.888Z"
 
 ---
 # 0364 · Keep the panel's header on one row with the project always shown
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 In a narrow window, such as the browser pane in Cursor or the Claude desktop app, the header takes two rows and drops to one as you scroll, hiding the project and base branch. It looks unsettled, and you can lose track of which repo the panel is for. It also shows speck twice: the logo mark, and the builder on the Foreman's button.
