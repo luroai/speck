@@ -42,6 +42,11 @@ A ticket uses the builder and reviewer the settings give, unless it names its ow
 - Checked 2026-10-22: `cmdNew` in `scripts/speck.mjs` sets builder, reviewer and reviewer_model from the config, and `templates/ticket.md` names `builder: claude` and `reviewer: codex`. `speck review` already falls back with `t.fm.reviewer || cfg.reviewer` (`scripts/review.mjs`), `ticketBuilder` falls back to the config's builder (`scripts/ticket-builder.mjs`), and `reviewerSettings` falls back for model and effort (`scripts/core.mjs`).
 - Waits for 0387: both change how settings reach the panel.
 - Failing before this build: none
+- `ticketAgents` in `scripts/core.mjs` gives the builder, reviewer, model and effort a ticket would use: each field it names, or else the settings' (`loadConfig`, so this machine's own settings too). `speck status --json` (and so the panel), `speck review`, lint's same-model check and `buildPlan` use it.
+- A Codex or command reviewer round compares the last round's recorded reviewer and model with this one's; when either differs it starts a fresh session with the full history (the round-1 prompt and every earlier verdict and response), says why in one line, and records `session: fresh`. Codex rounds now record `session` too. Rounds recorded without a reviewer or model aren't compared.
+- Existing tests changed because they checked that tickets copy the agents, which criterion 1 removes: review.test.mjs "AC1: speck new copies the config values" (now checks the blank ticket is reviewed with the config's values), builder-switch-0293 AC5 (both: a blank ticket takes the new builder, a named one keeps its own, and the Settings note says so), and the Settings note's wording in settings-0370, settings-0381 AC3 and run-builder-0324 AC4. The note under the builder in Settings said "Tickets already made keep the builder they were made with", which this change makes untrue.
+- The settings' explanations for builder and reviewer, the brief, and the build, review and ticket skills now say a blank ticket field uses the settings when the build or round starts.
+- Self-check: the panel's builder note, the settings' explanations and the ticket skill claimed tickets copy the builder; changed to match.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
