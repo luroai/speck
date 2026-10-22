@@ -1,7 +1,7 @@
 ---
 id: "0369"
 title: "Show the chosen agent's models before saving"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-calm-the-settings-view-down.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0368"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T20:55:11.777Z"
 
 ---
 # 0369 · Show the chosen agent's models before saving
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Picking Cursor as the builder or the reviewer leaves the model list as it was. The reviewer's model becomes a box that says to save Cursor and open Settings again, and the builder's model keeps showing the saved builder's models. You can't pick a Cursor model, such as a Grok model, until you've saved and reopened.
