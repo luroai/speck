@@ -4,8 +4,9 @@
 // printed and exits as it did. Its working files are kept with the review's others (cacheDir).
 //
 // Each start is numbered: review-run-<n>.json, made only if no file of that number exists yet, so two commands that
-// start at once can't both start a reviewer. The highest number is the current one, and nothing deletes it: a start
-// supersedes it with the next number, and the files of every earlier one are removed then.
+// start at once can't both start a reviewer. The highest number is the current one. Nothing deletes a start's record,
+// so no command that looked before a later start can claim its number again. A start removes only the output of
+// earlier ones, which the command that printed one read before marking it printed.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -76,7 +77,7 @@ export function startRound(repo, id, round, args, limitMs) {
   if (pendingRound(repo, id, limitMs, last)) return;
   const n = last + 1;
   if (!claimStart(repo, id, n, round)) return;
-  for (const old of startsIn(dir).filter(m => m < n)) for (const file of Object.values(filesOf(dir, old))) fs.rmSync(file, { force: true });
+  for (const old of startsIn(dir).filter(m => m < n)) for (const file of [filesOf(dir, old).out, filesOf(dir, old).err]) fs.rmSync(file, { force: true });
   const files = filesOf(dir, n);
   const out = fs.openSync(files.out, 'w'), err = fs.openSync(files.err, 'w');
   try {
@@ -102,7 +103,8 @@ export function waitForRound(repo, id, deadline, limitMs) {
     const c = current(repo, id);
     if (!c) throw new SpeckError(`No review round of ${id} is running or waiting to be read. Run \`speck next ${id}\` to see what to do next.`);
     const claim = () => publish(c.files.read, {}, true);
-    if (c.done) { if (claim()) return deliver(c.files, c.done); continue; }
+    // Its output is read before it's marked printed: from then on, a new start may remove it.
+    if (c.done) { const kept = output(c.files); if (claim()) return deliver(kept, c.done); continue; }
     if (!c.rec || !running(c.rec, limitMs)) {
       sleep(POLL_MS); // it may have just finished
       if (readJson(c.files.done) || !claim()) continue;
@@ -118,10 +120,12 @@ export function waitForRound(repo, id, deadline, limitMs) {
   }
 }
 
-function deliver(files, done) {
+function output(files) {
   const read = file => { try { return fs.readFileSync(file, 'utf8'); } catch { return ''; } };
-  const out = read(files.out), err = read(files.err);
-  for (const file of [files.out, files.err]) fs.rmSync(file, { force: true });
+  return { out: read(files.out), err: read(files.err) };
+}
+
+function deliver({ out, err }, done) {
   if (out) process.stdout.write(out);
   if (err) process.stderr.write(err);
   process.exitCode = Number.isInteger(done.code) ? done.code : 1;

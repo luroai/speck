@@ -137,3 +137,84 @@ A review round that runs longer than 10 minutes still finishes and is recorded. 
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "7bdeeee8c1c27b56ba0f285f9ce7bc48ee31ed7f",
+    "thread_id": "01a16547-0321-7da2-a780-1ebad34e32b2",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 251689,
+      "cached_input_tokens": 195968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2212,
+      "reasoning_output_tokens": 433
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T20:25:48.252Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "reviewWaitMs(), waitForRound() and the detached worker implement exit 12 after nine minutes while retaining the reviewer timeout. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "The sequential wait and concurrent-start tests passed, but deleting earlier start files permits a delayed starter to reclaim an old number (F1). Marking output read before consuming it also allows another starter to delete it (F2)."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both AC3 tests passed: short reviews retain their output, exit code and recorded round; roundRunning() remains visible through repeated exits 12."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both skills instruct builders to repeat the printed --wait command in the foreground until its exit code differs from 12. The AC4 document-fact test passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied selected-file run reports 176 passes, zero failures and three skips. Existing tests were not weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review-wait.mjs: startRound",
+        "issue": "The original race is narrowed but not fully resolved because earlier claim files are deleted. Command A can read last=0 and pause before claiming 1. Other commands can complete start 1 and launch start 2, deleting start 1's files. A can then successfully claim 1 and launch another reviewer while start 2 is running. Its completion is also hidden because current() selects the highest number. The new tests do not exercise a delayed claim after cleanup.",
+        "suggested_fix": "Keep claim identities permanently reserved, or use an ownership mechanism that prevents stale starters from reclaiming deleted numbers. Add a deterministic regression test that pauses a starter between reading the current number and claiming it, advances subsequent starts through cleanup, then resumes it.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/review-wait.mjs: waitForRound and deliver",
+        "issue": "A waiter publishes the .read marker before deliver() reads stdout and stderr. Another plain review command can observe that marker, start the next round and delete the previous start's output files during cleanup. The first waiter then silently prints empty output while returning the previous round's exit code. This violates the requirement to deliver the completed round's output.",
+        "suggested_fix": "Read the completed output into memory before publishing the marker that allows another start to clean it up, then let only the winning claimant print that captured output. Add a regression test interleaving delivery with the next start's cleanup.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The usual long-review workflow works and all supplied tests pass. The concurrency fix still leaves two races: a delayed command can launch an extra reviewer, and starting the next round can erase the previous round’s output before it is printed."
+  }
+}
+```
+
+</details>

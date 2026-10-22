@@ -150,6 +150,41 @@ test('0384 AC2: speck review run twice at once starts one reviewer, and its roun
   assert.equal(r.starts(), 1);
 });
 
+test('0384 AC2: a command that looked before later rounds started can never claim an earlier start again', async t => {
+  const r = slowRepo(t);
+  const dir = path.join(r.dir, 'speck', '.cache', '0001');
+  r.go();
+  assert.equal(r.run({ SPECK_REVIEW_WAIT_MS: '10000' }, 'review', '1').status, 10);
+  fs.rmSync(r.env.SLOW_GO);
+  // Round 2 is start 2, still running. A command that read "no start yet" before both now tries to claim start 1.
+  assert.equal(r.run({}, 'review', '1').status, 12);
+  assert.ok(fs.existsSync(path.join(dir, 'review-run-1.json')), 'start 1 is kept');
+  assert.equal(claimStart(r.dir, '0001', 1, 1), false);
+  assert.equal(claimStart(r.dir, '0001', 2, 2), false);
+  await until(() => r.starts() === 2);
+  r.go();
+  const done = r.run({ SPECK_REVIEW_WAIT_MS: '10000' }, 'review', '1', '--wait');
+  assert.equal(done.status, 10, done.stderr);
+  assert.match(done.stdout, /^Round 2: changes_requested/m);
+  assert.equal(r.starts(), 2, 'one reviewer for each round');
+});
+
+test('0384 AC2: a round marked printed keeps its output for the command that marked it, whatever starts next', () => {
+  const r = commandRepo();
+  const dir = path.join(r.dir, 'speck', '.cache', '0001');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'review-run-1.json'), JSON.stringify({ round: 1, pid: process.pid, started: new Date().toISOString() }));
+  fs.writeFileSync(path.join(dir, 'review-run-1.out'), 'Round 1: approve\n');
+  fs.writeFileSync(path.join(dir, 'review-run-1.done.json'), JSON.stringify({ code: 0 }));
+  const res = r.run('review', '1', '--wait');
+  assert.equal(res.status, 0);
+  assert.equal(res.stdout, 'Round 1: approve\n');
+  // The next start removes start 1's output, once it's printed, and keeps its record.
+  assert.equal(r.run('review', '1').status, 10);
+  assert.equal(fs.existsSync(path.join(dir, 'review-run-1.out')), false);
+  assert.ok(fs.existsSync(path.join(dir, 'review-run-1.json')));
+});
+
 test('0384 AC3: a reviewer that finishes within the wait gives the output, exit code and round it did before', () => {
   const r = commandRepo();
   const res = r.run('review', '1');
