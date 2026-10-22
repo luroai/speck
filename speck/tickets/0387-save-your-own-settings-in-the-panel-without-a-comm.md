@@ -1,7 +1,7 @@
 ---
 id: "0387"
 title: "Save your own settings in the panel without a commit"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T23:11:40.614Z"
 ---
 # 0387 · Save your own settings in the panel without a commit
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The panel's Save commits speck/config.yml to `main` for every setting except the two this machine can hold. It refuses to save while that file has uncommitted changes, so a change made with `speck config set` blocks the panel until someone commits it.
@@ -59,3 +59,87 @@ Saving your own settings in the panel makes no commit.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "edc33985c7809417fe8e0c56928deb1de355435d",
+    "thread_id": "01a165eb-de55-7dc1-b1e8-1b20925ebb94",
+    "seconds": 37,
+    "usage": {
+      "input_tokens": 315905,
+      "cached_input_tokens": 244864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1175,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T23:22:36.186Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelSaveSettings routes own settings to saveMachineValues; passing 0387 AC1 tests cover unchanged config and HEAD, automatic machine scope, and blank values."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0387 AC2 test verifies saves with uncommitted config changes and off the base branch leave git unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0387 AC3 tests cover mixed saves, config-only commits, dirty-config refusal and validation refusing the whole Save."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "The source labels and clear controls are covered, but sendSettings rejects clearing auto_ship_risk, and shipsMore interprets clearing auto_ship as false instead of using repo_value. These prevent some machine values being cleared through Settings."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified supplied output: 202 passed, zero failed, three skipped. Existing test changes replace the old commit and scope expectations consistently with the ticket."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clearing auto_ship_risk never saves: settingChanges represents clearing with value='', and sendSettings treats it as an invalid empty risk selection. A read-only fake-page reproduction produced no POST and the 'Tick at least one risk' error.",
+        "suggested_fix": "Exclude clear operations from empty-selection validation and add a page test that clears this machine's auto_ship_risk back to the repo value.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "shipsMore uses the blank clear payload instead of the resulting repo value. Clearing machine auto_ship=false when config.yml has true therefore sends no confirmation. The server correctly refuses it, but repeated Saves cannot produce the required confirmation, so the user cannot clear the override.",
+        "suggested_fix": "Calculate shipping changes using repo_value for clear operations, including auto_ship_risk. Test clearing overrides when that enables shipping or expands the covered risks, with confirmation and cancellation.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Personal settings now save locally without commits, and mixed saves retain the existing protections. The reported tests pass, but clearing shipping overrides is broken in the panel. Fix those clear paths before merging."
+  }
+}
+```
+
+</details>
