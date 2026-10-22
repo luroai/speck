@@ -1,7 +1,7 @@
 ---
 id: "0365"
 title: "Scroll the Foreman's status across a dot-matrix notice board"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T15:47:19.510Z"
 ---
 # 0365 · Scroll the Foreman's status across a dot-matrix notice board
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The Foreman's button in the header shows one word, such as "Building 2", so the overview of what speck run is doing is only in its detail. An old-school notice board scrolling words across a dot-matrix screen would give that overview at a glance, in the panel's LCD style.
@@ -57,3 +57,79 @@ The Foreman's button is a dot-matrix notice board that scrolls the Foreman's sta
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "ee1b221627c39b1bb39f86d0be13386cc5268d1c",
+    "thread_id": "01a1645e-d74f-78e1-aaa1-20cb22572061",
+    "seconds": 42,
+    "usage": {
+      "input_tokens": 168563,
+      "cached_input_tokens": 122112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1130,
+      "reasoning_output_tokens": 193
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T16:09:01.066Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html draws SVG paths from LCD.F5 and preserves the native button, click handler, tooltip and tone classes. The passing 0365 AC1 tests cover glyphs, colours and activation."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "boardText() assembles the word, building tickets, shipping ticket and blocked tickets in the required order. Passing 0365 AC2 tests cover these combinations and stale-page text."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "boardFrame() implements 30-dot-per-second movement and a 16-dot loop gap. Passing AC3 tests exercise scrolling, narrow boards, fitting text and reduced motion."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Refresh continuity and new-text resets have passing tests. However, render() appends an accessible 'Fixing on' span inside the button, so its accessible name exceeds the board's whole text when fixing is enabled. The AC4 name test omits this state."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing browser tests cover header overlap and mobile height at 320, 375, 699, 700 and 1200 px. The reported targeted run passed 227 tests with no failures; existing test changes concern the replaced label."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:3177",
+        "issue": "With Foreman fixing enabled, the button is named by both the board-text span and the appended 'Fixing on' span. This violates AC4's requirement that its accessible name be the board's whole text. A fakePage reproduction with word 'Idle' and fixing 'fix' produces button textContent 'IdleFixing on' and no aria-label.",
+        "suggested_fix": "Set the button's aria-label to the complete board text while preserving the visible fixing indicator. Add an AC4 test with fixing enabled, including reduced motion.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The notice board draws and scrolls the status as requested, and the layout tests pass. One accessibility detail needs fixing: when automatic fixing is enabled, the button's spoken name includes extra text beyond the board's message."
+  }
+}
+```
+
+</details>
