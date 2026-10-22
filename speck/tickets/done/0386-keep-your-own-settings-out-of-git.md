@@ -1,7 +1,7 @@
 ---
 id: "0386"
 title: "Keep your own settings out of git"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:58:32.613Z"
 approved: "2026-10-22T23:08:43.919Z"
+finished: "2026-10-22T23:11:28.597Z"
 
 ---
 # 0386 · Keep your own settings out of git
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Every setting lives in speck/config.yml, which is committed. Choosing which agent builds or reviews, or turning auto-ship on, means a commit to `main` that then goes out with the next ship's push. Running builds don't see the change, because they read the copy in their own worktree.
