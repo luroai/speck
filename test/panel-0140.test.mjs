@@ -230,7 +230,7 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       else assert.ok(!r.cut, `${what} isn't cut short`);
       if (sel !== '#settings-open') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
-    assert.match(await b.js(`document.querySelector('header .repo').textContent`), /speck-\w+ · base main/);
+    assert.equal(await b.js(`document.querySelector('header .repo').textContent`), 'base main'); // 0373: without the project
     assert.ok(await b.js(`!document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), "the Foreman's notice board is shown, with no builder"); // 0364, 0365
   });
 });

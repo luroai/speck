@@ -319,7 +319,8 @@ test('0031 AC2: an unreadable ticket gives /api/state a 500 with a plain error, 
   } finally { await stop(p); }
 });
 
-test('0031 AC1: the page header names the main checkout, even when the panel runs in a worktree', async () => {
+// 0373: the header no longer names the project, only the base branch, so this checks the page is filled in all the same.
+test('0031 AC1: the page header no longer names the main checkout, even when the panel runs in a worktree', async () => {
   const r = panelRepo({ worktrees: 'true' });
   assert.equal(r.run('start', '1').status, 0);
   const wt = r.g('worktree', 'list', '--porcelain').split('\n').filter(l => l.startsWith('worktree ')).map(l => l.slice(9))[1];
@@ -327,7 +328,8 @@ test('0031 AC1: the page header names the main checkout, even when the panel run
   const { port } = p;
   try {
     const body = (await request(port)).body;
-    assert.ok(body.includes(`<code>${path.basename(r.dir)}</code>`), 'main checkout name');
+    assert.ok(!body.includes(`<code>${path.basename(r.dir)}</code>`) && !body.includes(`<code>${path.basename(wt)}</code>`), 'no project name');
+    assert.ok(body.includes('base <code>main</code>'), 'the base branch');
     assert.ok(!body.includes('{{repo}}') && !body.includes('{{base}}'));
   } finally { await stop(p); }
 });
@@ -365,9 +367,9 @@ test('0031 AC4: a request that never answers, or whose body never arrives, still
 
 // ---------- 0033: everything needed for Gate 1 in Shaping ----------
 
-test('0033 AC2: the page header shows the repo and base branch, with no counts (0150: and no connection status)', async () => {
+test('0033 AC2: the page header shows the base branch (0373: not the repo), with no counts (0150: and no connection status)', async () => {
   const header = page().match(/<header>([\s\S]*?)<\/header>/)[1];
-  assert.match(header, /\{\{repo\}\}/);
+  assert.doesNotMatch(header, /\{\{repo\}\}/);
   assert.match(header, /\{\{base\}\}/);
   assert.doesNotMatch(header, /id="pills"/);
   const state = { tickets: [T('0001', 'draft'), T('0002', 'blocked'), T('0003', 'ready'), T('0004', 'done')], ideas: [idea('A', 'idea')] };
