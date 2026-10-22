@@ -95,6 +95,26 @@ test('0371 AC3: a click shows it at once and keeps it until clicked again or ano
   assert.deepEqual(shown(p), []);
 });
 
+test('0371 AC3: closing it with a second click or Escape before the pointer\'s pause ends keeps it closed', async () => {
+  const p = await openSettings();
+  const info = infoOf(p, 'builder');
+  fire(info, 'mouseenter');
+  p.press(info);
+  fire(info, 'focus'); // a click focuses the button in a browser
+  p.press(info);
+  assert.deepEqual(shown(p), [], 'a second click hides it');
+  p.clock.rest(500);
+  assert.deepEqual(shown(p), [], 'and the pause ending doesn\'t show it again');
+  fire(info, 'blur');
+  fire(info, 'mouseleave');
+  fire(info, 'mouseenter');
+  p.press(info);
+  p.key('Escape');
+  p.clock.rest(500);
+  assert.deepEqual(shown(p), [], 'Escape before the pause ends keeps it hidden');
+  assert.equal(p.byId('settings').hidden, false);
+});
+
 test('0371 AC3: Escape hides an open explanation and leaves Settings open', async () => {
   const p = await openSettings();
   const info = infoOf(p, 'auto_ship');
