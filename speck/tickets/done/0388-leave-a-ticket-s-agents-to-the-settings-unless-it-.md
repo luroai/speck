@@ -1,7 +1,7 @@
 ---
 id: "0388"
 title: "Leave a ticket's agents to the settings unless it names them"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0387"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:31:35.466Z"
 approved: "2026-10-22T23:41:16.853Z"
+finished: "2026-10-22T23:43:59.949Z"
 
 ---
 # 0388 · Leave a ticket's agents to the settings unless it names them
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 `speck new` copies the builder, reviewer and reviewer model into each ticket, and the ticket keeps them. Switching reviewer means editing and committing every open ticket: on 2026-10-22, switching to Grok and back took three commits across ten tickets.
