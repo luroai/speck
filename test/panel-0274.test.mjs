@@ -82,7 +82,6 @@ test('0274 AC2: Save sends every changed setting in one request, with where each
   changeTo(p, 'max_parallel_builds', '3');
   changeTo(p, 'reviewer_model', 'm1');
   changeTo(p, 'reviewer_model', ''); // put back: not sent
-  pick(p, 'max_parallel_builds', 'This machine only');
   p.press(saveButton(p));
   await p.settle();
   const sent = p.settingsCalls.filter(c => c.method === 'POST');
@@ -96,15 +95,16 @@ test('0274 AC2: the changed shared settings go into one commit of speck/config.y
   const r = panelRepo();
   fs.writeFileSync(path.join(r.dir, 'other.txt'), 'not mine\n'); // another session's file, left alone
   const before = readCfg(r).split('\n'), head = headOf(r);
+  // 0387: reviewer_effort is one of your own settings, so it's saved for this machine with max_parallel_tests.
   const out = panelSaveSettings(r.dir, [
-    { key: 'reviewer_effort', value: 'high' }, { key: 'limits.max_review_rounds', value: '5' },
+    { key: 'reviewer_effort', value: 'high' }, { key: 'limits.max_review_rounds', value: '5' }, { key: 'ship_mode', value: 'pr' },
     { key: 'max_parallel_tests', value: '3', machine: true }, { key: 'reviewer', value: 'codex' }, // codex: as it is
   ]);
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.deepEqual(out.body.changed, ['reviewer_effort', 'limits.max_review_rounds', 'max_parallel_tests']);
+  assert.deepEqual(out.body.changed, ['limits.max_review_rounds', 'ship_mode', 'reviewer_effort', 'max_parallel_tests']);
   assert.equal(r.g('rev-parse', 'HEAD~1'), head, 'one commit');
   assert.equal(r.g('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), 'speck/config.yml');
-  assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config reviewer_effort high; limits.max_review_rounds 5');
+  assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config limits.max_review_rounds 5; ship_mode pr');
   assert.equal(r.g('status', '--porcelain'), '?? other.txt');
   const after = readCfg(r).split('\n');
   assert.equal(after.length, before.length);
@@ -112,13 +112,13 @@ test('0274 AC2: the changed shared settings go into one commit of speck/config.y
   const s = byKey(panelSettings(r.dir));
   assert.equal(s.reviewer_effort.value, 'high');
   assert.equal(s['limits.max_review_rounds'].value, 5);
-  assert.deepEqual(machineConfig(r.dir), { max_parallel_tests: 3 }, 'this machine\'s, not committed');
+  assert.deepEqual(machineConfig(r.dir), { reviewer_effort: 'high', max_parallel_tests: 3 }, 'this machine\'s, not committed');
   assert.equal(s.max_parallel_tests.from, 'machine');
 
   // Only this machine's: no commit at all.
   const was = headOf(r);
   assert.equal(panelSaveSettings(r.dir, [{ key: 'max_parallel_tests', value: '', machine: true }]).status, 200);
-  assert.deepEqual(machineConfig(r.dir), {});
+  assert.deepEqual(machineConfig(r.dir), { reviewer_effort: 'high' });
   assert.equal(headOf(r), was);
 });
 
@@ -127,16 +127,16 @@ test('0274 AC2: the panel server takes the changes together from the view, only 
   const p = await startPanel(r.dir, ['--port', String(await freePort())]);
   try {
     const token = tokenOf((await request(p.port)).body);
-    const where = '/api/settings/save?repo%3Areviewer_effort=low&repo%3Amax_parallel_builds=2';
+    const where = '/api/settings/save?repo%3Aship_mode=pr&machine%3Amax_parallel_builds=2';
     const was = snapshot(r);
     assert.equal((await post(p.port, where)).status, 403);
     assert.equal((await post(p.port, where, { token, origin: 'http://evil.example' })).status, 403);
     assert.deepEqual(snapshot(r), was);
     const ok = await post(p.port, where, { token });
     assert.equal(ok.status, 200, ok.body);
-    assert.match(readCfg(r), /^reviewer_effort: low/m);
-    assert.match(readCfg(r), /^max_parallel_builds: 2 /m);
-    assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config reviewer_effort low; max_parallel_builds 2');
+    assert.match(readCfg(r), /^ship_mode: pr /m);
+    assert.deepEqual(machineConfig(r.dir), { max_parallel_builds: 2 }, '0387: for this machine');
+    assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config ship_mode pr');
   } finally { await stop(p); }
 });
 
@@ -195,7 +195,7 @@ test('0274 AC4: when any change is refused nothing is saved, and the refusal nam
   out = panelSaveSettings(r.dir, [{ key: 'reviewer_effort', value: 'low' }, { key: 'build_command', value: 'x' }]); // 0293: not builder, which can be now
   assert.equal(out.status, 403);
   assert.match(out.body.refused.build_command, /can't be changed from the panel/);
-  out = panelSaveSettings(r.dir, [{ key: 'reviewer_model', value: 'm', machine: true }]);
+  out = panelSaveSettings(r.dir, [{ key: 'limits.max_review_rounds', value: '4', machine: true }]); // 0387: reviewer_model is one now
   assert.equal(out.status, 422);
   out = panelSaveSettings(r.dir, [{ key: 'reviewer_model', value: 'm' }, { key: 'reviewer_model', value: 'n', machine: true }]);
   assert.equal(out.status, 400);
@@ -204,10 +204,10 @@ test('0274 AC4: when any change is refused nothing is saved, and the refusal nam
   // Off the base branch the repo's changes are refused, so this machine's isn't saved either.
   r.g('checkout', '-q', '-b', 'elsewhere');
   was = snapshot(r);
-  out = panelSaveSettings(r.dir, [{ key: 'max_parallel_tests', value: '2', machine: true }, { key: 'reviewer_effort', value: 'high' }]);
+  out = panelSaveSettings(r.dir, [{ key: 'max_parallel_tests', value: '2', machine: true }, { key: 'ship_mode', value: 'pr' }]);
   assert.equal(out.status, 409);
-  assert.deepEqual(Object.keys(out.body.refused), ['reviewer_effort']);
-  assert.match(out.body.refused.reviewer_effort, /"elsewhere", not main/);
+  assert.deepEqual(Object.keys(out.body.refused), ['ship_mode']);
+  assert.match(out.body.refused.ship_mode, /"elsewhere", not main/);
   assert.deepEqual(snapshot(r), was);
 
   // The request's own address: something that isn't a change is refused.
@@ -218,7 +218,7 @@ test('0274 AC4: when any change is refused nothing is saved, and the refusal nam
 
 test('0274 AC4 F1: when writing or committing speck/config.yml fails, this machine\'s changes are put back too', { skip: process.getuid?.() === 0 ? 'root can write a read-only file' : false }, () => {
   const r = panelRepo();
-  const changes = [{ key: 'max_parallel_tests', value: '3', machine: true }, { key: 'reviewer_effort', value: 'high' }];
+  const changes = [{ key: 'max_parallel_tests', value: '3', machine: true }, { key: 'reviewer_effort', value: 'high' }, { key: 'ship_mode', value: 'pr' }];
   let was = snapshot(r);
   fs.chmodSync(cfgOf(r), 0o444); // can't be written
   try {
@@ -268,17 +268,12 @@ test('0274 AC4: the view shows each refusal beside its setting, keeping every ch
   assert.equal(saveButton(p).disabled, false, 'still to save');
   assert.equal(p.settingsCalls.filter(c => c.method === 'GET' && c.url.startsWith('/api/settings')).length, 1, 'not read again');
 
-  // A refusal that's no one setting's shows under Save, and a change for this machine or the repo waits for an answer.
+  // A refusal that's no one setting's shows under Save. 0387: a change to your own setting goes for this machine, unasked.
   const q = await opened(page([view()], [{ status: 500, body: { error: 'Couldn\'t commit speck/config.yml, so nothing was saved.' } }]));
   changeTo(q, 'max_parallel_builds', '4');
   q.press(saveButton(q));
   await q.settle();
-  assert.deepEqual(posted(q), [], 'not sent before you say where it goes');
-  assert.match(rowOf(q, 'max_parallel_builds').textContent, /this machine only or the repo/);
-  pick(q, 'max_parallel_builds', 'The repo, for everyone');
-  q.press(saveButton(q));
-  await q.settle();
-  assert.deepEqual(asked(posted(q)[0]), { 'repo:max_parallel_builds': '4' });
+  assert.deepEqual(asked(posted(q)[0]), { 'machine:max_parallel_builds': '4' });
   assert.match(saveButton(q).parentNode.textContent, /Couldn't commit/);
   assert.equal(controlOf(q, 'max_parallel_builds').value, '4');
 });

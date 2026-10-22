@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
 import { panelSettings, panelSetSetting, EDITABLE } from '../scripts/settings.mjs';
+import { machineConfig } from '../scripts/machine.mjs';
 import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo } from './support/settings.mjs';
 
 // ---------- 0258: change a setting from the panel ----------
@@ -46,25 +47,26 @@ test('0258 AC2: saving rewrites only that setting\'s line, keeping its comment, 
   const r = panelRepo();
   fs.writeFileSync(path.join(r.dir, 'other.txt'), 'not mine\n'); // another session's file, left alone
   const before = readCfg(r).split('\n'), head = headOf(r);
-  const out = panelSetSetting(r.dir, 'max_parallel_builds', '2');
+  // 0387: your own settings are saved for this machine, so a setting speck/config.yml keeps shows the commit.
+  const out = panelSetSetting(r.dir, 'limits.max_changed_lines', '400');
   assert.equal(out.status, 200, JSON.stringify(out.body));
   const after = readCfg(r).split('\n');
   assert.equal(after.length, before.length);
   const changed = after.map((l, i) => l !== before[i] ? i : -1).filter(i => i >= 0);
   assert.equal(changed.length, 1, 'one line changed');
-  assert.match(after[changed[0]], /^max_parallel_builds: 2\s+# how many builds speck run keeps going at once$/);
-  assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config max_parallel_builds 2');
+  assert.match(after[changed[0]], /^ {2}max_changed_lines: 400\s+# excluding tests and lockfiles; the build stops and proposes a split if exceeded$/);
+  assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config limits.max_changed_lines 400');
   assert.equal(r.g('rev-parse', 'HEAD~1'), head);
   assert.equal(r.g('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), 'speck/config.yml');
   assert.equal(r.g('status', '--porcelain'), '?? other.txt');
-  assert.equal(byKey(panelSettings(r.dir)).max_parallel_builds.value, 2, 'and speck reads the new value');
+  assert.equal(byKey(panelSettings(r.dir))['limits.max_changed_lines'].value, 400, 'and speck reads the new value');
 
   // A nested one, and a blank and a picked value.
   assert.equal(panelSetSetting(r.dir, 'limits.max_review_rounds', '5').status, 200);
   assert.match(readCfg(r), /^limits:\n(?: {2}.*\n)*? {2}max_review_rounds: 5\n/m);
   assert.equal(panelSetSetting(r.dir, 'reviewer_effort', 'high').status, 200);
   assert.equal(panelSetSetting(r.dir, 'reviewer_effort', '').status, 200);
-  assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config reviewer_effort ""');
+  assert.equal(machineConfig(r.dir).reviewer_effort, '', '0387: for this machine');
   assert.equal(byKey(panelSettings(r.dir)).reviewer_effort.value, '');
   assert.equal(panelSetSetting(r.dir, 'reviewer_model', 'gpt-6.1-sol').status, 200);
   assert.equal(byKey(panelSettings(r.dir)).reviewer_model.value, 'gpt-6.1-sol');
@@ -144,7 +146,7 @@ test('0258 AC4: a change is refused off the base branch, or while speck/config.y
   const r = panelRepo();
   r.g('checkout', '-q', '-b', 'elsewhere');
   let was = snapshot(r);
-  let out = panelSetSetting(r.dir, 'max_parallel_builds', '2');
+  let out = panelSetSetting(r.dir, 'limits.max_review_rounds', '4'); // 0387: one speck/config.yml keeps
   assert.equal(out.status, 409);
   assert.match(out.body.error, /"elsewhere", not main/);
   assert.deepEqual(snapshot(r), was);
@@ -152,7 +154,7 @@ test('0258 AC4: a change is refused off the base branch, or while speck/config.y
 
   fs.appendFileSync(cfgOf(r), '# a note of mine\n');
   was = snapshot(r);
-  out = panelSetSetting(r.dir, 'max_parallel_builds', '2');
+  out = panelSetSetting(r.dir, 'limits.max_review_rounds', '4');
   assert.equal(out.status, 409);
   assert.match(out.body.error, /uncommitted changes/);
   assert.deepEqual(snapshot(r), was);
@@ -160,7 +162,7 @@ test('0258 AC4: a change is refused off the base branch, or while speck/config.y
   // Staged counts too.
   r.g('add', 'speck/config.yml');
   was = snapshot(r);
-  assert.equal(panelSetSetting(r.dir, 'max_parallel_builds', '2').status, 409);
+  assert.equal(panelSetSetting(r.dir, 'limits.max_review_rounds', '4').status, 409);
   assert.deepEqual(snapshot(r), was);
 });
 
@@ -185,9 +187,9 @@ test('0258 AC5: without the token or from another origin it gets 403, a setting 
     assert.match(JSON.parse(bad.body).error, /isn't written properly/);
     assert.deepEqual(snapshot(r), was);
     // And with both, it does change.
-    const ok = await post(p.port, '/api/settings/max_parallel_builds/2', { token });
+    const ok = await post(p.port, '/api/settings/limits.max_review_rounds/4', { token }); // 0387: one speck/config.yml keeps
     assert.equal(ok.status, 200, ok.body);
-    assert.match(readCfg(r), /^max_parallel_builds: 2 /m);
+    assert.match(readCfg(r), /^ {2}max_review_rounds: 4$/m);
   } finally { await stop(p); }
 });
 
