@@ -153,7 +153,8 @@ const LINES = sel => `(() => {
   for (const r of rects) if (r.top >= bottom - 1) { lines++; bottom = r.bottom; } else bottom = Math.max(bottom, r.bottom);
   return lines;
 })()`;
-const PARTS = { logo: 'header .logo', repo: 'header .repo', run: '#run', theme: '#theme' };
+// 0372: Settings ends the header now that light and dark are chosen in Settings, so it takes Settings's place here.
+const PARTS = { logo: 'header .logo', repo: 'header .repo', run: '#run', settings: '#settings-open' };
 const boxes = async b => Object.fromEntries(await Promise.all(Object.entries(PARTS).map(async ([k, sel]) => [k, await b.js(box(sel))])));
 const press = async (b, key, code, keyCode) => {
   await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: keyCode, ...(key === 'Enter' ? { text: '\r' } : { text: ' ' }) });
@@ -191,43 +192,43 @@ test('0150 AC2: on or off, the button shows its word, with no square or builder'
 });
 
 for (const width of [700, 1280]) {
-  test(`0150 AC3: at ${width} px, the header is one row, centred vertically: speck on the left, then the project, Auto-build and light/dark on the right`, skip, async () => {
+  test(`0150 AC3: at ${width} px, the header is one row, centred vertically: speck on the left, then the project, Auto-build and Settings on the right`, skip, async () => {
     await withPage(null, width, async b => {
       const x = await boxes(b);
       const h = await b.js(box('header'));
-      for (const k of ['repo', 'run', 'theme']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is centred on the same line as speck: ${JSON.stringify(x)}`);
-      assert.ok(x.logo.right < x.repo.left && x.repo.right < x.run.left && x.run.right < x.theme.left, `in order, left to right: ${JSON.stringify(x)}`);
+      for (const k of ['repo', 'run', 'settings']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is centred on the same line as speck: ${JSON.stringify(x)}`);
+      assert.ok(x.logo.right < x.repo.left && x.repo.right < x.run.left && x.run.right < x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
       assert.ok(x.repo.left - x.logo.right > 40, 'the project sits on the right, away from speck');
-      assert.ok(h.right - x.theme.right <= 32, 'light/dark is at the right edge');
+      assert.ok(h.right - x.settings.right <= 32, 'Settings is at the right edge');
       for (const k of Object.keys(PARTS)) assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
     });
   });
 }
 
 for (const run of [null, { on: true, pid: 7 }]) {
-  // 0364: one row, as it is wider: the mark, the project, the Foreman (Auto-build here) and light/dark
-  test(`0150 AC4: at 375 px with Auto-build ${run ? 'on' : 'off'}, the header is one row: speck's mark, the project, then Auto-build and light/dark`, skip, async () => {
+  // 0364: one row, as it is wider: the mark, the project, the Foreman (Auto-build here) and Settings
+  test(`0150 AC4: at 375 px with Auto-build ${run ? 'on' : 'off'}, the header is one row: speck's mark, the project, then Auto-build and Settings`, skip, async () => {
     await withPage(run, 375, async b => {
       const x = await boxes(b);
       const W = await b.js('document.documentElement.clientWidth');
-      for (const k of ['repo', 'run', 'theme']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is on speck's row: ${JSON.stringify(x)}`);
-      assert.ok(x.logo.right <= x.repo.left && x.repo.right <= x.run.left && x.run.right <= x.theme.left, `in order, left to right: ${JSON.stringify(x)}`);
+      for (const k of ['repo', 'run', 'settings']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is on speck's row: ${JSON.stringify(x)}`);
+      assert.ok(x.logo.right <= x.repo.left && x.repo.right <= x.run.left && x.run.right <= x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
       for (const k of Object.keys(PARTS)) {
         assert.ok(x[k].left >= 0 && x[k].right <= W + 0.5, `${k} is on screen`);
-        if (k !== 'theme') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
+        if (k !== 'settings') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
       }
       assert.ok(await b.js('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'nothing overflows the screen');
-      assert.ok(x.run.height >= 44 && x.theme.height >= 44, `every header button is at least 44 px tall: ${JSON.stringify(x)}`);
+      assert.ok(x.run.height >= 44 && x.settings.height >= 44, `every header button is at least 44 px tall: ${JSON.stringify(x)}`);
     });
   });
 }
 
 for (const width of [375, 699, 700, 1000, 1280]) {
-  test(`0150 AC5: at ${width} px, Auto-build and light/dark are the same height with their tops lined up`, skip, async () => {
+  test(`0150 AC5: at ${width} px, Auto-build and Settings are the same height with their tops lined up`, skip, async () => {
     await withPage(null, width, async b => {
       const x = await boxes(b);
-      assert.ok(Math.abs(x.run.height - x.theme.height) <= 0.5, `the same height: ${x.run.height} and ${x.theme.height}`);
-      assert.ok(Math.abs(x.run.top - x.theme.top) <= 0.5, `tops line up: ${x.run.top} and ${x.theme.top}`);
+      assert.ok(Math.abs(x.run.height - x.settings.height) <= 0.5, `the same height: ${x.run.height} and ${x.settings.height}`);
+      assert.ok(Math.abs(x.run.top - x.settings.top) <= 0.5, `tops line up: ${x.run.top} and ${x.settings.top}`);
     });
   });
 }
@@ -240,7 +241,7 @@ for (const width of [375, 700]) {
       const W = await b.js('document.documentElement.clientWidth');
       for (const k of Object.keys(PARTS)) {
         assert.ok(x[k].left >= 0 && x[k].right <= W + 0.5, `${k} is on screen: ${JSON.stringify(x)}`);
-        if (k !== 'theme') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
+        if (k !== 'settings') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
       }
       assert.ok(Math.abs(x.repo.mid - x.logo.mid) <= 1, 'the project stays on the first row');
       assert.ok(await b.js('document.documentElement.scrollWidth <= document.documentElement.clientWidth'), 'nothing overflows the screen');

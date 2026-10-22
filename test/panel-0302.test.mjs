@@ -172,7 +172,7 @@ test('0302 AC1, AC3 and AC4: in a real browser, each badge is the renderer\'s 56
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`document.readyState === 'complete' && document.querySelectorAll('#queue canvas.badge').length === ${Object.keys(POSES).length}`, 'the badges');
     for (const look of ['light', 'dark']) {
-      if (look === 'dark') await b.js(`document.querySelector('.theme').click()`);
+      if (look === 'dark') await b.js(`setLook(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')`);
       await b.until(`document.documentElement.dataset.theme === '${look}'`, `the ${look} look`);
       const want = {};
       for (const k of ['lcd-bg', 'line', 'idea', 'bad']) want[k] = await b.js(RGB(`var(--${k})`));
