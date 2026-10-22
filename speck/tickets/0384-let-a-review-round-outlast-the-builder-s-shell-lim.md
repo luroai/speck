@@ -47,6 +47,7 @@ A review round that runs longer than 10 minutes still finishes and is recorded. 
 - Related: 0180 (the reviewer's time limit, `scripts/limit.mjs`), 0223 (the running round's record, `<id>.review.json`, in `scripts/review-running.mjs`) and 0227 (foreground test runs and review rounds).
 - Waits for 0383: both change `scripts/reviewers.mjs`.
 - A priority 0 fix: a slow reviewer stalls every build it reviews.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
