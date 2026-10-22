@@ -1,7 +1,7 @@
 ---
 id: "0362"
 title: "Open a document task's document in a pop-up over the whole panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T15:05:04.994Z"
 ---
 # 0362 · Open a document task's document in a pop-up over the whole panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 A document task's Markdown document opens in the side pane, which is at most 480 px wide. That's narrow for reading a document, and reading it is how you review a document task before you ship it.
@@ -46,7 +46,11 @@ Pressing a Markdown document's button in a review pack shows it, formatted, in a
 - Self-check: added a test that the pop-up closes, and the side pane stops being inert, when the ticket leaves the board while its document is open; it already passed.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In a document task's review pack, pressing a Markdown file's button now opens the document over the whole panel window instead of in the narrow side pane. The text sits in a comfortable centred column, tables included, with the file's name and a Close button at the top. Close, or the Escape key, takes you back to the review pack just as you left it.
+
+To see it, open the review pack of a document task and press the button for its Markdown file. Files that aren't Markdown still open in a new tab.
+
+Worth a look: on a phone, the Close button scrolls away with a long document, so you scroll back up to close it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,4 +59,72 @@ Pressing a Markdown document's button in a review pack shows it, formatted, in a
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Keep the pop-up's path and Close button in view while a long document scrolls: `speck/ideas/2026-10-22-keep-the-document-pop-up-s-close-button-in-view.md`.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e8bcdba3fb3ca9879635c15f2c788d63d8383f60",
+    "thread_id": "01a1642a-9053-7891-838b-4e7e9709d275",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 122957,
+      "cached_input_tokens": 74496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 796,
+      "reasoning_output_tokens": 82
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T15:11:40.120Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: openDocument and drawDoc render Markdown with tables in #doc-view; its fixed inset layout fills the window and centres a column capped at 760 px using theme colours. Passing 0362 AC1 tests cover formatting, layout rules and the unchanged review pack."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawDoc makes the side pane and backdrop inert and focuses the dialog; holdPage keeps the underlying page inert and locks page scrolling. #doc-view provides internal scrolling and overscroll containment. Passing 0362 AC2 tests check these behaviours and rules."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "closeDoc restores focus to the document button without rebuilding the pack. The Escape handler closes the document first. Passing 0362 AC3 tests cover Close, Escape, retained pack nodes, late responses and removal of the ticket."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "openDocument preserves the previous loading and failure messages; documentsPart retains window.open for other file types. Passing 0362 AC4 tests exercise loading, HTTP failure, network failure and non-Markdown files."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied test run reports 139 passes, zero failures and three skips across the selected files and required checks. Changes to existing 0354 and 0359 assertions match the explicitly permitted move from the side pane to the pop-up. No unrelated implementation changes found."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Markdown documents now open over the whole panel while the review pack stays underneath. Closing returns focus to the file button. Loading, errors and other file types retain their existing behaviour. The tests pass, and no blocking issues were found."
+  }
+}
+```
+
+</details>
