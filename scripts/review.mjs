@@ -359,9 +359,9 @@ export function cmdReview(args) {
   const pad = t.fm.id || id;
   // 0384: a round runs in a process of its own, which this waits for, so it can outlast the builder's shell. One that
   // is running already, or has finished without being printed, is waited for rather than another started.
-  const worker = args.includes('--worker');
+  const worker = Number((args.find(a => a.startsWith('--worker=')) || '').slice(9)) || 0;
   const limitMs = () => { try { return reviewTimeoutMs(cfg); } catch { return 30 * 60 * 1000; } };
-  if (!worker && (args.includes('--wait') || pendingRound(repo, pad))) return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
+  if (!worker && (args.includes('--wait') || pendingRound(repo, pad, limitMs()))) return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
   const reviewer = t.fm.reviewer || cfg.reviewer;
   const command = reviewerOptions(cfg, reviewer).command;
   const opts = { tests: opt('tests'), response: opt('response') };
@@ -372,7 +372,7 @@ export function cmdReview(args) {
     startRound(repo, pad, rounds(repo, id).length + 1, args.slice(1).filter(a => /^--(tests|response)=/.test(a)), limitMs());
     return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
   }
-  keepExitCode(repo, pad);
+  keepExitCode(repo, pad, worker);
   let rec;
   if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
   else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));

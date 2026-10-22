@@ -2,6 +2,10 @@
 // 10 minutes. `speck review` starts it and waits up to 9 minutes for it: if it's still running then, it exits 12, and
 // `speck review <id> --wait` waits for the same round again. Whichever command sees it end prints what the round
 // printed and exits as it did. Its working files are kept with the review's others (cacheDir).
+//
+// Each start is numbered: review-run-<n>.json, made only if no file of that number exists yet, so two commands that
+// start at once can't both start a reviewer. The highest number is the current one, and nothing deletes it: a start
+// supersedes it with the next number, and the files of every earlier one are removed then.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -21,69 +25,92 @@ export function reviewWaitMs() {
   return Number.isSafeInteger(ms) && ms > 0 ? ms : 9 * 60 * 1000;
 }
 
-const files = (repo, id) => {
-  const dir = cacheDir(repo, id);
-  return { run: path.join(dir, 'review-run.json'), out: path.join(dir, 'review-run.out'), err: path.join(dir, 'review-run.err'), done: path.join(dir, 'review-run.done.json') };
-};
+// The files of start `n`: its record ({ round, pid, started }), its output, its exit code once it has ended, and the
+// marker that a command has printed it.
+const filesOf = (dir, n) => Object.fromEntries(['json', 'out', 'err', 'done.json', 'read'].map(ext => [ext.split('.')[0], path.join(dir, `review-run-${n}.${ext}`)]));
+const startsIn = dir => { try { return fs.readdirSync(dir).map(n => n.match(/^review-run-(\d+)\.json$/)?.[1]).filter(Boolean).map(Number); } catch { return []; } };
 const readJson = file => { try { const v = JSON.parse(fs.readFileSync(file, 'utf8')); return v && typeof v === 'object' ? v : null; } catch { return null; } };
-const clear = f => { for (const file of Object.values(f)) fs.rmSync(file, { force: true }); };
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 // A round's process that is still there. One started longer ago than its reviewer could run (twice the time limit, as a
 // resumed session that fails is run again fresh, and two minutes more) has gone, and its pid is another process's now.
-const running = (run, limitMs) => pidAlive(run.pid) && !(Date.parse(run.started) < Date.now() - 2 * limitMs - 120000);
+const running = (rec, limitMs) => pidAlive(rec.pid) && !(Date.parse(rec.started) < Date.now() - 2 * limitMs - 120000);
 
-// The round started for ticket `id` and not yet printed: { round, pid }, or null. One whose process has gone without
-// finishing counts too, so the waiting command can say so.
-export function pendingRound(repo, id) {
-  const f = files(repo, id);
-  const run = readJson(f.run);
-  return run || fs.existsSync(f.done) ? { round: run?.round ?? null, pid: run?.pid ?? null } : null;
+// Writes `value` to `file` whole, so a reader never sees it half written: with `create`, only if `file` isn't there yet,
+// returning false if it is.
+function publish(file, value, create = false) {
+  const tmp = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(value) + '\n');
+  try {
+    if (!create) { fs.renameSync(tmp, file); return true; }
+    try { fs.linkSync(tmp, file); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; }
+  } finally { fs.rmSync(tmp, { force: true }); }
 }
 
-// Starts round `round` of ticket `id` in a process of its own, `speck review <id> <args> --worker`, that runs it as
-// `speck review` always has, its output kept in files. Returns false, starting nothing, if a round is already running.
+// Ticket `id`'s current start, or start `n`, if no command has printed it yet: { n, files, rec, done }, or null.
+function current(repo, id, n = Math.max(0, ...startsIn(cacheDir(repo, id)))) {
+  const dir = cacheDir(repo, id);
+  if (!n) return null;
+  const files = filesOf(dir, n);
+  if (fs.existsSync(files.read)) return null;
+  return { n, files, rec: readJson(files.json), done: readJson(files.done) };
+}
+
+// True when ticket `id`'s current start, or start `n`, is a round running, or one that has ended and not been printed.
+export function pendingRound(repo, id, limitMs, n) {
+  const c = current(repo, id, n);
+  return !!c && (!!c.done || (!!c.rec && running(c.rec, limitMs)));
+}
+
+// Claims start `n` of ticket `id` for round `round`, recording this process. False if another command claimed it first.
+export function claimStart(repo, id, n, round) {
+  return publish(filesOf(cacheDir(repo, id), n).json, { round, pid: process.pid, started: new Date().toISOString() }, true);
+}
+
+// Starts round `round` of ticket `id` in a process of its own, `speck review <id> <args> --worker=<n>`, that runs it
+// as `speck review` always has, its output kept in files. Starts nothing if a round is pending or another command
+// starts one first: the caller then waits for that one.
 export function startRound(repo, id, round, args, limitMs) {
-  const f = files(repo, id);
-  const live = readJson(f.run);
-  if (live && (fs.existsSync(f.done) || running(live, limitMs))) return false;
-  clear(f);
-  try { fs.writeFileSync(f.run, JSON.stringify({ round, pid: process.pid, started: new Date().toISOString() }) + '\n', { flag: 'wx' }); } catch (e) { if (e.code === 'EEXIST') return false; throw e; }
-  const out = fs.openSync(f.out, 'w'), err = fs.openSync(f.err, 'w');
+  // The number to claim comes from the same look as the check, so a command that started one since makes the claim fail.
+  const dir = cacheDir(repo, id);
+  const last = Math.max(0, ...startsIn(dir));
+  if (pendingRound(repo, id, limitMs, last)) return;
+  const n = last + 1;
+  if (!claimStart(repo, id, n, round)) return;
+  for (const old of startsIn(dir).filter(m => m < n)) for (const file of Object.values(filesOf(dir, old))) fs.rmSync(file, { force: true });
+  const files = filesOf(dir, n);
+  const out = fs.openSync(files.out, 'w'), err = fs.openSync(files.err, 'w');
   try {
-    const child = spawn(process.execPath, [CLI, 'review', id, ...args, '--worker'], { cwd: process.cwd(), env: process.env, detached: true, stdio: ['ignore', out, err] });
+    const child = spawn(process.execPath, [CLI, 'review', id, ...args, `--worker=${n}`], { cwd: process.cwd(), env: process.env, detached: true, stdio: ['ignore', out, err] });
     child.on('error', () => {});
     child.unref();
-    if (!child.pid) { clear(f); throw new SpeckError(`Couldn't start review round ${round} of ${id}. No round was recorded. Run it again.`); }
-    fs.writeFileSync(f.run, JSON.stringify({ round, pid: child.pid, started: new Date().toISOString() }) + '\n');
+    if (!child.pid) throw new SpeckError(`Couldn't start review round ${round} of ${id}. No round was recorded. Run it again.`);
+    publish(files.json, { round, pid: child.pid, started: new Date().toISOString() });
   } finally { fs.closeSync(out); fs.closeSync(err); }
-  return true;
 }
 
-// In the round's own process: keeps its exit code for the command that prints its output.
-export function keepExitCode(repo, id) {
-  const f = files(repo, id);
-  process.on('exit', code => { try { fs.writeFileSync(f.done, JSON.stringify({ code }) + '\n'); } catch { /* the waiting command says the round stopped */ } });
+// In the round's own process, start `n`: keeps its exit code for the command that prints its output.
+export function keepExitCode(repo, id, n) {
+  const file = filesOf(cacheDir(repo, id), n).done;
+  process.on('exit', code => { try { publish(file, { code }); } catch { /* the waiting command says the round stopped */ } });
 }
 
-// Waits until `deadline` (a time in ms) for ticket `id`'s round, whose reviewer has `limitMs` to run. Once it has ended, prints what it printed and sets
-// the exit code it ended with. If it's still running then, says so and how to wait for it, and sets 12.
+// Waits until `deadline` (a time in ms) for ticket `id`'s round, whose reviewer has `limitMs` to run. Once it has
+// ended, prints what it printed and sets the exit code it ended with. If it's still running then, says so and how to
+// wait for it, and sets 12. Only one command prints a round: the one that marks it read first.
 export function waitForRound(repo, id, deadline, limitMs) {
-  const f = files(repo, id);
   for (;;) {
-    const run = readJson(f.run);
-    const done = readJson(f.done);
-    if (done) return deliver(f, done);
-    if (!run) throw new SpeckError(`No review round of ${id} is running or waiting to be read. Run \`speck next ${id}\` to see what to do next.`);
-    if (!running(run, limitMs)) {
+    const c = current(repo, id);
+    if (!c) throw new SpeckError(`No review round of ${id} is running or waiting to be read. Run \`speck next ${id}\` to see what to do next.`);
+    const claim = () => publish(c.files.read, {}, true);
+    if (c.done) { if (claim()) return deliver(c.files, c.done); continue; }
+    if (!c.rec || !running(c.rec, limitMs)) {
       sleep(POLL_MS); // it may have just finished
-      const late = readJson(f.done);
-      if (late) return deliver(f, late);
-      clear(f);
-      throw new SpeckError(`Review round ${run.round} of ${id} stopped before it finished, and no round was recorded. Run \`speck review ${id}\` to run it again.`);
+      if (readJson(c.files.done) || !claim()) continue;
+      throw new SpeckError(`Review round ${c.rec?.round ?? '?'} of ${id} stopped before it finished, and no round was recorded. Run \`speck review ${id}\` to run it again.`);
     }
     const left = deadline - Date.now();
     if (left <= 0) {
-      console.log(`Round ${run.round} of ${id} is still running. Its reviewer carries on until it finishes or reaches review_timeout_minutes. Wait for it in the foreground with \`speck review ${id} --wait\`, and run that again each time it exits ${STILL_RUNNING}, until it exits with another code.`);
+      console.log(`Round ${c.rec.round} of ${id} is still running. Its reviewer carries on until it finishes or reaches review_timeout_minutes. Wait for it in the foreground with \`speck review ${id} --wait\`, and run that again each time it exits ${STILL_RUNNING}, until it exits with another code.`);
       process.exitCode = STILL_RUNNING;
       return;
     }
@@ -91,10 +118,10 @@ export function waitForRound(repo, id, deadline, limitMs) {
   }
 }
 
-function deliver(f, done) {
+function deliver(files, done) {
   const read = file => { try { return fs.readFileSync(file, 'utf8'); } catch { return ''; } };
-  const out = read(f.out), err = read(f.err);
-  clear(f);
+  const out = read(files.out), err = read(files.err);
+  for (const file of [files.out, files.err]) fs.rmSync(file, { force: true });
   if (out) process.stdout.write(out);
   if (err) process.stderr.write(err);
   process.exitCode = Number.isInteger(done.code) ? done.code : 1;

@@ -1,7 +1,7 @@
 ---
 id: "0384"
 title: "Let a review round outlast the builder's shell limit"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T20:13:36.538Z"
 ---
 # 0384 · Let a review round outlast the builder's shell limit
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 speck lets a reviewer run for `review_timeout_minutes` (30 by default). But a builder waits for `speck review` in one foreground shell command, and Claude Code ends such a command after 10 minutes. `speck run`'s Claude Code builds can't run commands in the background (0245). On 0368, a Grok review was still running at 10 minutes, so the builder's shell ended the round. The builder then improvised a detached run and a polling loop.
@@ -61,3 +61,79 @@ A review round that runs longer than 10 minutes still finishes and is recorded. 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b02eb5ef33b8a1b3dc04d790b389d8cd2f656662",
+    "thread_id": "01a16547-0321-7da2-a780-1ebad34e32b2",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 145740,
+      "cached_input_tokens": 101888,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1094,
+      "reasoning_output_tokens": 166
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T20:22:20.951Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "review-wait.mjs implements the nine-minute wait and exit 12. Passing AC1 tests exercise command and Codex reviewers, continued execution and timeout. Claude and Cursor use the same command-reviewer path."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "Passing AC2 tests cover sequential waits, completed rounds and failures, but startRound() in scripts/review-wait.mjs:45–57 permits overlapping commands to start duplicate reviewers (F1)."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing AC3 tests verify unchanged short-review output and round recording, and roundRunning() remaining visible through repeated exits 12."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both skills explicitly instruct builders to run the printed --wait command in the foreground repeatedly until the exit code differs from 12. The passing AC4 test checks the exit code and command as document facts."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Supplied test results report 174 passes, zero failures and three skips across the selected files and required checks. No existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review-wait.mjs:45",
+        "issue": "Startup is not mutually exclusive. Two commands can both read no running record at line 47. After the first creates its exclusive record and launches its worker, the second can execute clear(f), deleting that record and the output files, then successfully create its own record and launch another worker. The exclusive write therefore does not guarantee one reviewer per round. Both workers can write the same round and completion files.",
+        "suggested_fix": "Protect startup and stale-record cleanup with an atomic ownership mechanism that competing starters cannot delete. Publish record updates atomically, and add a deterministic concurrent-start regression test proving that only one reviewer launches and its result remains deliverable.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Long reviews can continue across repeated foreground waits, and the supplied tests pass. One concurrency bug needs fixing: overlapping review commands can launch two reviewers for the same round and overwrite their shared results."
+  }
+}
+```
+
+</details>
