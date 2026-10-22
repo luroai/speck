@@ -44,6 +44,7 @@ Your own settings are kept for this machine in a file git ignores, and speck/con
 - Checked 2026-10-22: `speck config set builder <name>` sets build_command in the same change (0293), in `scripts/config.mjs`.
 - Assumption: review_timeout_minutes, test_stall_minutes and ship_wait_minutes stay project settings.
 - From the user's request on 2026-10-22, for 0.13.0. 0375 waits for it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
