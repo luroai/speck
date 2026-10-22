@@ -375,7 +375,7 @@
      0385: it scrolls only up and down. A finger can't pan it sideways, and each of its children clips anything wider
      than the column, 16 px beyond it so focus rings and shadows still show: that stays inside the pop-up's padding, so
      there's nothing beside the column to scroll to, even from script. */
-  #settings { position: fixed; inset: 0; z-index: 10; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y pinch-zoom; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #settings { position: fixed; inset: 0; z-index: 10; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y pinch-zoom; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #settings > * { max-width: 760px; overflow-x: clip; overflow-clip-margin: 16px; margin-left: auto; margin-right: auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); }
   #settings .top h3 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; }
   /* 0273: each group a box with a heading bar, like the panel's sections, with space between them. Each setting is a
@@ -462,11 +462,15 @@
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
   /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
      0366: the Foreman's detail opens in the same pop-up. */
-  #doc-view, #foreman { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #doc-view, #foreman { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #doc-view[hidden], #foreman[hidden] { display: none; }
   #doc-view .top, #doc-view .doc-actions, #doc-view .md, #foreman .top, #foreman .fm-body { max-width: 760px; margin: 0 auto; }
   #doc-view .top, #foreman .top { margin-bottom: 10px; }
   #doc-view .top .title, #foreman .top .title { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; }
+  /* 0379: each pop-up's top line, with its Close, stays at the top while the rest scrolls under it. The pop-up's own top
+     padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
+     explanation (z-index 2), which scrolls under it too. */
+  #doc-view .top, #foreman .top, #settings .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
   #full-ticket ol.criteria { padding-left: 18px; }
   #full-ticket ol.criteria > li { margin-bottom: 4px; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
@@ -2237,12 +2241,15 @@ function showSettingTip(key, kept) {
   for (const [k, tip] of settingTips) tip.hidden = k !== key;
   if (key !== null) placeSettingTip(settingTips.get(key));
 }
-// 0371: an explanation goes above its row, or below it when the top of the view would cut it off there.
+// 0371: an explanation goes above its row, or below it when the top of the view would cut it off there. 0379: the top
+// of the view is the bottom of its held top line, which would hide it.
 function placeSettingTip(tip) {
   const pane = $('settings');
   if (!tip || typeof tip.getBoundingClientRect !== 'function' || !pane || typeof pane.getBoundingClientRect !== 'function') return;
   tip.classList.remove('below');
-  if (tip.getBoundingClientRect().top < pane.getBoundingClientRect().top) tip.classList.add('below');
+  const line = [...pane.children].find(n => n.className === 'top' && typeof n.getBoundingClientRect === 'function');
+  const edge = Math.max(pane.getBoundingClientRect().top, line ? line.getBoundingClientRect().bottom : -Infinity);
+  if (tip.getBoundingClientRect().top < edge) tip.classList.add('below');
 }
 // 0258: a setting's control, a list of the server's choices or a box to type in. 0274: what's typed or picked is kept,
 // and Save sends it with the rest. 0259: auto_ship_risk's is a box to tick for each risk.
