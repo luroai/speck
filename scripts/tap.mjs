@@ -128,13 +128,27 @@ export function tapCounts(text) {
 }
 
 // The failing tests in TAP output, each as its path of names, leaving out a test whose failure is only that one of its
-// subtests failed. Empty when the output isn't TAP or names no failing test.
+// subtests failed. Empty when the output isn't TAP or names no failing test. When the output goes on with the line
+// saying the failing tests' files ran once more (0195) and that run's TAP, a test that failed in the first run and
+// passed in the second is a chance failure and left out (0377): two failing tests of one name need two passes.
 export function failingTests(text) {
   const lines = String(text).replace(/\r\n/g, '\n').split('\n');
   const header = lines.findIndex(l => HEADER.test(l));
   if (header < 0) return [];
-  const failing = results(lines, header + 1).filter(t => !t.ok && t.directive !== 'TODO');
-  return [...new Set(leaves(failing).map(t => t.path).filter(Boolean))];
+  const note = lines.findIndex((l, i) => i > header && l.startsWith(RETRY_NOTE));
+  const failed = list => leaves(list.filter(t => !t.ok && t.directive !== 'TODO')).map(t => t.path).filter(Boolean);
+  if (note < 0) return [...new Set(failed(results(lines, header + 1)))];
+  const after = lines.slice(note + 1);
+  const second = after.findIndex(l => HEADER.test(l));
+  const again = second < 0 ? [] : results(after, second + 1);
+  const passed = new Map();
+  for (const t of again.filter(o => o.ok && !o.directive)) passed.set(t.path, (passed.get(t.path) || 0) + 1);
+  const first = failed(results(lines.slice(0, note), header + 1)).filter(p => {
+    const n = passed.get(p) || 0;
+    passed.set(p, n - 1);
+    return n <= 0;
+  });
+  return [...new Set([...first, ...failed(again)])];
 }
 
 // The test output in the file given with --tests, refused in plain words when it can't be read.
