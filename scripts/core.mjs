@@ -86,6 +86,15 @@ export function stripComment(line) {
   return line.trimEnd();
 }
 
+// A value as it's written in speck/config.yml, so that it reads back exactly.
+export function yamlValue(value) {
+  if (typeof value !== 'string') return Array.isArray(value) ? `[${value.join(', ')}]` : String(value);
+  const readsBack = v => parseYaml(`k: ${v}   # comment`).k === value;
+  if (/^[A-Za-z0-9_./@~-][^#'"]*$/.test(value) && !/:\s|\s$/.test(value) && readsBack(value)) return value;
+  if (!value.includes("'") && !/[\n\r]/.test(value) && readsBack(`'${value}'`)) return `'${value}'`;
+  return JSON.stringify(value);
+}
+
 function scalar(v) {
   v = v.trim();
   if (v === '[]') return [];
