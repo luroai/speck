@@ -97,7 +97,7 @@ test('0160 AC2: the status bar style tag says black-translucent (light text) on 
   for (const theme of ['light', 'dark']) {
     await withPanel(async b => {
       assert.equal(await b.js(`document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content`), theme === 'dark' ? 'black-translucent' : 'default', `${theme} look`);
-      await b.js(`document.querySelector('#theme').click()`);
+      await b.js(`setLook(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')`);
       assert.equal(await b.js(`document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content`), theme === 'dark' ? 'default' : 'black-translucent', `after switching from the ${theme} look`);
     }, { theme });
   }
@@ -117,7 +117,7 @@ test('0160 AC2: with a 47 px status bar, the header fills it and nothing else ev
 }, { insets: { top: 47, bottom: 34 } }));
 
 // 0364: the header no longer slims as you scroll: it's one row at the top and scrolled down, with the project shown.
-test('0160 AC3: on a phone, at the top and scrolled down, the header is one row of the mark, the project, the Foreman and light/dark, no taller than 60 px', skip, () => withPanel(async b => {
+test('0160 AC3: on a phone, at the top and scrolled down, the header is one row of the mark, the project, the Foreman and Settings, no taller than 60 px', skip, () => withPanel(async b => {
   const before = await box(b, 'header');
   for (const y of [600, 0]) {
     await scrollTo(b, y);
@@ -126,10 +126,10 @@ test('0160 AC3: on a phone, at the top and scrolled down, the header is one row 
     assert.equal(h.height, before.height, 'scrolling never changes its height');
     assert.ok(await shown(b, '.repo'), 'the project name and base branch show');
     assert.equal(await shown(b, '.logo span'), false, '"control panel" is hidden');
-    for (const sel of ['.logo', '.repo', '#run', '#theme']) assert.ok(await shown(b, sel), `${sel} shows`);
-    const mids = await b.js(`['.logo', '.repo', '#run', '#theme'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return r.top + r.height / 2; })`);
+    for (const sel of ['.logo', '.repo', '#run', '#settings-open']) assert.ok(await shown(b, sel), `${sel} shows`);
+    const mids = await b.js(`['.logo', '.repo', '#run', '#settings-open'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return r.top + r.height / 2; })`);
     assert.ok(Math.max(...mids) - Math.min(...mids) < 4, `one row: ${mids}`);
-    assert.ok((await box(b, '#run')).height >= 44 && (await box(b, '#theme')).height >= 44, 'the buttons keep their 44 px tap areas');
+    assert.ok((await box(b, '#run')).height >= 44 && (await box(b, '#settings-open')).height >= 44, 'the buttons keep their 44 px tap areas');
   }
 }));
 

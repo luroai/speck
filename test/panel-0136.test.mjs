@@ -17,7 +17,6 @@ const ZEN = { '--bg': '#faf9f5', '--panel': '#ffffff', '--raise': '#f0eee6', '--
 const ZEN_TINTS = { '--accent-bg': '#f7ebe6', '--idea-bg': '#f2ecf3', '--inbox-bg': '#e9f2f0', '--bad-bg': '#fae6e8' };
 const OWN = ['--ok', '--warn', '--run', '--idea', '--inbox', '--bug', '--fix'];
 const TINTS = ['--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
-const LABEL = 'Switch between light and dark';
 
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
@@ -41,27 +40,10 @@ function startLook({ stored = null, dark = false, storage } = {}) {
   return { theme: root.dataset.theme, change: matches => { onChange && onChange({ matches }); return root.dataset.theme; } };
 }
 
-test('0136 AC1: the header ends with a button named "Switch between light and dark", after Auto-build (0150), with a moon and a sun icon and no text', () => {
-  const h = header();
-  const run = h.indexOf('id="run"');
-  const m = h.match(/[\s\S]*<button\b([^>]*)>([\s\S]*?)<\/button>\s*$/); // the last button: Auto-build is one too (0150)
-  assert.ok(m, 'a button is the last thing in the header');
-  assert.ok(run >= 0 && run < h.indexOf('id="theme"'), 'the button comes after Auto-build');
-  assert.match(m[1], /\btype="button"/);
-  assert.match(m[1], /\bid="theme"/);
-  assert.match(m[1], new RegExp(`\\baria-label="${LABEL}"`));
-  assert.equal(m[2].replace(/<[^>]*>/g, '').trim(), '', 'no visible text');
-  assert.match(m[2], /<svg class="moon"/);
-  assert.match(m[2], /<svg class="sun"/);
-  // Not inside Auto-build, whose contents the page replaces on every refresh.
-  assert.doesNotMatch(h.match(/<button class="run-state" id="run"[\s\S]*?<\/button>/)[0], /id="theme"/);
-});
-
-test('0136 AC1: the stylesheet shows the moon in the light look and the sun in the dark one', () => {
-  const s = css();
-  assert.match(s, /\.theme \.sun \{ display: none; \}/);
-  assert.match(s, /:root\[data-theme="dark"\] \.theme \.sun \{ display: block; \}/);
-  assert.match(s, /:root\[data-theme="dark"\] \.theme \.moon \{ display: none; \}/);
+// 0372: light and dark are chosen in Settings now: the header has no button for them.
+test('0136 AC1 (0372): the header has no light/dark button, and the stylesheet draws none', () => {
+  assert.doesNotMatch(header(), /id="theme"|class="theme"|light and dark/);
+  assert.doesNotMatch(css(), /\.theme\b/);
 });
 
 test('0136 AC2: the dark look sets the mockup\'s colours exactly', () => {
@@ -130,7 +112,10 @@ const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_C
 const bodyBg = `getComputedStyle(document.body).backgroundColor`;
 const LIGHT_BG = 'rgb(250, 249, 245)';
 const DARK_BG = 'rgb(24, 24, 24)';
-const shown = `[...document.querySelectorAll('#theme svg')].filter(s => getComputedStyle(s).display !== 'none').map(s => s.getAttribute('class'))`;
+// 0372: the look Settings' list shows, opening Settings if it's closed, and a look picked there.
+const LOOK = `(async () => { if (!document.getElementById('look')) document.getElementById('settings-open').click(); for (let i = 0; i < 100 && !document.getElementById('look'); i++) await new Promise(r => setTimeout(r, 20)); return document.getElementById('look'); })()`;
+const shown = `${LOOK}.then(l => l.value)`;
+const pick = look => `${LOOK}.then(l => { l.value = ${JSON.stringify(look)}; l.dispatchEvent(new Event('change')); return true; })`;
 
 async function withPanel(fn, { scheme } = {}) {
   const r = panelRepo();
@@ -141,7 +126,7 @@ async function withPanel(fn, { scheme } = {}) {
     const open = async () => {
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       // The page can be swapped out while it's checked: try again until it's there.
-      const ready = `location.port === '${panel.port}' && document.readyState === 'complete' && !!document.getElementById('theme')`;
+      const ready = `location.port === '${panel.port}' && document.readyState === 'complete' && !!document.getElementById('settings-open')`;
       for (let i = 0; ; i++) {
         try { if (await b.js(ready)) return; } catch (e) { if (i >= 100) throw e; }
         if (i >= 100) throw new Error('timed out waiting for the panel');
@@ -153,43 +138,35 @@ async function withPanel(fn, { scheme } = {}) {
   } finally { await b.close(); await stop(panel); }
 }
 
-test('0136 AC1-AC2: in a browser, the button switches the look by click, Enter and Space, and shows the right icon', skip, async () => {
+test('0136 AC1-AC2 (0372): in a browser, Settings\' list switches the look both ways and shows the one chosen', skip, async () => {
   await withPanel(async b => {
     assert.equal(await b.js(bodyBg), LIGHT_BG);
-    assert.deepEqual(await b.js(shown), ['moon']);
-    assert.equal(await b.js(`document.getElementById('theme').getAttribute('aria-label')`), LABEL);
-    assert.equal(await b.js(`document.getElementById('theme').innerText.trim()`), '');
-    await b.js(`document.getElementById('theme').click()`);
+    assert.equal(await b.js(shown), 'light');
+    await b.js(pick('dark'));
     await b.until(`getComputedStyle(document.body).backgroundColor === '${DARK_BG}'`, 'the dark look');
-    assert.deepEqual(await b.js(shown), ['sun']);
-    for (const key of [['Enter', 13, '\r'], [' ', 32, ' ']]) {
-      const before = await b.js(bodyBg);
-      await b.js(`document.getElementById('theme').focus()`);
-      const k = { key: key[0], code: key[0] === ' ' ? 'Space' : 'Enter', windowsVirtualKeyCode: key[1], text: key[2] };
-      await b.send('Input.dispatchKeyEvent', { type: 'keyDown', ...k });
-      await b.send('Input.dispatchKeyEvent', { type: 'keyUp', ...k });
-      const want = before === DARK_BG ? LIGHT_BG : DARK_BG;
-      await b.until(`getComputedStyle(document.body).backgroundColor === '${want}'`, `${key[0] === ' ' ? 'Space' : 'Enter'} to switch the look`);
-    }
+    assert.equal(await b.js(shown), 'dark');
+    await b.js(pick('light'));
+    await b.until(`getComputedStyle(document.body).backgroundColor === '${LIGHT_BG}'`, 'the light look again');
+    assert.equal(await b.js(shown), 'light');
   }, { scheme: 'light' });
 });
 
 test('0136 AC4: in a browser, the look chosen is kept through a reload, whatever the computer\'s setting', skip, async () => {
   await withPanel(async (b, open) => {
     assert.equal(await b.js(bodyBg), DARK_BG, 'starts dark, from the computer\'s setting');
-    await b.js(`document.getElementById('theme').click()`);
+    await b.js(pick('light'));
     await b.until(`getComputedStyle(document.body).backgroundColor === '${LIGHT_BG}'`, 'the light look');
     assert.equal(await b.js(`localStorage.getItem('speck-theme')`), 'light');
     await open();
     assert.equal(await b.js(bodyBg), LIGHT_BG, 'still light after a reload, though the computer is dark');
-    assert.deepEqual(await b.js(shown), ['moon']);
+    assert.equal(await b.js(shown), 'light');
   }, { scheme: 'dark' });
 });
 
 test('0136 AC5: in a browser, before any choice, the panel follows the computer\'s setting', skip, async () => {
   await withPanel(async (b, open) => {
     assert.equal(await b.js(bodyBg), DARK_BG);
-    assert.deepEqual(await b.js(shown), ['sun']);
+    assert.equal(await b.js(shown), 'dark');
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
     await b.until(`getComputedStyle(document.body).backgroundColor === '${LIGHT_BG}'`, 'the light look once the computer is light');
     await open();
