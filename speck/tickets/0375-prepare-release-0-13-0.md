@@ -47,6 +47,12 @@ speck is ready to be released as 0.13.0.
 - Checked 2026-10-22: `package.json` is `0.12.0`. 0367 prepared 0.12.0 the same way, and 0240 publishes the GitHub release from `docs/releases/` when the release ticket lands on `main`.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Covers every ticket shipped since `v0.12.0`: 0368 to 0374, 0381, 0382, 0385 to 0388, and also 0383 (reading a verdict after a line of prose) and 0384 (a review round outlasting the builder's shell limit), which shipped since too.
+- Built from main at `speck(0388): Leave a ticket's agents to the settings unless it names them`: 366 shipped, 16 cancelled, 12 minutes median, 1.5 review rounds median, 181 approved in the first round, worked out as 0307 did, with its figures test.
+- 0367's checks that named 0.12.0 as the current version now check the current version, and its figures test checks only the figures 0.12.0 was built from, as 0367 did for 0360.
+- Checked that an open panel page notices the new release: the page compares its own copy with `templates/panel.html`, which 0368 to 0373 changed, and the Foreman's board then says Reload page.
+- Self-check: no changes.
+- Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
