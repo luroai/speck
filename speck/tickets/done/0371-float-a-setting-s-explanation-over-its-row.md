@@ -1,7 +1,7 @@
 ---
 id: "0371"
 title: "Float a setting's explanation over its row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0370"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T21:33:36.430Z"
 approved: "2026-10-22T21:50:19.201Z"
+finished: "2026-10-22T21:53:04.202Z"
 
 ---
 # 0371 · Float a setting's explanation over its row
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The "i" beside a setting shows its explanation under the row as soon as the pointer is over it, which pushes every setting below it down.
