@@ -44,6 +44,7 @@ Settings opens in a pop-up over the whole panel, in the same look as a document'
 - Settings is `#settings` in `templates/panel.html`, a fixed pane `min(480px, 100vw)` wide. A document's pop-up is `#doc-view`: fixed over the window, content at most 760 px wide.
 - Checked 2026-10-22: the document pop-up covers the window and scrolls inside itself (0362, `templates/panel.html`).
 - 0369, 0370 and 0371 wait for this: they change `templates/panel.html` too.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
