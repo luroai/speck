@@ -3,7 +3,7 @@
 // because a model is left at the agent's default. Two names for one model, such as an alias and its full name, count
 // as different.
 
-import { blank, modelFamily, reviewerSettings } from './core.mjs';
+import { blank, modelFamily, ticketAgents } from './core.mjs';
 import { modelOf, codexBuilds, configBuilder } from './build-model.mjs';
 
 // The model a `builder` build runs on, as far as speck can tell, or '' when it can't: builder_model, counted only when
@@ -45,9 +45,9 @@ export function sameModelProblem(builder, reviewer, cfg, reviewerModel, elsewher
   return `${who}, and ${builderSide} and ${reviewerSide}, which could be the same. ${fix}`;
 }
 
-// The same, for a ticket: its builder and reviewer, with its reviewer model falling back to speck/config.yml's. 0312:
-// builder_model counts only when the ticket's builder is the one in speck/config.yml, as only that builder is given it.
+// The same, for a ticket: the builder, reviewer and reviewer model it would use, its own or else the settings' (0388).
+// 0312: builder_model counts only when the ticket's builder is the one in speck/config.yml, as only that builder is given it.
 export function ticketSameModelProblem(fm, cfg) {
-  const own = configBuilder(cfg), builder = typeof fm.builder === 'string' ? fm.builder.trim() : '';
-  return sameModelProblem(fm.builder, fm.reviewer, cfg, reviewerSettings(fm, cfg).model, builder && builder !== own ? own : null);
+  const own = configBuilder(cfg), use = ticketAgents(fm, cfg);
+  return sameModelProblem(use.builder, use.reviewer, cfg, use.reviewer_model, use.builder !== own ? own : null);
 }
