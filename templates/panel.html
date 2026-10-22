@@ -210,11 +210,6 @@
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
     @keyframes flash { 0%, 40% { box-shadow: inset 0 0 0 2px var(--text); } } /* 0167: a ring only, so a state's tint stays */
-    /* 0160: on a phone the header fades in as it slims to one row and as it goes back to two */
-    header.slim > * { animation: head-slim .15s ease-out; }
-    header.wide > * { animation: head-wide .15s ease-out; }
-    @keyframes head-slim { from { opacity: 0; } }
-    @keyframes head-wide { from { opacity: 0; } }
   }
   .question.exit.to-ship { border-left-color: var(--idea); }
   .question.exit.carried { border-left-color: var(--run); background: var(--raise); } /* 0338: speck run is carrying it on */
@@ -270,9 +265,8 @@
   .run-state:hover { color: var(--text); border-color: var(--text); }
   .run-state:disabled { cursor: default; opacity: .6; }
   .run-state[hidden] { display: none; }
-  /* 0163: the builder in place of the square, and a label that ends in "…" rather than wrap or overflow. */
+  /* 0163: a label that ends in "…" rather than wrap or overflow. 0364: its word alone, with no builder before it. */
   .run-state { gap: 6px; max-width: 100%; min-width: 0; }
-  .run-state .mini { display: block; flex: none; width: 28px; height: 28px; margin-left: -4px; image-rendering: pixelated; }
   .run-state .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .run-state .fixing { flex: none; font-size: 12px; color: var(--muted); border-left: .5px solid var(--line); padding-left: 6px; } /* 0317 */
   /* 0285: the Foreman's status, coloured by its tone, and its detail under the header */
@@ -531,27 +525,18 @@
   /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
      clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
   @media (max-width: 699.98px) {
-    /* 0150: two rows, speck and the project, then Auto-build and light/dark, each pair at the two edges */
-    header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; }
+    /* 0364: one row, the same at the top and scrolled: the mark, the project, the Foreman, Settings and light/dark,
+       with 44 px buttons and 6 px above and below. No "control panel" (0309) or "speck", so the project has room. */
+    header { column-gap: 6px; padding: calc(6px + env(safe-area-inset-top)) 16px 6px; }
     header > * { white-space: nowrap; }
-    /* 0160: scrolled down, one row of speck, Auto-build and light/dark, 44 px buttons and 6 px above and below */
-    header.slim { grid-template-columns: auto minmax(0, 1fr) auto auto; padding-top: calc(6px + env(safe-area-inset-top)); padding-bottom: 6px; }
-    header.slim .repo { display: none; }
-    /* 0309: no "control panel" on a phone, so the larger mark and speck leave room for the project's name in full */
-    .logo span { display: none; }
-    /* 0170: and room for the mark before speck */
-    header { column-gap: 6px; }
-    .logo .mark { margin-right: 6px; }
-    .repo { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; justify-self: end; margin-left: 0; }
-    .run-state { justify-self: start; height: 44px; min-width: 44px; }
-    /* 0163: in two rows, Auto-build has the row under speck and the project to itself, but light/dark's place, so a
-       long label is cut short there rather than move the project's name. Slim, each is in its own column again. */
-    header:not(.slim) { grid-template-columns: auto minmax(0, 1fr) auto auto; }
-    header:not(.slim) .repo { grid-column: 2 / 5; }
-    header:not(.slim) .run-state { grid-column: 1 / 3; }
-    header:not(.slim) .settings-open { grid-column: 3; } /* 0257: Settings, just before light/dark */
-    header:not(.slim) #theme { grid-column: 4; }
-    .theme, .settings-open { justify-self: end; width: 44px; height: 44px; }
+    .logo span, .logo .name { display: none; }
+    .logo .mark { margin-right: 0; }
+    /* The project fills the row after the mark. When the row is too narrow, it gives way first, cut short with "…" but
+       never narrower than about a quarter of the screen, so its name stays readable, then the Foreman's word is cut short too. */
+    .repo { flex: 1 1 0; min-width: min(96px, 25vw); margin-left: 0; }
+    .run-state { flex-shrink: 1; height: 44px; min-width: 44px; overflow: hidden; }
+    .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
+    .theme, .settings-open { width: 44px; height: 44px; }
     .settings-open + .theme { margin-left: 0; }
     #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
@@ -755,11 +740,6 @@ function stageOf(t, d) {
   if (d.sentence === 'Shipping' || t.ship_waiting) return 'ship';
   if (t.status === 'reviewing') return 'review';
   return (Array.isArray(t.steps) ? t.steps : []).findIndex(s => s.state === 'now') === 1 ? 'check' : 'build';
-}
-// 0199: whether any build or ship is at work, for the Auto-build button's builder. A ticket waiting its turn in the ship
-// queue isn't at work yet. `shippingId` is the ticket whose ship from the panel hasn't been answered yet.
-function atWork(queue, shippingId) {
-  return queue.some(t => t.inFlight && (t.shipping || shippingId === String(t.id) || (!t.ship_waiting && doing(t, false).moving)));
 }
 // An amount in US dollars, to the cent.
 const dollars = n => `$${n.toFixed(2)}`;
@@ -1931,35 +1911,14 @@ $('theme').addEventListener('click', () => {
   if (typeof setLook === 'function') setLook(look); else root.dataset.theme = look;
   try { localStorage.setItem('speck-theme', root.dataset.theme); } catch { /* storage refused: the look still switches, until a reload */ }
 });
-// 0160: the header stays at the top of the screen. On a phone, once the page is scrolled down, it slims to one row, and
-// a margin below it makes up the height it lost, so nothing on the page moves. --head is its height on screen, so a
-// ticket scrolled to sits below it.
+// 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
+// it. 0364: it's one row at every width, the same at the top and scrolled, and the project and base branch, cut short
+// when the row is narrow, show in full in its tooltip.
 const pageHeader = document.querySelector?.('header');
 if (pageHeader) {
-  const phone = matchMedia('(max-width: 699.98px)');
-  let width = innerWidth;
-  const fit = changed => {
-    const slim = phone.matches && scrollY > 4, was = pageHeader.classList.contains('slim');
-    if (slim === was && !changed) return;
-    // While it's measured, the page is never shorter than it ends up (that would pull the scroll back at the bottom),
-    // and the browser's scroll anchoring is off, so neither moves the page.
-    const root = document.documentElement;
-    root.style.overflowAnchor = 'none';
-    pageHeader.classList.remove('slim', 'wide');
-    pageHeader.style.marginBottom = '';
-    if (slim) {
-      const full = pageHeader.offsetHeight;
-      pageHeader.style.marginBottom = `${full}px`;
-      pageHeader.classList.add('slim');
-      pageHeader.style.marginBottom = `${full - pageHeader.offsetHeight}px`;
-    } else if (was) pageHeader.classList.add('wide');
-    void pageHeader.offsetHeight; // laid out as it ends, before anchoring is back on
-    root.style.overflowAnchor = '';
-  };
-  addEventListener('scroll', () => fit(false), { passive: true });
-  addEventListener('resize', () => { fit(innerWidth !== width); width = innerWidth; }); // a new width can change both heights
   new ResizeObserver(() => document.documentElement.style.setProperty('--head', `${pageHeader.offsetHeight}px`)).observe(pageHeader);
-  fit(false);
+  const repo = pageHeader.querySelector('.repo');
+  if (repo) repo.title = repo.textContent.trim();
 }
 $('full-backdrop').addEventListener('click', e => { if (e.target === $('full-backdrop')) closeFull(); });
 $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render(); });
@@ -2664,34 +2623,14 @@ function startBadges(inFlight) {
   const still = reducedMotion();
   if (LCD) for (const b of badges.values()) if (!b.lcd) b.lcd = LCD.badge(b.canvas, b.pose, { still });
 }
-// 0303: the Foreman's builder, the renderer's mini builder. It's made once: its canvas stays in the button between
-// redraws, and hops or holds still with its own set(on). Without the renderer it stays blank. The header's mark is the
-// design's logo, written into the page since 0320, so it needs no script.
+// The design's LCD renderer, for the builder badges. The header's mark is the design's logo, written into the page
+// since 0320, so it needs no script. 0364: the Foreman's button has no builder, so speck's mark shows once.
 const LCD = globalThis.SpeckLCD;
-const runBuilder = { canvas: el('canvas', 'mini still'), lcd: null, hop: false };
-runBuilder.canvas.setAttribute('aria-hidden', 'true');
-// The builder's canvas, hopping or still. It starts drawing in startBuilder(), once it's in the button, as the renderer
-// reads the look's colours from the canvas as it's made.
-function builderFor(hop) {
-  const b = runBuilder;
-  b.canvas.className = `mini ${hop ? 'hop' : 'still'}`;
-  if (b.lcd && b.hop !== hop) { b.lcd.set(hop); b.lcd.scr.dirty = true; }
-  b.hop = hop;
-  return b.canvas;
-}
-function startBuilder() {
-  const b = runBuilder;
-  if (b.lcd || !LCD || typeof LCD.mini !== 'function') return;
-  b.lcd = LCD.mini(b.canvas, b.hop);
-  b.lcd.cast.still = b.lcd.scr.still = reducedMotion();
-}
 function reducedMotion() { return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches; }
 // The renderer reads the reduced-motion setting once, as the page loads, so each new badge is given it as it is now,
-// and a change to it holds the badges and the Foreman's builder already drawn still or lets them move again.
+// and a change to it holds the badges already drawn still or lets them move again.
 if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
   for (const b of badges.values()) if (b.lcd) { b.lcd.cast.still = b.lcd.scr.still = e.matches; b.lcd.scr.dirty = true; }
-  const m = runBuilder.lcd;
-  if (m) { m.cast.still = m.scr.still = e.matches; m.scr.dirty = true; }
 });
 // A change of the screen's pixels per CSS pixel (a zoom, or another screen) gives each screen its new size, which its
 // renderer doesn't see, as the screen's size on the page stays the same. Its look it follows itself.
@@ -2699,7 +2638,6 @@ if (typeof matchMedia === 'function') {
   (function zoomed() {
     matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`).addEventListener('change', () => {
       for (const b of badges.values()) if (b.lcd) b.lcd.scr.size();
-      if (runBuilder.lcd) runBuilder.lcd.scr.size();
       zoomed();
     }, { once: true });
   })();
@@ -3222,14 +3160,13 @@ function render() {
   $('shipped-n').textContent = `${m.shippedTotal} in total`;
 
   // 0285: the Foreman, speck run's one status for the whole pipeline, in place of the speck run switch, which is in
-  // Settings now. Pressing it opens its detail. The button stays put and only its contents change, so it keeps focus,
-  // with the builder in place of a square (0163), hopping while any build or ship is at work.
+  // Settings now. Pressing it opens its detail. The button stays put and only its contents change, so it keeps focus.
+  // 0364: its word alone, with no builder.
   const f = foremanOf(state), stale = pageStale(state);
   const run = $('run');
   run.hidden = false;
   run.className = `run-state fm-${stale ? 'warn' : f.tone}`;
-  run.replaceChildren(builderFor(atWork(m.queue, shippingId)), el('span', 'label', stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
-  startBuilder();
+  run.replaceChildren(el('span', 'label', stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
   renderForeman(f, stale);

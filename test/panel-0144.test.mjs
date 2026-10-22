@@ -8,16 +8,16 @@ import { switchPage, deferred, panelRepo, freePort, startPanel, stop, findChrome
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const state = run => ({ tickets: [], ideas: [], resume_command: '', ...(run ? { run } : {}) });
 // 0150: the indicator is itself the button, so there's no separate Pause or Start, and "ready tickets wait" moved into its tooltip.
-// 0285: the switch is in the Settings view's Foreman group now, and the header button shows the Foreman, with the builder.
+// 0285: the switch is in the Settings view's Foreman group now, and the header button shows the Foreman. 0364: with no builder.
 const pillOf = p => p.runSwitch();
-const dotOf = p => p.all(p.byId('run')).find(n => /\bmini\b/.test(n.className || '')); // 0163: the builder in place of the square
+const dotOf = p => p.all(p.byId('run')).find(n => /\bmini\b/.test(n.className || '') || n.tagName === 'canvas'); // 0163: the builder in place of the square
 const switchOf = pillOf;
 
 test('0144 AC1: while speck run is on, the indicator reads "Auto-build on" with a green square (0150: and is the button)', async () => {
   const p = switchPage([state({ on: true, pid: 7 })]);
   await p.settle();
   assert.equal(pillOf(p).textContent, 'Auto-build on');
-  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
+  assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
   assert.equal(switchOf(p).title, 'Pause Auto-build: ready tickets wait');
 });
 
@@ -26,7 +26,7 @@ test('0144 AC2: while speck run is off, the indicator reads "Auto-build off" wit
   await p.settle();
   const pill = pillOf(p);
   assert.equal(pill.textContent, 'Auto-build off');
-  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
+  assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
   assert.ok(!p.all(pill).some(n => /\brun-wait\b/.test(n.className || '')), 'no small print beside it');
 });
 
@@ -86,7 +86,7 @@ async function withPage(run, fn, width = 1280) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .mini')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .label')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -99,16 +99,17 @@ const LINES = sel => `(() => {
   return lines;
 })()`;
 
-// 0163: the builder took the square's place, so neither is green or red: the label says whether it's on.
-test('0144 AC1: on, the button shows the builder rather than a green square', skip, async () => {
+// 0163: the builder took the square's place, so neither is green or red: the label says whether it's on. 0364: and the
+// builder has gone too, so the button shows its word alone.
+test('0144 AC1: on, the button shows its word, with no green square or builder', skip, async () => {
   await withPage({ on: true, pid: 7 }, async b => {
-    assert.equal(await b.js(`!document.querySelector('#run .live') && document.querySelector('#run canvas.mini').getBoundingClientRect().width > 0`), true);
+    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`), true);
   });
 });
 
-test('0144 AC2: off, the button shows the builder rather than a red square', skip, async () => {
+test('0144 AC2: off, the button shows its word, with no red square or builder', skip, async () => {
   await withPage(null, async b => {
-    assert.equal(await b.js(`!document.querySelector('#run .live') && document.querySelector('#run canvas.mini').getBoundingClientRect().width > 0`), true);
+    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`), true);
   });
 });
 

@@ -102,15 +102,15 @@ test('0320 AC4: the drawing reads only the shapes the design draws, and refuses 
 // The old renderer's drawing code, lines 1 to 706 as 0302 copied them from the design, before its export line.
 const DRAWING = 'aab9409deb0458e88c7d6f82c55f1bca0272eb836c71e00dfee627026c966a75';
 
-test('0320 AC5: the new renderer draws the badges and the Foreman\'s builder with the same code as before', () => {
+test('0320 AC5: the new renderer draws the badges and the Foreman\'s builder with the same code as before (0364: the panel draws no Foreman\'s builder)', () => {
   for (const file of [path.join(DESIGN, 'lcd.js'), path.join(ROOT, 'templates', 'lcd.js')]) {
     const lines = fs.readFileSync(file, 'utf8').split('\n');
     assert.equal(sha(lines.slice(0, 706).join('\n')), DRAWING, `${file}: the same code up to the logo`);
     assert.match(lines[706], /^ {2}\/\/ ---- The logo ----$/, 'then the logo section');
   }
-  // The panel still draws them with the same calls.
+  // The panel still draws the badges with the same call. 0364: the Foreman's button has no builder now.
   assert.match(page(), /LCD\.badge\(b\.canvas, b\.pose, \{ still \}\)/);
-  assert.match(page(), /LCD\.mini\(b\.canvas, b\.hop\)/);
+  assert.doesNotMatch(page(), /LCD\.mini\(/);
 });
 
 // ---------- in a real browser ----------
