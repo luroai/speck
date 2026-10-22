@@ -21,8 +21,8 @@ const within = (n, box) => { for (; n; n = n.parentNode) if (n === box) return t
 const pop = p => p.byId('settings');
 const closeOf = p => p.all(pop(p)).find(n => n.tagName === 'button' && n.textContent === 'Close');
 // An open Settings pop-up, on a page that records the focus and holds the page as a browser would.
-async function opened() {
-  const p = settingsPage([view()], [], { scrollX: 0, scrollY: 0, scrollTo() {} });
+async function opened(saves = []) {
+  const p = settingsPage([view()], saves, { scrollX: 0, scrollY: 0, scrollTo() {} });
   let focused = null;
   for (const id of ['settings', 'settings-open']) p.byId(id).focus = function () { focused = this; };
   p.behind = ['header', 'offline', 'restart', 'main'].map(tag => ({ tagName: tag, inert: false }));
@@ -52,7 +52,9 @@ test('0368 AC1: Settings is a pop-up over the whole window, its settings in a ce
   assert.match(base, /position: fixed/);
   assert.match(base, /inset: 0/);
   assert.doesNotMatch(base, /480px|right: 0|border-left|box-shadow/, 'not a pane down the right');
-  assert.ok(rules('#settings > *').some(r => /max-width: 760px/.test(r) && /margin-left: auto/.test(r) && /margin-right: auto/.test(r)), 'a centred column');
+  // The last margin-left in the rule is the one that holds: half the room left over, rounded down to a whole pixel.
+  assert.ok(rules('#settings > *').some(r => /max-width: 760px/.test(r) && /margin-right: auto/.test(r)
+    && /margin-left: max\(0px, round\(down, calc\(\(100% - 760px\) \/ 2\), 1px\)\);\s*$/.test(r)), 'a centred column');
   assert.ok(!rules(':root[data-theme="dark"] #settings').length, 'no side pane\'s shadow in the dark look');
   for (const sel of ['#settings .top', '#settings .close', '#settings .close:hover']) {
     const shared = sel.replace('#settings', '#doc-view');
@@ -114,6 +116,19 @@ test('0368 AC3: a click on the pop-up inside its column, such as between two gro
   assert.equal(pop(p).hidden, false);
 });
 
+test('0368 AC3: a click on the pop-up\'s scroll bar, beside the column, scrolls rather than closing it', async () => {
+  const p = await opened();
+  pop(p).getBoundingClientRect = () => ({ left: 0, right: 960, top: 0, bottom: 800, width: 960, height: 800 });
+  pop(p).clientLeft = 0;
+  pop(p).clientWidth = 945; // a 15 px scroll bar on the right
+  clickAt(p, 950);
+  await p.settle();
+  assert.equal(pop(p).hidden, false, 'still open');
+  clickAt(p, 900);
+  await p.settle();
+  assert.equal(pop(p).hidden, true, 'beside the column and left of the scroll bar, it closes');
+});
+
 test('0368 AC3: a drag from the column, such as selecting a setting\'s text, ending beside it doesn\'t close it', async () => {
   const p = await opened();
   clickAt(p, 40, 400, pop(p).children[1]);
@@ -134,4 +149,15 @@ test('0368 AC4: the pop-up shows the groups, controls, this-machine choices and 
   assert.ok(p.all(pop(p)).some(n => n.tagName === 'select' || n.tagName === 'input'), 'controls');
   assert.ok(p.all(pop(p)).some(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || '')), 'Save');
   assert.match(pop(p).textContent, /this machine/i);
+});
+
+// ---------- AC2 and AC4: what the pop-up covers is shown in it ----------
+
+test('0368 AC4: a refused Auto-build switch shows speck run\'s message beside the switch, as the pop-up covers the strip under the header', async () => {
+  const p = await opened([{ status: 409, body: { error: 'speck run won\'t start: no build_command.' } }]);
+  p.press(p.all(pop(p)).find(n => n.id === 'run-switch'));
+  await p.settle();
+  const said = p.all(pop(p)).find(n => n.tagName === 'p' && n.className === 'bad' && n.hidden === false);
+  assert.equal(said?.textContent, 'speck run won\'t start: no build_command.');
+  assert.equal(p.byId('run-error').textContent, 'speck run won\'t start: no build_command.', 'and under the header, as before');
 });

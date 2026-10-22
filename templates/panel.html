@@ -299,6 +299,8 @@
   #settings .run-row .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
   #settings .run-row .label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); }
   #settings .run-row p { margin: 4px 0 0; color: var(--muted); }
+  #settings .run-row p.bad { color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #settings .run-row p.bad[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
@@ -1956,9 +1958,14 @@ $('settings-backdrop').addEventListener('click', e => { if (e.target === $('sett
 let settingsDownBeside = false;
 $('settings').addEventListener('pointerdown', e => { settingsDownBeside = e.target === $('settings') && besideColumn(e); });
 $('settings').addEventListener('click', e => { if (settingsDownBeside && e.target === $('settings') && besideColumn(e)) leaveSettings(); });
+// Not on its scroll bar, which sits beside the column too: a click there scrolls.
 function besideColumn(e) {
-  const col = $('settings').children[0];
+  const pane = $('settings'), col = pane.children[0];
   if (!col || typeof col.getBoundingClientRect !== 'function' || typeof e.clientX !== 'number') return false;
+  if (typeof pane.getBoundingClientRect === 'function' && typeof pane.clientWidth === 'number') {
+    const p = pane.getBoundingClientRect(), inside = p.left + (pane.clientLeft || 0);
+    if (e.clientX < inside || e.clientX >= inside + pane.clientWidth) return false; // its border or scroll bar
+  }
   const r = col.getBoundingClientRect();
   return e.clientX < r.left || e.clientX >= r.right;
 }
@@ -3375,11 +3382,14 @@ function drawRunSwitch() {
   runSwitchButton.disabled = !!runSwitching || !state;
   runSwitchButton.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets';
 }
+// 0368: Settings covers the strip under the header, so a refusal shows beside the switch too, kept between redraws.
+const runSwitchSaid = el('p', 'bad');
+runSwitchSaid.hidden = true;
 function foremanGroup(rows = []) {
   drawRunSwitch();
   return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Foreman')),
     el('div', 'run-row', null, el('div', 'row', null, el('span', 'label', 'speck run'), runSwitchButton),
-      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.')), ...rows);
+      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.'), runSwitchSaid), ...rows);
 }
 // 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.
@@ -3406,6 +3416,8 @@ async function switchRun(to) {
 function showRunError(text) {
   $('run-error').hidden = !text;
   $('run-error').textContent = text || '';
+  runSwitchSaid.hidden = !text;
+  runSwitchSaid.textContent = text || '';
 }
 let offline = false; // whether the page says it's disconnected, or can't read the tickets (0186)
 function setConnected(ok, problem) {
