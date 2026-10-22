@@ -1,7 +1,7 @@
 ---
 id: "0373"
 title: "Restore speck's dot-matrix name beside the base branch"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-give-the-header-s-notice-board-more-room.md
 after: ["0372"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:15:26.690Z"
+approved: "2026-10-22T22:28:53.376Z"
 
 ---
 # 0373 · Restore speck's dot-matrix name beside the base branch
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Under 700 px the header hides the dot-matrix "speck" word so the project line can stay. That line is 12 px text, so on a narrow pane the title reads as a small "speck · base main" beside the mark.
@@ -53,9 +54,14 @@ The panel's header now shows "speck" in its dot-matrix lettering at every width,
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 141,624
+- Elapsed since build started: 13 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Tidy-up: the panel's server still works out the project's name and fills `{{repo}}`, which the page no longer uses (one 0059 test still writes it into a page of its own).
