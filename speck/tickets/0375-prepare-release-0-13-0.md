@@ -8,8 +8,8 @@ risk: low                # low | high (auth, payments, data deletion, migrations
 task: code               # code | document (what the build makes: a code change or a document)
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 builder: claude
-reviewer: cursor
-reviewer_model: grok-4.7-high-fast       # blank: use speck/config.yml (blank there too: the reviewer's default)
+reviewer: codex
+reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: "speck/ideas/done/2026-10-22-prepare-release-0-13-0.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0368","0369","0370","0371","0372","0373","0374","0381","0382"]                # ticket ids that must be done first
