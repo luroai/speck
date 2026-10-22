@@ -209,6 +209,23 @@ test('0386 AC4: speck config show marks each value that comes from this machine'
   assert.equal(all.reviewer.this_machine, true);
   assert.equal(all.reviewer.repo_value, 'codex');
   assert.equal(all.builder.this_machine, undefined);
+  assert.equal(all.build_command, undefined, 'build_command shows only when this machine holds it');
+});
+
+test('0386 AC4: speck config show marks every one of your own settings this machine holds, build_command and resume_command included', () => {
+  const r = repo();
+  for (const key of OWN) assert.equal(r.set(r.dir, key, VALUES[key]).status, 0, key);
+  const json = JSON.parse(r.show('--json').stdout);
+  const all = Object.fromEntries(json.groups.flatMap(g => g.settings.map(s => [s.key, s])));
+  const mine = machineConfig(r.dir);
+  for (const key of OWN) {
+    assert.equal(all[key]?.this_machine, true, key);
+    assert.deepEqual(all[key].value, mine[key], key);
+  }
+  assert.equal(all.build_command.repo_value, DEFAULT_BUILD_COMMAND);
+  assert.equal(all.resume_command.repo_value, '');
+  const text = r.show().stdout;
+  for (const key of OWN) assert.match(text, new RegExp(`^  ${key}: .*\\(this machine's own, over speck/config\\.yml's `, 'm'), key);
 });
 
 test('0386 AC5: the README and the brief name --repo and where your own settings are kept', () => {
