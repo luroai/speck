@@ -1,7 +1,7 @@
 ---
 id: "0381"
 title: "Put each agent's model beside its family"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0368","0369","0370","0371","0372","0373","0374"]                # ticke
 created: 2026-10-22
 started: "2026-10-22T22:31:49.142Z"
 approved: "2026-10-22T22:42:54.632Z"
+finished: "2026-10-22T22:45:34.211Z"
 
 ---
 # 0381 · Put each agent's model beside its family
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Settings shows each agent and its model as two rows: the builder, the reviewer and the Foreman. The model looks like a separate setting, so it is hard to see that the second list is the model for the family in the first.
