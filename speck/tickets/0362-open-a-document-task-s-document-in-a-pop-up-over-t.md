@@ -1,7 +1,7 @@
 ---
 id: "0362"
 title: "Open a document task's document in a pop-up over the whole panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-open-a-document-in-a-pop-up-over-the-whole-
 after: ["0361"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T15:05:04.994Z"
+approved: "2026-10-22T15:12:02.528Z"
 
 ---
 # 0362 · Open a document task's document in a pop-up over the whole panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 A document task's Markdown document opens in the side pane, which is at most 480 px wide. That's narrow for reading a document, and reading it is how you review a document task before you ship it.
@@ -56,9 +57,14 @@ Worth a look: on a phone, the Close button scrolls away with a long document, so
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 123,753
+- Elapsed since build started: 7 min
+- Changed lines: 140 (limit 5000)
 Follow-ups:
 - Keep the pop-up's path and Close button in view while a long document scrolls: `speck/ideas/2026-10-22-keep-the-document-pop-up-s-close-button-in-view.md`.
 
