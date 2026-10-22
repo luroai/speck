@@ -226,6 +226,11 @@ export function loosens(was, will) {
   return { risks: RISKS.filter(r => will.risks.includes(r)).join(','), words: covered(will.risks) };
 }
 
+const COMMAND_EXPLAIN = {
+  build_command: 'The command speck run starts each build with. Switching the builder sets it to that builder\'s own.',
+  resume_command: 'The command the panel shows to reopen a blocked build\'s session.',
+};
+
 // `speck config show [--json]` (0269): each setting of the panel's Settings view, by group, with its value now, whether
 // that's speck's default and the explanation the panel shows, so setup and the panel say the same thing.
 export function cmdConfigShow(args) {
@@ -239,6 +244,10 @@ export function cmdConfigShow(args) {
     return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: s.explain,
       ...(machine ? { this_machine: true, repo_value: repoValue } : {}) };
   }) }));
+  // build_command and resume_command aren't in the Settings view, so one this machine holds is shown with the builder's.
+  const repoCfg = loadConfig(repo, { machine: false }), agents = groups.find(g => g.settings.some(s => s.key === 'builder'));
+  for (const key of ['build_command', 'resume_command']) if (Object.hasOwn(mine, key))
+    agents.settings.push({ key, value: mine[key], is_default: false, speck_default: '', explain: COMMAND_EXPLAIN[key], this_machine: true, repo_value: repoCfg[key] ?? '' });
   if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
   const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : shown(v);
   console.log(groups.map(g => `${g.title}\n${g.settings.map(s =>
