@@ -181,7 +181,11 @@ for (const width of [320, 375, 500, 699, 700, 1200]) {
     const gap = parseFloat(await putBack(b));
     const was = await measure(b);
     const room = (width < 700 ? 44 : 34) + gap + (width < 700 ? 0 : -6), gained = now.board.width - was.board.width;
-    if (was.board.width < was.full - 0.5) assert.ok(Math.abs(gained - room) <= 1 || Math.abs(now.board.width - now.full) <= 0.5, `the board gained ${gained} px, the button's ${room} px`);
+    // 0373: with speck's word back, at 320 px the old button would squeeze the Foreman's button to its 44 px least, so
+    // the board can't lose all of the button's room there: it gains what it had to give up.
+    const floored = was.parts[PARTS.indexOf('#run')].width <= 44.5;
+    if (floored) assert.ok(gained > 0 && now.board.width > was.board.width, `the board gained ${gained} px, with the Foreman's button at its least`);
+    else if (was.board.width < was.full - 0.5) assert.ok(Math.abs(gained - room) <= 1 || Math.abs(now.board.width - now.full) <= 0.5, `the board gained ${gained} px, the button's ${room} px`);
     else assert.ok(Math.abs(now.board.width - now.full) <= 0.5 && Math.abs(gained) <= 0.5, `shown in full both ways: ${now.board.width} of ${now.full}`);
   }, width));
 }

@@ -61,18 +61,22 @@
 
   @font-face { font-family: "Doto"; src: url("/fonts/Doto.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; display: flex; align-items: center; gap: clamp(10px, calc(10px + (100vw - 700px) * .03), 16px); padding: calc(14px + env(safe-area-inset-top)) clamp(16px, calc(16px + (100vw - 700px) * .04), 24px) 14px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  /* 0309: the mark, speck and "control panel" in a row, each centred on the mark's line */
-  .logo { display: flex; align-items: center; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
+  /* 0309: the mark, speck and "control panel" in a row, each centred on the mark's line. 0373: the base branch sits
+     between speck and "control panel". The title gives way before anything else in the header, so the base branch is cut
+     short first, but its column never gets narrower than 58 px (its 10 px gap and about "base m…"), and speck and
+     "control panel" never are. It pushes the rest of the header to the right. */
+  .logo { display: grid; grid-template-columns: auto auto minmax(58px, auto) auto; align-items: center; flex: 0 1000 auto; margin-right: auto; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-weight: 600; font-size: 18px; }
   /* 0170: speck's mark before the wordmark, in the text colour with the red dot. 0309: 32 px, two screen pixels a dot.
      0320: the design's logo, its renderer's logo.markSVG() written into the page, with the speck in the panel's --dot */
   .logo .mark { display: block; width: 32px; height: 32px; margin-right: 8px; --speck: var(--dot); }
   /* 0304: speck's name in the design's dot-matrix lettering, from the panel's own copy of Doto (templates/fonts/). 0309: at 26 px */
   .logo .name { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 26px; line-height: 1; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 12px; }
-  .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .logo, .run-state, .settings-open { flex-shrink: 0; }
+  /* 0373: "base <branch>" just after speck, in the body's small text, cut short with "…" when the row is too narrow */
+  .logo .repo { font: 400 12px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; color: var(--muted); box-sizing: border-box; padding-left: 10px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .run-state, .settings-open { flex-shrink: 0; }
   /* 0372: Settings ends the header: light and dark are chosen in it. Below 900 px the header's gaps and sides narrow
-     with the screen, so the project's name still has room beside speck. */
+     with the screen, so the base branch still has room beside speck. */
   .settings-open { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
   .settings-open:hover { border-color: var(--text); color: var(--text); }
   .settings-open svg { width: 15px; height: 15px; }
@@ -533,15 +537,12 @@
   /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
      clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
   @media (max-width: 699.98px) {
-    /* 0364: one row, the same at the top and scrolled: the mark, the project, the Foreman, Settings and light/dark,
-       with 44 px buttons and 6 px above and below. No "control panel" (0309) or "speck", so the project has room. */
+    /* 0364: one row, the same at the top and scrolled, with 44 px buttons and 6 px above and below. 0373: the mark,
+       speck and the base branch, the Foreman and Settings. No "control panel" (0309). */
     header { column-gap: 6px; padding: calc(6px + env(safe-area-inset-top)) 16px 6px; }
     header > * { white-space: nowrap; }
-    .logo span, .logo .name { display: none; }
-    .logo .mark { margin-right: 0; }
-    /* The project fills the row after the mark. When the row is too narrow, it gives way first, cut short with "…" but
-       never narrower than about a quarter of the screen, so its name stays readable, then the Foreman's word is cut short too. */
-    .repo { flex: 1 1 0; min-width: min(96px, 25vw); margin-left: 0; }
+    .logo span { display: none; }
+    /* When the row is too narrow, the base branch gives way first (see .logo), then the Foreman's word is cut short too. */
     .run-state { flex-shrink: 1; height: 44px; min-width: 44px; overflow: hidden; }
     .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
     .settings-open { width: 44px; height: 44px; }
@@ -624,8 +625,7 @@
 </head>
 <body>
 <header>
-  <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges" class="mark" id="mark" aria-hidden="true"><path fill="currentColor" d="M2 1h2v1h-2zM12 1h2v1h-2zM1 2h1v1h-1zM5 2h6v1h-6zM14 2h1v1h-1zM1 3h1v1h-1zM10 3h2v1h-2zM14 3h1v1h-1zM3 4h1v1h-1zM12 4h1v1h-1zM2 5h1v1h-1zM13 5h1v1h-1zM1 6h2v1h-2zM13 6h2v1h-2zM1 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM13 11h2v1h-2zM2 12h1v1h-1zM13 12h1v1h-1zM3 13h1v1h-1zM12 13h1v1h-1zM4 14h2v1h-2zM10 14h2v1h-2zM5 15h6v1h-6z"/><path fill="var(--speck, #c4402a)" d="M7 8h2v1h-2zM7 9h2v1h-2z"/></svg><b class="name">speck</b> <span>control panel</span></div>
-  <div class="repo"><code>{{repo}}</code> · base <code>{{base}}</code></div>
+  <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges" class="mark" id="mark" aria-hidden="true"><path fill="currentColor" d="M2 1h2v1h-2zM12 1h2v1h-2zM1 2h1v1h-1zM5 2h6v1h-6zM14 2h1v1h-1zM1 3h1v1h-1zM10 3h2v1h-2zM14 3h1v1h-1zM3 4h1v1h-1zM12 4h1v1h-1zM2 5h1v1h-1zM13 5h1v1h-1zM1 6h2v1h-2zM13 6h2v1h-2zM1 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM14 10h1v1h-1zM1 11h2v1h-2zM13 11h2v1h-2zM2 12h1v1h-1zM13 12h1v1h-1zM3 13h1v1h-1zM12 13h1v1h-1zM4 14h2v1h-2zM10 14h2v1h-2zM5 15h6v1h-6z"/><path fill="var(--speck, #c4402a)" d="M7 8h2v1h-2zM7 9h2v1h-2z"/></svg><b class="name">speck</b><div class="repo">base <code>{{base}}</code></div><span>control panel</span></div>
   <button class="run-state" id="run" type="button" aria-expanded="false" aria-controls="foreman" hidden></button>
   <button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="5.5" cy="4.5" r="1.6" fill="var(--bg)"/><circle cx="10.5" cy="11.5" r="1.6" fill="var(--bg)"/></svg>
@@ -1920,8 +1920,8 @@ function chooseLook(look) {
   try { localStorage.setItem('speck-theme', root.dataset.theme); } catch { /* storage refused: the look still switches, until a reload */ }
 }
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
-// it. 0364: it's one row at every width, the same at the top and scrolled, and the project and base branch, cut short
-// when the row is narrow, show in full in its tooltip.
+// it. 0364: it's one row at every width, the same at the top and scrolled, and the base branch (0373: no longer the
+// project), cut short when the row is narrow, shows in full in its tooltip.
 const pageHeader = document.querySelector?.('header');
 if (pageHeader) {
   new ResizeObserver(() => document.documentElement.style.setProperty('--head', `${pageHeader.offsetHeight}px`)).observe(pageHeader);
