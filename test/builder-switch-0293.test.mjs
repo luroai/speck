@@ -9,6 +9,7 @@ import { panelSettings, panelSaveSettings, panelSaveRequest } from '../scripts/s
 import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
 import { parseYaml, parseTicket } from '../scripts/core.mjs';
 import { ROOT } from './support/speck.mjs';
+import { machineConfig, machineConfigFile } from '../scripts/machine.mjs';
 
 // ---------- 0293: switch the builder from the panel and in setup ----------
 
@@ -37,29 +38,26 @@ test('0293 AC1: builder offers the builders that are installed and signed in, an
   assert.deepEqual(builderRow(panelSettings(r.dir)).choices, ['claude', 'codex', 'cursor']);
 });
 
-test('0293 AC1: saving a builder sets build_command to its own, blank for Codex and Cursor, in the same commit', () => {
+test('0293 AC1: saving a builder sets build_command to its own, blank for Codex and Cursor, in the same save', () => {
+  // 0387: both are your own settings, so they're saved together for this machine, without a commit.
   const r = panelRepo();
   setCfg(r, /^reviewer: .*$/m, 'reviewer: claude');
-  const head = headOf(r);
+  const was = snapshot(r);
   let out = panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }]);
   assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.deepEqual(out.body.changed, ['builder', 'build_command']);
-  assert.equal(readCfg(r).builder, 'codex');
-  assert.equal(readCfg(r).build_command, '');
-  assert.equal(r.g('rev-list', '--count', `${head}..HEAD`), '1', 'one commit');
-  assert.equal(r.g('show', '--name-only', '--format=', 'HEAD'), 'speck/config.yml');
-  assert.match(r.g('show', 'HEAD'), /^-build_command: .*claude/m);
+  assert.deepEqual(machineConfig(r.dir), { builder: 'codex', build_command: '' });
+  assert.deepEqual(snapshot(r), was);
 
   out = panelSaveSettings(r.dir, [{ key: 'builder', value: 'cursor' }]);
   assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.deepEqual(out.body.changed, ['builder'], 'already blank');
-  assert.equal(readCfg(r).build_command, '');
+  assert.equal(machineConfig(r.dir).build_command, '');
 
   setCfg(r, /^reviewer: .*$/m, 'reviewer: codex');
   out = panelSaveRequest(r.dir, 'repo%3Abuilder=claude');
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder, 'claude');
-  assert.equal(readCfg(r).build_command, DEFAULT_BUILD_COMMAND);
+  assert.deepEqual(machineConfig(r.dir), { builder: 'claude', build_command: DEFAULT_BUILD_COMMAND });
   assert.equal(r.g('status', '--porcelain'), '');
 });
 
@@ -132,7 +130,9 @@ test('0293 AC3: a build_command set by hand is replaced only once confirmed, as 
   assert.deepEqual(snapshot(r), was);
   out = panelSaveRequest(r.dir, `repo%3Abuilder=codex&replace=${encodeURIComponent('my-build {id}')}`);
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).build_command, '');
+  assert.equal(machineConfig(r.dir).build_command, '', '0387: for this machine');
+  fs.rmSync(machineConfigFile(r.dir), { force: true }); // speck/config.yml's from here on
+  setCfg(r, /^builder: .*$/m, 'builder: codex');
 
   // The builder's own command, or blank for Claude Code (build by hand), as speck reads it.
   setCfg(r, /^build_command: .*$/m, 'build_command: ""');
@@ -144,7 +144,7 @@ test('0293 AC3: a build_command set by hand is replaced only once confirmed, as 
   setCfg(r, /^build_command: .*$/m, 'build_command: 5');
   assert.equal(builderRow(panelSettings(r.dir)).build_command.value, '5');
   assert.equal(panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }], { replace: '5' }).status, 200);
-  assert.equal(readCfg(r).build_command, '');
+  assert.equal(machineConfig(r.dir).build_command, '');
 });
 
 test('0293 AC3: the view asks before replacing a build_command set by hand, and cancelling sends nothing', async () => {

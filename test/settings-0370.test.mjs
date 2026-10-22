@@ -147,14 +147,13 @@ test('0370 AC2: what a change must show still updates', async () => {
   changeTo(p, 'foreman', 'cursor');
   await p.settle();
   assert.deepEqual(options(p, 'foreman_model'), ['', 'auto', 'grok-4.7-high']);
-  // Where a this-machine change goes: asked while it's changed.
+  // 0387: a change to one of your own settings is saved for this machine, so where it goes is never asked.
   const asks = () => p.all(rowOf(p, 'max_parallel_builds')).filter(n => n.tagName === 'button' && /This machine only/.test(n.textContent)).length;
-  assert.equal(asks(), 0);
   changeTo(p, 'max_parallel_builds', '3');
-  assert.equal(asks(), 1);
-  changeTo(p, 'reviewer', 'claude'); // a redraw of other rows leaves the question
+  assert.equal(asks(), 0);
+  changeTo(p, 'reviewer', 'claude');
   await p.settle();
-  assert.equal(asks(), 1);
+  assert.equal(asks(), 0);
 });
 
 test('0370 AC3: saving, a refusal and the question on closing with unsaved changes work after a change redraws rows', async () => {
