@@ -9,7 +9,7 @@ task: code               # code | document (what the build makes: a code change 
 type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
 builder: claude
 reviewer: cursor
-reviewer_model: grok-4.7-high       # blank: use speck/config.yml (blank there too: the reviewer's default)
+reviewer_model: grok-4.7-high-fast       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: "speck/ideas/done/2026-10-22-calm-the-settings-view-down.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0369"]                # ticket ids that must be done first
