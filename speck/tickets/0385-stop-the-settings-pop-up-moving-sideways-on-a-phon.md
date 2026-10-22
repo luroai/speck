@@ -1,7 +1,7 @@
 ---
 id: "0385"
 title: "Stop the Settings pop-up moving sideways on a phone"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0382"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:51:47.077Z"
+approved: "2026-10-22T22:59:51.110Z"
 
 ---
 # 0385 · Stop the Settings pop-up moving sideways on a phone
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Since 0368 opened Settings in a full-window pop-up, the pop-up can be dragged left and right on a phone. A sideways swipe while scrolling the settings shifts the whole view, which feels broken and makes the column wobble under your thumb.
@@ -57,9 +58,15 @@ Worth keeping an eye on: anything that ever turns out wider than the settings co
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Scripted scrolling can still set a non-zero horizontal position until the asynchronous scroll event resets it.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 274,666
+- Elapsed since build started: 8 min
+- Changed lines: 9 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Known limit: the 16 px clip margin that keeps focus rings and shadows visible beside the column relies on `overflow-clip-margin`. A browser without it clips them at the column's edge (the Save button's focus ring, for example). Not checked on a real phone.
 - Follow-ups: none for the inbox.
