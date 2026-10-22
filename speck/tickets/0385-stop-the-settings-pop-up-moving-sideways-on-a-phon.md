@@ -47,7 +47,11 @@ On a phone, the Settings pop-up only scrolls up and down.
 - Pictures: none, because nothing looks different: the pop-up only stops moving sideways. Its look at every width is unchanged.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone, Settings now only scrolls up and down. A sideways swipe while you scroll through the settings no longer shifts the whole view, so the column stays put under your thumb. Pinch-zoom still works, and on a wider screen Settings looks and behaves as before.
+
+To see it, open the panel on a phone, open Settings and swipe sideways anywhere in it: nothing moves.
+
+Worth keeping an eye on: anything that ever turns out wider than the settings column is now cut off at its edge rather than letting the view slide, so a too-wide control would show as clipped instead.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,6 +61,8 @@ On a phone, the Settings pop-up only scrolls up and down.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Known limit: the 16 px clip margin that keeps focus rings and shadows visible beside the column relies on `overflow-clip-margin`. A browser without it clips them at the column's edge (the Save button's focus ring, for example). Not checked on a real phone.
+- Follow-ups: none for the inbox.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -123,6 +129,74 @@ On a phone, the Settings pop-up only scrolls up and down.
     ],
     "escalation_question": "",
     "summary": "The change stops sideways touch gestures and preserves the tested phone and desktop layouts. Scripted scrolling can still move Settings sideways briefly before it is reset, so the strict requirement to keep its sideways position at zero is not yet met."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "151a8a7c3aa3a96df912bc2ccf50d10f96880c5a",
+    "thread_id": "01a165d5-90ac-7570-83a9-781732a3d692",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 179760,
+      "cached_input_tokens": 134016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1407,
+      "reasoning_output_tokens": 110
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T22:59:41.753Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html clips horizontal overflow on #settings > * and restricts touch panning to vertical movement while permitting pinch-zoom. The passing browser test in test/panel-0385.test.mjs immediately reads zero horizontal position after four scripted scroll attempts with oversized content present, tests sideways touch and mouse gestures, and verifies vertical touch scrolling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing browser test measures element boundaries and scroll widths at 320, 360, 390 and 430 px, in both themes, at rest and with each explanation opened."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing browser test verifies the centred 760 px column, vertical scrolling and absence of overflowing elements at 900 and 1280 px. Existing column dimensions remain unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded run covers panel-0385.test.mjs, panel-0368.test.mjs, panel-0371.test.mjs and configured checks: 135 passed, zero failed and three skipped. No existing tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "The previous implementation allowed scripted horizontal movement before resetting it.",
+        "suggested_fix": "Implemented: structural clipping removes horizontal scrollable overflow, and the browser test now checks the position immediately after each scripted attempt.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings now prevents sideways movement, including scripted scrolling, while preserving vertical scrolling and the tested phone and desktop layouts. The previous blocking issue is resolved and all acceptance criteria pass."
   }
 }
 ```
