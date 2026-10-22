@@ -48,7 +48,7 @@ The header is always one compact row that shows the project and base branch, wit
 - Changed older tests, as AC5 allows: the header slimming as you scroll (0160, 0163, 0170, 0309), the builder on the Foreman's button (0127, 0140, 0144, 0150, 0163, 0199, 0203, 0303, logo-0320) and the "speck" word under 700 px (0170, 0304, 0309). Also 0140 AC3 and 0309's check that the project shows in full at 375 px: on the one row, those tests' `speck-xxxxxx` project is cut short with an ellipsis at 375 px, as AC2 allows (it's in full at 500 px with `speck`).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+On a phone or in a narrow window, the panel's header is now always one row. It no longer changes as you scroll, and it always shows which project and base branch you're looking at. If the name doesn't fit, it ends in "…", and hovering over it shows it in full. On a narrow screen, speck's mark shows without the word "speck" beside it. At every width, the Foreman's button shows its status word without the little builder character, so speck's logo appears only once. To see it, open the panel in a narrow window and scroll. Keep an eye on the Foreman's button on a phone with Fixing on: there isn't much room, so its words are cut short.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,6 +58,9 @@ The header is always one compact row that shows the project and base branch, wit
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- On a phone with Fixing on, the Foreman's button is cut down to "Bui… | Fix…" at 375 px: `speck/ideas/2026-10-22-fit-the-foreman-s-button-on-a-phone-with-fixing-on.md`.
+- `lcd.js` still has `mini()`, the Foreman's builder, which the panel no longer uses. It's the design's renderer, and 0320's test fixes its code, so it was left as it is.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -137,6 +140,87 @@ The header is always one compact row that shows the project and base branch, wit
     ],
     "escalation_question": "",
     "summary": "The compact header appears to work, and the reported tests pass. Before approval, remove a prohibited documentation-wording test and correct the long-name tooltip test so it verifies the full name users would see."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "3db7e0e27611a16ec8ca35c8430e9d3790ba6215",
+    "thread_id": "01a16444-0c74-7430-b620-50344a771c6b",
+    "seconds": 21,
+    "usage": {
+      "input_tokens": 297830,
+      "cached_input_tokens": 230016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1486,
+      "reasoning_output_tokens": 80
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T15:40:29.592Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html uses one narrow header row without scroll-dependent styles or script. Passing panel-0364 browser tests cover 320–699 px, scrolling, height and safe-area insets."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The .repo styles retain visible text with ellipsis; initialisation sets its full-text tooltip. The corrected passing test supplies long project and branch names before initialisation and checks truncation and the matching full tooltip. The 500 px test verifies uncut text."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The narrow media rule hides the speck word and retains its mark. Passing browser tests verify narrow widths and the unchanged wider presentation at 700 and 1200 px."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "render() shows the Foreman's label without a builder while retaining tone classes, tooltip and interaction. Passing AC4 tests verify these behaviours."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing browser tests verify no sideways scrolling or overlap at 320 px, 44 px button heights, long Foreman text with Fixing on, and ticket navigation below the header. The recorded run has 250 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0364.test.mjs",
+        "issue": "The documentation test checked exact prose wording.",
+        "suggested_fix": "Remove the prose assertion and unused imports.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0364.test.mjs",
+        "issue": "The long-project tooltip test previously asserted the old short project name.",
+        "suggested_fix": "Initialise with long project and branch names and assert their full text in the tooltip.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The header stays compact while scrolling, keeps the project visible and removes the duplicate builder character. Both test issues are fixed, all acceptance criteria pass, and no blocking concerns remain."
   }
 }
 ```
