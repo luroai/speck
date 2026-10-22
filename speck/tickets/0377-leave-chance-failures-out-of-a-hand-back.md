@@ -40,6 +40,7 @@ A test that fails once and passes on the second try is not named as the ticket's
 ## Notes
 - Checked 2026-10-22: `testRun` in `scripts/results.mjs` counts a retry that passes altogether as a pass (0195). A retry that doesn't is appended to the first run's output, and `failingTests` in `scripts/tap.mjs` lists every test that isn't ok in that output. `testFailure` in `scripts/ship.mjs` names that list and, with `together`, makes speck run hand the ticket back (0264).
 - Waits for 0375 so it ships in 0.13.1, not in 0.13.0. It changes `scripts/ship.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
