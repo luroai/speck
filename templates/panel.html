@@ -2524,7 +2524,9 @@ function shippingNow() {
 // the server checks against its own reading, and the tickets in words; otherwise null.
 function shipsMore(changes) {
   const was = shippingNow(), will = { ...was };
-  for (const c of changes) if (c.key === 'auto_ship') will.on = c.value === 'true'; else if (c.key === 'auto_ship_risk') will.risks = c.value.split(',');
+  // 0387: clearing this machine's value leaves speck/config.yml's.
+  const to = c => c.clear ? (settingRows().find(x => x.key === c.key) || {}).repo_value : c.key === 'auto_ship' ? c.value === 'true' : c.value.split(',');
+  for (const c of changes) if (c.key === 'auto_ship') will.on = to(c) === true; else if (c.key === 'auto_ship_risk') will.risks = [].concat(to(c) ?? []).map(String);
   if (!changes.some(c => c.key === 'auto_ship' || c.key === 'auto_ship_risk')) return null;
   if (!will.on || (was.on && will.risks.every(r => was.risks.includes(r)))) return null;
   const risks = ['low', 'high'].filter(r => will.risks.includes(r));
@@ -2545,7 +2547,7 @@ async function sendSettings() {
   const changes = settingChanges(), mine = settingsSeq;
   if (!changes.length) return;
   // Checked here first, so nothing is sent: auto_ship_risk with nothing ticked (0259).
-  const unticked = changes.find(c => c.key === 'auto_ship_risk' && c.value === '');
+  const unticked = changes.find(c => c.key === 'auto_ship_risk' && c.value === '' && !c.clear);
   if (unticked) {
     settingRefused.set(unticked.key, 'Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
     renderSettings();
@@ -2555,7 +2557,7 @@ async function sendSettings() {
   if (more !== null) {
     const ask = `Let more tickets ship by themselves? With this change, speck run's ship queue will merge ${more.words} and push them to the base branch without waiting for you.`;
     if (typeof confirm !== 'function' || !confirm(ask)) { // cancelled: nothing is saved, and auto_ship and auto_ship_risk go back as they were
-      for (const k of ['auto_ship', 'auto_ship_risk']) { settingTyped.delete(k); settingRefused.delete(k); }
+      for (const k of ['auto_ship', 'auto_ship_risk']) { settingTyped.delete(k); settingRefused.delete(k); settingClear.delete(k); }
       renderSettings();
       return;
     }
@@ -2599,7 +2601,7 @@ async function sendSettings() {
     const mineToo = refused === null ? [] : Object.entries(refused).filter(([k, v]) => changes.some(c => c.key === k) && typeof v === 'string');
     for (const [k, v] of mineToo) settingRefused.set(k, v);
     if (!mineToo.length) settingsFailed = why;
-    if (ask) { for (const k of ['auto_ship', 'auto_ship_risk']) settingTyped.delete(k); loadSettings(); return; } // 0259: changed since: read them again
+    if (ask) { for (const k of ['auto_ship', 'auto_ship_risk']) { settingTyped.delete(k); settingClear.delete(k); } loadSettings(); return; } // 0259: changed since: read them again
     if (again) { loadSettings(); return; } // 0293: read build_command again, keeping the builder picked
     renderSettings();
     return;

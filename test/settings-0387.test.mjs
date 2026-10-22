@@ -188,3 +188,50 @@ test('0387 AC4: the view marks whose each value is, offers to clear this machine
   assert.deepEqual(posted(p).map(asked), [[['machine:reviewer_model', '']]]);
   assert.doesNotMatch(rowOf(p, 'reviewer_model').textContent, /this machine/);
 });
+
+// Review round 1, F1 and F2: clearing this machine's auto_ship or auto_ship_risk goes back to speck/config.yml's.
+const shipView = (mine, repo) => ({ groups: [{ title: 'Shipping', settings: [
+  S('auto_ship', mine.auto_ship ?? repo.auto_ship, { choices: [true, false], for_machine: true, from: 'auto_ship' in mine ? 'machine' : 'repo', repo_value: repo.auto_ship }),
+  S('auto_ship_risk', mine.auto_ship_risk ?? repo.auto_ship_risk, { choices: ['low', 'high'], for_machine: true, from: 'auto_ship_risk' in mine ? 'machine' : 'repo', repo_value: repo.auto_ship_risk }),
+] }] });
+const clearOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button' && n.textContent === 'Clear this machine\'s value');
+
+test('0387 AC4: clearing this machine\'s auto_ship_risk saves, without asking to tick a risk', async () => {
+  const repo = { auto_ship: false, auto_ship_risk: ['low'] };
+  const p = settingsPage([shipView({ auto_ship_risk: ['low', 'high'] }, repo), shipView({}, repo)], [{ ok: true, changed: ['auto_ship_risk'] }]);
+  await p.settle();
+  await openSettings(p);
+  p.press(clearOf(p, 'auto_ship_risk'));
+  p.press(saveButton(p));
+  await p.settle();
+  assert.deepEqual(posted(p).map(asked), [[['machine:auto_ship_risk', '']]]);
+  assert.doesNotMatch(rowOf(p, 'auto_ship_risk').textContent, /Tick at least one risk/);
+});
+
+test('0387 AC4: clearing this machine\'s value asks first when speck/config.yml\'s lets more ship, and cancelling sends nothing', async () => {
+  for (const answer of [true, false]) {
+    const said = [];
+    const p = settingsPage([shipView({ auto_ship: false }, { auto_ship: true, auto_ship_risk: ['low', 'high'] })], [{ ok: true, changed: ['auto_ship'] }],
+      { confirm: msg => { said.push(String(msg)); return answer; } });
+    await p.settle();
+    await openSettings(p);
+    p.press(clearOf(p, 'auto_ship'));
+    p.press(saveButton(p));
+    await p.settle();
+    assert.equal(said.length, 1, 'asked');
+    assert.match(said[0], /low-risk and high-risk/);
+    assert.deepEqual(posted(p).map(asked), answer ? [[['machine:auto_ship', ''], ['confirm', 'low,high']]] : []);
+    if (!answer) assert.equal(saveButton(p).disabled, true, 'the clear is undone');
+  }
+  // Server side too: the confirmation is the one speck/config.yml's values call for.
+  const r = panelRepo();
+  fs.writeFileSync(cfgOf(r), readCfg(r).replace(/^auto_ship: .*$/m, 'auto_ship: true').replace(/^auto_ship_risk: .*$/m, 'auto_ship_risk: [low, high]'));
+  r.g('commit', '-qam', 'ship');
+  assert.equal(panelSaveSettings(r.dir, [{ key: 'auto_ship', value: 'false' }]).status, 200);
+  let out = panelSaveRequest(r.dir, 'machine%3Aauto_ship=');
+  assert.equal(out.status, 409);
+  assert.equal(out.body.confirm, true);
+  out = panelSaveRequest(r.dir, 'machine%3Aauto_ship=&confirm=low%2Chigh');
+  assert.equal(out.status, 200, JSON.stringify(out.body));
+  assert.deepEqual(machineConfig(r.dir), {});
+});
