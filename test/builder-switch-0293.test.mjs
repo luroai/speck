@@ -174,31 +174,31 @@ test('0293 AC3: the view asks before replacing a build_command set by hand, and 
 
 test('0293 AC4: speck config set builder sets build_command with it, asking for --replace when it was set by hand', () => {
   const r = panelRepo();
-  let out = r.run('config', 'set', 'builder', 'codex');
+  let out = r.run('config', 'set', '--repo', 'builder', 'codex');
   assert.equal(out.status, 0, out.stderr);
   assert.equal(readCfg(r).builder, 'codex');
   assert.equal(readCfg(r).build_command, '');
   assert.match(out.stdout, /build_command: .* → ""/);
   assert.match(out.stdout, /another family is claude/, 'reviewer codex is the same family');
-  out = r.run('config', 'set', 'builder', 'claude');
+  out = r.run('config', 'set', '--repo', 'builder', 'claude');
   assert.equal(out.status, 0, out.stderr);
   assert.equal(readCfg(r).build_command, DEFAULT_BUILD_COMMAND);
   assert.doesNotMatch(out.stdout, /Note:/);
 
   fs.writeFileSync(cfgOf(r), fs.readFileSync(cfgOf(r), 'utf8').replace(/^build_command: .*$/m, 'build_command: "my-build {id}"'));
   const was = fs.readFileSync(cfgOf(r), 'utf8');
-  out = r.run('config', 'set', 'builder', 'cursor');
+  out = r.run('config', 'set', '--repo', 'builder', 'cursor');
   assert.notEqual(out.status, 0);
   assert.match(out.stderr, /set by hand/);
   assert.match(out.stderr, /--replace/);
   assert.equal(fs.readFileSync(cfgOf(r), 'utf8'), was);
-  out = r.run('config', 'set', 'builder', 'cursor', '--replace');
+  out = r.run('config', 'set', '--repo', 'builder', 'cursor', '--replace');
   assert.equal(out.status, 0, out.stderr);
   assert.equal(readCfg(r).builder, 'cursor');
   assert.equal(readCfg(r).build_command, '');
 
   // A builder speck can't start by itself leaves build_command as it is.
-  out = r.run('config', 'set', 'builder', 'gemini');
+  out = r.run('config', 'set', '--repo', 'builder', 'gemini');
   assert.equal(out.status, 0, out.stderr);
   assert.equal(readCfg(r).build_command, '');
 });

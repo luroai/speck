@@ -119,6 +119,8 @@ The loop ends when the reviewer approves with no blocking findings and every cri
 
 The tickets, the reviews and every decision stay in your repo, as Markdown and YAML. A ticket's status, priority, size, risk, builder, reviewer and `after:` list are in its frontmatter. Each review round is a collapsed block in the ticket's `## Review rounds`, which only speck writes, with a one-line summary in its `## Review log`. Its `## Delivery log` keeps the actuals and follow-ups. Shipped and cancelled tickets move to `speck/tickets/done/`, keeping all of it. `speck/.cache/`, which git ignores, holds working files for reviews in progress, recorded test results, `speck run`'s logs, the record of flaky tests and this machine's own settings, in `speck/.cache/machine/config.yml`.
 
+**Your own settings.** Who builds, reviews and runs the Foreman, and how, is yours rather than the project's: `builder`, `builder_model`, `build_command`, `resume_command`, `reviewer`, `reviewer_model`, `reviewer_effort`, `allow_same_model_review`, `auto_ship`, `auto_ship_risk`, `foreman`, `foreman_model`, `foreman_effort`, `foreman_fixing`, `max_parallel_builds` and `max_parallel_tests`. `speck config set <key> <value>` saves one of them for this machine only, in `speck/.cache/machine/config.yml` in the main checkout, which git ignores, so changing it makes no commit and nothing goes out with the next ship. Every speck command, in the main checkout and every worktree, uses this machine's value over `speck/config.yml`'s, and a build already running picks it up the next time it reads its settings. `speck/config.yml` keeps the project's own settings, such as `commands`, `limits` and `base_branch`, and the defaults for your own settings that anyone without their own uses. To change one of those defaults for everyone, run `speck config set --repo <key> <value>` and commit `speck/config.yml`. `speck config show` marks each value that comes from this machine.
+
 ### Which tests run when
 
 A build never runs the whole suite. Before it changes anything, it reads the result recorded for the same code with `speck test --recorded` and writes the tests already failing as `Failing before this build:` in the ticket's Notes. After that it runs only test files, with `speck test --files <file>…`: the ticket's own while it builds, and before every review round the ticket's own, any existing ones it changed and those of any test that failed last time. Every such run also runs the project's quick checks of rules for the whole repo, the test files listed in `commands.checks`. The reviewer sees a summary of that run. The whole suite runs in `speck ship`, on the ticket merged with the base branch, which is what lands. A full run on code that hasn't changed reuses the recorded result, and a test that fails in a full run then passes on a second try is logged as flaky.
@@ -212,7 +214,7 @@ In your terminal, as `node .speck/scripts/speck.mjs <command>` (`speck help` lis
 | `status` | Tickets by status, blocked first (`--json` for programs) |
 | `pack <id>` | The review pack for a ticket |
 | `cancel <id> "<reason>"` | Cancels a ticket you've decided against, keeping the reason |
-| `config set <key> <value>` | Changes one setting in `speck/config.yml`, checking it first. `config set --machine <key> <value>` sets `max_parallel_builds` or `max_parallel_tests` for this machine only. `config set builder <name>` sets `build_command` to that builder's own too, for `claude`, `codex` or `cursor`, and `--replace` lets it replace one set by hand. It clears `builder_model` when the new builder doesn't offer it, as `speck agents` lists its models, or they can't be read |
+| `config set <key> <value>` | Changes one setting, checking it first. One of your own settings is saved for this machine only, committing nothing, and any other setting is changed in `speck/config.yml` (see "Your own settings" above). `config set --repo <key> <value>` changes `speck/config.yml`'s value instead, and `config set --machine <key> ""` removes this machine's value. `config set builder <name>` sets `build_command` to that builder's own too, for `claude`, `codex` or `cursor`, and `--replace` lets it replace one set by hand. It clears `builder_model` when the new builder doesn't offer it, as `speck agents` lists its models, or they can't be read |
 | `config show` | The main settings by group, with each one's value, whether it's the default and what it does |
 | `agents` | Says whether each of Claude Code, Codex and Cursor is installed and signed in, and lists its models (`--json` for programs) |
 | `doctor` | Checks that git, your builder and your reviewer are ready |
@@ -243,7 +245,7 @@ This is where speck keeps its files in your repo.
 .agents/skills/speck-*/      # the same skills, for Codex, cptr and other agents
 .speck/                      # the speck command and templates (installed by init)
 speck/
-  config.yml                 # builder, reviewer, test command, limits
+  config.yml                 # test command, limits, and the defaults for your own settings
   ideas/                     # captured ideas, and the inbox of follow-ups from builds
   tickets/0007-<slug>.md     # numbered tickets; status in frontmatter, every review round at the end
   tickets/done/              # shipped and cancelled tickets
