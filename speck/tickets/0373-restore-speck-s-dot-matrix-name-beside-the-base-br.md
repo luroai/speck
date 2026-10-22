@@ -41,6 +41,7 @@ The header shows "speck" in its dot-matrix lettering at every width, with the ba
 
 ## Notes
 - Checked 2026-10-22: under 700 px, `templates/panel.html` sets `.logo .name` to `display: none` (0364). The word's rule at every other width is Doto at 26 px. The project line is `.repo`, 12 px, "<project> · base <branch>".
+- Failing before this build: none
 - Seen in the panel at 127.0.0.1:4777 in a narrow pane: the mark, then "speck · base main" in the small text, then the notice board, Settings and light/dark.
 
 ## In plain words
