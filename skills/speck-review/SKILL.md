@@ -33,6 +33,8 @@ speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-r
 
 This runs Codex in a read-only sandbox, with the reviewer model (`-m`) and effort (`model_reasoning_effort`) if they're set, and gives it the ticket, the diff, the test output and your response file. It saves the Codex session so later rounds continue the same conversation, records the round, and prints the verdict and `NEXT: …`. Exit codes: 0 means ship, 10 means fix, 11 means block.
 
+Exit code 12 means the round is still running: speck waits up to 9 minutes for a reviewer, so that each command ends within your shell's time limit, while the reviewer carries on. It prints the command to wait for that same round, `speck review <id> --wait`. Run it in the foreground, and again each time it exits 12, until it exits with any other code. It then prints the round and exits just as `speck review` would have. Never start another `speck review` round to get past it: while a round is running, `speck review <id>` waits for it too.
+
 **`claude`**: run the same `speck review` command as for Codex. speck runs Claude Code itself, without a person and read-only, with the reviewer model (`--model`) and effort (`--effort`) if they're set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
 
 **`cursor`**: run the same `speck review` command as for Codex. speck runs Cursor's CLI itself, without a person and read-only, with the reviewer model (`--model`) if it's set, reads the verdict from its output and records the round, just as for Codex. It works whatever the builder. Exit codes are the same.
