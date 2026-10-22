@@ -1,7 +1,7 @@
 ---
 id: "0366"
 title: "Open the Foreman's detail in a pop-up over the whole panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-a-scrolling-dot-matrix-notice-board-in-the-
 after: ["0365"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T16:12:45.625Z"
+approved: "2026-10-22T16:21:04.619Z"
 
 ---
 # 0366 · Open the Foreman's detail in a pop-up over the whole panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Pressing the Foreman's button opens its detail at the top of the page, under the header, where it pushes the page down and scrolls away as you scroll. It should stay in view while you read it.
@@ -53,9 +54,14 @@ To see it, open the panel and press the notice board.
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 106,963
+- Elapsed since build started: 8 min
+- Changed lines: 68 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
