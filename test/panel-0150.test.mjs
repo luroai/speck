@@ -11,7 +11,7 @@ const header = () => page().match(/<header>([\s\S]*?)<\/header>/)[1];
 // 0285: the header button shows the Foreman now, and the Auto-build switch is in the Settings view's Foreman group.
 const headerOf = p => p.byId('run');
 const runOf = p => p.runSwitch();
-const dotOf = p => p.all(headerOf(p)).find(n => /\bmini\b/.test(n.className || '')); // 0163: the builder in place of the square
+const dotOf = p => p.all(headerOf(p)).find(n => /\bmini\b/.test(n.className || '') || n.tagName === 'canvas'); // 0163: the builder in place of the square
 const ON = 'Pause Auto-build: ready tickets wait';
 const OFF = 'Start Auto-build: build ready tickets';
 
@@ -56,7 +56,7 @@ test('0150 AC2: on, it reads "Auto-build on" with a green square, aria-pressed t
   await p.settle();
   assert.equal(headerOf(p).hidden, false);
   assert.equal(runOf(p).textContent, 'Auto-build on');
-  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
+  assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
   assert.equal(runOf(p).attrs['aria-pressed'], 'true');
   assert.equal(runOf(p).title, ON);
   assert.equal(runOf(p).disabled, false);
@@ -66,7 +66,7 @@ test('0150 AC2: off, it reads "Auto-build off" with a red square, aria-pressed f
   const p = switchPage([state(null)]);
   await p.settle();
   assert.equal(runOf(p).textContent, 'Auto-build off');
-  assert.equal(dotOf(p).className, 'mini still'); // 0163: the builder, still, in place of the square
+  assert.equal(dotOf(p), undefined); // 0364: no builder, and no square (0163)
   assert.equal(runOf(p).attrs['aria-pressed'], 'false');
   assert.equal(runOf(p).title, OFF);
 });
@@ -182,9 +182,9 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
   });
 });
 
-// 0163: the builder took the square's place, and the label alone says whether it's on or off.
-test('0150 AC2: on or off, the button shows the builder rather than a square', skip, async () => {
-  const shown = `!document.querySelector('#run .live') && document.querySelector('#run canvas.mini').getBoundingClientRect().width > 0`;
+// 0163: the builder took the square's place, and the label alone says whether it's on or off. 0364: the builder has gone too.
+test('0150 AC2: on or off, the button shows its word, with no square or builder', skip, async () => {
+  const shown = `!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`;
   await withPage({ on: true, pid: 7 }, 1280, async b => assert.equal(await b.js(shown), true));
   await withPage(null, 1280, async b => assert.equal(await b.js(shown), true));
 });
@@ -204,17 +204,13 @@ for (const width of [700, 1280]) {
 }
 
 for (const run of [null, { on: true, pid: 7 }]) {
-  test(`0150 AC4: at 375 px with Auto-build ${run ? 'on' : 'off'}, the header is two rows: speck and the project, then Auto-build and light/dark`, skip, async () => {
+  // 0364: one row, as it is wider: the mark, the project, the Foreman (Auto-build here) and light/dark
+  test(`0150 AC4: at 375 px with Auto-build ${run ? 'on' : 'off'}, the header is one row: speck's mark, the project, then Auto-build and light/dark`, skip, async () => {
     await withPage(run, 375, async b => {
       const x = await boxes(b);
       const W = await b.js('document.documentElement.clientWidth');
-      assert.ok(Math.abs(x.repo.mid - x.logo.mid) <= 1, `speck and the project share the first row: ${JSON.stringify(x)}`);
-      assert.ok(Math.abs(x.theme.mid - x.run.mid) <= 1, `Auto-build and light/dark share the second row: ${JSON.stringify(x)}`);
-      assert.ok(x.run.top >= Math.max(x.logo.bottom, x.repo.bottom), 'the second row is below the first');
-      assert.ok(x.logo.right < x.repo.left, 'speck on the left, the project on the right');
-      assert.ok(x.run.right < x.theme.left, 'Auto-build on the left, light/dark on the right');
-      assert.ok(Math.abs(x.repo.right - x.theme.right) <= 1, 'the project and light/dark both end at the right edge');
-      assert.ok(Math.abs(x.logo.left - x.run.left) <= 1, 'speck and Auto-build both start at the left edge');
+      for (const k of ['repo', 'run', 'theme']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is on speck's row: ${JSON.stringify(x)}`);
+      assert.ok(x.logo.right <= x.repo.left && x.repo.right <= x.run.left && x.run.right <= x.theme.left, `in order, left to right: ${JSON.stringify(x)}`);
       for (const k of Object.keys(PARTS)) {
         assert.ok(x[k].left >= 0 && x[k].right <= W + 0.5, `${k} is on screen`);
         if (k !== 'theme') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);

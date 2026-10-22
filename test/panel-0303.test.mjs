@@ -63,102 +63,58 @@ test('0303 AC1: at 32 px since 0309, the ink the text colour and the speck --dot
   assert.doesNotMatch(page(), /\.mark \.dot\b/, 'the old drawing\'s dot rules are gone');
 });
 
-test('0303 AC1: without the renderer (it didn\'t load), the header still shows, with the mark blank', async () => {
+test('0303 AC1: without the renderer (it didn\'t load), the header still shows (0364: with no builder in the Foreman\'s button)', async () => {
   const p = fakePage([], { fetch: async () => ({ ok: true, status: 200, json: async () => JSON.parse(JSON.stringify({ tickets: [BUILDING], ideas: [], run: { on: true } })) }) });
   await p.settle();
   assert.equal(p.byId('run').hidden, false);
-  assert.equal(builderIn(p).className, 'mini hop');
+  assert.equal(builderIn(p), undefined);
 });
 
-test('0303 AC2: the Foreman\'s button shows the renderer\'s mini builder before its status, made once and kept', async () => {
+// 0364: the Foreman's button has no builder now, so speck's mark shows once: it makes no mini builder, at work or not.
+test('0303 AC2: the Foreman\'s button makes no mini builder, as builds start and stop, and shows its status alone', async () => {
   let tickets = [BUILDING];
   const { p, minis } = fake(() => tickets);
   await p.settle();
-  assert.equal(minis.length, 1);
-  const c = builderIn(p);
-  assert.equal(minis[0].canvas, c, 'on the button\'s canvas');
-  assert.equal(minis[0].moving, true, 'made hopping, as a build is running');
-  assert.equal(minis[0].parent, p.byId('run'), 'made once its canvas is in the button, so it reads the look\'s colours');
-  assert.equal(p.byId('run').children[0], c, 'before its status');
-  assert.match(p.byId('run').children[1].className, /\blabel\b/);
-  assert.equal(c.attrs['aria-hidden'], 'true');
-  assert.match(rule('.run-state .mini'), /width: 28px; height: 28px/, '28 px');
-  tickets = [BUILDING, READY];
-  await refresh(p);
-  assert.equal(builderIn(p), c, 'a refresh keeps the same builder');
-  assert.equal(minis.length, 1);
-  assert.deepEqual(minis[0].sets, [], 'still hopping: not set again');
-  assert.doesNotMatch(page(), /const BADGE = |function paintBadge\(/, 'the old drawing is gone');
+  for (const next of [[BUILDING, READY], [READY], [BUILDING]]) {
+    assert.equal(minis.length, 0);
+    assert.equal(builderIn(p), undefined);
+    assert.match(p.byId('run').children[0].className, /\blabel\b/);
+    tickets = next;
+    await refresh(p);
+  }
+  assert.equal(rule('.run-state .mini'), '', 'no style for it');
+  assert.doesNotMatch(page(), /const BADGE = |function paintBadge\(|LCD\.mini\(/, 'the old drawings are gone');
 });
 
-test('0303 AC2: it hops while builds are running and is still otherwise, through the mini builder\'s set(true) and set(false)', async () => {
-  let tickets = [READY];
-  const { p, minis } = fake(() => tickets);
-  await p.settle();
-  assert.equal(minis[0].moving, false, 'made still, as nothing is running');
-  assert.equal(builderIn(p).className, 'mini still');
-  tickets = [BUILDING];
-  await refresh(p);
-  assert.deepEqual(minis[0].sets, [true]);
-  assert.equal(builderIn(p).className, 'mini hop');
-  tickets = [READY];
-  await refresh(p);
-  assert.deepEqual(minis[0].sets, [true, false]);
-  assert.equal(builderIn(p).className, 'mini still');
-  assert.equal(minis.length, 1, 'the same builder throughout');
-});
-
-test('0303 AC2: a change to reduced motion holds the builder still or lets it move again', async () => {
+test('0303 AC2: a change to reduced motion makes no builder in the button', async () => {
   const { p, minis, changes } = fake(() => [BUILDING]);
   await p.settle();
   for (const fn of changes) fn({ matches: true });
-  assert.equal(minis[0].scr.still, true);
-  assert.equal(minis[0].cast.still, true);
   for (const fn of changes) fn({ matches: false });
-  assert.equal(minis[0].scr.still, false);
-  assert.equal(minis[0].cast.still, false);
+  assert.equal(minis.length, 0);
+  assert.equal(builderIn(p), undefined);
 });
 
 // ---------- in a real browser ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 // The colours each canvas shows, as hex, most common first, ignoring transparent pixels.
-const COLOURS = `(() => {
-  const hex = (r, g, b) => '#' + [r, g, b].map(n => n.toString(16).padStart(2, '0')).join('');
-  const of = c => { const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, n = new Map();
-    for (let i = 0; i < d.length; i += 4) if (d[i + 3] === 255) { const k = hex(d[i], d[i + 1], d[i + 2]); n.set(k, (n.get(k) || 0) + 1); }
-    return { colours: [...n.keys()], clear: d.filter((v, i) => i % 4 === 3 && v === 0).length, width: c.getBoundingClientRect().width }; };
-  const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(k).trim();
-  return { mini: of(document.querySelector('#run canvas.mini')), ink: v('--lcd-ink'), off: v('--lcd-off') };
-})()`;
-
-// 0320: the mark is an svg in the page's own colours now, checked in a real browser in logo-0320.test.mjs.
-test('0303 AC3: in a real browser, the builder follows the light and dark looks, from the start and when switched', skip, async () => {
+// 0320: the mark is an svg in the page's own colours now, checked in a real browser in logo-0320.test.mjs. 0364: the
+// Foreman's button has no builder, so there is none to follow the look.
+test('0303 AC3: in a real browser, the Foreman\'s button draws no builder, in either look', skip, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   try {
-    // Opened in each look, then switched to the other.
-    for (const [first, then] of [['light', 'dark'], ['dark', 'light']]) {
+    for (const look of ['light', 'dark']) {
       const b = await browserPage('about:blank');
       try {
         await b.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
         await b.send('Page.enable');
-        await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('speck-theme', '${first}');` });
+        await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('speck-theme', '${look}');` });
         await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-        await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run canvas.mini')`, 'the panel');
-        for (const look of [first, then]) {
-          if (look === then) await b.js(`document.getElementById('theme').click()`);
-          await b.until(`document.documentElement.dataset.theme === '${look}'`, `the ${look} look`);
-          let x;
-          for (let i = 0; i < 50; i++) { // the renderer redraws on its next frame
-            x = await b.js(COLOURS);
-            if (x.mini.colours.includes(x.ink) && x.mini.colours.includes(x.off)) break;
-            await new Promise(res => setTimeout(res, 50));
-          }
-          const where = `${look}, opened ${first}`;
-          assert.equal(x.mini.width, 28, `${where}: the builder is 28 px`);
-          assert.ok(x.mini.colours.includes(x.ink) && x.mini.colours.includes(x.off) && x.mini.clear === 0, `${where}: the builder is on the look's LCD screen: ${JSON.stringify(x)}`);
-        }
+        await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run .label')`, 'the panel');
+        assert.equal(await b.js(`document.documentElement.dataset.theme`), look);
+        assert.equal(await b.js(`document.querySelectorAll('#run canvas').length`), 0, look);
       } finally { await b.close(); }
     }
   } finally { await stop(panel); }

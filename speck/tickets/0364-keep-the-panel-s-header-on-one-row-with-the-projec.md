@@ -44,6 +44,8 @@ The header is always one compact row that shows the project and base branch, wit
 - One logo: speck's mark stays. The builder character on the Foreman's button goes, and the "speck" word goes under 700 px, to leave room for the project.
 - The Foreman's words today: "Off", "Idle", "Building <n>", "Shipping <id>", "Needs you <n>" and "Waiting: <why>" (`scripts/foreman.mjs`). A long one is cut short with an ellipsis, as now.
 - Failing before this build: none
+- Self-check: on a phone, "Fixing on" beside a long Foreman word could spill out of the button onto Settings at 320 px, so it now gives way inside the button too, with a test. The brief's line about the header slimming on a phone now says it's one row.
+- Changed older tests, as AC5 allows: the header slimming as you scroll (0160, 0163, 0170, 0309), the builder on the Foreman's button (0127, 0140, 0144, 0150, 0163, 0199, 0203, 0303, logo-0320) and the "speck" word under 700 px (0170, 0304, 0309). Also 0140 AC3 and 0309's check that the project shows in full at 375 px: on the one row, those tests' `speck-xxxxxx` project is cut short with an ellipsis at 375 px, as AC2 allows (it's in full at 500 px with `speck`).
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
