@@ -42,6 +42,7 @@ The path and Close button stay at the top of a document pop-up, and Close stays 
 - Checked 2026-10-22: `#doc-view` and `#foreman` in `templates/panel.html` are the scrolling window (`overflow-y: auto`), and the path and Close sit inside it (0362, 0366). 0363 puts Ship and Ask for changes in that same scroll. 0368 turns Settings into a pop-up of this look.
 - The Foreman's pop-up is included: it is the same window as the document's, so leaving its Close to scroll away would keep the phone problem on one of the three.
 - Waits for 0375, which waits for 0368, so the Settings pop-up exists when this is built. It changes `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
