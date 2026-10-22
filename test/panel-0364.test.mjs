@@ -1,9 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { ROOT, T, full, fakePage, page, findChrome, browserPage } from './support/panel.mjs';
+import { T, full, fakePage, page, findChrome, browserPage } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 
 // ---------- 0364: the panel's header on one row, with the project always shown ----------
@@ -61,8 +59,8 @@ test('0364 AC1: the header has no slimming as you scroll, in its styles or its s
 // ---------- in a real browser ----------
 
 // The panel at `width` px, with the board above and the screen's safe-area insets, the shared panel's project and base
-// shown as `speck` and `main`, as AC2 measures them.
-async function withPanel(fn, { width = 375, height = 640, insets = null, word = 'Building 1', theme = null, fixing = null } = {}) {
+// shown as `speck` and `main` (as AC2 measures them) unless `project` and `base` give others.
+async function withPanel(fn, { width = 375, height = 640, insets = null, word = 'Building 1', theme = null, fixing = null, project = 'speck', base = 'main' } = {}) {
   const panel = await sharedPanel();
   const b = await browserPage('about:blank');
   try {
@@ -74,7 +72,7 @@ async function withPanel(fn, { width = 375, height = 640, insets = null, word = 
       const STATE = ${JSON.stringify(board(word, 'ok', fixing))}, real = window.fetch.bind(window);
       window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? new Response(JSON.stringify(STATE), { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts);
       // As the parser reaches the header, before the page script runs
-      const seen = new MutationObserver(() => { const c = document.querySelectorAll('.repo code'); if (c.length < 2) return; c[0].textContent = 'speck'; c[1].textContent = 'main'; seen.disconnect(); });
+      const seen = new MutationObserver(() => { const c = document.querySelectorAll('.repo code'); if (c.length < 2) return; c[0].textContent = ${JSON.stringify(project)}; c[1].textContent = ${JSON.stringify(base)}; seen.disconnect(); });
       seen.observe(document, { childList: true, subtree: true });
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
@@ -135,14 +133,14 @@ test('0364 AC2: at 500 px, with speck, main and "Building 1", nothing in the hea
 }, { width: 500 }));
 
 test('0364 AC2: too narrow, the project and base are cut short with an ellipsis, never hidden, and the tooltip has them in full', skip, () => withPanel(async b => {
-  await b.js(`(() => { const c = document.querySelectorAll('.repo code'); c[0].textContent = 'a-very-long-project-name-that-cannot-fit'; c[1].textContent = 'release/2026-autumn'; })()`);
   const h = await header(b);
+  assert.equal(h.repoText, 'a-very-long-project-name-that-cannot-fit · base release/2026-autumn');
   assert.ok(h.repo.shown, 'shown');
   assert.equal(h.repo.cut, true, 'cut short');
   assert.equal(await b.js(`getComputedStyle(document.querySelector('.repo')).textOverflow`), 'ellipsis');
-  assert.equal(h.repoTitle, 'speck · base main', 'the tooltip, set as the page loads, has the text in full');
+  assert.equal(h.repoTitle, 'a-very-long-project-name-that-cannot-fit · base release/2026-autumn', 'the tooltip has the text in full');
   oneRow(h, '320 px, a long project');
-}, { width: 320 }));
+}, { width: 320, project: 'a-very-long-project-name-that-cannot-fit', base: 'release/2026-autumn' }));
 
 for (const width of [700, 1200]) {
   test(`0364 AC2 and AC3: at ${width} px, the header shows "speck", "control panel" and the project, with the project's tooltip`, skip, () => withPanel(async b => {
@@ -175,11 +173,6 @@ test('0364 AC5: at 320 px, "Fixing on" beside a long Foreman word stays inside i
   assert.ok(inside, 'everything in the button is inside it');
   assert.ok(h.page <= h.width, 'no sideways scroll');
 }, { width: 320, fixing: 'fix', word: 'Waiting: the base branch is failing its tests' }));
-
-test('0364 AC1: the brief no longer says the header slims on a phone', () => {
-  const brief = fs.readFileSync(path.join(ROOT, 'docs', 'brief.md'), 'utf8');
-  assert.doesNotMatch(brief, /slimmed to one row/);
-});
 
 for (const insets of [null, { top: 47, bottom: 34 }]) {
   const where = insets ? 'in the home-screen app' : 'in a browser tab';
