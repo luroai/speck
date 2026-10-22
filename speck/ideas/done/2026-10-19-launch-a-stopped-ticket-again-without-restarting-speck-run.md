@@ -1,6 +1,6 @@
 # Launch a stopped ticket again without restarting speck run
 
-Captured: 2026-10-19 · Status: inbox
+Captured: 2026-10-19 · Status: ticketed (0376)
 From ticket: 0327
 
 ## What
