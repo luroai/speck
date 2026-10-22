@@ -224,11 +224,13 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       assert.ok(r, `${what} is there`);
       assert.ok(r.width > 0 && r.height > 0 && !r.hidden, `${what} is shown`);
       assert.ok(r.left >= 0 && r.right <= W + 0.5, `${what} is on screen: ${JSON.stringify(r)}`);
-      assert.ok(!r.cut, `${what} isn't cut short`);
+      // 0364: the project shares the phone's one row with the buttons, so it may be cut short with "…", never hidden
+      if (sel === 'header .repo') assert.ok(!r.cut || await b.js(`getComputedStyle(document.querySelector('header .repo')).textOverflow === 'ellipsis'`), `${what} is in full or ends in "…"`);
+      else assert.ok(!r.cut, `${what} isn't cut short`);
       if (sel !== '#theme') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
     assert.match(await b.js(`document.querySelector('header .repo').textContent`), /speck-\w+ · base main/);
-    assert.ok(await b.js(`document.querySelector('#run .mini').getBoundingClientRect().width > 0`), "Auto-build's builder is shown"); // 0163: in place of the square
+    assert.ok(await b.js(`!document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`), "the Foreman's word is shown, with no builder"); // 0364
   });
 });
 

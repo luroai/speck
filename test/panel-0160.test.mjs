@@ -90,7 +90,7 @@ test('0160 AC2: the page reaches behind the status bar, with a status bar style 
   const rule = (css().match(/(?:^|\n)\s*header \{([^}]*)\}/) || [])[1] || '';
   assert.match(rule, /padding:\s*calc\(14px \+ env\(safe-area-inset-top\)\)/);
   const phone = (phoneCss().match(/(?:^|\n)\s*header \{([^}]*)\}/) || [])[1] || '';
-  assert.match(phone, /padding:\s*calc\(10px \+ env\(safe-area-inset-top\)\)/);
+  assert.match(phone, /padding:\s*calc\(6px \+ env\(safe-area-inset-top\)\)/); // 0364: its one row, 6 px above and below
 });
 
 test('0160 AC2: the status bar style tag says black-translucent (light text) on the dark look and default (dark text) on the light one, set before the page is drawn and on each switch', skip, async () => {
@@ -116,22 +116,21 @@ test('0160 AC2: with a 47 px status bar, the header fills it and nothing else ev
   }
 }, { insets: { top: 47, bottom: 34 } }));
 
-test('0160 AC3: on a phone, scrolled down, the header slims to one row of speck, Auto-build and light/dark, no taller than 60 px', skip, () => withPanel(async b => {
+// 0364: the header no longer slims as you scroll: it's one row at the top and scrolled down, with the project shown.
+test('0160 AC3: on a phone, at the top and scrolled down, the header is one row of the mark, the project, the Foreman and light/dark, no taller than 60 px', skip, () => withPanel(async b => {
   const before = await box(b, 'header');
-  assert.ok(await shown(b, '.repo'), 'at the top, the project and base branch show');
-  await scrollTo(b, 600);
-  const h = await box(b, 'header');
-  assert.ok(h.height <= 60, `slim: ${h.height} px`);
-  assert.ok(h.height < before.height, 'and slimmer than at the top');
-  assert.equal(await shown(b, '.repo'), false, 'the project name and base branch are hidden');
-  assert.equal(await shown(b, '.logo span'), false, 'and so is "control panel"');
-  for (const sel of ['.logo', '#run', '#theme']) assert.ok(await shown(b, sel), `${sel} shows`);
-  const mids = await b.js(`['.logo', '#run', '#theme'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return r.top + r.height / 2; })`);
-  assert.ok(Math.max(...mids) - Math.min(...mids) < 4, `one row: ${mids}`);
-  assert.ok((await box(b, '#run')).height >= 44 && (await box(b, '#theme')).height >= 44, 'the buttons keep their 44 px tap areas');
-  await scrollTo(b, 0);
-  assert.equal((await box(b, 'header')).height, before.height, 'back at the top, both rows again');
-  assert.ok(await shown(b, '.repo'));
+  for (const y of [600, 0]) {
+    await scrollTo(b, y);
+    const h = await box(b, 'header');
+    assert.ok(h.height <= 60, `${h.height} px`);
+    assert.equal(h.height, before.height, 'scrolling never changes its height');
+    assert.ok(await shown(b, '.repo'), 'the project name and base branch show');
+    assert.equal(await shown(b, '.logo span'), false, '"control panel" is hidden');
+    for (const sel of ['.logo', '.repo', '#run', '#theme']) assert.ok(await shown(b, sel), `${sel} shows`);
+    const mids = await b.js(`['.logo', '.repo', '#run', '#theme'].map(s => { const r = document.querySelector(s).getBoundingClientRect(); return r.top + r.height / 2; })`);
+    assert.ok(Math.max(...mids) - Math.min(...mids) < 4, `one row: ${mids}`);
+    assert.ok((await box(b, '#run')).height >= 44 && (await box(b, '#theme')).height >= 44, 'the buttons keep their 44 px tap areas');
+  }
 }));
 
 test('0160 AC3: with a 47 px status bar, the slim header is at most 60 px plus that', skip, () => withPanel(async b => {
@@ -157,24 +156,15 @@ test('0160 AC3: on 700 px and wider, the header keeps its one full row when scro
   assert.ok(await shown(b, '.logo span'));
 }, { width: 800 }));
 
-test('0160 AC3: the change is a quick fade, and none with reduced motion', skip, async () => {
-  await withPanel(async b => {
-    await b.js(`window.anims = []; document.querySelector('header').addEventListener('animationstart', e => anims.push(e.animationName), true)`);
-    await scrollTo(b, 600);
-    await scrollTo(b, 0);
-    const named = await b.js('anims');
-    assert.ok(named.length >= 2, `fades as it slims and as it widens: ${named}`);
-    const dur = await b.js(`getComputedStyle(document.querySelector('.logo')).animationDuration`);
-    assert.ok(parseFloat(dur) > 0 && parseFloat(dur) <= 0.3, `quick: ${dur}`);
-  });
-  await withPanel(async b => {
-    await b.js(`window.anims = []; document.querySelector('header').addEventListener('animationstart', e => anims.push(e.animationName), true)`);
-    await scrollTo(b, 600);
-    assert.ok((await box(b, 'header')).height <= 60, 'it still slims');
-    await scrollTo(b, 0);
-    assert.deepEqual(await b.js('anims'), [], 'but instantly');
-  }, { reducedMotion: true });
-});
+// 0364: with nothing to change as you scroll, nothing in the header fades either.
+test('0160 AC3: scrolling down and back up starts no fade in the header, and leaves it as it was', skip, () => withPanel(async b => {
+  await b.js(`window.anims = []; document.querySelector('header').addEventListener('animationstart', e => anims.push(e.animationName), true)`);
+  const before = await b.js(`document.querySelector('header').className`);
+  await scrollTo(b, 600);
+  await scrollTo(b, 0);
+  assert.deepEqual(await b.js('anims'), []);
+  assert.equal(await b.js(`document.querySelector('header').className`), before);
+}));
 
 test('0160 AC3: the fake page, which has no scrolling, still runs the page script without error', async () => {
   const p = fakePage([board()]);
