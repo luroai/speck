@@ -42,6 +42,9 @@ Text that doesn't fit the board scrolls slowly enough to read.
 - 10 dots a second is the slower pace asked for as "slower".
 - It does not wait on the Settings or header tickets. 0375 still waits for it, so 0.13.0 includes the slower board.
 - Failing before this build: none
+- 0365's speed check now checks 10 dots a second. Its narrow-screen and refresh tests wait three times as long between frames, so the dots they count stay as they were. The board's test helpers moved to `test/support/board.mjs`, shared by both files.
+- Self-check: no changes
+- Pictures: none, because the board looks the same; only how fast it moves changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
