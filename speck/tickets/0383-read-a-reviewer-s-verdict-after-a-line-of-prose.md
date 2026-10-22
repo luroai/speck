@@ -43,6 +43,7 @@ speck reads a JSON verdict that comes before, after or between prose in a review
 - Checked 2026-10-22: `jsonIn` in `scripts/reviewers.mjs` tries only the whole text and fenced blocks, and `verdictFromOutput` applies it to an envelope's `result` too. The parser for `speck record` in `scripts/review.mjs` (near "A subagent often wraps its JSON verdict") accepts only bare JSON or a fence.
 - Checked 2026-10-22: Cursor's CLI (`agent -p --mode ask --trust --output-format json --model grok-4.7-high`) printed an envelope whose `result` was two sentences of prose followed straight away by the verdict object, with no fence and no newline. Source: 0374's build log, `speck/.cache/runs/0374.log`.
 - A priority 0 fix: with Cursor reviewing, no build gets past review.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
