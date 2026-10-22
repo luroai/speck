@@ -81,20 +81,17 @@ test('0163 AC2: when a build waits for you it still reads "Auto-build on", in th
   assert.doesNotMatch(page(), /\.run-state\.run-(wait|bad)\b/);
 });
 
-test('0163 AC3: in place of the square, the builder: bouncing while a build is running, still otherwise', async () => {
+// 0364: the builder has gone from the button too, so its label alone is in it, at work or not.
+test('0163 AC3: no square and no builder: the label alone, whether a build is running or not', async () => {
   const cases = [[[BUILDING], RUN, 'hop'], [[REVIEWING], RUN, 'hop'], [[SHIPPING], RUN, 'hop'], [[PAUSED], RUN, 'still'], [[BLOCKED], RUN, 'still'],
     [[TO_SHIP], RUN, 'still'], [[], RUN, 'still'], [[BUILDING], null, 'hop'], [[], null, 'still']]; // 0199: any build at work hops, on or off
   for (const [tickets, run, pose] of cases) {
     const p = await shows(tickets, run);
     assert.equal(p.all(headerOf(p)).filter(n => /\blive\b/.test(n.className || '')).length, 0, 'no square');
-    const b = badgeIn(p);
-    assert.ok(b, 'a drawn builder');
-    assert.deepEqual(b.className.split(' '), ['mini', pose], `${tickets.map(t => t.id)} ${run ? 'on' : 'off'}: ${pose}`);
-    assert.equal(b.attrs['aria-hidden'], 'true', 'the label alone names the button');
-    assert.equal(parts(p)[0], b, 'before the label');
+    assert.equal(badgeIn(p), undefined, `${tickets.map(t => t.id)} ${run ? 'on' : 'off'} (${pose} before 0364): no builder`);
+    assert.ok(/\blabel\b/.test(parts(p)[0].className), 'the label comes first');
   }
-  const css = page();
-  assert.match(css, /\.run-state \.mini \{[^}]*width: 28px; height: 28px/, 'about 28 px');
+  assert.doesNotMatch(page(), /\.run-state \.mini \{/, 'no style for a builder in the button');
 });
 
 // 0303: the builder is the LCD renderer's mini builder, so the drawing of it is checked in panel-0303.test.mjs.
@@ -157,34 +154,20 @@ async function withPanel(tickets, fn, { width = 1280, motion = 'no-preference' }
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
-// The builder's pixels, as a string, a few frames apart. 0303: over one whole hop (1.4 s) of the LCD screen's builder,
-// which moves a dot at a time.
-const FRAMES = `(async () => {
-  const c = document.querySelector('#run canvas.mini'), out = [];
-  for (let i = 0; i < 16; i++) { out.push(Array.from(c.getContext('2d').getImageData(0, 0, c.width, c.height).data).join()); await new Promise(r => setTimeout(r, 90)); }
-  return { distinct: new Set(out).size, drawn: out.some(d => /[1-9]/.test(d)), width: c.getBoundingClientRect().width, height: c.getBoundingClientRect().height };
-})()`;
-
-test('0163 AC3: in a real browser, the builder is about 28 px and bounces while a build runs', skip, async () => {
-  await withPanel([BUILDING], async b => {
-    const f = await b.js(FRAMES);
-    assert.equal(f.drawn, true, 'it is drawn');
-    assert.deepEqual([f.width, f.height], [28, 28]);
-    assert.ok(f.distinct > 1, 'it moves');
+// 0364: no builder is drawn in the button, while a build runs or not.
+test('0163 AC3: in a real browser, the button draws no builder, while a build runs or not', skip, async () => {
+  for (const tickets of [[BUILDING], [PAUSED]]) await withPanel(tickets, async b => {
+    assert.equal(await b.js(`document.querySelectorAll('#run canvas').length`), 0);
+    assert.ok(await b.js(`document.querySelector('#run .label').getBoundingClientRect().width > 0`), 'its label shows');
   });
 });
 
-test('0163 AC3: in a real browser, it holds still when nothing runs, and with reduced motion never moves', skip, async () => {
-  await withPanel([PAUSED], async b => { const f = await b.js(FRAMES); assert.equal(f.drawn, true); assert.equal(f.distinct, 1, 'paused: still'); });
-  await withPanel([BUILDING], async b => { const f = await b.js(FRAMES); assert.equal(f.drawn, true); assert.equal(f.distinct, 1, 'reduced motion: still'); }, { motion: 'reduce' });
-});
-
 test('0163 AC4: in a real browser at 375 px, the label stays on one line, beside light/dark, with a long ticket in flight (0199)', skip, async () => {
-  for (const slim of [false, true]) {
+  for (const slim of [false, true]) { // 0364: at the top and scrolled down, the header is the same one row
     await withPanel([LONG], async b => {
       if (slim) {
         await b.js(`document.body.style.minHeight = '4000px'; window.scrollTo(0, 600); true`);
-        await b.until(`document.querySelector('header').classList.contains('slim')`, 'the slim header');
+        await b.until(`scrollY >= 600`, 'the scroll');
       }
       const g = await b.js(`(() => {
         const r = n => { const b = n.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; }, run = document.getElementById('run'), label = run.querySelector('.label'), cs = getComputedStyle(label);
@@ -192,7 +175,7 @@ test('0163 AC4: in a real browser at 375 px, the label stays on one line, beside
         return { run: r(run), label: r(label), labelFull: label.scrollWidth > label.clientWidth, ellipsis: cs.textOverflow, wrap: cs.whiteSpace,
           lineHeight: parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.6, theme, logo, repo, head: document.querySelector('header').scrollWidth, title: run.title };
       })()`);
-      const where = slim ? 'slim' : 'two rows';
+      const where = slim ? 'scrolled' : 'at the top';
       assert.equal(g.head, 375, `${where}: nothing in the header past the right edge`); // the header only: the Build card's own long id is out of this ticket's scope
       assert.equal(g.labelFull, false, `${where}: "Auto-build on" in full`);
       assert.equal(g.ellipsis, 'ellipsis', `${where}: a label too long would end in "…"`);
@@ -201,7 +184,7 @@ test('0163 AC4: in a real browser at 375 px, the label stays on one line, beside
       assert.ok(g.run.right <= g.theme.left, `${where}: beside light/dark`);
       assert.ok(Math.abs(g.run.top - g.theme.top) < 1, `${where}: on light/dark's row`);
       assert.ok(g.run.left >= 16 && g.theme.right <= 375 - 16 + .5, `${where}: within the header's padding`);
-      if (!slim) assert.ok(g.repo.width > 0 && Math.abs(g.repo.top - g.logo.top) < 12 && g.run.top > g.logo.bottom, 'the project stays beside speck, above the button');
+      assert.ok(g.repo.width > 0 && g.repo.left >= g.logo.right && g.repo.right <= g.run.left, `${where}: the project stays between speck's mark and the button, on its row`);
       assert.equal(g.title, 'What speck run is doing, and what is waiting', `${where}: the tooltip says what pressing it shows (0285: it's the Foreman's status)`);
     }, { width: 375 });
   }

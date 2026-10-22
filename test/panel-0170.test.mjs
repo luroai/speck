@@ -37,15 +37,18 @@ const measure = b => b.js(`(() => {
   const m = mark.getBoundingClientRect(), w = r.getBoundingClientRect();
   return { text: r.toString(), mark: { left: m.left, right: m.right, top: m.top, bottom: m.bottom, height: m.height },
     word: { left: w.left, top: w.top, bottom: w.bottom }, font: parseFloat(getComputedStyle(logo.querySelector('.name')).fontSize),
-    shown: getComputedStyle(mark).display !== 'none' && m.width > 0 };
+    shown: getComputedStyle(mark).display !== 'none' && m.width > 0, wordShown: getComputedStyle(logo.querySelector('.name')).display !== 'none' };
 })()`);
 
 for (const theme of ['light', 'dark']) for (const width of [1280, 375]) {
-  test(`0170 AC3: ${theme}, at ${width} px, the mark is just left of "speck" and about as tall`, skip, () => inBrowser(async b => {
+  test(`0170 AC3: ${theme}, at ${width} px, the mark is just left of "speck" and about as tall (0364: under 700 px, the mark alone)`, skip, () => inBrowser(async b => {
     const check = async where => {
       const x = await measure(b);
       assert.equal(x.text, 'speck');
       assert.ok(x.shown, `${where}: the mark shows`);
+      // 0364: under 700 px the "speck" word is hidden, and the mark stays, at the top and scrolled
+      if (width < 700) return assert.equal(x.wordShown, false, `${where}: no "speck" word on a phone`);
+      assert.ok(x.wordShown, `${where}: the "speck" word shows`);
       assert.ok(x.mark.right <= x.word.left && x.word.left - x.mark.right <= 10, `${where}: immediately left of the wordmark: ${JSON.stringify(x)}`);
       // 0309: a 32 px mark beside a 26 px speck
       assert.ok(x.mark.height >= x.font * 0.8 && x.mark.height <= x.font * 1.25, `${where}: about as tall as the wordmark: ${JSON.stringify(x)}`);
@@ -53,11 +56,10 @@ for (const theme of ['light', 'dark']) for (const width of [1280, 375]) {
     };
     await check('at the top');
     if (width < 700) {
-      // 0160: scrolled down on a phone, the header slims to one row.
+      // 0364: scrolled down on a phone, the header is the same one row.
       await b.js(`document.body.style.minHeight = '4000px'; scrollTo(0, 900)`);
-      await b.until(`document.querySelector('header').classList.contains('slim')`, 'the slim header');
-      await new Promise(r => setTimeout(r, 300)); // its fade
-      await check('in the slim header');
+      await b.until(`scrollY >= 900`, 'the scroll');
+      await check('scrolled down');
     }
   }, { width, theme }));
 }

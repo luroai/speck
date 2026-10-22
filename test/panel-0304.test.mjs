@@ -73,10 +73,12 @@ test('0304 AC1, AC2 and AC4: in a real browser, Doto loads from the panel and th
         await b.until(`document.documentElement.dataset.theme === '${look}'`, `the ${look} look`);
         const m = await b.js(MEASURE);
         const at = `${width} px, ${look}: ${JSON.stringify(m)}`;
-        assert.ok(m.loaded, `Doto loaded, from the panel: ${at}`);
+        // 0364: under 700 px the "speck" word is hidden, so nothing there needs Doto, and nothing sits beside the mark
+        const phone = width < 700;
+        if (!phone) assert.ok(m.loaded, `Doto loaded, from the panel: ${at}`);
         assert.match(m.font, /^Doto,/, at);
         assert.equal(m.header, m.serif, `the header is as tall as with the old serif title: ${at}`);
-        assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 1.5, `speck is centred on the mark, as the design sets them: ${at}`);
+        if (!phone) assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 1.5, `speck is centred on the mark, as the design sets them: ${at}`);
         if (width >= 700) assert.ok(m.name.top < m.label.bottom && m.label.top < m.name.bottom, `speck is on the line beside "control panel": ${at}`); // 0309: a phone has no "control panel"
         assert.ok(m.width <= m.view, `nothing past the right edge: ${at}`);
       }
