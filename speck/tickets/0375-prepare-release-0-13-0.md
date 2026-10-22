@@ -1,7 +1,7 @@
 ---
 id: "0375"
 title: "Prepare release 0.13.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-prepare-release-0-13-0.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0368","0369","0370","0371","0372","0373","0374","0381","0382","0385","0386","0387","0388"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T23:44:11.286Z"
 
 ---
 # 0375 · Prepare release 0.13.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0368 to 0374 rework Settings and the header. Settings opens over the whole panel, a builder or reviewer's models appear when you choose that agent, and changing a setting leaves the view still. An explanation floats over its row. Light and dark move into Settings, the dot-matrix "speck" word comes back with the base branch beside it, and the Foreman's notice board scrolls more slowly. Your own settings, such as which agents build and review, are kept for your machine and no longer need a commit (0386 to 0388). Anyone following the setup prompt, or updating speck on another machine, gets 0.12.0 without them.
