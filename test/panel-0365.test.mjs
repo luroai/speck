@@ -220,7 +220,7 @@ async function withPanel(fn, { width, f = LONG, theme = null } = {}) {
 const layout = b => b.js(`(() => {
   const box = s => { const r = document.querySelector(s).getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, height: r.height, width: r.width }; };
   const run = box('#run'), board = box('#run .board');
-  return { parts: ['.logo .mark', '.repo', '#run', '#settings-open', '#theme'].map(box), run, board, page: document.documentElement.scrollWidth, width: innerWidth };
+  return { parts: ['.logo .mark', '.repo', '#run', '#settings-open'].map(box), run, board, page: document.documentElement.scrollWidth, width: innerWidth };
 })()`);
 
 for (const [width, theme] of [[320, 'light'], [320, 'dark'], [375, 'light'], [699, 'dark'], [700, 'light'], [1200, 'light']]) {

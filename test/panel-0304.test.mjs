@@ -69,7 +69,7 @@ test('0304 AC1, AC2 and AC4: in a real browser, Doto loads from the panel and th
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`document.readyState === 'complete' && !!document.querySelector('.logo .name')`, 'the panel');
       for (const look of ['light', 'dark']) {
-        if ((await b.js('document.documentElement.dataset.theme')) !== look) await b.js(`document.querySelector('.theme').click()`);
+        if ((await b.js('document.documentElement.dataset.theme')) !== look) await b.js(`setLook(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')`);
         await b.until(`document.documentElement.dataset.theme === '${look}'`, `the ${look} look`);
         const m = await b.js(MEASURE);
         const at = `${width} px, ${look}: ${JSON.stringify(m)}`;

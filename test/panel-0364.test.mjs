@@ -87,11 +87,11 @@ const scrollTo = async (b, y) => { await b.js(`scrollTo(0, ${y})`); await settle
 const header = b => b.js(`(() => {
   const box = s => { const n = document.querySelector(s), r = n.getBoundingClientRect(); return { shown: getComputedStyle(n).display !== 'none' && getComputedStyle(n).visibility !== 'hidden' && r.width > 0 && r.height > 0, left: r.left, right: r.right, top: r.top, bottom: r.bottom, height: r.height, mid: r.top + r.height / 2, cut: n.scrollWidth > n.clientWidth + 0.5 }; };
   const label = document.querySelector('#run .board'); // 0365: the Foreman's notice board, cut short when narrower than its dots
-  return { header: box('header'), mark: box('.logo .mark'), name: box('.logo .name'), repo: box('.repo'), run: box('#run'), settings: box('#settings-open'), theme: box('#theme'),
+  return { header: box('header'), mark: box('.logo .mark'), name: box('.logo .name'), repo: box('.repo'), run: box('#run'), settings: box('#settings-open'), // 0372: Settings ends the header
     runCut: label ? label.getBoundingClientRect().width < Number(label.getAttribute('width')) - 0.5 : false, repoText: document.querySelector('.repo').textContent.trim(), repoTitle: document.querySelector('.repo').title,
     page: document.documentElement.scrollWidth, width: innerWidth };
 })()`);
-const ORDER = ['mark', 'repo', 'run', 'settings', 'theme'];
+const ORDER = ['mark', 'repo', 'run', 'settings'];
 const oneRow = (h, at) => {
   for (const k of ORDER) assert.ok(h[k].shown, `${k} shows: ${at}`);
   for (let i = 1; i < ORDER.length; i++) assert.ok(h[ORDER[i]].left >= h[ORDER[i - 1]].right - 0.5, `${ORDER[i]} comes after ${ORDER[i - 1]}, not over it: ${at}`);
@@ -159,8 +159,8 @@ for (const theme of ['light', 'dark']) {
       const h = await header(b);
       assert.ok(h.page <= h.width, `no sideways scroll: ${h.page} > ${h.width}`);
       oneRow(h, `320 px at ${y}`);
-      for (const k of ['run', 'settings', 'theme']) assert.ok(h[k].height >= 44, `${k}: ${h[k].height} px`);
-      assert.ok(h.theme.right <= h.width, 'light/dark is on screen');
+      for (const k of ['run', 'settings']) assert.ok(h[k].height >= 44, `${k}: ${h[k].height} px`);
+      assert.ok(h.settings.right <= h.width, 'Settings is on screen');
     }
   }, { width: 320, theme, word: 'Waiting: the base branch is failing its tests' }));
 }

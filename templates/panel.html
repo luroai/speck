@@ -15,8 +15,8 @@
 <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)">
 <title>speck · control panel</title>
 <script id="theme-start">
-// 0136: set the look before the page is first drawn: the one last chosen with the button in this browser, or else the
-// computer's light or dark setting, followed as it changes until a choice is made.
+// 0136: set the look before the page is first drawn: the one last chosen in this browser (in Settings since 0372), or
+// else the computer's light or dark setting, followed as it changes until a choice is made.
 (() => {
   const root = document.documentElement;
   const saved = () => { try { const t = localStorage.getItem('speck-theme'); return t === 'light' || t === 'dark' ? t : null; } catch { return null; } };
@@ -24,10 +24,11 @@
   // 0160: the home-screen app's status bar: black-translucent (light text) on the dark look, default (dark text) on the
   // light one. iOS reads it as the app opens.
   const bar = look => { const m = document.getElementById?.('status-bar'); if (m) m.content = look === 'dark' ? 'black-translucent' : 'default'; };
-  const set = look => { root.dataset.theme = look; bar(look); };
+  // 0372: Settings' list of looks, while it's open, shows the one the page has.
+  const set = look => { root.dataset.theme = look; bar(look); const c = document.getElementById?.('look'); if (c) c.value = look; };
   set(saved() || (system.matches ? 'dark' : 'light'));
   system.addEventListener('change', e => { if (!saved()) set(e.matches ? 'dark' : 'light'); });
-  globalThis.setLook = set; // for the light/dark button
+  globalThis.setLook = set; // for Settings' look
 })();
 </script>
 <style>
@@ -69,16 +70,12 @@
   .logo .name { font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 26px; line-height: 1; }
   .logo span { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--faint); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; margin-left: 12px; }
   .repo { color: var(--muted); font-size: 12px; margin-left: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .logo, .run-state, .theme, .settings-open { flex-shrink: 0; }
-  .theme, .settings-open { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
-  .theme:hover, .settings-open:hover { border-color: var(--text); color: var(--text); }
-  .theme svg, .settings-open svg { width: 15px; height: 15px; }
-  .theme .sun { display: none; }
-  :root[data-theme="dark"] .theme .sun { display: block; }
-  :root[data-theme="dark"] .theme .moon { display: none; }
-  /* 0257: Settings sits just before light/dark, closer to it than the rest. Below 900 px the header's gaps and sides
-     narrow with the screen, so the project's name still has room beside speck. */
-  .settings-open + .theme { margin-left: -6px; }
+  .logo, .run-state, .settings-open { flex-shrink: 0; }
+  /* 0372: Settings ends the header: light and dark are chosen in it. Below 900 px the header's gaps and sides narrow
+     with the screen, so the project's name still has room beside speck. */
+  .settings-open { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: .5px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+  .settings-open:hover { border-color: var(--text); color: var(--text); }
+  .settings-open svg { width: 15px; height: 15px; }
 
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); }
   section { background: var(--panel); border: .5px solid var(--line); }
@@ -295,10 +292,10 @@
   .foreman-ask .ask-refused { margin: 4px 0 0; font-size: 12px; color: var(--bad); white-space: pre-wrap; }
   .foreman .reload, #settings .run-switch { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--panel); border: .5px solid var(--line); padding: 2px 10px; cursor: pointer; }
   #settings .run-switch:disabled { cursor: default; opacity: .6; }
-  #settings .run-row { padding: 8px 12px; }
-  #settings .run-row .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
-  #settings .run-row .label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); }
-  #settings .run-row p { margin: 4px 0 0; color: var(--muted); }
+  #settings .run-row, #settings .look-row { padding: 8px 12px; }
+  #settings .run-row .row, #settings .look-row .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+  #settings .run-row .label, #settings .look-row .label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); }
+  #settings .run-row p, #settings .look-row p { margin: 4px 0 0; color: var(--muted); }
   #settings .run-row p.bad { color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
   #settings .run-row p.bad[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -399,7 +396,7 @@
   #settings .setting p { margin: 4px 0 0; color: var(--muted); }
   #settings .setting p.bad { color: var(--bad); }
   /* 0258: a setting the panel can change: its control and Save button */
-  #settings .setting .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
+  #settings .setting .edit, #settings .look-row .edit { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); border: .5px solid var(--line); padding: 1px 6px; min-width: 0; max-width: 100%; }
   /* 0281: the boxes a whole number of pixels wide, borders and padding included, so their right edges fall on a whole
      pixel. 0273: the text box in the row's right half. */
   #settings .setting input.edit[type="number"] { box-sizing: border-box; width: calc(8ch + 14px); width: round(up, calc(8ch + 14px), 1px); }
@@ -419,7 +416,7 @@
   #settings .setting .info { position: relative; display: inline-grid; place-items: center; align-self: center; width: 18px; height: 18px; padding: 0; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; line-height: 1; color: var(--muted); background: none; border: .5px solid var(--line); cursor: help; }
   /* 0281: under 2 device pixels to a CSS pixel, half a pixel is less than a device pixel, which a browser may not draw,
      so there these borders are a whole pixel. From 2 up, half a pixel is a device pixel or more. */
-  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .setting .edit, #settings .setting .info { border-width: 1px; } }
+  @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .setting .edit, #settings .look-row .edit, #settings .setting .info { border-width: 1px; } }
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .sgroup { box-shadow: 0 0 0 1px var(--line); } }
   #settings .setting .info:hover, #settings .setting .info:focus-visible { color: var(--text); border-color: var(--text); }
   #settings .setting .info::before { content: "i"; } /* drawn here, so the button adds no text to its line: its name is its aria-label */
@@ -547,8 +544,7 @@
     .repo { flex: 1 1 0; min-width: min(96px, 25vw); margin-left: 0; }
     .run-state { flex-shrink: 1; height: 44px; min-width: 44px; overflow: hidden; }
     .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
-    .theme, .settings-open { width: 44px; height: 44px; }
-    .settings-open + .theme { margin-left: 0; }
+    .settings-open { width: 44px; height: 44px; }
     #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
@@ -633,10 +629,6 @@
   <button class="run-state" id="run" type="button" aria-expanded="false" aria-controls="foreman" hidden></button>
   <button class="settings-open" id="settings-open" type="button" aria-label="Settings" title="Settings">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="5.5" cy="4.5" r="1.6" fill="var(--bg)"/><circle cx="10.5" cy="11.5" r="1.6" fill="var(--bg)"/></svg>
-  </button>
-  <button class="theme" id="theme" type="button" aria-label="Switch between light and dark">
-    <svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/></svg>
-    <svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
   </button>
 </header>
 <div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
@@ -1919,13 +1911,14 @@ function holdPage(on) {
   if (!on) { scrollTo(...heldAt); heldAt = null; }
 }
 // A click on the backdrop closes the pane and nothing else. A drag from the pane to the backdrop clicks a node above both.
-// 0136: the light/dark button switches the look and remembers it in this browser (the <head> script applies it on load).
-$('theme').addEventListener('click', () => {
+// 0136: a look chosen switches the page and is remembered in this browser (the <head> script applies it on load). 0372:
+// chosen in Settings, not the header.
+function chooseLook(look) {
   const root = document.documentElement;
-  const look = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  if (look !== 'light' && look !== 'dark') return;
   if (typeof setLook === 'function') setLook(look); else root.dataset.theme = look;
   try { localStorage.setItem('speck-theme', root.dataset.theme); } catch { /* storage refused: the look still switches, until a reload */ }
-});
+}
 // 0160: the header stays at the top of the screen. --head is its height on screen, so a ticket scrolled to sits below
 // it. 0364: it's one row at every width, the same at the top and scrolled, and the project and base branch, cut short
 // when the row is narrow, show in full in its tooltip.
@@ -2092,12 +2085,26 @@ function renderSettings() {
       // 0273: a box like the panel's sections, with a heading bar
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
     }
-    if (settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
   }
+  kids.push(lookGroup());
+  if (settingsView.state === 'ok' && settingRows().some(x => x.editable === true)) kids.push(saveBar()); // none to change: nothing to save
   kids.splice(1, 0, foremanGroup(foremanRows)); // 0285: the Foreman first
   pane.replaceChildren(...kids);
   refreshSettings();
   showSettingTip(settingTips.has(settingTip) ? settingTip : null, settingTipKept);
+}
+// 0372: light or dark, kept in this browser rather than speck/config.yml, so it switches the page as it's picked and
+// Save neither sends it nor counts it as a change. A row of its own, as speck run's is, not one of the file's settings.
+function lookGroup() {
+  const list = el('select', 'edit');
+  list.id = 'look';
+  for (const look of ['light', 'dark']) { const o = el('option', null, look); o.value = look; list.appendChild(o); }
+  list.value = document.documentElement?.dataset?.theme === 'dark' ? 'dark' : 'light';
+  list.setAttribute('aria-label', 'Light or dark');
+  list.addEventListener('change', () => chooseLook(String(list.value ?? '')));
+  return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Look')),
+    el('div', 'look-row', null, el('div', 'row', null, el('span', 'label', 'light or dark'), list),
+      el('p', null, 'For the panel in this browser. It switches as you pick it, and is kept here, not in speck/config.yml.')));
 }
 // A setting's row, whose explanation is the view's `n`th.
 function settingRow(x, n) {
