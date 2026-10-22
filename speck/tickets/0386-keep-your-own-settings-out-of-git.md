@@ -1,7 +1,7 @@
 ---
 id: "0386"
 title: "Keep your own settings out of git"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T22:58:32.613Z"
 ---
 # 0386 · Keep your own settings out of git
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Every setting lives in speck/config.yml, which is committed. Choosing which agent builds or reviews, or turning auto-ship on, means a commit to `main` that then goes out with the next ship's push. Running builds don't see the change, because they read the copy in their own worktree.
@@ -60,3 +60,79 @@ Your own settings are kept for this machine in a file git ignores, and speck/con
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "df700b655229aee4410fb17a60b6ed090201599e",
+    "thread_id": "01a165dd-ee9d-7942-af16-cfae1dabf357",
+    "seconds": 32,
+    "usage": {
+      "input_tokens": 235996,
+      "cached_input_tokens": 179712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 913,
+      "reasoning_output_tokens": 30
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T23:07:17.796Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/config.mjs routes all sixteen own settings to setMachine; setBuilder saves its associated build_command. Reported AC1 tests exercise persistence, unchanged repo config and no commits."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/core.mjs loadConfig calls applyMachineConfig on each read. The passing AC2 test checks main checkout, worktree, fallback and subsequent updates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "setMachine uses checkConfigValue; saveMachineValues uses yamlValue and verifies round trips. Passing AC3 tests cover refusal messages, quotes, spaces, lists, --repo and removal."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "cmdConfigShow maps only panelSettings groups. SETTING_GROUPS omits build_command and resume_command, so neither machine value is displayed or marked. The passing show test covers only reviewer and auto_ship."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README's 'Your own settings' passage and the brief's config command entry explain the sixteen settings, ignored shared file and --repo defaults. Reported tests: 241 passed, zero failed, three skipped; existing test changes preserve their assertions."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "config show omits build_command and resume_command entirely, even when they have machine overrides. Criterion 4 requires each machine-sourced value to be marked. These omissions also hide the build_command saved automatically when switching builder.",
+        "suggested_fix": "Include both settings in CLI text and JSON output, with their effective values and machine-source markers. Add coverage checking all sixteen machine settings. Keep the panel changes within the stated scope.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Personal settings are saved outside git and shared across worktrees, with validation and repository defaults preserved. One required detail is missing: config show hides the personal build and resume commands. Fix that visibility gap before merge."
+  }
+}
+```
+
+</details>
