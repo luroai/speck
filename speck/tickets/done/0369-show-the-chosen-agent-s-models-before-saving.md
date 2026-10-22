@@ -1,7 +1,7 @@
 ---
 id: "0369"
 title: "Show the chosen agent's models before saving"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0368"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T20:55:11.777Z"
 approved: "2026-10-22T21:14:46.122Z"
+finished: "2026-10-22T21:17:31.565Z"
 
 ---
 # 0369 · Show the chosen agent's models before saving
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Picking Cursor as the builder or the reviewer leaves the model list as it was. The reviewer's model becomes a box that says to save Cursor and open Settings again, and the builder's model keeps showing the saved builder's models. You can't pick a Cursor model, such as a Grok model, until you've saved and reopened.
