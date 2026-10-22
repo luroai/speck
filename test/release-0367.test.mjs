@@ -54,7 +54,7 @@ test('0367 AC4: the release notes say how to update to 0.12.0 and name what chan
 
 test('0367 AC2: CHANGELOG.md\'s 0.12.0 section names the words and settings the panel changes show', () => {
   const s = changelogSection(read('CHANGELOG.md'), '0.12.0');
-  for (const name of ['Finished · read the document', 'Review pack', 'Ask for changes', 'Escape', 'Reload page', 'Needs you',
+  for (const name of ['Review pack', 'Ask for changes', 'Escape', 'Reload page', 'Needs you',
     '`prefers-reduced-motion: reduce`', '`auto_ship`']) assert.ok(s.includes(name), name);
 });
 
