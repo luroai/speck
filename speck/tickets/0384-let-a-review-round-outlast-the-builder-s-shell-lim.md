@@ -1,7 +1,7 @@
 ---
 id: "0384"
 title: "Let a review round outlast the builder's shell limit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-let-a-review-round-outlast-the-builder-s-sh
 after: ["0383"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T20:13:36.538Z"
+approved: "2026-10-22T20:28:00.998Z"
 
 ---
 # 0384 · Let a review round outlast the builder's shell limit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 speck lets a reviewer run for `review_timeout_minutes` (30 by default). But a builder waits for `speck review` in one foreground shell command, and Claude Code ends such a command after 10 minutes. `speck run`'s Claude Code builds can't run commands in the background (0245). On 0368, a Grok review was still running at 10 minutes, so the builder's shell ended the round. The builder then improvised a detached run and a polling loop.
@@ -57,9 +58,16 @@ A slow reviewer no longer gets cut off when a review takes more than about ten m
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Startup is not mutually exclusive.
+Round 2 (codex): changes requested: F2 A waiter publishes the .read marker before deliver() reads stdout and stderr.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 777,122
+- Elapsed since build started: 14 min
+- Changed lines: 160 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Ctrl-C on `speck review`, or stopping the build, no longer ends a running round's reviewer, as the round runs detached: saved to the inbox as speck/ideas/2026-10-22-end-a-review-round-s-reviewer-when-its-build-is-stopped.md.
