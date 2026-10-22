@@ -114,10 +114,12 @@ export function testRun(repo, cfg, cmd, { reuse = 'any', onStart = () => {}, hin
       if (r.reused) return r;
       let text = written();
       // A run that failed with an exit code gets one more try at its failing tests (0195). One that passes it counts
-      // as passed, and one that doesn't keeps the first run's result, with both runs' output.
+      // as passed, and one that doesn't keeps the first run's result, with both runs' output, the second's after a line
+      // saying it ran them once more, so its results can be told from the first's (0377).
       if (/^\d+$/.test(r.ended) && r.ended !== '0') {
         const again = retry(repo, cfg, cmd, text, branch);
-        if (again?.passed) { Object.assign(r, { status: 0, ended: '0' }); text = ''; } else if (again) text += again.output;
+        if (again?.passed) { Object.assign(r, { status: 0, ended: '0' }); text = ''; }
+        else if (again) text += `${text && !text.endsWith('\n') ? '\n' : ''}${again.note}\n${again.output}`;
       }
       return { r, text };
     });
@@ -154,9 +156,10 @@ function failingOnBase(repo, cfg, cmd) {
 // (0195). Null when it can't: commands.test_files is blank or has no {files}, or a failing test has no location in a
 // file in `repo`. Tests that already fail on the base branch (see failingOnBase) are left out, along with their files
 // unless a test that didn't fail there failed in them too, and said so in a line naming them: null too when that leaves
-// nothing to run (0228). Otherwise { passed, output }: passed when nothing was left out, the second run passed and each
-// test that failed passed in it (a name that failed twice, twice), which it then says with a line naming them and adds
-// to the shared flaky log, with the time and `branch` (blank: the branch checked out).
+// nothing to run (0228). Otherwise { passed, output, note }: passed when nothing was left out, the second run passed
+// and each test that failed passed in it (a name that failed twice, twice), which it then says with a line naming them
+// and adds to the shared flaky log, with the time and `branch` (blank: the branch checked out). When it didn't pass,
+// note is the line saying it ran them once more.
 function retry(repo, cfg, cmd, text, branch) {
   const only = String(cfg.commands?.test_files || '').trim();
   const failing = failingTestFiles(text);
@@ -191,7 +194,7 @@ function retry(repo, cfg, cmd, text, branch) {
     const passed = new Map();
     for (const name of passingTests(again)) passed.set(name, (passed.get(name) || 0) + 1);
     const all = failing.every(t => { const n = passed.get(t.name) || 0; passed.set(t.name, n - 1); return n > 0; });
-    if (r.ended !== '0' || !all || left.length) return { passed: false, output: again };
+    if (r.ended !== '0' || !all || left.length) return { passed: false, output: again, note: `${RETRY_NOTE}${rerun}` };
     const names = [...new Set(failing.map(t => t.name))];
     console.log(`${FLAKY}${names.join('; ')}`);
     flakyLog(repo, names, branch);
