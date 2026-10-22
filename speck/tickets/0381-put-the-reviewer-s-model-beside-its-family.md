@@ -43,6 +43,7 @@ The builder, the reviewer and the Foreman each have their agent and the model it
 - The reviewer's first dropdown keeps `claude-subagent` and a command from `reviewer_options`. The builder's offers `claude`, `codex` and `cursor`. The Foreman's offers blank plus `claude`, `codex` and `cursor`. Blank still means the Foreman follows the builder, as today.
 - Checked 2026-10-22: `renderSettings` in `templates/panel.html` draws one `.setting` row per key, so each agent and its model are separate rows (`scripts/settings.mjs`). Once 0369 has shipped, choosing the agent fills that agent's model list before saving.
 - Waits for 0368 to 0374. They change `templates/panel.html`, and 0369 also changes `scripts/settings.mjs`. 0375 waits for this, so it ships in 0.13.0.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
