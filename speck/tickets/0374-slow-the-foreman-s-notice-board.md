@@ -1,7 +1,7 @@
 ---
 id: "0374"
 title: "Slow the Foreman's notice board"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-give-the-header-s-notice-board-more-room.md
 after: []                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T19:40:00.584Z"
+approved: "2026-10-22T20:00:16.945Z"
 
 ---
 # 0374 · Slow the Foreman's notice board
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When the Foreman's notice board has more text than fits, it scrolls at about 30 dots a second. That is too fast to read.
@@ -53,9 +54,14 @@ The Foreman's notice board at the top of the panel now scrolls at a third of its
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (cursor): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: cursor, model grok-4.7-high, effort default
+- Reviewer tokens: 0
+- Elapsed since build started: 20 min
+- Changed lines: 6 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - `speck review` with the Cursor reviewer failed three times: the reviewer wrote a line of prose before its JSON verdict, which speck can't read. Round 1 was recorded with `speck record --reviewer=cursor`, from the Cursor reviewer's own reply to the saved round-1 prompt (same model, read-only), with the prose before the JSON removed.
 - Follow-ups:
