@@ -201,3 +201,12 @@ test('0372 AC2: in a real browser, choosing dark in Settings switches the page, 
   await b.until(`document.readyState === 'complete' && document.documentElement.dataset.theme === 'dark'`, 'dark after a reload');
   await b.js(`localStorage.removeItem('speck-theme'); true`);
 }, 1200));
+
+test('0372 AC2: Settings opens on a page whose root has no dataset, showing light', async () => {
+  const p = settingsPage([VIEW()], [], { scrollX: 0, scrollY: 0, scrollTo() {} });
+  p.document.documentElement = { classList: { toggle() {} } };
+  p.document.querySelectorAll = () => [];
+  await p.settle();
+  await openSettings(p);
+  assert.equal(p.all(p.byId('settings')).find(n => n.id === 'look').value, 'light');
+});

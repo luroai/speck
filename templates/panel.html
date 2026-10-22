@@ -2099,7 +2099,7 @@ function lookGroup() {
   const list = el('select', 'edit');
   list.id = 'look';
   for (const look of ['light', 'dark']) { const o = el('option', null, look); o.value = look; list.appendChild(o); }
-  list.value = document.documentElement && document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+  list.value = document.documentElement?.dataset?.theme === 'dark' ? 'dark' : 'light';
   list.setAttribute('aria-label', 'Light or dark');
   list.addEventListener('change', () => chooseLook(String(list.value ?? '')));
   return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Look')),
