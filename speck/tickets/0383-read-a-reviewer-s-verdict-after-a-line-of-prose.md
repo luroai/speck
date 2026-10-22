@@ -1,7 +1,7 @@
 ---
 id: "0383"
 title: "Read a reviewer's verdict after a line of prose"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-read-a-reviewer-s-verdict-after-a-line-of-prose.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: []                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T20:07:36.894Z"
 
 ---
 # 0383 · Read a reviewer's verdict after a line of prose
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 A reviewer that speck runs as a command can open its reply with a line of prose and then give an unfenced JSON verdict. Cursor on grok-4.7-high replied `I'll review ticket 0374 …{"round":1,"verdict":"approve",…}`. speck refuses such a reply with "didn't return a verdict" and records nothing, so a build can't get past review. 0374's builder recorded the verdict by hand to get through.
