@@ -1,7 +1,7 @@
 ---
 id: "0362"
 title: "Open a document task's document in a pop-up over the whole panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -20,7 +20,7 @@ approved: "2026-10-22T15:12:02.528Z"
 ---
 # 0362 · Open a document task's document in a pop-up over the whole panel
 
-**Status:** 👍 approved
+**Status:** 🔍 reviewing
 
 ## Problem
 A document task's Markdown document opens in the side pane, which is at most 480 px wide. That's narrow for reading a document, and reading it is how you review a document task before you ship it.
@@ -129,6 +129,71 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "Markdown documents now open over the whole panel while the review pack stays underneath. Closing returns focus to the file button. Loading, errors and other file types retain their existing behaviour. The tests pass, and no blocking issues were found."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1cdfa2c20b8900167f9e5e056d57ef531fe53056",
+    "merge": true,
+    "thread_id": "01a1642a-9053-7891-838b-4e7e9709d275",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 227693,
+      "cached_input_tokens": 173568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1375,
+      "reasoning_output_tokens": 82
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T15:15:50.260Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: drawDoc renders the path, Close button and Markdown with tables. #doc-view fills the viewport using theme colours, with a centred column capped at 760 px. Passing 0362 AC1 tests cover these properties and retention of the review pack."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawDoc focuses the pop-up and makes the side pane and backdrop inert; holdPage locks scrolling and makes the underlying page inert. #doc-view scrolls internally with overscroll containment. The 0362 AC2 tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "closeDoc and the Escape handler close the pop-up and restore focus to the file button. Passing 0362 AC3 tests verify unchanged review-pack nodes, restored interaction, discarded late responses and closure when the ticket disappears."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "openDocument retains the previous loading and error wording, while documentsPart still opens non-Markdown files in a new tab. All 0362 AC4 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified the CSS restores the original standalone #full-ticket .top and #full-ticket:focus rules without changing the existing tests. The expanded run, including panel-0143 and panel-0161, reports 159 passes, zero failures and three skips."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The pop-up meets all five criteria. The two CSS regressions found during shipping have been corrected without weakening tests. On phones, closing a long document still requires scrolling back to the top; that usability improvement is recorded as a follow-up."
   }
 }
 ```
