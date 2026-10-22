@@ -1,7 +1,7 @@
 ---
 id: "0377"
 title: "Leave chance failures out of a hand-back"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0375"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:50:24.194Z"
 approved: "2026-10-22T23:54:51.351Z"
+finished: "2026-10-22T23:57:59.663Z"
 
 ---
 # 0377 · Leave chance failures out of a hand-back
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a ship's tests fail and some of those tests pass on a second try, the ship still names the ones that passed. With the base branch's own tests failing, that alone can hand the ticket back to its build to fix a test that isn't broken.
