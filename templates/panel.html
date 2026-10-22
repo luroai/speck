@@ -3217,10 +3217,10 @@ function foremanOf(st) {
 }
 // 0365: the Foreman's notice board. Its text is the Foreman's word, then what each ticket in flight is doing, drawn in
 // the LCD screens' 5 × 7 dot font, in capitals, on dots 2 px apart. Text wider than the board scrolls from right to left,
-// 30 dots a second, and loops round with a gap. Text that fits, or any text with reduced motion (which shows the word
-// alone), stays still. The board is kept between redraws, so the same text carries on scrolling; new text starts again
+// 10 dots a second (0374: slow enough to read), and loops round with a gap. Text that fits, or any text with reduced
+// motion (which shows the word alone), stays still. The board is kept between redraws, so the same text carries on scrolling; new text starts again
 // from the right-hand edge. Its whole text is the button's name, whatever has scrolled into view.
-const BOARD = { pitch: 2, rows: 9, max: 90, gap: 16, speed: 30 };
+const BOARD = { pitch: 2, rows: 9, max: 90, gap: 16, speed: 10 };
 const MIDDOT = '.....|.....|.....|..#..|.....|.....|.....'.split('|'); // "·", which the font hasn't got
 function boardText(f, stale) {
   if (stale) return 'Reload page';
