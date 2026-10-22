@@ -320,12 +320,12 @@ test('0109 AC5: max_parallel_tests is in the config template', () => {
 test('0109 AC5: speck config set accepts a whole number of 1 or more for max_parallel_tests', () => {
   const { dir } = testRepo();
   const file = path.join(dir, 'speck', 'config.yml');
-  const ok = speck(dir, 'config', 'set', 'max_parallel_tests', '3');
+  const ok = speck(dir, 'config', 'set', '--repo', 'max_parallel_tests', '3');
   assert.equal(ok.status, 0, ok.stderr);
   assert.match(fs.readFileSync(file, 'utf8'), /^max_parallel_tests: 3\s+#/m);
   const before = fs.readFileSync(file, 'utf8');
   for (const bad of ['0', '-1', '1.5', 'two', '']) {
-    const res = speck(dir, 'config', 'set', 'max_parallel_tests', bad);
+    const res = speck(dir, 'config', 'set', '--repo', 'max_parallel_tests', bad);
     assert.notEqual(res.status, 0, `refuses ${JSON.stringify(bad)}`);
     noTrace(res);
     assert.equal(fs.readFileSync(file, 'utf8'), before, 'the file is unchanged');

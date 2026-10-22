@@ -10,7 +10,11 @@ import { commitTicketOnly } from './close.mjs';
 import { FIXING } from './foreman.mjs';
 import { FOREMAN_AGENTS, foremanAgentOf } from './foreman-agent.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
-import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
+import { machineConfig, saveMachineValue } from './machine.mjs';
+
+// 0261: the settings the panel saves for this machine. 0386 made more of your own settings this machine's, and 0387
+// moves the panel to all of them.
+const MACHINE_SETTINGS = Object.freeze(['max_parallel_builds', 'max_parallel_tests']);
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
@@ -222,19 +226,32 @@ export function loosens(was, will) {
   return { risks: RISKS.filter(r => will.risks.includes(r)).join(','), words: covered(will.risks) };
 }
 
+const COMMAND_EXPLAIN = {
+  build_command: 'The command speck run starts each build with. Switching the builder sets it to that builder\'s own.',
+  resume_command: 'The command the panel shows to reopen a blocked build\'s session.',
+};
+
 // `speck config show [--json]` (0269): each setting of the panel's Settings view, by group, with its value now, whether
 // that's speck's default and the explanation the panel shows, so setup and the panel say the same thing.
 export function cmdConfigShow(args) {
   const json = args.length === 1 && args[0] === '--json';
   if (args.length && !json) throw new SpeckError('Usage: speck config show [--json]');
   const defaults = Object.fromEntries(SETTING_GROUPS.flatMap(g => g.settings).map(s => [s.key, s.default]));
-  const groups = panelSettings(findRepoRoot()).groups.map(g => ({ title: g.title, settings: g.settings.map(s => ({
-    key: s.key, value: s.repo_value ?? s.value, is_default: JSON.stringify(s.repo_value ?? s.value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: s.explain,
-  })) }));
+  // 0386: a value this machine holds is shown as speck uses it, marked this_machine, with speck/config.yml's in repo_value.
+  const repo = findRepoRoot(), mine = machineConfig(repo);
+  const groups = panelSettings(repo).groups.map(g => ({ title: g.title, settings: g.settings.map(s => {
+    const repoValue = s.repo_value ?? s.value, machine = Object.hasOwn(mine, s.key), value = machine ? mine[s.key] : repoValue;
+    return { key: s.key, value, is_default: JSON.stringify(value) === JSON.stringify(defaults[s.key]), speck_default: defaults[s.key], explain: s.explain,
+      ...(machine ? { this_machine: true, repo_value: repoValue } : {}) };
+  }) }));
+  // build_command and resume_command aren't in the Settings view, so one this machine holds is shown with the builder's.
+  const repoCfg = loadConfig(repo, { machine: false }), agents = groups.find(g => g.settings.some(s => s.key === 'builder'));
+  for (const key of ['build_command', 'resume_command']) if (Object.hasOwn(mine, key))
+    agents.settings.push({ key, value: mine[key], is_default: false, speck_default: '', explain: COMMAND_EXPLAIN[key], this_machine: true, repo_value: repoCfg[key] ?? '' });
   if (json) { console.log(JSON.stringify({ groups }, null, 2)); return; }
   const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : shown(v);
   console.log(groups.map(g => `${g.title}\n${g.settings.map(s =>
-    `  ${s.key}: ${show(s.value)} (${s.is_default ? 'the default' : `speck's default is ${show(s.speck_default)}`})\n    ${s.explain}`).join('\n')}`).join('\n\n'));
+    `  ${s.key}: ${show(s.value)} (${s.this_machine ? `this machine's own, over speck/config.yml's ${show(s.repo_value)}; ` : ''}${s.is_default ? 'the default' : `speck's default is ${show(s.speck_default)}`})\n    ${s.explain}`).join('\n')}`).join('\n\n'));
 }
 
 // One setting's change, checked as `speck config set` does: the value speck would write in `want`, and `same` when the
