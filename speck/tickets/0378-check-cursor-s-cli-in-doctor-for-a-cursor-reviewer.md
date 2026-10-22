@@ -1,7 +1,7 @@
 ---
 id: "0378"
 title: "Check Cursor's CLI in doctor for a Cursor reviewer"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-20-check-cursor-s-cli-in-doctor-for-a-cursor-r
 after: ["0375"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:50:26.264Z"
+approved: "2026-10-22T23:52:07.470Z"
 
 ---
 # 0378 · Check Cursor's CLI in doctor for a Cursor reviewer
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 With `reviewer: cursor` and no reviewer command of your own, `speck doctor` checks nothing for the reviewer. A missing Cursor CLI only shows up when the first review fails.
@@ -50,9 +51,14 @@ If Cursor reviews your tickets, `speck doctor` now checks that Cursor's command-
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 87,062
+- Elapsed since build started: 2 min
+- Changed lines: 4 (limit 5000)
 Follow-ups: none.
 
 ## Review rounds
