@@ -132,6 +132,29 @@ export function readyAgain(repo, runs, t) {
   return now !== '' && now !== then;
 }
 
+// True for a ticket whose last build `speck stop` ended, until the ticket has a commit other than the one it had when
+// it was stopped (set ready again, for example). A ticket still ready because blocking it failed isn't launched again.
+export function heldByStop(repo, runs, t) {
+  const file = path.join(runs, `${t.id}.json`);
+  if (!stoppedBySpeck(file)) return false;
+  let mark = null;
+  try { mark = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')); } catch { /* unreadable: held */ }
+  return typeof mark?.ticket_commit !== 'string' || mark.ticket_commit === lastTicketCommit(t.worktree || repo, t.path);
+}
+
+// 0376: true once the ticket `t` has been committed ready since `speck stop` ended its last build: its last commit
+// where it's read from isn't the one it had as it was stopped, and has it ready. The stop's own commit blocks it.
+export function readyAfterStop(repo, runs, t) {
+  const file = path.join(runs, `${t.id}.json`);
+  if (!stoppedBySpeck(file)) return false;
+  let mark;
+  try { mark = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.stopped'), 'utf8')); } catch { return false; }
+  const dir = t.worktree || repo, now = lastTicketCommit(dir, t.path);
+  if (!now || typeof mark?.ticket_commit !== 'string' || now === mark.ticket_commit) return false;
+  const r = sh('git', ['show', `${now}:${t.path}`], { cwd: dir });
+  try { return r.status === 0 && parseTicket(r.stdout).fm.status === 'ready'; } catch { return false; }
+}
+
 // Where the ticket's build keeps it:the checkout its branch is in, or the main checkout before the build has started it.
 export function buildTicket(repo, cfg, id) {
   const list = worktreeList(repo);
