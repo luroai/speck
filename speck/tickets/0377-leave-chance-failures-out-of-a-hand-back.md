@@ -1,7 +1,7 @@
 ---
 id: "0377"
 title: "Leave chance failures out of a hand-back"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-17-leave-chance-failures-out-of-a-hand-back.md
 after: ["0375"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:50:24.194Z"
+approved: "2026-10-22T23:54:51.351Z"
 
 ---
 # 0377 · Leave chance failures out of a hand-back
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a ship's tests fail and some of those tests pass on a second try, the ship still names the ones that passed. With the base branch's own tests failing, that alone can hand the ticket back to its build to fix a test that isn't broken.
@@ -50,9 +51,14 @@ When a ship's tests fail, speck runs the failing ones once more. A test that pas
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 134,033
+- Elapsed since build started: 4 min
+- Changed lines: 35 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none. Known limit: when a second try leaves some tests failing, the ones that passed on it aren't written to the flaky log (unchanged by this ticket).
 
