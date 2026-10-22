@@ -87,7 +87,7 @@ test('0127 AC3: the pill sits in the header, not in a ticket row (0150: it is th
   assert.doesNotMatch(header, /id="pills"/);
   const p = fakePage([state(true)]);
   await p.settle();
-  assert.equal(p.byId('run').children.length, 2, 'its square and its label');
+  assert.equal(p.byId('run').children.length, 1, 'its label alone (0364: no square or builder before it)');
   assert.equal(p.byId('pills').children.length, 0);
 });
 

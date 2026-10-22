@@ -46,10 +46,10 @@ test('0203 AC1: with speck run off, an approved ticket auto-ship covers says to 
   assert.deepEqual([m.to_ship, m.red, m.ship_waiting, m.exit_label], [true, false, false, null]);
 });
 
-test('0203 AC1: the Auto-build button\'s builder isn\'t at work for it', async () => {
+test('0203 AC1: the Auto-build button\'s builder isn\'t at work for it (0364: the button has no builder)', async () => {
   const p = await fake(null, TICKETS.slice(0, 2));
   const builder = p.all(p.byId('run')).find(n => n.tagName === 'canvas');
-  assert.deepEqual(classes(builder), ['mini', 'still']);
+  assert.equal(builder, undefined);
 });
 
 test('0203 AC2: with speck run on, the same ticket waits to ship in the normal colour with its badge moving', async () => {

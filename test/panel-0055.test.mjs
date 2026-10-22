@@ -58,9 +58,9 @@ test('0055 AC3: the motion is drawn only when the browser doesn\'t ask for reduc
   for (let i = end; i < css.length; i++) { if (css[i] === '{') depth++; else if (css[i] === '}' && --depth === 0) { end = i; break; } }
   const inside = css.slice(at, end + 1), outside = css.slice(0, at) + css.slice(end + 1);
   // Since 0168 the badge moves in the page script, which draws a still pose when the browser asks for reduced motion.
-  // 0302 and 0303: the LCD renderer's badges and the Foreman's builder, each made still with reduced motion.
+  // 0302: the LCD renderer's badges, made still with reduced motion. 0364: the Foreman's button has no builder (0303) now.
   assert.match(page(), /LCD\.badge\(b\.canvas, b\.pose, \{ still \}\)/, 'a still badge with reduced motion');
-  assert.match(page(), /b\.lcd\.cast\.still = b\.lcd\.scr\.still = reducedMotion\(\);/, 'and a still builder in the Foreman\'s button');
+  assert.doesNotMatch(page(), /LCD\.mini\(/, 'and no builder in the Foreman\'s button to move');
   assert.doesNotMatch(outside, /\.moving/, 'no rule outside it changes a moving step');
   assert.doesNotMatch(outside, /animation:/, 'and nothing else animates');
 });
