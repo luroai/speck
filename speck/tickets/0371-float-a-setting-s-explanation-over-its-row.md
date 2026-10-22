@@ -1,7 +1,7 @@
 ---
 id: "0371"
 title: "Float a setting's explanation over its row"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-calm-the-settings-view-down.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0370"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T21:33:36.430Z"
 
 ---
 # 0371 · Float a setting's explanation over its row
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The "i" beside a setting shows its explanation under the row as soon as the pointer is over it, which pushes every setting below it down.
