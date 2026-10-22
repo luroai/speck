@@ -41,6 +41,7 @@ A ticket being reviewed names the model that is reviewing it.
 - Checked 2026-10-22: `doing` in `templates/panel.html` builds the sentence from `t.reviewer` (`name(t.reviewer, 'the reviewer') is reviewing · round N`), which is the family. `reviewerSettings` in `scripts/core.mjs` picks the ticket's `reviewer_model` when it isn't blank, otherwise `speck/config.yml`'s, and null when both are blank. `statusData` in `scripts/speck.mjs` spreads the ticket's frontmatter, so the card has the ticket's `reviewer_model`, not the config's when the ticket's is blank.
 - The model is shown as written. It is not capitalised the way the family name is ("Cursor").
 - Waits for 0381, which changes `templates/panel.html`. 0375 waits for this, so it ships in 0.13.0.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
