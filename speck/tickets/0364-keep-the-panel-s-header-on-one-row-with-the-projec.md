@@ -1,7 +1,7 @@
 ---
 id: "0364"
 title: "Keep the panel's header on one row with the project always shown"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-keep-the-panel-s-header-compact-all-the-tim
 after: ["0363"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T15:26:17.888Z"
+approved: "2026-10-22T15:40:48.373Z"
 
 ---
 # 0364 · Keep the panel's header on one row with the project always shown
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 In a narrow window, such as the browser pane in Cursor or the Claude desktop app, the header takes two rows and drops to one as you scroll, hiding the project and base branch. It looks unsettled, and you can lose track of which repo the panel is for. It also shows speck twice: the logo mark, and the builder on the Foreman's button.
@@ -54,9 +55,15 @@ On a phone or in a narrow window, the panel's header is now always one row. It n
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The new brief test asserts exact prose wording with /slimmed to one row/.; F2 The long-project tooltip test expects 'speck · base main' after replacing the displayed project and branch with long values.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 466,788
+- Elapsed since build started: 15 min
+- Changed lines: 111 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - On a phone with Fixing on, the Foreman's button is cut down to "Bui… | Fix…" at 375 px: `speck/ideas/2026-10-22-fit-the-foreman-s-button-on-a-phone-with-fixing-on.md`.
