@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-10-22-change-your-own-settings-without-a-commit.m
 after: ["0386","0385"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:11:40.614Z"
-approved: "2026-10-22T23:23:59.086Z"
+approved: "2026-10-22T23:29:04.766Z"
 
 ---
 # 0387 · Save your own settings in the panel without a commit
@@ -58,13 +58,14 @@ Saving in the panel's Settings no longer makes a commit for your own settings: w
 ## Review log
 Round 1 (codex): changes requested: F1 Clearing auto_ship_risk never saves: settingChanges represents clearing with value='', and sendSettings treats it as an invalid empty risk selection.; F2 shipsMore uses the blank clear payload instead of the resulting repo value.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 785,539
-- Elapsed since build started: 12 min
-- Changed lines: 196 (limit 5000)
+- Reviewer tokens: 1,417,825
+- Elapsed since build started: 17 min
+- Changed lines: 205 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: the panel can no longer change speck/config.yml's defaults for your own settings (out of scope here); `speck config set --repo` still does.
@@ -230,6 +231,88 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "Personal settings save for this machine without commits, while shared settings retain the existing commit and refusal rules. Both problems with clearing shipping overrides are fixed. All five criteria pass, with no blocking findings remaining."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "db33dfd286a01b751f4fc5897690e20019244e3c",
+    "merge": true,
+    "thread_id": "01a165eb-de55-7dc1-b1e8-1b20925ebb94",
+    "seconds": 15,
+    "usage": {
+      "input_tokens": 629968,
+      "cached_input_tokens": 544896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2318,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T23:29:01.793Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "panelSaveSettings still routes own settings to saveMachineValues. Passing 0387 AC1 tests verify no config change or commit, automatic machine scope, and blank-value handling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0387 AC2 test verifies saves with uncommitted config changes and off the base branch leave git unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0387 AC3 tests cover config-only commits, mixed saves, dirty-config refusal and saving nothing when validation fails. This round changes only label rendering."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0387 AC4 tests cover source labels, clearing overrides, the commit explanation, and shipping confirmation or cancellation. settingMark preserves label text while rounding its width."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified current output: 227 passed, zero failed, three skipped. The previously failing 0281 browser layout test now passes across its tested widths and pixel ratios; no tests were weakened."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clearing auto_ship_risk was incorrectly rejected as an empty risk selection.",
+        "suggested_fix": "Fixed: clear operations bypass empty-selection validation, with a passing page regression test.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clearing a shipping override used the blank request value when deciding whether confirmation was needed.",
+        "suggested_fix": "Fixed: confirmation uses repo_value for clears, with passing confirmation, cancellation and server-enforcement tests.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Personal settings save locally without commits, and shared settings retain their existing protections. The label alignment regression found during shipping is fixed without weakening tests. All criteria pass, with no blocking findings."
   }
 }
 ```
