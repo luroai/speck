@@ -9,6 +9,7 @@ import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
+import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -348,23 +349,40 @@ function printRound(rec, cfg, all) {
 }
 
 export function cmdReview(args) {
+  const started = Date.now();
   const id = args[0];
-  if (!id) throw new SpeckError('Usage: speck review <id> [--tests=file] [--response=file]');
+  if (!id) throw new SpeckError('Usage: speck review <id> [--tests=file] [--response=file] | speck review <id> --wait');
   const opt = k => (args.find(a => a.startsWith(`--${k}=`)) || '').slice(k.length + 3) || undefined;
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
+  const pad = t.fm.id || id;
+  // 0384: a round runs in a process of its own, which this waits for, so it can outlast the builder's shell. One that
+  // is running already, or has finished without being printed, is waited for rather than another started.
+  const worker = args.includes('--worker');
+  const limitMs = () => { try { return reviewTimeoutMs(cfg); } catch { return 30 * 60 * 1000; } };
+  if (!worker && (args.includes('--wait') || pendingRound(repo, pad))) return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
   const reviewer = t.fm.reviewer || cfg.reviewer;
   const command = reviewerOptions(cfg, reviewer).command;
   const opts = { tests: opt('tests'), response: opt('response') };
   // A bad review_timeout_minutes is refused before the ticket changes or any reviewer runs (0180).
   if ((typeof command === 'string' && command.trim()) || reviewer === 'codex') reviewTimeoutMs(cfg);
+  if (!worker) {
+    if (!(typeof command === 'string' && command.trim()) && reviewer !== 'codex') unsupported(id, reviewer);
+    startRound(repo, pad, rounds(repo, id).length + 1, args.slice(1).filter(a => /^--(tests|response)=/.test(a)), limitMs());
+    return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
+  }
+  keepExitCode(repo, pad);
   let rec;
   if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
   else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));
-  else throw new SpeckError(`speck review runs the codex, claude and cursor reviewers, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
+  else unsupported(id, reviewer);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
+}
+
+function unsupported(id, reviewer) {
+  throw new SpeckError(`speck review runs the codex, claude and cursor reviewers, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
 }
 
 // Where the JSON value starting at the brace at `from` ends, skipping braces inside strings, or -1 if it never closes.
