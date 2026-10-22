@@ -12,7 +12,7 @@ import { FOREMAN_AGENTS, foremanAgentOf } from './foreman-agent.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
-import { agentModelsAsync, offeredModels, offeredModelsAsync } from './agents.mjs';
+import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { buildsEachTicket } from './build-model.mjs';
 
@@ -181,6 +181,32 @@ export async function foremanModels(repo, read = codexModelsAsync, readCursor = 
   const foreman = foremanAgentOf(loadConfig(repo));
   if (foreman === 'claude') return { foreman, models: CLAUDE_MODELS };
   return { foreman, ...await (foreman === 'cursor' ? readCursor() : read()) };
+}
+
+// 0257: what the panel's GET /api/settings answers: panelSettings, with the models the reviewer (0276), the builder
+// (0279) and the Foreman agent (0348) offer, read now, asking Codex once and Cursor once (0347) when more than one runs on
+// it, and which agents are installed and signed in (0288), read at the same time. Throws when speck/config.yml can't be read.
+export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCursorModels = () => agentModelsAsync('cursor'), find = findAgentsAsync) {
+  let asked = null, cursorAsked = null;
+  const read = () => (asked ??= readCodex()), readCursor = () => (cursorAsked ??= readCursorModels());
+  const found = Promise.resolve().then(() => find({ models: false })).catch(() => undefined);
+  let models, built, foreman;
+  try { models = await reviewerModels(repo, read, readCursor); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
+  try { built = await builderModels(repo, read, readCursor); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
+  try { foreman = await foremanModels(repo, read, readCursor); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
+  return panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents: await found });
+}
+
+// 0369: the models `agent` offers, read now, for the Settings view while it's chosen as the reviewer, builder or
+// Foreman agent but not yet saved: { agent, models } as reviewerModels reads them, or { agent, why } in one line, even
+// when reading them fails.
+export async function agentModels(agent, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
+  if (agent === 'claude' || agent === 'claude-subagent') return { agent, models: CLAUDE_MODELS };
+  try {
+    if (agent === 'cursor') return { agent, ...await readCursor() };
+    if (agent === 'codex') return { agent, ...await read() };
+  } catch (e) { return { agent, why: `Couldn't read ${agent}'s models (${String(e?.message ?? e).split('\n')[0]}), so type the model's name.` }; }
+  return { agent: '', why: 'speck can only list the models of claude, codex and cursor, so type the model\'s name as the agent names it.' };
 }
 
 const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : String(v);

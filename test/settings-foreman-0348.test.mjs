@@ -96,12 +96,14 @@ test('0348 AC3: when the Foreman agent\'s models can\'t be read, foreman_model i
   assert.equal(said(p, 'foreman_model').filter(t => /Cursor isn't installed/.test(t)).length, 1);
 });
 
-test('0348 AC4: choosing another Foreman agent says to save it, then open Settings again to pick from its models', async () => {
+// 0369 AC3: changed from saying to save codex and open Settings again: its models are read when it's chosen.
+test('0348 AC4: choosing another Foreman agent reads its models, without saying to save it first', async () => {
   const p = settingsPage([view({ foreman: 'claude', foreman_models: { foreman: 'claude', models: CLAUDE_MODELS } })]);
   await openSettings(p);
   changeTo(p, 'foreman', 'codex');
   assert.equal(controlOf(p, 'foreman_model').tagName, 'input');
-  assert.ok(said(p, 'foreman_model').some(t => /^Save codex as the Foreman agent, then open Settings again to pick from its models\.$/.test(t)), said(p, 'foreman_model').join(' | '));
+  assert.ok(p.settingsCalls.some(c => c.url === '/api/agent-models?agent=codex'));
+  assert.ok(!said(p, 'foreman_model').some(t => /open Settings again/.test(t)), said(p, 'foreman_model').join(' | '));
   // Back to the saved one: its list again.
   changeTo(p, 'foreman', 'claude');
   assert.equal(controlOf(p, 'foreman_model').tagName, 'select');

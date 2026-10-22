@@ -44,6 +44,8 @@ Choosing a builder, reviewer or Foreman agent that can list its models fills tha
 - The Foreman is included: it has the same save-and-reopen line, on the same view.
 - 0370 and 0371 wait for this: they change `templates/panel.html` too. This one also changes `scripts/settings.mjs`.
 - Failing before this build: none
+- Self-check: the new models request now always answers, with why in one line, when reading an agent's models fails (it could have hung), with a test.
+- `scripts/panel.mjs` was at the 600-line limit, so the GET /api/settings model reading moved, unchanged, into `settingsAnswer` in `scripts/settings.mjs`.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
