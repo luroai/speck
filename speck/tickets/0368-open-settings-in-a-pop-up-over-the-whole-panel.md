@@ -1,7 +1,7 @@
 ---
 id: "0368"
 title: "Open Settings in a pop-up over the whole panel"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T19:39:59.696Z"
 waited_seconds: 2034
+approved: "2026-10-22T20:52:06.555Z"
 
 ---
 # 0368 · Open Settings in a pop-up over the whole panel
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings opens in a pane down the right, at most 480 px wide. With every group and control in that strip, the view is cluttered and hard to scan.
@@ -55,9 +56,15 @@ Settings now opens over the whole panel, like a document does, instead of in a n
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (cursor): changes requested: F1 A click on the pop-up's scrollbar closes Settings.; F2 If Auto-build refuses to start or stop, the reason is invisible while Settings is open.
+Round 2 (cursor): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: cursor, model grok-4.7-high, effort default
+- Reviewer tokens: 0
+- Elapsed since build started: 72 min
+- Changed lines: 52 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Idea `speck/ideas/2026-10-22-hide-the-group-edges-beside-the-sticky-save-bar.md`: the groups' outline shows beside the sticky Save bar on a long view (seen in the pictures; it was there in the side pane too).
