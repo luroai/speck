@@ -1,7 +1,7 @@
 ---
 id: "0387"
 title: "Save your own settings in the panel without a commit"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-change-your-own-settings-without-a-commit.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0386","0385"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T23:11:40.614Z"
 
 ---
 # 0387 · Save your own settings in the panel without a commit
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel's Save commits speck/config.yml to `main` for every setting except the two this machine can hold. It refuses to save while that file has uncommitted changes, so a change made with `speck config set` blocks the panel until someone commits it.
