@@ -394,6 +394,14 @@
   #settings .setting .label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; min-width: 0; }
   #settings .setting .control { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
   #settings .setting .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+  /* 0381: an agent's model, a setting of its own drawn beside the agent's list in its row, its explanation floating from
+     the row. Its name is the list's and the info button's label, so only the agent's shows. */
+  #settings .setting .setting { position: static; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; flex: 1 1 14ch; min-width: 0; max-width: 100%; }
+  #settings .setting .setting .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; max-width: 100%; }
+  #settings .setting .setting .list { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; } /* its info button kept beside it */
+  #settings .setting .setting .list .info { flex: none; }
+  #settings .setting .setting .name { display: none; }
+  #settings .setting .setting > p:not(.explain) { flex: 1 1 100%; margin: 0; }
   #settings .setting .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
   #settings .setting .default { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
@@ -2081,6 +2089,7 @@ function renderSettings() {
     for (const g of settingsView.groups) {
       const rows = [];
       for (const x of Array.isArray(g.settings) ? g.settings : []) rows.push(settingRow(x, settingTips.size));
+      pairSettings(rows); // 0381
       if (g.title === 'Foreman') { foremanRows = rows; continue; }
       // 0273: a box like the panel's sections, with a heading bar
       kids.push(el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, g.title)), ...rows));
@@ -2106,15 +2115,35 @@ function lookGroup() {
     el('div', 'look-row', null, el('div', 'row', null, el('span', 'label', 'light or dark'), list),
       el('p', null, 'For the panel in this browser. It switches as you pick it, and is kept here, not in speck/config.yml.')));
 }
-// A setting's row, whose explanation is the view's `n`th.
+// 0381: each agent's model, drawn in the agent's row: key → the agent's key.
+const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', foreman_model: 'foreman' };
+// The agent whose row `key`'s model is drawn in, when the server put both in one group; otherwise null.
+function pairedWith(key) {
+  const agent = Object.hasOwn(SETTING_PAIRS, key) ? SETTING_PAIRS[key] : null;
+  if (agent === null || settingsView === null || !Array.isArray(settingsView.groups)) return null;
+  const keys = g => (Array.isArray(g.settings) ? g.settings : []).map(x => x.key);
+  return settingsView.groups.some(g => keys(g).includes(key) && keys(g).includes(agent)) ? agent : null;
+}
+// Each model's row among a group's `rows`, as drawn, moved into its agent's row, beside the agent's control.
+function pairSettings(rows) {
+  for (const [key, agent] of Object.entries(SETTING_PAIRS)) {
+    const model = settingRowsDrawn.get(key), host = settingRowsDrawn.get(agent);
+    if (!model || !host || !rows.includes(model.row) || !rows.includes(host.row) || pairedWith(key) === null) continue;
+    rows.splice(rows.indexOf(model.row), 1);
+    host.control.appendChild(model.row);
+  }
+}
+// A setting's row, whose explanation is the view's `n`th. 0381: an agent's model's is drawn to sit in the agent's row.
 function settingRow(x, n) {
   const edit = x.editable === true ? settingEditor(x) : null;
   const mine = x.for_machine === true && x.from === 'machine' && !settingClear.has(x.key);
   const [info, tip] = settingInfo(x, n);
-  const row = el('div', 'setting', null,
-    el('div', 'row', null, el('span', 'label', null, settingName(x.key), info),
-      el('div', 'control', null, ...(edit ? edit : [el('code', 'value', settingValue(x.value))]),
-        x.for_machine === true ? el('span', 'default', mine ? 'this machine' : 'repo') : null, x.default && !mine ? el('span', 'default', 'default') : null)),
+  const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
+  const marks = [x.for_machine === true ? el('span', 'default', mine ? 'this machine' : 'repo') : null, x.default && !mine ? el('span', 'default', 'default') : null];
+  const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown, ...marks);
+  const row = el('div', model ? 'setting model' : 'setting', null,
+    model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info), ...marks)
+      : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
     mine ? machineLine(x) : null,
     x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null,
     edit && x.for_machine === true ? scopeQuestion(x.key) : null,
@@ -2125,7 +2154,7 @@ function settingRow(x, n) {
     x.key === 'foreman_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
     settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
     tip);
-  settingRowsDrawn.set(x.key, { row, n });
+  settingRowsDrawn.set(x.key, { row, n, control });
   return row;
 }
 // 0370: the rows of `keys` drawn again in their places, leaving the rest of the view, and how far it's scrolled, as it
@@ -2151,6 +2180,10 @@ function redrawSettings(keys, kept = null) {
     }
     if (settingHover === key) settingHover = null; // its info button is a new one
     if (settingFocus === key) settingFocus = null;
+    for (const [m, agent] of Object.entries(SETTING_PAIRS)) { // 0381: an agent's row keeps its model's
+      const model = settingRowsDrawn.get(m);
+      if (agent === key && model && drawn.control && model.row.parentNode === drawn.control) settingRowsDrawn.get(key).control.appendChild(model.row);
+    }
     drawn.row.parentNode.insertBefore(row, drawn.row);
     drawn.row.parentNode.removeChild(drawn.row);
   }
