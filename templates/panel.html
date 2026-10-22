@@ -299,6 +299,8 @@
   #settings .run-row .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
   #settings .run-row .label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); }
   #settings .run-row p { margin: 4px 0 0; color: var(--muted); }
+  #settings .run-row p.bad { color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #settings .run-row p.bad[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
   .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
@@ -366,11 +368,12 @@
   /* 0257: the Settings view, a side pane like the full ticket's, over its own backdrop */
   #settings-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }
   #settings-backdrop[hidden], #settings[hidden] { display: none; }
-  #settings { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 1px solid var(--line); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
-  #settings .top { display: flex; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); }
+  /* 0368: a pop-up over the whole panel, as a document's is (0362), its settings in a centred column. Beside the column
+     is its backdrop. Above the ticket pane, and below the question about unsaved changes. The column's left edge is
+     rounded down to a whole pixel, so its controls stay on whole pixels (0281) whatever room the scroll bar takes. */
+  #settings { position: fixed; inset: 0; z-index: 10; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #settings > * { max-width: 760px; margin-left: auto; margin-right: auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); }
   #settings .top h3 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; }
-  #settings .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #settings .close:hover { color: var(--text); }
   /* 0273: each group a box with a heading bar, like the panel's sections, with space between them. Each setting is a
      row, its name and info button on the left and its value or control on the right: every row splits its width the
      same way, so a group's controls line up in one column. */
@@ -406,7 +409,7 @@
   #settings .setting .save:hover { color: var(--text); border-color: var(--text); }
   #settings .setting .save[aria-pressed="true"] { color: var(--text); border-color: var(--text); background: var(--raise); } /* 0261: where a change goes, once picked */
   /* 0274: the view's one Save, kept at the bottom of the pane however far it's scrolled */
-  #settings .savebar { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); margin: 16px 0 0; padding: 10px 0 calc(16px + env(safe-area-inset-bottom)); background: var(--panel); border-top: .5px solid var(--line-soft); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+  #settings > .savebar { position: sticky; bottom: calc(-16px - env(safe-area-inset-bottom)); margin: 16px auto 0; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); padding: 10px 0 calc(16px + env(safe-area-inset-bottom)); background: var(--panel); border-top: .5px solid var(--line-soft); display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
   #settings .savebar p.bad { flex: 1 1 100%; margin: 0; color: var(--bad); }
   #settings .savebar p.said { flex: 1 1 100%; margin: 0; color: var(--text); }
   #settings .save-all { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text); background: var(--raise); border: .5px solid var(--text); padding: 4px 14px; cursor: pointer; }
@@ -435,10 +438,10 @@
   #settings-unsaved button.save-all { color: var(--text); background: var(--raise); border-color: var(--text); }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #doc-view .top, #foreman .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
+  #doc-view .top, #foreman .top, #settings .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
-  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover { color: var(--text); }
+  #full-ticket .close, #doc-view .close, #foreman .close, #settings .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover, #settings .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
   #full-ticket h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
@@ -526,7 +529,6 @@
   :root[data-theme="dark"] #settings-backdrop { background: rgba(0, 0, 0, .45); }
   :root[data-theme="dark"] #full-ticket { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
   :root[data-theme="dark"] #settings-unsaved { background: rgba(0, 0, 0, .45); }
-  :root[data-theme="dark"] #settings { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
 
   /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
      clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
@@ -601,7 +603,7 @@
     td .full-open { min-height: 44px; }
 
     /* The full ticket and review pack */
-    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close { min-width: 44px; min-height: 44px; }
+    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close { min-width: 44px; min-height: 44px; }
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
     #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody, #doc-view .md table, #doc-view .md tbody,
     #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td, #doc-view .md tr, #doc-view .md td { display: block; }
@@ -660,7 +662,7 @@
 <div id="doc-view" tabindex="-1" role="dialog" aria-modal="true" aria-label="Document" hidden></div>
 <div class="foreman" id="foreman" tabindex="-1" role="dialog" aria-modal="true" aria-label="The Foreman" hidden></div>
 <div id="settings-backdrop" hidden></div>
-<aside id="settings" tabindex="-1" role="dialog" aria-label="Settings" hidden></aside>
+<div id="settings" tabindex="-1" role="dialog" aria-modal="true" aria-label="Settings" hidden></div>
 <div id="settings-unsaved" hidden></div>
 <div id="tag-tip" role="tooltip" hidden></div>
 
@@ -1603,7 +1605,7 @@ function closeDoc() {
 function drawDoc() {
   const view = $('doc-view'), was = !view.hidden && view.children.length > 0, had = within(document.activeElement, view);
   view.hidden = !docOpen;
-  for (const id of ['full-ticket', 'full-backdrop']) $(id).inert = !!docOpen;
+  holdPane();
   if (!docOpen) { view.replaceChildren(); return; }
   const close = el('button', 'close', 'Close');
   close.type = 'button';
@@ -1899,6 +1901,8 @@ function returnFocus() {
   const to = find($(from.list)) || find($(from.list === 'queue' ? 'shaping' : 'queue')) || $(from.list === 'queue' ? 'build-section' : 'shaping-section');
   if (to.focus) to.focus();
 }
+// 0362, 0368: while a document's pop-up or Settings covers the panel, the side pane and its backdrop can't be reached either.
+function holdPane() { for (const id of ['full-ticket', 'full-backdrop']) $(id).inert = !!docOpen || settingsView !== null; }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
 // 0366: the same while Settings or the Foreman's pop-up is open.
 const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen;
@@ -1949,6 +1953,22 @@ let settingTips = new Map(); // key → its explanation, in the view as it's dra
 let settingsLeaving = null;
 $('settings-open').addEventListener('click', openSettings);
 $('settings-backdrop').addEventListener('click', e => { if (e.target === $('settings-backdrop')) leaveSettings(); });
+// 0368: the pop-up covers the backdrop, so a click on the pop-up itself, beside its column, is a click on the backdrop.
+// One between two groups, inside the column, isn't, nor is a drag from the column, such as selecting text, ending beside it.
+let settingsDownBeside = false;
+$('settings').addEventListener('pointerdown', e => { settingsDownBeside = e.target === $('settings') && besideColumn(e); });
+$('settings').addEventListener('click', e => { if (settingsDownBeside && e.target === $('settings') && besideColumn(e)) leaveSettings(); });
+// Not on its scroll bar, which sits beside the column too: a click there scrolls.
+function besideColumn(e) {
+  const pane = $('settings'), col = pane.children[0];
+  if (!col || typeof col.getBoundingClientRect !== 'function' || typeof e.clientX !== 'number') return false;
+  if (typeof pane.getBoundingClientRect === 'function' && typeof pane.clientWidth === 'number') {
+    const p = pane.getBoundingClientRect(), inside = p.left + (pane.clientLeft || 0);
+    if (e.clientX < inside || e.clientX >= inside + pane.clientWidth) return false; // its border or scroll bar
+  }
+  const r = col.getBoundingClientRect();
+  return e.clientX < r.left || e.clientX >= r.right;
+}
 renderSettings(); // closed
 renderLeaving(); // not asking
 function openSettings() {
@@ -2037,6 +2057,7 @@ function renderSettings() {
   pane.hidden = !open;
   $('settings-backdrop').hidden = !open;
   holdPage(pageHeld());
+  holdPane();
   settingTips = new Map();
   settingAsks = new Map();
   settingControls = new Map();
@@ -3361,11 +3382,14 @@ function drawRunSwitch() {
   runSwitchButton.disabled = !!runSwitching || !state;
   runSwitchButton.title = on ? 'Pause Auto-build: ready tickets wait' : 'Start Auto-build: build ready tickets';
 }
+// 0368: Settings covers the strip under the header, so a refusal shows beside the switch too, kept between redraws.
+const runSwitchSaid = el('p', 'bad');
+runSwitchSaid.hidden = true;
 function foremanGroup(rows = []) {
   drawRunSwitch();
   return el('section', 'sgroup', null, el('div', 'sh', null, el('h4', null, 'Foreman')),
     el('div', 'run-row', null, el('div', 'row', null, el('span', 'label', 'speck run'), runSwitchButton),
-      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.')), ...rows);
+      el('p', null, 'On: speck run builds each ready ticket and ships each approved one auto_ship covers. Off: ready tickets wait.'), runSwitchSaid), ...rows);
 }
 // 0128: the speck run switch. The server starts or stops speck run and answers once it's on or off, so the button shows
 // that at once. A refusal shows speck run's own message under the header until the next click on the switch.
@@ -3392,6 +3416,8 @@ async function switchRun(to) {
 function showRunError(text) {
   $('run-error').hidden = !text;
   $('run-error').textContent = text || '';
+  runSwitchSaid.hidden = !text;
+  runSwitchSaid.textContent = text || '';
 }
 let offline = false; // whether the page says it's disconnected, or can't read the tickets (0186)
 function setConnected(ok, problem) {
