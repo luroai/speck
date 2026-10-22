@@ -1,7 +1,7 @@
 ---
 id: "0365"
 title: "Scroll the Foreman's status across a dot-matrix notice board"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-a-scrolling-dot-matrix-notice-board-in-the-header.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0364"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T15:47:19.510Z"
 
 ---
 # 0365 · Scroll the Foreman's status across a dot-matrix notice board
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The Foreman's button in the header shows one word, such as "Building 2", so the overview of what speck run is doing is only in its detail. An old-school notice board scrolling words across a dot-matrix screen would give that overview at a glance, in the panel's LCD style.
