@@ -136,16 +136,14 @@ test('0275 AC2: a save that needs 0259\'s confirmation asks it, and when cancell
   assert.match(saveButton(r).parentNode.textContent, /changed since/);
 });
 
-test('0275 AC2: a change still to be placed is asked about in the view, which stays open, and nothing is sent', async () => {
+test('0275 AC2: a change to one of your own settings is sent for this machine, without asking where it goes (0387)', async () => {
   const p = await opened([view()]);
   changeTo(p, 'max_parallel_builds', '3');
   WAYS.Close(p);
   p.press(choice(p, 'Save'));
   await p.settle();
-  assert.deepEqual(posted(p), []);
-  assert.ok(viewOpen(p));
-  assert.equal(asking(p), false);
-  assert.match(rowOf(p, 'max_parallel_builds').textContent, /this machine only or the repo/);
+  assert.deepEqual(posted(p), ['/api/settings/save?machine%3Amax_parallel_builds=3']);
+  assert.doesNotMatch(rowOf(p, 'max_parallel_builds')?.textContent ?? '', /this machine only or the repo/);
 });
 
 test('0275 AC3: Discard closes the view without saving, and it opens again with the saved values', async () => {
