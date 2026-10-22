@@ -43,6 +43,7 @@ The header is always one compact row that shows the project and base branch, wit
 - The project and base branch stay fixed text in the header, not words on a future notice board: you should read where you are at a glance, without waiting for the words to scroll round.
 - One logo: speck's mark stays. The builder character on the Foreman's button goes, and the "speck" word goes under 700 px, to leave room for the project.
 - The Foreman's words today: "Off", "Idle", "Building <n>", "Shipping <id>", "Needs you <n>" and "Waiting: <why>" (`scripts/foreman.mjs`). A long one is cut short with an ellipsis, as now.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
