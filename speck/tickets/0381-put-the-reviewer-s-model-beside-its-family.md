@@ -44,6 +44,8 @@ The builder, the reviewer and the Foreman each have their agent and the model it
 - Checked 2026-10-22: `renderSettings` in `templates/panel.html` draws one `.setting` row per key, so each agent and its model are separate rows (`scripts/settings.mjs`). Once 0369 has shipped, choosing the agent fills that agent's model list before saving.
 - Waits for 0368 to 0374. They change `templates/panel.html`, and 0369 also changes `scripts/settings.mjs`. 0375 waits for this, so it ships in 0.13.0.
 - Failing before this build: none
+- Self-check: at the narrowest width the model's info button wrapped onto its own line beside the agent's, so their tap targets overlapped (0277's check). The model's list and its info button now stay together on one line, the info button never shrinking.
+- Changed an existing check (criterion 5): 0370's AC1 tests treated each agent and its model as separate rows, so a redraw of the model failed the agent's "unchanged" check. They now check the agent's own part of the row, leaving out the model drawn inside it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
