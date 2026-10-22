@@ -1,7 +1,7 @@
 ---
 id: "0361"
 title: "Show a finished document task as a calm, compact row"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T14:58:32.323Z"
 ---
 # 0361 · Show a finished document task as a calm, compact row
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 When a document task's build finishes, its queue row is purple and grows to show "Build finished without shipping" and the last 50 lines of the build's log, in a red-tinted box. It reads like a problem, though the task is done and its document is waiting to be read. Opening the row shows the log a second time, and four or five of these rows together look cluttered.
@@ -46,7 +46,7 @@ A document task whose build has finished shows as a short row that says it's fin
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When a document task's build finishes, its row in the queue is now short and calm. It says "Finished · read the document" and has a Review pack button, which opens the pack with the document's files at the top. The "Build finished without shipping" line and the box with the end of the build's log are gone. Opening the row still shows the full log, once. To see it, let a document task's build finish and look at its row in the queue. Code tickets waiting to ship, and document tasks that are still being worked on or stopped part way, look the same as before. The row stays purple, as it's still waiting for you.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,70 @@ A document task whose build has finished shows as a short row that says it's fin
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9495210ddba5116ec5b846ecfc029e558eb69548",
+    "thread_id": "01a16421-b79b-7593-afac-7e89d51e8430",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 171186,
+      "cached_input_tokens": 130048,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 727,
+      "reasoning_output_tokens": 11
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T15:02:09.027Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: panelModel suppresses exit_label and exit_message for finished document tasks; doing supplies the finished sentence. Both closed and open AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "queueItem adds the existing packButton to closed finished rows. packButton stops click propagation. Both AC2 tests passed, including document files appearing first and the row retaining its open/closed state."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "queueItem retains the open-row buttons and logBox while suppressing the exit log excerpt. AC3 passed, checking one of each button and one full log."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "doc_finished requires a document task and the approved-build exit label. AC4 tests passed for code, blocked, building, reviewing, shipping and stopped tasks. scripts/ship.mjs:autoShipWhyNot excludes document tasks from auto-ship."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded test output confirms 116 passed, zero failed and three skipped. No existing tests were changed; the implementation is limited to finished document rows."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Finished document tasks now show a compact finished row with a Review pack button. Opening the row shows the full log once. Tests cover the requested behaviour and unchanged ticket states; no blocking issues found."
+  }
+}
+```
+
+</details>
