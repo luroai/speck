@@ -1,7 +1,7 @@
 ---
 id: "0386"
 title: "Keep your own settings out of git"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-change-your-own-settings-without-a-commit.m
 after: []                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:58:32.613Z"
+approved: "2026-10-22T23:08:43.919Z"
 
 ---
 # 0386 · Keep your own settings out of git
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Every setting lives in speck/config.yml, which is committed. Choosing which agent builds or reviews, or turning auto-ship on, means a commit to `main` that then goes out with the next ship's push. Running builds don't see the change, because they read the copy in their own worktree.
@@ -56,9 +57,15 @@ Choosing who builds and reviews, their models, auto-ship, the Foreman and how ma
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 config show omits build_command and resume_command entirely, even when they have machine overrides.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 594,182
+- Elapsed since build started: 10 min
+- Changed lines: 154 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-22-decide-where-setup-saves-the-agents-it-picks.md (setup's `speck config set` calls now save its agent choices for this machine only).
