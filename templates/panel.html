@@ -446,7 +446,7 @@
   /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column */
   #doc-view { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
   #doc-view[hidden] { display: none; }
-  #doc-view .top, #doc-view .md { max-width: 760px; margin: 0 auto; }
+  #doc-view .top, #doc-view .doc-actions, #doc-view .md { max-width: 760px; margin: 0 auto; }
   #doc-view .top { margin-bottom: 10px; }
   #doc-view .top .title { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; }
   #full-ticket ol.criteria { padding-left: 18px; }
@@ -470,16 +470,16 @@
   #full-ticket .md details, #doc-view .md details { margin: 0 0 8px; }
   #full-ticket .md summary, #doc-view .md summary { cursor: pointer; color: var(--muted); }
   td .full-open + .full-open { margin-left: 6px; }
-  /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said */
-  #full-ticket .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
-  #full-ticket .ship:disabled { cursor: default; opacity: .6; }
-  #full-ticket .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
-  #full-ticket .ship-said.bad { color: var(--bad); }
+  /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said. 0363: and above its document */
+  #full-ticket .ship, #doc-view .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
+  #full-ticket .ship:disabled, #doc-view .ship:disabled { cursor: default; opacity: .6; }
+  #full-ticket .ship-said, #doc-view .ship-said { margin: 0 0 10px; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
+  #full-ticket .ship-said.bad, #doc-view .ship-said.bad { color: var(--bad); }
   /* 0357: beside it, a box for a note and an Ask for changes button, which sends the note back to the build */
-  #full-ticket .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: .5px solid var(--line); resize: vertical; }
-  #full-ticket .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-  #full-ticket .ask-changes { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
-  #full-ticket .ask-changes:disabled { cursor: default; opacity: .6; }
+  #full-ticket .changes-note, #doc-view .changes-note { display: block; box-sizing: border-box; width: 100%; min-height: 3em; margin: 0 0 6px; padding: 4px 6px; font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: .5px solid var(--line); resize: vertical; }
+  #full-ticket .pack-buttons, #doc-view .pack-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  #full-ticket .ask-changes, #doc-view .ask-changes { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--panel); color: var(--text); border: .5px solid var(--text); cursor: pointer; }
+  #full-ticket .ask-changes:disabled, #doc-view .ask-changes:disabled { cursor: default; opacity: .6; }
   /* 0359: a document task's files, as buttons at the top of its review pack */
   #full-ticket .pack-documents { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
   #full-ticket .pack-document { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
@@ -611,7 +611,7 @@
     td .full-open { min-height: 44px; }
 
     /* The full ticket and review pack */
-    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close { min-width: 44px; min-height: 44px; }
+    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes { min-width: 44px; min-height: 44px; }
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
     #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody, #doc-view .md table, #doc-view .md tbody,
     #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td, #doc-view .md tr, #doc-view .md td { display: block; }
@@ -1580,6 +1580,9 @@ function documentsPart(documents) {
 // 0362: the Markdown file shown in the pop-up, or null while it's closed: { id, path, state: 'loading' | 'error' | 'ok',
 // text }. It's kept apart from the pack, so the side pane behind it keeps its nodes as they were.
 let docOpen = null, docSeq = 0;
+// 0363: the ticket the side pane shows, kept by renderFull, and the signature of what the pop-up's Ship and Ask for
+// changes show, so they're redrawn only when it changes, and the document under them keeps its nodes.
+let paneTicket = null, docActsBuilt = null;
 // Fetches a Markdown file once, when it's pressed. An answer for a file that's been closed, or replaced since, is dropped.
 async function openDocument(d) {
   if (!packOf) return;
@@ -1624,9 +1627,27 @@ function drawDoc() {
   else if (docOpen.state === 'error') body.appendChild(el('p', 'bad', docOpen.text));
   else for (const n of mdBlocks(markdown(docOpen.text, { tables: true }))) body.appendChild(n);
   view.setAttribute('aria-label', docOpen.path);
-  view.replaceChildren(el('div', 'top', null, el('span', 'title', docOpen.path), close), body);
+  docActsBuilt = null;
+  view.replaceChildren(el('div', 'top', null, el('span', 'title', docOpen.path), close), el('div', 'doc-actions'), body);
+  drawDocActs();
   if (!was) view.scrollTop = 0;
   if ((!was || had) && view.focus) view.focus({ preventScroll: true }); // into it, or back into it when Close was redrawn
+}
+// 0363: above the document, the review pack's Ship and Ask for changes, from shipPart as the pack draws them, so they
+// ship it or send it back exactly as the pack's do. Redrawn when what they show changes, with the focus kept in the pop-up.
+const docActsSig = t => signature([t.status, t.shipping === true, t.pull_request ?? null, shippingId, shipped.get(String(t.id)) ?? null,
+  shipRefused.get(String(t.id)) ?? null, changesSending, changesSaid.get(String(t.id)) ?? null, changesRefused.get(String(t.id)) ?? null]);
+function drawDocActs() {
+  const view = $('doc-view'), acts = docOpen && [...view.children].find(n => n.className === 'doc-actions');
+
+  const t = acts && paneTicket && String(paneTicket.id) === String(docOpen.id) ? paneTicket : null;
+  if (!t) return;
+  const sig = docActsSig(t);
+  if (sig === docActsBuilt) return;
+  docActsBuilt = sig;
+  const had = within(document.activeElement, acts);
+  acts.replaceChildren(...shipPart(t));
+  if (had && view.focus) view.focus({ preventScroll: true });
 }
 // The side pane with a review pack: its Markdown formatted, tables included, and the findings in a <details> element
 // that folds away, as the pack's own <details> does where Markdown is shown with HTML.
@@ -1686,7 +1707,15 @@ function changesPart(id, ship) {
   b.title = 'Send your note back to the build, as speck changes does: the ticket is built and reviewed again before it ships';
   const can = () => !sending && changesSending === null && shippingId === null && String(box.value ?? '').trim() !== '';
   b.disabled = !can();
-  box.addEventListener('input', () => { changesNotes.set(id, String(box.value ?? '')); b.disabled = !can(); });
+  // 0363: the pack and the document's pop-up each have a box for the note: typing in one puts the same note in the other.
+  box.noteOf = id;
+  box.sync = () => { box.value = changesNotes.get(id) || ''; b.disabled = !can(); };
+  box.addEventListener('input', () => {
+    changesNotes.set(id, String(box.value ?? ''));
+    b.disabled = !can();
+    const each = n => { if (n !== box && n.noteOf === id && n.sync) n.sync(); for (const c of n.children || []) each(c); };
+    for (const at of ['full-ticket', 'doc-view']) each($(at));
+  });
   box.addEventListener('click', e => e.stopPropagation());
   b.addEventListener('click', e => { e.stopPropagation(); if (can()) askForChanges(id); });
   return [box, el('div', 'pack-buttons', null, ship, b)];
@@ -1843,6 +1872,8 @@ function renderFull(m) {
   if (!t && fullId !== null && within(document.activeElement, pane)) focusBack = true; // 0326: it closed with the focus in it
   if (!t) { fullId = null; packOf = null; }
   if (docOpen && (!packOf || String(packOf.id) !== String(docOpen.id))) { if (within(document.activeElement, $('doc-view'))) focusBack = true; docSeq++; docOpen = null; drawDoc(); } // 0362: its pack has gone
+  paneTicket = t;
+  drawDocActs(); // 0363
   const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
   pane.hidden = !t;
