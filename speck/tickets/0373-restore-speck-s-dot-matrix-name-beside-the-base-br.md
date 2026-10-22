@@ -1,7 +1,7 @@
 ---
 id: "0373"
 title: "Restore speck's dot-matrix name beside the base branch"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T22:15:26.690Z"
 ---
 # 0373 · Restore speck's dot-matrix name beside the base branch
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Under 700 px the header hides the dot-matrix "speck" word so the project line can stay. That line is 12 px text, so on a narrow pane the title reads as a small "speck · base main" beside the mark.
@@ -47,7 +47,7 @@ The header shows "speck" in its dot-matrix lettering at every width, with the ba
 - Seen in the panel at 127.0.0.1:4777 in a narrow pane: the mark, then "speck · base main" in the small text, then the notice board, Settings and light/dark.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel's header now shows "speck" in its dot-matrix lettering at every width, including a narrow pane or a phone, with "base main" (or whichever base branch you use) straight after it. The project's name is no longer in the header. On a wide screen, "CONTROL PANEL" still follows. To see it, open the panel and make the window narrower than 700 px: the big "speck" stays. Worth keeping an eye on: on a very narrow pane with a long Foreman message, the base branch gives way first and can shrink to "base …", with the full text in its tooltip, and the Foreman's board has less room than before.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,74 @@ The header shows "speck" in its dot-matrix lettering at every width, with the ba
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Tidy-up: the panel's server still works out the project's name and fills `{{repo}}`, which the page no longer uses (one 0059 test still writes it into a page of its own).
+- Known limit: at 320–375 px with "Fixing on" and a long Foreman message, the base branch shrinks to "base …" and the board is cut short too, since the speck word takes about 90 px of the row back.
+- No inbox notes: neither needs its own ticket.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f7964b051c884f1352ffb02758bdb35516f97e8e",
+    "thread_id": "01a165ba-beeb-7823-9148-5c1fec4e649d",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 140816,
+      "cached_input_tokens": 86272,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 808,
+      "reasoning_output_tokens": 16
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T22:28:43.428Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html keeps .logo .name in Doto at 26px and removes its narrow-screen hiding rule. Passing panel-0373 browser tests verify visibility, font and size at 320–1280px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The header places .repo containing base {{base}} immediately after .name and removes {{repo}}. Passing panel-0373 AC2 and browser tests check the text, order and absence of the project name."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The .logo grid preserves the wordmark while .repo uses overflow:hidden and text-overflow:ellipsis; pageHeader sets its title from its full text. Passing panel-0373 tests check one row, an uncut wordmark, long-branch truncation and tooltips, and full content at 500px."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The max-width:699.98px rule hides only .logo span. Passing panel-0373 browser tests verify the label is hidden below 700px and visible at 700px and 1280px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The full recorded output reports 290 passes, zero failures and three unrelated legacy skips. Changed layout assertions accommodate the requested header structure. The 0372 adjustment accounts for the hypothetical restored button reaching its minimum width while retaining a meaningful room-gained check."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The dot-matrix speck name now stays visible beside the base branch on narrow screens. Long branches shorten with an ellipsis and retain their full tooltip. The tested header stays on one row, and all tests run passed. No blocking concerns found."
+  }
+}
+```
+
+</details>
