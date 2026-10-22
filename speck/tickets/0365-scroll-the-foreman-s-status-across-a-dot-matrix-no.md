@@ -42,6 +42,7 @@ The Foreman's button is a dot-matrix notice board that scrolls the Foreman's sta
 - Today: the button is `#run`, drawn in `render()` with `foremanOf()`, and its detail in `renderForeman()`, in `templates/panel.html` (0285, 0303, 0317). The Foreman's words come from `scripts/foreman.mjs`.
 - `templates/lcd.js` already has the 5 × 7 font (`F5`), with capitals, digits and `:`, and reads `prefers-reduced-motion`. A "·" may need a glyph of its own.
 - Waits for 0364, which takes the builder character off this button and sets the header's one-row layout.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
