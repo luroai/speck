@@ -2457,7 +2457,8 @@ function builderSwitchLine(x) {
     return el('p', null, `build_command is one you've written yourself, '${typeof b.value === 'string' ? b.value : ''}', so speck run builds every ticket with it, whichever builder the ticket was made with. Set it to ${BUILDER_NAMES[settingNow(x)] || settingNow(x)}'s own command to build each ticket with its own builder.`);
   }
   const sets = builderCommandWords(x, picked);
-  return el('p', null, `Tickets already made keep the builder they were made with, ${settingNow(x)}. Saving changes who builds tickets made from now on${sets ? `, and sets build_command to ${sets}` : ''}.`);
+  // 0388: a ticket that leaves its builder blank is built with the settings' one when its build starts.
+  return el('p', null, `Saving changes who builds every ticket that doesn't name its own builder, from its next build${sets ? `, and sets build_command to ${sets}` : ''}. A ticket that names one keeps it.`);
 }
 // When these changes switch the builder and build_command was set by hand: what to ask before replacing it, and the
 // build_command to send as confirmed; otherwise null.
