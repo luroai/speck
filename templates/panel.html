@@ -436,32 +436,39 @@
   #settings-unsaved button.save-all { color: var(--text); background: var(--raise); border-color: var(--text); }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
+  #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
-  #full-ticket .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #full-ticket .close:hover { color: var(--text); }
+  #full-ticket .close, #doc-view .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close:hover, #doc-view .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
   #full-ticket h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
-  #full-ticket .md, #full-ticket ol.criteria { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
+  #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
+  /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column */
+  #doc-view { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #doc-view[hidden] { display: none; }
+  #doc-view .top, #doc-view .md { max-width: 760px; margin: 0 auto; }
+  #doc-view .top { margin-bottom: 10px; }
+  #doc-view .top .title { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; }
   #full-ticket ol.criteria { padding-left: 18px; }
   #full-ticket ol.criteria > li { margin-bottom: 4px; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
-  #full-ticket .md p, #full-ticket .criteria p { margin: 0 0 8px; }
-  #full-ticket .md > :last-child, #full-ticket li > :last-child { margin-bottom: 0; }
-  #full-ticket .md ul, #full-ticket .md ol, #full-ticket .criteria ul, #full-ticket .criteria ol { margin: 0 0 8px; padding-left: 20px; }
-  #full-ticket li ul, #full-ticket li ol { margin: 2px 0 0; }
-  #full-ticket h5, #full-ticket h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; color: var(--text); font-weight: 600; }
-  #full-ticket .md-h1 { font-size: 13px; }
-  #full-ticket .md-h2 { font-size: 12px; }
-  #full-ticket .md-h3 { font-size: 12px; color: var(--muted); }
-  #full-ticket code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
-  #full-ticket pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
-  #full-ticket pre code { font-size: 12px; }
+  #full-ticket .md p, #full-ticket .criteria p, #doc-view .md p { margin: 0 0 8px; }
+  #full-ticket .md > :last-child, #full-ticket li > :last-child, #doc-view .md > :last-child, #doc-view li > :last-child { margin-bottom: 0; }
+  #full-ticket .md ul, #full-ticket .md ol, #full-ticket .criteria ul, #full-ticket .criteria ol, #doc-view .md ul, #doc-view .md ol { margin: 0 0 8px; padding-left: 20px; }
+  #full-ticket li ul, #full-ticket li ol, #doc-view li ul, #doc-view li ol { margin: 2px 0 0; }
+  #full-ticket h5, #full-ticket h6, #doc-view h5, #doc-view h6 { margin: 10px 0 4px; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; color: var(--text); font-weight: 600; }
+  #full-ticket .md-h1, #doc-view .md-h1 { font-size: 13px; }
+  #full-ticket .md-h2, #doc-view .md-h2 { font-size: 12px; }
+  #full-ticket .md-h3, #doc-view .md-h3 { font-size: 12px; color: var(--muted); }
+  #full-ticket code.md-code, #doc-view code.md-code { background: var(--raise); border: .5px solid var(--line-soft); padding: 0 4px; }
+  #full-ticket pre, #doc-view pre { margin: 0 0 8px; padding: 8px 10px; background: var(--raise); border: .5px solid var(--line-soft); white-space: pre; overflow-x: auto; overflow-wrap: normal; }
+  #full-ticket pre code, #doc-view pre code { font-size: 12px; }
   /* 0132: a review pack's table, and its findings, which fold away */
-  #full-ticket .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 13px; }
-  #full-ticket .md th, #full-ticket .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
-  #full-ticket .md th { font-weight: 600; background: var(--raise); }
-  #full-ticket .md details { margin: 0 0 8px; }
-  #full-ticket .md summary { cursor: pointer; color: var(--muted); }
+  #full-ticket .md table, #doc-view .md table { border-collapse: collapse; margin: 0 0 8px; font-size: 13px; }
+  #full-ticket .md th, #full-ticket .md td, #doc-view .md th, #doc-view .md td { border: .5px solid var(--line-soft); padding: 2px 6px; font-size: inherit; text-align: left; vertical-align: top; }
+  #full-ticket .md th, #doc-view .md th { font-weight: 600; background: var(--raise); }
+  #full-ticket .md details, #doc-view .md details { margin: 0 0 8px; }
+  #full-ticket .md summary, #doc-view .md summary { cursor: pointer; color: var(--muted); }
   td .full-open + .full-open { margin-left: 6px; }
   /* 0133: an approved ticket's Ship button, above its review pack, and what speck ship said */
   #full-ticket .ship { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; padding: 3px 14px; background: var(--text); color: var(--panel); border: .5px solid var(--text); cursor: pointer; }
@@ -478,8 +485,7 @@
   #full-ticket .pack-document { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; padding: 3px 14px; background: var(--raise); color: var(--text); border: .5px solid var(--text); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
   #full-ticket .pack-document:hover { background: var(--panel); }
   /* 0354: the button back from a document task's file to its review pack */
-  #full-ticket .full-open.back { margin: 0 0 10px; }
-  #full-ticket .md a, #full-ticket .criteria a { color: var(--text); }
+  #full-ticket .md a, #full-ticket .criteria a, #doc-view .md a { color: var(--text); }
   /* 0294: the pictures of a visual change in its review pack, each opening full size when pressed */
   #full-ticket .pack-pictures { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 0 0 8px; }
   #full-ticket .pack-pictures figure { margin: 0; }
@@ -605,15 +611,15 @@
     td .full-open { min-height: 44px; }
 
     /* The full ticket and review pack */
-    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes { min-width: 44px; min-height: 44px; }
+    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close { min-width: 44px; min-height: 44px; }
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
-    #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody,
-    #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td { display: block; }
-    #full-ticket .md thead, .shaping .md thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    #full-ticket .md tr, .shaping .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
-    #full-ticket .md tr:last-child, .shaping .md tr:last-child { border-bottom: 0; }
-    #full-ticket .md td, .shaping .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
-    #full-ticket .md td::before, .shaping .md td::before { content: attr(data-label); display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+    #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody, #doc-view .md table, #doc-view .md tbody,
+    #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td, #doc-view .md tr, #doc-view .md td { display: block; }
+    #full-ticket .md thead, .shaping .md thead, #doc-view .md thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    #full-ticket .md tr, .shaping .md tr, #doc-view .md tr { padding: 8px 0; border-bottom: .5px solid var(--line); }
+    #full-ticket .md tr:last-child, .shaping .md tr:last-child, #doc-view .md tr:last-child { border-bottom: 0; }
+    #full-ticket .md td, .shaping .md td, #doc-view .md td { border: 0; padding: 2px 0; overflow-wrap: normal; overflow-x: auto; } /* a word too long for the line scrolls in its cell, unbroken */
+    #full-ticket .md td::before, .shaping .md td::before, #doc-view .md td::before { content: attr(data-label); display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
     /* A review pack's criteria: the number and result on one line, then the criterion, then the labelled evidence */
     #full-ticket .md .ac-table tr, .shaping .md .ac-table tr { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
     #full-ticket .md .ac-table td:nth-child(-n+3)::before, .shaping .md .ac-table td:nth-child(-n+3)::before { display: none; }
@@ -621,7 +627,7 @@
     #full-ticket .md .ac-table td:nth-child(3), .shaping .md .ac-table td:nth-child(3) { order: 1; }
     #full-ticket .md .ac-table td:nth-child(2), .shaping .md .ac-table td:nth-child(2) { order: 2; flex-basis: 100%; }
     #full-ticket .md .ac-table td:nth-child(n+4), .shaping .md .ac-table td:nth-child(n+4) { order: 3; flex-basis: 100%; }
-    #full-ticket .md summary { min-height: 44px; padding-top: 12px; }
+    #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
   }
 </style>
 </head>
@@ -662,6 +668,7 @@
 </main>
 <div id="full-backdrop" hidden></div>
 <aside id="full-ticket" tabindex="-1" hidden></aside>
+<div id="doc-view" tabindex="-1" role="dialog" aria-modal="true" aria-label="Document" hidden></div>
 <div id="settings-backdrop" hidden></div>
 <aside id="settings" tabindex="-1" role="dialog" aria-label="Settings" hidden></aside>
 <div id="settings-unsaved" hidden></div>
@@ -1558,23 +1565,27 @@ function picturesPart(pictures) {
 const packDocuments = list => (Array.isArray(list) ? list : []).filter(d => d && typeof d.path === 'string' && typeof d.url === 'string' && /^\/api\/tickets\/\d+\/output\/./.test(d.url));
 const isMarkdown = d => /\.(md|markdown)$/i.test(d.path);
 // 0359: each file as a button at the top of the pack, labelled with its path. A button has no address, so a browser that
-// opens links itself has nothing to open: pressing a Markdown file shows it formatted in the side pane, and any other
-// opens in a new tab, served by the panel.
+// opens links itself has nothing to open: pressing a Markdown file shows it formatted in a pop-up over the whole panel
+// (0362), and any other opens in a new tab, served by the panel.
 function documentsPart(documents) {
   return [el('div', 'pack-documents', null, ...documents.map(d => {
     const b = el('button', 'pack-document', d.path);
     b.type = 'button';
-    b.title = isMarkdown(d) ? 'Show it here, formatted' : 'Open it in a new tab';
+    b.title = isMarkdown(d) ? 'Show it formatted, over the whole panel' : 'Open it in a new tab';
+    b.docOf = d.path; // 0362: so the focus can come back to it, or to the button drawn in its place
     b.addEventListener('click', e => { e.stopPropagation(); if (isMarkdown(d)) openDocument(d); else window.open(d.url, '_blank', 'noopener'); });
     return b;
   }))];
 }
-// Fetches a Markdown file once, when it's pressed. An answer for a file that's been left, or replaced since, is dropped.
+// 0362: the Markdown file shown in the pop-up, or null while it's closed: { id, path, state: 'loading' | 'error' | 'ok',
+// text }. It's kept apart from the pack, so the side pane behind it keeps its nodes as they were.
+let docOpen = null, docSeq = 0;
+// Fetches a Markdown file once, when it's pressed. An answer for a file that's been closed, or replaced since, is dropped.
 async function openDocument(d) {
   if (!packOf) return;
-  const id = packOf.id, mine = ++packSeq;
-  packOf = { ...packOf, doc: { path: d.path, state: 'loading' } };
-  render();
+  const id = packOf.id, mine = ++docSeq;
+  docOpen = { id, path: d.path, state: 'loading' };
+  drawDoc();
   let next;
   try {
     const res = await fetch(d.url, { cache: 'no-store' });
@@ -1582,28 +1593,44 @@ async function openDocument(d) {
   } catch {
     next = { state: 'error', text: `Couldn't reach the panel server, so ${d.path} can't be shown.` };
   }
-  if (mine !== packSeq || !packOf || packOf.id !== id || !packOf.doc || packOf.doc.path !== d.path) return;
-  packOf = { ...packOf, doc: { path: d.path, ...next } };
-  render();
+  if (mine !== docSeq || !docOpen || docOpen.id !== id || docOpen.path !== d.path) return;
+  docOpen = { ...docOpen, ...next };
+  drawDoc();
 }
-// The side pane with one of the pack's Markdown files, formatted, and a button back to the pack.
-function documentPane(t) {
+// Closes the pop-up and puts the focus back on the file's button, or the one drawn in its place since.
+function closeDoc() {
+  if (!docOpen) return;
+  const path = docOpen.path, pane = $('full-ticket');
+  docSeq++;
+  docOpen = null;
+  drawDoc();
+  const find = n => { if (n.docOf === path) return n; for (const c of n.children || []) { const f = find(c); if (f) return f; } return null; };
+  const to = find(pane) || pane;
+  if (to.focus) to.focus();
+}
+// The pop-up, over the whole panel: the file's path, Close, and the file formatted as the pack is, tables included.
+// While it's open, the side pane and its backdrop are inert as well as the page (holdPage), so only the pop-up can be
+// clicked, scrolled or reached with Tab.
+function drawDoc() {
+  const view = $('doc-view'), was = !view.hidden && view.children.length > 0, had = within(document.activeElement, view);
+  view.hidden = !docOpen;
+  for (const id of ['full-ticket', 'full-backdrop']) $(id).inert = !!docOpen;
+  if (!docOpen) { view.replaceChildren(); return; }
   const close = el('button', 'close', 'Close');
   close.type = 'button';
-  close.addEventListener('click', closeFull);
-  const back = el('button', 'full-open back', 'Back to the review pack');
-  back.type = 'button';
-  back.addEventListener('click', e => { e.stopPropagation(); packSeq++; const { doc, ...pack } = packOf; packOf = pack; render(); });
-  const doc = packOf.doc, body = el('div', 'md');
-  if (doc.state === 'loading') body.appendChild(el('p', null, `Loading ${doc.path}…`));
-  else if (doc.state === 'error') body.appendChild(el('p', 'bad', doc.text));
-  else for (const n of mdBlocks(markdown(doc.text, { tables: true }))) body.appendChild(n);
-  return [el('div', 'top', null, el('span', 'id', t.id), el('span', 'title', doc.path), close), back, body];
+  close.addEventListener('click', e => { e.stopPropagation(); closeDoc(); });
+  const body = el('div', 'md');
+  if (docOpen.state === 'loading') body.appendChild(el('p', null, `Loading ${docOpen.path}…`));
+  else if (docOpen.state === 'error') body.appendChild(el('p', 'bad', docOpen.text));
+  else for (const n of mdBlocks(markdown(docOpen.text, { tables: true }))) body.appendChild(n);
+  view.setAttribute('aria-label', docOpen.path);
+  view.replaceChildren(el('div', 'top', null, el('span', 'title', docOpen.path), close), body);
+  if (!was) view.scrollTop = 0;
+  if ((!was || had) && view.focus) view.focus({ preventScroll: true }); // into it, or back into it when Close was redrawn
 }
 // The side pane with a review pack: its Markdown formatted, tables included, and the findings in a <details> element
 // that folds away, as the pack's own <details> does where Markdown is shown with HTML.
 function packPane(t) {
-  if (packOf.doc) return documentPane(t);
   const close = el('button', 'close', 'Close');
   close.type = 'button';
   close.addEventListener('click', closeFull);
@@ -1815,6 +1842,7 @@ function renderFull(m) {
   const draft = fullId === null ? null : find(m.drafts), t = fullId === null ? null : draft || find(m.queue) || find(m.shipped) || null;
   if (!t && fullId !== null && within(document.activeElement, pane)) focusBack = true; // 0326: it closed with the focus in it
   if (!t) { fullId = null; packOf = null; }
+  if (docOpen && (!packOf || String(packOf.id) !== String(docOpen.id))) { if (within(document.activeElement, $('doc-view'))) focusBack = true; docSeq++; docOpen = null; drawDoc(); } // 0362: its pack has gone
   const sig = t ? signature([fullId, !!draft, packOf ? ['pack', packOf, t.status, t.shipping === true, shippingId, shipped.get(fullId) ?? null, shipRefused.get(fullId) ?? null, changesSending, changesSaid.get(fullId) ?? null, changesRefused.get(fullId) ?? null] : fullText(t)]) : null, readySig = draft && !packOf ? signature([fullId, readyData(draft)]) : null;
   const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
   pane.hidden = !t;
@@ -1842,7 +1870,7 @@ function renderFull(m) {
     if (now) head.appendChild(now);
   }
 }
-function closeFull() { fullId = null; packOf = null; focusBack = true; render(); }
+function closeFull() { fullId = null; packOf = null; focusBack = true; render(); } // 0362: the pop-up goes with it (renderFull)
 // 0326: once the pane has closed and the board is drawn, the focus goes back to the Full ticket button that opened it,
 // the one drawn in its place since, or, when its ticket has none on the board now, to the top of the list it was in.
 function returnFocus() {
@@ -2435,6 +2463,7 @@ async function sendSettings() {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (tipTag !== null) closeTip();
+  else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
   else if (foremanOpen && settingsView === null) { foremanOpen = false; render(); } // 0285: the Foreman's detail
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
   else if (settingsView !== null && settingTip !== null) showSettingTip(null, false); // 0268: the explanation first, then the view
