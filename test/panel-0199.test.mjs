@@ -63,17 +63,17 @@ test('0199 AC2: it never names a ticket, a build step or that something needs yo
   assert.doesNotMatch(page(), /\.run-state\.run-(wait|bad)\b/, 'no colour for a ticket waiting for you');
 });
 
-test('0199 AC3: its builder hops while any build or ship is at work, and stands still otherwise', async () => {
+// 0364: the button has no builder now, whether any build or ship is at work or not.
+test('0199 AC3: its builder hops while any build or ship is at work, and stands still otherwise (0364: it has none, either way)', async () => {
   const cases = [[[BUILDING], 'hop'], [[CHECKING], 'hop'], [[REVIEWING], 'hop'], [[SHIPPING], 'hop'], [[READY, BLOCKED, CHECKING], 'hop'],
     [[TO_SHIP, PAUSED, SHIPPING], 'hop'], [ALL, 'hop'], [[], 'still'], [[READY], 'still'], [[PAUSED], 'still'], [[TO_SHIP], 'still'],
     [[WAITING], 'still'], [[BLOCKED], 'still'], [[STOPPED], 'still'], [[READY, PAUSED, TO_SHIP, WAITING, BLOCKED, STOPPED], 'still']];
   for (const run of [RUN, null]) for (const [tickets, pose] of cases) {
-    const b = builderIn(await shows(tickets, run));
-    assert.deepEqual(b.className.split(' '), ['mini', pose], `${run ? 'on' : 'off'}: ${ids(tickets)}`);
+    assert.equal(builderIn(await shows(tickets, run)), undefined, `${run ? 'on' : 'off'}: ${ids(tickets)} (${pose} before 0364)`);
   }
 });
 
-test('0199 AC3: a ship started from the panel and not yet answered counts as a ship at work', async () => {
+test('0199 AC3: a ship started from the panel and not yet answered counts as a ship at work (0364: with no builder to show it)', async () => {
   const st = state([TO_SHIP]), never = new Promise(() => {});
   const p = switchPage([], {
     fetch: async url => {
@@ -84,7 +84,7 @@ test('0199 AC3: a ship started from the panel and not yet answered counts as a s
     confirm: () => true,
   });
   await p.settle();
-  assert.equal(builderIn(p).className, 'mini still');
+  assert.equal(builderIn(p), undefined);
   const buttons = (n, text) => p.all(n).filter(x => x.tagName === 'button' && text.test(x.textContent));
   const row = queueRows(p).find(r => r.textContent.includes('0306'));
   p.press(row.children.find(n => n.className === 'top'));
@@ -93,7 +93,7 @@ test('0199 AC3: a ship started from the panel and not yet answered counts as a s
   await p.settle();
   p.press(buttons(p.byId('full-ticket'), /^Ship$/)[0]);
   await p.settle();
-  assert.equal(builderIn(p).className, 'mini hop');
+  assert.equal(builderIn(p), undefined);
   assert.equal(runOf(p).textContent, 'Auto-build on');
 });
 
