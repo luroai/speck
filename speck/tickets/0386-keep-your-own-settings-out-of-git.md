@@ -50,7 +50,7 @@ Your own settings are kept for this machine in a file git ignores, and speck/con
 - Self-check: removing this machine's builder with `--machine builder ""` now also removes the build_command switching to it saved, so speck/config.yml's pair applies again.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Choosing who builds and reviews, their models, auto-ship, the Foreman and how many builds and test runs go at once are now your own settings. Changing one with `speck config set` keeps it on this computer only: nothing is committed, and nothing goes out with the next ship. Builds already running pick up the change the next time they read their settings. The project's file still holds the defaults everyone else gets, and `speck config set --repo` changes those. To see it, run `speck config set reviewer claude`, then `git status` (nothing changed) and `speck config show`, which marks the value as this machine's own. Worth knowing: the panel's Settings view still only saves the two parallel limits for this machine; 0387 brings it in line.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -60,6 +60,10 @@ Your own settings are kept for this machine in a file git ignores, and speck/con
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-22-decide-where-setup-saves-the-agents-it-picks.md (setup's `speck config set` calls now save its agent choices for this machine only).
+- speck/ideas/2026-10-17-show-this-machine-s-values-in-speck-config-show.md looks covered by this ticket's AC4; worth checking when triaging.
+- Known limit: a machine value edited by hand is checked only for its kind (text, true/false, whole number, risks), not against every rule `speck config set` applies.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +135,79 @@ Your own settings are kept for this machine in a file git ignores, and speck/con
     ],
     "escalation_question": "",
     "summary": "Personal settings are saved outside git and shared across worktrees, with validation and repository defaults preserved. One required detail is missing: config show hides the personal build and resume commands. Fix that visibility gap before merge."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "2c105aa539770190ec66a382048385f618301099",
+    "thread_id": "01a165dd-ee9d-7942-af16-cfae1dabf357",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 355855,
+      "cached_input_tokens": 292992,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1418,
+      "reasoning_output_tokens": 30
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T23:08:25.343Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "config.mjs routes the sixteen own settings to machine storage; setBuilder saves the associated build_command. Passing AC1 tests check persistence, unchanged repository config and no commits."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "core.mjs loadConfig applies machine overrides on each read. The passing AC2 test checks main checkout, worktree, fallback and subsequent updates."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "setMachine uses checkConfigValue; saveMachineValues verifies serialisation round trips. Passing AC3 tests cover validation messages, spaces, quotes, lists, --repo, --machine and removal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "cmdConfigShow now includes machine-held build_command and resume_command in text and JSON. The new passing AC4 test checks values and machine markers for all sixteen settings. Existing tests cover repository settings and --machine refusals."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README's 'Your own settings' passage and the brief's config command entry explain personal settings, their ignored storage and --repo defaults. Reported checks: 242 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/settings.mjs",
+        "issue": "config show previously omitted machine-held build_command and resume_command.",
+        "suggested_fix": "Completed: both commands are included with effective values and machine-source markers; the new test covers all sixteen settings.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Personal settings stay out of git and apply across worktrees, while project defaults remain available. The missing commands now appear in config show, with coverage for all sixteen settings. All criteria pass; no blocking concerns remain."
   }
 }
 ```
