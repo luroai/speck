@@ -1,7 +1,7 @@
 ---
 id: "0388"
 title: "Leave a ticket's agents to the settings unless it names them"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-change-your-own-settings-without-a-commit.m
 after: ["0387"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:31:35.466Z"
+approved: "2026-10-22T23:41:16.853Z"
 
 ---
 # 0388 · Leave a ticket's agents to the settings unless it names them
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck new` copies the builder, reviewer and reviewer model into each ticket, and the ticket keeps them. Switching reviewer means editing and committing every open ticket: on 2026-10-22, switching to Grok and back took three commits across ten tickets.
@@ -55,9 +56,15 @@ New tickets no longer write down who builds and reviews them. They use whatever 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Fresh review sessions lose earlier builder responses from Codex rounds.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 596,214
+- Elapsed since build started: 10 min
+- Changed lines: 106 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: open tickets made before this change still name their builder and reviewer, so they keep them until cleared by hand (out of scope).
