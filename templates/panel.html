@@ -1937,6 +1937,7 @@ $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render
 // 0257: the Settings view. It shows the settings people tune, read afresh from speck/config.yml each time it opens.
 // 0258: the ones the server marks editable can be changed in place. 0274: the view's one Save sends every change at
 // once, and the server saves them all or none.
+let settingAgentModels = new Map(); // 0369: each agent chosen since the view opened: { reading } | { models } | { why }
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
 let settingScope = new Map(); // 0261: key → 'machine' or 'repo', where a change to a setting this machine can hold goes
@@ -1980,6 +1981,7 @@ function openSettings() {
 }
 async function loadSettings() {
   const mine = ++settingsSeq;
+  settingAgentModels = new Map();
   let next;
   try {
     const res = await fetch('/api/settings', { cache: 'no-store' });
@@ -2038,6 +2040,7 @@ async function saveAndLeave() {
 function closeSettings() {
   settingsView = null;
   settingsSeq++;
+  settingAgentModels = new Map();
   settingsLeaving = null;
   renderLeaving();
   settingTip = settingHover = settingFocus = null;
@@ -2227,20 +2230,61 @@ function settingChosen(key) {
 // 0276: the models the server read, while the reviewer chosen in the view is the one it read them for; otherwise null.
 // 0278: Claude's model names whenever claude-subagent (or 0292's claude) is chosen, each with no `efforts` (null).
 // 0347: Cursor's have no `efforts` either: their names carry the effort, so reviewer_effort offers speck's own.
+// 0369: or those of codex or cursor chosen but not yet saved, read when it's chosen.
 function reviewerModelList() {
-  const m = settingsView !== null ? settingsView.reviewer_models : null, claude = ['claude', 'claude-subagent'].includes(settingChosen('reviewer'));
+  const m = settingsView !== null ? settingsView.reviewer_models : null, chosen = settingChosen('reviewer'), claude = ['claude', 'claude-subagent'].includes(chosen);
+  const read = claude ? null : modelsRead(m, 'reviewer', chosen);
   const list = claude && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
-    : m && typeof m === 'object' && Array.isArray(m.models) && settingChosen('reviewer') === m.reviewer ? m.models : null;
+    : read && Array.isArray(read.models) ? read.models : null;
   if (list === null) return null;
   return list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug,
-    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude || m.reviewer === 'cursor' ? null : [], ...modelWords(x) }));
+    efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : claude || chosen === 'cursor' ? null : [], ...modelWords(x) }));
 }
-// 0279: the models the server read for the builder, which the view can't change, each with its words when it has them;
-// null when it couldn't list them.
+// 0369: the models `agent` offers for the setting `of` (reviewer, builder or foreman), whose models the server read as
+// `m`: those when it read them for `agent`, otherwise, for codex or cursor, the ones read since it was chosen, asking
+// for them the first time. { models } or { why }, { reading: true } while they're read, or null: none to read. With no
+// `m`, the server said nothing of models, so none are read.
+function modelsRead(m, of, agent) {
+  if (!m || typeof m !== 'object' || settingsView === null || settingsView.state !== 'ok') return null;
+  // The server reads the builder's models for the saved builder, so they're its models while it's chosen.
+  const readFor = of === 'builder' && agent === settingSaved('builder') ? agent : typeof m[of] === 'string' ? m[of] : null;
+  if (readFor === agent && (Array.isArray(m.models) || (typeof m.why === 'string' && m.why))) return m;
+  if (agent !== 'codex' && agent !== 'cursor') return null;
+  if (!settingAgentModels.has(agent)) askAgentModels(agent);
+  return settingAgentModels.get(agent);
+}
+function settingSaved(key) {
+  const x = settingRows().find(r => r.key === key);
+  return x ? settingNow(x) : '';
+}
+async function askAgentModels(agent) {
+  const mine = settingsSeq;
+  settingAgentModels.set(agent, { reading: true });
+  let got;
+  try {
+    const res = await fetch(`/api/agent-models?agent=${encodeURIComponent(agent)}`, { cache: 'no-store' });
+    let body = null;
+    try { body = await res.json(); } catch { /* no JSON: say what we know */ }
+    got = res.ok && body && Array.isArray(body.models) ? { models: body.models }
+      : { why: body && typeof body.why === 'string' && body.why ? body.why : `Couldn't read ${agent}'s models (${res.status}), so type the model's name.` };
+  } catch { got = { why: `Couldn't reach speck panel to read ${agent}'s models, so type the model's name.` }; }
+  if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
+  settingAgentModels.set(agent, got);
+  const had = [...settingControls].find(([, c]) => c === document.activeElement);
+  renderSettings();
+  const again = had ? settingControls.get(had[0]) : null;
+  if (again && again.focus) again.focus();
+}
+// 0369: one line saying `agent`'s models are being read, or why they can't be, from modelsRead; null otherwise.
+const readingWhy = (read, agent) => read && read.reading ? `Reading ${agent}'s models…` : read && typeof read.why === 'string' && read.why ? read.why : null;
+// 0279: the models the server read for the builder, each with its words when it has them; null when it couldn't list
+// them. 0369: for a builder chosen but not yet saved, Claude's model names for claude, or those read for codex or cursor.
 function builderModelList() {
-  const m = settingsView !== null ? settingsView.builder_models : null;
-  if (!m || typeof m !== 'object' || !Array.isArray(m.models)) return null;
-  return m.models.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
+  const m = settingsView !== null ? settingsView.builder_models : null, chosen = settingChosen('builder');
+  const read = modelsRead(m, 'builder', chosen);
+  const list = read && Array.isArray(read.models) ? read.models
+    : read === null && m && typeof m === 'object' && chosen === 'claude' && Array.isArray(settingsView.claude_models) ? settingsView.claude_models : null;
+  return list === null ? null : list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
 }
 // 0348: the agent the Foreman runs on as chosen in the view, as foremanAgentOf in foreman-agent.mjs reads it: foreman
 // when it's set, otherwise the builder when that's Codex or Cursor, otherwise Claude Code.
@@ -2252,8 +2296,9 @@ function foremanAgentChosen() {
 // them for that agent; null when there are none to offer.
 function foremanModelList() {
   const m = settingsView !== null ? settingsView.foreman_models : null, agent = foremanAgentChosen();
+  const read = agent === 'claude' ? null : modelsRead(m, 'foreman', agent); // 0369: or those read since it was chosen
   const list = agent === 'claude' && settingsView !== null && Array.isArray(settingsView.claude_models) ? settingsView.claude_models
-    : m && typeof m === 'object' && Array.isArray(m.models) && m.foreman === agent ? m.models : null;
+    : read && Array.isArray(read.models) ? read.models : null;
   return list === null ? null : list.filter(x => x && typeof x.slug === 'string').map(x => ({ slug: x.slug, ...modelWords(x) }));
 }
 // 0348: why foreman_model is a box to type in rather than a list, in one line, or null when it's a list or the server
@@ -2262,17 +2307,19 @@ function foremanModelsWhy() {
   const m = settingsView !== null ? settingsView.foreman_models : null;
   if (!m || typeof m !== 'object' || foremanModelList() !== null) return null;
   const agent = foremanAgentChosen();
-  if (agent === m.foreman || !m.foreman) return typeof m.why === 'string' && m.why ? m.why : null; // '': the server couldn't tell
-  return ['claude', 'codex', 'cursor'].includes(settingChosen('foreman')) ? `Save ${agent} as the Foreman agent, then open Settings again to pick from its models.`
-    : `Save these settings, then open Settings again to pick from ${agent}'s models.`;
+  const why = typeof m.why === 'string' && m.why ? m.why : null;
+  if (agent === m.foreman) return why;
+  return readingWhy(modelsRead(m, 'foreman', agent), agent) ?? why; // 0369: read when it's chosen; why: the server couldn't tell
 }
 // 0288: a model's display name and description, each null when the agent gives none.
 const modelWords = x => ({ display_name: typeof x.display_name === 'string' && x.display_name ? x.display_name : null,
   description: typeof x.description === 'string' && x.description ? x.description : null });
 // 0279: why builder_model is a box to type in rather than a list, in one line, or null.
 function builderModelsWhy() {
-  const m = settingsView !== null ? settingsView.builder_models : null;
-  return m && typeof m === 'object' && builderModelList() === null && typeof m.why === 'string' && m.why ? m.why : null;
+  const m = settingsView !== null ? settingsView.builder_models : null, chosen = settingChosen('builder');
+  if (!m || typeof m !== 'object' || builderModelList() !== null) return null;
+  const read = modelsRead(m, 'builder', chosen);
+  return read !== null ? readingWhy(read, chosen) : `${chosen || 'This builder'} can't list its models, so type the model's name as it names it.`;
 }
 // Why reviewer_model is a box to type in rather than a list, in one line, or null when it's a list or the server
 // didn't say.
@@ -2281,7 +2328,7 @@ function modelsWhy() {
   if (!m || typeof m !== 'object' || reviewerModelList() !== null) return null;
   const chosen = settingChosen('reviewer');
   if (chosen === m.reviewer) return typeof m.why === 'string' && m.why ? m.why : null;
-  return chosen === 'codex' || chosen === 'cursor' ? `Save ${chosen} as the reviewer, then open Settings again to pick from its models.` // 0347: cursor too
+  return chosen === 'codex' || chosen === 'cursor' ? readingWhy(modelsRead(m, 'reviewer', chosen), chosen) // 0369: read when it's chosen
     : `${chosen} can't list its models, so type the model's name as it names it.`;
 }
 // 0293: what switching the builder does, said while a new one is picked, and the build_command it sets.
