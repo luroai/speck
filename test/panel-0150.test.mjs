@@ -154,7 +154,8 @@ const LINES = sel => `(() => {
   return lines;
 })()`;
 // 0372: Settings ends the header now that light and dark are chosen in Settings, so it takes Settings's place here.
-const PARTS = { logo: 'header .logo', repo: 'header .repo', run: '#run', settings: '#settings-open' };
+// 0373: "base <branch>" is inside the title, just after the word speck, so it's measured against the word.
+const PARTS = { logo: 'header .logo', name: 'header .logo .name', repo: 'header .repo', run: '#run', settings: '#settings-open' };
 const boxes = async b => Object.fromEntries(await Promise.all(Object.entries(PARTS).map(async ([k, sel]) => [k, await b.js(box(sel))])));
 const press = async (b, key, code, keyCode) => {
   await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: keyCode, ...(key === 'Enter' ? { text: '\r' } : { text: ' ' }) });
@@ -192,13 +193,13 @@ test('0150 AC2: on or off, the button shows its word, with no square or builder'
 });
 
 for (const width of [700, 1280]) {
-  test(`0150 AC3: at ${width} px, the header is one row, centred vertically: speck on the left, then the project, Auto-build and Settings on the right`, skip, async () => {
+  test(`0150 AC3: at ${width} px, the header is one row, centred vertically: speck and its base branch on the left, Auto-build and Settings on the right`, skip, async () => {
     await withPage(null, width, async b => {
       const x = await boxes(b);
       const h = await b.js(box('header'));
       for (const k of ['repo', 'run', 'settings']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is centred on the same line as speck: ${JSON.stringify(x)}`);
-      assert.ok(x.logo.right < x.repo.left && x.repo.right < x.run.left && x.run.right < x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
-      assert.ok(x.repo.left - x.logo.right > 40, 'the project sits on the right, away from speck');
+      assert.ok(x.name.right <= x.repo.left && x.logo.right < x.run.left && x.run.right < x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
+      assert.ok(x.run.left - x.logo.right > 40, 'Auto-build sits on the right, away from speck');
       assert.ok(h.right - x.settings.right <= 32, 'Settings is at the right edge');
       for (const k of Object.keys(PARTS)) assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);
     });
@@ -207,12 +208,12 @@ for (const width of [700, 1280]) {
 
 for (const run of [null, { on: true, pid: 7 }]) {
   // 0364: one row, as it is wider: the mark, the project, the Foreman (Auto-build here) and Settings
-  test(`0150 AC4: at 375 px with Auto-build ${run ? 'on' : 'off'}, the header is one row: speck's mark, the project, then Auto-build and Settings`, skip, async () => {
+  test(`0150 AC4: at 375 px with Auto-build ${run ? 'on' : 'off'}, the header is one row: speck's mark, speck and its base branch, then Auto-build and Settings`, skip, async () => {
     await withPage(run, 375, async b => {
       const x = await boxes(b);
       const W = await b.js('document.documentElement.clientWidth');
       for (const k of ['repo', 'run', 'settings']) assert.ok(Math.abs(x[k].mid - x.logo.mid) <= 1, `${k} is on speck's row: ${JSON.stringify(x)}`);
-      assert.ok(x.logo.right <= x.repo.left && x.repo.right <= x.run.left && x.run.right <= x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
+      assert.ok(x.name.right <= x.repo.left && x.repo.right <= x.run.left && x.run.right <= x.settings.left, `in order, left to right: ${JSON.stringify(x)}`);
       for (const k of Object.keys(PARTS)) {
         assert.ok(x[k].left >= 0 && x[k].right <= W + 0.5, `${k} is on screen`);
         if (k !== 'settings') assert.equal(await b.js(LINES(PARTS[k])), 1, `${k} is on one line`);

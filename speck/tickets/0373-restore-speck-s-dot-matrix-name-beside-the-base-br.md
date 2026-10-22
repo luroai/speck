@@ -42,6 +42,8 @@ The header shows "speck" in its dot-matrix lettering at every width, with the ba
 ## Notes
 - Checked 2026-10-22: under 700 px, `templates/panel.html` sets `.logo .name` to `display: none` (0364). The word's rule at every other width is Doto at 26 px. The project line is `.repo`, 12 px, "<project> · base <branch>".
 - Failing before this build: none
+- Tests changed for AC5: the checks that "speck" is hidden under 700 px (0170, 0309, 0364) and that the header shows "<project> · base <branch>" (0031, 0033, 0059, 0134, 0140, 0364). Also changed, because "base <branch>" now sits inside the title between "speck" and "control panel": the title's exact HTML (0303, 0304, 0320), and the order and overlap checks that measured the old project line against the whole title box (0150, 0163, 0309), which now measure it against the "speck" word. 0372 AC4 at 320 px: with the word back, putting the old light/dark button back would squeeze the Foreman's button to its 44 px least, so there it checks the board gained room rather than the button's full 50 px.
+- Self-check: no changes. The base branch's text is escaped by the server as before, and its tooltip is set from the text once the page loads.
 - Seen in the panel at 127.0.0.1:4777 in a narrow pane: the mark, then "speck · base main" in the small text, then the notice board, Settings and light/dark.
 
 ## In plain words

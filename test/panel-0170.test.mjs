@@ -41,13 +41,12 @@ const measure = b => b.js(`(() => {
 })()`);
 
 for (const theme of ['light', 'dark']) for (const width of [1280, 375]) {
-  test(`0170 AC3: ${theme}, at ${width} px, the mark is just left of "speck" and about as tall (0364: under 700 px, the mark alone)`, skip, () => inBrowser(async b => {
+  test(`0170 AC3: ${theme}, at ${width} px, the mark is just left of "speck" and about as tall (0373: at every width)`, skip, () => inBrowser(async b => {
     const check = async where => {
       const x = await measure(b);
       assert.equal(x.text, 'speck');
       assert.ok(x.shown, `${where}: the mark shows`);
-      // 0364: under 700 px the "speck" word is hidden, and the mark stays, at the top and scrolled
-      if (width < 700) return assert.equal(x.wordShown, false, `${where}: no "speck" word on a phone`);
+      // 0373: the "speck" word shows at every width (0364 had hidden it under 700 px), at the top and scrolled
       assert.ok(x.wordShown, `${where}: the "speck" word shows`);
       assert.ok(x.mark.right <= x.word.left && x.word.left - x.mark.right <= 10, `${where}: immediately left of the wordmark: ${JSON.stringify(x)}`);
       // 0309: a 32 px mark beside a 26 px speck
