@@ -1,7 +1,7 @@
 ---
 id: "0363"
 title: "Ship a document task from its document's pop-up"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-open-a-document-in-a-pop-up-over-the-whole-
 after: ["0362"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T15:18:23.341Z"
+approved: "2026-10-22T15:23:33.081Z"
 
 ---
 # 0363 · Ship a document task from its document's pop-up
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 To ship a document task you read its document, then go back to the review pack in the side pane to find Ship. Reading and deciding should happen in one place.
@@ -51,9 +52,14 @@ When you open an approved document task's document from its review pack, the pop
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 146,055
+- Elapsed since build started: 5 min
+- Changed lines: 57 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 
 ## Review rounds
