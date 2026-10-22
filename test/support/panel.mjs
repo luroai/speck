@@ -460,3 +460,15 @@ export async function browserPage(url) {
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();
   r.setStart(t, ${offset}); r.setEnd(t, ${offset} + 1); const b = r.getBoundingClientRect(); return [b.left + 1, b.top + b.height / 2]; })()`;
+
+// 0371: a setTimeout for fakePage's globals that keeps every wait and runs none until the test says so: rest(ms) runs
+// those of `ms`, as the clock does once they're up. pending(ms) counts those not yet run.
+export function heldTimeouts() {
+  const waits = [];
+  return {
+    setTimeout: (fn, ms) => { waits.push({ fn, ms }); return waits.length; },
+    clearTimeout: () => {},
+    pending: ms => waits.filter(w => w.ms === ms).length,
+    rest: ms => { const due = waits.filter(w => w.ms === ms); for (const w of due) waits.splice(waits.indexOf(w), 1); for (const w of due) w.fn(); },
+  };
+}
