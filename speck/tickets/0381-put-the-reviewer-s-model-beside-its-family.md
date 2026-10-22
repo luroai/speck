@@ -1,7 +1,7 @@
 ---
 id: "0381"
 title: "Put each agent's model beside its family"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T22:31:49.142Z"
 ---
 # 0381 · Put each agent's model beside its family
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Settings shows each agent and its model as two rows: the builder, the reviewer and the Foreman. The model looks like a separate setting, so it is hard to see that the second list is the model for the family in the first.
@@ -48,7 +48,11 @@ The builder, the reviewer and the Foreman each have their agent and the model it
 - Changed an existing check (criterion 5): 0370's AC1 tests treated each agent and its model as separate rows, so a redraw of the model failed the agent's "unchanged" check. They now check the agent's own part of the row, leaving out the model drawn inside it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In Settings, the builder, the reviewer and the Foreman each now have one row with two dropdowns: the agent first, then the model it runs on. Before, the model was a separate row underneath and looked like a setting of its own. Everything else works as before: picking a different agent fills in its models straight away, Save writes both settings, and the effort settings keep their own rows.
+
+To see it, open Settings in the panel and look at the Foreman and "Building and reviewing" groups. On a wide screen the two dropdowns sit side by side. On a phone the model's dropdown sits under the agent's, still in the same row.
+
+Worth keeping an eye on: only the agent's name shows on the left now. The model's dropdown has its own info button, which explains it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -58,3 +62,71 @@ The builder, the reviewer and the Foreman each have their agent and the model it
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "1dacfa106af8058081fcd04144378c760b061292",
+    "thread_id": "01a165c7-82f6-7591-9cdd-61771dec5b34",
+    "seconds": 28,
+    "usage": {
+      "input_tokens": 145890,
+      "cached_input_tokens": 101376,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 854,
+      "reasoning_output_tokens": 80
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T22:42:44.635Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: pairSettings places each model control inside its agent's row. Passing 0381 AC1 checks all three pairs, control order, agent choices and model choices."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0381 AC2 changes each agent and verifies its model list updates before saving; it also checks the reviewer command, claude-subagent and blank Foreman options remain available."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "settingRow preserves the existing editors and save handling. Both passing 0381 AC3 tests cover separate setting keys in the save request, disabled unavailable models, loading feedback, the fallback text box and explanation, and the builder note."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0381 AC4 checks separate effort rows, retained controls, unchanged scroll position and preservation of unrelated nodes. redrawSettings preserves the nested model when replacing its agent row."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Recorded test output confirms 134 passed, zero failed and three skipped. The 0370 test adjustment excludes nested model nodes from the agent's own-node check while retaining independent checks of model rows. No unrelated implementation changes appear in the ticket's commit."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Each agent’s model now appears beside its agent selector. Model updates, saving, fallback messages and separate effort settings are preserved. The relevant tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
