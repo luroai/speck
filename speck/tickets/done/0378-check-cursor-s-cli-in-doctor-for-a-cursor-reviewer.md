@@ -1,7 +1,7 @@
 ---
 id: "0378"
 title: "Check Cursor's CLI in doctor for a Cursor reviewer"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0375"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:50:26.264Z"
 approved: "2026-10-22T23:52:07.470Z"
+finished: "2026-10-22T23:55:14.095Z"
 
 ---
 # 0378 · Check Cursor's CLI in doctor for a Cursor reviewer
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 With `reviewer: cursor` and no reviewer command of your own, `speck doctor` checks nothing for the reviewer. A missing Cursor CLI only shows up when the first review fails.
