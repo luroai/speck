@@ -9,6 +9,7 @@ import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
 import { changesPending, changesToReview } from './changes-asked.mjs';
+import { reviewWaitMs, pendingRound, startRound, waitForRound, keepExitCode } from './review-wait.mjs';
 
 // The ticket without its Review rounds section, for the reviewer's diff and prompt.
 export function stripRounds(text) {
@@ -348,30 +349,77 @@ function printRound(rec, cfg, all) {
 }
 
 export function cmdReview(args) {
+  const started = Date.now();
   const id = args[0];
-  if (!id) throw new SpeckError('Usage: speck review <id> [--tests=file] [--response=file]');
+  if (!id) throw new SpeckError('Usage: speck review <id> [--tests=file] [--response=file] | speck review <id> --wait');
   const opt = k => (args.find(a => a.startsWith(`--${k}=`)) || '').slice(k.length + 3) || undefined;
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
   const t = findTicket(repo, id);
+  const pad = t.fm.id || id;
+  // 0384: a round runs in a process of its own, which this waits for, so it can outlast the builder's shell. One that
+  // is running already, or has finished without being printed, is waited for rather than another started.
+  const worker = Number((args.find(a => a.startsWith('--worker=')) || '').slice(9)) || 0;
+  const limitMs = () => { try { return reviewTimeoutMs(cfg); } catch { return 30 * 60 * 1000; } };
+  if (!worker && (args.includes('--wait') || pendingRound(repo, pad, limitMs()))) return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
   const reviewer = t.fm.reviewer || cfg.reviewer;
   const command = reviewerOptions(cfg, reviewer).command;
   const opts = { tests: opt('tests'), response: opt('response') };
   // A bad review_timeout_minutes is refused before the ticket changes or any reviewer runs (0180).
   if ((typeof command === 'string' && command.trim()) || reviewer === 'codex') reviewTimeoutMs(cfg);
+  if (!worker) {
+    if (!(typeof command === 'string' && command.trim()) && reviewer !== 'codex') unsupported(id, reviewer);
+    startRound(repo, pad, rounds(repo, id).length + 1, args.slice(1).filter(a => /^--(tests|response)=/.test(a)), limitMs());
+    return waitForRound(repo, pad, started + reviewWaitMs(), limitMs());
+  }
+  keepExitCode(repo, pad, worker);
   let rec;
   if (typeof command === 'string' && command.trim()) rec = reviewRound(repo, id, opts, s => runCommandReview(repo, id, reviewer, command, s));
   else if (reviewer === 'codex') rec = reviewRound(repo, id, opts, s => runCodexReview(repo, id, s));
-  else throw new SpeckError(`speck review runs the codex, claude and cursor reviewers, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
+  else unsupported(id, reviewer);
   const next = printRound(rec, cfg, rounds(repo, id));
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
 
-// A subagent often wraps its JSON verdict in a ```json fence, even when asked not to, so a reply saved as it was sent is accepted.
+function unsupported(id, reviewer) {
+  throw new SpeckError(`speck review runs the codex, claude and cursor reviewers, or a reviewer with a command under reviewer_options in speck/config.yml. For reviewer "${reviewer}", follow the review skill and record the verdict with \`speck record ${id} <file>\`.`);
+}
+
+// Where the JSON value starting at the brace at `from` ends, skipping braces inside strings, or -1 if it never closes.
+function objectEnd(s, from) {
+  let depth = 0, inString = false;
+  for (let i = from; i < s.length; i++) {
+    const c = s[i];
+    if (inString) { if (c === '\\') i++; else if (c === '"') inString = false; }
+    else if (c === '"') inString = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return i;
+  }
+  return -1;
+}
+
+// The last unfenced JSON object with a `verdict` key in a reply with prose before, after or between objects (0383).
+export function verdictInProse(text) {
+  const s = String(text);
+  let found = null;
+  for (let i = s.indexOf('{'); i !== -1;) {
+    const end = objectEnd(s, i);
+    let v = null;
+    if (end !== -1) try { v = JSON.parse(s.slice(i, end + 1)); } catch { /* not JSON: try the next brace */ }
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (Object.hasOwn(v, 'verdict')) found = v;
+      i = s.indexOf('{', end + 1);
+    } else i = s.indexOf('{', i + 1);
+  }
+  return found;
+}
+
+// A subagent often wraps its JSON verdict in a ```json fence, even when asked not to, or opens with a line of prose,
+// so a reply saved as it was sent is accepted.
 function parseReply(text, file) {
   const body = text.trim().replace(/^```[a-z]*\r?\n([\s\S]*?)\r?\n```$/i, '$1');
   let v = null;
-  try { v = JSON.parse(body); } catch { /* not JSON: refused below */ }
+  try { v = JSON.parse(body); } catch { v = verdictInProse(text); }
   if (v && typeof v === 'object' && !Array.isArray(v)) return v;
   throw new SpeckError(`${file} isn't a JSON verdict. Save the reviewer's JSON reply (a \`\`\`json fence around it is fine), then run this again.`);
 }
