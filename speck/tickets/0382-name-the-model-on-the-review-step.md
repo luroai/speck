@@ -42,6 +42,7 @@ A ticket being reviewed names the model that is reviewing it.
 - The model is shown as written. It is not capitalised the way the family name is ("Cursor").
 - Waits for 0381, which changes `templates/panel.html`. 0375 waits for this, so it ships in 0.13.0.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
