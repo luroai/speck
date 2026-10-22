@@ -1,7 +1,7 @@
 ---
 id: "0382"
 title: "Name the model on the review step"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-name-the-model-on-the-review-step.md"      
 after: ["0381"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:45:50.514Z"
+approved: "2026-10-22T22:48:51.936Z"
 
 ---
 # 0382 · Name the model on the review step
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 While a ticket is being reviewed, its card says "Cursor is reviewing" or "Claude is reviewing". That names the family. When a model is set, it hides the model that is actually reviewing.
@@ -51,9 +52,14 @@ While a ticket is in review, its card on the board now names the model doing the
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 86,954
+- Elapsed since build started: 3 min
+- Changed lines: 7 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
