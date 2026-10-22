@@ -41,6 +41,7 @@ Changing a setting updates what that change affects and leaves the rest of the o
 ## Notes
 - Checked 2026-10-22: `typing` in `templates/panel.html` calls `renderSettings`, which replaces the whole pane, for `reviewer`, `builder`, `foreman` and a listed `reviewer_model`. Other controls call `refreshSettings`, which only updates Save and the this-machine question.
 - 0371 waits for this: it changes `templates/panel.html` too.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
