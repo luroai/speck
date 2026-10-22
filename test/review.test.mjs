@@ -16,11 +16,16 @@ test('AC1: config and ticket templates have blank reviewer_model and reviewer_ef
   assert.equal(t.fm.reviewer_effort, '');
 });
 
-test('AC1: speck new copies the config values into the ticket', () => {
-  const { ticketFile } = reviewRepo({ config: 'reviewer_model: some-model-1\nreviewer_effort: high\n' });
+// 0388: speck new no longer copies them; a blank ticket is reviewed with the config's values.
+test('AC1: a ticket speck new makes is reviewed with the config values', () => {
+  const { ticketFile, run, calls } = reviewRepo({ config: 'reviewer_model: some-model-1\nreviewer_effort: high\n' });
   const t = parseTicket(fs.readFileSync(ticketFile, 'utf8'));
-  assert.equal(t.fm.reviewer_model, 'some-model-1');
-  assert.equal(t.fm.reviewer_effort, 'high');
+  assert.equal(t.fm.reviewer_model, '');
+  assert.equal(t.fm.reviewer_effort, '');
+  assert.equal(run('review', '1').status, 10);
+  const args = calls()[0];
+  assert.equal(args[args.indexOf('-m') + 1], 'some-model-1');
+  assert.ok(args.includes('model_reasoning_effort="high"'), args.join(' '));
 });
 
 test('AC1: a ticket value overrides config and a blank ticket value falls back to config', () => {

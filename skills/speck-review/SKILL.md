@@ -19,11 +19,11 @@ CLI: `node .speck/scripts/speck.mjs`, run from the repo root (below: `speck`).
 
 ## Reviewer model and effort
 
-The reviewer's model and effort come from the ticket's `reviewer_model` and `reviewer_effort` fields. A blank ticket value falls back to the same fields in `speck/config.yml`. If both are blank, speck passes nothing and the reviewer runs on its own default. Model names are passed through exactly as written. Effort must be blank, one of `low`, `medium`, `high`, `xhigh` or `max`, or an effort Codex lists for one of its models, such as `ultra` (`speck lint` checks this). Every saved round and the review pack record the model and effort used, or `default`.
+The reviewer's model and effort come from the ticket's `reviewer_model` and `reviewer_effort` fields. A blank ticket value falls back to the same settings, as `speck config show` gives them when the round starts. If both are blank, speck passes nothing and the reviewer runs on its own default. Model names are passed through exactly as written. Effort must be blank, one of `low`, `medium`, `high`, `xhigh` or `max`, or an effort Codex lists for one of its models, such as `ultra` (`speck lint` checks this). Every saved round and the review pack record the model and effort used, or `default`.
 
 ## Round 1
 
-Check the ticket's `reviewer:` field.
+Check the ticket's `reviewer:` field. When it's blank, the reviewer is the `reviewer` setting, as `speck config show` gives it when the round starts.
 
 **`codex` (default)**
 
@@ -80,13 +80,13 @@ Check each fix with the ticket's own test files (`speck test --files <file>…`)
 speck review <id> --tests=/tmp/speck-<id>-tests.txt --response=/tmp/speck-<id>-response.md
 ```
 
-This resumes the same Codex session. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
+This resumes the same Codex session, unless the last round was reviewed by another reviewer or on another model: then speck says so in one line and starts a fresh session with the full history. The reviewer remembers its earlier findings and sees your response plus the diff since its last review.
 
 **claude:** run the same command, with `--response`. speck resumes the same Claude Code session, or, if resuming fails, says so in one line and starts a fresh one with the full history.
 
 **Reviewer with a `command`:** run the same command as for Codex, with `--response`. If the reviewer's config has `session_id_path` and `resume_command`, speck continues its session and sends only your response, the new diff and the tests. Otherwise, or if resuming fails, speck says so in one line and resends the round-1 prompt, every earlier verdict and response, then your new response and the diff since its last review. Either way, carry on as normal.
 
-**claude-subagent:** run `speck review-running <id>` (and `speck review-running <id> --ended` if you give up on the round), then use SendMessage to the agent id you kept in round 1. That resumes the same reviewer, with its earlier findings and the model and effort it started with. Don't spawn a new one. Include your response file, any changes the user asked for since the last approval (the dated `Changes asked for by the user` lines in the ticket's `## Review log`, to check as well as the acceptance criteria), the output of `speck diff <id>` (the changes since its last review, or the whole change against the base branch as merged after a merge, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Save its reply as in round 1, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent --tests=/tmp/speck-<id>-tests.txt`.
+**claude-subagent:** run `speck review-running <id>` (and `speck review-running <id> --ended` if you give up on the round), then use SendMessage to the agent id you kept in round 1. That resumes the same reviewer, with its earlier findings and the model and effort it started with. Don't spawn a new one, unless the ticket leaves `reviewer` or `reviewer_model` blank and the setting has changed since the last round (`speck config show`): then start the round as round 1 does for the reviewer the setting now gives, and include every earlier verdict and response. Otherwise include your response file, any changes the user asked for since the last approval (the dated `Changes asked for by the user` lines in the ticket's `## Review log`, to check as well as the acceptance criteria), the output of `speck diff <id>` (the changes since its last review, or the whole change against the base branch as merged after a merge, without the ticket's review rounds) and the new test output, and ask for the full verdict JSON again with stable finding ids. Save its reply as in round 1, then run `speck record <id> /tmp/speck-<id>-verdict.json --reviewer=claude-subagent --tests=/tmp/speck-<id>-tests.txt`.
 
 ## Ending the loop
 

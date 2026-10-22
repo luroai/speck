@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ideaCounts } from './idea-counts.mjs';
-import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketTask, ticketPriority, byPriority, reviewerSettings, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
+import { TEMPLATES, STATUSES, TYPES, SpeckError, sh, git, findRepoRoot, loadConfig, contentLines, setField, blank, ticketType, ticketTask, ticketPriority, byPriority, reviewerSettings, ticketAgents, syncHeader, ticketsDir, ideasDir, doneIdeasDir, repoPath, listTickets, findTicket, placeTicket, nextId, slugify, lintTicket, ticketRounds, posix, STATUS_LINE, ideaStatus, writeField, worktreeList, worktreePath, padId, ticketsElsewhere, checkNotBeingBuilt, builderSpent, pausedSince, waitFields } from './core.mjs';
 import { cmdReview, cmdRecord, cmdNext, cmdReviewerSettings, cmdReviewRunning, cmdPrompt, cmdDiff } from './review.mjs';
 import { cmdPack } from './pack.mjs';
 import { cmdPr, prShown } from './pull-request.mjs';
@@ -88,11 +88,6 @@ function cmdNew(args) {
   let text = fs.readFileSync(path.join(TEMPLATES, 'ticket.md'), 'utf8');
   text = setField(text, 'id', id);
   text = setField(text, 'title', JSON.stringify(title));
-  text = setField(text, 'builder', cfg.builder);
-  text = setField(text, 'reviewer', cfg.reviewer);
-  const settings = reviewerSettings({}, cfg);
-  text = setField(text, 'reviewer_model', settings.model || '');
-  text = setField(text, 'reviewer_effort', settings.effort || '');
   // A note that gets a status is filed in speck/ideas/done/, so the ticket points at it there.
   const note = sourceFile && fs.readFileSync(sourceFile, 'utf8');
   const target = note && STATUS_LINE.test(note) && filed ? filed : sourceFile;
@@ -435,6 +430,9 @@ export function statusData(repo) {
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null;
     return withForeman(t, fixing, { // 0317
       ...t.fm,
+      // 0388: the builder and reviewer it would use now: its own, or else the settings'
+      builder: ticketAgents(t.fm, cfg).builder,
+      reviewer: ticketAgents(t.fm, cfg).reviewer,
       type: ticketType(t),
       task: ticketTask(t), // 0350
       priority: ticketPriority(t),

@@ -110,14 +110,14 @@ test('0381 AC3: a model not offered stays marked, the loading line and the type-
   changeTo(p, 'builder', 'cursor');
   await p.settle();
   assert.ok(said(p, 'builder_model').includes("Reading cursor's models…"), said(p, 'builder_model').join(' | '));
-  assert.ok(said(p, 'builder').some(t => /Tickets already made keep the builder they were made with, claude\. Saving changes who builds tickets made from now on/.test(t)),
+  assert.ok(said(p, 'builder').some(t => /Saving changes who builds every ticket that doesn't name its own builder, from its next build/.test(t)),
     said(p, 'builder').join(' | '));
   later.resolve({ status: 500, body: { why: "cursor can't list its models here, so type the model's name." } });
   await p.settle();
   assert.equal(controlOf(p, 'builder_model').tagName, 'input', 'a box to type in');
   assert.ok(said(p, 'builder_model').includes("cursor can't list its models here, so type the model's name."), said(p, 'builder_model').join(' | '));
   assert.ok(inside(p, rowOf(p, 'builder'), controlOf(p, 'builder_model')), 'the box is in the builder\'s row');
-  assert.ok(said(p, 'builder').some(t => /Tickets already made keep the builder/.test(t)), 'the note is still there');
+  assert.ok(said(p, 'builder').some(t => /A ticket that names one keeps it/.test(t)), 'the note is still there');
 });
 
 test('0381 AC4: the efforts keep their own rows, and changing either list in a row leaves the rest of Settings where it was', async () => {

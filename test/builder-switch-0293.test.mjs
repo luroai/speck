@@ -7,7 +7,8 @@ import { panelRepo, headOf, gitEnv } from './support/panel.mjs';
 import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, posted } from './support/settings.mjs';
 import { panelSettings, panelSaveSettings, panelSaveRequest } from '../scripts/settings.mjs';
 import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
-import { parseYaml, parseTicket } from '../scripts/core.mjs';
+import { parseYaml, parseTicket, loadConfig } from '../scripts/core.mjs';
+import { ticketBuilder } from '../scripts/ticket-builder.mjs';
 import { ROOT } from './support/speck.mjs';
 import { machineConfig, machineConfigFile } from '../scripts/machine.mjs';
 
@@ -203,30 +204,33 @@ test('0293 AC4: speck config set builder sets build_command with it, asking for 
   assert.equal(readCfg(r).build_command, '');
 });
 
-test('0293 AC5: a ticket keeps the builder it was made with, and new tickets take the new one', () => {
+// 0388: tickets no longer copy the builder. One that leaves it blank takes the new one; one that names its own keeps it.
+test('0293 AC5: a ticket that names its builder keeps it, and the rest take the new one', () => {
   const r = panelRepo();
   setCfg(r, /^reviewer: .*$/m, 'reviewer: claude');
-  const before = parseTicket(fs.readFileSync(r.file, 'utf8')).fm.builder;
-  assert.equal(before, 'claude');
-  assert.equal(panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }]).status, 200);
-  assert.equal(parseTicket(fs.readFileSync(r.file, 'utf8')).fm.builder, 'claude');
   const made = r.run('new', 'Import bookings');
   assert.equal(made.status, 0, made.stderr);
-  assert.equal(parseTicket(fs.readFileSync(path.join(r.dir, made.stdout.trim()), 'utf8')).fm.builder, 'codex');
+  const blankOne = parseTicket(fs.readFileSync(path.join(r.dir, made.stdout.trim()), 'utf8')).fm;
+  assert.equal(blankOne.builder, '');
+  const named = { ...blankOne, builder: 'claude' };
+  assert.equal(ticketBuilder(blankOne, loadConfig(r.dir)), 'claude');
+  assert.equal(panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }]).status, 200);
+  assert.equal(ticketBuilder(blankOne, loadConfig(r.dir)), 'codex');
+  assert.equal(ticketBuilder(named, loadConfig(r.dir)), 'claude');
 });
 
-test('0293 AC5: the view says tickets already made keep their builder while a new one is picked', async () => {
+test('0293 AC5: the view says which tickets keep their builder while a new one is picked', async () => {
   const S = (key, value, more = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...more });
   const view = { groups: [{ title: 'Building and reviewing', settings: [
     S('builder', 'claude', { choices: ['claude', 'codex'], build_command: { value: DEFAULT_BUILD_COMMAND, hand_set: false, own: { claude: DEFAULT_BUILD_COMMAND, codex: '', cursor: '' } } })] }] };
   const p = settingsPage([view], []);
   await p.settle();
   await openSettings(p);
-  const line = () => p.all(rowOf(p, 'builder')).find(n => n.tagName === 'p' && /Tickets already made/.test(n.textContent));
+  const line = () => p.all(rowOf(p, 'builder')).find(n => n.tagName === 'p' && /names one keeps it/.test(n.textContent));
   assert.equal(line(), undefined, 'not while it\'s unchanged');
   changeTo(p, 'builder', 'codex');
-  assert.match(line().textContent, /keep the builder they were made with, claude/);
-  assert.match(line().textContent, /tickets made from now on/);
+  assert.match(line().textContent, /A ticket that names one keeps it/);
+  assert.match(line().textContent, /every ticket that doesn't name its own builder/);
 });
 
 test('0293 AC4: the README and the setup skill name the command that switches the builder', () => {

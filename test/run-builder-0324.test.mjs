@@ -99,6 +99,6 @@ test('0324 AC4: the view says when a build_command you\'ve written yourself buil
     const p = await words(viewWith(builder, value, true, false));
     assert.equal(line(p), undefined, `${builder}'s own: each ticket keeps its builder`);
     changeTo(p, 'builder', builder === 'claude' ? 'codex' : 'claude');
-    assert.ok(p.all(rowOf(p, 'builder')).some(n => n.tagName === 'p' && /keep the builder they were made with/.test(n.textContent)));
+    assert.ok(p.all(rowOf(p, 'builder')).some(n => n.tagName === 'p' && /A ticket that names one keeps it/.test(n.textContent)));
   }
 });

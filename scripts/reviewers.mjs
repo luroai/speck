@@ -113,7 +113,7 @@ export function verdictFromOutput(stdout) {
 // The round-1 prompt exactly as it was sent, saved with the review's working files. If that copy is gone (another
 // machine, or a cleared cache), it is rebuilt from the commit round 1 reviewed. Only its test output can't be recovered.
 // A copy saved by a speck that still sent speck/product.md is rebuilt the same way, keeping the test output it holds.
-const roundOneFile = (repo, id) => path.join(cacheDir(repo, id), 'round-1.prompt.md');
+export const roundOneFile = (repo, id) => path.join(cacheDir(repo, id), 'round-1.prompt.md');
 const LEGACY_SPEC = '## Living spec (speck/product.md)';
 function savedTests(text) {
   const head = '## Test output (from the builder)\n\n```\n';
@@ -133,9 +133,29 @@ function roundOnePrompt(repo, s, id) {
   return fullPrompt(repo, ticket, s.cfg, reviewDiff(repo, base, sha), saved === null ? '(the round-1 test output was not kept)' : savedTests(saved), s.prior[0].meta.builder_response);
 }
 
+// 0388: the session a later round of reviewer `name`, on `settings`' model, can continue: { thread }, the one the last
+// round saved, or { why } it starts fresh. A round whose reviewer or model differs from the last round's starts fresh.
+export function resumableSession(prior, name, settings) {
+  const last = prior[prior.length - 1]?.meta;
+  if (!last) return { why: 'no earlier round was recorded' };
+  const changed = reviewerChanged(prior, name, settings);
+  if (changed) return { why: changed };
+  return last.thread_id ? { thread: last.thread_id } : { why: `no session id was saved from round ${last.round}` };
+}
+
+// Why the last round's session can't carry on for reviewer `name` on `settings`' model, or null when it ran on both.
+export function reviewerChanged(prior, name, settings) {
+  const last = prior[prior.length - 1]?.meta;
+  if (!last) return null;
+  const model = settingsMeta(settings).reviewer_model;
+  if (typeof last.reviewer === 'string' && last.reviewer !== name) return `round ${last.round} was reviewed by ${last.reviewer}`;
+  if (typeof last.reviewer_model === 'string' && last.reviewer_model !== model) return `round ${last.round} ran on model ${last.reviewer_model}, and this one runs on ${model}`;
+  return null;
+}
+
 // Later rounds give a reviewer with no memory everything it has seen: the round-1 prompt, every earlier verdict and
 // builder response in order, then this round's response, diff and tests.
-function historyPrompt(repo, s, id) {
+export function historyPrompt(repo, s, id) {
   const parts = [roundOnePrompt(repo, s, id), '# Earlier review rounds'];
   for (const r of s.prior) {
     if (r.meta.builder_response && r.meta.round > 1) parts.push(`## Builder response before round ${r.meta.round}`, r.meta.builder_response);
@@ -170,7 +190,8 @@ export function runCommandReview(repo, id, name, command, s) {
   const settings = reviewerSettings(s.ticket.fm, s.cfg);
   const values = { model: settings.model, effort: settings.effort };
   // Only the latest round's session has seen every round so far. An older one would miss the rounds since.
-  const lastThread = s.prior[s.prior.length - 1]?.meta?.thread_id;
+  const last = s.round > 1 ? resumableSession(s.prior, name, settings) : {};
+  const lastThread = last.thread;
   const resume = typeof options.resume_command === 'string' && options.resume_command.includes('{session}') ? options.resume_command : '';
   const ms = reviewTimeoutMs(s.cfg);
   const started = Date.now();
@@ -178,7 +199,7 @@ export function runCommandReview(repo, id, name, command, s) {
   if (s.round > 1) {
     let why = '';
     if (!resume) why = 'no resume_command with {session} is set for it';
-    else if (!lastThread) why = `no session id was saved from round ${s.round - 1}`;
+    else if (!lastThread) why = last.why;
     else {
       const tried = runReviewer(repo, name, resume, { ...values, session: lastThread }, reviewerPrompt(repo, s.ticket, s.cfg, s.round, { diff: s.diff, tests: s.tests, response: s.response, sinceSha: s.sinceSha, merged: s.merged }), ms);
       if (tried.error) why = `resuming session ${lastThread} failed: ${tried.error}`;
