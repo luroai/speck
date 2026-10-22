@@ -1,6 +1,6 @@
 # Read a reviewer's verdict after a line of prose
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: ticketed (0383)
 From ticket: 0374
 
 ## What
