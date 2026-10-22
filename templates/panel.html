@@ -1949,13 +1949,12 @@ $('more-stats').addEventListener('click', () => { moreStats = !moreStats; render
 let settingAgentModels = new Map(); // 0369: each agent chosen since the view opened: { reading } | { models } | { why }
 let settingsView = null, settingsSeq = 0; // null while it's closed, or { state: 'loading' | 'error' | 'ok', … }
 let settingTyped = new Map(), settingRefused = new Map(); // key → what was typed, and why the server refused it, until the view closes
-let settingScope = new Map(); // 0261: key → 'machine' or 'repo', where a change to a setting this machine can hold goes
 let settingClear = new Set(); // 0261: keys whose machine value is cleared on Save
 let settingsFailed = null; // 0274: why the last Save failed, when it wasn't one setting's fault
 let settingsSaid = null; // 0311: what the last Save changed that you didn't, such as builder_model cleared
-let settingsBar = null, settingAsks = new Map();
+let settingsBar = null;
 let settingRowsDrawn = new Map(); // 0370: key → its row, and its explanation's number, as drawn
-let settingControls = new Map(); // 0276: key → its control, as drawn // 0274: the Save button, and where each machine setting's question goes, as drawn
+let settingControls = new Map(); // 0276: key → its control, as drawn // 0274: the Save button, as drawn
 // 0268: each setting's explanation sits behind an info button beside its name. It shows while the pointer is over the
 // button or the button has focus, and a tap or click keeps it until the next tap or click on it. One shows at a time.
 let settingTip = null, settingTipKept = false, settingHover = null, settingFocus = null; // keys, or null
@@ -2059,7 +2058,6 @@ function closeSettings() {
   settingTipKept = false;
   settingTyped = new Map();
   settingRefused = new Map();
-  settingScope = new Map();
   settingClear = new Set();
   settingsFailed = settingsSaid = null;
   renderSettings();
@@ -2074,7 +2072,6 @@ function renderSettings() {
   holdPage(pageHeld());
   holdPane();
   settingTips = new Map();
-  settingAsks = new Map();
   settingControls = new Map();
   settingRowsDrawn = new Map();
   settingsBar = null;
@@ -2090,7 +2087,7 @@ function renderSettings() {
   if (settingsView.state === 'loading') kids.push(el('p', null, 'Loading the settings…'));
   else if (settingsView.state === 'error') kids.push(el('p', 'bad', settingsView.text));
   else {
-    kids.push(el('p', null, 'What speck reads from speck/config.yml now. Saving commits your changes to the base branch, apart from those for this machine only. Change the rest in the file.'));
+    kids.push(el('p', null, settingsLine()));
     for (const g of settingsView.groups) {
       const rows = [];
       for (const x of Array.isArray(g.settings) ? g.settings : []) rows.push(settingRow(x, settingTips.size));
@@ -2151,7 +2148,6 @@ function settingRow(x, n) {
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
     mine ? machineLine(x) : null,
     x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null,
-    edit && x.for_machine === true ? scopeQuestion(x.key) : null,
     (x.key === 'reviewer' || x.key === 'builder') && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293
     x.key === 'builder' ? builderSwitchLine(x) : null,
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
@@ -2480,23 +2476,14 @@ function clearLine(x) {
   keep.addEventListener('click', () => { settingClear.delete(x.key); settingRefused.delete(x.key); renderSettings(); });
   return el('p', 'line', null, el('span', null, `This machine's value, ${settingValue(x.value)}, is cleared when you save.`), keep);
 }
-// 0261: asked while a setting this machine can hold its own value for is changed: where the change goes. Its place in
-// the row is kept empty while the setting isn't changed.
-function scopeQuestion(key) {
-  const button = (label, scope) => {
-    const b = el('button', 'save', label);
-    b.type = 'button';
-    b.setAttribute('aria-pressed', String(settingScope.get(key) === scope));
-    b.addEventListener('click', () => { settingScope.set(key, scope); settingRefused.delete(key); renderSettings(); });
-    return b;
-  };
-  const ask = el('p', 'line', null, el('span', null, 'Save this for:'), button('This machine only', 'machine'), button('The repo, for everyone', 'repo'));
-  const slot = el('div', 'ask');
-  settingAsks.set(key, { slot, ask });
-  return slot;
-}
 const settingRows = () => settingsView !== null && Array.isArray(settingsView.groups)
   ? settingsView.groups.flatMap(g => Array.isArray(g.settings) ? g.settings : []) : [];
+// 0387: the line at the top of Settings: your own settings are saved for this machine, and which others saving commits.
+function settingsLine() {
+  const commits = settingRows().filter(x => x.editable === true && x.for_machine !== true).map(x => x.key);
+  return 'What speck uses now. Your own settings, marked this machine or repo, are saved for this machine only, without a commit.'
+    + (commits.length ? ` Saving ${commits.join(', ')} commits speck/config.yml to the base branch.` : '') + ' Change the rest in the file.';
+}
 // 0274: each setting whose value differs from the one the view read, as { key, value, machine }: what Save sends.
 function settingChanges() {
   const out = [];
@@ -2507,8 +2494,7 @@ function settingChanges() {
     const value = settingTyped.get(x.key), now = settingNow(x);
     const same = x.key === 'auto_ship_risk' ? value.split(',').filter(Boolean).sort().join() === now.split(',').filter(Boolean).sort().join() : value === now;
     if (same) continue;
-    const scope = x.for_machine === true ? settingScope.get(x.key) : 'repo'; // null: not yet said
-    out.push({ key: x.key, value, machine: scope === undefined ? null : scope === 'machine' });
+    out.push({ key: x.key, value, machine: x.for_machine === true }); // 0387: your own settings, for this machine
   }
   return out;
 }
@@ -2520,18 +2506,13 @@ function saveBar() {
   settingsBar = save;
   return el('div', 'savebar', null, settingsFailed !== null ? el('p', 'bad', settingsFailed) : null, settingsSaid !== null ? el('p', 'said', settingsSaid) : null, save);
 }
-// After each change: Save is pressable only while something differs and nothing is being saved, and each machine
-// setting asks where its change goes only while it's changed.
+// After each change: Save is pressable only while something differs and nothing is being saved.
 function refreshSettings() {
   if (settingsView === null || settingsView.state !== 'ok') return;
   const changes = settingChanges();
   if (settingsBar !== null) {
     settingsBar.disabled = changes.length === 0 || settingsView.saving === true;
     settingsBar.textContent = settingsView.saving === true ? 'Saving…' : 'Save';
-  }
-  for (const [key, { slot, ask }] of settingAsks) {
-    const asking = changes.some(c => c.key === key && !c.clear);
-    if (asking !== (slot.children.length > 0)) slot.replaceChildren(...(asking ? [ask] : []));
   }
 }
 // 0259: auto_ship and auto_ship_risk as the view last read them, as the ship queue reads them.
@@ -2563,11 +2544,10 @@ async function sendSettings() {
   if (settingsView === null || settingsView.state !== 'ok' || settingsView.saving) return;
   const changes = settingChanges(), mine = settingsSeq;
   if (!changes.length) return;
-  // Checked here first, so nothing is sent: a change still to be placed, or auto_ship_risk with nothing ticked (0259).
-  const unasked = changes.filter(c => c.machine === null), unticked = changes.find(c => c.key === 'auto_ship_risk' && c.value === '');
-  if (unasked.length || unticked) {
-    for (const c of unasked) settingRefused.set(c.key, 'Say whether this is for this machine only or the repo, then save.');
-    if (unticked) settingRefused.set(unticked.key, 'Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
+  // Checked here first, so nothing is sent: auto_ship_risk with nothing ticked (0259).
+  const unticked = changes.find(c => c.key === 'auto_ship_risk' && c.value === '');
+  if (unticked) {
+    settingRefused.set(unticked.key, 'Tick at least one risk. To stop tickets shipping by themselves, turn auto_ship off instead.');
     renderSettings();
     return;
   }
@@ -2592,7 +2572,8 @@ async function sendSettings() {
   settingsFailed = settingsSaid = null;
   refreshSettings();
   let refused = null, why = null, ask = false, again = false, said = null;
-  const query = [...changes.map(c => `${c.machine ? 'machine' : 'repo'}%3A${encodeURIComponent(c.key)}=${encodeURIComponent(c.value)}`),
+  // 0387: machine:<key>= clears this machine's value, so a blank one for this machine is sent as blank:<key>=.
+  const query = [...changes.map(c => `${!c.machine ? 'repo' : c.value === '' && !c.clear ? 'blank' : 'machine'}%3A${encodeURIComponent(c.key)}=${encodeURIComponent(c.value)}`),
     ...(more !== null ? [`confirm=${encodeURIComponent(more.risks)}`] : []),
     ...(replacing !== null ? [`replace=${encodeURIComponent(replacing.value)}`] : [])].join('&');
   try {
@@ -2627,7 +2608,7 @@ async function sendSettings() {
   settingsSaid = said;
   for (const c of changes) {
     if (c.clear) settingClear.delete(c.key);
-    else if (settingTyped.get(c.key) === c.value) { settingTyped.delete(c.key); settingScope.delete(c.key); }
+    else if (settingTyped.get(c.key) === c.value) settingTyped.delete(c.key);
   }
   loadSettings(); // the values speck now reads
   return true;
