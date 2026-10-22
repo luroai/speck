@@ -455,6 +455,7 @@ export function statusData(repo) {
       notes: sectionText(t.sections.notes),
       self_check: selfCheck(t.sections.notes),
       lint_messages: { errors: lint.errors, warnings: lint.warnings },
+      review_model: reviewerSettings(t.fm, cfg).model, // 0382: the model its review runs on, the ticket's or the config's, or null
       // 0167: whether speck ship --auto would ship it once approved, so the panel knows an approved one is waiting for you
       auto_ship: autoShipWhyNot(cfg, padId(t.fm.id), t.fm.risk, ticketRounds(t.raw).rounds, ticketTask(t), changesPending(t.raw, ticketRounds(t.raw).rounds).length > 0) === '', // 0356
       rounds: ticketRounds(t.raw).rounds.map(r => ({
