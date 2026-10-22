@@ -1,7 +1,7 @@
 ---
 id: "0373"
 title: "Restore speck's dot-matrix name beside the base branch"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-give-the-header-s-notice-board-more-room.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0372"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T22:15:26.690Z"
 
 ---
 # 0373 · Restore speck's dot-matrix name beside the base branch
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Under 700 px the header hides the dot-matrix "speck" word so the project line can stay. That line is 12 px text, so on a narrow pane the title reads as a small "speck · base main" beside the mark.
