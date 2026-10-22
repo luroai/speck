@@ -42,7 +42,8 @@ const MEASURE = `(async () => {
     return { shown, cut: e.scrollWidth > e.clientWidth + 0.5, ellipsis: getComputedStyle(e).textOverflow === 'ellipsis', top: r.top, bottom: r.bottom, left: r.left, right: r.right, width: r.width, height: r.height, mid: r.top + r.height / 2 }; };
   const c = document.getElementById('mark');
   return { header: box('header'), logo: box('.logo'), mark: box('.logo .mark'), name: box('.logo .name'), label: box('.logo span'), repo: box('.repo'),
-    theme: box('#theme'), settings: box('#settings-open'), viewBox: c.getAttribute('viewBox'), font: getComputedStyle(document.querySelector('.logo .name')).fontFamily,
+    settings: box('#settings-open'), // 0372: light/dark is chosen in Settings, not the header
+    viewBox: c.getAttribute('viewBox'), font: getComputedStyle(document.querySelector('.logo .name')).fontFamily,
     scroll: document.documentElement.scrollWidth, view: innerWidth };
 })()`;
 const apart = (a, b) => a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
@@ -57,7 +58,7 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
       await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
       await b.until(`document.readyState === 'complete' && !!document.querySelector('.logo .name')`, 'the panel');
       for (const look of ['light', 'dark']) {
-        if ((await b.js('document.documentElement.dataset.theme')) !== look) await b.js(`document.querySelector('.theme').click()`);
+        if ((await b.js('document.documentElement.dataset.theme')) !== look) await b.js(`setLook(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')`);
         await b.until(`document.documentElement.dataset.theme === '${look}' && document.getElementById('mark').getBoundingClientRect().width === 32`, `the ${look} look, with the mark drawn`);
         const m = await b.js(MEASURE);
         const at = `${width} px, ${look}: ${JSON.stringify(m)}`;
@@ -73,7 +74,7 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
         if (!phone) assert.ok(m.name.left >= m.mark.right && m.name.left - m.mark.right <= 8, `speck follows the mark on its line: ${at}`);
         // AC3: buttons as they were, and the header only as tall as the mark needs (63 px wide; on a phone since 0364, one row of 44 px buttons and 6 px above and below)
         const button = phone ? 44 : 34;
-        for (const k of ['theme', 'settings']) assert.ok(m[k].width === button && m[k].height === button, `${k} stays ${button} px: ${at}`);
+        for (const k of ['settings']) assert.ok(m[k].width === button && m[k].height === button, `${k} stays ${button} px: ${at}`);
         assert.equal(m.logo.height, 32, `the logo is no taller than the mark: ${at}`);
         assert.equal(m.header.height, phone ? 57 : 63, `the header grows only by what the mark needs: ${at}`);
         // AC4: nothing past the right edge, and nothing overlapping
@@ -84,7 +85,7 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
         // (at 320 px a long one was cut short with an ellipsis before 0309 too, and still is. 0364: on a phone it shares
         // its row with the buttons, so this test's speck-xxxxxx project may be cut short there too, never hidden)
         assert.ok(m.repo.shown && (!m.repo.cut || (phone && m.repo.ellipsis)), `the project's name shows in full on wider screens: ${at}`);
-        for (const [x, y] of [['logo', 'repo'], ['logo', 'theme'], ['logo', 'settings'], ['repo', 'theme'], ['repo', 'settings']]) assert.ok(apart(m[x], m[y]), `${x} and ${y} don't overlap: ${at}`);
+        for (const [x, y] of [['logo', 'repo'], ['logo', 'settings'], ['repo', 'settings']]) assert.ok(apart(m[x], m[y]), `${x} and ${y} don't overlap: ${at}`);
         assert.ok(m.repo.right <= m.view, at);
       }
     }

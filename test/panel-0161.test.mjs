@@ -43,9 +43,9 @@ const SURFACES = ['--bg', '--panel', '--raise', '--accent-bg', '--idea-bg', '--i
 // stage dots and the ensō's speck went in 0168.)
 const NO_TEXT = ['.live', '.live.go', '.live.stop', '.sq', '.lock::after', '.stats'];
 // Every control and card with an edge of its own, by its main rule.
-const EDGED = ['.tag', '.toggle', '.theme', '.run-state', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
+const EDGED = ['.tag', '.toggle', '.settings-open', '.run-state', '.set-ready', '.full-open', '.q .stop-build', '.q .back-to-plan', '.resume .copy',
   '#full-ticket .close', '#full-ticket .ship', '.prio-menu', '.item', '.q', '#shipped tr', 'section'];
-const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|toggle|theme|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
+const CONTROL = /(?:^|[^\w-])(?:\.(?:tag|toggle|settings-open|run-state|set-ready|full-open|stop-build|back-to-plan|copy|close|ship|prio-menu|item|q)|section)(?![\w-])/;
 const lastCompound = s => s.trim().split(/\s+|>|\+|~/).filter(Boolean).pop() || '';
 const size = r => {
   const fs = get(r, 'font-size'), font = get(r, 'font');
@@ -368,7 +368,7 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
         if (f) seen.push(f);
       }
       assert.ok(seen.length >= 10, `${theme}: Tab reaches the controls (${seen.length})`);
-      for (const kind of ['BUTTON.toggle', 'BUTTON.theme', 'SPAN.title-link', 'BUTTON.full-open', 'BUTTON.goto']) {
+      for (const kind of ['BUTTON.toggle', 'BUTTON.settings-open', 'SPAN.title-link', 'BUTTON.full-open', 'BUTTON.goto']) {
         assert.ok(seen.some(f => f.what.startsWith(kind)), `${theme}: Tab reaches a ${kind}: ${seen.map(f => f.what).join(' | ')}`);
       }
       for (const f of seen) {

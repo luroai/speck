@@ -43,6 +43,10 @@ Light and dark are chosen from a row in Settings, and the header no longer has t
 - Checked 2026-10-22: the button is `.theme` in the header of `templates/panel.html`. It toggles `data-theme` and stores `speck-theme` in `localStorage`. It is not one of the settings in `scripts/settings.mjs`.
 - 0373 waits for this: it changes `templates/panel.html` too, as do 0368 to 0371. 0374 does not: it only changes the notice board's speed.
 - Failing before this build: none
+- The Look row is a row of its own (like speck run's in the Foreman group), not one of the file's `.setting` rows, so tests that list the file's settings still see only those. One existing check had to change beyond the header-button ones: 0257 AC5 ("the view has no control that changes a setting") now also exempts the look list, as it already exempted 0268's info buttons and 0285's speck run switch, since the look isn't a setting in speck/config.yml.
+- AC4: the board takes the button's room wherever it was cut short; where it already shows in full (above 700 px it never shrinks), it has nothing more to show, and the extra room goes to the project's name.
+- The build skill's note on taking pictures pointed at the panel's theme button; it now points at the look in Settings.
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

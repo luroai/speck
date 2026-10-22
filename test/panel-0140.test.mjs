@@ -212,8 +212,9 @@ const LINES = sel => `(() => {
   return lines;
 })()`;
 // 0150: speck run's state is itself its on/off button, Auto-build, and the live indicator has gone.
+// 0372: and Settings, which ends it now that light and dark are chosen in Settings.
 const HEADER = { 'the speck name': 'header .logo', 'the repo and base branch': 'header .repo', 'Auto-build': '#run',
-  'the light/dark switch': '#theme' };
+  'Settings': '#settings-open' };
 
 test('0140 AC3: at 375 px, the header shows each of its parts in full, each label on one line', skip, async () => {
   await withPhone(async b => {
@@ -227,7 +228,7 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       // 0364: the project shares the phone's one row with the buttons, so it may be cut short with "…", never hidden
       if (sel === 'header .repo') assert.ok(!r.cut || await b.js(`getComputedStyle(document.querySelector('header .repo')).textOverflow === 'ellipsis'`), `${what} is in full or ends in "…"`);
       else assert.ok(!r.cut, `${what} isn't cut short`);
-      if (sel !== '#theme') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
+      if (sel !== '#settings-open') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
     assert.match(await b.js(`document.querySelector('header .repo').textContent`), /speck-\w+ · base main/);
     assert.ok(await b.js(`!document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), "the Foreman's notice board is shown, with no builder"); // 0364, 0365
@@ -273,7 +274,7 @@ for (const width of [375, 699]) {
       await check('the review pack pane');
       // The controls the ticket names were all among those checked.
       for (const c of ['button.set-ready', 'button.on', 'button.stop-build', 'button.full-open',
-        'button.ship', 'button.toggle.tickets.on', 'button.theme', 'span.tag.p1.pick', 'button.copy', 'button.close', 'span.title-link', 'summary.']) {
+        'button.ship', 'button.toggle.tickets.on', 'button.settings-open', 'span.tag.p1.pick', 'button.copy', 'button.close', 'span.title-link', 'summary.']) {
         assert.ok(seen.has(c), `${c} was checked (saw ${[...seen].join(', ')})`);
       }
       assert.ok([...seen].some(c => c === 'button.'), "speck run's on/off button was checked");
