@@ -41,6 +41,7 @@ Text that doesn't fit the board scrolls slowly enough to read.
 - Checked 2026-10-22: `BOARD.speed` in `templates/panel.html` is 30, and 0365's criterion 3 says about 30 dots a second. `test/panel-0365.test.mjs` asserts 30 dots in a second.
 - 10 dots a second is the slower pace asked for as "slower".
 - It does not wait on the Settings or header tickets. 0375 still waits for it, so 0.13.0 includes the slower board.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
