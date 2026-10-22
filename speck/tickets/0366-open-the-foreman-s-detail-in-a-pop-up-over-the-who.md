@@ -41,6 +41,7 @@ Pressing the notice board opens the Foreman's detail in a pop-up over the whole 
 ## Notes
 - Today: `#foreman`, `foremanOpen` and `renderForeman()` in `templates/panel.html` (0285, 0299, 0317, 0318, 0328).
 - Share the pop-up from 0362 rather than making a second kind.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
