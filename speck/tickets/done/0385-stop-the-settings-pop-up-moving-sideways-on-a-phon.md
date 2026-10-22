@@ -1,7 +1,7 @@
 ---
 id: "0385"
 title: "Stop the Settings pop-up moving sideways on a phone"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0382"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:51:47.077Z"
 approved: "2026-10-22T22:59:51.110Z"
+finished: "2026-10-22T23:02:46.207Z"
 
 ---
 # 0385 · Stop the Settings pop-up moving sideways on a phone
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0368 opened Settings in a full-window pop-up, the pop-up can be dragged left and right on a phone. A sideways swipe while scrolling the settings shifts the whole view, which feels broken and makes the column wobble under your thumb.
