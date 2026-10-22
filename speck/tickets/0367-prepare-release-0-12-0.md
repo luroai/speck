@@ -1,7 +1,7 @@
 ---
 id: "0367"
 title: "Prepare release 0.12.0"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0366"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T16:23:48.883Z"
 
 ---
 # 0367 · Prepare release 0.12.0
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 0361 to 0366 make the panel calmer in a narrow pane, such as Cursor's or the Claude desktop app's: a finished document task is a short row, a document opens in a pop-up you can ship it from, the header is one row with the project always shown, and the Foreman's status scrolls across a dot-matrix notice board whose detail opens in a pop-up. Anyone following the setup prompt, or updating speck on another machine, gets 0.11.0 without them.
