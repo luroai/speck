@@ -1,7 +1,7 @@
 ---
 id: "0370"
 title: "Keep Settings still when a setting changes"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-calm-the-settings-view-down.md"            
 after: ["0369"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T21:17:44.497Z"
+approved: "2026-10-22T21:30:36.371Z"
 
 ---
 # 0370 · Keep Settings still when a setting changes
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Changing the builder, the reviewer, the reviewer's model or the Foreman agent replaces the whole Settings view, so it looks as if the page reloaded. That's confusing when you're only picking one value.
@@ -53,9 +54,14 @@ Changing a setting in the Settings view no longer makes the whole view flash and
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (cursor): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: cursor, model grok-4.7-high-fast, effort default
+- Reviewer tokens: 0
+- Elapsed since build started: 13 min
+- Changed lines: 91 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-up: the place buttons ("This machine only", "The repo, for everyone"), clearing or keeping this machine's value, and a Save refused before sending still redraw the whole view. Saved to the inbox as speck/ideas/2026-10-22-keep-settings-still-when-a-setting-s-button-is-pressed.md.
 - Known limit: which rows a change redraws is a fixed list in SETTING_AFFECTS; a new setting that depends on another needs adding there.
