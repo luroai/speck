@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { TEMPLATES, SpeckError, sh, git, findRepoRoot, loadConfig, parseTicket, setField, reviewerSettings, ticketAgents, settingsMeta, syncHeader, findTicket, ROUNDS_HEADING, splitRounds, ticketRounds, posix, isAncestor } from './core.mjs';
-import { fullPrompt, historyPrompt, reviewerChanged, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong, reviewerOptions } from './reviewers.mjs';
+import { fullPrompt, historyPrompt, reviewerChanged, roundOneFile, runCommandReview, runLimited, reviewTimeoutMs, tookTooLong, reviewerOptions } from './reviewers.mjs';
 import { testOutput, testsMeta } from './tap.mjs';
 import { markRoundRunning, markSubagentRound, endRound } from './review-running.mjs';
 import { documentSection } from './output.mjs';
@@ -317,6 +317,8 @@ function runCodexReview(repo, id, s) {
   const lastThread = round > 1 && !fresh ? [...prior].reverse().find(r => r.meta?.thread_id)?.meta.thread_id : undefined;
   if (fresh && prior.some(r => r.meta?.thread_id)) console.log(`Started a fresh codex session with the full history, because ${fresh}.`);
   const prompt = round > 1 && !lastThread ? historyPrompt(repo, s, id) : reviewerPrompt(repo, ticket, cfg, round, { diff, tests, response, sinceSha, merged });
+  // 0388: kept, with each round's response, so a later fresh session can be given the full history.
+  if (round === 1) fs.writeFileSync(roundOneFile(repo, id), prompt);
 
   const common = ['--json', '--output-schema', schema, '-o', out, '-c', `sandbox_mode="${sandbox}"`,
     ...(settings.model ? ['-m', settings.model] : []), ...(settings.effort ? ['-c', `model_reasoning_effort="${settings.effort}"`] : [])];
@@ -336,7 +338,7 @@ function runCodexReview(repo, id, s) {
   const usage = events.filter(e => e.type === 'turn.completed').map(e => e.usage).pop() || {};
   const verdict = JSON.parse(fs.readFileSync(out, 'utf8'));
   fs.rmSync(out);
-  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...testsSeen });
+  return saveRound(repo, id, verdict, { reviewer: 'codex', ...settingsMeta(settings), reviewed_sha: head, ...(merge ? { merge } : {}), ...(extra ? { extra } : {}), session: lastThread ? 'continued' : 'fresh', thread_id: thread, ...(response ? { builder_response: response } : {}), ...(sandboxFailed(events) ? { sandbox_ok: false } : {}), seconds: Math.round((Date.now() - started) / 1000), usage, ...testsSeen });
 }
 
 function printRound(rec, cfg, all) {
