@@ -86,9 +86,9 @@ const scrollTo = async (b, y) => { await b.js(`scrollTo(0, ${y})`); await settle
 // The header and each of its parts: on screen or not, their boxes, and whether their text is cut short.
 const header = b => b.js(`(() => {
   const box = s => { const n = document.querySelector(s), r = n.getBoundingClientRect(); return { shown: getComputedStyle(n).display !== 'none' && getComputedStyle(n).visibility !== 'hidden' && r.width > 0 && r.height > 0, left: r.left, right: r.right, top: r.top, bottom: r.bottom, height: r.height, mid: r.top + r.height / 2, cut: n.scrollWidth > n.clientWidth + 0.5 }; };
-  const label = document.querySelector('#run .label');
+  const label = document.querySelector('#run .board'); // 0365: the Foreman's notice board, cut short when narrower than its dots
   return { header: box('header'), mark: box('.logo .mark'), name: box('.logo .name'), repo: box('.repo'), run: box('#run'), settings: box('#settings-open'), theme: box('#theme'),
-    runCut: label ? label.scrollWidth > label.clientWidth + 0.5 : false, repoText: document.querySelector('.repo').textContent.trim(), repoTitle: document.querySelector('.repo').title,
+    runCut: label ? label.getBoundingClientRect().width < Number(label.getAttribute('width')) - 0.5 : false, repoText: document.querySelector('.repo').textContent.trim(), repoTitle: document.querySelector('.repo').title,
     page: document.documentElement.scrollWidth, width: innerWidth };
 })()`);
 const ORDER = ['mark', 'repo', 'run', 'settings', 'theme'];

@@ -230,7 +230,7 @@ test('0140 AC3: at 375 px, the header shows each of its parts in full, each labe
       if (sel !== '#theme') assert.equal(await b.js(LINES(sel)), 1, `${what} is on one line`);
     }
     assert.match(await b.js(`document.querySelector('header .repo').textContent`), /speck-\w+ · base main/);
-    assert.ok(await b.js(`!document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`), "the Foreman's word is shown, with no builder"); // 0364
+    assert.ok(await b.js(`!document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), "the Foreman's notice board is shown, with no builder"); // 0364, 0365
   });
 });
 

@@ -86,7 +86,7 @@ async function withPage(run, fn, width = 1280) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .label')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && !!document.querySelector('#run .board')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -100,16 +100,16 @@ const LINES = sel => `(() => {
 })()`;
 
 // 0163: the builder took the square's place, so neither is green or red: the label says whether it's on. 0364: and the
-// builder has gone too, so the button shows its word alone.
+// builder has gone too, so the button shows its word alone. 0365: on its notice board.
 test('0144 AC1: on, the button shows its word, with no green square or builder', skip, async () => {
   await withPage({ on: true, pid: 7 }, async b => {
-    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`), true);
+    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), true);
   });
 });
 
 test('0144 AC2: off, the button shows its word, with no red square or builder', skip, async () => {
   await withPage(null, async b => {
-    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`), true);
+    assert.equal(await b.js(`!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`), true);
   });
 });
 
