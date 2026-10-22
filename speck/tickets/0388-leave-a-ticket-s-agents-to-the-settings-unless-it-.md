@@ -41,6 +41,7 @@ A ticket uses the builder and reviewer the settings give, unless it names its ow
 ## Notes
 - Checked 2026-10-22: `cmdNew` in `scripts/speck.mjs` sets builder, reviewer and reviewer_model from the config, and `templates/ticket.md` names `builder: claude` and `reviewer: codex`. `speck review` already falls back with `t.fm.reviewer || cfg.reviewer` (`scripts/review.mjs`), `ticketBuilder` falls back to the config's builder (`scripts/ticket-builder.mjs`), and `reviewerSettings` falls back for model and effort (`scripts/core.mjs`).
 - Waits for 0387: both change how settings reach the panel.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
