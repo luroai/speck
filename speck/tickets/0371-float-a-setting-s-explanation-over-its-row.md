@@ -46,7 +46,7 @@ The explanation floats over the top of its setting, after the pointer has rested
 - Self-check: a pause cut short by moving off, or by moving on to another info button, shows nothing when it ends (tested); Escape or closing Settings during a pause shows nothing later, as closing clears the hovered setting.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A setting's explanation in Settings now floats in a box just above its setting instead of opening underneath it, so the other settings stay where they are. Resting the pointer on the "i" for half a second shows it; clicking the "i", or reaching it with the keyboard, shows it straight away, and Escape hides it. To see it, open Settings and rest the pointer on any "i". A setting at the very top of the view shows its explanation just below it instead, so it isn't cut off.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,6 +56,7 @@ The explanation floats over the top of its setting, after the pointer has rested
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none for the inbox. Known limit: whether an explanation goes above or below its row is decided when it opens, not again if Settings is scrolled while it's open.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -128,6 +129,80 @@ The explanation floats over the top of its setting, after the pointer has rested
     ],
     "escalation_question": "",
     "summary": "A setting's explanation now floats over its row instead of pushing the rows below it down. It appears after the pointer has rested on the \"i\" for half a second, and a click or the keyboard still opens it straight away. At the panel's narrowest width the rows stay still and the note stays inside Settings, dropping under the row only when the row is at the very top so it is not cut off. It is not ready to merge. If you move onto the \"i\" and then click it shut, or press Escape, before that half-second is up, the note comes back on its own and can stay open after you move the pointer away."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · cursor · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "cursor",
+    "reviewer_model": "grok-4.7-high-fast",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b6eda8a8be81bb5566544e63302ededa2c5fdb3c",
+    "session": "continued",
+    "thread_id": "6206b8e6-c638-48df-9c6e-57831449411d",
+    "builder_response": "- Tests run: test/panel-0371.test.mjs test/panel-0268.test.mjs (plus the commands.checks files)\n- F1: fixed. In templates/panel.html, the info button's click and focus listeners and the Escape branch that hides an explanation now bump `settingHoverWait`, so a pause still running from the pointer shows nothing when it ends. New test `0371 AC3: closing it with a second click or Escape before the pointer's pause ends keeps it closed` fires mouseenter, click, focus, click, then ends the pause and checks it stays hidden; then mouseenter, click, Escape, pause ends, still hidden and Settings open.\n",
+    "seconds": 109,
+    "usage": {
+      "inputTokens": 114032,
+      "outputTokens": 10040,
+      "cacheReadTokens": 96640,
+      "cacheWriteTokens": 0
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T21:50:10.116Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Unchanged from round 1. templates/panel.html places `#settings .setting p.explain` absolutely above the row (z-index 2), and `placeSettingTip` adds `.below` when it would stick out of the top of `#settings`. Browser test `0371 AC1, AC4: at the narrowest width...` passed: rows do not move, the note is on top, and it stays inside the view at 320px."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "`settingInfo` still shows on mouseenter only after `SETTING_TIP_PAUSE` (500) and only if `settingHoverWait` and `settingHover` are unchanged. mouseleave still bumps the counter and hides an unpinned note. Click, focus and Escape also bump that counter, which only cancels a pause already in flight; a plain hover still waits. Tests `0371 AC2: the pointer must rest...` and `0371 AC2: moving off before the half second...` passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Click and focus in `settingInfo` still call `showSettingTip` immediately, and both now bump `settingHoverWait` first. The Escape branch bumps it before `showSettingTip(null)`. A pause started by mouseenter then cannot show the note again. Test `0371 AC3: closing it with a second click or Escape before the pointer's pause ends keeps it closed` hovers, clicks twice, lets the pause end, and checks it stays hidden; then hovers, clicks, presses Escape, lets the pause end, and checks it stays hidden with Settings still open. Focus still shows at once (`0371 AC3: a click shows it at once...`). In a real click, focus runs before click: focus opens it, click pins it, and the earlier pause no longer matches."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Unchanged. `settingInfo` still sets aria-describedby to the explanation in that row (`0371 AC4: each info button is still described...`). The narrow-width browser test passed, so the note stays inside Settings at 320px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "This round only bumps the hover-pause counter on click, focus and Escape, and adds the AC3 test. panel-0268.test.mjs was not changed again. The run was 125 passed, 0 failed. No unrelated failure was fixed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Moving the pointer onto an info button started a half-second timer. A click showed the note at once and left that timer running, so a second click or Escape before it fired closed the note and the timer opened it again.",
+        "suggested_fix": "Invalidate the pending hover pause on click, focus and Escape.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "A setting's explanation floats over its row, so the rows below it no longer jump down. It appears after the pointer has rested on the i for half a second. A click or the keyboard still opens it straight away, and at the narrowest width it stays inside Settings. The problem from the last review is fixed: clicking the i shut, or pressing Escape, during that half-second no longer makes the note come back on its own. This is ready for you to merge."
   }
 }
 ```
