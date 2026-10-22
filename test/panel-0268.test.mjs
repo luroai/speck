@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { fakePage, panelRepo, freePort, startPanel, stop, findChrome, browserPage, heldTimeouts } from './support/panel.mjs';
 
 // ---------- 0268: each setting's explanation in a tooltip ----------
 
@@ -11,7 +11,9 @@ const view = () => ({ groups: [{ title: 'Some', settings: KEYS.map(key => ({ key
 // A page whose fetch answers the board with an empty one and GET /api/settings with `view()`.
 async function openSettings() {
   const fetch = async url => ({ ok: true, status: 200, json: async () => String(url).startsWith('/api/settings') ? view() : { tickets: [], ideas: [], resume_command: '' } });
-  const p = fakePage([], { fetch });
+  const clock = heldTimeouts(); // 0371: the pointer's pause before an explanation shows
+  const p = fakePage([], { fetch, setTimeout: clock.setTimeout, clearTimeout: clock.clearTimeout });
+  p.rest = () => clock.rest(500);
   await p.settle();
   p.press(p.byId('settings-open'));
   await p.settle();
@@ -23,6 +25,8 @@ const infoOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'button'
 const tipOf = (p, key) => p.all(rowOf(p, key)).find(n => n.tagName === 'p' && n.textContent === `What ${key} does.`);
 const shown = p => KEYS.filter(k => !tipOf(p, k).hidden);
 const fire = (n, type) => n.listeners[type]({ target: n, currentTarget: n, stopPropagation() {}, preventDefault() {} });
+// 0371: the pointer onto the info button, resting there until its explanation's pause is up.
+const hover = (p, n) => { fire(n, 'mouseenter'); p.rest(); };
 
 test('0268 AC1: no explanation shows until asked for, and each setting has an info button beside its name, named after the setting', async () => {
   const p = await openSettings();
@@ -42,7 +46,7 @@ test('0268 AC1: no explanation shows until asked for, and each setting has an in
 test('0268 AC2: the explanation shows while the pointer is over the info button, and while it has focus', async () => {
   const p = await openSettings();
   const info = infoOf(p, 'builder');
-  fire(info, 'mouseenter');
+  hover(p, info);
   assert.deepEqual(shown(p), ['builder']);
   fire(info, 'mouseleave');
   assert.deepEqual(shown(p), []);
@@ -52,7 +56,7 @@ test('0268 AC2: the explanation shows while the pointer is over the info button,
   assert.deepEqual(shown(p), []);
   // Both at once: it stays until both have ended.
   fire(info, 'focus');
-  fire(info, 'mouseenter');
+  hover(p, info);
   fire(info, 'mouseleave');
   assert.deepEqual(shown(p), ['builder'], 'still focused');
   fire(info, 'blur');
@@ -68,7 +72,7 @@ test('0268 AC2: a tap or click keeps it until it is tapped or clicked again, or 
   fire(a, 'blur');
   assert.deepEqual(shown(p), ['auto_ship'], 'kept after focus leaves');
   // A mouse click: hover, then a click.
-  fire(a, 'mouseenter');
+  hover(p, a);
   p.press(a);
   assert.deepEqual(shown(p), [], 'a second click hides it, though the pointer is still over it');
   p.press(a);
@@ -76,7 +80,7 @@ test('0268 AC2: a tap or click keeps it until it is tapped or clicked again, or 
   assert.deepEqual(shown(p), ['auto_ship'], 'kept after the pointer leaves');
   p.press(b);
   assert.deepEqual(shown(p), ['reviewer'], 'another setting\'s replaces it');
-  fire(a, 'mouseenter');
+  hover(p, a);
   assert.deepEqual(shown(p), ['auto_ship'], 'hovering another opens it instead');
   fire(a, 'mouseleave');
   assert.deepEqual(shown(p), []);
@@ -86,7 +90,7 @@ test('0268 AC3: Escape hides an open explanation and leaves the view open, and w
   const p = await openSettings();
   for (const how of ['click', 'focus', 'mouseenter']) {
     const info = infoOf(p, 'reviewer');
-    if (how === 'click') p.press(info); else fire(info, how);
+    if (how === 'click') p.press(info); else if (how === 'mouseenter') hover(p, info); else fire(info, how);
     assert.deepEqual(shown(p), ['reviewer'], how);
     p.key('Escape');
     assert.deepEqual(shown(p), [], `${how}: Escape hides it`);
