@@ -159,6 +159,8 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
     try { first = splitCommand(command)[0] || ''; } catch { /* an unclosed quote: reported as not found */ }
     checks.push(check(`Reviewer command for "${reviewer}" (${first || 'empty'})`, Boolean(first) && onPath(first),
       `Install ${first || 'the reviewer'} so it's on your PATH, or fix reviewer_options.${reviewer}.command in speck/config.yml.`));
+  } else if (reviewer === 'cursor') {
+    checks.push(check('Cursor CLI (reviews tickets)', CURSOR_CLIS.some(onPath), BUILDERS.cursor[2]));
   } else if (reviewer === 'codex') {
     const codexInstalled = runs('codex', ['--version']);
     checks.push(check('Codex CLI (reviews tickets)', codexInstalled,
