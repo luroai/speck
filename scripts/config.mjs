@@ -3,8 +3,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig } from './core.mjs';
-import { MACHINE_SETTINGS, machineConfig, saveMachineValue } from './machine.mjs';
+import { SpeckError, findRepoRoot, parseYaml, stripComment, EFFORTS, loadConfig, yamlValue } from './core.mjs';
+import { MACHINE_SETTINGS, machineConfig, saveMachineValues } from './machine.mjs';
 import { knownEffort } from './codex-models.mjs';
 import { ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { offeredModels } from './agents.mjs';
@@ -13,7 +13,7 @@ import { FIXING } from './foreman.mjs';
 import { FOREMAN_AGENTS } from './foreman-agent.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 
-const USAGE = 'Usage: speck config set <key> <value>, speck config set --machine <key> <value> for this machine only, speck config set builder <name> [--replace] to switch the builder, or speck config show [--json] to see the main settings.';
+const USAGE = 'Usage: speck config set <key> <value>, which saves your own settings for this machine only, speck config set --repo <key> <value> to change speck/config.yml\'s, speck config set --machine <key> "" to remove this machine\'s value, speck config set builder <name> [--replace] to switch the builder, or speck config show [--json] to see the main settings.';
 
 // Every setting `speck config set` can change, with how speck reads it. reviewer_options and other free-form maps
 // are left to hand editing.
@@ -72,14 +72,7 @@ export function checkConfigValue(key, value) {
   return value;
 }
 
-// A value as it's written in speck/config.yml, so that it reads back exactly.
-export function yamlValue(value) {
-  if (typeof value !== 'string') return Array.isArray(value) ? `[${value.join(', ')}]` : String(value);
-  const readsBack = v => parseYaml(`k: ${v}   # comment`).k === value;
-  if (/^[A-Za-z0-9_./@~-][^#'"]*$/.test(value) && !/:\s|\s$/.test(value) && readsBack(value)) return value;
-  if (!value.includes("'") && !/[\n\r]/.test(value) && readsBack(`'${value}'`)) return `'${value}'`;
-  return JSON.stringify(value);
-}
+export { yamlValue }; // 0386: moved to core.mjs, so this machine's file is written the same way
 
 const show = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : v === undefined ? '(not set)' : typeof v === 'object' ? '{}' : String(v);
 
@@ -139,31 +132,37 @@ export function setConfigText(text, keys, v) {
 }
 
 // 0260: `speck config set --machine <key> <value>` sets a setting for this machine only, over speck/config.yml's value,
-// in a file git ignores. A blank value removes it, so speck/config.yml's value applies again.
-function setMachine(key, raw) {
+// in a file git ignores. A blank value removes it, so speck/config.yml's value applies again. 0386: `speck config set`
+// does the same for your own settings without --machine, where a blank value is saved as blank rather than removing it.
+function setMachine(key, raw, remove, replace = false) {
   if (!MACHINE_SETTINGS.includes(key))
     throw new SpeckError(`--machine can set only ${MACHINE_SETTINGS.join(', ')}, not "${key}". Set ${key} for every machine with \`speck config set ${key} <value>\`.`);
-  const value = raw === '' ? undefined : checkConfigValue(key, raw);
+  if (key === 'builder' && !remove) return setBuilder(raw, replace, true);
+  const value = remove ? undefined : checkConfigValue(key, raw);
   const repo = findRepoRoot();
   const values = machineConfig(repo);
-  const committed = loadConfig(repo, { machine: false })[key] ?? 1;
+  const committed = loadConfig(repo, { machine: false })[key] ?? (key.startsWith('max_parallel_') ? 1 : undefined);
   const before = Object.hasOwn(values, key) ? values[key] : committed;
   if (value === undefined && !Object.hasOwn(values, key)) {
     console.log(`${key} has no value for this machine, so speck uses speck/config.yml's: ${show(committed)}.`);
     return;
   }
-  saveMachineValue(repo, key, value);
+  // Removing a builder also removes the build_command switching to it saved, so speck/config.yml's pair applies again.
+  const pair = key === 'builder' && value === undefined && Object.hasOwn(values, 'build_command') && values.build_command === ownBuildCommand(values.builder);
+  saveMachineValues(repo, pair ? [[key, undefined], ['build_command', undefined]] : [[key, value]]);
   console.log(value === undefined
     ? `${key} (this machine): ${show(before)} → ${show(committed)}, speck/config.yml's value`
     : `${key} (this machine): ${show(before)} → ${show(value)}`);
 }
 
 export function cmdConfig(args) {
-  const machine = args.slice(1).includes('--machine');
-  const replace = args[1] === 'builder' && args.slice(2).includes('--replace'); // 0293
-  const [sub, key, ...rest] = [args[0], ...args.slice(1).filter(a => a !== '--machine' && !(replace && a === '--replace'))];
-  if (sub !== 'set' || !key || !rest.length) throw new SpeckError(USAGE);
-  if (machine) return setMachine(key, rest.join(' '));
+  const flags = args.slice(1), machine = flags.includes('--machine'), repoFlag = flags.includes('--repo');
+  const words = flags.filter(a => a !== '--machine' && a !== '--repo');
+  const replace = words[0] === 'builder' && words.slice(1).includes('--replace'); // 0293
+  const [sub, key, ...rest] = [args[0], ...words.filter(a => !(replace && a === '--replace'))];
+  if (sub !== 'set' || !key || !rest.length || (machine && repoFlag)) throw new SpeckError(USAGE);
+  // 0386: your own settings are saved for this machine, unless --repo asks for speck/config.yml's.
+  if (machine || (!repoFlag && MACHINE_SETTINGS.includes(key))) return setMachine(key, rest.join(' '), machine && rest.join(' ') === '', replace);
   if (key === 'builder') return setBuilder(rest.join(' '), replace);
   const value = checkConfigValue(key, rest.join(' '));
   const repo = findRepoRoot();
@@ -185,10 +184,11 @@ export function cmdConfig(args) {
 // 0293: `speck config set builder <name> [--replace]`, as the panel's Settings view switches it: build_command is set
 // to the new builder's own in the same write, for a builder speck starts by itself. One set by hand is replaced only
 // with --replace. A builder of the reviewer's family is set, with a note saying which reviewer is from another family.
-function setBuilder(value, replace) {
+// 0386: with `machine`, the builder and the settings it changes are saved for this machine, read as speck uses them.
+function setBuilder(value, replace, machine = false) {
   const repo = findRepoRoot();
   const file = path.join(repo, 'speck', 'config.yml');
-  const text = fs.readFileSync(file, 'utf8'), was = parseYaml(text);
+  const text = fs.readFileSync(file, 'utf8'), was = machine ? loadConfig(repo) : parseYaml(text);
   const before = was.builder ?? 'claude', own = ownBuildCommand(value);
   const changes = [['builder', value]];
   if (value !== before && own !== null && was.build_command !== own) {
@@ -199,13 +199,17 @@ function setBuilder(value, replace) {
   // 0311: and clears a builder_model the new builder doesn't offer, saying why.
   const cleared = value !== before ? clearsBuilderModel(was.builder_model, value, () => offeredModels(value)) : null;
   if (cleared !== null) changes.push(['builder_model', '']);
-  let next = text;
-  for (const [k, v] of changes) next = setConfigText(next, [k], yamlValue(v));
-  const read = parseYaml(next);
-  for (const [k, v] of changes) if (read[k] !== v)
-    throw new SpeckError(`Couldn't write ${k} so that speck reads it back as given. Edit speck/config.yml by hand instead.`);
-  fs.writeFileSync(file, next);
-  for (const [k, v] of changes) console.log(`${k}: ${show(was[k])} → ${show(v)}${k === 'builder_model' ? `, cleared because ${cleared}.` : ''}`);
+  if (machine) saveMachineValues(repo, changes);
+  else {
+    let next = text;
+    for (const [k, v] of changes) next = setConfigText(next, [k], yamlValue(v));
+    const read = parseYaml(next);
+    for (const [k, v] of changes) if (read[k] !== v)
+      throw new SpeckError(`Couldn't write ${k} so that speck reads it back as given. Edit speck/config.yml by hand instead.`);
+    fs.writeFileSync(file, next);
+  }
+  const where = machine ? ' (this machine)' : '';
+  for (const [k, v] of changes) console.log(`${k}${where}: ${show(was[k])} → ${show(v)}${k === 'builder_model' ? `, cleared because ${cleared}.` : ''}`);
   const cfg = loadConfig(repo);
   if (cfg.allow_same_model_review !== true) {
     const problem = sameModelProblem(value, String(cfg.reviewer ?? ''), cfg, cfg.reviewer_model);

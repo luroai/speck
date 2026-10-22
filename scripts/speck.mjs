@@ -530,8 +530,8 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first and commits the ticket; priority "" clears it)
-  speck config set <key> <value>      change one setting in speck/config.yml, checked first (nested: commands.test)
-  speck config set --machine <key> <value>  set max_parallel_builds or max_parallel_tests for this machine only ("" removes it)
+  speck config set <key> <value>      change one setting, checked first: your own (builder, reviewer, auto_ship...) for this machine only, the rest in speck/config.yml
+  speck config set --repo <key> <value>     change speck/config.yml's value instead; --machine <key> "" removes this machine's own value
   speck config show [--json]          the main settings by group, with each one's value, whether it's the default and
                                       what it does, as the panel's Settings view explains them
   speck start <id>                    start building a ready ticket, in its own worktree if worktrees are on

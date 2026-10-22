@@ -61,7 +61,7 @@ test('0260 AC2: a machine value is used over config.yml\'s from the main checkou
   }
   assert.equal(machineConfigFile(r.wt), machineConfigFile(r.dir), 'worktrees read the main checkout\'s file');
   assert.equal(loadConfig(r.dir, { machine: false }).max_parallel_builds, 1, 'config.yml\'s own value is unchanged');
-  const shared = r.run(r.dir, 'max_parallel_builds', '5');
+  const shared = r.run(r.dir, '--repo', 'max_parallel_builds', '5');
   assert.match(shared.stdout, /max_parallel_builds: 1 → 5\nThis machine uses its own max_parallel_builds, 3, over it/, 'setting it for every machine says this one keeps its own');
   assert.equal(loadConfig(r.wt).max_parallel_builds, 3);
 });
@@ -85,7 +85,7 @@ test('0260 AC3: a blank value removes this machine\'s value, so config.yml\'s ap
 
 test('0260 AC4: --machine refuses any other setting, naming the ones it can set, and changes nothing', () => {
   const r = repo();
-  for (const key of ['reviewer', 'limits.max_review_rounds', 'constructor', '__proto__']) {
+  for (const key of ['base_branch', 'limits.max_review_rounds', 'constructor', '__proto__']) {
     const out = r.run(r.dir, '--machine', key, 'x');
     assert.notEqual(out.status, 0);
     assert.match(out.stderr, /max_parallel_builds, max_parallel_tests/);
