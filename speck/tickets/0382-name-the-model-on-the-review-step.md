@@ -1,7 +1,7 @@
 ---
 id: "0382"
 title: "Name the model on the review step"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T22:45:50.514Z"
 ---
 # 0382 · Name the model on the review step
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 While a ticket is being reviewed, its card says "Cursor is reviewing" or "Claude is reviewing". That names the family. When a model is set, it hides the model that is actually reviewing.
@@ -45,7 +45,7 @@ A ticket being reviewed names the model that is reviewing it.
 - Self-check: no changes
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+While a ticket is in review, its card on the board now names the model doing the review, written just as it is in the settings, for example "grok-4.7-high is reviewing · round 2". If no model is set for the ticket or for the project, the card names the reviewer as before, such as "Codex is reviewing". While the builder fixes the reviewer's findings, the card still names the builder. To see it, set a reviewer model in Settings and watch a ticket's card while it's being reviewed.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,66 @@ A ticket being reviewed names the model that is reviewing it.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "aac31cd168efef1a2482311014312ea7bd4b8643",
+    "thread_id": "01a165cd-22ec-7c62-9b8e-bcd858e6a28e",
+    "seconds": 18,
+    "usage": {
+      "input_tokens": 86405,
+      "cached_input_tokens": 51328,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 549,
+      "reasoning_output_tokens": 0
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T22:48:42.841Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html doing() uses review_model without capitalising it in both reviewing paths. The passing 0382 AC1 panel test checks model names and round numbers; the statusData test checks ticket-model precedence."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/speck.mjs statusData() resolves review_model through core.mjs reviewerSettings(), also used by review execution. Passing 0382 AC2 tests check config fallback, both models blank, reviewer-family fallback and no reviewer set."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "doing() retains round numbers and the existing builder-fixing branch. The passing 0382 AC3 test checks that round 2 findings still name Claude as the builder."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded targeted run reports 145 passed, 3 skipped and no failures across 148 tests. No existing tests were changed, and the production diff is confined to resolving and displaying the review model."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Reviewing cards now show the configured model exactly as named, with the round number. Reviewer-name fallbacks and builder-fixing messages are preserved. The targeted tests passed, and I found no blocking issues."
+  }
+}
+```
+
+</details>
