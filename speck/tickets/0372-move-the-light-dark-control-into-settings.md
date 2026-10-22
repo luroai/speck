@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-10-22-give-the-header-s-notice-board-more-room.md
 after: ["0371"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T21:53:21.042Z"
-approved: "2026-10-22T22:08:12.981Z"
+approved: "2026-10-22T22:12:50.742Z"
 
 ---
 # 0372 · Move the light/dark control into Settings
@@ -59,12 +59,13 @@ To see it, open Settings, scroll to Look and pick dark or light. On a phone or a
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 201,936
-- Elapsed since build started: 15 min
+- Reviewer tokens: 532,794
+- Elapsed since build started: 19 min
 - Changed lines: 71 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups only, none to the inbox):
@@ -131,6 +132,71 @@ Round 1 (codex): approve.
     "findings": [],
     "escalation_question": "",
     "summary": "Light and dark are now chosen in Settings and remembered in this browser without needing Save. Removing the header button gives the notice board more room on narrow screens. The relevant tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f64a95885966dff41efeda9be0900a829864c76a",
+    "merge": true,
+    "thread_id": "01a165a7-d60a-7393-aaa2-4713e06189cd",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 329692,
+      "cached_input_tokens": 263680,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1166,
+      "reasoning_output_tokens": 76
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T22:12:47.321Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains Settings and the notice board while removing the theme button and its CSS. The 0372 AC1 tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "lookGroup() displays light and dark and chooseLook() applies the selection. Passing 0372 and 0136 tests cover both directions and synchronisation with the page. The new regression test exercises opening Settings when the fake root lacks dataset."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "chooseLook() stores speck-theme in localStorage; theme-start restores it on load. Passing 0372 AC3 tests verify persistence and that the choice causes neither server requests nor unsaved configuration changes."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0372 AC4 browser tests cover widths from 320 to 1200 px, measuring recovered board space, one-row layout, no overlap and button heights of at least 44 px below 700 px."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0372-tests.txt: 515 passed, zero failed, three skipped. Previously failing 0368 tests now pass without being weakened; the production change safely handles a missing dataset."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The change still meets all five criteria. The follow-up fixes a compatibility problem with existing Settings tests without changing normal browser behaviour. The expanded test run passes, and there are no blocking concerns."
   }
 }
 ```
