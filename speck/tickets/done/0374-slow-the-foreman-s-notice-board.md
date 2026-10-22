@@ -1,7 +1,7 @@
 ---
 id: "0374"
 title: "Slow the Foreman's notice board"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: []                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T19:40:00.584Z"
 approved: "2026-10-22T20:00:16.945Z"
+finished: "2026-10-22T20:02:56.089Z"
 
 ---
 # 0374 · Slow the Foreman's notice board
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When the Foreman's notice board has more text than fits, it scrolls at about 30 dots a second. That is too fast to read.
