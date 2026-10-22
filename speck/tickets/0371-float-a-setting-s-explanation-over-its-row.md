@@ -1,7 +1,7 @@
 ---
 id: "0371"
 title: "Float a setting's explanation over its row"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-calm-the-settings-view-down.md"            
 after: ["0370"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T21:33:36.430Z"
+approved: "2026-10-22T21:50:19.201Z"
 
 ---
 # 0371 · Float a setting's explanation over its row
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The "i" beside a setting shows its explanation under the row as soon as the pointer is over it, which pushes every setting below it down.
@@ -52,9 +53,15 @@ A setting's explanation in Settings now floats in a box just above its setting i
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (cursor): changes requested: F1 Moving the pointer onto an info button starts a half-second timer.
+Round 2 (cursor): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: cursor, model grok-4.7-high-fast, effort default
+- Reviewer tokens: 0
+- Elapsed since build started: 17 min
+- Changed lines: 34 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: whether an explanation goes above or below its row is decided when it opens, not again if Settings is scrolled while it's open.
 
