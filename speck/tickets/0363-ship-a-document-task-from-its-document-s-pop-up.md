@@ -1,7 +1,7 @@
 ---
 id: "0363"
 title: "Ship a document task from its document's pop-up"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T15:18:23.341Z"
 ---
 # 0363 · Ship a document task from its document's pop-up
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 To ship a document task you read its document, then go back to the review pack in the side pane to find Ship. Reading and deciding should happen in one place.
@@ -45,7 +45,7 @@ An approved document task's document pop-up has the review pack's Ship and Ask f
 - Self-check: a note typed in the pop-up's box now shows in the pack's box too (and the other way), so the pack never sends a note other than the one it shows; the pop-up's controls are redrawn only when what they show changes, so typing doesn't redraw the document.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+When you open an approved document task's document from its review pack, the pop-up now has Ship, and a box with Ask for changes, above the document. You can read it and decide there, without going back to the review pack. They work exactly as the pack's do, with the same messages, and a note you start typing in one shows in the other. To see it, open an approved document task's review pack in the panel and press its document. Worth a look: a long document puts the buttons at the top, so you scroll back up to ship.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,3 +55,70 @@ An approved document task's document pop-up has the review pack's Ship and Ask f
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "d85cafe3c1d00f42e959ffb8e6a53bb228403acb",
+    "thread_id": "01a16435-4573-70f2-a61d-f943904c935c",
+    "seconds": 31,
+    "usage": {
+      "input_tokens": 145302,
+      "cached_input_tokens": 101120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 753,
+      "reasoning_output_tokens": 44
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T15:23:26.065Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: drawDoc and drawDocActs place shared shipPart controls above the document. Both AC1 tests in test/pack-0363.test.mjs pass, checking placement, controls and shared styling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "drawDocActs reuses shipPart and shipTicket, including confirmation, request, disabled state and result wording. Passing AC2 tests cover success, refusal, network failure, cancellation and an externally running ship."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "changesPart and askForChanges are shared with the pack; the input handler synchronises both note boxes. Passing AC3 tests verify the submitted note, authentication header, sending state, success, refusal, retained note and synchronisation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "shipPart gates controls on approval or shipping state. Passing AC4 tests verify their removal after a status change and exercise the pack's existing Ship and Ask for changes actions."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified /tmp/speck-0363-tests.txt: 162 tests, 159 passed, 3 skipped, no failures. The targeted run covers existing document pop-up, document buttons, shipping and changes tests alongside the new tests and repository checks. No existing tests were weakened."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Approved document pop-ups now let you ship or ask for changes directly above the document. They reuse the review pack's actions and messages, and both note boxes stay in sync. The targeted tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
