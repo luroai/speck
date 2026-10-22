@@ -41,6 +41,7 @@ Saving your own settings in the panel makes no commit.
 ## Notes
 - Checked 2026-10-22: `panelSaveSettings` in `scripts/settings.mjs` commits speck/config.yml for every change not marked for this machine, and refuses with 409 while `git status` shows the file changed. In `templates/panel.html`, `settingScope` (0261) asks where a change to a setting this machine can hold goes.
 - Waits for 0386, and for 0385, which also changes `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
