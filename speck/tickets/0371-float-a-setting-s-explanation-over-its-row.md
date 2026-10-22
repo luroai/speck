@@ -42,6 +42,7 @@ The explanation floats over the top of its setting, after the pointer has rested
 ## Notes
 - Checked 2026-10-22: `#settings .setting p.explain` sits in the flow under the row (`templates/panel.html`), and `settingInfo` shows it on pointer entry with no pause (0268).
 - Half a second is the pause asked for as "a while". Keyboard focus still shows the explanation at once, so 0268's keyboard behaviour stays.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
