@@ -43,6 +43,8 @@ On a phone, the Settings pop-up only scrolls up and down.
 - Checked 2026-10-22: which phone and browser the user saw it on can't be checked from here, and no real device is to hand. The fix doesn't depend on it: it stops sideways scrolling in CSS that every mobile browser follows.
 - A bug in 0368, which shipped in the run-up to 0.13.0. Waits for 0382 (which waits for 0381): all three change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: no changes. Checked by hand that the tests catch the bug: with the old page all three fail, without the new CSS a real touch swipe still moved it 16 px sideways, and without the scroll guard a sideways scroll from script stayed.
+- Pictures: none, because nothing looks different: the pop-up only stops moving sideways. Its look at every width is unchanged.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
