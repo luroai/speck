@@ -275,13 +275,12 @@
   .run-state .board.plain { display: none; }
   .run-state .board.plain + .board-text { position: static; width: auto; height: auto; min-width: 0; clip-path: none; text-overflow: ellipsis; }
   .run-state .fixing { flex: none; font-size: 12px; color: var(--muted); border-left: .5px solid var(--line); padding-left: 6px; } /* 0317 */
-  /* 0285: the Foreman's status, coloured by its tone, and its detail under the header */
+  /* 0285: the Foreman's status, coloured by its tone, and its detail, in a pop-up over the whole panel (0366) */
   .run-state.fm-ok { color: var(--ok); border-color: var(--ok); }
   .run-state.fm-warn { color: var(--warn); border-color: var(--warn); }
   .run-state.fm-bad { color: var(--bad); border-color: var(--bad); }
   .run-state.fm-off { color: var(--muted); }
-  .foreman { font-size: 13px; padding: 8px 24px 12px; border-bottom: .5px solid var(--line); background: var(--raise); }
-  .foreman[hidden] { display: none; }
+  .foreman { font-size: 13px; }
   .foreman h4 { margin: 8px 0 2px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
   .foreman ul { margin: 0; padding-left: 18px; }
   .foreman p { margin: 2px 0; }
@@ -436,19 +435,20 @@
   #settings-unsaved button.save-all { color: var(--text); background: var(--raise); border-color: var(--text); }
   #full-ticket:focus { outline: none; }
   #full-ticket .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
-  #doc-view .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
+  #doc-view .top, #foreman .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; padding: 12px 0 10px; border-bottom: .5px solid var(--line-soft); margin-bottom: 10px; }
   #full-ticket .top .tags { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px; } /* 0165: as in Plan and the queue */
-  #full-ticket .close, #doc-view .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
-  #full-ticket .close:hover, #doc-view .close:hover { color: var(--text); }
+  #full-ticket .close, #doc-view .close, #foreman .close { margin-left: auto; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; }
+  #full-ticket .close:hover, #doc-view .close:hover, #foreman .close:hover { color: var(--text); }
   #full-ticket .ready { border-left: 0; padding: 0 0 10px; margin-bottom: 10px; border-bottom: .5px solid var(--line-soft); }
   #full-ticket h4 { margin: 0 0 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 400; }
   #full-ticket .md, #full-ticket ol.criteria, #doc-view .md { margin: 0 0 10px; color: var(--text); overflow-wrap: anywhere; }
-  /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column */
-  #doc-view { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
-  #doc-view[hidden] { display: none; }
-  #doc-view .top, #doc-view .doc-actions, #doc-view .md { max-width: 760px; margin: 0 auto; }
-  #doc-view .top { margin-bottom: 10px; }
-  #doc-view .top .title { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; }
+  /* 0362: a document task's Markdown file, over the whole panel, its path and Close above its text in a centred column.
+     0366: the Foreman's detail opens in the same pop-up. */
+  #doc-view, #foreman { position: fixed; inset: 0; z-index: 12; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  #doc-view[hidden], #foreman[hidden] { display: none; }
+  #doc-view .top, #doc-view .doc-actions, #doc-view .md, #foreman .top, #foreman .fm-body { max-width: 760px; margin: 0 auto; }
+  #doc-view .top, #foreman .top { margin-bottom: 10px; }
+  #doc-view .top .title, #foreman .top .title { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; }
   #full-ticket ol.criteria { padding-left: 18px; }
   #full-ticket ol.criteria > li { margin-bottom: 4px; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
@@ -547,7 +547,6 @@
     #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .setting .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
-    .foreman { padding: 8px 16px 12px; }
 
     main { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
     .sh { flex-wrap: wrap; align-items: center; }
@@ -602,7 +601,7 @@
     td .full-open { min-height: 44px; }
 
     /* The full ticket and review pack */
-    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes { min-width: 44px; min-height: 44px; }
+    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close { min-width: 44px; min-height: 44px; }
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
     #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody, #doc-view .md table, #doc-view .md tbody,
     #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td, #doc-view .md tr, #doc-view .md td { display: block; }
@@ -635,7 +634,6 @@
     <svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
   </button>
 </header>
-<div class="foreman" id="foreman" hidden></div>
 <div class="offline" id="offline" hidden>Disconnected: can't reach speck panel. Showing the last state received. Retrying every 2 seconds…</div>
 <div class="restart" id="restart" hidden></div>
 <div class="run-error" id="run-error" hidden></div>
@@ -660,6 +658,7 @@
 <div id="full-backdrop" hidden></div>
 <aside id="full-ticket" tabindex="-1" hidden></aside>
 <div id="doc-view" tabindex="-1" role="dialog" aria-modal="true" aria-label="Document" hidden></div>
+<div class="foreman" id="foreman" tabindex="-1" role="dialog" aria-modal="true" aria-label="The Foreman" hidden></div>
 <div id="settings-backdrop" hidden></div>
 <aside id="settings" tabindex="-1" role="dialog" aria-label="Settings" hidden></aside>
 <div id="settings-unsaved" hidden></div>
@@ -1317,6 +1316,7 @@ const copyButtons = new Map(); // id → the Copy button last built for it
 let fullId = null; // the id of the ticket in the side pane, or null
 let fullFrom = null; // 0326: { id, list } of the Full ticket button that opened the pane, or null when something else did
 let focusBack = false; // 0326: the pane has closed, so the next render puts the focus back
+let foremanOpen = false; // 0285: whether the Foreman's detail is open. 0366: declared early, as holdPage reads it
 let packOf = null; // while the side pane shows a review pack instead: { id, state: 'loading' | 'ok' | 'none' | 'error', text }
 let shippingId = null; // the id whose Ship request hasn't been answered yet: one ship at a time
 let runSwitching = null; // 'on' or 'off' while the speck run switch's request hasn't been answered yet
@@ -1864,7 +1864,7 @@ function renderFull(m) {
   const tagsSig = t && !packOf ? signature([fullId, tagData(t)]) : null;
   pane.hidden = !t;
   $('full-backdrop').hidden = !t;
-  holdPage(!!t || settingsView !== null);
+  holdPage(pageHeld());
   if (sig !== fullBuilt) {
     fullBuilt = sig;
     readyBuilt = readySig;
@@ -1900,6 +1900,8 @@ function returnFocus() {
   if (to.focus) to.focus();
 }
 // While the pane is open the page can't scroll or take the focus, and it's put back where it was when the pane closes.
+// 0366: the same while Settings or the Foreman's pop-up is open.
+const pageHeld = () => fullId !== null || settingsView !== null || foremanOpen;
 let heldAt = null; // the page's scroll position when the pane opened, or null while it's closed
 function holdPage(on) {
   const root = document.documentElement;
@@ -2034,7 +2036,7 @@ function renderSettings() {
   const pane = $('settings'), open = settingsView !== null;
   pane.hidden = !open;
   $('settings-backdrop').hidden = !open;
-  holdPage(open || fullId !== null);
+  holdPage(pageHeld());
   settingTips = new Map();
   settingAsks = new Map();
   settingControls = new Map();
@@ -2460,7 +2462,7 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (tipTag !== null) closeTip();
   else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
-  else if (foremanOpen && settingsView === null) { foremanOpen = false; render(); } // 0285: the Foreman's detail
+  else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
   else if (settingsView !== null && settingTip !== null) showSettingTip(null, false); // 0268: the explanation first, then the view
   else if (settingsView !== null) leaveSettings();
@@ -3191,12 +3193,19 @@ function render() {
 }
 $('run').addEventListener('click', e => {
   e.stopPropagation();
-  foremanOpen = !foremanOpen;
+  if (foremanOpen) { closeForeman(); return; }
+  foremanOpen = true;
   render();
 });
+// 0366: closes the Foreman's pop-up, with the focus back on its notice board.
+function closeForeman() {
+  foremanOpen = false;
+  render();
+  const run = $('run');
+  if (run.focus) run.focus();
+}
 // 0285: the Foreman's status and detail, as the server worked them out from speck run's own record. A server without
 // it (older code) gets what the page can tell: on or off.
-let foremanOpen = false; // whether the Foreman's detail is open
 function foremanOf(st) {
   const f = st && st.foreman && typeof st.foreman === 'object' ? st.foreman : null;
   const on = !!(st && st.run && st.run.on), list = v => (Array.isArray(v) ? v : []);
@@ -3283,10 +3292,23 @@ function boardFrame(now) {
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
+// 0366: the detail, in the pop-up over the whole panel that a document opens in (0362). Its top, with Close, is kept
+// while it's open and only the detail under it is drawn again, so the focus stays in the pop-up through a refresh.
+// While it's open the page behind is held (holdPage), so only the pop-up can be clicked, scrolled or reached with Tab.
 function renderForeman(f, stale) {
-  const box = $('foreman');
+  const box = $('foreman'), was = !box.hidden && box.children.length > 0;
   box.hidden = !foremanOpen;
+  holdPage(pageHeld());
   if (!foremanOpen) { box.replaceChildren(); return; }
+  let body = was ? box.children[1] : null;
+  if (!body) {
+    const close = el('button', 'close', 'Close');
+    close.type = 'button';
+    close.addEventListener('click', e => { e.stopPropagation(); closeForeman(); });
+    body = el('div', 'fm-body');
+    box.replaceChildren(el('div', 'top', null, el('span', 'title', 'The Foreman'), close), body);
+  }
+  const had = within(document.activeElement, body);
   const kids = [];
   if (stale) {
     const reload = el('button', 'reload', 'Reload page');
@@ -3318,7 +3340,9 @@ function renderForeman(f, stale) {
   for (const d of list(a && a.did)) looked.push(item(String(d.id), `The Foreman ${String(d.did || d.action || '')}${d.text ? `: ${String(d.text)}` : ''}.`, d.why ? `Why: ${String(d.why)}` : '',
     ...(typeof d.outcome === 'string' && d.outcome ? [el('p', 'outcome', d.outcome)] : []))); // 0328: what became of a question, as the server says it
   kids.push(...section('Looked into', looked, 'The Foreman hasn\'t had to look into anything.'));
-  box.replaceChildren(...kids);
+  body.replaceChildren(...kids);
+  if (!was) box.scrollTop = 0;
+  if ((!was || had) && box.focus) box.focus({ preventScroll: true }); // into it, or back into it when what had it was drawn again
 }
 // 0285: the speck run switch, in the Settings view's Foreman group. One button, kept between redraws so it keeps focus,
 // working as the header's did (0150): it reads Auto-build on or off, and a press turns speck run off or on.
