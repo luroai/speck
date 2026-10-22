@@ -367,11 +367,41 @@ export function cmdReview(args) {
   process.exitCode = { ship: 0, fix: 10, block: 11 }[next.action];
 }
 
-// A subagent often wraps its JSON verdict in a ```json fence, even when asked not to, so a reply saved as it was sent is accepted.
+// Where the JSON value starting at the brace at `from` ends, skipping braces inside strings, or -1 if it never closes.
+function objectEnd(s, from) {
+  let depth = 0, inString = false;
+  for (let i = from; i < s.length; i++) {
+    const c = s[i];
+    if (inString) { if (c === '\\') i++; else if (c === '"') inString = false; }
+    else if (c === '"') inString = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return i;
+  }
+  return -1;
+}
+
+// The last unfenced JSON object with a `verdict` key in a reply with prose before, after or between objects (0383).
+export function verdictInProse(text) {
+  const s = String(text);
+  let found = null;
+  for (let i = s.indexOf('{'); i !== -1;) {
+    const end = objectEnd(s, i);
+    let v = null;
+    if (end !== -1) try { v = JSON.parse(s.slice(i, end + 1)); } catch { /* not JSON: try the next brace */ }
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (Object.hasOwn(v, 'verdict')) found = v;
+      i = s.indexOf('{', end + 1);
+    } else i = s.indexOf('{', i + 1);
+  }
+  return found;
+}
+
+// A subagent often wraps its JSON verdict in a ```json fence, even when asked not to, or opens with a line of prose,
+// so a reply saved as it was sent is accepted.
 function parseReply(text, file) {
   const body = text.trim().replace(/^```[a-z]*\r?\n([\s\S]*?)\r?\n```$/i, '$1');
   let v = null;
-  try { v = JSON.parse(body); } catch { /* not JSON: refused below */ }
+  try { v = JSON.parse(body); } catch { v = verdictInProse(text); }
   if (v && typeof v === 'object' && !Array.isArray(v)) return v;
   throw new SpeckError(`${file} isn't a JSON verdict. Save the reviewer's JSON reply (a \`\`\`json fence around it is fine), then run this again.`);
 }
