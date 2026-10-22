@@ -51,7 +51,7 @@ A review round that runs longer than 10 minutes still finishes and is recorded. 
 - Self-check: a waiting command no longer trusts a round's record forever: one whose process is gone, or that started longer ago than its reviewer could run (so its pid may be another process's now), is reported as stopped and cleared. Also passed `--tests=` and `--response=` through to the round's process as given.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+A slow reviewer no longer gets cut off when a review takes more than about ten minutes. speck now waits up to nine minutes for the reviewer; if it's still working then, speck says so and gives the builder a command to keep waiting for the same round, which it can run as many times as needed. The reviewer keeps going in the meantime, still stopped after the usual review time limit, and the panel shows the round as running throughout. Short reviews look and behave exactly as before. To see it, watch a ticket with a slow reviewer: its build log shows "still running" messages and the round is recorded once the reviewer finishes. Keep an eye on one thing: pressing Ctrl-C during a review, or stopping a build mid-review, no longer stops the reviewer straight away; it runs on until it finishes or hits the time limit.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,6 +61,10 @@ A review round that runs longer than 10 minutes still finishes and is recorded. 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Ctrl-C on `speck review`, or stopping the build, no longer ends a running round's reviewer, as the round runs detached: saved to the inbox as speck/ideas/2026-10-22-end-a-review-round-s-reviewer-when-its-build-is-stopped.md.
+- Known limit: each review start leaves a small record file in the ticket's `speck/.cache/<id>/` (kept so no start number is ever claimed twice). Only their output files are removed. The cache is git-ignored and per ticket.
+- Known limit: the round's own process calls `noteThisBuild` like any `speck review`, so outside `speck run` it looks up the build's process once more; harmless.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -213,6 +217,87 @@ A review round that runs longer than 10 minutes still finishes and is recorded. 
     ],
     "escalation_question": "",
     "summary": "The usual long-review workflow works and all supplied tests pass. The concurrency fix still leaves two races: a delayed command can launch an extra reviewer, and starting the next round can erase the previous round’s output before it is printed."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9919ca6aba0a331f2c9e465eb5c86fa7e59a8d9c",
+    "thread_id": "01a16547-0321-7da2-a780-1ebad34e32b2",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 373442,
+      "cached_input_tokens": 310016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2945,
+      "reasoning_output_tokens": 433
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T20:27:35.243Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "reviewWaitMs() defaults to nine minutes; waitForRound() prints the round and exact --wait command with exit 12. The detached worker retains the existing reviewer timeout. Both AC1 tests passed; Claude and Cursor share the command-reviewer path."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests cover repeated waits, completion before waiting, failure without recording, concurrent commands and delayed claims. Permanent start records prevent duplicate claims. waitForRound() captures output before marking it read, resolving the cleanup race."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Both AC3 tests passed, checking unchanged short-review output, exit code and recorded round, and panel running status through repeated exits 12."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Both skills explicitly require repeating the printed --wait command in the foreground until it exits with another code. The AC4 test checks the documented exit code and command."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied selected-file run reports 178 passes, zero failures and three skips. No existing tests were weakened or unrelated fixes introduced."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/review-wait.mjs: startRound",
+        "issue": "Earlier start numbers could previously be reclaimed after their records were deleted.",
+        "suggested_fix": "Implemented: start records remain permanently reserved; cleanup removes only output files. The passing delayed-claim regression test verifies old claims fail while a later round runs.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/review-wait.mjs: waitForRound and deliver",
+        "issue": "Starting another round could previously delete completed output before its waiter read it.",
+        "suggested_fix": "Implemented: output is captured before publishing the read marker, and only the winning claimant prints its captured output. The output-delivery and cleanup test passed.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Long reviews now continue across repeated foreground waits while retaining their timeout and panel status. Both concurrency findings are fixed, and all supplied tests pass. The change is ready for the owner’s merge decision."
   }
 }
 ```
