@@ -43,11 +43,14 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = 'claude' } = {
   foreman_models: { foreman, models: listOf(foreman) }, claude_models: CLAUDE_MODELS });
 
 const KEYS = view().groups.flatMap(g => g.settings.map(x => x.key));
+// 0381: a setting's own nodes, leaving out an agent's model's, which is drawn in the agent's row.
+const own = (p, row) => { const inner = new Set(p.all(row).filter(n => n !== row && /\bsetting\b/.test(n.className || '')).flatMap(n => p.all(n)));
+  return p.all(row).filter(n => !inner.has(n)); };
 // Each setting's row and every node in it, and every other node in the pane, before a change, so a test can see which
 // were taken out or drawn again.
 function snapshot(p) {
   const rows = new Map(KEYS.map(k => [k, rowOf(p, k)]));
-  const inRows = new Set([...rows.values()].flatMap(r => p.all(r)));
+  const inRows = new Set([...rows.values()].flatMap(r => own(p, r)));
   const rest = p.all(p.byId('settings')).filter(n => !inRows.has(n) && n !== p.byId('settings'));
   return { rows, rest, detached: new Map([...inRows, ...rest].map(n => [n, n.detached || 0])) };
 }
@@ -58,7 +61,7 @@ function unchanged(p, snap, key, why) {
   const row = snap.rows.get(key);
   assert.equal(rowOf(p, key), row, `${key} is the same row (${why})`);
   assert.ok(attached(p, row), `${key} is still in the view (${why})`);
-  for (const n of p.all(row)) assert.ok(!moved(snap, n), `nothing in ${key} was taken out (${why})`);
+  for (const n of own(p, row)) assert.ok(!moved(snap, n), `nothing in ${key} was taken out (${why})`);
 }
 const said = (p, key) => p.all(rowOf(p, key)).filter(n => n.tagName === 'p' && !/\bexplain\b/.test(n.className || '')).map(n => n.textContent);
 const options = (p, key) => p.all(controlOf(p, key)).filter(n => n.tagName === 'option' && !n.disabled).map(o => o.value);
