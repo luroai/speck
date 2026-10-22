@@ -59,3 +59,96 @@ Settings opens in a pop-up over the whole panel, in the same look as a document'
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · cursor · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "cursor",
+    "reviewer_model": "grok-4.7-high",
+    "reviewer_effort": "default",
+    "reviewed_sha": "f302898639ad8958c738709e20a8df6eb70da351",
+    "session": "fresh",
+    "thread_id": "26a5320f-a30b-4bb0-916e-fad038f2ffa7",
+    "builder_response": "- Tests run: test/panel-0368.test.mjs test/builder-model-0311.test.mjs test/foreman-0285.test.mjs test/foreman-fix-0286.test.mjs test/panel-0150.test.mjs test/panel-0273.test.mjs test/panel-0274.test.mjs test/panel-0281.test.mjs test/panel-0257.test.mjs test/panel-0275.test.mjs test/panel-0268.test.mjs test/panel-0277.test.mjs test/panel-0364.test.mjs test/panel-0366.test.mjs test/panel-0309.test.mjs test/panel-0365.test.mjs test/settings-0278.test.mjs test/settings-0276.test.mjs test/pack-0362.test.mjs test/pack-0363.test.mjs\n- Round 1. Settings is now a full-window pop-up (`#settings`, fixed, inset 0, scrolls inside itself), its direct children in a centred column at most 760 px wide, its top bar and Close sharing the document pop-up's rules. The column's left edge is rounded down to a whole pixel so 0281's whole-pixel check still holds with a scroll bar.\n- While it's open, the ticket pane and its backdrop are inert too (`holdPane`, shared with the document pop-up), as well as the page (`holdPage`).\n- The backdrop: the pop-up covers the old backdrop, so a click on the pop-up itself beside its column closes it via `leaveSettings` (asking first with unsaved changes, 0275). A click inside the column (between groups) or a drag that started in the column doesn't. The old `#settings-backdrop` element and handler stay, so 0275's tests pass unchanged.\n- No existing test needed changing: none checked the right-hand pane's geometry.\n- Pictures: wide and phone, light and dark.\n",
+    "seconds": 620,
+    "usage": {
+      "inputTokens": 109267,
+      "outputTokens": 40960,
+      "cacheReadTokens": 1467264,
+      "cacheWriteTokens": 0
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T20:47:39.316Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: #settings is position:fixed; inset:0; background:var(--panel), with the 480px right-hand pane and its dark box-shadow removed, so both looks use the theme tokens and the pop-up fills the window at every width. #settings > * caps each direct child at max-width 760px and centres it (rounded margin-left, margin-right:auto). Close and the top bar share the #doc-view rules. test/panel-0368.test.mjs both '0368 AC1' tests passed; panel-0273's light and dark colour check passed in this run."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "openSettings focuses #settings. renderSettings calls holdPage (html.held { overflow:hidden }, and header, #offline, #restart and main set inert) and holdPane (full-ticket and full-backdrop inert while settingsView is set). #settings has overflow-y:auto and overscroll-behavior:contain. test '0368 AC2' passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The Close button, the Escape branch in the keydown handler, and a click on #settings beside the column (besideColumn) all call leaveSettings. That closes at once, or opens the unsaved-changes question (renderLeaving, 0275) when settingChanges() is non-empty. closeSettings then focuses #settings-open. The six '0368 AC3' tests passed, and panel-0275.test.mjs passed in this run."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "renderSettings still builds the same groups, editors, this-machine lines, Save bar and in-pane messages; the only addition there is holdPane(). test '0368 AC4' passed, and panel-0273, panel-0274 and panel-0275 passed in this run."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The diff touches templates/panel.html, the new test/panel-0368.test.mjs and the ticket status. No existing test was rewritten. This round's speck test --files run reported 316 pass, 0 fail and 3 skipped, including the settings and pop-up files. Failing before this build: none."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "A click on the pop-up's scrollbar closes Settings. #settings is both the scroll container and the backdrop target. besideColumn treats any x outside the first child's box as beside the column, and a classic scrollbar sits in that gutter (on a wide window and on a narrow one). pointerdown and click on the scrollbar therefore call leaveSettings, so paging the scrollbar shuts the view, or raises the unsaved-changes question if a setting was edited. Wheel scrolling still works.",
+        "suggested_fix": "In besideColumn, ignore a point in the scrollbar gutter (for example clientX past the pane's left plus clientWidth, or offsetX greater than clientWidth) so that click scrolls and does not call leaveSettings. Add a test that a click in that gutter leaves Settings open.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "If Auto-build refuses to start or stop, the reason is invisible while Settings is open. switchRun still writes it to #run-error, the strip under the header (0150, checked by foreman-0285 and panel-0150). Those tests only check that the text is set. The new pop-up is an opaque full-window layer at z-index 10, so it covers that strip. The switch lives in the Foreman group inside the pop-up, so the person who clicked it cannot read why it failed until they close Settings.",
+        "suggested_fix": "Show that same refusal inside the pop-up, in the Foreman group next to the switch, for as long as Settings is open. Keep writing #run-error so the existing checks still pass.",
+        "state": "open"
+      },
+      {
+        "id": "F3",
+        "severity": "minor",
+        "file": "test/panel-0368.test.mjs",
+        "issue": "The centred-column assertion looks for margin-left:auto in #settings > *. That declaration is in the rule, but the next margin-left in the same rule replaces it. The margin that actually centres the column is the rounded one. The test would still pass if that winning margin stopped centring the column.",
+        "suggested_fix": "Assert the winning margin: max-width 760px, margin-right auto, and margin-left's round(down, calc((100% - 760px) / 2), 1px).",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Settings now opens over the whole panel, in the same full-window style as a document, with the controls in a centred column and a Close button. Close, Escape and a click on the empty area beside the column still close it, and unsaved changes still ask first. While it is open the rest of the panel cannot be used, and the focus returns to the Settings button.\n\nTwo things should be fixed before this is merged. Clicking the scrollbar on a long Settings view is treated as a click beside the column, so the view closes, or asks about unsaved changes, when the person was trying to scroll. And if Auto-build refuses to start or stop, the reason is still written in the strip under the header, which this pop-up now covers, so the reason stays hidden until Settings is closed."
+  }
+}
+```
+
+</details>
