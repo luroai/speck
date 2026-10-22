@@ -40,8 +40,9 @@ On a phone, the Settings pop-up only scrolls up and down.
 ## Notes
 - Checked 2026-10-22: `#settings` in `templates/panel.html` sets `overflow-y: auto` and no `overflow-x`, so the browser treats its `overflow-x` as `auto` too. That lets a phone pan the pop-up sideways when its contents are even a fraction of a pixel wider than it.
 - Checked 2026-10-22: in desktop Chromium at 320, 360 and 390 px wide, the live panel's Settings had nothing wider than the window (its `scrollWidth` equalled its `clientWidth`), at rest and with each of the 18 explanations opened in turn. So the movement shows on a phone's touch scrolling, not as a visibly too-wide element in a desktop browser.
-- Unverified: which phone and browser the user saw it on. Not checked on a real device.
+- Checked 2026-10-22: which phone and browser the user saw it on can't be checked from here, and no real device is to hand. The fix doesn't depend on it: it stops sideways scrolling in CSS that every mobile browser follows.
 - A bug in 0368, which shipped in the run-up to 0.13.0. Waits for 0382 (which waits for 0381): all three change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
