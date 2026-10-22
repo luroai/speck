@@ -42,6 +42,7 @@ Light and dark are chosen from a row in Settings, and the header no longer has t
 ## Notes
 - Checked 2026-10-22: the button is `.theme` in the header of `templates/panel.html`. It toggles `data-theme` and stores `speck-theme` in `localStorage`. It is not one of the settings in `scripts/settings.mjs`.
 - 0373 waits for this: it changes `templates/panel.html` too, as do 0368 to 0371. 0374 does not: it only changes the notice board's speed.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
