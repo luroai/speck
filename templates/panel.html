@@ -716,12 +716,14 @@ function doing(t, shipping) {
   // a subagent is running; otherwise the builder is fixing the last recorded round's findings. A board that doesn't say
   // whether one is running names the last recorded round, as before.
   const name = (v, none) => { const w = typeof v === 'string' && v.trim() ? v.trim() : none; return `${w[0].toUpperCase()}${w.slice(1)}`; };
+  // 0382: the model the review runs on, as written, when one is set; otherwise the reviewer, as before.
+  const reviewer = typeof t.review_model === 'string' && t.review_model.trim() ? t.review_model.trim() : name(t.reviewer, 'the reviewer');
   const running = roundUnderReview(t);
-  if (running !== null) sentence = `${name(t.reviewer, 'the reviewer')} is reviewing · round ${running}`;
+  if (running !== null) sentence = `${reviewer} is reviewing · round ${running}`;
   else if (t.status === 'reviewing') {
     const n = (steps[2] && /(\d+)$/.exec(steps[2].label)) || [null, '1'];
     if (t.review_running === null && n[0] !== null) sentence = `${name(t.builder, 'the builder')} is fixing round ${n[1]}'s findings`;
-    else sentence = `${name(t.reviewer, 'the reviewer')} is reviewing · round ${n[1]}`;
+    else sentence = `${reviewer} is reviewing · round ${n[1]}`;
   }
   return { sentence, tone, moving: t.status === 'building' || t.status === 'reviewing' };
 }
