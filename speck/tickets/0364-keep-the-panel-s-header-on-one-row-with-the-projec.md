@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-10-22-keep-the-panel-s-header-compact-all-the-tim
 after: ["0363"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T15:26:17.888Z"
-approved: "2026-10-22T15:40:48.373Z"
+approved: "2026-10-22T15:44:43.293Z"
 
 ---
 # 0364 · Keep the panel's header on one row with the project always shown
@@ -57,12 +57,13 @@ On a phone or in a narrow window, the panel's header is now always one row. It n
 ## Review log
 Round 1 (codex): changes requested: F1 The new brief test asserts exact prose wording with /slimmed to one row/.; F2 The long-project tooltip test expects 'speck · base main' after replacing the displayed project and branch with long values.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 466,788
-- Elapsed since build started: 15 min
+- Reviewer tokens: 908,791
+- Elapsed since build started: 18 min
 - Changed lines: 111 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
@@ -228,6 +229,88 @@ Follow-ups:
     ],
     "escalation_question": "",
     "summary": "The header stays compact while scrolling, keeps the project visible and removes the duplicate builder character. Both test issues are fixed, all acceptance criteria pass, and no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "808cc483f8c64afeb4f1c8f37a9191eaa435c2a2",
+    "merge": true,
+    "thread_id": "01a16444-0c74-7430-b620-50344a771c6b",
+    "seconds": 20,
+    "usage": {
+      "input_tokens": 439984,
+      "cached_input_tokens": 367104,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2019,
+      "reasoning_output_tokens": 80
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T15:44:41.415Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Header implementation is unchanged since approval. Passing panel-0364 browser tests verify one row at 320–699 px, stable height while scrolling and safe-area handling."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing panel-0364 tests verify full text at 500 px, visible ellipsis for long names at 320 px and the matching full-text tooltip."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing browser tests verify the mark remains and the speck word hides below 700 px; wider presentation is retained at 700 and 1200 px."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The unchanged render() implementation retains the Foreman's word, tone, tooltip and interaction without its builder. Both AC4 tests pass."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Passing tests cover 320 px overflow, overlap, button heights and ticket navigation. The revised panel-0055 assertion concerns the removed builder, as AC5 permits, and preserves the other reduced-motion checks. Latest run: 131 passed, zero failed, three skipped."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/panel-0364.test.mjs",
+        "issue": "The documentation test checked exact prose wording.",
+        "suggested_fix": "Remove the prose assertion and unused imports.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/panel-0364.test.mjs",
+        "issue": "The long-project tooltip test previously asserted the old short project name.",
+        "suggested_fix": "Initialise with long project and branch names and assert their full text in the tooltip.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The header continues to meet all five criteria. The additional test change correctly accounts for removing the builder and preserves the remaining reduced-motion checks. No blocking concerns remain."
   }
 }
 ```
