@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { reviewPack } from '../scripts/pack.mjs';
-import { docRepo, PACK, DOCS, text, openPack, pane, docButtons } from './support/documents.mjs';
+import { docRepo, PACK, DOCS, text, openPack, pane, docView, docButtons } from './support/documents.mjs';
 
 // The pane's own nodes, top to bottom, and the index of the first one holding `pick`.
 const at = (p, pick) => pane(p).children.findIndex(n => p.all(n).includes(pick));
@@ -41,7 +41,7 @@ test('0359 AC1: a pack with no files has no buttons', async () => {
   assert.equal(p.all(pane(p)).filter(n => n.className === 'pack-documents' || n.className === 'pack-document').length, 0);
 });
 
-// ---------- AC2: a Markdown file shows in the side pane and opens nothing else ----------
+// ---------- AC2: a Markdown file shows in the panel and opens nothing else ----------
 
 test('0359 AC2: a Markdown file\'s button has no address or target, and pressing it shows it formatted and opens nothing', async () => {
   const opened = [];
@@ -54,8 +54,8 @@ test('0359 AC2: a Markdown file\'s button has no address or target, and pressing
   p.press(md);
   await p.settle();
   assert.deepEqual(opened, [], 'no new tab or window');
-  const all = p.all(pane(p));
-  assert.ok(all.some(n => /^h/.test(n.tagName) && n.textContent === 'Pricing'), 'shown formatted in the side pane');
+  const all = p.all(docView(p)); // 0362: in a pop-up over the whole panel, not the side pane
+  assert.ok(all.some(n => /^h/.test(n.tagName) && n.textContent === 'Pricing'), 'shown formatted in the pop-up');
   assert.ok(all.some(n => n.tagName === 'strong' && n.textContent === 'up'));
 });
 
