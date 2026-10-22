@@ -43,6 +43,7 @@ Choosing a builder, reviewer or Foreman agent that can list its models fills tha
 - Checked 2026-10-22: `reviewerModels` and `builderModels` in `scripts/settings.mjs` read models only for the reviewer and builder saved in `speck/config.yml`. `modelsWhy` in `templates/panel.html` shows "Save cursor as the reviewer, then open Settings again to pick from its models." when the chosen reviewer isn't the one those models were read for (0347, criterion 4). `foremanModelsWhy` says the same for the Foreman (0348, criterion 4). `builderModelList` keeps showing the saved builder's models when another builder is chosen. Cursor's models come from `agent models`, as `speck agents` reports (`docs/brief.md`).
 - The Foreman is included: it has the same save-and-reopen line, on the same view.
 - 0370 and 0371 wait for this: they change `templates/panel.html` too. This one also changes `scripts/settings.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
