@@ -1,7 +1,7 @@
 ---
 id: "0362"
 title: "Open a document task's document in a pop-up over the whole panel"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-22
 ---
 # 0362 · Open a document task's document in a pop-up over the whole panel
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 A document task's Markdown document opens in the side pane, which is at most 480 px wide. That's narrow for reading a document, and reading it is how you review a document task before you ship it.
