@@ -6,6 +6,7 @@ import path from 'node:path';
 import { panelRepo, freePort, startPanel, stop, request, post, tokenOf, headOf, gitEnv } from './support/panel.mjs';
 import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, boxesOf, tick } from './support/settings.mjs';
 import { panelSettings, panelSetSetting, panelSettingRequest, panelSaveSettings } from '../scripts/settings.mjs';
+import { machineConfig } from '../scripts/machine.mjs';
 
 // ---------- 0259: change auto_ship and auto_ship_risk from the panel, asking first before more tickets ship by themselves ----------
 
@@ -40,22 +41,18 @@ test('0259 AC1: auto_ship and auto_ship_risk are editable, and a change is saved
   assert.deepEqual(s.auto_ship.choices, [true, false]);
   assert.deepEqual(s.auto_ship_risk.choices, ['low', 'high']);
 
-  // auto_ship is off, so adding high lets nothing more ship: saved at once.
-  const before = readCfg(r).split('\n'), head = headOf(r);
+  // auto_ship is off, so adding high lets nothing more ship: saved at once. 0387: for this machine, without a commit.
+  const unsaved = snapshot(r);
   let out = panelSetSetting(r.dir, 'auto_ship_risk', 'low,high');
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  const after = readCfg(r).split('\n');
-  assert.equal(after.filter((l, i) => l !== before[i]).length, 1, 'one line changed');
-  assert.match(lineOf(r, 'auto_ship_risk'), /^auto_ship_risk: \[low, high\]\s+# which ticket risks auto_ship covers/);
-  assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config auto_ship_risk [low, high]');
-  assert.equal(r.g('rev-parse', 'HEAD~1'), head);
-  assert.equal(r.g('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'), 'speck/config.yml');
+  assert.deepEqual(machineConfig(r.dir).auto_ship_risk, ['low', 'high']);
+  assert.deepEqual(snapshot(r), unsaved);
   assert.deepEqual(byKey(panelSettings(r.dir)).auto_ship_risk.value, ['low', 'high']);
 
   out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: 'low,high' });
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.match(lineOf(r, 'auto_ship'), /^auto_ship: true\s+#/);
-  assert.equal(r.g('log', '-1', '--format=%s'), 'speck: config auto_ship true');
+  assert.equal(machineConfig(r.dir).auto_ship, true);
+  assert.deepEqual(snapshot(r), unsaved);
   assert.equal(byKey(panelSettings(r.dir)).auto_ship.value, true);
 
   // The same value writes nothing.
@@ -76,19 +73,23 @@ test('0259 AC1: they are refused as 0258\'s settings are: a bad value, off the b
   assert.match(out.body.error, /low, high or both/);
   assert.deepEqual(snapshot(r), was);
 
+  // 0387: they're your own settings, saved for this machine, so off the base branch or with config.yml changed they're
+  // saved all the same, leaving git as it was. A change that lets more ship is still asked about first.
   r.g('checkout', '-q', '-b', 'elsewhere');
   was = snapshot(r);
   out = panelSetSetting(r.dir, 'auto_ship_risk', 'high');
-  assert.equal(out.status, 409);
-  assert.match(out.body.error, /"elsewhere", not main/);
+  assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.deepEqual(snapshot(r), was);
   r.g('checkout', '-q', 'main');
 
   fs.appendFileSync(cfgOf(r), '# a note of mine\n');
   was = snapshot(r);
-  out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: 'low' });
+  out = panelSetSetting(r.dir, 'auto_ship', 'true');
   assert.equal(out.status, 409);
-  assert.match(out.body.error, /uncommitted changes/);
+  assert.equal(out.body.confirm, true);
+  out = panelSetSetting(r.dir, 'auto_ship', 'true', { confirmed: 'high' });
+  assert.equal(out.status, 200, JSON.stringify(out.body));
+  assert.deepEqual(machineConfig(r.dir), { auto_ship_risk: ['high'], auto_ship: true });
   assert.deepEqual(snapshot(r), was);
 });
 
@@ -268,6 +269,6 @@ test('0259 AC2: the panel server passes on that the change was confirmed, and on
     assert.deepEqual(snapshot(r), was);
     const ok = await post(p.port, '/api/settings/auto_ship/true?confirm=low', { token });
     assert.equal(ok.status, 200, ok.body);
-    assert.match(lineOf(r, 'auto_ship'), /^auto_ship: true /);
+    assert.equal(machineConfig(r.dir).auto_ship, true, '0387: for this machine');
   } finally { await stop(p); }
 });

@@ -10,11 +10,7 @@ import { commitTicketOnly } from './close.mjs';
 import { FIXING } from './foreman.mjs';
 import { FOREMAN_AGENTS, foremanAgentOf } from './foreman-agent.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
-import { machineConfig, saveMachineValue } from './machine.mjs';
-
-// 0261: the settings the panel saves for this machine. 0386 made more of your own settings this machine's, and 0387
-// moves the panel to all of them.
-const MACHINE_SETTINGS = Object.freeze(['max_parallel_builds', 'max_parallel_tests']);
+import { MACHINE_SETTINGS, machineConfig, saveMachineValues } from './machine.mjs';
 import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
@@ -124,8 +120,10 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
     // 0293: build_command as the file has it, whether it was set by hand, and each builder's own, for the view to say
     // what switching the builder sets it to, and to ask first when it replaces one set by hand. 0324: and whether speck
     // run builds each ticket with its own builder with it, so the view says when it doesn't.
-    const build = s.key !== 'builder' ? {} : { build_command: { value: file.build_command === undefined || file.build_command === null ? null : String(file.build_command),
-      hand_set: handSetBuildCommand(file), each_ticket: buildsEachTicket(file.build_command ?? ''), own: OWN_BUILD_COMMANDS } };
+    // 0387: as speck uses it, this machine's over speck/config.yml's, as switching the builder saves it for this machine.
+    const used = { ...file, ...mine };
+    const build = s.key !== 'builder' ? {} : { build_command: { value: used.build_command === undefined || used.build_command === null ? null : String(used.build_command),
+      hand_set: handSetBuildCommand(used), each_ticket: buildsEachTicket(used.build_command ?? ''), own: OWN_BUILD_COMMANDS } };
     const machine = !MACHINE_SETTINGS.includes(s.key) ? {}
       : Object.hasOwn(mine, s.key) ? { for_machine: true, from: 'machine', repo_value: value } : { for_machine: true, from: 'repo', repo_value: value };
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
@@ -257,74 +255,86 @@ export function cmdConfigShow(args) {
 // One setting's change, checked as `speck config set` does: the value speck would write in `want`, and `same` when the
 // setting already has it, or why it's refused, in `status` and `error`. Nothing is written.
 // 0261: with `machine`, the change is to this machine's own value, or clears it when `value` is blank.
-function checkChange(repo, text, cfg, { key, value, machine }) {
+// 0387: each of your own settings is saved for this machine, `own`, whether or not the change says so. Blank clears this
+// machine's value only when the change says `machine` and not `blank`, which saves a blank value for this machine.
+// `after`: the value speck uses once it's saved.
+function checkChange(repo, text, cfg, { key, value, machine, blank }) {
   if (!EDITABLE.includes(key))
     return { status: 403, error: `${key} can't be changed from the panel. The panel changes only ${EDITABLE.join(', ')}: change the rest in speck/config.yml.` };
-  if (machine && !MACHINE_SETTINGS.includes(key))
+  const own = MACHINE_SETTINGS.includes(key);
+  if (machine && !own)
     return { status: 422, error: `Only ${MACHINE_SETTINGS.join(', ')} can be set for this machine, not ${key}. Save it for the repo instead.` };
+  const mine = machineConfig(repo), repoValue = valueIn(text, repo, key).value;
+  if (own && machine && !blank && value === '')
+    return { own, clear: true, want: undefined, after: repoValue, same: !Object.hasOwn(mine, key) };
   let want;
-  try { want = machine && value === '' ? undefined : checkConfigValue(key, value); }
+  try { want = checkConfigValue(key, value); }
   catch (e) { if (e instanceof SpeckError) return { status: 422, error: e.message }; throw e; }
-  if (machine) return { want, same: machineConfig(repo)[key] === want };
   if (key === 'reviewer_model' && /[\x00-\x1f\x7f]/.test(value))
     return { status: 422, error: 'reviewer_model must be on one line, with no tabs or other control characters.' };
   // 0276: reviewer_effort is checked as speck config set checks it, which accepts an effort Codex lists, such as ultra.
   const choices = key === 'reviewer_effort' ? undefined : choicesOf(key, parseYaml(text));
   if (choices && ![].concat(want).every(w => choices.includes(w)))
     return { status: 422, error: `${key} must be ${choices.map(shown).join(', ')} (got ${JSON.stringify(value)}).` };
-  const same = key === 'auto_ship_risk' ? [...want].sort().join() === [].concat(valueIn(text, repo, key).value).map(String).sort().join()
-    : JSON.stringify(valueIn(text, repo, key).value) === JSON.stringify(want);
-  return { want, same };
+  const now = own && Object.hasOwn(mine, key) ? mine[key] : repoValue;
+  const same = key === 'auto_ship_risk' ? [...want].sort().join() === [].concat(now).map(String).sort().join()
+    : JSON.stringify(now) === JSON.stringify(want);
+  return { own, want, after: want, same };
 }
 
 // A refusal of the changes in `keys`, each for the same reason, or each for its own in `refused` (key → why).
 const refusal = (status, refused, more = {}) => ({ status, body: { error: [...new Set(Object.values(refused))].join('\n'), refused, ...more } });
 const each = (changes, why) => Object.fromEntries(changes.map(c => [c.key, why]));
 
-// 0274: the panel's one Save, for every setting changed in the Settings view. `changes`: { key, value, machine } each,
-// with `machine` for this machine's own value (0261). Each is checked first, and if any is refused nothing is saved,
-// with why in `refused` by setting. Otherwise the repo's changes are written to speck/config.yml, rewriting only their
-// lines, and committed in one commit of only that file on the base branch, and this machine's are saved, as
-// `speck config set --machine` does. Settings already at the value given are left alone.
+// 0274: the panel's one Save, for every setting changed in the Settings view. `changes`: { key, value, machine, blank }
+// each. Each is checked first, and if any is refused nothing is saved, with why in `refused` by setting. Otherwise
+// 0387: your own settings are saved for this machine, as `speck config set` does, without a commit, and the rest are
+// written to speck/config.yml, rewriting only their lines, and committed in one commit of only that file on the base
+// branch. Settings already at the value given are left alone.
 // A change that lets more tickets ship by themselves is refused unless `confirmed` names the risks that would then ship,
 // as the dialog you confirmed did ("low,high"), so a page that read the settings before they changed can't confirm more (0259).
-// 0293: a change to builder sets build_command to the new builder's own in the same commit. One set by hand is replaced
-// only when `replace` is it, exactly as the file has it, as the page read it when you confirmed.
+// 0293: a change to builder sets build_command to the new builder's own in the same save. One set by hand is replaced
+// only when `replace` is it, exactly as speck uses it, as the page read it when you confirmed.
 // 0311: and clears a builder_model the new builder doesn't offer, as it would be once saved, giving why in `cleared`. `offered`: { builder, models }, the new builder's models as read already, or they're read now.
 export function panelSaveSettings(repo, changes, { confirmed = null, replace = null, offered = null } = {}) {
   const twice = changes.find((c, i) => changes.findIndex(d => d.key === c.key) !== i);
   if (twice) return { status: 400, body: { error: `${twice.key} is given more than once. Reload the panel, then try again.` } };
   const file = path.join(repo, 'speck', 'config.yml');
-  const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo);
+  const text = fs.readFileSync(file, 'utf8'), cfg = loadConfig(repo), mine = machineConfig(repo);
   const checked = changes.map(c => ({ ...c, ...checkChange(repo, text, cfg, c) }));
   const bad = checked.filter(c => c.error !== undefined);
   if (bad.length) return refusal(bad[0].status, Object.fromEntries(bad.map(c => [c.key, c.error])));
-  const switched = checked.find(c => c.key === 'builder' && !c.machine && !c.same), cleared = {};
-  if (switched) {
+  const switched = checked.find(c => c.key === 'builder' && !c.same), cleared = {};
+  if (switched && !switched.clear) {
     const to = String(switched.want), given = checked.find(c => c.key === 'builder_model');
-    const why = clearsBuilderModel(given ? given.want : parseYaml(text).builder_model, to, () => offered?.builder === to ? offered.models : offeredModels(to));
+    const why = clearsBuilderModel(given ? given.after : cfg.builder_model, to, () => offered?.builder === to ? offered.models : offeredModels(to));
     if (why !== null) {
-      if (given) Object.assign(given, { want: '', same: JSON.stringify(valueIn(text, repo, 'builder_model').value) === '""' });
-      else checked.push({ key: 'builder_model', want: '', machine: false, same: false });
+      if (given) Object.assign(given, { clear: false, want: '', after: '', same: Object.hasOwn(mine, 'builder_model') && mine.builder_model === '' });
+      else checked.push({ key: 'builder_model', own: true, want: '', after: '', same: false });
       cleared.builder_model = why;
     }
+  }
+  // 0387: speck as it would be once saved, with this machine's values over speck/config.yml's.
+  const will = { ...cfg, ...Object.fromEntries(checked.map(c => [c.key, c.after])) };
+  // 0293: switching the builder sets build_command to its own, for this machine (0387), asking first for one set by
+  // hand. Clearing this machine's builder also clears the build_command switching to it saved, as `speck config set` does.
+  const own = switched && !switched.clear ? ownBuildCommand(String(switched.want)) : null;
+  if (own !== null) will.build_command = own;
+  if (switched?.clear && Object.hasOwn(mine, 'build_command') && mine.build_command === ownBuildCommand(mine.builder)) {
+    checked.push({ key: 'build_command', own: true, clear: true, want: undefined, same: false });
+    will.build_command = loadConfig(repo, { machine: false }).build_command;
   }
   // 0280: a reviewer of the builder's own family is refused only when the two would run the same model, or might, as
   // the settings would be once saved. So a change to builder_model or reviewer_model can be refused too.
   // 0293: and so can a change to builder, saying which reviewer would be from another family.
-  const models = checked.filter(c => !c.machine && ['builder', 'reviewer', 'builder_model', 'reviewer_model'].includes(c.key));
+  const models = checked.filter(c => ['builder', 'reviewer', 'builder_model', 'reviewer_model'].includes(c.key));
   if (models.length && cfg.allow_same_model_review !== true) {
-    const will = { ...cfg, ...Object.fromEntries(models.map(c => [c.key, c.want])) };
-    // 0313: with the build_command switching the builder gives it, which decides whether builder_model counts for Codex.
-    const own = switched ? ownBuildCommand(String(switched.want)) : null;
-    if (own !== null) will.build_command = own;
     const problem = sameModelProblem(String(will.builder ?? ''), String(will.reviewer ?? ''), will, will.reviewer_model);
     const switching = models.some(c => c.key === 'builder' && !c.same);
     if (problem) return refusal(422, each(models, switching
       ? `${problem} For a ${will.builder} builder, a reviewer from another family is ${otherFamilyReviewer(String(will.builder))}: pick it as the reviewer in the same Save.` : problem));
   }
-  const toFile = checked.filter(c => !c.machine && !c.same), toMachine = checked.filter(c => c.machine && !c.same);
-  let next = text;
+  const toFile = checked.filter(c => !c.own && !c.same), toMachine = checked.filter(c => c.own && !c.same);
   if (toFile.length) {
     const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: repo }).stdout.trim();
     if (branch !== cfg.base_branch)
@@ -332,30 +342,27 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
     const dirty = sh('git', ['status', '--porcelain', '--', 'speck/config.yml'], { cwd: repo });
     if (dirty.status !== 0 || dirty.stdout.trim())
       return refusal(409, each(toFile, 'speck/config.yml has uncommitted changes, so saving would commit them too. Commit or undo them, then try again.'));
-    const now = shipping(cfg), will = { ...now };
-    for (const c of toFile) if (c.key === 'auto_ship') will.on = c.want === true; else if (c.key === 'auto_ship_risk') will.risks = [].concat(c.want).map(String);
-    const ships = toFile.filter(c => c.key === 'auto_ship' || c.key === 'auto_ship_risk'), more = ships.length ? loosens(now, will) : null;
-    if (more && confirmed !== more.risks)
-      return refusal(409, each(ships, `That would let ${more.words} merge and push to ${cfg.base_branch} without waiting for you, which hasn't been confirmed. Check the settings as they are now, then save again.`), { confirm: true });
-    // 0293: switching the builder sets build_command to its own, asking first for one set by hand.
-    const builder = toFile.find(c => c.key === 'builder'), file = parseYaml(text), own = builder ? ownBuildCommand(String(builder.want)) : null;
-    if (own !== null && file.build_command !== own) {
-      if (handSetBuildCommand(file) && replace !== String(file.build_command))
-        return refusal(409, each([builder], `build_command is set by hand to '${String(file.build_command)}', and switching the builder replaces it with ${describeBuildCommand(builder.want, own)}, which hasn't been confirmed. Check the settings as they are now, then save again.`), { replace: true });
-      toFile.push({ key: 'build_command', want: own, machine: false });
-    }
-    for (const c of toFile) next = setConfigText(next, c.key.split('.'), yamlValue(c.want));
-    const read = parseYaml(next), unread = toFile.filter(c => JSON.stringify(lookup(read, c.key)) !== JSON.stringify(c.want));
-    if (unread.length)
-      return refusal(422, Object.fromEntries(unread.map(c => [c.key, `Couldn't write ${c.key} so that speck reads it back as given. Edit speck/config.yml by hand instead.`])));
   }
-  // This machine's first, so that a write or commit that fails can put them back, and speck/config.yml as it was.
-  const before = machineConfig(repo), undo = () => {
-    for (const c of toMachine) try { saveMachineValue(repo, c.key, before[c.key]); } catch { /* put back all it can */ }
+  const ships = toMachine.filter(c => c.key === 'auto_ship' || c.key === 'auto_ship_risk'), more = ships.length ? loosens(shipping(cfg), shipping(will)) : null;
+  if (more && confirmed !== more.risks)
+    return refusal(409, each(ships, `That would let ${more.words} merge and push to ${cfg.base_branch} without waiting for you, which hasn't been confirmed. Check the settings as they are now, then save again.`), { confirm: true });
+  if (own !== null && cfg.build_command !== own) {
+    if (handSetBuildCommand(cfg) && replace !== String(cfg.build_command))
+      return refusal(409, each([switched], `build_command is set by hand to '${String(cfg.build_command)}', and switching the builder replaces it with ${describeBuildCommand(switched.want, own)}, which hasn't been confirmed. Check the settings as they are now, then save again.`), { replace: true });
+    toMachine.push({ key: 'build_command', own: true, want: own });
+  }
+  let next = text;
+  for (const c of toFile) next = setConfigText(next, c.key.split('.'), yamlValue(c.want));
+  const read = parseYaml(next), unread = toFile.filter(c => JSON.stringify(lookup(read, c.key)) !== JSON.stringify(c.want));
+  if (unread.length)
+    return refusal(422, Object.fromEntries(unread.map(c => [c.key, `Couldn't write ${c.key} so that speck reads it back as given. Edit speck/config.yml by hand instead.`])));
+  // This machine's first, all at once, so that a write or commit that fails can put them back, and speck/config.yml as it was.
+  const undo = () => {
+    try { saveMachineValues(repo, toMachine.map(c => [c.key, mine[c.key]])); } catch { /* put back all it can */ }
     if (toFile.length) try { if (fs.readFileSync(file, 'utf8') !== text) fs.writeFileSync(file, text); } catch { /* as above */ }
   };
   try {
-    for (const c of toMachine) saveMachineValue(repo, c.key, c.want);
+    if (toMachine.length) saveMachineValues(repo, toMachine.map(c => [c.key, c.want]));
     if (toFile.length) {
       fs.writeFileSync(file, next);
       const commit = commitTicketOnly(repo, file, text, `speck: config ${toFile.map(c => `${c.key} ${shown(c.want)}`).join('; ')}`);
@@ -392,17 +399,18 @@ export function panelSettingRequest(repo, rawKey, rawValue, confirmed = null, sc
 }
 
 // 0274: the panel's POST /api/settings/save, the Settings view's one Save. Its address's query gives each change, as
-// repo:<key>=<value> for the repo or machine:<key>=<value> for this machine only, and confirm=<risks> once you've
+// repo:<key>=<value> for the repo or machine:<key>=<value> for this machine only, machine:<key>= clearing this
+// machine's value and blank:<key>= saving a blank one for this machine (0387), and confirm=<risks> once you've
 // confirmed a change that lets more tickets ship by themselves (0259). 0293: replace=<build_command> once you've
 // confirmed that switching the builder replaces one set by hand.
 export function panelSaveRequest(repo, query, { offered = null } = {}) {
   const changes = [];
   let confirmed = null, replace = null;
   for (const [name, value] of new URLSearchParams(query)) {
-    const m = name.match(/^(repo|machine):(.+)$/);
+    const m = name.match(/^(repo|machine|blank):(.+)$/);
     if (name === 'confirm' && confirmed === null) confirmed = value;
     else if (name === 'replace' && replace === null) replace = value; // 0293: the build_command you confirmed replacing
-    else if (m) changes.push({ key: m[2], value, machine: m[1] === 'machine' });
+    else if (m) changes.push({ key: m[2], value, machine: m[1] !== 'repo', blank: m[1] === 'blank' });
     else return { status: 400, body: { error: `The panel doesn't save ${JSON.stringify(name)}. Reload the panel, then try again.` } };
   }
   try { return panelSaveSettings(repo, changes, { confirmed, replace, offered }); }
@@ -414,9 +422,10 @@ export function panelSaveRequest(repo, query, { offered = null } = {}) {
 export async function panelSaveRequestAsync(repo, query, find) {
   let offered = null;
   try {
-    const q = new URLSearchParams(query), to = q.get('repo:builder'), cfg = parseYaml(fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'));
-    const model = q.has('repo:builder_model') ? q.get('repo:builder_model') : cfg.builder_model;
-    if (to !== null && to !== String(cfg.builder ?? 'claude') && clearsBuilderModel(model, to, () => []) !== null)
+    // 0387: the builder and its model as given in any of the ways the Save gives them, over the ones speck uses now.
+    const q = new URLSearchParams(query), given = key => ['machine', 'blank', 'repo'].map(w => q.get(`${w}:${key}`)).find(v => v !== null) ?? null;
+    const cfg = loadConfig(repo), to = given('builder'), model = given('builder_model') ?? cfg.builder_model;
+    if (to && to !== String(cfg.builder ?? 'claude') && clearsBuilderModel(model, to, () => []) !== null)
       offered = { builder: to, models: await offeredModelsAsync(to, find) };
   } catch { /* panelSaveRequest says what's wrong */ }
   return panelSaveRequest(repo, query, { offered });
