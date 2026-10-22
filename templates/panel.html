@@ -372,9 +372,11 @@
   /* 0368: a pop-up over the whole panel, as a document's is (0362), its settings in a centred column. Beside the column
      is its backdrop. Above the ticket pane, and below the question about unsaved changes. The column's left edge is
      rounded down to a whole pixel, so its controls stay on whole pixels (0281) whatever room the scroll bar takes.
-     0385: it scrolls only up and down. A finger can't pan it sideways, and anything a fraction wider than it is clipped. */
+     0385: it scrolls only up and down. A finger can't pan it sideways, and each of its children clips anything wider
+     than the column, 16 px beyond it so focus rings and shadows still show: that stays inside the pop-up's padding, so
+     there's nothing beside the column to scroll to, even from script. */
   #settings { position: fixed; inset: 0; z-index: 10; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y pinch-zoom; background: var(--panel); padding: env(safe-area-inset-top) max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
-  #settings > * { max-width: 760px; margin-left: auto; margin-right: auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); }
+  #settings > * { max-width: 760px; overflow-x: clip; overflow-clip-margin: 16px; margin-left: auto; margin-right: auto; margin-left: max(0px, round(down, calc((100% - 760px) / 2), 1px)); }
   #settings .top h3 { margin: 0; font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; }
   /* 0273: each group a box with a heading bar, like the panel's sections, with space between them. Each setting is a
      row, its name and info button on the left and its value or control on the right: every row splits its width the
@@ -1969,8 +1971,6 @@ $('settings-backdrop').addEventListener('click', e => { if (e.target === $('sett
 let settingsDownBeside = false;
 $('settings').addEventListener('pointerdown', e => { settingsDownBeside = e.target === $('settings') && besideColumn(e); });
 $('settings').addEventListener('click', e => { if (settingsDownBeside && e.target === $('settings') && besideColumn(e)) leaveSettings(); });
-// 0385: a sideways scroll, which only a script can still make, is put back.
-$('settings').addEventListener('scroll', () => { if ($('settings').scrollLeft) $('settings').scrollLeft = 0; });
 // Not on its scroll bar, which sits beside the column too: a click there scrolls.
 function besideColumn(e) {
   const pane = $('settings'), col = pane.children[0];

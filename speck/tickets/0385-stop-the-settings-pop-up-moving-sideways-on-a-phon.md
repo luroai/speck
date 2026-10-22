@@ -1,7 +1,7 @@
 ---
 id: "0385"
 title: "Stop the Settings pop-up moving sideways on a phone"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 1              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T22:51:47.077Z"
 ---
 # 0385 · Stop the Settings pop-up moving sideways on a phone
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Since 0368 opened Settings in a full-window pop-up, the pop-up can be dragged left and right on a phone. A sideways swipe while scrolling the settings shifts the whole view, which feels broken and makes the column wobble under your thumb.
@@ -43,7 +43,7 @@ On a phone, the Settings pop-up only scrolls up and down.
 - Checked 2026-10-22: which phone and browser the user saw it on can't be checked from here, and no real device is to hand. The fix doesn't depend on it: it stops sideways scrolling in CSS that every mobile browser follows.
 - A bug in 0368, which shipped in the run-up to 0.13.0. Waits for 0382 (which waits for 0381): all three change `templates/panel.html`.
 - Failing before this build: none
-- Self-check: no changes. Checked by hand that the tests catch the bug: with the old page all three fail, without the new CSS a real touch swipe still moved it 16 px sideways, and without the scroll guard a sideways scroll from script stayed.
+- Self-check: no changes. Checked by hand that the tests catch the bug: with the old page all three fail, without the new CSS a real touch swipe still moved it 16 px sideways, and without the scroll guard a sideways scroll from script stayed. Round 1 replaced the scroll guard with clipping on the column, and without that clipping a scroll from script still moves it.
 - Pictures: none, because nothing looks different: the pop-up only stops moving sideways. Its look at every width is unchanged.
 
 ## In plain words
@@ -57,3 +57,74 @@ On a phone, the Settings pop-up only scrolls up and down.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8dbfbabc4bfaf29e724513c76577841d68b4f64f",
+    "thread_id": "01a165d5-90ac-7570-83a9-781732a3d692",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 92673,
+      "cached_input_tokens": 54912,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 826,
+      "reasoning_output_tokens": 110
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T22:58:04.607Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "templates/panel.html: #settings uses overflow-x: hidden, which permits scripted horizontal scrolling. Its scroll listener resets scrollLeft only after scrolling occurs. test/panel-0385.test.mjs waits for the position to return to zero, so it verifies recovery rather than the required position staying at zero. Touch scrolling and vertical scrolling have real-browser coverage."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The passing real-browser test in test/panel-0385.test.mjs measures visible elements and scroll widths at all four specified widths, in both themes, at rest and with each explanation opened."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The passing real-browser test checks the existing centred 760 px column and vertical scrolling at 900 and 1280 px. The implementation leaves the column layout unchanged."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The recorded run includes panel-0385.test.mjs, panel-0368.test.mjs and configured checks: 126 passed, zero failed, three skipped. The implementation is confined to Settings."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:1973",
+        "issue": "Scripted scrolling can still set a non-zero horizontal position until the asynchronous scroll event resets it. This does not meet the explicit requirement that the position stays at zero whatever is done from script. The browser test allows this deviation by waiting for recovery.",
+        "suggested_fix": "Prevent horizontal scrolling structurally, for example by separating the horizontal clipping container from the vertical scrolling container. Add a browser assertion that reads scrollLeft immediately after each scripted scroll attempt, with overflowing content present.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The change stops sideways touch gestures and preserves the tested phone and desktop layouts. Scripted scrolling can still move Settings sideways briefly before it is reset, so the strict requirement to keep its sideways position at zero is not yet met."
+  }
+}
+```
+
+</details>

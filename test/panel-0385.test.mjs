@@ -20,17 +20,9 @@ test('0385 AC1: the pop-up clips anything wider than it and lets a finger pan it
   assert.match(base, /touch-action: pan-y pinch-zoom/, 'a sideways swipe pans nothing');
 });
 
-test('0385 AC1: a sideways scroll of the pop-up, from script or otherwise, is put back at once', async () => {
-  const p = settingsPage([{ groups: [] }]);
-  await p.settle();
-  await openSettings(p);
-  const pop = p.byId('settings');
-  assert.ok(pop.listeners.scroll, 'the pop-up watches its scrolling');
-  pop.scrollLeft = 40;
-  pop.scrollTop = 120;
-  pop.listeners.scroll({ target: pop });
-  assert.equal(pop.scrollLeft, 0, 'back at the left');
-  assert.equal(pop.scrollTop, 120, 'up and down is left alone');
+test('0385 AC1: each of the pop-up\'s children clips anything wider than the column, within the pop-up\'s padding', () => {
+  assert.ok(rules('#settings > *').some(r => /overflow-x: clip/.test(r) && /overflow-clip-margin: 16px/.test(r)), 'clipped 16 px beyond the column');
+  assert.match(rules('#settings')[0], /padding: [^;]*max\(16px, env\(safe-area-inset-right\)\)/, 'which the pop-up\'s padding on the right holds');
 });
 
 // ---------- AC1 to AC3 in a real browser, at a phone's widths and a desktop's ----------
@@ -75,15 +67,19 @@ test('0385 AC1, AC2, AC3: in a real browser, the pop-up never moves sideways on 
       // AC1: something far wider than the pop-up, as a phone may find a fraction of a pixel too much, can't be scrolled to.
       await b.js(`(() => { const w = document.createElement('div'); w.id = 'too-wide'; w.style.width = '2000px'; w.style.height = '1px';
         document.querySelector('#settings > .sgroup').append(w); })()`);
-      // A scroll from script is put back as soon as the browser says it scrolled.
-      for (const attempt of ['p.scrollLeft = 500', 'p.scrollTo(300, 0)', 'p.scrollBy(200, 0)', 'p.scrollIntoView && document.getElementById(\'too-wide\').scrollIntoView({ inline: \'end\' })']) {
-        await b.js(`(() => { const p = document.getElementById('settings'); ${attempt}; })()`);
-        await b.until(`document.getElementById('settings').scrollLeft === 0 && window.scrollX === 0`, `${width} px: the pop-up back at its left after ${attempt}`);
-      }
+      // A scroll from script doesn't take hold, not even for a moment.
+      const fromScript = await b.js(`(() => { const p = document.getElementById('settings'), seen = [];
+        p.scrollLeft = 500; seen.push(p.scrollLeft, window.scrollX);
+        p.scrollTo(300, 0); seen.push(p.scrollLeft, window.scrollX);
+        p.scrollBy(200, 0); seen.push(p.scrollLeft, window.scrollX);
+        document.getElementById('too-wide').scrollIntoView({ inline: 'end' }); seen.push(p.scrollLeft, window.scrollX);
+        return { seen, scrollWidth: p.scrollWidth, clientWidth: p.clientWidth }; })()`);
+      assert.deepEqual(fromScript.seen, [0, 0, 0, 0, 0, 0, 0, 0], `${width} px: no scroll from script moved it sideways`);
+      assert.ok(fromScript.scrollWidth <= fromScript.clientWidth, `${width} px: nothing beside the column to scroll to`);
       const pane = await b.js(`(() => { const r = document.getElementById('settings').getBoundingClientRect(); document.getElementById('settings').scrollTop = 0; return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
       // A sideways swipe, and a sideways drag, anywhere in it: in the middle and over a setting's control.
       const control = await b.js(`(() => { const c = document.querySelector('#settings .setting .control'); c.scrollIntoView({ block: 'center' }); const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
-      // How far it got to the side at any moment, seen before the page itself could put it back.
+      // How far it got to the side at any moment.
       await b.js(`(() => { window.sideways = 0; document.addEventListener('scroll', e => { if (e.target.id === 'settings') window.sideways = Math.max(window.sideways, Math.abs(e.target.scrollLeft)); }, true); })()`);
       for (const at of [pane, control]) {
         for (const dx of [-width / 3, width / 3]) {
