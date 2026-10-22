@@ -1,7 +1,7 @@
 ---
 id: "0387"
 title: "Save your own settings in the panel without a commit"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-change-your-own-settings-without-a-commit.m
 after: ["0386","0385"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:11:40.614Z"
+approved: "2026-10-22T23:23:59.086Z"
 
 ---
 # 0387 · Save your own settings in the panel without a commit
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel's Save commits speck/config.yml to `main` for every setting except the two this machine can hold. It refuses to save while that file has uncommitted changes, so a change made with `speck config set` blocks the panel until someone commits it.
@@ -55,9 +56,15 @@ Saving in the panel's Settings no longer makes a commit for your own settings: w
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Clearing auto_ship_risk never saves: settingChanges represents clearing with value='', and sendSettings treats it as an invalid empty risk selection.; F2 shipsMore uses the blank clear payload instead of the resulting repo value.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 785,539
+- Elapsed since build started: 12 min
+- Changed lines: 196 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Known limit: the panel can no longer change speck/config.yml's defaults for your own settings (out of scope here); `speck config set --repo` still does.
