@@ -1,7 +1,7 @@
 ---
 id: "0384"
 title: "Let a review round outlast the builder's shell limit"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 0              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0383"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T20:13:36.538Z"
 approved: "2026-10-22T20:28:00.998Z"
+finished: "2026-10-22T20:30:47.233Z"
 
 ---
 # 0384 · Let a review round outlast the builder's shell limit
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 speck lets a reviewer run for `review_timeout_minutes` (30 by default). But a builder waits for `speck review` in one foreground shell command, and Claude Code ends such a command after 10 minutes. `speck run`'s Claude Code builds can't run commands in the background (0245). On 0368, a Grok review was still running at 10 minutes, so the builder's shell ended the round. The builder then improvised a detached run and a polling loop.
