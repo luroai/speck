@@ -43,6 +43,8 @@ The Foreman's button is a dot-matrix notice board that scrolls the Foreman's sta
 - `templates/lcd.js` already has the 5 × 7 font (`F5`), with capitals, digits and `:`, and reads `prefers-reduced-motion`. A "·" may need a glyph of its own.
 - Waits for 0364, which takes the builder character off this button and sets the header's one-row layout.
 - Failing before this build: none
+- Self-check: added a test that each tone's colour reads at 4.5:1 on the board's LCD background in both looks (the 0161 check doesn't cover it, the board's colour being inherited); drew the "·" in the panel rather than adding it to lcd.js, which 0308 pins.
+- Tests changed under AC5 (checks of the button's word as a text label, now of the board and its text): 0127, 0140, 0144, 0150, 0163, 0285, 0303, 0364. The fake page in test/support/panel.mjs gains createElementNS for the board's SVG.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

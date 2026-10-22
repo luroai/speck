@@ -29,7 +29,7 @@ const runOf = p => p.runSwitch();
 const headerOf = p => p.byId('run');
 const parts = p => headerOf(p).children;
 const badgeIn = p => p.all(headerOf(p)).find(n => n.tagName === 'canvas');
-const labelIn = p => p.all(headerOf(p)).find(n => /\blabel\b/.test(n.className || ''));
+const labelIn = p => p.all(headerOf(p)).find(n => n.className === 'board-text'); // 0365: the notice board's whole text
 const shows = async (tickets, run = RUN) => { const p = switchPage([state(tickets, run)]); await p.settle(); return p; };
 
 test('0163 AC1: while Auto-build is on and a ticket is building, reviewing or shipping, the button reads "Auto-build on" (0199)', async () => {
@@ -89,7 +89,7 @@ test('0163 AC3: no square and no builder: the label alone, whether a build is ru
     const p = await shows(tickets, run);
     assert.equal(p.all(headerOf(p)).filter(n => /\blive\b/.test(n.className || '')).length, 0, 'no square');
     assert.equal(badgeIn(p), undefined, `${tickets.map(t => t.id)} ${run ? 'on' : 'off'} (${pose} before 0364): no builder`);
-    assert.ok(/\blabel\b/.test(parts(p)[0].className), 'the label comes first');
+    assert.match((parts(p)[0].attrs || {}).class, /^board\b/, 'the notice board comes first (0365)');
   }
   assert.doesNotMatch(page(), /\.run-state \.mini \{/, 'no style for a builder in the button');
 });
@@ -150,7 +150,7 @@ async function withPanel(tickets, fn, { width = 1280, motion = 'no-preference' }
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(tickets) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelector('#run .label') && !document.getElementById('run').hidden`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && document.querySelector('#run .board') && !document.getElementById('run').hidden`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -158,7 +158,7 @@ async function withPanel(tickets, fn, { width = 1280, motion = 'no-preference' }
 test('0163 AC3: in a real browser, the button draws no builder, while a build runs or not', skip, async () => {
   for (const tickets of [[BUILDING], [PAUSED]]) await withPanel(tickets, async b => {
     assert.equal(await b.js(`document.querySelectorAll('#run canvas').length`), 0);
-    assert.ok(await b.js(`document.querySelector('#run .label').getBoundingClientRect().width > 0`), 'its label shows');
+    assert.ok(await b.js(`document.querySelector('#run .board').getBoundingClientRect().width > 0`), 'its notice board shows (0365)');
   });
 });
 
@@ -170,17 +170,14 @@ test('0163 AC4: in a real browser at 375 px, the label stays on one line, beside
         await b.until(`scrollY >= 600`, 'the scroll');
       }
       const g = await b.js(`(() => {
-        const r = n => { const b = n.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; }, run = document.getElementById('run'), label = run.querySelector('.label'), cs = getComputedStyle(label);
+        const r = n => { const b = n.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; }, run = document.getElementById('run'), label = run.querySelector('.board'); // 0365: the notice board
         const logo = r(document.querySelector('.logo')), repo = r(document.querySelector('.repo')), theme = r(document.getElementById('theme'));
-        return { run: r(run), label: r(label), labelFull: label.scrollWidth > label.clientWidth, ellipsis: cs.textOverflow, wrap: cs.whiteSpace,
-          lineHeight: parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.6, theme, logo, repo, head: document.querySelector('header').scrollWidth, title: run.title };
+        return { run: r(run), label: r(label), labelFull: label.getBoundingClientRect().width < Number(label.getAttribute('width')) - 0.5, theme, logo, repo, head: document.querySelector('header').scrollWidth, title: run.title };
       })()`);
       const where = slim ? 'scrolled' : 'at the top';
       assert.equal(g.head, 375, `${where}: nothing in the header past the right edge`); // the header only: the Build card's own long id is out of this ticket's scope
-      assert.equal(g.labelFull, false, `${where}: "Auto-build on" in full`);
-      assert.equal(g.ellipsis, 'ellipsis', `${where}: a label too long would end in "…"`);
-      assert.equal(g.wrap, 'nowrap', `${where}: on one line`);
-      assert.ok(g.label.height < g.lineHeight * 1.5, `${where}: one line high`);
+      assert.equal(g.labelFull, false, `${where}: the Foreman's word in full on its board (0365)`);
+      assert.equal(g.label.height, 18, `${where}: one line of dots high (0365)`);
       assert.ok(g.run.right <= g.theme.left, `${where}: beside light/dark`);
       assert.ok(Math.abs(g.run.top - g.theme.top) < 1, `${where}: on light/dark's row`);
       assert.ok(g.run.left >= 16 && g.theme.right <= 375 - 16 + .5, `${where}: within the header's padding`);
@@ -194,7 +191,7 @@ test('0163 AC4: in a real browser at 375 px, a normal label is shown in full wit
   let before;
   await withPanel([READY], async b => { before = await b.js(`(() => { const r = document.querySelector('.repo').getBoundingClientRect(); return [r.left, r.width]; })()`); }, { width: 375 });
   await withPanel([CHECKING], async b => {
-    const g = await b.js(`(() => { const l = document.querySelector('#run .label'), r = document.querySelector('.repo').getBoundingClientRect(); return { cut: l.scrollWidth > l.clientWidth, repo: [r.left, r.width] }; })()`);
+    const g = await b.js(`(() => { const l = document.querySelector('#run .board'), r = document.querySelector('.repo').getBoundingClientRect(); return { cut: l.getBoundingClientRect().width < Number(l.getAttribute('width')) - 0.5, repo: [r.left, r.width] }; })()`); // 0365: its board
     assert.equal(g.cut, false, '"Auto-build on" fits');
     assert.deepEqual(g.repo, before, 'the project\'s name is where it was');
   }, { width: 375 });

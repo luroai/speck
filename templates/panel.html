@@ -266,8 +266,14 @@
   .run-state:disabled { cursor: default; opacity: .6; }
   .run-state[hidden] { display: none; }
   /* 0163: a label that ends in "…" rather than wrap or overflow. 0364: its word alone, with no builder before it. */
-  .run-state { gap: 6px; max-width: 100%; min-width: 0; }
-  .run-state .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .run-state { position: relative; gap: 6px; max-width: 100%; min-width: 0; }
+  /* 0365: the Foreman's notice board, an LCD screen of 5 × 7 dots in its tone's colour, cut short by a narrow button */
+  .run-state .board { display: block; flex: 0 1 auto; min-width: 0; color: inherit; background: var(--lcd-bg); }
+  .run-state .board pattern rect { fill: var(--lcd-off); }
+  .run-state .board .lit { fill: currentColor; }
+  .run-state .board-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .run-state .board.plain { display: none; }
+  .run-state .board.plain + .board-text { position: static; width: auto; height: auto; min-width: 0; clip-path: none; text-overflow: ellipsis; }
   .run-state .fixing { flex: none; font-size: 12px; color: var(--muted); border-left: .5px solid var(--line); padding-left: 6px; } /* 0317 */
   /* 0285: the Foreman's status, coloured by its tone, and its detail under the header */
   .run-state.fm-ok { color: var(--ok); border-color: var(--ok); }
@@ -2631,6 +2637,7 @@ function reducedMotion() { return typeof matchMedia === 'function' && matchMedia
 // and a change to it holds the badges already drawn still or lets them move again.
 if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e => {
   for (const b of badges.values()) if (b.lcd) { b.lcd.cast.still = b.lcd.scr.still = e.matches; b.lcd.scr.dirty = true; }
+  if (state) render(); // 0365: the Foreman's board stops, showing its word alone, or scrolls again
 });
 // A change of the screen's pixels per CSS pixel (a zoom, or another screen) gives each screen its new size, which its
 // renderer doesn't see, as the screen's size on the page stays the same. Its look it follows itself.
@@ -3166,7 +3173,8 @@ function render() {
   const run = $('run');
   run.hidden = false;
   run.className = `run-state fm-${stale ? 'warn' : f.tone}`;
-  run.replaceChildren(el('span', 'label', stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
+  // 0365: a dot-matrix notice board, scrolling the Foreman's word and what each ticket in flight is doing
+  run.replaceChildren(...drawBoard(boardText(f, stale), stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
   renderForeman(f, stale);
@@ -3195,6 +3203,81 @@ function foremanOf(st) {
     building: list(f && f.building), ready: list(f && f.ready), held: list(f && f.held), ship: f && f.ship && typeof f.ship === 'object' ? f.ship : null, blocked: list(f && f.blocked),
     agent: f && f.agent && typeof f.agent === 'object' ? f.agent : null, // 0287: the Foreman agent's work
     fixing: f && typeof f.fixing === 'string' ? f.fixing : null, fixing_says: f && typeof f.fixing_says === 'string' ? f.fixing_says : '', took: list(f && f.took) }; // 0317
+}
+// 0365: the Foreman's notice board. Its text is the Foreman's word, then what each ticket in flight is doing, drawn in
+// the LCD screens' 5 × 7 dot font, in capitals, on dots 2 px apart. Text wider than the board scrolls from right to left,
+// 30 dots a second, and loops round with a gap. Text that fits, or any text with reduced motion (which shows the word
+// alone), stays still. The board is kept between redraws, so the same text carries on scrolling; new text starts again
+// from the right-hand edge. Its whole text is the button's name, whatever has scrolled into view.
+const BOARD = { pitch: 2, rows: 9, max: 90, gap: 16, speed: 30 };
+const MIDDOT = '.....|.....|.....|..#..|.....|.....|.....'.split('|'); // "·", which the font hasn't got
+function boardText(f, stale) {
+  if (stale) return 'Reload page';
+  const s = f.ship && typeof f.ship.running === 'string' && f.ship.running ? f.ship.running : null;
+  return [f.word, ...f.building.map(id => `${id} building`), ...(s ? [`${s} shipping`] : []), ...f.blocked.map(b => `${b && typeof b === 'object' ? b.id : b} blocked`)].join(' · ');
+}
+// Each lit dot of `text` in the 5 × 7 font, as one path, the text's left edge at 0 and its top a dot down.
+function boardDots(text) {
+  const font = LCD && LCD.F5, up = String(text).toUpperCase();
+  let d = '';
+  if (font) for (let n = 0; n < up.length; n++) {
+    const rows = up[n] === '·' ? MIDDOT : font.g[up[n]];
+    if (rows) for (let r = 0; r < font.h; r++) for (let c = 0; c < font.w; c++) if (rows[r][c] === '#') d += `M${n * (font.w + 1) + c + .1} ${r + 1.1}h.8v.8h-.8z`;
+  }
+  return { d, width: Math.max(0, up.length * 6 - 1) };
+}
+const SVGNS = 'http://www.w3.org/2000/svg';
+const svgEl = (tag, attrs = {}) => { const n = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
+let board = null; // { svg, g, a, b, shown, still, width, cols, t0, x }
+// The board, kept between redraws, then its whole text, made again with each one, for the button's name.
+function drawBoard(text, word) {
+  if (!board) {
+    const a = svgEl('path', { class: 'lit' }), b = svgEl('path', { class: 'lit' }), g = svgEl('g');
+    const dots = svgEl('pattern', { id: 'board-dots', width: '1', height: '1', patternUnits: 'userSpaceOnUse' });
+    dots.appendChild(svgEl('rect', { x: '.1', y: '.1', width: '.8', height: '.8' }));
+    const svg = svgEl('svg', { 'aria-hidden': 'true', focusable: 'false', preserveAspectRatio: 'xMinYMid slice' });
+    svg.appendChild(dots);
+    svg.appendChild(svgEl('rect', { class: 'unlit', width: '100%', height: '100%', fill: 'url(#board-dots)' }));
+    g.appendChild(a); g.appendChild(b); svg.appendChild(g);
+    board = { svg, g, a, b, shown: null, still: null, t0: null, x: null };
+  }
+  const still = reducedMotion(), shown = still ? word : text;
+  board.svg.setAttribute('class', LCD && LCD.F5 ? 'board' : 'board plain'); // without the renderer's font, the text itself shows
+  if (board.shown !== shown || board.still !== still) {
+    const { d, width } = boardDots(shown);
+    Object.assign(board, { shown, still, width, cols: Math.min(BOARD.max, width + 2), t0: null, x: null });
+    board.a.setAttribute('d', d);
+    board.b.setAttribute('d', d);
+    board.b.setAttribute('transform', `translate(${width + BOARD.gap} 0)`);
+    board.svg.setAttribute('viewBox', `0 0 ${board.cols} ${BOARD.rows}`);
+    board.svg.setAttribute('width', String(board.cols * BOARD.pitch));
+    board.svg.setAttribute('height', String(BOARD.rows * BOARD.pitch));
+  }
+  boardFrame(null);
+  if (!still && !boardTicking && typeof requestAnimationFrame === 'function') { boardTicking = true; requestAnimationFrame(boardTick); }
+  return [board.svg, el('span', 'board-text', text)];
+}
+let boardTicking = false;
+function boardTick(now) {
+  if (!board || board.still) { boardTicking = false; return; }
+  boardFrame(now);
+  requestAnimationFrame(boardTick);
+}
+// Places the board's text for the time `now` (null: as it was, or at the start). How many dots show is how wide the
+// board is on the page, so a narrow screen scrolls text the full board would fit.
+function boardFrame(now) {
+  if (now === null && board.t0 !== null) return; // a redraw while it scrolls: it carries on where it is
+  const w = typeof board.svg.getBoundingClientRect === 'function' ? board.svg.getBoundingClientRect().width : 0, shows = w > 0 ? Math.floor(w / BOARD.pitch) : board.cols;
+  const scrolls = !board.still && board.width + 2 > shows, P = board.width + BOARD.gap;
+  let x = 1;
+  if (scrolls) {
+    if (board.t0 === null && now !== null) board.t0 = now;
+    const s = board.t0 === null ? 0 : Math.floor((now - board.t0) * BOARD.speed / 1000);
+    x = shows - s;
+    if (x <= -P) x = (((x % P) + P) % P || P) - P; // gone off the left: back where its copy was
+  } else board.t0 = null;
+  board.b.setAttribute('display', scrolls ? 'inline' : 'none');
+  if (x !== board.x) { board.x = x; board.g.setAttribute('transform', `translate(${x} 0)`); }
 }
 // 0285: true when the server's code is newer than the code this page was sent with.
 const pageStale = st => !!(st && typeof st.page === 'string' && st.page && st.page !== PAGE);
