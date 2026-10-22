@@ -49,7 +49,7 @@ Saving your own settings in the panel makes no commit.
 - Self-check: no changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Saving in the panel's Settings no longer makes a commit for your own settings: who builds and reviews, their models and effort, auto-ship, the Foreman and how many builds and test runs go at once. They're kept on this computer only, just as `speck config set` keeps them, and the panel no longer asks whether a change is for this machine or the repo. Only the project's settings, such as the ticket size limits and how tickets ship, are still committed, and the line at the top of Settings names them. Because your own settings make no commit, saving them works even when the project's settings file has changes that aren't committed yet. Each of your own settings is marked "this machine" or "repo", and one this machine holds can be cleared back to the project's value. To see it, open Settings, change the reviewer's effort and save: nothing new appears in git, and the setting is marked "this machine". Worth knowing: the panel can't change the project's defaults for your own settings any more; `speck config set --repo` does that.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,10 @@ Saving your own settings in the panel makes no commit.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Known limit: the panel can no longer change speck/config.yml's defaults for your own settings (out of scope here); `speck config set --repo` still does.
+- Tidy-up: every one of your own settings now carries a "repo" mark when it uses speck/config.yml's value, which with "default" reads "REPO DEFAULT"; the marks could be merged if it feels busy.
+- No inbox notes: neither needs its own ticket.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -138,6 +142,87 @@ Saving your own settings in the panel makes no commit.
     ],
     "escalation_question": "",
     "summary": "Personal settings now save locally without commits, and mixed saves retain the existing protections. The reported tests pass, but clearing shipping overrides is broken in the panel. Fix those clear paths before merging."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b20b8caf9abdd3b4af0302803c6f11cd9694d75d",
+    "thread_id": "01a165eb-de55-7dc1-b1e8-1b20925ebb94",
+    "seconds": 17,
+    "usage": {
+      "input_tokens": 466703,
+      "cached_input_tokens": 388864,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1756,
+      "reasoning_output_tokens": 123
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T23:23:46.895Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs panelSaveSettings saves own settings through saveMachineValues. Passing 0387 AC1 tests verify unchanged config and HEAD, automatic machine scope, no scope question, and blank values."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0387 AC2 test verifies own-settings saves work with uncommitted config changes and off the base branch, leaving git unchanged."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "panelSaveSettings validates before writing and retains branch and dirty-config checks for repo changes. Passing 0387 AC3 tests cover mixed saves, config-only commits, and refusing all changes when either kind is invalid."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing 0387 AC4 tests cover source labels, clearing overrides, and the line naming committed settings. New regression tests exercise clearing shipping risks and confirming or cancelling a clear that enables shipping. shipsMore now uses repo_value for clears."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Verified current test output: 204 passed, zero failed, three skipped. Existing test changes retain their checks while updating the former commit and scope expectations."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clearing auto_ship_risk was incorrectly rejected as an empty risk selection.",
+        "suggested_fix": "Implemented: sendSettings excludes clear operations from empty-selection validation; a passing page regression test verifies the clear request is sent.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Clearing a shipping override used the blank request value when deciding whether confirmation was needed.",
+        "suggested_fix": "Implemented: shipsMore uses repo_value for clear operations, and cancellation clears the pending operation. Passing tests cover confirmation, cancellation and server enforcement.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Personal settings save for this machine without commits, while shared settings retain the existing commit and refusal rules. Both problems with clearing shipping overrides are fixed. All five criteria pass, with no blocking findings remaining."
   }
 }
 ```
