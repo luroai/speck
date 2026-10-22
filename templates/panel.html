@@ -706,6 +706,7 @@ function doing(t, shipping) {
   if (t.red && (t.status === 'building' || t.status === 'reviewing')) return at('The build stopped');
   if (t.paused) return at('Paused');
   if (t.run_waiting) return at('Approved · turn on Auto-build to ship it');
+  if (t.doc_finished) return at('Finished · read the document'); // 0361
   if (approved) return at(autoShips ? 'Approved · waiting to ship' : 'Approved · waiting for you to ship it');
   const steps = Array.isArray(t.steps) ? t.steps : [], now = steps.findIndex(s => s.state === 'now');
   let sentence = now === 1 ? 'Checking its own work' : 'Writing tests and code';
@@ -901,6 +902,9 @@ function panelModel(state) {
       // An approved ticket whose build has exited is waiting for you to ship it, so it's purple rather than red (0138),
       // unless its auto-ship failed. 0167: so is one auto-ship doesn't cover, whatever its build is doing, unless it's shipping.
       const to_ship = t.status === 'approved' && !auto_failed && (exit_label !== null || run_waiting || (t.auto_ship === false && !shipping));
+      // 0361: a document task whose build has finished is done, and its document waits in its review pack: its row
+      // says so, with no exit line or log box.
+      const doc_finished = t.task === 'document' && exit_label === 'Build finished without shipping';
       // A build speck run launched and is running can be stopped from its row, which says when it's paused.
       const pausable = (t.status === 'building' || t.status === 'reviewing') && t.build_running === true && !exited;
       const paused = pausable && t.paused === true;
@@ -909,9 +913,9 @@ function panelModel(state) {
       // 0217: and while its build has stopped before finishing, at its exit, or at when speck noticed it had been killed.
       const stopped_at = stopped ? time(t.build_stopped_at) : exit_label === 'Build stopped before finishing' ? time(t.build_exit.at) : null;
       const held_at = approved_at ?? (t.status === 'blocked' ? time(t.blocked_at) : null) ?? (paused ? time(t.paused_at) : null) ?? stopped_at;
-      return { ...t, inFlight, pausable, paused, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship && !carried_by), to_ship, carried_by, exit_label, resume: resumeOf(t, state.resume_command, stopped),
+      return { ...t, inFlight, pausable, paused, steps: progress(t.status === 'done' ? { ...t, status: 'approved' } : t), red: t.status === 'blocked' || (exit_label !== null && !to_ship && !carried_by), to_ship, carried_by, doc_finished, exit_label: doc_finished ? null : exit_label, resume: resumeOf(t, state.resume_command, stopped),
         exit_message: auto_failed || blocked_failed ? (typeof ship.message === 'string' && ship.message ? ship.message : null)
-          : exited && exit_label && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
+          : exited && exit_label && !doc_finished && typeof t.build_exit.message === 'string' ? t.build_exit.message : null,
         ship_hint: auto_failed && !carried_by ? `Ship it from its review pack, or run /speck-ship ${t.id}` : null,
         shipping, ship_waiting, run_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight && start !== null ? start + waited(t) : null, approved_at, held_at, counter: inFlight && start !== null ? counter((held_at ?? Date.now()) - start - waited(t)) : null };
@@ -2548,6 +2552,7 @@ function queueItem(t) {
     if (t.exit_message) q.appendChild(el('div', t.to_ship ? 'question exit to-ship' : t.carried_by ? 'question exit carried' : 'question exit', t.exit_message));
   }
   if (t.ship_hint) q.appendChild(el('div', 'act', t.ship_hint));
+  if (t.doc_finished && !isOpen) q.appendChild(packButton(t)); // 0361: the document is in its review pack
   // 0317: a blocked ticket says whether the Foreman will take its recommendation or it's waiting for you, and one whose
   // build carries on with a recommendation says who went with it, until it moves on
   if (t.status === 'blocked' && t.foreman_will === true) q.appendChild(el('div', 'act foreman-will', `The Foreman will take its recommendation: ${t.blocked_recommendation}`));

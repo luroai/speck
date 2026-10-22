@@ -43,6 +43,7 @@ A document task whose build has finished shows as a short row that says it's fin
 - Today's row comes from `queueItem` and the `exit_label` and `exit_message` fields in `templates/panel.html`. `exit_message` is `build_exit.message`, the log's last 50 lines (0045). The box is `.question.exit.to-ship`: a purple left edge on `.question`'s red-tinted background (0138).
 - A document task never ships by itself, whatever `auto_ship` says, so every finished one ends up like this.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
