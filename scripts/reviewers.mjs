@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TEMPLATES, SpeckError, sh, git, reviewerSettings, settingsMeta, posix } from './core.mjs';
-import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt } from './review.mjs';
+import { cacheDir, reviewDiff, validateVerdict, saveRound, reviewerPrompt, verdictInProse } from './review.mjs';
 import { cursorCli } from './cursor-build.mjs';
 
 const LIMIT_SCRIPT = fileURLToPath(new URL('./limit.mjs', import.meta.url));
@@ -93,16 +93,17 @@ export function reviewerOptions(cfg, name) {
   return Object.hasOwn(BUILT_IN, name) ? BUILT_IN[name]() : mine;
 }
 
-// A JSON object from text that is JSON, or holds a ```json fenced block.
+// A JSON object from text that is JSON, or holds a ```json fenced block, or else the last verdict object among its prose.
 function jsonIn(text) {
   const tries = [text.trim(), ...[...String(text).matchAll(/```[a-z]*\r?\n([\s\S]*?)\r?\n```/gi)].map(m => m[1])];
   for (const s of tries) {
     try { const v = JSON.parse(s); if (v && typeof v === 'object' && !Array.isArray(v)) return v; } catch { /* try the next */ }
   }
-  return null;
+  return verdictInProse(text);
 }
 
-// The verdict in a command reviewer's stdout: the whole output, a fenced block, or an envelope whose `result` string holds it.
+// The verdict in a command reviewer's stdout: the whole output, a fenced block, an object with a `verdict` key among
+// prose, or an envelope whose `result` string holds any of them.
 export function verdictFromOutput(stdout) {
   const v = jsonIn(stdout);
   if (v && !('verdict' in v) && typeof v.result === 'string') return { verdict: jsonIn(v.result), envelope: v };
