@@ -1,7 +1,7 @@
 ---
 id: "0372"
 title: "Move the light/dark control into Settings"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0371"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T21:53:21.042Z"
 approved: "2026-10-22T22:12:50.742Z"
+finished: "2026-10-22T22:15:10.088Z"
 
 ---
 # 0372 · Move the light/dark control into Settings
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The header carries a light/dark button beside Settings. On a narrow pane that button takes space the Foreman's notice board needs.
