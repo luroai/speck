@@ -41,6 +41,7 @@ The speck run that stopped a build launches that ticket again once it is set rea
 - Checked 2026-10-22: `ownWait` in `scripts/run.mjs` returns while the ticket is still in `launched`, before `heldByStop`. `readyAgain` in `scripts/build-records.mjs` returns false when `speck stop` ended the build, so the launched list is never cleared for it. `heldByStop` already knows a later commit of the ticket.
 - Waits for 0375 so it ships in 0.13.1, not in 0.13.0. It changes `scripts/run.mjs`, not the files the 0.13.0 tickets change.
 - Failing before this build: none
+- Self-check: `speck stop`'s own commit, blocking the ticket, already counts as a commit since the stop, so a ticket set ready in its worktree but not committed would have been launched. It's now launched again only once its last commit has it ready (`readyAfterStop`), and a test covers it with and without worktrees. `heldByStop` moved to `scripts/build-records.mjs` to keep `scripts/run.mjs` under 600 lines.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
