@@ -1,7 +1,7 @@
 ---
 id: "0375"
 title: "Prepare release 0.13.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-22T23:44:11.286Z"
 ---
 # 0375 · Prepare release 0.13.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 0368 to 0374 rework Settings and the header. Settings opens over the whole panel, a builder or reviewer's models appear when you choose that agent, and changing a setting leaves the view still. An explanation floats over its row. Light and dark move into Settings, the dot-matrix "speck" word comes back with the base branch beside it, and the Foreman's notice board scrolls more slowly. Your own settings, such as which agents build and review, are kept for your machine and no longer need a commit (0386 to 0388). Anyone following the setup prompt, or updating speck on another machine, gets 0.12.0 without them.
@@ -55,7 +55,7 @@ speck is ready to be released as 0.13.0.
 - Pictures: none, because only text changes: the README's status line and figures, which render as before.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.13.0, the release with the reworked Settings and header and your own settings kept out of git: Settings in a pop-up, each agent's models beside it, a view that stays still, light and dark in Settings, the "speck" word back in the header beside the base branch, a slower notice board, and who builds and reviews saved for your machine without a commit. The changelog has a 0.13.0 section, the README and the brief say 0.13.0, the README's "Built with speck" figures are up to date (366 tickets shipped, now 1.5 review rounds median), and the notes for the GitHub release page are written, including what changes for someone upgrading. Nothing about how speck works changes in this ticket. Once it lands, the release workflow should tag 0.13.0 and publish its release page: check it appeared in the repository's Actions tab.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -64,4 +64,73 @@ speck is ready to be released as 0.13.0.
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6b637b6feb5159e2a8fe4cdafa5b88a45ba3f1cd",
+    "session": "fresh",
+    "thread_id": "01a16602-8c53-74b2-bb1e-df4b3673c63a",
+    "builder_response": "- Tests run: test/release-0375.test.mjs test/release-0367.test.mjs test/release-0360.test.mjs test/docs-0267.test.mjs test/install-0253.test.mjs and every other test/release-0*.test.mjs (the commands.checks files run too)\n- Tickets shipped since v0.12.0 (`git log v0.12.0..HEAD | grep ': ship$'`): 0368 to 0374, 0381, 0382, 0383, 0384, 0385 to 0388. 0383 and 0384 aren't named in the ticket but shipped since, so the changelog and notes cover them too.\n- README figures recomputed with test/support/figures.mjs at the 0388 commit: 366 shipped, 16 cancelled, 12 min median, 1.5 rounds median, 181 first-round approvals.\n- test/release-0367.test.mjs: its checks that named 0.12.0 as the current version now check the current version, as 0367 did to 0360's.\n",
+    "seconds": 38,
+    "usage": {
+      "input_tokens": 208256,
+      "cached_input_tokens": 155008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1141,
+      "reasoning_output_tokens": 102
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-22T23:47:22.970Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.13.0. Both 0375 AC1 tests passed, including running init and checking its printed version."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 0.13.0 above 0.12.0 without changing older sections. Reviewed its claims against the 15 tickets shipped since v0.12.0; it covers their Settings, header, machine settings and review changes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md say '0.13.0, a public preview'. The README setup prompt retains the quoted semver:* install command. Both 0375 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.13.0.md explains the minor release, benefits, update command for each project and upgrade changes, with no person's name. Claims match shipped tickets. All three AC4 tests passed, covering commands, the changelog link and private words."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recomputed figures from the current done tickets: 366 shipped, 16 cancelled, 12 minutes median, 1.5 review rounds median and 181 first-round approvals, matching README.md. Both AC5 tests passed. The recorded run has 325 passes, no failures and three skips; changes to older release tests appropriately accommodate the new current release."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release is ready for the owner's merge decision. Version numbers, release notes and README figures agree, and the notes cover all shipped changes since 0.12.0. The tested checks passed, with no blocking concerns found."
+  }
+}
+```
+
+</details>
