@@ -16,12 +16,10 @@ import { pictureFile } from './pictures.mjs';
 import { documentFile } from './output.mjs';
 import { boardFeed, boardVersions, panelBoard } from './board-feed.mjs';
 import { logFeed } from './log-feed.mjs';
-import { panelSettings, panelSettingRequest, panelSaveRequestAsync, reviewerModels, builderModels, foremanModels } from './settings.mjs';
-import { codexModelsAsync } from './codex-models.mjs';
+import { panelSettingRequest, panelSaveRequestAsync, settingsAnswer, agentModels } from './settings.mjs';
 import { foremanView, readForeman, fixingOf } from './foreman.mjs';
 import { agentView } from './foreman-agent.mjs';
 import { panelForemanReply } from './foreman-answer.mjs';
-import { findAgentsAsync, agentModelsAsync } from './agents.mjs';
 import { goWith } from './go-with.mjs';
 
 // ---------- panel (a view in the browser, with its writes: Set ready and Back to Plan, a draft's priority, Stop build, Go with the recommendation, an answer to the Foreman's question, Ship, Ask for changes, the speck run switch and a setting) ----------
@@ -478,25 +476,12 @@ export async function panelServer() {
       try { return send(res, 200, 'application/json', JSON.stringify(logs.answer(req.headers, padId(log[1]), !!log[2]))); }
       catch (e) { return send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read the build log: ${e.message}` })); }
     }
-    // 0257: the settings people tune, read afresh from speck/config.yml each time the Settings view opens.
-    // 0276: with the models the reviewer offers, read now too.
-    if (where === '/api/settings') {
-      return (async () => {
-        // 0279: and the builder's, asking Codex once when it's both
-        let models, built, foreman, agents, asked = null, cursorAsked = null;
-        const read = () => (asked ??= codexModelsAsync());
-        const readCursor = () => (cursorAsked ??= agentModelsAsync('cursor')); // 0347: and Cursor once when it's both
-        // 0288: and which agents are installed and signed in, for the reviewers it offers, at the same time
-        const found = findAgentsAsync({ models: false }).catch(() => undefined);
-        try { models = await reviewerModels(repo, read, readCursor); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
-        try { built = await builderModels(repo, read, readCursor); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
-        // 0348: and the Foreman agent's
-        try { foreman = await foremanModels(repo, read, readCursor); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
-        agents = await found;
-        try { send(res, 200, 'application/json', JSON.stringify(panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents }))); }
-        catch (e) { send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })); }
-      })();
-    }
+    // 0257: the settings people tune, read afresh from speck/config.yml each time the Settings view opens, with the
+    // models the reviewer, builder and Foreman agent offer (settingsAnswer).
+    if (where === '/api/settings') return settingsAnswer(repo).then(body => send(res, 200, 'application/json', JSON.stringify(body)),
+      e => send(res, 500, 'application/json', JSON.stringify({ error: `Couldn't read speck/config.yml: ${e.message}` })));
+    // 0369: the models of an agent chosen in the Settings view but not yet saved, read when it's chosen.
+    if (where === '/api/agent-models') return agentModels(query.get('agent') ?? '').then(out => send(res, 200, 'application/json', JSON.stringify(out)));
     const pack = where.match(/^\/api\/tickets\/(\d{1,4})\/pack$/);
     if (pack) {
       try { const out = panelPack(repo, pack[1]); return send(res, out.status, 'application/json', JSON.stringify(out.body)); }
