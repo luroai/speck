@@ -41,6 +41,7 @@ An approved document task's document pop-up has the review pack's Ship and Ask f
 ## Notes
 - Today: `shipPart` and `changesPart` in `templates/panel.html` (0133, 0357) draw the pack's controls. Shipping a document task files it as done (0355).
 - Ask for changes is included because it's the other answer to reading the document: ship it, or send it back.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
