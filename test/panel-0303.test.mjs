@@ -78,7 +78,7 @@ test('0303 AC2: the Foreman\'s button makes no mini builder, as builds start and
   for (const next of [[BUILDING, READY], [READY], [BUILDING]]) {
     assert.equal(minis.length, 0);
     assert.equal(builderIn(p), undefined);
-    assert.match(p.byId('run').children[0].className, /\blabel\b/);
+    assert.match((p.byId('run').children[0].attrs || {}).class, /^board\b/, 'its notice board (0365)');
     tickets = next;
     await refresh(p);
   }
@@ -112,7 +112,7 @@ test('0303 AC3: in a real browser, the Foreman\'s button draws no builder, in ei
         await b.send('Page.enable');
         await b.send('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('speck-theme', '${look}');` });
         await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-        await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run .label')`, 'the panel');
+        await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !!document.querySelector('#run .board')`, 'the panel');
         assert.equal(await b.js(`document.documentElement.dataset.theme`), look);
         assert.equal(await b.js(`document.querySelectorAll('#run canvas').length`), 0, look);
       } finally { await b.close(); }

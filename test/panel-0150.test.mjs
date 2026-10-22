@@ -140,7 +140,7 @@ async function withPage(run, width, fn) {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub(run) });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && document.querySelector('#run .label')`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.readyState === 'complete' && !document.getElementById('run').hidden && document.querySelector('#run .board')`, 'the panel');
     await fn(b);
   } finally { await b.close(); await stop(panel); }
 }
@@ -183,8 +183,9 @@ test('0150 AC2: pressing Enter or Space on the focused button starts or pauses s
 });
 
 // 0163: the builder took the square's place, and the label alone says whether it's on or off. 0364: the builder has gone too.
+// 0365: the label is the Foreman's notice board.
 test('0150 AC2: on or off, the button shows its word, with no square or builder', skip, async () => {
-  const shown = `!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .label').getBoundingClientRect().width > 0`;
+  const shown = `!document.querySelector('#run .live') && !document.querySelector('#run canvas') && document.querySelector('#run .board').getBoundingClientRect().width > 0`;
   await withPage({ on: true, pid: 7 }, 1280, async b => assert.equal(await b.js(shown), true));
   await withPage(null, 1280, async b => assert.equal(await b.js(shown), true));
 });
