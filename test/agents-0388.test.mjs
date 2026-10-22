@@ -57,6 +57,23 @@ test('0388 AC2: a Codex round after the settings\' model changes uses it, in a f
   assert.equal(r.roundFile(2).meta.session, 'fresh');
 });
 
+test('0388 AC2: a fresh Codex session after a change gets every earlier response, verdict and the round-1 test output', () => {
+  const r = reviewRepo({ config: 'reviewer_model: m1\n' });
+  const file = (name, text) => { const f = path.join(r.dir, '..', `${name}-${path.basename(r.dir)}.txt`); fs.writeFileSync(f, text); return f; };
+  const commit = n => { fs.writeFileSync(path.join(r.dir, 'a.txt'), `fix ${n}\n`); r.git('add', '-A'); r.git('commit', '-qm', `fix ${n}`); };
+  assert.equal(r.run('review', '1', `--tests=${file('t1', 'TESTS-ONE-MARKER\n')}`, `--response=${file('r1', '- RESPONSE-ONE-MARKER\n')}`).status, 10);
+  commit(1);
+  assert.equal(r.run('review', '1', `--response=${file('r2', '- RESPONSE-TWO-MARKER\n')}`).status, 10);
+  assert.deepEqual(r.calls()[1].slice(0, 2), ['exec', 'resume']);
+  commit(2);
+  assert.equal(r.run('config', 'set', 'reviewer_model', 'm2').status, 0);
+  assert.equal(r.run('review', '1', `--response=${file('r3', '- RESPONSE-THREE-MARKER\n')}`).status, 10);
+  assert.ok(!r.calls()[2].includes('resume'));
+  const third = r.prompts()[2];
+  for (const marker of ['TESTS-ONE-MARKER', 'RESPONSE-ONE-MARKER', 'RESPONSE-TWO-MARKER', 'RESPONSE-THREE-MARKER', 'Your round 1 verdict', 'Your round 2 verdict'])
+    assert.ok(third.includes(marker), `missing ${marker}`);
+});
+
 test('0388 AC2: a Codex round with the same reviewer and model still resumes the last session', () => {
   const r = reviewRepo({ config: 'reviewer_model: m1\n' });
   assert.equal(r.run('review', '1').status, 10);

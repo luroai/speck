@@ -113,7 +113,7 @@ export function verdictFromOutput(stdout) {
 // The round-1 prompt exactly as it was sent, saved with the review's working files. If that copy is gone (another
 // machine, or a cleared cache), it is rebuilt from the commit round 1 reviewed. Only its test output can't be recovered.
 // A copy saved by a speck that still sent speck/product.md is rebuilt the same way, keeping the test output it holds.
-const roundOneFile = (repo, id) => path.join(cacheDir(repo, id), 'round-1.prompt.md');
+export const roundOneFile = (repo, id) => path.join(cacheDir(repo, id), 'round-1.prompt.md');
 const LEGACY_SPEC = '## Living spec (speck/product.md)';
 function savedTests(text) {
   const head = '## Test output (from the builder)\n\n```\n';
