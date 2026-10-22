@@ -1,7 +1,7 @@
 ---
 id: "0373"
 title: "Restore speck's dot-matrix name beside the base branch"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0372"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:15:26.690Z"
 approved: "2026-10-22T22:28:53.376Z"
+finished: "2026-10-22T22:31:33.211Z"
 
 ---
 # 0373 · Restore speck's dot-matrix name beside the base branch
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Under 700 px the header hides the dot-matrix "speck" word so the project line can stay. That line is 12 px text, so on a narrow pane the title reads as a small "speck · base main" beside the mark.
