@@ -43,6 +43,8 @@ The path and Close button stay at the top of a document pop-up, and Close stays 
 - The Foreman's pop-up is included: it is the same window as the document's, so leaving its Close to scroll away would keep the phone problem on one of the three.
 - Waits for 0375, which waits for 0368, so the Settings pop-up exists when this is built. It changes `templates/panel.html`.
 - Failing before this build: none
+- Self-check: a setting's explanation opening above a row just under the Settings pop-up's held top line would have gone under that line, so it now goes below its row there (test added). The pop-ups' own top padding moved into the top line, in their existing rules, so no second rule changes their size (0362's check).
+- AC5: no existing test checked that Close scrolls with the document, so none needed changing.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
