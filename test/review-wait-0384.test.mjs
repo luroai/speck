@@ -6,11 +6,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { reviewRepo, commandRepo, changesVerdict, ROOT } from './support/speck.mjs';
+import { spawn } from 'node:child_process';
+import { reviewRepo, commandRepo, changesVerdict, ROOT, CLI } from './support/speck.mjs';
 import { keptFile } from './support/copy.mjs';
 import { runsOf } from '../scripts/speck.mjs';
 import { roundRunning } from '../scripts/review-running.mjs';
-import { reviewWaitMs } from '../scripts/review-wait.mjs';
+import { reviewWaitMs, claimStart } from '../scripts/review-wait.mjs';
 
 // A reviewer that logs each start and answers only once its go file exists, or fails then with SLOW_FAIL set.
 const slow = keptFile('slow-reviewer', `#!${process.execPath}
@@ -123,6 +124,32 @@ test('0384 AC2: a reviewer that fails gives its failure message from the wait co
   assert.equal(r.git('status', '--porcelain', '--untracked-files=no').stdout, '', 'the ticket is as it was');
 });
 
+test('0384 AC2: only one command can claim a start, so two started at once never both start a reviewer', () => {
+  const r = commandRepo();
+  assert.equal(claimStart(r.dir, '0001', 1, 1), true);
+  assert.equal(claimStart(r.dir, '0001', 1, 1), false, 'the second claim of the same start fails');
+  const rec = JSON.parse(fs.readFileSync(path.join(r.dir, 'speck', '.cache', '0001', 'review-run-1.json'), 'utf8'));
+  assert.equal(rec.pid, process.pid, 'and leaves the first one\'s record as it was');
+});
+
+test('0384 AC2: speck review run twice at once starts one reviewer, and its round is recorded once', async t => {
+  const r = slowRepo(t);
+  const start = () => new Promise(resolve => {
+    const p = spawn(process.execPath, [CLI, 'review', '1'], { cwd: r.dir, env: { ...process.env, ...r.env, SPECK_REVIEW_WAIT_MS: '1500' } });
+    let out = '';
+    p.stdout.on('data', d => { out += d; });
+    p.on('close', code => resolve({ code, out }));
+  });
+  const both = await Promise.all([start(), start()]);
+  assert.deepEqual(both.map(b => b.code), [12, 12], JSON.stringify(both));
+  assert.equal(r.starts(), 1, 'one reviewer only');
+  r.go();
+  const done = r.run({ SPECK_REVIEW_WAIT_MS: '10000' }, 'review', '1', '--wait');
+  assert.equal(done.status, 10, done.stderr);
+  assert.equal(r.rounds(), 1);
+  assert.equal(r.starts(), 1);
+});
+
 test('0384 AC3: a reviewer that finishes within the wait gives the output, exit code and round it did before', () => {
   const r = commandRepo();
   const res = r.run('review', '1');
@@ -147,15 +174,16 @@ test('0384 AC3: the panel shows the round as running through every exit 12, unti
 
 test('0384 AC2: a round whose process is gone, or whose pid another process has taken since, is said to have stopped', () => {
   const r = commandRepo();
-  const run = path.join(r.dir, 'speck', '.cache', '0001', 'review-run.json');
-  fs.mkdirSync(path.dirname(run), { recursive: true });
-  for (const rec of [{ round: 1, pid: 2 ** 22 + 12345, started: new Date().toISOString() }, { round: 1, pid: process.pid, started: '2020-01-01T00:00:00Z' }]) {
-    fs.writeFileSync(run, JSON.stringify(rec));
+  const dir = path.join(r.dir, 'speck', '.cache', '0001');
+  fs.mkdirSync(dir, { recursive: true });
+  const stale = [{ round: 1, pid: 2 ** 22 + 12345, started: new Date().toISOString() }, { round: 1, pid: process.pid, started: '2020-01-01T00:00:00Z' }];
+  for (const [i, rec] of stale.entries()) {
+    fs.writeFileSync(path.join(dir, `review-run-${i + 1}.json`), JSON.stringify(rec));
     const res = r.run('review', '1', '--wait');
     assert.equal(res.status, 1, res.stdout);
     assert.match(res.stderr, /Review round 1 of 0001 stopped before it finished, and no round was recorded\./);
     assert.doesNotMatch(res.stderr, /^\s+at /m);
-    assert.equal(fs.existsSync(run), false, 'the stale record is cleared');
+    assert.match(r.run('review', '1', '--wait').stderr, /No review round of 0001 is running/, 'it is said once');
   }
   // With the stale record gone, a new round runs as usual.
   assert.equal(r.run('review', '1').status, 10);
