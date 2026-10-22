@@ -42,6 +42,7 @@ Pressing a Markdown document's button in a review pack shows it, formatted, in a
 ## Notes
 - Today: `documentsPart`, `openDocument` and `documentPane` in `templates/panel.html` (0354, 0359). The side pane is `#full-ticket`, made modal in 0060, and focus returns to its opener as in 0326.
 - The "Back to the review pack" button goes: closing the pop-up returns to the pack.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
