@@ -1,7 +1,7 @@
 ---
 id: "0366"
 title: "Open the Foreman's detail in a pop-up over the whole panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0365"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T16:12:45.625Z"
 approved: "2026-10-22T16:21:04.619Z"
+finished: "2026-10-22T16:23:37.601Z"
 
 ---
 # 0366 · Open the Foreman's detail in a pop-up over the whole panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Pressing the Foreman's button opens its detail at the top of the page, under the header, where it pushes the page down and scrolls away as you scroll. It should stay in view while you read it.
