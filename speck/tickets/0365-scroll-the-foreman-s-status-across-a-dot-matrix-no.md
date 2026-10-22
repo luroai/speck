@@ -1,7 +1,7 @@
 ---
 id: "0365"
 title: "Scroll the Foreman's status across a dot-matrix notice board"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-22
 ---
 # 0365 · Scroll the Foreman's status across a dot-matrix notice board
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 The Foreman's button in the header shows one word, such as "Building 2", so the overview of what speck run is doing is only in its detail. An old-school notice board scrolling words across a dot-matrix screen would give that overview at a glance, in the panel's LCD style.
