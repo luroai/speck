@@ -1,7 +1,7 @@
 ---
 id: "0381"
 title: "Put each agent's model beside its family"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-put-the-reviewer-s-model-beside-its-family.
 after: ["0368","0369","0370","0371","0372","0373","0374"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T22:31:49.142Z"
+approved: "2026-10-22T22:42:54.632Z"
 
 ---
 # 0381 · Put each agent's model beside its family
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 Settings shows each agent and its model as two rows: the builder, the reviewer and the Foreman. The model looks like a separate setting, so it is hard to see that the second list is the model for the family in the first.
@@ -58,9 +59,14 @@ Worth keeping an eye on: only the agent's name shows on the left now. The model'
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 146,744
+- Elapsed since build started: 11 min
+- Changed lines: 45 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
