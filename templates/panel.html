@@ -2135,13 +2135,20 @@ function pairSettings(rows) {
     host.control.appendChild(model.row);
   }
 }
+// 0387: a mark beside a setting's value, a whole number of pixels wide from its monospaced letters, so an agent's model
+// list drawn after it in the row still starts on a whole pixel (0281).
+function settingMark(text) {
+  const mark = el('span', 'default', text);
+  mark.setAttribute('style', `display: inline-block; white-space: nowrap; width: round(up, calc(${text.length} * (1ch + .08em)), 1px)`);
+  return mark;
+}
 // A setting's row, whose explanation is the view's `n`th. 0381: an agent's model's is drawn to sit in the agent's row.
 function settingRow(x, n) {
   const edit = x.editable === true ? settingEditor(x) : null;
   const mine = x.for_machine === true && x.from === 'machine' && !settingClear.has(x.key);
   const [info, tip] = settingInfo(x, n);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
-  const marks = [x.for_machine === true ? el('span', 'default', mine ? 'this machine' : 'repo') : null, x.default && !mine ? el('span', 'default', 'default') : null];
+  const marks = [x.for_machine === true ? settingMark(mine ? 'this machine' : 'repo') : null, x.default && !mine ? settingMark('default') : null];
   const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown, ...marks);
   const row = el('div', model ? 'setting model' : 'setting', null,
     model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info), ...marks)
