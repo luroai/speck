@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.12.0 · 22 October 2026
+
+What's new since 0.11.0. A minor release that reworks the panel for a narrow pane, such as the browser pane in Cursor or the Claude desktop app. A finished document task is a short row, its document opens in a pop-up over the whole panel that you can ship it from, the header stays on one row with the project always in view, and the Foreman's status scrolls across a dot-matrix notice board whose detail opens in a pop-up too.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.12.0 init`.
+
+### Document tasks in the panel
+
+- When a document task's build has finished and it's waiting for you, its row in the queue is short and calm. It says "Finished · read the document", with a Review pack button you can press without opening the row, which opens the pack with the document's files at the top. The "Build finished without shipping" line and the box with the end of the build's log are gone, and opening the row shows the log once. The row stays purple, as it's still waiting for you.
+- Code tickets waiting to ship, and document tasks that are blocked, still being built, reviewed or shipped, or that stopped part way, look as before.
+- Pressing a Markdown document's button in a review pack opens it in a pop-up that covers the whole panel window, rather than in the side pane. It shows the file's path, a Close button and the document formatted as before, tables included, in a centred column at most 760 px wide. A long document scrolls inside the pop-up, and nothing behind it can be clicked or reached with Tab while it's open. Close or Escape takes you back to the review pack as you left it. A file that isn't Markdown still opens in a new tab.
+- When the ticket is approved, the pop-up has Ship and the box and button for Ask for changes above the document, so you can read it and decide in one place. They work exactly as the review pack's do, with the same messages, and a note you start typing in one shows in the other.
+
+### The header
+
+- Under 700 px wide, the header is always one row: speck's mark, the project and base branch, the Foreman's button, Settings and light/dark. It no longer changes height or hides the project as you scroll. When the project and base branch don't fit, they're cut short with an ellipsis, and hovering over them shows them in full.
+- Under 700 px wide, the "speck" word beside the mark is hidden, and the mark stays. At every width, the Foreman's button no longer shows the builder character, so speck's logo shows once.
+
+### The Foreman's notice board
+
+- The Foreman's button is now a dot-matrix notice board, in the style of the panel's other LCD screens. It shows the Foreman's word, then what each ticket in flight is doing, such as "Building 2 · 0362 building · 0358 blocked". When that's wider than the board, it scrolls from right to left and loops round; when it fits, it stays still. It keeps the button's colour, so Needs you still shows in red, and screen readers hear the whole text.
+- With `prefers-reduced-motion: reduce`, the board never scrolls and shows the Foreman's word alone.
+- When the page is out of date, the board says Reload page, as the button did.
+- Pressing the board opens the Foreman's detail in a pop-up over the whole panel, in the same look as a document's pop-up, rather than under the header, where it scrolled away. It says the same things as before and keeps itself up to date while it's open, keeping an answer you're typing to one of the Foreman's questions. Close or Escape shuts it, with the focus back on the board.
+- None of this changes what `speck run` or `auto_ship` do.
+
 ## 0.11.0 · 21 October 2026
 
 What's new since 0.10.3. A minor release that adds document tasks: a ticket can now have its build write a document, such as an email, a plan or a report, instead of changing code. It's reviewed against the ticket like code is, and it waits for you to read it before it ships. You can also send an approved ticket back with a note saying what to change, from the panel or the command line.
