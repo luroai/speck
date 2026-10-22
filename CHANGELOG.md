@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.13.0 · 22 October 2026
+
+What's new since 0.12.0. A minor release that reworks Settings and the header, and keeps your own settings out of git. Settings opens in a pop-up over the whole panel, an agent's models show as soon as you choose it, and changing a setting leaves the view where it was. Light and dark move into Settings, and the header shows the dot-matrix "speck" word again, with the base branch beside it. Who builds and reviews, and how, are now your own settings, saved for this machine without a commit, and new tickets leave them to your settings.
+
+### Getting started
+
+- Install this release with `npx github:luroai/speck#v0.13.0 init`.
+
+### Settings
+
+- Settings opens in a pop-up that covers the whole panel window, in the same look as a document's pop-up, with the settings in a centred column at most 760 px wide, rather than in a pane down the right. Nothing behind it can be clicked or reached with Tab while it's open, and a long view scrolls inside it. Close, Escape and a click on the backdrop close it, still asking first when there are unsaved changes, and the focus goes back to the Settings button.
+- If Auto-build refuses to start or stop, the reason shows beside its switch in Settings.
+- The builder, the reviewer and the Foreman each have one row with two dropdowns: the agent, then the model it runs on. Choosing another agent fills its model list straight away, before you save, so you no longer need to save and open Settings again. While the list is being read, the setting says so in one line. When it can't be read, you get a box to type the model's name in, with why. A model already chosen that the new agent doesn't offer stays, marked "not offered", until you change it.
+- Changing a setting no longer draws the whole view again: it stays where you scrolled it, the control you changed keeps the keyboard focus, and only what the change affects updates.
+- A setting's explanation floats in a box over its row, so nothing else moves. Resting the pointer on its info button for half a second shows it. Clicking the button, or reaching it with the keyboard, shows it straight away, and Escape hides it.
+- Light and dark are chosen in a new Look group in Settings. The choice is still remembered in this browser only: it isn't written to `speck/config.yml`, and Save doesn't count it as a change.
+- On a phone, 320 to 430 px wide, the Settings pop-up only scrolls up and down: a sideways swipe no longer moves it, and long text wraps inside the column.
+
+### The header
+
+- The light/dark button has left the header, giving the Foreman's notice board its room.
+- The header shows speck's mark and the word "speck" in its dot-matrix lettering at every width, followed by "base <branch>", such as "base main". The "<project> · base <branch>" line is gone. When there isn't room, the base branch is cut short with an ellipsis and shows in full in a tooltip. At 700 px and wider, "control panel" still follows.
+- The Foreman's notice board scrolls at about 10 dots a second, a third of its old speed, so a long message can be read as it goes past.
+
+### Your own settings
+
+- `builder`, `builder_model`, `build_command`, `resume_command`, `reviewer`, `reviewer_model`, `reviewer_effort`, `allow_same_model_review`, `auto_ship`, `auto_ship_risk`, `foreman`, `foreman_model`, `foreman_effort`, `foreman_fixing`, `max_parallel_builds` and `max_parallel_tests` are now your own settings. `speck config set <key> <value>` saves one of them for this machine only, in `speck/.cache/machine/config.yml` in the main checkout, which git ignores. It leaves `speck/config.yml` as it is and commits nothing.
+- Every speck command, in the main checkout and every worktree, uses this machine's value over `speck/config.yml`'s, and a build already running picks it up the next time it reads its settings. A setting this machine has no value for uses `speck/config.yml`'s, as before.
+- `speck config set --repo <key> <value>` changes `speck/config.yml`'s value, the default for anyone without their own. `speck config set --machine <key> ""` removes this machine's value, and `speck config show` marks each value that comes from this machine.
+- Saving your own settings in the panel's Settings works the same way: no commit, no question about where the change goes, and it works even while `speck/config.yml` has uncommitted changes. Each is marked as this machine's or the repo's, and one this machine holds can be cleared back to the repo's. The project's own settings, such as the size limits, are still committed when you save them, and the line at the top of Settings says which those are.
+
+### Tickets and reviews
+
+- New tickets leave `builder`, `reviewer`, `reviewer_model` and `reviewer_effort` blank. A ticket with one blank uses what your settings give when its build starts and when each review round starts, so changing the reviewer reaches every such ticket at once. A ticket that names its own still uses it. When the reviewer or its model changes between rounds, the next round starts a fresh session with the full history of the earlier ones. The panel and `speck status` show the builder and reviewer a ticket would use now.
+- While a ticket is in review, its card names the model doing the review, as it's written in the settings, such as "grok-4.7-high is reviewing · round 2". With no model set, it names the reviewer as before.
+- A reviewer such as Cursor or Claude that writes a line of prose before or after its JSON verdict no longer stops the build: speck finds the verdict and records the round, taking the last JSON object with a `verdict` in it. `speck record` reads such a reply the same way.
+- A review round that runs longer than 9 minutes is no longer cut off by the builder's shell. `speck review` exits with code 12, saying the round is still running, and `speck review <id> --wait` waits for that same round, as many times as it takes. The reviewer carries on meanwhile, still ended at `review_timeout_minutes`, and the panel shows the round as running throughout. Stopping a build mid-review no longer ends its reviewer straight away.
+
 ## 0.12.0 · 22 October 2026
 
 What's new since 0.11.0. A minor release that reworks the panel for a narrow pane, such as the browser pane in Cursor or the Claude desktop app. A finished document task is a short row, its document opens in a pop-up over the whole panel that you can ship it from, the header stays on one row with the project always in view, and the Foreman's status scrolls across a dot-matrix notice board whose detail opens in a pop-up too.
