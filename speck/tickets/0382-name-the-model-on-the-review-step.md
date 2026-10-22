@@ -1,7 +1,7 @@
 ---
 id: "0382"
 title: "Name the model on the review step"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-name-the-model-on-the-review-step.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0381"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T22:45:50.514Z"
 
 ---
 # 0382 · Name the model on the review step
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 While a ticket is being reviewed, its card says "Cursor is reviewing" or "Claude is reviewing". That names the family. When a model is set, it hides the model that is actually reviewing.
