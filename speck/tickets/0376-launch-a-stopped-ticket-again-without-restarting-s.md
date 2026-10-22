@@ -1,7 +1,7 @@
 ---
 id: "0376"
 title: "Launch a stopped ticket again without restarting speck run"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-19-launch-a-stopped-ticket-again-without-resta
 after: ["0375"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:50:24.940Z"
+approved: "2026-10-22T23:56:17.050Z"
 
 ---
 # 0376 · Launch a stopped ticket again without restarting speck run
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 `speck stop` ends a build, and speck run says to set the ticket ready again and commit it. The speck run that launched it never does: it keeps the ticket on its launched list, so nothing starts until speck run itself is restarted.
@@ -50,9 +51,14 @@ When you stop a build and later set its ticket ready again, the speck run that's
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 147,131
+- Elapsed since build started: 6 min
+- Changed lines: 44 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Inbox: speck/ideas/2026-10-22-hold-a-stopped-ticket-until-it-s-committed-ready-after-a-restart.md. After a restart, `heldByStop` counts the stop's own blocking commit as the ticket being committed again, so with worktrees a stopped ticket set ready but not committed is launched.
