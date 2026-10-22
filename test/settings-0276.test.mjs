@@ -8,6 +8,7 @@ import { panelRepo, gitEnv, fm, good } from './support/panel.mjs';
 import { settingsPage, openSettings, rowOf, controlOf, saveButton, changeTo, posted } from './support/settings.mjs';
 import { parseCodexModels, codexModels, codexModelsAsync, knownEffort, CODEX_MODELS_TIMEOUT_MS } from '../scripts/codex-models.mjs';
 import { panelSettings, panelSaveSettings, reviewerModels } from '../scripts/settings.mjs';
+import { machineConfig } from '../scripts/machine.mjs';
 import { checkConfigValue } from '../scripts/config.mjs';
 import { parseTicket, lintTicket } from '../scripts/speck.mjs';
 
@@ -102,7 +103,7 @@ test('0276 AC2: speck accepts an effort Codex lists beyond max, in config set, l
     const r = panelRepo();
     const out = panelSaveSettings(r.dir, [{ key: 'reviewer_effort', value: 'ultra' }]);
     assert.equal(out.status, 200, JSON.stringify(out.body));
-    assert.match(fs.readFileSync(cfgOf(r), 'utf8'), /^reviewer_effort: ultra\b/m);
+    assert.equal(machineConfig(r.dir).reviewer_effort, 'ultra', '0387: for this machine');
     assert.equal(panelSaveSettings(r.dir, [{ key: 'reviewer_effort', value: 'huge' }]).status, 422);
   });
   // Codex can't be asked: only speck's own efforts.

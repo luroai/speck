@@ -13,6 +13,7 @@ import { DEFAULT_BUILD_COMMAND } from '../scripts/build-model.mjs';
 import { clearsBuilderModel } from '../scripts/builder-switch.mjs';
 import { parseYaml } from '../scripts/core.mjs';
 import { ROOT } from './support/speck.mjs';
+import { machineConfig, machineConfigFile } from '../scripts/machine.mjs';
 
 // ---------- 0311: clear builder_model when the builder is switched ----------
 
@@ -20,9 +21,13 @@ Object.assign(process.env, gitEnv); // panelSaveSettings commits in this process
 
 const cfgOf = r => path.join(r.dir, 'speck', 'config.yml');
 const readCfg = r => parseYaml(fs.readFileSync(cfgOf(r), 'utf8'));
+// 0387: the panel saves the builder and its model for this machine, so these are the values speck uses.
+const used = r => ({ ...readCfg(r), ...machineConfig(r.dir) });
+// Sets speck/config.yml's value, and removes this machine's, so speck uses the file's.
 const setCfg = (r, re, line) => {
   fs.writeFileSync(cfgOf(r), fs.readFileSync(cfgOf(r), 'utf8').replace(re, line));
   r.g('commit', '-qam', 'config');
+  fs.rmSync(machineConfigFile(r.dir), { force: true });
 };
 // A Claude Code builder on opus, with a Claude reviewer so that switching to Codex or Cursor isn't refused.
 function opusRepo() {
@@ -35,17 +40,16 @@ const CODEX = { builder: 'codex', models: ['gpt-6.1-sol', 'gpt-small'] };
 // A stand-in for findAgentsAsync, as speck agents would find `spec`'s agents, counting what it's asked.
 const finder = (models, asked = []) => async ({ only } = {}) => { asked.push(only); return { agents: models === undefined ? [] : [{ id: only, models: models.map(name => ({ name })) }] }; };
 
-test('0311 AC1: switching the builder clears a builder_model it doesn\'t offer, in the same commit, saying why', () => {
+test('0311 AC1: switching the builder clears a builder_model it doesn\'t offer, in the same save, saying why', () => {
   const r = opusRepo();
   const head = headOf(r);
   const out = panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }], { offered: CODEX });
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder, 'codex');
-  assert.equal(readCfg(r).builder_model, '');
+  assert.equal(used(r).builder, 'codex');
+  assert.equal(used(r).builder_model, '');
   assert.ok(out.body.changed.includes('builder_model'), JSON.stringify(out.body));
   assert.match(out.body.cleared.builder_model, /Codex doesn't offer opus/);
-  assert.equal(r.g('rev-list', '--count', `${head}..HEAD`), '1', 'one commit');
-  assert.equal(r.g('show', '--name-only', '--format=', 'HEAD'), 'speck/config.yml');
+  assert.equal(headOf(r), head, '0387: saved for this machine, without a commit');
   assert.equal(r.g('status', '--porcelain'), '');
 });
 
@@ -55,7 +59,7 @@ test('0311 AC1: the panel\'s Save reads the new builder\'s models first, only wh
   let out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=codex', finder(['gpt-6.1-sol'], asked));
   assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.deepEqual(asked, ['codex']);
-  assert.equal(readCfg(r).builder_model, '');
+  assert.equal(used(r).builder_model, '');
   assert.match(out.body.cleared.builder_model, /Codex doesn't offer opus/);
   // Blank now: nothing to check, so nothing is read and nothing is said.
   out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=cursor', finder(['auto'], asked));
@@ -67,7 +71,7 @@ test('0311 AC1: the panel\'s Save reads the new builder\'s models first, only wh
   out = await panelSaveRequestAsync(r.dir, 'repo%3Alimits.max_review_rounds=4', finder([], asked));
   assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.deepEqual(asked, ['codex']);
-  assert.equal(readCfg(r).builder_model, 'auto');
+  assert.equal(used(r).builder_model, 'auto');
 });
 
 test('0311 AC1: the view says builder_model was cleared, and why', async () => {
@@ -108,14 +112,14 @@ test('0311 AC3: a builder_model the new builder offers is kept', async () => {
   setCfg(r, /^build_command: .*$/m, 'build_command: ""');
   let out = panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }], { offered: CODEX });
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder, 'codex');
-  assert.equal(readCfg(r).builder_model, 'gpt-small');
+  assert.equal(used(r).builder, 'codex');
+  assert.equal(used(r).builder_model, 'gpt-small');
   assert.equal(out.body.changed.includes('builder_model'), false);
   assert.equal(out.body.cleared, undefined);
 
   out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=cursor', finder(['gpt-small', 'auto']));
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder_model, 'gpt-small');
+  assert.equal(used(r).builder_model, 'gpt-small');
 
   // From the command line, with Claude Code's models as speck agents lists them.
   setCfg(r, /^builder_model: .*$/m, 'builder_model: sonnet');
@@ -130,7 +134,7 @@ test('0311 AC4: when the new builder\'s models can\'t be read, builder_model is 
   const r = opusRepo();
   let out = panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }], { offered: { builder: 'codex', models: null } });
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder_model, '');
+  assert.equal(used(r).builder_model, '');
   assert.match(out.body.cleared.builder_model, /Codex's models couldn't be read/);
   assert.match(out.body.cleared.builder_model, /can't be checked/);
 
@@ -138,7 +142,7 @@ test('0311 AC4: when the new builder\'s models can\'t be read, builder_model is 
   setCfg(r, /^builder_model: .*$/m, 'builder_model: gpt-small');
   out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=cursor', finder([]));
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder_model, '');
+  assert.equal(used(r).builder_model, '');
   assert.match(out.body.cleared.builder_model, /couldn't be read/);
 
   // From the command line, with Codex not installed.
@@ -189,20 +193,20 @@ test('0311 AC1, AC3, AC4: a builder_model given in the same Save as the builder 
   // Not offered: cleared, and opus as it was isn't kept either.
   let out = panelSaveSettings(r.dir, [{ key: 'builder', value: 'codex' }, { key: 'builder_model', value: 'sonnet' }], { offered: CODEX });
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder, 'codex');
-  assert.equal(readCfg(r).builder_model, '');
+  assert.equal(used(r).builder, 'codex');
+  assert.equal(used(r).builder_model, '');
   assert.match(out.body.cleared.builder_model, /Codex doesn't offer sonnet/);
   // Offered: kept.
   out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=cursor&repo%3Abuilder_model=auto', finder(['auto']));
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder, 'cursor');
-  assert.equal(readCfg(r).builder_model, 'auto');
+  assert.equal(used(r).builder, 'cursor');
+  assert.equal(used(r).builder_model, 'auto');
   assert.equal(out.body.cleared, undefined);
   // Can't be read: cleared.
   out = await panelSaveRequestAsync(r.dir, 'repo%3Abuilder=codex&repo%3Abuilder_model=gpt-small', finder([]));
   assert.equal(out.status, 200, JSON.stringify(out.body));
-  assert.equal(readCfg(r).builder, 'codex');
-  assert.equal(readCfg(r).builder_model, '');
+  assert.equal(used(r).builder, 'codex');
+  assert.equal(used(r).builder_model, '');
   assert.match(out.body.cleared.builder_model, /couldn't be read/);
   assert.equal(r.g('status', '--porcelain'), '');
 });
