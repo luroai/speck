@@ -22,7 +22,7 @@ function repo(text = TEMPLATE) {
   const file = path.join(dir, 'speck', 'config.yml');
   return {
     dir, file,
-    run: (...a) => spawnSync(process.execPath, [CLI, 'config', 'set', ...a], { cwd: dir, encoding: 'utf8' }),
+    run: (...a) => spawnSync(process.execPath, [CLI, 'config', 'set', '--repo', ...a], { cwd: dir, encoding: 'utf8' }),
     read: () => fs.readFileSync(file, 'utf8'),
     cfg: () => loadConfig(dir),
   };

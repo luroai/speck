@@ -45,6 +45,9 @@ Your own settings are kept for this machine in a file git ignores, and speck/con
 - Assumption: review_timeout_minutes, test_stall_minutes and ship_wait_minutes stay project settings.
 - From the user's request on 2026-10-22, for 0.13.0. 0375 waits for it.
 - Failing before this build: none
+- Existing tests that ran `speck config set` for one of the sixteen settings and expected speck/config.yml to change (0087, 0109, 0260, 0293, 0311) now pass `--repo`, as criterion 1 makes the plain command save for this machine. Their checks are otherwise unchanged. 0260 AC4's refused key `reviewer` is now `base_branch`, since `reviewer` is one of your own settings.
+- The panel keeps 0261's two machine settings until 0387 moves it to all of them.
+- Self-check: removing this machine's builder with `--machine builder ""` now also removes the build_command switching to it saved, so speck/config.yml's pair applies again.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

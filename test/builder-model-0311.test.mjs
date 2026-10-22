@@ -90,7 +90,7 @@ test('0311 AC1: the view says builder_model was cleared, and why', async () => {
 
 test('0311 AC2: speck config set builder clears it too, saying in one line that it was cleared and why', () => {
   const r = opusRepo();
-  const out = speck(r.dir, { ...process.env, PATH: fakeAgents(READY) }, 'config', 'set', 'builder', 'codex');
+  const out = speck(r.dir, { ...process.env, PATH: fakeAgents(READY) }, 'config', 'set', '--repo', 'builder', 'codex');
   assert.equal(out.status, 0, out.stderr);
   assert.equal(readCfg(r).builder, 'codex');
   assert.equal(readCfg(r).builder_model, '');
@@ -119,7 +119,7 @@ test('0311 AC3: a builder_model the new builder offers is kept', async () => {
 
   // From the command line, with Claude Code's models as speck agents lists them.
   setCfg(r, /^builder_model: .*$/m, 'builder_model: sonnet');
-  const cli = speck(r.dir, { ...process.env, PATH: fakeAgents(READY) }, 'config', 'set', 'builder', 'claude');
+  const cli = speck(r.dir, { ...process.env, PATH: fakeAgents(READY) }, 'config', 'set', '--repo', 'builder', 'claude');
   assert.equal(cli.status, 0, cli.stderr);
   assert.equal(readCfg(r).builder, 'claude');
   assert.equal(readCfg(r).builder_model, 'sonnet');
@@ -143,7 +143,7 @@ test('0311 AC4: when the new builder\'s models can\'t be read, builder_model is 
 
   // From the command line, with Codex not installed.
   setCfg(r, /^builder_model: .*$/m, 'builder_model: auto');
-  const cli = speck(r.dir, { ...process.env, PATH: fakeAgents({}) }, 'config', 'set', 'builder', 'codex');
+  const cli = speck(r.dir, { ...process.env, PATH: fakeAgents({}) }, 'config', 'set', '--repo', 'builder', 'codex');
   assert.equal(cli.status, 0, cli.stderr);
   assert.equal(readCfg(r).builder_model, '');
   const lines = cli.stdout.split('\n').filter(l => /builder_model/.test(l));
@@ -152,7 +152,7 @@ test('0311 AC4: when the new builder\'s models can\'t be read, builder_model is 
 
   // A builder speck has no agent for can't list its models either.
   setCfg(r, /^builder_model: .*$/m, 'builder_model: big');
-  const other = speck(r.dir, { ...process.env, PATH: fakeAgents(READY) }, 'config', 'set', 'builder', 'gemini');
+  const other = speck(r.dir, { ...process.env, PATH: fakeAgents(READY) }, 'config', 'set', '--repo', 'builder', 'gemini');
   assert.equal(other.status, 0, other.stderr);
   assert.equal(readCfg(r).builder_model, '');
 });
