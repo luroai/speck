@@ -40,6 +40,7 @@ With `reviewer: cursor` and no reviewer command of your own, `speck doctor` chec
 ## Notes
 - Checked 2026-10-22: `doctorChecks` in `scripts/install.mjs` checks `claude` on the PATH for `reviewer: claude` with no command, and the Codex CLI for `reviewer: codex`. It has no branch for `reviewer: cursor`. `CURSOR_CLIS` is `agent` and `cursor-agent`, which the builder check already uses.
 - Waits for 0375 so it ships in 0.13.1, not in 0.13.0. It changes `scripts/install.mjs`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
