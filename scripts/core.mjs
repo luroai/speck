@@ -186,6 +186,13 @@ export function reviewerSettings(fm = {}, cfg = {}) {
   return { model: pick('reviewer_model'), effort: pick('reviewer_effort') };
 }
 
+// 0388: the agents a ticket is built and reviewed with: each field it names, or else what the settings give now.
+export function ticketAgents(fm = {}, cfg = {}) {
+  const pick = (k, dflt) => !blank(fm[k]) ? String(fm[k]).trim() : !blank(cfg[k]) ? String(cfg[k]).trim() : dflt;
+  const s = reviewerSettings(fm, cfg);
+  return { builder: pick('builder', 'claude'), reviewer: pick('reviewer', 'codex'), reviewer_model: s.model, reviewer_effort: s.effort };
+}
+
 export function settingsMeta(s) { return { reviewer_model: s.model || 'default', reviewer_effort: s.effort || 'default' }; }
 
 // ---------- the readable header under the frontmatter ----------

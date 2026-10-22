@@ -129,12 +129,12 @@ test('0370 AC2: what a change must show still updates', async () => {
   // The builder: the line under it, Save, and its models and the Foreman's (which follows the builder).
   changeTo(p, 'builder', 'codex');
   await p.settle();
-  assert.ok(said(p, 'builder').some(t => /Tickets already made keep the builder they were made with, claude/.test(t)), said(p, 'builder').join(' | '));
+  assert.ok(said(p, 'builder').some(t => /Saving changes who builds every ticket that doesn't name its own builder/.test(t)), said(p, 'builder').join(' | '));
   assert.equal(saveButton(p).disabled, false);
   assert.deepEqual(options(p, 'builder_model'), ['', 'gpt-new', 'gpt-old']);
   changeTo(p, 'builder', 'claude');
   await p.settle();
-  assert.ok(!said(p, 'builder').some(t => /Tickets already made/.test(t)));
+  assert.ok(!said(p, 'builder').some(t => /names one keeps it/.test(t)));
   assert.equal(saveButton(p).disabled, true);
   // The reviewer and its model: the model and effort lists.
   changeTo(p, 'reviewer', 'cursor');
