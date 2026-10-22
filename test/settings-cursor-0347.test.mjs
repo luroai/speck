@@ -83,12 +83,14 @@ test('0347 AC3: when Cursor\'s models can\'t be read, reviewer_model is a box to
   assert.equal(said(p, 'reviewer_model').filter(t => /Cursor isn't installed/.test(t)).length, 1);
 });
 
-test('0347 AC4: choosing cursor while another reviewer is saved says to save it, then open Settings again', async () => {
+// 0369 AC2: changed from saying to save cursor and open Settings again: its models are read when it's chosen.
+test('0347 AC4: choosing cursor while another reviewer is saved reads its models, without saying to save it first', async () => {
   const p = settingsPage([view('codex', { reviewer: 'codex', models: [{ slug: 'gpt-new', efforts: ['low'] }] })]);
   await openSettings(p);
   changeTo(p, 'reviewer', 'cursor');
   assert.equal(controlOf(p, 'reviewer_model').tagName, 'input');
-  assert.ok(said(p, 'reviewer_model').some(t => /^Save cursor as the reviewer, then open Settings again to pick from its models\.$/.test(t)), said(p, 'reviewer_model').join(' | '));
+  assert.ok(p.settingsCalls.some(c => c.url === '/api/agent-models?agent=cursor'));
+  assert.ok(!said(p, 'reviewer_model').some(t => /open Settings again/.test(t)), said(p, 'reviewer_model').join(' | '));
 });
 
 test('0347: the brief says reviewer cursor lists the models agent models lists', () => {
