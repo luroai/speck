@@ -1,7 +1,7 @@
 ---
 id: "0375"
 title: "Prepare release 0.13.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-prepare-release-0-13-0.md"               # 
 after: ["0368","0369","0370","0371","0372","0373","0374","0381","0382","0385","0386","0387","0388"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T23:44:11.286Z"
+approved: "2026-10-22T23:47:30.646Z"
 
 ---
 # 0375 · Prepare release 0.13.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0368 to 0374 rework Settings and the header. Settings opens over the whole panel, a builder or reviewer's models appear when you choose that agent, and changing a setting leaves the view still. An explanation floats over its row. Light and dark move into Settings, the dot-matrix "speck" word comes back with the base branch beside it, and the Foreman's notice board scrolls more slowly. Your own settings, such as which agents build and review, are kept for your machine and no longer need a commit (0386 to 0388). Anyone following the setup prompt, or updating speck on another machine, gets 0.12.0 without them.
@@ -61,9 +62,14 @@ speck is ready to go out as version 0.13.0, the release with the reworked Settin
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 209,397
+- Elapsed since build started: 3 min
+- Changed lines: 78 (limit 5000)
 - Follow-ups: none.
 
 ## Review rounds
