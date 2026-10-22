@@ -1,7 +1,7 @@
 ---
 id: "0372"
 title: "Move the light/dark control into Settings"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium |
 source: "speck/ideas/done/2026-10-22-give-the-header-s-notice-board-more-room.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0371"]                # ticket ids that must be done first
 created: 2026-10-22
+started: "2026-10-22T21:53:21.042Z"
 
 ---
 # 0372 · Move the light/dark control into Settings
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The header carries a light/dark button beside Settings. On a narrow pane that button takes space the Foreman's notice board needs.
