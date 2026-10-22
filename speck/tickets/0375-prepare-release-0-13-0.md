@@ -12,7 +12,7 @@ reviewer: codex
 reviewer_model: gpt-6.1-sol       # blank: use speck/config.yml (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: use speck/config.yml. Otherwise low | medium | high | xhigh | max
 source: "speck/ideas/done/2026-10-22-prepare-release-0-13-0.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0368","0369","0370","0371","0372","0373","0374","0381","0382"]                # ticket ids that must be done first
+after: ["0368","0369","0370","0371","0372","0373","0374","0381","0382","0385"]                # ticket ids that must be done first
 created: 2026-10-22
 
 ---
@@ -40,7 +40,7 @@ speck is ready to be released as 0.13.0.
 
 ## Notes
 - Asked for 2026-10-22 as a minor release, not a patch. It adds behaviour (Settings as a pop-up, model lists that fill when the agent is chosen, light/dark in Settings, the speck word back beside the base branch) without changing config or the commands. The slower notice board (0374) would be a patch on its own. Follows 0367 (0.12.0).
-- Covers every ticket shipped since `v0.12.0`: 0368 to 0374, each agent's model beside its family (0381) and the review sentence (0382), which it waits for (`after:`), and any other that ships before this is built.
+- Covers every ticket shipped since `v0.12.0`: 0368 to 0374, each agent's model beside its family (0381), the review sentence (0382) and the Settings pop-up no longer moving sideways on a phone (0385), which it waits for (`after:`), and any other that ships before this is built.
 - Upgrading from 0.12.0: light/dark leaves the header for Settings, and the header shows the speck word with the base branch beside it rather than "<project> · base <branch>".
 - After it ships, check that the `v0.13.0` tag and its GitHub release page appeared (0240's workflow, in the repository's Actions tab). If it failed, tag and publish by hand: `gh release create v0.13.0 --target main --title "speck 0.13.0" --notes-file docs/releases/v0.13.0.md`.
 - Checked 2026-10-22: `package.json` is `0.12.0`. 0367 prepared 0.12.0 the same way, and 0240 publishes the GitHub release from `docs/releases/` when the release ticket lands on `main`.
