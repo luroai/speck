@@ -41,8 +41,8 @@ const rule = sel => (page().match(new RegExp(`\\n\\s*${sel.replace(/[.*+?^${}()|
 // 0320: the mark is the design's logo now, an svg written into the page (checked in logo-0320.test.mjs), in place of
 // 0303's canvas drawn with the renderer's tile().
 test('0303 AC1: the header\'s mark comes before "speck", hidden from screen readers', () => {
-  const logo = (page().match(/<div class="logo">([\s\S]*?)<\/div>/) || [])[1] || '';
-  assert.match(logo, /^<svg [^>]*class="mark" id="mark" aria-hidden="true">[\s\S]*?<\/svg><b class="name">speck<\/b> <span>control panel<\/span>$/, 'with speck in its own element since 0304');
+  const logo = (page().match(/<div class="logo">([\s\S]*?<\/span>)<\/div>/) || [])[1] || ''; // 0373: it holds the base branch's own <div>
+  assert.match(logo, /^<svg [^>]*class="mark" id="mark" aria-hidden="true">[\s\S]*?<\/svg><b class="name">speck<\/b><div class="repo">base <code>\{\{base\}\}<\/code><\/div><span>control panel<\/span>$/, 'with speck in its own element since 0304, then the base branch since 0373');
 });
 
 test('0303 AC1: since 0320 the page draws no tile for the mark', async () => {

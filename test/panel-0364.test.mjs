@@ -58,9 +58,9 @@ test('0364 AC1: the header has no slimming as you scroll, in its styles or its s
 
 // ---------- in a real browser ----------
 
-// The panel at `width` px, with the board above and the screen's safe-area insets, the shared panel's project and base
-// shown as `speck` and `main` (as AC2 measures them) unless `project` and `base` give others.
-async function withPanel(fn, { width = 375, height = 640, insets = null, word = 'Building 1', theme = null, fixing = null, project = 'speck', base = 'main' } = {}) {
+// The panel at `width` px, with the board above and the screen's safe-area insets, the shared panel's base branch
+// shown as `main` (as AC2 measures it) unless `base` gives another. 0373: the header no longer shows the project.
+async function withPanel(fn, { width = 375, height = 640, insets = null, word = 'Building 1', theme = null, fixing = null, base = 'main' } = {}) {
   const panel = await sharedPanel();
   const b = await browserPage('about:blank');
   try {
@@ -72,7 +72,7 @@ async function withPanel(fn, { width = 375, height = 640, insets = null, word = 
       const STATE = ${JSON.stringify(board(word, 'ok', fixing))}, real = window.fetch.bind(window);
       window.fetch = async (url, opts = {}) => String(url) === '/api/state' ? new Response(JSON.stringify(STATE), { status: 200, headers: { 'content-type': 'application/json' } }) : real(url, opts);
       // As the parser reaches the header, before the page script runs
-      const seen = new MutationObserver(() => { const c = document.querySelectorAll('.repo code'); if (c.length < 2) return; c[0].textContent = ${JSON.stringify(project)}; c[1].textContent = ${JSON.stringify(base)}; seen.disconnect(); });
+      const seen = new MutationObserver(() => { const c = document.querySelector('.repo code'); if (!c) return; c.textContent = ${JSON.stringify(base)}; seen.disconnect(); });
       seen.observe(document, { childList: true, subtree: true });
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
@@ -100,11 +100,11 @@ const oneRow = (h, at) => {
 };
 
 for (const width of [320, 375, 500, 699]) {
-  test(`0364 AC1 and AC3: at ${width} px, the header is one row, the same at the top and scrolled, at most 60 px, with the mark and no "speck" word`, skip, () => withPanel(async b => {
+  test(`0364 AC1 and AC3: at ${width} px, the header is one row, the same at the top and scrolled, at most 60 px, with the mark and (0373) the "speck" word`, skip, () => withPanel(async b => {
     const top = await header(b);
     oneRow(top, `${width} px at the top`);
     assert.ok(top.header.height <= 60, `${top.header.height} px`);
-    assert.equal(top.name.shown, false, '"speck" is hidden');
+    assert.equal(top.name.shown, true, '"speck" shows (0373)');
     assert.ok(top.mark.shown, 'the mark stays');
     await scrollTo(b, 600);
     const down = await header(b);
@@ -125,29 +125,29 @@ test('0364 AC1: with a 47 px status bar, the header is at most 60 px plus that, 
   }
 }, { insets: { top: 47, bottom: 34 } }));
 
-test('0364 AC2: at 500 px, with speck, main and "Building 1", nothing in the header is cut short', skip, () => withPanel(async b => {
+test('0364 AC2: at 500 px, with main and "Building 1", nothing in the header is cut short', skip, () => withPanel(async b => {
   const h = await header(b);
-  assert.equal(h.repoText, 'speck · base main');
-  assert.equal(h.repo.cut, false, 'the project and base in full');
+  assert.equal(h.repoText, 'base main'); // 0373: without the project
+  assert.equal(h.repo.cut, false, 'the base in full');
   assert.equal(h.runCut, false, 'the Foreman in full');
 }, { width: 500 }));
 
-test('0364 AC2: too narrow, the project and base are cut short with an ellipsis, never hidden, and the tooltip has them in full', skip, () => withPanel(async b => {
+test('0364 AC2: too narrow, the base is cut short with an ellipsis, never hidden, and the tooltip has it in full (0373: without the project)', skip, () => withPanel(async b => {
   const h = await header(b);
-  assert.equal(h.repoText, 'a-very-long-project-name-that-cannot-fit · base release/2026-autumn');
+  assert.equal(h.repoText, 'base release/2026-autumn');
   assert.ok(h.repo.shown, 'shown');
   assert.equal(h.repo.cut, true, 'cut short');
   assert.equal(await b.js(`getComputedStyle(document.querySelector('.repo')).textOverflow`), 'ellipsis');
-  assert.equal(h.repoTitle, 'a-very-long-project-name-that-cannot-fit · base release/2026-autumn', 'the tooltip has the text in full');
-  oneRow(h, '320 px, a long project');
-}, { width: 320, project: 'a-very-long-project-name-that-cannot-fit', base: 'release/2026-autumn' }));
+  assert.equal(h.repoTitle, 'base release/2026-autumn', 'the tooltip has the text in full');
+  oneRow(h, '320 px, a long base branch');
+}, { width: 320, base: 'release/2026-autumn' }));
 
 for (const width of [700, 1200]) {
-  test(`0364 AC2 and AC3: at ${width} px, the header shows "speck", "control panel" and the project, with the project's tooltip`, skip, () => withPanel(async b => {
+  test(`0364 AC2 and AC3: at ${width} px, the header shows "speck", "control panel" and the base branch, with its tooltip`, skip, () => withPanel(async b => {
     const h = await header(b);
     assert.ok(h.name.shown && await b.js(`getComputedStyle(document.querySelector('.logo span')).display !== 'none'`));
     assert.ok(h.repo.shown && !h.repo.cut);
-    assert.equal(h.repoTitle, 'speck · base main');
+    assert.equal(h.repoTitle, 'base main'); // 0373: without the project
     oneRow(h, `${width} px`);
   }, { width }));
 }

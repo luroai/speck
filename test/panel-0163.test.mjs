@@ -171,7 +171,7 @@ test('0163 AC4: in a real browser at 375 px, the label stays on one line, beside
       }
       const g = await b.js(`(() => {
         const r = n => { const b = n.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height }; }, run = document.getElementById('run'), label = run.querySelector('.board'); // 0365: the notice board
-        const logo = r(document.querySelector('.logo')), repo = r(document.querySelector('.repo')), settings = r(document.getElementById('settings-open')); // 0372: Settings ends the header
+        const logo = r(document.querySelector('.logo .name')), repo = r(document.querySelector('.repo')), settings = r(document.getElementById('settings-open')); // 0372: Settings ends the header
         return { run: r(run), label: r(label), labelFull: label.getBoundingClientRect().width < Number(label.getAttribute('width')) - 0.5, settings, logo, repo, head: document.querySelector('header').scrollWidth, title: run.title };
       })()`);
       const where = slim ? 'scrolled' : 'at the top';
@@ -181,7 +181,7 @@ test('0163 AC4: in a real browser at 375 px, the label stays on one line, beside
       assert.ok(g.run.right <= g.settings.left, `${where}: beside Settings`);
       assert.ok(Math.abs(g.run.top - g.settings.top) < 1, `${where}: on Settings's row`);
       assert.ok(g.run.left >= 16 && g.settings.right <= 375 - 16 + .5, `${where}: within the header's padding`);
-      assert.ok(g.repo.width > 0 && g.repo.left >= g.logo.right && g.repo.right <= g.run.left, `${where}: the project stays between speck's mark and the button, on its row`);
+      assert.ok(g.repo.width > 0 && g.repo.left >= g.logo.right && g.repo.right <= g.run.left, `${where}: the base branch stays between speck and the button, on its row (0373)`);
       assert.equal(g.title, 'What speck run is doing, and what is waiting', `${where}: the tooltip says what pressing it shows (0285: it's the Foreman's status)`);
     }, { width: 375 });
   }

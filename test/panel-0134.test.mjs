@@ -80,7 +80,8 @@ test('0134 AC3 (undone by 0135): no section heading has a number beside it', () 
 // AC4: the ids and visible text in the page's static HTML before this ticket. 0150 removed the connection pill, its id
 // and its "connecting…", and 0162 the three hints beside the section headings.
 const IDS = ['offline', 'restart', 'shaping-section', 'shaping-toggle', 'shaping', 'queue-n', 'queue', 'shipped-n', 'shipped-stats', 'shipped', 'full-backdrop', 'full-ticket'];
-const TEXT = ['speck', 'control panel', '{{repo}}', '· base', '{{base}}',
+// 0373: the header's title is speck, then "base <branch>", without the project, then "control panel".
+const TEXT = ['speck', 'base', '{{base}}', 'control panel',
   'Disconnected: can\'t reach speck panel. Showing the last state received. Retrying every 2 seconds…',
   'Plan', 'Build', 'Shipped'];
 
