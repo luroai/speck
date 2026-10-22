@@ -1,6 +1,6 @@
 # Keep the document pop-up's Close button in view
 
-Captured: 2026-10-22 · Status: inbox
+Captured: 2026-10-22 · Status: ticketed (0379)
 From ticket: 0362
 
 ## What

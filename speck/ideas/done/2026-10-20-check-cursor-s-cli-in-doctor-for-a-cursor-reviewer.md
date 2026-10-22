@@ -1,6 +1,6 @@
 # Check Cursor's CLI in doctor for a Cursor reviewer
 
-Captured: 2026-10-20 · Status: inbox
+Captured: 2026-10-20 · Status: ticketed (0378)
 From ticket: 0332
 
 ## What
