@@ -28,8 +28,9 @@ export const DOCS = [{ path: 'outputs/memos/memo.md', url: '/api/tickets/0005/ou
 const STATE = { ideas: [], tickets: [T('0005', 'approved', { started: new Date(Date.now() - 60000).toISOString() })] };
 export const text = body => Promise.resolve({ ok: true, status: 200, text: async () => body });
 
-export async function openPack(response, more = [], globals = {}) {
-  const p = fakePage([structuredClone(STATE), { text: '', truncated: false }, response, ...more, structuredClone(STATE)], globals);
+// 0362: `made` is passed to fakePage, for example to let each node take the focus.
+export async function openPack(response, more = [], globals = {}, made) {
+  const p = fakePage([structuredClone(STATE), { text: '', truncated: false }, response, ...more, structuredClone(STATE)], globals, made ? { made } : {});
   await p.settle();
   const row = () => queueRows(p).find(n => n.textContent.includes('0005'));
   p.press(row().children.find(n => n.className === 'top'));
@@ -39,6 +40,8 @@ export async function openPack(response, more = [], globals = {}) {
   return p;
 }
 export const pane = p => p.byId('full-ticket');
+// 0362: the pop-up a Markdown file opens in, over the whole panel.
+export const docView = p => p.byId('doc-view');
 // 0359: each file's button, labelled with its path.
 export const docButtons = p => p.all(pane(p)).filter(n => n.tagName === 'button' && DOCS.some(d => d.path === n.textContent));
 
