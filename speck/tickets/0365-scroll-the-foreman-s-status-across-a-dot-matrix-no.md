@@ -1,7 +1,7 @@
 ---
 id: "0365"
 title: "Scroll the Foreman's status across a dot-matrix notice board"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-a-scrolling-dot-matrix-notice-board-in-the-
 after: ["0364"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T15:47:19.510Z"
+approved: "2026-10-22T16:10:00.939Z"
 
 ---
 # 0365 · Scroll the Foreman's status across a dot-matrix notice board
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Foreman's button in the header shows one word, such as "Building 2", so the overview of what speck run is doing is only in its detail. An old-school notice board scrolling words across a dot-matrix screen would give that overview at a glance, in the panel's LCD style.
@@ -57,9 +58,15 @@ Worth a look: on a phone the board is narrow, so even a short word like "Buildin
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 With Foreman fixing enabled, the button is named by both the board-text span and the appended 'Fixing on' span.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 441,673
+- Elapsed since build started: 23 min
+- Changed lines: 91 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups (tidy-ups and known limits, no inbox notes):
 - Tidy-up: since round 1's fix names the button with aria-label, the visually hidden text after the board is only needed as the fallback text when lcd.js doesn't load, and by tests that read it.
