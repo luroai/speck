@@ -1,49 +1,14 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import vm from 'node:vm';
-import { T, full, fakePage, page, ROOT, findChrome, browserPage } from './support/panel.mjs';
+import { T, full, fakePage, page, findChrome, browserPage } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
+import { LCD, foreman, state, boardPage, dotsOf, expected, LONG, LONG_W } from './support/board.mjs';
 
 // ---------- 0365: the Foreman's status scrolls across a dot-matrix notice board ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
-
-// The LCD renderer as the page loads it, from lcd.js, with the cards' builder badges, which draw on a canvas, left blank.
-const LCD = (() => { const window = {}; vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'templates', 'lcd.js'), 'utf8'), { window, Math, Array, Object, String, Set, Uint8Array, Float32Array }); return window.SpeckLCD; })();
-const PAGE_LCD = { ...LCD, badge() { return { set() {}, scr: { still: false, size() {} }, cast: { still: false } }; } };
-
-const foreman = (o = {}) => ({ word: 'Building 2', tone: 'ok', building: [], ready: [], held: [], ship: { running: null, waiting: [] }, blocked: [], took: [], ...o });
-const state = (f, o = {}) => ({ tickets: [T('0362', 'building'), T('0363', 'building'), T('0358', 'blocked')], ideas: [], run: { on: true, pid: 1 }, foreman: f, ...o });
-
-// The page with the real renderer, frames it runs only when the test says, the reduced-motion setting and how wide the
-// board is on the page (null: no layout, as on the fake page).
-function boardPage(states, { reduce = false, width = null } = {}) {
-  const frames = [];
-  const media = { matches: reduce, addEventListener() {} };
-  const made = n => { if (width !== null) n.getBoundingClientRect = () => ({ width: /\bboard\b/.test((n.attrs || {}).class || '') ? width : 0, height: 0, top: 0, bottom: 0, left: 0, right: 0 }); };
-  const p = fakePage(states, { SpeckLCD: PAGE_LCD, requestAnimationFrame: fn => frames.push(fn), matchMedia: () => media, devicePixelRatio: 1 }, { made });
-  // Runs the frames waiting, at `now` ms.
-  p.frame = now => { for (const fn of frames.splice(0)) fn(now); };
-  p.board = () => p.byId('run').children.find(n => n.tagName === 'svg');
-  p.svg = p.board;
-  p.group = () => p.all(p.svg()).find(n => n.tagName === 'g');
-  p.x = () => Number(/translate\((-?\d+) 0\)/.exec(p.group().attrs.transform)[1]);
-  p.name = () => p.byId('run').children.find(n => n.className === 'board-text').textContent;
-  p.frames = frames;
-  return p;
-}
-// The lit dots of a path, as "column,row".
-const dotsOf = d => new Set([...String(d).matchAll(/M(-?[\d.]+) (-?[\d.]+)h/g)].map(m => `${Math.floor(Number(m[1]))},${Math.floor(Number(m[2]))}`));
-// The dots `text` should light in the 5 × 7 font, in capitals, its top a row down.
-const expected = text => {
-  const out = new Set();
-  [...text.toUpperCase()].forEach((ch, n) => (ch === '·' ? ['.....', '.....', '.....', '..#..', '.....', '.....', '.....'] : LCD.F5.g[ch] || []).forEach((row, r) => [...row].forEach((c, k) => { if (c === '#') out.add(`${n * 6 + k},${r + 1}`); })));
-  return out;
-};
 
 test('0365 AC1: the Foreman\'s button is a dot-matrix screen drawing its word in the 5 × 7 font, in capitals', async () => {
   const p = boardPage([state(foreman())]);
@@ -139,10 +104,7 @@ test('0365 AC2: the board\'s text is the word, then each ticket building, shippi
   assert.equal(stale.byId('run').className, 'run-state fm-warn');
 });
 
-const LONG = foreman({ building: ['0362', '0363'], blocked: [{ id: '0358' }] }); // 'Building 2 · 0362 building · 0363 building · 0358 blocked'
-const LONG_W = 'Building 2 · 0362 building · 0363 building · 0358 blocked'.length * 6 - 1;
-
-test('0365 AC3: text wider than the board scrolls from right to left at 30 dots a second, and loops round with a gap', async () => {
+test('0365 AC3: text wider than the board scrolls from right to left at 10 dots a second (0374), and loops round with a gap', async () => {
   const p = boardPage([state(LONG)]);
   await p.settle();
   const cols = 90, P = LONG_W + 16;
@@ -151,15 +113,15 @@ test('0365 AC3: text wider than the board scrolls from right to left at 30 dots 
   p.frame(1000);
   assert.equal(p.x(), cols, 'the first frame starts the clock');
   p.frame(2000);
-  assert.equal(p.x(), cols - 30, '30 dots in a second');
-  p.frame(1000 + 100);
+  assert.equal(p.x(), cols - 10, '10 dots in a second');
+  p.frame(1000 + 300);
   assert.equal(p.x(), cols - 3);
   const copy = p.all(p.group()).filter(n => n.attrs && n.attrs.class === 'lit')[1];
   assert.equal(copy.attrs.transform, `translate(${P} 0)`, 'its copy follows a 16-dot gap after its end');
   assert.equal(copy.attrs.display, 'inline');
   // Once the text has gone off the left, it's back where its copy was: no jump.
   for (const s of [cols + P - 1, cols + P, cols + P + 1, cols + 2 * P + 5]) {
-    p.frame(1000 + (s * 1000) / 30 + 1);
+    p.frame(1000 + (s * 1000) / 10 + 1);
     const x = p.x();
     assert.ok(x > -P && x <= cols, `${s} dots in: ${x}`);
     assert.equal(((cols - s - x) % P + P) % P, 0, `${s} dots in: on the loop`);
@@ -175,7 +137,7 @@ test('0365 AC3: text that fits stays still, and a board cut short by a narrow sc
   assert.equal(p.all(p.group()).filter(n => n.attrs && n.attrs.class === 'lit')[1].attrs.display, 'none', 'no copy');
   const narrow = boardPage([state(foreman())], { width: 40 }); // 20 dots showing
   await narrow.settle();
-  narrow.frame(0); narrow.frame(1000);
+  narrow.frame(0); narrow.frame(3000);
   assert.equal(narrow.x(), 20 - 30, 'scrolls through the 20 dots that show');
 });
 
@@ -220,18 +182,18 @@ test('0365 AC4: a refresh with the same text carries on scrolling; new text star
   const p = boardPage([state(LONG), state(LONG), state(BUSY)]);
   await p.settle();
   const b = p.board();
-  p.frame(0); p.frame(2000);
+  p.frame(0); p.frame(6000);
   assert.equal(p.x(), 90 - 60);
   await p.timers.shift()(); await p.settle(); // the next board: the same text
   assert.equal(p.board(), b, 'the same board');
   assert.equal(p.byId('run').children.at(-1).className, 'board-text');
   assert.equal(p.x(), 90 - 60, 'no jump');
-  p.frame(3000);
+  p.frame(9000);
   assert.equal(p.x(), 90 - 90, 'carries on');
   await p.timers.shift()(); await p.settle(); // new text
   assert.equal(p.name(), 'Building 3 · 0362 building · 0363 building · 0364 building · 0358 blocked');
   assert.equal(p.x(), 90, 'back at the right-hand edge');
-  p.frame(4000); p.frame(5000);
+  p.frame(12000); p.frame(15000);
   assert.equal(p.x(), 90 - 30, 'and scrolls from there');
 });
 
