@@ -1,7 +1,7 @@
 ---
 id: "0372"
 title: "Move the light/dark control into Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-22-give-the-header-s-notice-board-more-room.md
 after: ["0371"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T21:53:21.042Z"
+approved: "2026-10-22T22:08:12.981Z"
 
 ---
 # 0372 · Move the light/dark control into Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The header carries a light/dark button beside Settings. On a narrow pane that button takes space the Foreman's notice board needs.
@@ -57,9 +58,14 @@ To see it, open Settings, scroll to Look and pick dark or light. On a phone or a
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 201,936
+- Elapsed since build started: 15 min
+- Changed lines: 71 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (tidy-ups only, none to the inbox):
   - test/panel-0168.test.mjs still clicks `.theme` when it exists, falling back to setLook; the fallback is all that runs now, so the check for `.theme` could go.
