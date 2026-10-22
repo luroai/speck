@@ -2176,9 +2176,10 @@ function settingInfo(x, n) {
     if (settingTip !== key) setTimeout(() => { if (wait === settingHoverWait && settingHover === key && settingTip !== key) showSettingTip(key, false); }, SETTING_TIP_PAUSE);
   });
   info.addEventListener('mouseleave', () => { settingHoverWait++; if (settingHover === key) settingHover = null; if (settingTip === key && !settingTipKept && settingFocus !== key) showSettingTip(null, false); });
-  info.addEventListener('focus', () => { settingFocus = key; if (settingTip !== key) showSettingTip(key, false); });
+  info.addEventListener('focus', () => { settingFocus = key; settingHoverWait++; if (settingTip !== key) showSettingTip(key, false); });
   info.addEventListener('blur', () => { if (settingFocus === key) settingFocus = null; if (settingTip === key && !settingTipKept && settingHover !== key) showSettingTip(null, false); });
-  info.addEventListener('click', () => { if (settingTip === key && settingTipKept) showSettingTip(null, false); else showSettingTip(key, true); });
+  // 0371: a click or focus settles it, so a pause still running from the pointer shows nothing when it ends.
+  info.addEventListener('click', () => { settingHoverWait++; if (settingTip === key && settingTipKept) showSettingTip(null, false); else showSettingTip(key, true); });
   settingTips.set(key, tip);
   return [info, tip];
 }
@@ -2592,7 +2593,7 @@ document.addEventListener('keydown', e => {
   else if (docOpen !== null) closeDoc(); // 0362: the pop-up, over everything else
   else if (foremanOpen && settingsView === null) closeForeman(); // 0285: the Foreman's detail
   else if (settingsLeaving !== null) keepEditing(); // 0275: Escape answers the question with Keep editing
-  else if (settingsView !== null && settingTip !== null) showSettingTip(null, false); // 0268: the explanation first, then the view
+  else if (settingsView !== null && settingTip !== null) { settingHoverWait++; showSettingTip(null, false); } // 0268: the explanation first, then the view. 0371: and no pause left to show it again
   else if (settingsView !== null) leaveSettings();
   else if (priorityMenu !== null) closePriorityMenu();
   else if (fullId !== null) closeFull();
