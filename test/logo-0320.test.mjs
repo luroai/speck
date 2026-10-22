@@ -18,7 +18,8 @@ const read = (...p) => fs.readFileSync(path.join(...p));
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 // The header's mark as the page writes it.
 const ATTRS = 'class="mark" id="mark" aria-hidden="true"';
-const logoDiv = () => (page().match(/<div class="logo">([\s\S]*?)<\/div>/) || [])[1] || '';
+// 0373: the title holds the base branch's own <div>, so it ends at "control panel".
+const logoDiv = () => (page().match(/<div class="logo">([\s\S]*?<\/span>)<\/div>/) || [])[1] || '';
 
 test('0320 AC1: the design\'s new renderer is in docs/design/lcd/ and templates/, byte for byte', () => {
   assert.equal(sha(read(DESIGN, 'lcd.js')), SHA, 'docs/design/lcd/lcd.js');
@@ -43,7 +44,7 @@ test('0320 AC1: the tests that pin the renderer pin the new one', () => {
 
 test('0320 AC2: the header\'s mark is the renderer\'s markSVG(), written into the page before "speck"', () => {
   const svg = logo().markSVG({ attrs: ATTRS });
-  assert.equal(logoDiv(), `${svg}<b class="name">speck</b> <span>control panel</span>`);
+  assert.equal(logoDiv(), `${svg}<b class="name">speck</b><div class="repo">base <code>{{base}}</code></div><span>control panel</span>`);
   // In the text colour, with the speck from --speck, on a 16 × 16 grid with crisp edges.
   assert.match(svg, /viewBox="0 0 16 16" shape-rendering="crispEdges"/);
   assert.match(svg, /<path fill="currentColor" d="[^"]+"\/><path fill="var\(--speck, #c4402a\)" d="[^"]+"\/>/);

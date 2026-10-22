@@ -6,11 +6,11 @@ import { rules, rule, get } from './support/css.mjs';
 
 // ---------- 0309: a larger mark and title in the header ----------
 
-test('0309 AC4: on a phone, "control panel" is hidden in the header, at the top and scrolled (0364: and so is "speck")', () => {
+test('0309 AC4: on a phone, "control panel" is hidden in the header, at the top and scrolled (0373: "speck" isn\'t)', () => {
   const phone = rules().filter(r => r.at.some(a => /max-width: 699\.98px/.test(a)));
   const hidden = sel => phone.some(r => r.sel.split(',').map(s => s.trim()).includes(sel) && get(r, 'display') === 'none');
   assert.ok(hidden('.logo span'), 'hidden on a phone');
-  assert.ok(hidden('.logo .name'), '"speck" too, since 0364');
+  assert.ok(!rules().some(r => r.sel.split(',').map(s => s.trim()).includes('.logo .name') && get(r, 'display') === 'none'), '"speck" shows at every width, since 0373');
   assert.ok(!rule('.logo span').decls.some(([k, v]) => k === 'display' && v === 'none'), 'shown on wider screens');
 });
 
@@ -68,10 +68,10 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
         assert.equal(m.viewBox, '0 0 16 16', `drawn at two pixels a dot: ${at}`);
         // AC2: on the mark's line, centred with it
         assert.match(m.font, /^Doto,/, at);
-        // 0364: under 700 px, no "speck" word beside the mark
-        assert.equal(m.name.shown, !phone, `"speck" shows only on wider screens: ${at}`);
-        if (!phone) assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 0.5, `speck is centred on the mark: ${at}`);
-        if (!phone) assert.ok(m.name.left >= m.mark.right && m.name.left - m.mark.right <= 8, `speck follows the mark on its line: ${at}`);
+        // 0373: "speck" beside the mark at every width (0364 had hidden it under 700 px)
+        assert.equal(m.name.shown, true, `"speck" shows: ${at}`);
+        assert.ok(Math.abs(m.name.mid - m.mark.mid) <= 0.5, `speck is centred on the mark: ${at}`);
+        assert.ok(m.name.left >= m.mark.right && m.name.left - m.mark.right <= 8, `speck follows the mark on its line: ${at}`);
         // AC3: buttons as they were, and the header only as tall as the mark needs (63 px wide; on a phone since 0364, one row of 44 px buttons and 6 px above and below)
         const button = phone ? 44 : 34;
         for (const k of ['settings']) assert.ok(m[k].width === button && m[k].height === button, `${k} stays ${button} px: ${at}`);
@@ -85,7 +85,7 @@ test('0309 AC1 to AC4: in a real browser, the mark and title are larger, centred
         // (at 320 px a long one was cut short with an ellipsis before 0309 too, and still is. 0364: on a phone it shares
         // its row with the buttons, so this test's speck-xxxxxx project may be cut short there too, never hidden)
         assert.ok(m.repo.shown && (!m.repo.cut || (phone && m.repo.ellipsis)), `the project's name shows in full on wider screens: ${at}`);
-        for (const [x, y] of [['logo', 'repo'], ['logo', 'settings'], ['repo', 'settings']]) assert.ok(apart(m[x], m[y]), `${x} and ${y} don't overlap: ${at}`);
+        for (const [x, y] of [['name', 'repo'], ['logo', 'settings'], ['repo', 'settings']]) assert.ok(apart(m[x], m[y]), `${x} and ${y} don't overlap: ${at}`);
         assert.ok(m.repo.right <= m.view, at);
       }
     }
