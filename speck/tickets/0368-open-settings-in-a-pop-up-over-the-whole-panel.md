@@ -45,6 +45,7 @@ Settings opens in a pop-up over the whole panel, in the same look as a document'
 - Checked 2026-10-22: the document pop-up covers the window and scrolls inside itself (0362, `templates/panel.html`).
 - 0369, 0370 and 0371 wait for this: they change `templates/panel.html` too.
 - Failing before this build: none
+- Self-check: a drag from the column ending beside it (such as selecting text) no longer closes Settings: a click closes it only when the pointer also went down beside the column. The column's left edge is rounded to a whole pixel, which 0281's test caught.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
