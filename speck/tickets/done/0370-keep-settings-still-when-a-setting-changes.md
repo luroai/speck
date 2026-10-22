@@ -1,7 +1,7 @@
 ---
 id: "0370"
 title: "Keep Settings still when a setting changes"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0369"]                # ticket ids that must be done first
 created: 2026-10-22
 started: "2026-10-22T21:17:44.497Z"
 approved: "2026-10-22T21:30:36.371Z"
+finished: "2026-10-22T21:33:24.602Z"
 
 ---
 # 0370 · Keep Settings still when a setting changes
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Changing the builder, the reviewer, the reviewer's model or the Foreman agent replaces the whole Settings view, so it looks as if the page reloaded. That's confusing when you're only picking one value.
