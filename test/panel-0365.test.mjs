@@ -200,7 +200,19 @@ test('0365 AC4: the button\'s name is the board\'s whole text, whatever has scro
   assert.equal(p.byId('run').textContent, text, 'its only text, the SVG being hidden from screen readers');
   assert.equal(p.name(), text);
   assert.match(css(), /\.run-state \.board-text \{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset\(50%\);/, 'read out, not shown');
-  assert.equal(p.byId('run').attrs['aria-label'], undefined, 'named by its content');
+  assert.equal(p.byId('run').attrs['aria-label'], text, 'its name');
+});
+
+test('0365 AC4: with "Fixing on" beside the board, the name is still the board\'s whole text, moving or still', async () => {
+  for (const reduce of [false, true]) {
+    const p = boardPage([state({ ...LONG, fixing: 'fix' })], { reduce });
+    await p.settle();
+    assert.ok(p.byId('run').children.some(n => n.className === 'fixing' && n.textContent === 'Fixing on'), '"Fixing on" shows');
+    assert.equal(p.byId('run').attrs['aria-label'], 'Building 2 · 0362 building · 0363 building · 0358 blocked', reduce ? 'reduced motion' : 'moving');
+  }
+  const stale = boardPage([state({ ...LONG, fixing: 'fix' }, { page: 'newer-code' })]);
+  await stale.settle();
+  assert.equal(stale.byId('run').attrs['aria-label'], 'Reload page');
 });
 
 test('0365 AC4: a refresh with the same text carries on scrolling; new text starts again from the right-hand edge', async () => {

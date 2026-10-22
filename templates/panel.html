@@ -3174,7 +3174,9 @@ function render() {
   run.hidden = false;
   run.className = `run-state fm-${stale ? 'warn' : f.tone}`;
   // 0365: a dot-matrix notice board, scrolling the Foreman's word and what each ticket in flight is doing
-  run.replaceChildren(...drawBoard(boardText(f, stale), stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
+  const said = boardText(f, stale);
+  run.setAttribute('aria-label', said); // its name is the board's whole text, without "Fixing on" beside it
+  run.replaceChildren(...drawBoard(said, stale ? 'Reload page' : f.word), ...(!stale && f.fixing === 'fix' ? [el('span', 'fixing', 'Fixing on')] : [])); // 0317
   run.setAttribute('aria-expanded', String(foremanOpen));
   run.title = stale ? 'The panel is running newer code than this page shows: open to reload it' : 'What speck run is doing, and what is waiting';
   renderForeman(f, stale);
