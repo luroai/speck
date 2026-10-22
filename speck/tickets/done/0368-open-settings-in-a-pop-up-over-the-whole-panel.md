@@ -1,7 +1,7 @@
 ---
 id: "0368"
 title: "Open Settings in a pop-up over the whole panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-10-22
 started: "2026-10-22T19:39:59.696Z"
 waited_seconds: 2034
 approved: "2026-10-22T20:52:06.555Z"
+finished: "2026-10-22T20:54:54.147Z"
 
 ---
 # 0368 · Open Settings in a pop-up over the whole panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Settings opens in a pane down the right, at most 480 px wide. With every group and control in that strip, the view is cluttered and hard to scan.
