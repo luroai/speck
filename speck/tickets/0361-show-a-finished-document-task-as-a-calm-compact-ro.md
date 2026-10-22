@@ -1,7 +1,7 @@
 ---
 id: "0361"
 title: "Show a finished document task as a calm, compact row"                # one outcome, no "and"
-status: draft            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -18,7 +18,7 @@ created: 2026-10-22
 ---
 # 0361 · Show a finished document task as a calm, compact row
 
-**Status:** 📝 draft
+**Status:** 📋 ready
 
 ## Problem
 When a document task's build finishes, its queue row is purple and grows to show "Build finished without shipping" and the last 50 lines of the build's log, in a red-tinted box. It reads like a problem, though the task is done and its document is waiting to be read. Opening the row shows the log a second time, and four or five of these rows together look cluttered.
