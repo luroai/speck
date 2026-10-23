@@ -27,8 +27,8 @@ Every corner in the panel is square: `* { border-radius: 0 !important; }` in `te
 The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 
 ## Acceptance criteria
-1. Buttons, inputs, selects, tags, toggles, the priority menu and the open tab's top corners have a 6 px corner radius.
-2. Ticket cards, the build log, the stats, Settings' groups and pop-ups (the full ticket, a document, the pipeline log and the questions Settings asks) have an 8 px corner radius.
+1. Buttons, inputs, selects, tags, toggles, the priority menu and the open tab's top corners have an 8 px corner radius.
+2. Ticket cards, the build log, the stats, Settings' groups and pop-ups (the full ticket, a document, the pipeline log and the questions Settings asks) have a 12 px corner radius.
 3. The focus ring follows each control's rounded corners.
 4. speck's screen and its frame keep the corners they have.
 5. Nothing forces square corners on the whole page any more. The switches' round track and knob stay round.
@@ -38,7 +38,7 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 
 ## Notes
 - The user asked for this on 2026-10-23: the panel is used mostly beside Cursor, at work and at home, and should look like part of it.
-- Unverified: Cursor's exact corner radii (no Cursor source or docs to check). 6 px and 8 px are the values the user agrees to when setting this ticket ready.
+- Unverified: Cursor's exact corner radii (no Cursor source or docs to check). 8 px and 12 px are estimated from the user's screenshot of Cursor on 2026-10-23 (its buttons about 8 px, its message bubble and input box about 10–12 px), and the user agreed to them.
 - Waits for 0427: both change `templates/panel.html`.
 
 ## In plain words
