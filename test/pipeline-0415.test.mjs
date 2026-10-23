@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 import { fakePage, page, T, PAGE, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage } from './support/panel.mjs';
 import { openStream } from './support/stream.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
-import { runLogTail, runLogStamp, RUN_LOG_LINES } from '../scripts/run-log.mjs';
+import { runLogTail, runLogStamp, RUN_LOG_LINES, RUN_LOG_MAX } from '../scripts/run-log.mjs';
 
 const ON = { on: true, pid: 4242 };
 const rec = (o = {}) => ({ lock: 4242, max: 2, building: [], switching: null, ready: [], ship: { running: null, hold: null, refused: [] }, ...o });
@@ -121,18 +121,55 @@ test('0415 AC2: lines written while the pop-up is open appear with the next boar
   assert.deepEqual(logLines(p), ['second', 'first']);
 });
 
-test('0415 AC2: a reader scrolled down the log stays where they are as new lines come in above them', async () => {
-  const LINE = 20;
-  let box = null;
-  const made = n => { n.getBoundingClientRect = () => ({ top: n.className === 'run-log' ? -400 : 0, bottom: n.className === 'top' ? 40 : 0, left: 0, right: 0 }); };
-  const p = await opened([state(BUSY, { run_log: '1' }), { lines: ['c', 'b', 'a'], stamp: '1' },
-    state(BUSY, { run_log: '2' }), { lines: ['f', 'e', 'd', 'c', 'b', 'a'], stamp: '2' }], {}, made);
-  box = pop(p);
-  Object.defineProperty(box, 'scrollHeight', { configurable: true, get: () => 1000 + LINE * (logLines(p) || []).length });
-  box.scrollTop = 500;
+// A browser's layout, for the pop-up scrolled by its scrollTop: the top line ends 40 px down, the log starts 1000 px
+// into the pop-up, and each of its lines is 20 px high, or 60 px when it's long enough to wrap.
+function laidOut(p) {
+  const box = () => p.byId('foreman'), tall = li => (/long/.test(li.textContent) ? 60 : 20);
+  return n => {
+    n.getBoundingClientRect = () => {
+      const st = box().scrollTop || 0;
+      if (n.className === 'top') return { top: 0, bottom: 40, left: 0, right: 0 };
+      if (n.className === 'run-log') return { top: 1000 - st, bottom: 1000 - st + n.children.reduce((h, li) => h + tall(li), 0), left: 0, right: 0 };
+      if (n.tagName === 'li' && n.parentNode && n.parentNode.className === 'run-log') {
+        const sibs = n.parentNode.children, at = 1000 + sibs.slice(0, sibs.indexOf(n)).reduce((h, li) => h + tall(li), 0) - st;
+        return { top: at, bottom: at + tall(n), left: 0, right: 0 };
+      }
+      return { top: 0, bottom: 0, left: 0, right: 0 };
+    };
+  };
+}
+const firstSeen = p => { const ol = p.all(pop(p)).find(n => n.className === 'run-log'); const li = ol.children.find(x => x.getBoundingClientRect().bottom > 40); return { text: li.textContent, top: li.getBoundingClientRect().top }; };
+const numbered = (to, from) => Array.from({ length: to - from + 1 }, (_, i) => `line ${to - i}${(to - i) % 7 === 0 ? ' long enough to wrap' : ''}`);
+
+for (const [what, before, after] of [
+  ['a full log of 200 lines, the oldest going as one comes in', numbered(200, 1), numbered(201, 2)],
+  ['a log under 200 lines, with wrapped lines coming in', numbered(50, 1), [...numbered(53, 51), ...numbered(50, 1)]],
+]) {
+  test(`0415 AC2: a reader scrolled down the log stays where they are as new lines come in above them: ${what}`, async () => {
+    let lay = () => {};
+    const p = await opened([state(BUSY, { run_log: '1' }), { lines: before, stamp: '1' }, state(BUSY, { run_log: '2' }), { lines: after, stamp: '2' }], {}, n => lay(n));
+    lay = laidOut(p);
+    for (const n of p.all(pop(p))) lay(n);
+    pop(p).scrollTop = 1500;
+    const was = firstSeen(p);
+    await tick(p);
+    assert.deepEqual(logLines(p), after);
+    const now = firstSeen(p);
+    assert.equal(now.text, was.text, 'the same line is the first they see');
+    assert.equal(now.top, was.top, 'in the same place');
+    assert.ok(pop(p).scrollTop > 1500, 'scrolled down by the lines above it');
+  });
+}
+
+test('0415 AC2: a log started afresh, sharing no lines with the one drawn, leaves the scroll as it is', async () => {
+  let lay = () => {};
+  const p = await opened([state(BUSY, { run_log: '1' }), { lines: numbered(100, 1), stamp: '1' }, state(BUSY, { run_log: '2' }), { lines: ['new run'], stamp: '2' }], {}, n => lay(n));
+  lay = laidOut(p);
+  for (const n of p.all(pop(p))) lay(n);
+  pop(p).scrollTop = 1500;
   await tick(p);
-  assert.deepEqual(logLines(p), ['f', 'e', 'd', 'c', 'b', 'a']);
-  assert.equal(box.scrollTop, 500 + 3 * LINE, 'moved down by the lines added above, so what they read stays put');
+  assert.deepEqual(logLines(p), ['new run']);
+  assert.equal(pop(p).scrollTop, 1500);
 });
 
 test('0415 AC2: a reader at the top of the pop-up sees the new lines', async () => {
@@ -173,12 +210,36 @@ test('0415 AC2: the server gives the latest 200 lines of run.log, newest first, 
   assert.equal(runLogTail(runs).lines[0], 'line 251');
 });
 
-test('0415 AC2: an empty run.log has no lines, and a long one is read from its end only', () => {
-  const runs = runsDir(), file = path.join(runs, 'run.log');
-  fs.writeFileSync(file, '');
+test('0415 AC2: an empty run.log has no lines', () => {
+  const runs = runsDir();
+  fs.writeFileSync(path.join(runs, 'run.log'), '');
   assert.deepEqual(runLogTail(runs).lines, []);
-  fs.writeFileSync(file, `${'x'.repeat(400 * 1024)}\nlast\n`);
-  assert.deepEqual(runLogTail(runs).lines, ['last'], 'a piece of a line cut off at the start of what was read isn\'t shown');
+});
+
+test('0415 AC2: a latest line longer than one read is shown whole', () => {
+  const runs = runsDir(), long = `big ${'x'.repeat(400 * 1024)} end`;
+  fs.writeFileSync(path.join(runs, 'run.log'), `before\n${long}\n`);
+  assert.deepEqual(runLogTail(runs).lines, [long, 'before']);
+});
+
+test('0415 AC2: 200 long lines, together far over one read, are all shown, and the line before them isn\'t', () => {
+  const runs = runsDir(), lines = Array.from({ length: 201 }, (_, i) => `${i} ${'y'.repeat(4000)}`);
+  fs.writeFileSync(path.join(runs, 'run.log'), `${lines.join('\n')}\n`);
+  const out = runLogTail(runs).lines;
+  assert.equal(out.length, 200);
+  assert.equal(out[0], lines[200]);
+  assert.equal(out[199], lines[1]);
+});
+
+test('0415 AC2: a line longer than the most the panel reads is shown cut off, starting with an ellipsis', () => {
+  const runs = runsDir(), fd = fs.openSync(path.join(runs, 'run.log'), 'w');
+  fs.writeSync(fd, 'old\n');
+  fs.writeSync(fd, Buffer.alloc(RUN_LOG_MAX, 'z'));
+  fs.writeSync(fd, ' end\n');
+  fs.closeSync(fd);
+  const out = runLogTail(runs).lines;
+  assert.equal(out.length, 1);
+  assert.ok(out[0].startsWith('…z') && out[0].endsWith('z end'), 'its end, cut off at the start');
 });
 
 // ---------- AC3: Close, Escape and a click outside close it, with the focus back on the screen ----------
