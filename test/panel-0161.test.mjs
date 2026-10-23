@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, idea, round } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, idea, round, openLane } from './support/panel.mjs';
 
 // ---------- 0161: make the panel readable for low vision ----------
 
@@ -287,8 +287,8 @@ const TAGS = `[...document.querySelectorAll('.tag')].filter(el => el.getClientRe
   where: el.closest('#full-ticket') ? 'pane' : el.closest('#queue') ? 'build' : el.closest('#shaping') ? 'plan' : el.closest('#shipped') ? 'shipped' : 'other',
   text: el.textContent, size: parseFloat(getComputedStyle(el).fontSize), height: el.getBoundingClientRect().height }))`;
 
-function checkTexts(texts, where) {
-  assert.ok(texts.length > 20, `${where}: text found (${texts.length})`);
+function checkTexts(texts, where, atLeast = 21) {
+  assert.ok(texts.length >= atLeast, `${where}: text found (${texts.length})`);
   for (const t of texts) {
     const what = `${where}: "${t.text}" (${t.cls})`;
     assert.ok(t.size >= 12, `${what} is ${t.size} px`);
@@ -299,8 +299,8 @@ function checkTexts(texts, where) {
     assert.ok(t.ratio >= need - 0.005, `${what} is ${t.ratio.toFixed(2)}:1, under ${need}:1`);
   }
 }
-function checkEdges(edges, where) {
-  assert.ok(edges.length > 10, `${where}: controls found (${edges.length})`);
+function checkEdges(edges, where, atLeast = 11) {
+  assert.ok(edges.length >= atLeast, `${where}: controls found (${edges.length})`);
   for (const e of edges.filter(x => !x.disabled)) assert.ok(e.best >= 3 - 0.005, `${where}: ${e.what}'s edge is ${e.best.toFixed(2)}:1`);
 }
 
@@ -313,8 +313,15 @@ async function everyView(b, theme) {
     await b.js(`[...document.querySelectorAll('#queue .q')].find(q => q.querySelector('.id').textContent === '${id}').querySelector('.top').click()`);
   }
   await b.until(`document.querySelectorAll('#queue .q.open').length === 3`, 'the open queue tickets');
-  checkTexts(await b.js(TEXTS), `${theme}, Plan's tickets and Build open`);
-  checkEdges(await b.js(EDGES), `${theme}, Plan's tickets and Build open`);
+  // 0410: each lane in turn, as only the open one shows
+  const tags = [];
+  for (const lane of ['plan', 'build', 'shipped']) {
+    await b.js(openLane(lane));
+    checkTexts(await b.js(TEXTS), `${theme}, ${lane}, with Plan's tickets and Build open`);
+    checkEdges(await b.js(EDGES), `${theme}, ${lane}, with Plan's tickets and Build open`, 5); // Shipped has fewer controls than the others
+    tags.push(...await b.js(TAGS));
+  }
+  await b.js(openLane('plan'));
   await b.js(`document.querySelector('#shaping .tag.pick').click()`);
   await b.until(`!!document.querySelector('.prio-menu')`, 'the priority menu');
   checkTexts(await b.js(TEXTS), `${theme}, the priority menu`);
@@ -325,7 +332,7 @@ async function everyView(b, theme) {
   await b.until(`!document.getElementById('full-ticket').hidden && !!document.querySelector('#full-ticket .tag')`, 'the full ticket');
   checkTexts(await b.js(TEXTS), `${theme}, the full ticket`);
   checkEdges(await b.js(EDGES), `${theme}, the full ticket`);
-  const tags = await b.js(TAGS);
+  tags.push(...(await b.js(TAGS)).filter(t => t.where === 'pane'));
   for (const where of ['plan', 'build', 'pane', 'shipped']) assert.ok(tags.some(t => t.where === where), `${theme}: tags in ${where}`);
   for (const t of tags) {
     assert.equal(t.size, 14, `${theme}: the ${t.text} tag in ${t.where} is 14 px`);
@@ -338,8 +345,8 @@ async function everyView(b, theme) {
     await b.until(`!!document.querySelector('#shaping .item.${list === 'ideas' ? 'idea' : 'inbox'} .head')`, list);
     await b.js(`document.querySelector('#shaping .item .head').click()`);
     await b.until(`!!document.querySelector('#shaping .item.open')`, `the open ${list} item`);
-    checkTexts(await b.js(TEXTS), `${theme}, ${list}`);
-    checkEdges(await b.js(EDGES), `${theme}, ${list}`);
+    checkTexts(await b.js(TEXTS), `${theme}, ${list}`, 10); // 0410: Plan alone shows now
+    checkEdges(await b.js(EDGES), `${theme}, ${list}`, 5);
   }
 }
 
@@ -355,17 +362,21 @@ test('0161 AC4: in a real browser, each button, link and tab reached with Tab sh
   for (const theme of ['light', 'dark']) {
     await withPanel(theme, async b => {
       const seen = [];
-      for (let i = 0; i < 60; i++) { // 60: since 0165 each tag is a stop too
-        await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
-        await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
-        const f = await b.js(`(() => { ${LIB}
-          const el = document.activeElement;
-          if (!el || el === document.body) return null;
-          const s = getComputedStyle(el), around = behind(el.parentElement);
-          return { what: el.tagName + '.' + el.className + ' ' + el.textContent.trim().slice(0, 20), width: parseFloat(s.outlineWidth), style: s.outlineStyle,
-            ratio: ratio(over(rgba(s.outlineColor), around), around), offset: parseFloat(s.outlineOffset) };
-        })()`);
-        if (f) seen.push(f);
+      // 0410: from the top of each lane in turn, as only the open one shows
+      for (const lane of ['plan', 'build', 'shipped']) {
+        await b.js(`${openLane(lane)} && document.activeElement.blur()`);
+        for (let i = 0; i < 40; i++) { // since 0165 each tag is a stop too
+          await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+          await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+          const f = await b.js(`(() => { ${LIB}
+            const el = document.activeElement;
+            if (!el || el === document.body) return null;
+            const s = getComputedStyle(el), around = behind(el.parentElement);
+            return { what: el.tagName + '.' + el.className + ' ' + el.textContent.trim().slice(0, 20), width: parseFloat(s.outlineWidth), style: s.outlineStyle,
+              ratio: ratio(over(rgba(s.outlineColor), around), around), offset: parseFloat(s.outlineOffset) };
+          })()`);
+          if (f) seen.push(f);
+        }
       }
       assert.ok(seen.length >= 10, `${theme}: Tab reaches the controls (${seen.length})`);
       for (const kind of ['BUTTON.toggle', 'BUTTON.settings-open', 'SPAN.title-link', 'BUTTON.full-open', 'BUTTON.goto']) {

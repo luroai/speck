@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, items, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, fakePage, full, items, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
 
 // ---------- 0164: line up a ticket's dependency note ----------
 
@@ -36,6 +36,7 @@ async function withBoard(fn, { width = 1280 } = {}) {
     })();` });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#shaping .item .goto').length > 0`, 'the panel');
+    await b.js(openLane('plan')); // 0410: these are Plan's cards
     await b.js(`document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))`);
     await fn(b);
   } finally { await b.close(); await stop(panel); }
@@ -162,6 +163,7 @@ test('0164 AC4: on a phone, in a note on several lines, each id\'s text and its 
   // A real tap on every id goes to that ticket.
   await b.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
   for (const i of ids) {
+    await b.js(openLane('plan')); // 0410: going to a Build ticket opens Build, so back to the note in Plan
     const [at] = (await b.js(WHERE('0001'))).filter(x => x.id === i.id);
     await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: (at.left + at.right) / 2, y: (at.top + at.bottom) / 2 }] });
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });

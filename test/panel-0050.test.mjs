@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, stageOf, shippedRows, startOfToday, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { T, fm, good, panelRepo, freePort, startPanel, stop, fakePage, full, round, exitOf, queueRows, stageOf, shippedRows, startOfToday, findChrome, browserPage, charAt, openLane } from './support/panel.mjs';
 
 // ---------- 0050: selected text and scroll in queue and Shipped rows survive the refresh ----------
 
@@ -239,6 +239,7 @@ test('0050 AC1-AC5: in a real browser, selections and the build message scroll s
     assert.equal(await b.js(`document.querySelector('${exit}').scrollTop`), scrolled, 'the scroll position stayed');
     // AC3: a Shipped row.
     const ship = '#shipped tr td:first-child .title-link'; // the title, in a link from 0137 until 0141
+    await b.js(openLane('shipped')); // 0410
     const at = await b.js(`document.querySelector('${ship}').lastChild.textContent.indexOf('Shipped')`);
     await b.js(`(() => { const t = document.querySelector('${ship}').lastChild, r = document.createRange(); r.setStart(t, ${at}); r.setEnd(t, ${at} + 7); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
     assert.equal(await sel(), 'Shipped');
@@ -283,6 +284,7 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     await b.until(`document.querySelector('${sub}').textContent.startsWith('06:')`, 'the minutes to move on');
     assert.equal(await sel(), '06', 'the selected number is still selected, and updated');
     // The Shipped time, after midnight.
+    await b.js(openLane('shipped')); // 0410
     await select(when, 8, when, 13);
     assert.equal(await sel(), '23:48');
     await clock(late + 2 * 60000);
@@ -291,6 +293,7 @@ test('0050 AC4: in a real browser, a selection in or across the minutes or the S
     assert.match(date, /^Shipped \d+ \w{3}, 23:48$/, 'past midnight it shows date and time');
     assert.equal(await sel(), date.slice('Shipped '.length), 'and the selection grows with it');
     // From the title across the minutes.
+    await b.js(openLane('build')); // 0410
     await select('#queue .q .title', 2, sub, 5);
     assert.match(await sel(), /^long build\s+S\s+low\s+Writing tests and code\s+Build\s+07:\d\d$/); // what it's doing and its stage come before the timer since 0156
     await clock(late + 3 * 60000);
