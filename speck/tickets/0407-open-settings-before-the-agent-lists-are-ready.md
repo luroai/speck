@@ -1,7 +1,7 @@
 ---
 id: "0407"
 title: "Open Settings before the agent lists are ready"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-23-open-settings-before-the-agent-lists-are-ready.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0406"]                # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T12:25:48.528Z"
 
 ---
 # 0407 · Open Settings before the agent lists are ready
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 Opening Settings sits on "Loading the settings…" until speck has finished asking every agent CLI whether it is signed in and which models it offers. Cursor's model list alone often takes a few seconds, so the view feels stuck even though the config is ready at once.
