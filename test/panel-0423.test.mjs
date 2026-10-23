@@ -92,13 +92,18 @@ for (const how of ['Close', 'Escape']) {
 
 test('0423 AC3: on a wide window its text is a centred column at most 720 px wide', () => {
   const [base] = rules('#full-ticket');
-  // The room beside the column, half on each side, rounded down to a whole pixel (0281), and at least 16 px.
-  const half = 'round(down, calc((100% - 720px) / 2), 1px)';
-  for (const side of ['left', 'right']) {
-    const all = [...base.matchAll(new RegExp(`padding-${side}: ([^;]+);`, 'g'))].map(m => m[1]);
-    assert.ok(all.length, `a padding-${side}`);
-    const last = all[all.length - 1];
-    assert.ok(last.includes(half), `padding-${side} leaves half the room beside a 720 px column: ${last}`);
-    assert.match(last, /^max\(16px, env\(safe-area-inset-/, `at least 16 px on a narrow window: ${last}`);
+  // The room beside the column, half on each side, at least 16 px. The left side's is rounded down to a whole pixel
+  // (0281) and the right side's up, so an odd width leaves a column no wider than 720 px.
+  const last = side => { const all = [...base.matchAll(new RegExp(`padding-${side}: ([^;]+);`, 'g'))].map(m => m[1]); return all[all.length - 1] || ''; };
+  const left = last('left'), right = last('right');
+  assert.equal(left, 'max(16px, env(safe-area-inset-left), round(down, calc((100% - 720px) / 2), 1px))');
+  assert.equal(right, 'max(16px, env(safe-area-inset-right), round(up, calc((100% - 720px) / 2), 1px))');
+  // What those give, with no insets, at even and odd window widths.
+  const pad = (w, r) => Math.max(16, r((w - 720) / 2));
+  for (const w of [761, 800, 1024, 1279, 1280, 1281, 1920, 2561]) {
+    const l = pad(w, Math.floor), rt = pad(w, Math.ceil), column = w - l - rt;
+    assert.ok(column <= 720, `${w} px: a ${column} px column`);
+    assert.ok(Math.abs(l - rt) <= 1, `${w} px: centred (${l} and ${rt})`);
+    if (w >= 752) assert.equal(column, 720, `${w} px: the full 720 px`);
   }
 });
