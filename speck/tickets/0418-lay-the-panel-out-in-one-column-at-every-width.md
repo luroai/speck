@@ -1,7 +1,7 @@
 ---
 id: "0418"
 title: "Lay the panel out in one column at every width"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0417"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T16:07:18.865Z"
+approved: "2026-10-23T16:17:31.512Z"
 
 ---
 # 0418 · Lay the panel out in one column at every width
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The panel keeps a separate layout for wide windows, with its own rules, but it's used mostly in a narrow side pane, and since 0410 the lanes are tabs showing one list at a time. Each lane also has a border of its own round its tickets' boxes, which takes width in a narrow pane and makes the tickets harder to pick out.
@@ -52,9 +53,14 @@ To see it, open the panel and make the window wider and narrower: nothing moves 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 124,414
+- Elapsed since build started: 10 min
+- Changed lines: 57 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none for the inbox. Known limit: tables inside an open Plan item still turn into labelled blocks only below 700 px, as the full ticket's do. In the 720 px column they show as ordinary tables, as they did before in a wide window.
 
