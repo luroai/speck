@@ -1,7 +1,7 @@
 ---
 id: "0424"
 title: "Set the full ticket out as a document"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0423"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:19:05.570Z"
 approved: "2026-10-23T18:30:15.118Z"
+finished: "2026-10-23T18:33:08.296Z"
 
 ---
 # 0424 · Set the full ticket out as a document
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The full ticket's text runs together: section headings, paragraphs and lists are close in size and spacing, so it doesn't read as a document with a clear order of parts.
