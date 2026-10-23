@@ -208,7 +208,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
   try {
     await b.until(`document.querySelectorAll('#shaping .item').length === 2 && !!document.querySelector('#queue .q')`, 'the tickets');
     assert.equal(await b.js(`document.querySelector('#queue .q .chain').title`), 'Starts a chain: unlocks 0002');
-    assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), 'rgb(61, 61, 58)', 'the muted colour (0167)');
+    assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), await b.js(`(() => { const s = document.createElement('span'); s.style.color = 'var(--muted)'; document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c; })()`), 'the muted colour (0167)');
     assert.ok(await b.js(`document.querySelector('#queue .q .chain').getBoundingClientRect().width > 0`), 'the icon takes up room');
     assert.equal(await b.js(`document.querySelector('#shaping .item .lock').title`), 'Waiting on 0001');
     assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('after 0001')`));

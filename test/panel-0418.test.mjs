@@ -152,13 +152,13 @@ test('0418 AC3: a ticket that needs you, waits for you or is being built keeps i
     const colour = v => { const p = document.createElement('i'); p.style.color = root.getPropertyValue(v); document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; };
     const row = cls => { const n = document.querySelector('#queue .q.' + cls); if (!n) return null; const s = getComputedStyle(n);
       return { border: s.borderTopColor, width: s.borderTopWidth, fill: s.backgroundColor }; };
-    return { want: { bad: colour('--bad'), badBg: colour('--bad-bg'), idea: colour('--idea'), ideaBg: colour('--idea-bg'), run: colour('--run'), raise: colour('--raise') },
+    return { want: { bad: colour('--bad'), badBg: colour('--bad-bg'), idea: colour('--idea'), ideaBg: colour('--idea-bg'), blue: colour('--blue'), raise: colour('--raise') },
       blocked: row('blocked'), toShip: row('to-ship'), atBuild: row('at-build'), wait: row('wait') };
   })()`);
   const w = got.want;
   assert.deepEqual(got.blocked, { border: w.bad, width: '1px', fill: w.badBg }, 'a ticket that needs you is crimson');
   assert.deepEqual(got.toShip, { border: w.idea, width: '1px', fill: w.ideaBg }, 'a ticket waiting for you to ship it is purple');
   assert.ok(got.atBuild, 'a ticket being built is in the list');
-  assert.deepEqual([got.atBuild.border, got.atBuild.width], [w.run, '2px'], 'a ticket being built has a 2px edge in its stage\'s colour');
+  assert.deepEqual([got.atBuild.border, got.atBuild.width], [w.blue, '2px'], 'a ticket being built has a 2px edge in its stage\'s colour (0426: Cursor\'s blue)');
   assert.equal(got.wait && got.wait.fill, w.raise, 'a ticket waiting on another is set back by its fill');
 });
