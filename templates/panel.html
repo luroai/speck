@@ -2187,7 +2187,7 @@ function toggleGroup() {
 // 0381: each agent's model, drawn in the agent's row: key → the agent's key.
 const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', foreman_model: 'foreman' };
 // 0400: with one list for each role, its effort is drawn beside it instead, and its model has no row.
-const ROLE_PAIRS = { reviewer_effort: 'reviewer', foreman_effort: 'foreman' };
+const ROLE_PAIRS = { builder_effort: 'builder', reviewer_effort: 'reviewer', foreman_effort: 'foreman' }; // 0402: and the builder's
 const settingPairs = () => yourModels() !== null ? ROLE_PAIRS : SETTING_PAIRS;
 // The agent whose row `key`'s model is drawn in, when the server put both in one group; otherwise null.
 function pairedWith(key) {
@@ -2411,14 +2411,20 @@ function settingChoices(x) {
     const listed = foremanModelList();
     return listed !== null ? ['', ...listed.map(m => m.slug)] : null;
   }
-  const models = x.key === 'reviewer_model' || x.key === 'reviewer_effort' ? reviewerModelList() : null;
+  const models = x.key === 'reviewer_model' || x.key === 'reviewer_effort' ? reviewerModelList() : x.key === 'builder_effort' ? builderEffortModels() : null;
   if (models !== null && x.key === 'reviewer_model') return ['', ...models.map(m => m.slug)];
   if (models !== null) {
-    const model = models.find(m => m.slug === settingChosen('reviewer_model'));
+    const model = models.find(m => m.slug === settingChosen(x.key === 'builder_effort' ? 'builder_model' : 'reviewer_model'));
     const listed = (model ? [model] : models).filter(m => m.efforts !== null); // 0278: none for Claude's: speck's own
     if (listed.length) return ['', ...new Set(listed.flatMap(m => m.efforts))];
   }
   return Array.isArray(x.choices) ? x.choices.map(String) : null;
+}
+// 0402: the models of the builder's agent, as your agents list them, each with the efforts it lists (null for none),
+// for builder_effort to offer those of the model chosen; null without your agents' models, or for an agent not yours.
+function builderEffortModels() {
+  const a = yourModels() !== null ? yourAgent(settingChosen('builder')) : null;
+  return a === null ? null : agentModelsOf(a).map(x => ({ slug: x.slug, efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : null }));
 }
 // A setting's value as picked or typed in the view, or as the view read it.
 function settingChosen(key) {
@@ -2669,7 +2675,7 @@ function roleEditor(x) {
   return [select];
 }
 // What a change to a role's list redraws: its own row, its effort, and the Foreman's, which can run on the builder's agent.
-const ROLE_AFFECTS = { builder: ['builder', 'foreman', 'foreman_effort'], reviewer: ['reviewer', 'reviewer_effort'], foreman: ['foreman', 'foreman_effort'] };
+const ROLE_AFFECTS = { builder: ['builder', 'builder_effort', 'foreman', 'foreman_effort'], reviewer: ['reviewer', 'reviewer_effort'], foreman: ['foreman', 'foreman_effort'] };
 // Whether the agent `role` runs on, as chosen, takes an effort: Claude Code and Codex do.
 function takesEffort(role) {
   const agent = role === 'foreman' ? foremanAgentChosen() : agentOfRole(settingChosen(role)), a = yourAgent(agent);
