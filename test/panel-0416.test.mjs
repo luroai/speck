@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, round, page } from './support/panel.mjs';
+import { T, fakePage, queueRows, round, page, styles } from './support/panel.mjs';
 import { LCD } from './support/screen.mjs';
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
@@ -40,8 +40,8 @@ const classes = n => (n.className || '').split(/\s+/).filter(Boolean);
 const progressOf = row => topOf(row).children.find(n => classes(n)[0] === 'progress');
 const WORKING = ['0901', '0902', '0903']; // 0434: their grid of lights stands in for their sentence
 const sentenceIn = n => (n.className === 'lights' ? n.attrs['aria-label'] : n.textContent);
-// The page's CSS, from its <style>, without its comments.
-const css = () => /<style>([\s\S]*?)<\/style>/.exec(page())[1].replace(/\/\*[\s\S]*?\*\//g, '');
+// The page's CSS, from panel.css (0430), without its comments.
+const css = () => styles().replace(/\/\*[\s\S]*?\*\//g, '');
 
 test('0416 AC1: no card has a tile, picture or animation of its stage, at any stage', async () => {
   const p = fake();

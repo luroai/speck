@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, items, queueRows, page } from './support/panel.mjs';
+import { T, fakePage, full, items, queueRows, page, styles } from './support/panel.mjs';
 
 // ---------- 0185: a hover no longer makes every other ticket look highlighted ----------
 
@@ -9,7 +9,7 @@ const idOf = (p, n) => p.all(n).find(x => x.className === 'id')._text;
 const rows = p => [...items(p), ...queueRows(p)];
 const row = (p, id) => rows(p).find(n => idOf(p, n) === id);
 const classes = p => Object.fromEntries(rows(p).map(n => [idOf(p, n), n.className]));
-const css = () => page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+const css = () => styles().replace(/\/\*[\s\S]*?\*\//g, '');
 const decls = sel => [...css().matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].split(',').map(s => s.trim()).includes(sel)).map(m => m[2]).join(';');
 
 // 0001 ← 0002 (ready) ← 0003, and 0001 ← 0004 (ready) make one group; 0010 (a draft) and 0005 (ready) stand alone.

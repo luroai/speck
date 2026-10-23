@@ -1,11 +1,11 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, page } from './support/panel.mjs';
+import { T, full, fakePage, page, styles } from './support/panel.mjs';
 
 // ---------- 0364: the panel's header on one row, with the project always shown ----------
 
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 
 // A board long enough to scroll, with the Foreman reading `word`. 0002 waits on 0001, so its row jumps to 0001 (0154).
 const board = (word = 'Building 1', tone = 'ok', fixing = null) => ({

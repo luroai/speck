@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { page, paletteProblems, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { page, paletteProblems, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0136: a dark look you can switch to ----------
 
@@ -21,7 +21,7 @@ const SHARED = new Set(['--fix --warn', '--warn --fix']);
 const TINTS = ['--accent-bg', '--idea-bg', '--inbox-bg', '--bad-bg'];
 
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const darkVars = () => vars([...css().matchAll(/:root\[data-theme="dark"\] \{([^}]*)\}/g)].map(m => m[1]).join(' '));
 const luminance = hex => {
   const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
@@ -80,12 +80,12 @@ test('0136 AC2: the full ticket pane\'s backdrop has a dark counterpart (0423: t
 });
 
 test('0136 AC3: the first :root block still sets the light colours, and the colour check passes', () => {
-  const first = vars((page().match(/:root \{([\s\S]*?)\}/) || [])[1] || '');
+  const first = vars((styles().match(/:root \{([\s\S]*?)\}/) || [])[1] || '');
   for (const [k, v] of Object.entries(ZEN)) assert.equal(first.get(k), v, k);
   const light = vars([...css().matchAll(/:root \{([^}]*)\}/g)].map(m => m[1]).join(' '));
   for (const [k, v] of Object.entries(ZEN_TINTS)) assert.equal(light.get(k), v, k);
-  assert.deepEqual(paletteProblems(page()), []);
-  assert.ok(page().indexOf(':root[data-theme="dark"]') > page().indexOf(':root {'), 'the dark values come after the first :root block');
+  assert.deepEqual(paletteProblems(styles()), []);
+  assert.ok(styles().indexOf(':root[data-theme="dark"]') > styles().indexOf(':root {'), 'the dark values come after the first :root block');
 });
 
 test('0136 AC4: the <head> script applies a saved choice, whatever the computer\'s setting, and ignores anything else saved', () => {

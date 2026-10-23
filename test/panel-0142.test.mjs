@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, toggles, items, top, findChrome, browserPage, charAt, page, openLane } from './support/panel.mjs';
+import { fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, click, toggles, items, top, findChrome, browserPage, charAt, page, openLane, styles } from './support/panel.mjs';
 
 const clone = s => JSON.parse(JSON.stringify(s));
 const tags = (p, n, tag) => p.all(n).filter(x => x.tagName === tag);
@@ -179,7 +179,7 @@ test('0142 AC4: text selected in an opened draft, idea or inbox note stays on th
 });
 
 test('0142 AC1 and AC2: the opened view styles its formatted Markdown, not as preformatted text', () => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   const rule = sel => (css.match(new RegExp(`(?:^|\\n)\\s*([^{}\\n]*${sel.replace(/[.*]/g, '\\$&')}[^{}\\n]*)\\{([^}]*)\\}`)) || [])[2] || '';
   assert.doesNotMatch(rule('.note '), /white-space:\s*pre/, 'a note is no longer preformatted');
   assert.doesNotMatch(rule('.detail p.text'), /white-space:\s*pre/, 'a draft\'s paragraph wraps as the pane\'s does');

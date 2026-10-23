@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, round, click, page, panelRepo, fm, good, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, fakePage, full, round, click, page, panelRepo, fm, good, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0425: the lane tabs share the row equally, and the lanes' counts are at the top of the lanes ----------
 
@@ -29,7 +29,7 @@ function livePage(s) {
 }
 const refresh = async p => { p.timers.shift()(); await p.settle(); };
 const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').replace(/<style>[\s\S]*?<\/style>/g, '');
-const css = () => page().match(/<style>([\s\S]*?)<\/style>/)[1];
+const css = () => styles();
 const nav = () => staticHtml().match(/<nav [^>]*role="tablist"[^>]*>([\s\S]*?)<\/nav>/)[1];
 const tabHtml = id => nav().match(new RegExp(`<button [^>]*id="${id}"[^>]*>([\\s\\S]*?)</button>`))[1];
 const open = p => Object.keys(LANE).filter(l => !p.byId(LANE[l]).hidden);

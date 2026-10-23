@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { full, fakePage, page, panelModel, idea, click, toggles, items, top } from './support/panel.mjs';
+import { full, fakePage, page, panelModel, idea, click, toggles, items, top, styles } from './support/panel.mjs';
 
 // ---------- 0038: the inbox in Shaping ----------
 
@@ -105,7 +105,7 @@ test('0038 AC3: Ideas leaves out inbox and dropped ideas, its count matches its 
 });
 
 test('0038 AC4: Inbox keeps a colour of its own, and since 0167 its tab, section and items are in the plain colours', () => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   const vars = Object.fromEntries([...css.matchAll(/--([a-z-]+):\s*(#[0-9a-f]{3,6})/gi)].map(m => [m[1], m[2].toLowerCase()]));
   const rule = selector => {
     const m = css.match(new RegExp(`(?:^|\\n)\\s*${selector.replace(/[.#]/g, '\\$&')} \\{([^}]*)\\}`));

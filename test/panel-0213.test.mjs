@@ -2,9 +2,9 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fakePage, T, full, click, top, items, queueRows, openQueueRows, findChrome, browserPage } from './support/panel.mjs';
+import { page, fakePage, T, full, click, top, items, queueRows, openQueueRows, findChrome, browserPage, styles } from './support/panel.mjs';
 
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const rule = sel => (css().match(new RegExp(`\\n\\s*${sel.replace(/[.:#]/g, '\\$&')}\\s*\\{([^}]*)\\}`)) || [])[1] || '';
 const STATE = () => ({ ideas: [], tickets: [
   full('0001', { priority: 0, type: 'fix' }), full('0002', { priority: 1 }), full('0003', { priority: 2 }),

@@ -2,7 +2,7 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { page, findChrome, browserPage, full, T } from './support/panel.mjs';
+import { page, findChrome, browserPage, full, T, styles } from './support/panel.mjs';
 import fs from 'node:fs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { settingsPage, openSettings, saveButton, posted } from './support/settings.mjs';
@@ -10,7 +10,7 @@ import { settingsPage, openSettings, saveButton, posted } from './support/settin
 // ---------- 0372: move the light/dark control into Settings ----------
 
 const header = () => page().match(/<header>([\s\S]*?)<\/header>/)[1];
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const S = (key, value, o = {}) => ({ key, value, default: false, explain: `What ${key} does.`, editable: true, ...o });
 const VIEW = () => ({ groups: [{ title: 'Shipping', settings: [S('auto_ship', false, { choices: ['true', 'false'] })] }] });
 

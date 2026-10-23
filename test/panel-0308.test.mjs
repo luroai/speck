@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { ROOT, page } from './support/panel.mjs';
+import { ROOT, page, styles } from './support/panel.mjs';
 
 // ---------- 0308: a lighter LCD screen in the panel's light look (shade C) ----------
 
@@ -13,9 +13,9 @@ const LIGHT = { '--lcd-bg': '#e6e9db', '--lcd-off': '#dde1cf', '--lcd-ink': '#20
 const DARK = { '--lcd-bg': '#0d130f', '--lcd-off': '#151d17', '--lcd-ink': '#cfe6c6', '--lcd-red': '#ff5a3f', '--lcd-shadow': 'transparent' };
 const sha = b => crypto.createHash('sha256').update(b).digest('hex');
 const tokens = rule => Object.fromEntries([...rule.matchAll(/(--lcd-[a-z]+):\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
-const css = () => page().match(/<style>([\s\S]*?)<\/style>/)[1];
-const lightRule = () => tokens(css().match(/\n {2}:root \{([\s\S]*?)\n {2}\}/)[1]);
-const darkRule = () => tokens(css().match(/\n {2}:root\[data-theme="dark"\] \{([\s\S]*?)\n {2}\}/)[1]);
+const css = () => styles();
+const lightRule = () => tokens(css().match(/(?:^|\n) {2}:root \{([\s\S]*?)\n {2}\}/)[1]);
+const darkRule = () => tokens(css().match(/(?:^|\n) {2}:root\[data-theme="dark"\] \{([\s\S]*?)\n {2}\}/)[1]);
 
 test('0308 AC1: the light look\'s screen is shade C, with its ink and red unchanged', () => {
   assert.deepEqual(lightRule(), LIGHT);
