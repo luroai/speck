@@ -57,6 +57,7 @@ speck, the Foreman, plays an animation for each thing that happens in the pipeli
 - speck is the Foreman: building, reviewing and shipping are the work of other models, so speck shows them only as events (the user, 2026-10-23). The laptop now means writing tickets.
 - The animations are the ones in console.html in https://claude.ai/artifact/R5CQDZJfMZ2rYcTmZK1B8z and `templates/lcd.js`: the landing page's states (`STATES`, whose `building` is the laptop), the panel's `ship`, `wait` and `bad` poses (`PANEL`), and the mock's new clipboard pose (`watch` in console.html). "One push" is one 3.2-second loop of `PANEL.ship`.
 - Waits for 0413: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
