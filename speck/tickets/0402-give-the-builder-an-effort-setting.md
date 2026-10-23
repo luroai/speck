@@ -1,7 +1,7 @@
 ---
 id: "0402"
 title: "Give the builder an effort setting"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T11:39:09.124Z"
 ---
 # 0402 · Give the builder an effort setting
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Settings offers how hard the reviewer and the Foreman think. The builder has no effort control, so a Claude Code or Codex build can't be set to high, max or another effort from the panel.
@@ -46,7 +46,9 @@ The builder has an effort setting, offered and passed the same way as the review
 - Existing tests changed: 0400's "the builder has no effort" check now checks criterion 1, and 0257, 0258 and 0386's pinned lists of settings now include builder_effort.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In Settings, the builder now has an effort list beside it, as the reviewer and the Foreman already do, while the builder is Claude Code or Codex. It offers the efforts that agent takes, including the ones Codex lists for the chosen model, such as ultra, and is saved for this computer only. Every build that speck run starts or resumes then thinks that hard. Cursor and model providers get no effort list, as before.
+
+To see it, open Settings and look at the builder row: pick a Codex model and the list changes to that model's efforts. Keep an eye on one thing: if you save an effort only Codex offers and then switch the builder to Claude Code, the effort stays set, shown as "not offered", until you change it.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +58,70 @@ The builder has an effort setting, offered and passed the same way as the review
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Clear a builder effort the new builder doesn't take, as switching clears builder_model: speck/ideas/2026-10-23-clear-a-builder-effort-the-new-builder-doesn-t-take.md.
+- Known limit, as for foreman_effort: `speck lint` doesn't check a builder_effort typed into speck/config.yml by hand. `speck config set` and the panel do.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9badfe3c75494c68181f6e7682bc2832c410051e",
+    "session": "fresh",
+    "thread_id": "01a16895-46aa-7d72-ae57-9f9ffb3c734b",
+    "builder_response": "- Tests run: test/settings-builder-effort-0402.test.mjs test/settings-roles-0400.test.mjs test/config-0386.test.mjs test/panel-0257.test.mjs test/panel-0258.test.mjs\n- Existing tests changed, each because it pinned the builder having no effort setting: 0400's \"the builder has no effort\" now checks criterion 1 (the builder's effort sits in its row) and its fixture gains a builder_effort row; 0257's settings groups and count, 0258's EDITABLE list and 0386's list of your own settings now include builder_effort.\n- Pictures of the Settings view's builder row with its effort list, light and dark, are kept with the review pack.\n- Known and kept as the reviewer's own effort behaves: an effort saved for one builder that the next doesn't offer (Codex's ultra, then Claude Code) stays saved and is shown as \"(not offered)\".\n",
+    "seconds": 30,
+    "usage": {
+      "input_tokens": 196628,
+      "cached_input_tokens": 138624,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 764,
+      "reasoning_output_tokens": 79
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T11:46:45.404Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html adds builder_effort to ROLE_PAIRS and derives model-specific choices through builderEffortModels and settingChoices. Passing 0402 AC1 tests exercise Claude Code and Codex choices, including ultra, placement beside the builder list, and hiding for Cursor and providers."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/machine.mjs includes builder_effort in MACHINE_SETTINGS; scripts/settings.mjs makes it editable and scripts/config.mjs validates it as an effort. Passing 0402 AC2 tests exercise machine saving, blank values, invalid-value rejection and the Settings save request."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "scripts/build-model.mjs withBuilderModel adds or replaces Claude's --effort; scripts/codex-build.mjs supplies model_reasoning_effort on starts and resumes. ticket-builder.mjs and hand-back.mjs isolate settings when a different builder runs. Passing 0402 AC3 tests exercise start and resume commands and exclusion from Cursor and provider commands."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "templates/panel.html ROLE_AFFECTS redraws builder_effort when the builder/model selection changes. The passing 0402 AC4 test checks different Codex models and the default selection. Recorded results show 163 passing tests, zero failures and three skips across the selected files; existing test changes update settings inventories and the superseded no-effort assertion."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The builder now has an effort control for Claude Code and Codex, saved for this machine and passed to build commands. The tests exercise the settings, model changes and command arguments. I found no blocking issues or unrelated changes."
+  }
+}
+```
+
+</details>
