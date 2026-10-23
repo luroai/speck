@@ -40,6 +40,7 @@ A ticket's card says its stage in words only, and speck's screen is the only par
 - Removes the builder badge: `badgeOf` and its canvas in `templates/panel.html` (0168, 0169, 0172, 0302). The `PANEL` poses in `templates/lcd.js` stay, as speck's screen uses `ship`, `wait` and `bad` (0414).
 - The user decided on 2026-10-23 that the status text is enough.
 - Waits for 0415: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
