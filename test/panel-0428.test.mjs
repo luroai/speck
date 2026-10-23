@@ -87,7 +87,6 @@ test('0428 AC2: cards, the build log, the stats, Settings\' groups and the pop-u
   const BOXES = {
     'a Plan card': ['.item'], 'a Build card': ['.q'], 'a shipped card': ['#shipped tr'], 'the build log': ['.q .log'],
     'the stats': ['.stats'], 'Settings\' groups': ['#settings .sgroup'], 'Settings\' switches': ['#settings .switches'],
-    'the full ticket': ['#full-ticket'], 'a document': ['#doc-view'], 'the pipeline log': ['#foreman'],
     'Settings\' question': ['#settings-unsaved .box'],
   };
   for (const [what, sels] of Object.entries(BOXES)) assert.equal(resolve(sels)['border-radius'], '12px', what);
@@ -120,6 +119,10 @@ test('0428 AC3: the focus ring is an outline, which follows each control\'s roun
   const ring = rule(':focus-visible');
   assert.match(ring.decls.find(([k]) => k === 'outline')[1], /^2px solid var\(--blue\)$/);
   for (const r of RS) assert.ok(!r.decls.some(([k, v]) => k === 'box-shadow' && /:focus/.test(r.sel) && v !== 'none'), `${r.sel} draws no ring as a shadow`);
+});
+
+test('0428 AC2: the pop-ups that fill the window keep square corners, as the window\'s own edges (the user chose this, 0160)', () => {
+  for (const sel of ['#full-ticket', '#doc-view', '#foreman']) assert.equal(resolve([sel])['border-radius'] ?? '0', '0', sel);
 });
 
 test('0428 AC4: speck\'s screen and its frame keep their square corners', () => {
