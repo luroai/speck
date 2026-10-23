@@ -49,7 +49,7 @@ This machine keeps an API key for each model provider speck knows, safely, and s
 - Self-check: a closed input now gives "No key was given" rather than a stack trace, and a failed write removes its temporary file so no copy of a key is left behind.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck can now keep an API key for a model provider, starting with DeepSeek, on your machine. You type or paste the key when asked and it isn't shown on screen. It's kept in a private file that git ignores and only you can read, and every copy of the project on this machine uses the same key. speck never prints it: listing your keys only says whether each one is set. To try it, set a DeepSeek key, list the keys to see it marked as set, then remove it. Nothing uses the key yet: that comes in the next tickets.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +59,9 @@ This machine keeps an API key for each model provider speck knows, safely, and s
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (known limits, no ticket needed):
+- A keys file owned by another user can't be made private again, and gives a raw error rather than a plain message. Unlikely on one person's machine.
+- A key for a provider later dropped from speck's list stays in the file, unread, until another key is set or removed.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -140,6 +143,89 @@ This machine keeps an API key for each model provider speck knows, safely, and s
     ],
     "escalation_question": "",
     "summary": "Key storage, removal and sharing across worktrees are implemented and covered by passing tests. Two fixes are needed before approval: prevent a fast paste from exposing the key before terminal echo is disabled, and remove a test that locks README prose to exact wording."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b6d5570e6732e12d9dcbc115e50e4187a128a5a5",
+    "session": "continued",
+    "thread_id": "01a167aa-fbb7-7b92-85e0-a1b492e3aab0",
+    "builder_response": "- Tests run: test/keys-0389.test.mjs (with the commands.checks files speck test --files adds)\n- F1: fixed. READ_SILENTLY in scripts/keys.mjs now turns echo off first and only then prints the prompt (passed to the shell as $1, to stderr), then reads the line and prints the newline. The terminal test now types the key as soon as the prompt appears, with no pause; I checked it still fails when stty -echo is taken out.\n- F2: fixed. The README test now checks only facts: the keys file path, the set and remove commands and the name DeepSeek. The tested-providers sentence is left to review.\n",
+    "seconds": 24,
+    "usage": {
+      "input_tokens": 193379,
+      "cached_input_tokens": 145024,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1440,
+      "reasoning_output_tokens": 78
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T07:31:57.736Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/keys.mjs now disables echo before displaying the prompt. Passing AC1 tests exercise immediate terminal input, echo restoration, piped input, command-line refusal, unknown providers, ignored storage with mode 0600 and removal."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "readKeyInput captures the secret through a pipe; cmdKeys prints only confirmations or provider status. The passing AC2 test checks output and repository files for secret leakage. The terminal exposure identified in F1 is fixed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "keysFile resolves storage through machineConfigFile. The passing AC3 test verifies shared reads and removal between the main checkout and a worktree."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/providers.mjs supplies the single provider list and all required fields. Passing AC4 tests verify DeepSeek and exercise storage, status and removal with an additional test provider."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README.md's model-provider paragraph describes the storage location, set and remove commands, and lists DeepSeek as tested. Documentation assertions now check facts only. The reported run passed 120 tests with zero failures and three skips."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/keys.mjs:93",
+        "issue": "The prompt previously appeared before terminal echo was disabled. READ_SILENTLY now disables echo before printing the prompt, and the passing terminal test sends the key immediately upon seeing it.",
+        "suggested_fix": "Completed; no further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/keys-0389.test.mjs:195",
+        "issue": "The README test previously required exact prose. It now checks only the storage path, command names and provider name; the tested-provider statement was verified by review.",
+        "suggested_fix": "Completed; no further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Both requested fixes are complete. Keys are stored with owner-only permissions, shared across worktrees, and entered without being displayed. All five criteria pass, and the reported checks have no failures. The change is ready for the owner's merge decision."
   }
 }
 ```
