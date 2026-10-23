@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0426"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:57:11.441Z"
-approved: "2026-10-23T19:14:01.511Z"
+approved: "2026-10-23T19:21:56.160Z"
 
 ---
 # 0427 · Use Cursor's fonts in the panel
@@ -58,12 +58,13 @@ The panel now uses the same fonts as Cursor: your computer's own interface font 
 ## Review log
 Round 1 (codex): changes requested: F1 A ticket's stage sentence remains 12 px, although AC1 explicitly includes it among body text that must be 14 px.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 876,608
-- Elapsed since build started: 17 min
+- Reviewer tokens: 1,605,333
+- Elapsed since build started: 25 min
 - Changed lines: 154 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (to the inbox): speck/ideas/2026-10-23-give-the-dots-in-a-details-line-their-gaps-back.md (the dots' gaps close in a proportional font); speck/ideas/2026-10-23-measure-the-panel-s-layout-in-a-proportional-font.md (the build machine's Chrome shows `system-ui` as Liberation Mono, so the layout tests measure a monospaced panel).
@@ -216,6 +217,82 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The panel now uses the requested interface and monospace fonts, stronger headings and sentence-case controls. The stage-sentence size is fixed and verified in a browser. All criteria pass; the reported run has 233 passing tests, no failures and three skips."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8164899386cdef70a490d60a1d4249438dc0b621",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16a2b-b1fa-7910-b3c5-323213966dd5",
+    "builder_response": "- Tests run: test/panel-0140.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0156.test.mjs test/panel-0427.test.mjs test/panel-0419.test.mjs test/panel-0420.test.mjs test/panel-0161.test.mjs test/panel-0158.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0147.test.mjs test/panel-0273.test.mjs test/panel-0424.test.mjs test/panel-0164.test.mjs test/panel-0304.test.mjs test/panel-0413.test.mjs test/panel-0426.test.mjs test/panel-0421.test.mjs test/panel-0422.test.mjs\n- Merge: `git merge main` was clean (no conflicting files). The ship failed on the ticket's own change, not main's: 0140, 0151, 0155 and 0156 are browser tests I hadn't run in the build.\n- 0156 (sentence under the title; and 0140, which passes again with the same fix): the 14 px stage sentence's glyph box (16 px) poked 2 px into the title above it, inside a 14 px details line. Fix in templates/panel.html: `.q .top .say` is `display: inline-block; line-height: 13px`, so its box is exactly the line's height: it starts at the title's bottom, its top is level with the 12 px stage name's (0156 AC4), and cards keep their height (0419's 64 px).\n- 0151 and 0155 (the 68-character title on at most N lines): on this machine Chrome resolves `system-ui` to Liberation Mono, where the bold 17 px title is 694 px wide; in a proportional font it is 564 px (bold Liberation Sans, measured), against about 620 px of room at 1280 px, so it still fits on one line on a real machine. Added `MONO_UI` to test/support/panel.mjs (true when an i and an m are the same width in `system-ui`), and 0151/0155 allow one more line only then. 0419's inline copy of that check now uses it.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 726509,
+      "cached_input_tokens": 614400,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2216,
+      "reasoning_output_tokens": 71
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:21:53.571Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains the requested interface stack and 14 px body text, including .q .top .say. The 0427 browser test verifies computed stage-sentence and question sizes. Existing 0156 positioning tests and 0419 card-height tests pass with the revised inline-block layout."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Code, ids, build logs and figures use the requested monospace stack. The 0427 AC2 test passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Heading, tab-name and ticket-title rules use the interface stack at weight 600; old font names remain absent. The 0427 AC3 and updated 0134 browser tests pass."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Buttons and labels retain sentence-case text in the interface font without positive letter spacing or uppercase transforms. The 0427 AC4 test passes."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Text sizes remain at least 12 px and weights at least 400. The 0427 AC5 and existing 0161 tests pass."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:232",
+        "issue": "The stage sentence now uses 14 px. Its revised inline-block layout also passes the existing tests for placement beneath the title and compact card height.",
+        "suggested_fix": "Completed; retain the browser size and layout coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The merged change meets all five criteria. The stage sentence keeps its required size and now passes the existing positioning checks. Font-dependent wrapping allowances preserve overflow and alignment checks. The reported run has 297 passing tests, no failures and three skips. No blocking findings remain."
   }
 }
 ```
