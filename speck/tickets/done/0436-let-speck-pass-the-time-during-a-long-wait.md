@@ -1,7 +1,7 @@
 ---
 id: "0436"
 title: "Let speck pass the time during a long wait"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0435"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T21:11:03.198Z"
 approved: "2026-10-23T21:14:28.369Z"
+finished: "2026-10-23T21:17:20.210Z"
 
 ---
 # 0436 · Let speck pass the time during a long wait
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0414, speck plays an event's animation, then shows the pipeline's state and holds it until the state changes. On a long build that's 40 minutes of watching with the clipboard, so the screen looks stuck.
