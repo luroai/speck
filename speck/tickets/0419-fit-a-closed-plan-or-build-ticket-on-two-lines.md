@@ -47,7 +47,7 @@ A closed Plan or Build ticket is a title line and one line of details.
 - Failing before this build: none
 - Self-check: a ticket missing its priority, size or risk, or its timer, leaves them out of its line with no empty part (new test); a wrapped line ends with its dot rather than starting with one, and breaks only between parts, a list of linked ids wrapping between its ids; removed two rules for the old tag row.
 - Built: the bug, fix and document tags and the chain icon stay. The tags follow the risk in the details line, as words; the icon follows the id. Tags in the line are inline text with a mouse, and keep their 44 px boxes on a touch screen (0417).
-- Known limit: at 420 px a details line longer than about 50 characters of 12 px text, such as a reviewing ticket's "Codex is reviewing · round 2 · Review 2 · 01:07 · P2 · S · low", wraps onto a second line, as AC1 and AC2 allow. The card's padding and line heights leave room for that within 64 px. A details line on three lines, such as a long list of linked ids, makes the card taller.
+- Known limit: at 420 px a details line longer than about 50 characters of 12 px text, such as a reviewing ticket's "Codex is reviewing · round 2 · Review 2 · 01:07 · P2 · S · low", wraps onto a second line, as AC1 and AC2 allow. The card's padding and line heights leave room for that within 64 px. A details line on three lines, such as a long list of linked ids, makes the card taller, as the user chose (A).
 - Went with the recommendation: A, the 64 px limit covers details on up to two lines (chosen by the user in the panel, 2026-10-23 17:29 UTC).
 
 ## In plain words
