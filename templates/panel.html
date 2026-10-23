@@ -182,6 +182,17 @@
   .q .top .sub { font-variant-numeric: tabular-nums; }
   .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border-left: 2px solid var(--line-soft);
     font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
+  /* 0422: one line of the log a row, its text past a column for the time, so a line that wraps, or a message's next line,
+     starts under the text. Each kind of entry has its own colour; anything else keeps the log's muted one */
+  .q .log { overflow-anchor: none; } /* 0422: rows taken out at the top leave the box's scroll place as it was, as text did */
+  .q .log .ln { display: block; padding-left: 9ch; }
+  .q .log .ln.timed { text-indent: -9ch; }
+  .q .log .ln.plain { padding-left: 0; }
+  .q .log .at { color: var(--muted); }
+  .q .log .msg { color: var(--text); }
+  .q .log .tool { color: var(--run); }
+  .q .log .fail { color: var(--bad); }
+  .q .log .note { color: var(--warn); }
   .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
   /* An open running or paused build's Stop build button, beside Full ticket, and why the server refused it */
   /* 0421: an open card's Full ticket, Review pack and Stop build are small text buttons on one line, underlined rather than boxed */
@@ -3546,7 +3557,8 @@ const logShown = log => (!log ? 'Loading the log…' : log.failed ? "Couldn't lo
 // A box built afresh, when the ticket opens or its row is rebuilt, goes to the bottom once it's on the page, or where
 // the reader had scrolled the box it replaces.
 function logBox(id) {
-  const old = logBoxes.get(id), box = el('pre', 'log', logShown(logs.get(id)));
+  const old = logBoxes.get(id), box = el('pre', 'log');
+  setLogText(box, logShown(logs.get(id)));
   logBoxes.set(id, box);
   logScroll.set(box, old && !atBottom(old) ? old.scrollTop : null);
   return box;
@@ -3627,24 +3639,52 @@ function showLog(id, toBottom) {
   setLogText(box, logShown(logs.get(id)));
   if (follow) box.scrollTop = box.scrollHeight;
 }
-// Puts a newer log in its box. New text after the old is added at the bottom. When the old text runs on into the new
-// one once its oldest lines have dropped out of the tail, only the fewest lines that makes it fit are taken out at the
-// top and the rest added at the bottom, so text selected in what stays stays selected. Anything else goes to setText.
-function setLogText(node, text) {
-  const t = node.firstChild;
-  if (t && t === node.lastChild && t.nodeType === 3) {
-    const old = t.data;
-    if (text.startsWith(old)) { if (text.length > old.length) t.appendData(text.slice(old.length)); return; }
-    const head = old.startsWith(`${TRUNCATED}\n`) && text.startsWith(`${TRUNCATED}\n`) ? TRUNCATED.length + 1 : 0;
-    const body = text.slice(head);
-    for (let i = old.indexOf('\n', head); i >= 0 && i < old.length - 1; i = old.indexOf('\n', i + 1)) {
-      if (!body.startsWith(old.slice(i + 1))) continue;
-      t.deleteData(head, i + 1 - head);
-      t.appendData(text.slice(t.data.length));
+// 0422: a log line's row: its time (HH:MM:SS and a space) in a span of its own, then its text, coloured by its kind:
+// the note that earlier lines aren't shown, a failure (✗, or Build ended), a tool call (→) or the agent's message.
+// `more`: another line follows, so the row ends with its newline, keeping the log's text as it was. `plain`: one of
+// the box's own notes, such as No log yet., which isn't a log line.
+const LOG_PLAIN = new Set(['Loading the log…', "Couldn't load the log yet. Trying again in a few seconds…", 'No log yet.']);
+function logParts(line, plain) {
+  const m = plain ? null : line.match(/^(\d\d:\d\d:\d\d )([\s\S]*)$/), text = m ? m[2] : line, t = text.trimStart();
+  const kind = plain ? 'plain' : line === TRUNCATED ? 'note' : line === '' ? 'gap' : t.startsWith('✗') || text.startsWith('Build ended:') ? 'fail'
+    : t.startsWith('→') ? 'tool' : 'msg';
+  return { cls: `ln ${kind}${m ? ' timed' : ''}`, at: m ? m[1] : '', text };
+}
+const logTextOf = new WeakMap(); // row → the text node with its text
+function logRow(line, more, plain) {
+  const p = logParts(line, plain), t = document.createTextNode(p.text);
+  const row = el('span', p.cls, null, p.at ? el('span', 'at', p.at) : null, t, more ? document.createTextNode('\n') : null);
+  logTextOf.set(row, t);
+  return row;
+}
+// Puts a newer log in its box, a row a line. New lines after the old are added at the bottom. When the old lines run on
+// into the new ones once the oldest have dropped out of the tail, only the fewest rows that makes them fit are taken
+// out at the top and the rest added at the bottom, so text selected in the rows that stay stays selected. The last old
+// line may have grown: its new text is added to its row's, or, when that changes its time or its kind, its row alone is
+// made again. Anything else makes every row afresh.
+const logLinesOf = new WeakMap(); // box → the lines its rows show
+function setLogText(box, text) {
+  const next = text.split('\n'), plain = LOG_PLAIN.has(text), cur = logLinesOf.get(box);
+  logLinesOf.set(box, plain ? null : next);
+  const rows = Array.from(box.children);
+  if (cur && !plain) {
+    const head = cur[0] === TRUNCATED && next[0] === TRUNCATED ? 1 : 0;
+    for (let k = head; k < cur.length; k++) {
+      const kept = cur.slice(k), last = kept.length - 1;
+      if (kept.length > next.length - head || !kept.every((l, i) => (i < last ? l === next[head + i] : next[head + i].startsWith(l)))) continue;
+      for (const r of rows.slice(head, k)) box.removeChild(r);
+      const at = head + last, more = at < next.length - 1, row = rows[k + last];
+      const was = logParts(kept[last], false), now = logParts(next[at], false);
+      if (was.cls !== now.cls || was.at !== now.at || !logTextOf.has(row)) { box.insertBefore(logRow(next[at], more, false), row); box.removeChild(row); }
+      else {
+        if (now.text !== was.text) logTextOf.get(row).appendData(now.text.slice(was.text.length));
+        if (more) row.appendChild(document.createTextNode('\n'));
+      }
+      for (let i = at + 1; i < next.length; i++) box.appendChild(logRow(next[i], i < next.length - 1, false));
       return;
     }
   }
-  setText(node, text);
+  box.replaceChildren(...next.map((l, i) => logRow(l, i < next.length - 1, plain)));
 }
 const queueCounter = t => (t.counter !== null ? `${t.paused ? 'Paused · ' : ''}${t.counter}` : t.paused ? 'Paused' : '');
 // A ready ticket's details line (0419): Queued, the tickets it waits on or unlocks, then its priority, size and risk.

@@ -79,7 +79,8 @@ test('0361 AC3: open, it has the Full ticket and Review pack buttons and the bui
   assert.equal(buttons(p, row, 'Full ticket').length, 1);
   assert.equal(buttons(p, row, 'Review pack').length, 1);
   assert.equal(p.all(row).filter(n => n.tagName === 'pre' && n.className === 'log').length, 1, 'one log');
-  assert.equal(p.all(row).filter(n => (n._text || '').includes('the full log')).length, 1, 'the log shown once');
+  // 0422: the log's lines are text nodes in rows of their own.
+  assert.equal(p.all(row).filter(n => (n.tagName === '#text' ? n.textContent : n._text || '').includes('the full log')).length, 1, 'the log shown once');
 });
 
 test('0361 AC4: a code ticket waiting to be shipped keeps its line, log box and sentence, and no closed Review pack button', async () => {
