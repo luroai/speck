@@ -42,6 +42,7 @@ The Settings view's script is in a file of its own.
 - Install and update copy the whole `templates/` folder (`place` in `scripts/`), so a new file there reaches projects with no change.
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
 - Today Settings runs from `openSettings` (about line 2061) to `saveSettings` and its helpers (about line 3200).
+- Failing before this build: none
 - Waits for 0431: both change `templates/panel.html`, `scripts/panel.mjs` and `test/support/panel.mjs`.
 
 ## In plain words
