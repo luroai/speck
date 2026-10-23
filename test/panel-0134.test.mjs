@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, page, PALETTE, paletteProblems, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { ROOT, page, PALETTE, paletteProblems, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0134: restyle the control panel in the zen look ----------
 
@@ -21,16 +21,16 @@ const luminance = hex => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').replace(/<style>[\s\S]*?<\/style>/g, '');
 
 test('0134 AC1: the first :root block sets the zen colours', () => {
-  const vars = rootVars(page());
+  const vars = rootVars(styles());
   for (const [k, v] of Object.entries(ZEN)) assert.equal(vars.get(k), v, k);
 });
 
 test('0134 AC1: each of the panel\'s own colours is a distinct 6-digit hex that reads against the page', () => {
-  const vars = rootVars(page());
+  const vars = rootVars(styles());
   const bg = vars.get('--bg');
   for (const k of OWN) {
     const v = vars.get(k);
@@ -46,11 +46,11 @@ test('0134 AC1: each of the panel\'s own colours is a distinct 6-digit hex that 
 test('0134 AC1: PALETTE lists the new values for the same 14 names, and the colour check holds', () => {
   const names = PALETTE.split('; ').map(d => d.split(': ')[0]);
   assert.deepEqual(names, ['--bg', '--panel', '--raise', '--line', '--line-soft', '--text', '--muted', '--faint', '--accent', '--ok', '--warn', '--bad', '--run', '--idea']);
-  const vars = rootVars(page());
+  const vars = rootVars(styles());
   for (const d of PALETTE.split('; ')) { const [k, v] = d.split(': '); if (ZEN[k]) assert.equal(v, ZEN[k], k); else assert.equal(v, vars.get(k), k); }
-  assert.deepEqual(paletteProblems(page()), []);
-  const changed = page().replace('--accent: #cf2d56;', '--accent: #b0412f;');
-  assert.notEqual(changed, page());
+  assert.deepEqual(paletteProblems(styles()), []);
+  const changed = styles().replace('--accent: #cf2d56;', '--accent: #b0412f;');
+  assert.notEqual(changed, styles());
   assert.deepEqual(paletteProblems(changed), ['--accent should be #cf2d56']);
   const src = fs.readFileSync(path.join(ROOT, 'test', 'mockup-0126.test.mjs'), 'utf8');
   assert.ok(src.includes(`assert.equal(PALETTE, '${PALETTE}')`), 'the 0126 AC2 literal lists the new values');

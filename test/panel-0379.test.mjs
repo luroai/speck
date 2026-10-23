@@ -4,14 +4,14 @@ import './support/tmp.mjs'; // first: sends every temporary folder into one per-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
-import { PAGE, page, findChrome, browserPage } from './support/panel.mjs';
+import { PAGE, page, findChrome, browserPage, styles } from './support/panel.mjs';
 import { PACK, DOCS, text, openPack, docView, docButtons } from './support/documents.mjs';
 import { settingsPage, openSettings, rowOf } from './support/settings.mjs';
 
 const POPS = ['doc-view', 'foreman', 'settings'];
 // The declarations of each CSS rule whose selector list holds exactly `sel`, in the page's style, media queries included.
 const rules = sel => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => m[1].replace(/^[^{]*\{/, '').split(',').map(x => x.trim()).includes(sel)).map(m => m[2]);
 };
 
@@ -82,6 +82,8 @@ test('0379 AC1 and AC2: in a real browser, at 390 and 1280 px wide in both looks
     const url = pathToFileURL(PAGE).href;
     await b.send('Page.navigate', { url });
     await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');
+    // 0430: a page opened from its file can't load /panel.css, so its styles are put in from their own file.
+    await b.js(`(() => { const s = document.createElement('style'); s.textContent = ${JSON.stringify(styles())}; document.head.appendChild(s); return true; })()`);
     for (const [width, mobile] of [[390, true], [1280, false]]) {
       await b.send('Emulation.setDeviceMetricsOverride', { width, height: 700, deviceScaleFactor: 1, mobile });
       for (const look of ['light', 'dark']) {

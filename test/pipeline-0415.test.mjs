@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { fakePage, page, T, PAGE, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage } from './support/panel.mjs';
+import { fakePage, page, T, PAGE, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage, styles } from './support/panel.mjs';
 import { openStream } from './support/stream.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 import { runLogTail, runLogStamp, RUN_LOG_LINES } from '../scripts/run-log.mjs';
@@ -352,6 +352,8 @@ test('0415 AC5: in a real browser at 320 px wide, the open pop-up doesn\'t scrol
     const url = pathToFileURL(PAGE).href;
     await b.send('Page.navigate', { url });
     await b.until(`location.href === ${JSON.stringify(url)} && document.readyState === 'complete'`, 'the page');
+    // 0430: a page opened from its file can't load /panel.css, so its styles are put in from their own file.
+    await b.js(`(() => { const s = document.createElement('style'); s.textContent = ${JSON.stringify(styles())}; document.head.appendChild(s); return true; })()`);
     await b.until(`!!document.getElementById('run') && document.getElementById('run').getAttribute('aria-label') !== null`, 'the board');
     await b.js(`document.getElementById('run').click(), true`);
     await b.until(`!!document.querySelector('#foreman ol.run-log li')`, 'the log in the pop-up');

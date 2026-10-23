@@ -3,11 +3,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, page } from './support/panel.mjs';
+import { ROOT, page, styles } from './support/panel.mjs';
 
 // ---------- 0426: use Cursor's colours in the panel ----------
 
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const vars = block => Object.fromEntries([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 // Each look's tokens: every plain :root block, and the dark look's block over them.
 function looks(text = css()) {

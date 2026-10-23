@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, queueRows, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, fakePage, queueRows, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0156: a running build's progress shown with the speck going round an ensō ----------
 // Since 0168 the builder badge stood in for the ensō and the stage dots (test/panel-0168.test.mjs); the sentence and the
@@ -58,7 +58,7 @@ test('0156 AC1: each in-flight ticket has its progress in its top row (in words 
     const row = rowOf(p, id);
     assert.equal(find(p, row, /\b(badge|progress|stages|say|stage)\b/).length, 0, `${id}: a ready ticket shows no progress`);
   }
-  assert.doesNotMatch(page(), /\.stages\b|@keyframes sweep/, 'the old bar and its sweep are gone');
+  assert.doesNotMatch((page() + styles()), /\.stages\b|@keyframes sweep/, 'the old bar and its sweep are gone');
 });
 
 test('0156 AC2: the card shows the builder at work (the speck moved until 0168, the badge until 0416) only while an agent is at work on the ticket', async () => {
@@ -106,7 +106,7 @@ test('0156 AC3: one plain sentence under the title says what is happening, in th
     assert.equal(say[0].className, WORKING.includes(id) ? 'lights' : tone ? `say ${tone}` : 'say', `${id}: its colour`);
     assert.ok(top.children.findIndex(n => classes(n)[0] === 'progress') > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
   }
-  const css = page();
+  const css = styles();
   assert.match(css, /\.say\.bad \{ color: var\(--bad\); \}/);
   assert.match(css, /\.say\.to-ship \{ color: var\(--idea\); \}/);
   assert.match(css, /\.q \.top \.say \{[^}]*color: var\(--text\)/);

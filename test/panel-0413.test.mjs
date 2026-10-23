@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, page, findChrome, browserPage } from './support/panel.mjs';
+import { T, page, findChrome, browserPage, styles } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 import { settingsPage } from './support/settings.mjs';
 import { rules, get, selectors } from './support/css.mjs';
@@ -23,7 +23,7 @@ test('0413 AC1: the header is speck\'s screen in its dark frame, under a title r
   assert.equal(decl('.bezel .repo', 'text-overflow'), 'ellipsis');
   assert.equal(decl('.bezel .repo', 'white-space'), 'nowrap');
   assert.equal(decl('.bezel .repo', 'font-size') || (/\b(\d+)px\b/.exec(decl('.bezel .repo', 'font')) || [])[0], '12px', 'small plain text');
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   for (const look of [/:root \{([^}]*)\}/, /:root\[data-theme="dark"\] \{([^}]*)\}/]) assert.match(css.match(look)[1], /--bezel: #[0-9a-f]{6}/, 'a frame colour in each look');
 });
 

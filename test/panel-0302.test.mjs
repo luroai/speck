@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, page, panelRepo, freePort, startPanel, stop, raw } from './support/panel.mjs';
+import { ROOT, page, panelRepo, freePort, startPanel, stop, raw, styles } from './support/panel.mjs';
 
 // ---------- 0302: the builder badge on the LCD screen, drawn by the design's own renderer ----------
 // 0416: the cards have no badge now. The renderer and its colours stay, for speck's screen (0413).
@@ -35,7 +35,7 @@ const LIGHT = { '--lcd-bg': '#e6e9db', '--lcd-off': '#dde1cf', '--lcd-ink': '#20
 const DARK = { '--lcd-bg': '#0d130f', '--lcd-off': '#151d17', '--lcd-ink': '#cfe6c6', '--lcd-red': '#ff5a3f', '--lcd-shadow': 'transparent' };
 
 test('0302 AC3: the page has the screen\'s colours as tokens, with the design\'s values in the light and dark looks', () => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
-  assert.deepEqual(tokens(css.match(/\n {2}:root \{([\s\S]*?)\n {2}\}/)[1]), LIGHT);
-  assert.deepEqual(tokens(css.match(/\n {2}:root\[data-theme="dark"\] \{([\s\S]*?)\n {2}\}/)[1]), DARK);
+  const css = styles();
+  assert.deepEqual(tokens(css.match(/(?:^|\n) {2}:root \{([\s\S]*?)\n {2}\}/)[1]), LIGHT);
+  assert.deepEqual(tokens(css.match(/(?:^|\n) {2}:root\[data-theme="dark"\] \{([\s\S]*?)\n {2}\}/)[1]), DARK);
 });
