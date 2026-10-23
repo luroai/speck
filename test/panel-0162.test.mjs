@@ -218,16 +218,15 @@ for (const width of [375, 1280]) {
     }, { width });
   });
 
-  // 0410: Build is a tab, open on load, its message in the tab under or beside its name, and in its lane.
-  test(`0162 AC2: at ${width} px an empty Build says "Nothing in flight or ready" in its tab and its lane`, skip, async () => {
+  // 0410: Build is a tab, open on load. 0425: its message is the first line of its lane, above the lane's list.
+  test(`0162 AC2: at ${width} px an empty Build says "Nothing in flight or ready" at the top of its lane and in its list`, skip, async () => {
     await withPanel(async b => {
-      const s = await b.js(`(() => { const name = document.querySelector('#tab-build .tab-name'), n = document.getElementById('queue-n'), tab = document.getElementById('tab-build');
-        const t = tab.getBoundingClientRect(), nr = n.getBoundingClientRect();
-        return { text: n.innerText, inTab: nr.left >= t.left && nr.right <= t.right + 0.5 && nr.top >= t.top && nr.bottom <= t.bottom + 0.5, name: name.innerText,
+      const s = await b.js(`(() => { const name = document.querySelector('#tab-build .tab-name'), n = document.getElementById('queue-n'), sec = document.getElementById('build-section');
+        return { text: n.innerText, inTab: sec.firstElementChild === n && n.getBoundingClientRect().bottom <= document.getElementById('queue').getBoundingClientRect().top + 0.5, name: name.innerText,
           lane: document.getElementById('queue').innerText, open: !document.getElementById('build-section').hidden }; })()`);
       assert.equal(s.name, 'Build');
       assert.equal(s.text, 'Nothing in flight or ready');
-      assert.ok(s.inTab, 'the message is in the tab');
+      assert.ok(s.inTab, 'the message is the first line of the lane');
       assert.ok(s.open, 'Build is open');
       assert.equal(s.lane, 'Nothing in flight or ready.');
     }, { width, state: STATE({ queue: false }) });
