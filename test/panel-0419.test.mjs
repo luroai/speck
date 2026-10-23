@@ -100,6 +100,8 @@ test('0419 AC4: a question, a recommendation, a Ship hint and a message still sh
 
 // ---------- in a real browser: a 420 px side pane with a mouse ----------
 
+// Enough tickets to wait on that the details need three lines or more at 420 px.
+const LONG_WAIT = Array.from({ length: 14 }, (_, i) => String(901 + i).padStart(4, '0'));
 const PANE = {
   run: { on: true },
   tickets: [
@@ -109,6 +111,7 @@ const PANE = {
     T('0704', 'reviewing', { title: 'Under review', priority: 2, size: 'S', risk: 'low', started: ago(65), build_running: true, rounds: [{ round: 1, verdict: 'request_changes' }], review_running: 2, reviewer: 'codex' }),
     T('0705', 'ready', { title: 'Queued behind', priority: 3, size: 'M', risk: 'low', after: ['0703'], waiting_on: ['0703'] }),
     T('0706', 'ready', { title: 'Queued and free', priority: 1, size: 'S', risk: 'high' }),
+    T('0707', 'ready', { title: 'Waiting on many', priority: 3, size: 'M', risk: 'low', after: LONG_WAIT, waiting_on: LONG_WAIT }),
   ],
   ideas: [],
 };
@@ -130,11 +133,12 @@ const CARDS = sel => `(async () => {
     const top = c.firstElementChild, title = top.querySelector('.title'), details = top.children[1];
     return { id: c.querySelector('.id').textContent, height: c.getBoundingClientRect().height, titleLines: lines(title), detailLines: lines(details),
       titleSize: parseFloat(getComputedStyle(title).fontSize), detailSize: parseFloat(getComputedStyle(details).fontSize),
-      broken: [...details.children].filter(n => !n.matches('.sep, .ids') && n.getClientRects().length > 1).map(n => n.textContent) };
+      broken: [...details.children].filter(n => !n.matches('.sep, .ids') && n.getClientRects().length > 1).map(n => n.textContent),
+      overflows: details.scrollWidth > details.clientWidth + 0.5 || details.getBoundingClientRect().right > c.getBoundingClientRect().right };
   });
 })()`;
 
-test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title fits on one line is no more than 64 px tall, and its details are one line in smaller type', skip, async () => {
+test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title fits on one line and details on two is no more than 64 px tall, and its details are smaller type that wraps only when it does not fit', skip, async () => {
   const panel = await startPanel(panelRepo().dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   try {
@@ -143,7 +147,7 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: stub });
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
-    await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 4 && document.querySelectorAll('#shaping .item.ticket').length === 2`, 'the panel');
+    await b.until(`location.port === '${panel.port}' && document.querySelectorAll('#queue .q').length === 5 && document.querySelectorAll('#shaping .item.ticket').length === 2`, 'the panel');
     assert.equal(await b.js(`matchMedia('(pointer: coarse)').matches`), false, 'a mouse is the main pointer, not a touch screen');
     const seen = [];
     for (const [lane, sel] of [['plan', '#shaping .item.ticket'], ['build', '#queue .q']]) {
@@ -152,7 +156,11 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         seen.push(c.id);
         assert.ok(c.detailSize < c.titleSize, `${c.id}: the details (${c.detailSize} px) are smaller than the title (${c.titleSize} px)`);
         assert.deepEqual(c.broken, [], `${c.id}: the details line wraps only between its parts`);
+        assert.ok(!c.overflows, `${c.id}: the details stay inside the card`);
         if (c.id === '0702') { assert.equal(c.titleLines, 2, '0702: a long title wraps'); continue; }
+        // The user's choice for this ticket: the 64 px limit covers details on up to two lines. A long list of tickets
+        // waited on wraps between its ids, onto as many lines as it needs, and the card grows to show every one.
+        if (c.id === '0707') { assert.ok(c.titleLines === 1 && c.detailLines >= 3 && c.height > 64, `0707: ${c.detailLines} lines of details, ${c.height} px`); continue; }
         // A reviewing ticket's sentence ("Codex is reviewing · round 2") is too long for its details to fit on one line
         // in 12 px text here, so its details wrap, between their parts, and it's still no more than 64 px tall.
         assert.equal(c.titleLines, 1, `${c.id}: the title fits on one line`);
@@ -160,7 +168,7 @@ test('0419 AC1, AC2 and AC5: at 420 px with a mouse, a closed ticket whose title
         assert.ok(c.height <= 64, `${c.id}: ${c.height} px tall`);
       }
     }
-    assert.deepEqual(seen, ['0701', '0702', '0703', '0704', '0705', '0706']);
+    assert.deepEqual(seen, ['0701', '0702', '0703', '0704', '0705', '0706', '0707']);
   } finally { await b.close(); await stop(panel); }
 });
 
