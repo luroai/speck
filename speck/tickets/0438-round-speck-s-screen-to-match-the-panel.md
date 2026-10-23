@@ -43,6 +43,7 @@ speck's screen and its frame have rounded corners like the rest of the panel, th
 - Today: `.bezel` (`max-width: 520px`, square) and `.glass` in `templates/panel.html`. 0428 kept the screen's corners deliberately; this changes that.
 - Waits for 0436: both change `templates/panel.html`. 0430 waits for it too, as 0430 moves every style.
 - Failing before this build: none
+- Self-check: no changes. The dot holds no text, so it joins the no-text fills in 0161's contrast check; 0428 AC4's square-corner test now checks only the header, as this ticket rounds the screen and frame.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

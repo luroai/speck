@@ -36,7 +36,7 @@ function sides(sels, rs = RS) {
   return side;
 }
 
-// Every button with a box of its own: its selectors, the generic `button` first. Left out: speck's screen (AC4), the
+// Every button with a box of its own: its selectors, the generic `button` first. Left out: speck's screen (0438), the
 // switches, whose track is the control, and the linked ids, which are words.
 const BUTTONS = {
   'Full ticket / Review pack on an open card': ['button', '.full-open', '.q .full-open'],
@@ -125,10 +125,8 @@ test('0428 AC2: the pop-ups that fill the window keep square corners, as the win
   for (const sel of ['#full-ticket', '#doc-view', '#foreman']) assert.equal(resolve([sel])['border-radius'] ?? '0', '0', sel);
 });
 
-test('0428 AC4: speck\'s screen and its frame keep their square corners', () => {
-  assert.equal(resolve(['.bezel'])['border-radius'] ?? '0', '0', 'the frame');
-  assert.equal(resolve(['button', '.bezel .glass'])['border-radius'], '0', 'the screen, a button');
-  assert.equal(resolve(['.bezel .glass::after'])['border-radius'] ?? '0', '0', 'the screen\'s shade');
+// 0438 rounds speck's screen and its frame (panel-0438.test.mjs); the header round them stays square.
+test('0428 AC4: the header round speck\'s screen keeps its square corners', () => {
   assert.equal(resolve(['header'])['border-radius'] ?? '0', '0', 'the header round the frame');
 });
 
