@@ -15,6 +15,9 @@ import { codexModelsAsync } from './codex-models.mjs';
 import { agentModelsAsync, offeredModels, offeredModelsAsync, findAgentsAsync } from './agents.mjs';
 import { OWN_BUILD_COMMANDS, ownBuildCommand, handSetBuildCommand, otherFamilyReviewer, describeBuildCommand, clearsBuilderModel } from './builder-switch.mjs';
 import { buildsEachTicket } from './build-model.mjs';
+import { PROVIDERS } from './providers.mjs';
+import { providerNamed } from './provider-review.mjs';
+import { keysStatus, saveProviderKey } from './keys.mjs';
 
 export const SETTING_GROUPS = [
   // 0286: the panel shows this group's settings in its own Foreman group, under the speck run switch.
@@ -23,7 +26,7 @@ export const SETTING_GROUPS = [
       explain: 'What the Foreman does when a build stops with a question: off leaves it to you, tell also counts it under Needs you, and fix takes the build\'s recommendation when no option changes anything you\'d notice and the recommendation is a clear winner, then starts the build again, once per ticket. With fix, it also starts an agent to look into work that stops for a reason speck has no steps for, which resumes the build, ships it again once, makes a draft fix ticket or asks you.' },
     // 0287: the agent the Foreman looks into stops with
     { key: 'foreman', default: '',
-      explain: 'The agent the Foreman runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex or cursor. Blank uses the builder when that\'s codex or cursor, and claude otherwise.' },
+      explain: 'The agent the Foreman runs on when it looks into work that stopped for a reason speck has no steps for: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it. Blank uses the builder when that\'s codex, cursor or a model provider, and claude otherwise.' },
     { key: 'foreman_model', default: '',
       explain: 'The model the Foreman agent runs on, picked from that agent\'s models or written as it names it. Blank leaves it to the agent\'s own default.' },
     { key: 'foreman_effort', default: '',
@@ -40,11 +43,11 @@ export const SETTING_GROUPS = [
   ] },
   { title: 'Building and reviewing', settings: [
     { key: 'builder', default: 'claude',
-      explain: 'The agent that builds each ticket, writing its tests and code: claude, codex or cursor, offered when it\'s installed and signed in. A ticket that doesn\'t name its own builder takes it from here when its build starts, so changing it changes who builds those tickets, sets build_command to the new builder\'s own, asking first when that was set by hand, and clears builder_model when the new builder doesn\'t offer it or its models can\'t be read.' },
+      explain: 'The agent that builds each ticket, writing its tests and code: claude, codex, cursor or a model provider, such as DeepSeek, with your own API key for it, offered when it\'s installed and signed in. A ticket that doesn\'t name its own builder takes it from here when its build starts, so changing it changes who builds those tickets, sets build_command to the new builder\'s own, asking first when that was set by hand, and clears builder_model when the new builder doesn\'t offer it or its models can\'t be read.' },
     { key: 'builder_model', default: '',
       explain: 'The model every build speck run starts runs on, picked from the builder\'s models or written as the builder names it, and given to Claude Code builds, to Codex builds when build_command is blank, and to Cursor builds when it is blank too. Blank leaves it to the builder\'s own default.' },
     { key: 'reviewer', default: 'codex',
-      explain: 'The agent that reviews each build and decides whether it is approved: codex, claude (Claude Code, run by speck, for any builder), claude-subagent (a Claude Code subagent the builder starts, for Claude Code builders), cursor or a command you have set up. A ticket that doesn\'t name its own reviewer takes it from here when each review round starts, so changing it changes who reviews those tickets from their next round.' },
+      explain: 'The agent that reviews each build and decides whether it is approved: codex, claude (Claude Code, run by speck, for any builder), claude-subagent (a Claude Code subagent the builder starts, for Claude Code builders), cursor, a model provider, such as DeepSeek, with your own API key for it, or a command you have set up. A ticket that doesn\'t name its own reviewer takes it from here when each review round starts, so changing it changes who reviews those tickets from their next round.' },
     { key: 'reviewer_model', default: '',
       explain: 'The model the reviewer runs on, written as the reviewer names it, or picked from the models Codex or Cursor offers or Claude\'s model names. Blank leaves it to the reviewer\'s own default, and a ticket\'s own value overrides this one.' },
     { key: 'reviewer_effort', default: '',
@@ -80,18 +83,20 @@ export const EDITABLE = Object.freeze(['builder', 'builder_model', 'reviewer', '
 const RISKS = ['low', 'high'];
 
 // The only values a picker setting offers: a reviewer speck knows how to run, or blank and the effort levels.
-function choicesOf(key, file) {
+// 0393: the builder, reviewer and Foreman lists offer each model provider in `providers` too.
+function choicesOf(key, file, providers = PROVIDERS) {
+  const named = providers.map(p => p.name);
   if (key === 'reviewer') {
     const options = file.reviewer_options !== null && typeof file.reviewer_options === 'object' ? Object.keys(file.reviewer_options) : [];
-    return [...new Set(['codex', 'claude', 'claude-subagent', 'cursor', ...options])]; // 0347: and cursor
+    return [...new Set(['codex', 'claude', 'claude-subagent', 'cursor', ...named, ...options])]; // 0347: and cursor
   }
-  if (key === 'builder') return Object.keys(OWN_BUILD_COMMANDS); // 0293: the builders speck starts by itself
+  if (key === 'builder') return [...new Set([...Object.keys(OWN_BUILD_COMMANDS), ...named])]; // 0293: the builders speck starts by itself
   if (key === 'reviewer_effort') return ['', ...EFFORTS];
   if (key === 'auto_ship') return [true, false];
   if (key === 'auto_ship_risk') return RISKS; // any of them, ticked
   if (key === 'foreman_fixing') return [...FIXING]; // 0286
   if (key === 'ship_mode') return [...SHIP_MODES]; // 0295
-  if (key === 'foreman') return ['', ...FOREMAN_AGENTS]; // 0287
+  if (key === 'foreman') return [...new Set(['', ...FOREMAN_AGENTS, ...named])]; // 0287
   if (key === 'foreman_effort') return ['', ...EFFORTS];
   return undefined;
 }
@@ -112,11 +117,15 @@ function valueIn(text, repo, key) {
 // 0348: `foremanModels`, from foremanModels, is given back as `foreman_models`, for the view to offer the Foreman agent's.
 // 0288: with `agents`, from findAgentsAsync, reviewer offers only the reviewers whose agent is installed and signed in,
 // and the current value, with why the others are left out in `missing`, one line.
-export function panelSettings(repo, { models, builderModels, foremanModels, agents } = {}) {
+// 0393: each model provider in `providers`, given back in `providers` with its label, its models and whether this
+// machine has its key (never the key), is offered as builder, reviewer and Foreman while Claude Code is installed.
+export function panelSettings(repo, { models, builderModels, foremanModels, agents, providers = PROVIDERS } = {}) {
   const text = fs.readFileSync(path.join(repo, 'speck', 'config.yml'), 'utf8'), file = parseYaml(text), mine = machineConfig(repo);
   return { groups: SETTING_GROUPS.map(g => ({ title: g.title, settings: g.settings.map(s => {
-    const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file);
-    const { choices, missing } = (s.key === 'reviewer' || s.key === 'builder') && agents ? readyReviewers(all, agents, String(value ?? ''), s.key === 'builder') : { choices: all };
+    const { value, inFile } = valueIn(text, repo, s.key), all = choicesOf(s.key, file, providers);
+    // 0393: the one set now is the one the view shows: this machine's when it has its own.
+    const now = String((MACHINE_SETTINGS.includes(s.key) && Object.hasOwn(mine, s.key) ? mine[s.key] : value) ?? '');
+    const { choices, missing } = ['reviewer', 'builder', 'foreman'].includes(s.key) && agents ? readyReviewers(all, agents, now, s.key, providers) : { choices: all };
     // 0293: build_command as the file has it, whether it was set by hand, and each builder's own, for the view to say
     // what switching the builder sets it to, and to ask first when it replaces one set by hand. 0324: and whether speck
     // run builds each ticket with its own builder with it, so the view says when it doesn't.
@@ -129,7 +138,19 @@ export function panelSettings(repo, { models, builderModels, foremanModels, agen
     return { key: s.key, value: machine.from === 'machine' ? mine[s.key] : value, default: !inFile, explain: s.explain,
       editable: EDITABLE.includes(s.key), ...(choices ? { choices } : {}), ...(missing ? { missing } : {}), ...build, ...machine };
   }) })), ...(models ? { reviewer_models: models } : {}), ...(builderModels ? { builder_models: builderModels } : {}),
-    ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS };
+    ...(foremanModels ? { foreman_models: foremanModels } : {}), claude_models: CLAUDE_MODELS, providers: providersShown(repo, providers) };
+}
+
+// 0393: a provider's models as the Settings view lists them, its default model said as such.
+const providerModels = p => p.models.map(slug => ({ slug, display_name: null, description: slug === p.defaultModel ? `${p.label}'s default` : null }));
+
+// 0393: each provider in `providers` as the Settings view shows it, with whether this machine has its key, never the
+// key itself. A keys file that can't be read counts as no key, with why in `key_why`.
+function providersShown(repo, providers) {
+  let set = null, why = null;
+  try { set = new Map(keysStatus(repo, { providers }).map(k => [k.name, k.set])); } catch (e) { why = e instanceof SpeckError ? e.message : String(e?.message ?? e); }
+  return providers.map(p => ({ name: p.name, label: p.label, models: providerModels(p), default_model: p.defaultModel,
+    key_set: set ? set.get(p.name) === true : false, ...(why ? { key_why: why } : {}) }));
 }
 
 // 0278: the model names a claude-subagent reviewer (or 0292's claude) takes, each meaning the newest model of its kind. Claude Code has no
@@ -142,25 +163,40 @@ export const CLAUDE_MODELS = Object.freeze(['fable', 'opus', 'sonnet', 'haiku'].
 
 // 0288: the agent each built-in reviewer runs on. A reviewer set up as a command under reviewer_options is offered as
 // it is: speck can't tell what it runs. 0293: with `builders`, each choice is a builder, run on the agent of its name.
+// 0393: `key` is the setting, builder, reviewer or foreman. The Foreman's list leaves out only providers. A provider in
+// `providers` runs through Claude Code, so it needs Claude Code installed, though not signed in.
 const REVIEWER_AGENTS = { codex: 'codex', claude: 'claude', 'claude-subagent': 'claude', cursor: 'cursor' };
-function readyReviewers(choices, { agents }, current, builders = false) {
+function readyReviewers(choices, { agents }, current, key, providers = PROVIDERS) {
   const byId = new Map((Array.isArray(agents) ? agents : []).map(a => [a.id, a]));
-  const left = [];
+  const left = [], cant = [];
   const kept = choices.filter(c => {
-    const agent = builders ? byId.get(c) : Object.hasOwn(REVIEWER_AGENTS, c) ? byId.get(REVIEWER_AGENTS[c]) : undefined;
+    const p = providerNamed(c, providers);
+    if (p) {
+      const claude = byId.get('claude');
+      if (!claude || claude.installed) return true;
+      const why = `speck runs ${p.label}'s models through Claude Code, and Claude Code isn't installed`;
+      if (c !== current) { left.push(`${p.label} (${why})`); return false; }
+      cant.push(`${p.label} can't run here: ${why}.`); // chosen already, so still offered
+      return true;
+    }
+    if (key === 'foreman') return true;
+    const agent = key === 'builder' ? byId.get(c) : Object.hasOwn(REVIEWER_AGENTS, c) ? byId.get(REVIEWER_AGENTS[c]) : undefined;
     if (!agent || (agent.installed && agent.signed_in) || c === current) return true;
     left.push(`${c} (${String(agent.why || `${agent.name} isn't ready.`).replace(/\.$/, '')})`);
     return false;
   });
-  return { choices: kept, ...(left.length ? { missing: `Not offered: ${left.join('; ')}.` } : {}) };
+  const said = [...(left.length ? [`Not offered: ${left.join('; ')}.`] : []), ...cant];
+  return { choices: kept, ...(said.length ? { missing: said.join(' ') } : {}) };
 }
 
 // 0276: the models the configured reviewer offers, read now, for the Settings view: { reviewer, models: [{ slug,
 // efforts }] } when it can list them (Codex, or Claude's names from 0278), or { reviewer, why } in one line when it can't.
 // 0347: and the models Cursor lists for cursor, as builderModels reads them.
-export async function reviewerModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
+// 0393: and a model provider's, from speck's list.
+export async function reviewerModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
   const reviewer = String(loadConfig(repo).reviewer ?? '');
   if (reviewer === 'claude' || reviewer === 'claude-subagent') return { reviewer, models: CLAUDE_MODELS };
+  if (providerNamed(reviewer, providers)) return { reviewer, models: providerModels(providerNamed(reviewer, providers)) };
   if (reviewer === 'cursor') return { reviewer, ...await readCursor() };
   if (reviewer !== 'codex') return { reviewer, why: `${reviewer || 'This reviewer'} can't list its models, so type the model's name as it names it.` };
   return { reviewer, ...await read() };
@@ -169,9 +205,10 @@ export async function reviewerModels(repo, read = codexModelsAsync, readCursor =
 // 0279: the models the configured builder offers, read now, for the Settings view: { builder, models } with Claude's
 // model names for claude and the models Codex lists for codex, or { builder, why } in one line when it can't list them.
 // 0288: and the models Cursor lists for cursor.
-export async function builderModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
+export async function builderModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
   const builder = String(loadConfig(repo).builder ?? '');
   if (builder === 'claude') return { builder, models: CLAUDE_MODELS };
+  if (providerNamed(builder, providers)) return { builder, models: providerModels(providerNamed(builder, providers)) }; // 0393
   if (builder === 'cursor') return { builder, ...await readCursor() };
   if (builder !== 'codex') return { builder, why: `${builder || 'This builder'} can't list its models, so type the model's name as it names it.` };
   return { builder, ...await read() };
@@ -179,36 +216,40 @@ export async function builderModels(repo, read = codexModelsAsync, readCursor = 
 
 // 0348: the models of the agent the Foreman runs on (foremanAgentOf), read now, for the Settings view: { foreman, models }
 // with Claude's model names for claude and the models Codex or Cursor lists, or { foreman, why } in one line when it can't.
-export async function foremanModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
-  const foreman = foremanAgentOf(loadConfig(repo));
+export async function foremanModels(repo, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
+  const foreman = foremanAgentOf(loadConfig(repo), providers);
   if (foreman === 'claude') return { foreman, models: CLAUDE_MODELS };
+  if (providerNamed(foreman, providers)) return { foreman, models: providerModels(providerNamed(foreman, providers)) }; // 0393
   return { foreman, ...await (foreman === 'cursor' ? readCursor() : read()) };
 }
 
 // 0257: what the panel's GET /api/settings answers: panelSettings, with the models the reviewer (0276), the builder
 // (0279) and the Foreman agent (0348) offer, read now, asking Codex once and Cursor once (0347) when more than one runs on
 // it, and which agents are installed and signed in (0288), read at the same time. Throws when speck/config.yml can't be read.
-export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCursorModels = () => agentModelsAsync('cursor'), find = findAgentsAsync) {
+// 0393: and each model provider in `providers`.
+export async function settingsAnswer(repo, readCodex = codexModelsAsync, readCursorModels = () => agentModelsAsync('cursor'), find = findAgentsAsync, providers = PROVIDERS) {
   let asked = null, cursorAsked = null;
   const read = () => (asked ??= readCodex()), readCursor = () => (cursorAsked ??= readCursorModels());
   const found = Promise.resolve().then(() => find({ models: false })).catch(() => undefined);
   let models, built, foreman;
-  try { models = await reviewerModels(repo, read, readCursor); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
-  try { built = await builderModels(repo, read, readCursor); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
-  try { foreman = await foremanModels(repo, read, readCursor); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
-  return panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents: await found });
+  try { models = await reviewerModels(repo, read, readCursor, providers); } catch (e) { models = { reviewer: '', why: `Couldn't read the reviewer's models (${e.message}), so type the model's name.` }; }
+  try { built = await builderModels(repo, read, readCursor, providers); } catch (e) { built = { builder: '', why: `Couldn't read the builder's models (${e.message}), so type the model's name.` }; }
+  try { foreman = await foremanModels(repo, read, readCursor, providers); } catch (e) { foreman = { foreman: '', why: `Couldn't read the Foreman agent's models (${e.message}), so type the model's name.` }; }
+  return panelSettings(repo, { models, builderModels: built, foremanModels: foreman, agents: await found, providers });
 }
 
 // 0369: the models `agent` offers, read now, for the Settings view while it's chosen as the reviewer, builder or
 // Foreman agent but not yet saved: { agent, models } as reviewerModels reads them, or { agent, why } in one line, even
 // when reading them fails.
-export async function agentModels(agent, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor')) {
+// 0393: and a model provider's, from speck's list.
+export async function agentModels(agent, read = codexModelsAsync, readCursor = () => agentModelsAsync('cursor'), providers = PROVIDERS) {
   if (agent === 'claude' || agent === 'claude-subagent') return { agent, models: CLAUDE_MODELS };
+  if (providerNamed(agent, providers)) return { agent, models: providerModels(providerNamed(agent, providers)) };
   try {
     if (agent === 'cursor') return { agent, ...await readCursor() };
     if (agent === 'codex') return { agent, ...await read() };
   } catch (e) { return { agent, why: `Couldn't read ${agent}'s models (${String(e?.message ?? e).split('\n')[0]}), so type the model's name.` }; }
-  return { agent: '', why: 'speck can only list the models of claude, codex and cursor, so type the model\'s name as the agent names it.' };
+  return { agent: '', why: 'speck can only list the models of claude, codex and cursor, and of the model providers it knows, so type the model\'s name as the agent names it.' };
 }
 
 const shown = v => Array.isArray(v) ? `[${v.join(', ')}]` : v === '' ? '""' : String(v);
@@ -307,7 +348,7 @@ export function panelSaveSettings(repo, changes, { confirmed = null, replace = n
   const switched = checked.find(c => c.key === 'builder' && !c.same), cleared = {};
   if (switched && !switched.clear) {
     const to = String(switched.want), given = checked.find(c => c.key === 'builder_model');
-    const why = clearsBuilderModel(given ? given.after : cfg.builder_model, to, () => offered?.builder === to ? offered.models : offeredModels(to));
+    const why = clearsBuilderModel(given ? given.after : cfg.builder_model, to, () => offered?.builder === to ? offered.models : providerNamed(to) ? providerNamed(to).models : offeredModels(to)); // 0393
     if (why !== null) {
       if (given) Object.assign(given, { clear: false, want: '', after: '', same: Object.hasOwn(mine, 'builder_model') && mine.builder_model === '' });
       else checked.push({ key: 'builder_model', own: true, want: '', after: '', same: false });
@@ -425,8 +466,27 @@ export async function panelSaveRequestAsync(repo, query, find) {
     // 0387: the builder and its model as given in any of the ways the Save gives them, over the ones speck uses now.
     const q = new URLSearchParams(query), given = key => ['machine', 'blank', 'repo'].map(w => q.get(`${w}:${key}`)).find(v => v !== null) ?? null;
     const cfg = loadConfig(repo), to = given('builder'), model = given('builder_model') ?? cfg.builder_model;
-    if (to && to !== String(cfg.builder ?? 'claude') && clearsBuilderModel(model, to, () => []) !== null)
+    if (to && to !== String(cfg.builder ?? 'claude') && !providerNamed(to) && clearsBuilderModel(model, to, () => []) !== null) // 0393: a provider's are speck's own
       offered = { builder: to, models: await offeredModelsAsync(to, find) };
   } catch { /* panelSaveRequest says what's wrong */ }
   return panelSaveRequest(repo, query, { offered });
+}
+
+// 0393: the panel's POST /api/keys/<provider>, the Settings view's field for a model provider's API key. `body` is the
+// request's JSON, { key }. The key is saved for this machine only (keys.mjs), with no commit, and never sent back:
+// the answer says only whether this machine has the provider's key. Every failure is an answer that doesn't show it.
+export function panelKeyRequest(repo, rawName, body, { providers = PROVIDERS } = {}) {
+  let name;
+  try { name = decodeURIComponent(String(rawName ?? '')); } catch { name = ''; }
+  const p = providerNamed(name, providers);
+  if (!p) return { status: 404, body: { error: `speck doesn't know a model provider called ${JSON.stringify(name)}. Reload the panel, then try again.` } };
+  let key;
+  try { key = JSON.parse(String(body ?? ''))?.key; } catch { key = undefined; }
+  if (typeof key !== 'string') return { status: 400, body: { error: `The ${p.label} API key wasn't sent properly, so nothing was saved. Reload the panel, then try again.` } };
+  try { saveProviderKey(repo, p.name, key, { providers }); }
+  catch (e) {
+    if (e instanceof SpeckError) return { status: 422, body: { error: e.message } };
+    return { status: 500, body: { error: `Couldn't save the ${p.label} API key, so nothing was saved: ${e?.code ?? 'an error'} writing this machine's keys file.` } };
+  }
+  return { status: 200, body: { ok: true, provider: p.name, key_set: true } };
 }

@@ -206,7 +206,7 @@ test('0287 AC3: the Settings view\'s Foreman group offers them, explained and ed
     assert.equal(by[key].value, '', key);
     assert.ok(by[key].explain.length > 20, key);
   }
-  assert.deepEqual(by.foreman.choices, ['', 'claude', 'codex', 'cursor']); // 0333: and cursor
+  assert.deepEqual(by.foreman.choices, ['', 'claude', 'codex', 'cursor', 'deepseek']); // 0333: and cursor. 0393: and each model provider
   assert.deepEqual(by.foreman_effort.choices, ['', 'low', 'medium', 'high', 'xhigh', 'max']);
   assert.equal(by.foreman_model.choices, undefined, 'typed in');
 });
