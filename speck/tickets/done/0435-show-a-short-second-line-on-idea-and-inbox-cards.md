@@ -1,7 +1,7 @@
 ---
 id: "0435"
 title: "Shorten the second line of Plan's note cards"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0434"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T20:59:20.145Z"
 approved: "2026-10-23T21:07:57.489Z"
+finished: "2026-10-23T21:10:49.769Z"
 
 ---
 # 0435 · Shorten the second line of Plan's note cards
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Cards in Plan's Ideas and Inbox lists repeat themselves and run long: `idea` (or `inbox`) shows before the title and again on the second line, the second line is the note's full file path, which wraps on a phone, and the touch sizing puts a big gap between them.
