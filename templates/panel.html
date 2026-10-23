@@ -2613,23 +2613,38 @@ const roleCleared = role => { const own = withRoleModel(role).filter(fromMachine
 const projectValue = key => { const r = settingRows().find(x => x.key === key); return !r ? '' : r.for_machine === true && r.from === 'machine' ? settingNow({ value: r.repo_value }) : settingNow(r); };
 // The agent the Foreman runs on when it's left to the builder's, as foremanAgentChosen reads it.
 const buildersAgent = () => { const b = settingChosen('builder'); return ['codex', 'cursor'].includes(b) || settingProvider(b) !== null ? b : 'claude'; };
-// `role`'s entries: { group, value, label }, each value "<agent>|<model>", a blank model being the agent's own default.
+// 0403: the model an agent runs when its model is left blank, as the server named it, or '' when it couldn't tell.
+const defaultSlug = a => a !== null && typeof a.default_model === 'string' ? a.default_model : '';
+// That model by name, with " (default)", as " · Sonnet (default)", or just " (default)" when it isn't named.
+function defaultWords(a) {
+  const slug = defaultSlug(a), m = slug ? agentModelsOf(a).find(x => x.slug === slug) : undefined;
+  return slug ? ` · ${m ? modelLabel(m) : slug} (default)` : ' (default)';
+}
+// `role`'s entries: { group, value, label }, each value "<agent>|<model>", a blank model being the agent's own default,
+// which stands in for that model by name (0403).
 function roleEntries(role) {
   const out = role === 'foreman' ? [{ group: null, value: '|', label: `The builder's agent, now ${agentLabel(buildersAgent())}` }] : [];
   for (const a of yourModels().filter(a => !needsClaude(a.id))) {
-    out.push({ group: a.name, value: `${a.id}|`, label: `${a.name} · default` });
-    for (const m of agentModelsOf(a)) out.push({ group: a.name, value: `${a.id}|${m.slug}`, label: `${a.name} · ${modelLabel(m)}` });
+    const own = { group: a.name, value: `${a.id}|`, label: `${a.name}${defaultWords(a)}` }, models = agentModelsOf(a);
+    if (!models.some(m => m.slug === defaultSlug(a))) out.push(own);
+    for (const m of models) out.push(m.slug === defaultSlug(a) ? own : { group: a.name, value: `${a.id}|${m.slug}`, label: `${a.name} · ${modelLabel(m)}` });
     if (role === 'reviewer' && a.id === 'claude') out.push({ group: a.name, value: 'claude-subagent|', label: `${a.name} · subagent in the builder's session` });
   }
   return out;
 }
 const roleValue = (role, of) => `${of(role)}|${of(ROLES[role].model)}`;
+// 0403: a value naming an agent's default model by name is shown as its default's entry, the one that stands in for it.
+function asEntry(value) {
+  const at = value.indexOf('|'), agent = value.slice(0, at), model = value.slice(at + 1), a = yourAgent(agent);
+  return model !== '' && agent !== 'claude-subagent' && a !== null && model === defaultSlug(a) ? `${agent}|` : value;
+}
 // A value that isn't an entry, in words, as it's saved.
 function roleWords(role, value) {
   const at = value.indexOf('|'), agent = value.slice(0, at), model = value.slice(at + 1);
   const a = yourAgent(agent), m = a !== null ? agentModelsOf(a).find(x => x.slug === model) : undefined;
   const who = agent === '' ? 'The builder\'s agent' : agent === 'claude-subagent' ? `${agentLabel(agent)} · subagent in the builder's session` : agentLabel(agent);
-  return `${who} · ${model === '' ? 'default' : m ? modelLabel(m) : model}`;
+  if (model !== '') return `${who} · ${m ? modelLabel(m) : model}`;
+  return `${who}${agent === '' || agent === 'claude-subagent' ? ' (default)' : defaultWords(a)}`;
 }
 function roleEditor(x) {
   const role = x.key;
@@ -2641,9 +2656,9 @@ function roleEditor(x) {
     shown.setAttribute('aria-label', role);
     return [shown];
   }
-  const entries = roleEntries(role), picked = roleValue(role, settingChosen);
+  const entries = roleEntries(role), picked = asEntry(roleValue(role, settingChosen));
   const select = el('select', 'edit');
-  for (const v of [...new Set([roleValue(role, settingSaved), picked])].filter(v => !entries.some(e => e.value === v))) {
+  for (const v of [...new Set([asEntry(roleValue(role, settingSaved)), picked])].filter(v => !entries.some(e => e.value === v))) {
     const o = el('option', null, `${roleWords(role, v)} (not offered)`);
     o.value = v;
     o.disabled = true;

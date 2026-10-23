@@ -18,15 +18,17 @@ const lastLine = s => plain(s).trim().split('\n').pop().trim().slice(0, 200);
 const seconds = ms => `${ms / 1000} second${ms === 1000 ? '' : 's'}`;
 
 // Cursor's `agent models`: a header, then `<id> - <name>` a line, sometimes followed by (current) or (default), and a
-// tip. { models } or { why }.
+// tip. { models, default_model? } or { why }, `default_model` being the one marked (default) (0403).
 export function parseCursorModels(stdout) {
   const models = [];
+  let marked;
   for (const line of plain(stdout).split('\n')) {
-    const m = line.trim().match(/^([A-Za-z0-9][A-Za-z0-9._:/-]*)\s+-\s+(.+?)(?:\s+\((?:current|default|current,\s*default)\))?$/);
+    const m = line.trim().match(/^([A-Za-z0-9][A-Za-z0-9._:/-]*)\s+-\s+(.+?)(?:\s+\((current|default|current,\s*default)\))?$/);
     if (!m || /^(Available|Tip:)/.test(line.trim()) || models.some(x => x.name === m[1])) continue;
     models.push(model(m[1], m[2].trim()));
+    if (marked === undefined && m[3] && /default/.test(m[3])) marked = m[1];
   }
-  return models.length ? { models } : { why: 'Cursor listed no models in a form speck reads: check it\'s signed in (agent login).' };
+  return models.length ? { models, ...(marked ? { default_model: marked } : {}) } : { why: 'Cursor listed no models in a form speck reads: check it\'s signed in (agent login).' };
 }
 
 // Why a command gave nothing to read, from how it ended.
@@ -76,7 +78,7 @@ function* cursor(opts) {
   const listed = yield [command, ['models']];
   if (listed.status !== 0 || listed.timedOut) return { ...base, installed: true, signed_in: signed, ...why, models: [], models_why: failed('Cursor', 'list its models', listed, opts.timeoutMs) };
   const read = parseCursorModels(listed.stdout);
-  return { ...base, installed: true, signed_in: signed, ...why, models: read.models || [], ...(read.why ? { models_why: read.why } : {}) };
+  return { ...base, installed: true, signed_in: signed, ...why, models: read.models || [], ...(read.default_model ? { default_model: read.default_model } : {}), ...(read.why ? { models_why: read.why } : {}) };
 }
 
 const AGENTS = { claude, codex, cursor };
@@ -123,12 +125,14 @@ export async function findAgentsAsync(opts) {
 }
 
 // One agent's models, read without waiting, in the shape the Settings view takes: { models: [{ slug, display_name?,
-// description? }] }, or { why } in one line when there are none.
+// description? }] }, or { why } in one line when there are none. 0403: with `defaults`, and `default_model`, the one the
+// agent marks as its default, when it marks one.
 export async function agentModelsAsync(id, opts) {
   const { agents } = await findAgentsAsync({ ...opts, only: id });
   const a = agents[0];
   if (!a.models.length) return { why: `${a.models_why || a.why || `${a.name} lists no models.`} Type the model's name instead.` };
-  return { models: a.models.map(m => ({ slug: m.name, ...(m.display_name ? { display_name: m.display_name } : {}), ...(m.description ? { description: m.description } : {}) })) };
+  return { models: a.models.map(m => ({ slug: m.name, ...(m.display_name ? { display_name: m.display_name } : {}), ...(m.description ? { description: m.description } : {}) })),
+    ...(opts?.defaults && a.default_model ? { default_model: a.default_model } : {}) };
 }
 
 // 0311: the names of the models `id` offers, as `speck agents` lists them, or null when there are none to read: it
