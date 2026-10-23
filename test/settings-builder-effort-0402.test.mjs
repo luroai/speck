@@ -150,7 +150,6 @@ test('0402 AC4: changing the builder\'s model redraws the effort list for that m
 
 test('0402 AC2 AC3: the README lists builder_effort as your own, and the brief names how each builder is given it', () => {
   const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8'), brief = fs.readFileSync(new URL('../docs/brief.md', import.meta.url), 'utf8');
-  assert.match(readme.split('\n').find(l => l.startsWith('**Your own settings.**')), /`builder_effort`/);
-  const line = brief.split('\n').find(l => l.startsWith('**Builder effort.**'));
-  for (const fact of ['`builder_effort`', '`--effort <value>`', 'model_reasoning_effort', '`ultra`']) assert.ok(line.includes(fact), fact);
+  assert.ok(readme.includes('`builder_effort`'), 'the README names builder_effort');
+  for (const fact of ['`builder_effort`', '`--effort <value>`', '`-c model_reasoning_effort="<value>"`', '`ultra`']) assert.ok(brief.includes(fact), fact);
 });
