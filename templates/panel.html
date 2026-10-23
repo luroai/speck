@@ -576,12 +576,12 @@
   :root[data-theme="dark"] #full-ticket { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
   :root[data-theme="dark"] #settings-unsaved { background: rgba(0, 0, 0, .45); }
 
-  /* 0140: a phone screen. One column, nothing past the right edge, labels kept on one line, and every button and
-     clickable control at least 44 px each way (Apple's smallest recommended tap target). Wider screens are unchanged. */
+  /* 0140: a phone screen. One column, nothing past the right edge and labels kept on one line. Wider screens are
+     unchanged. 0417: the 44 px tap areas are in the touch screen rules below, so a narrow pane used with a mouse keeps
+     compact controls. */
   @media (max-width: 699.98px) {
     header { padding: calc(8px + env(safe-area-inset-top)) 16px 8px; } /* 0413: the screen's frame, as wide as the page allows */
     .bezel .print { padding-bottom: 4px; }
-    .bezel .settings-open { width: 44px; height: 44px; margin: -4px -2px -4px 0; }
     #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .looks [role="radio"] { padding: 0 2px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px */
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
@@ -589,60 +589,24 @@
 
     main { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
     .tabs { padding: 8px 16px 0; gap: 2px; }
-    .tab { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; min-height: 44px; padding: 6px 10px; } /* each name on the top line, its count under it */
+    .tab { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; padding: 6px 10px; } /* each name on the top line, its count under it */
     .sh { flex-wrap: wrap; align-items: center; }
-    .toggle { min-width: 44px; min-height: 44px; }
 
     /* Shaping */
-    .head { min-height: 44px; }
-    /* 0151: the priority tag looks like the others, and its tap area is the 44 px box around it */
     #shaping { padding: 6px; }
-    .item.ticket .prio { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
-    /* 0162: the tap area reaches 7 px past the tag on each side, into the gaps, so the gaps beside it match the rest */
-    .item.ticket .prio { padding: 0 7px; margin: 0 -7px; }
-    .tag.pick::after { content: ''; position: absolute; inset: 0; }
-    /* 0165: every other tag's tap area is an invisible 44 by 44 px box centred on it, and the gaps between tags are
-       wide enough that no two tap areas overlap */
-    .tag:not(.pick) { position: relative; }
-    .tag:not(.pick)::after { content: ''; position: absolute; inset: min(0px, calc((100% - 44px) / 2)); }
-    .tag-row, #full-ticket .top .tags { gap: 18px; }
-    .prio-menu button { min-width: 44px; min-height: 44px; }
     .detail { grid-template-columns: minmax(0, 1fr); }
     .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
-    .set-ready, .full-open { min-width: 44px; min-height: 44px; }
-    /* 0164: each id reads as running text, on the line's baseline with its comma straight after it. Its tap area is
-       at least 44 px each way, but its negative margins give back what it reaches past the text, so nothing moves. */
-    .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; }
-    /* A note on several lines has them closer together than that, so each id's text, and the band of its own line,
-       sit above every tap area in the note: a tap there reaches that id, not one on the line above or below. */
-    .item .checks, .act { isolation: isolate; }
-    .goto > span { position: relative; z-index: 1; }
-    .goto > span::before { content: ''; position: absolute; inset: -1px -6px; } /* not into the next id's: a comma and a space away */
 
-    /* Queue: the top row is at least 44 px high */
+    /* Queue */
     #queue { padding: 6px; }
-    .q .top { min-height: 44px; }
-    /* 0190: the line under a queue row's top, such as a ready ticket's Queued line, starts below the 7.5 px its tags'
-       tap areas reach past them, as that line sits above those tap areas */
-    .q .top + .act { margin-top: 8px; }
-    /* 0224: a linked id's tap area in that line reaches 14 px up, past those 8 px, so the tags are above it: a tap
-       anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
-    .q .top .tag:not(.pick) { z-index: 1; }
-    .q .full-open { min-height: 44px; }
-    .q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply { min-width: 44px; min-height: 44px; }
     .resume { flex-wrap: wrap; }
     .resume .cmd { min-width: 0; }
-    .resume .copy { min-width: 44px; min-height: 44px; }
 
     /* Shipped: the stats three to a row (0162), with room for the first three labels on two lines */
     .stat { padding: 8px 6px; }
-    .more-stats { min-width: 44px; min-height: 44px; }
     #shipped { padding: 6px; }
-    td .title-link { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
-    td .full-open { min-height: 44px; }
 
     /* The full ticket and review pack */
-    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close { min-width: 44px; min-height: 44px; }
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
     #full-ticket .md table, .shaping .md table, #full-ticket .md tbody, .shaping .md tbody, #doc-view .md table, #doc-view .md tbody,
     #full-ticket .md tr, .shaping .md tr, #full-ticket .md td, .shaping .md td, #doc-view .md tr, #doc-view .md td { display: block; }
@@ -658,6 +622,57 @@
     #full-ticket .md .ac-table td:nth-child(3), .shaping .md .ac-table td:nth-child(3) { order: 1; }
     #full-ticket .md .ac-table td:nth-child(2), .shaping .md .ac-table td:nth-child(2) { order: 2; flex-basis: 100%; }
     #full-ticket .md .ac-table td:nth-child(n+4), .shaping .md .ac-table td:nth-child(n+4) { order: 3; flex-basis: 100%; }
+  }
+
+  /* 0417: a touch screen, at any width: every button and clickable control at least 44 px each way (0140, Apple's
+     smallest recommended tap target). A mouse or trackpad keeps the compact sizes, even in a narrow pane. */
+  @media (pointer: coarse) {
+    .bezel .settings-open { width: 44px; height: 44px; margin: -4px -2px -4px 0; }
+    .tab { min-height: 44px; }
+    .toggle { min-width: 44px; min-height: 44px; }
+
+    /* Shaping */
+    .head { min-height: 44px; }
+    /* 0151: the priority tag looks like the others, and its tap area is the 44 px box around it */
+    .item.ticket .prio { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+    /* 0162: the tap area reaches 7 px past the tag on each side, into the gaps, so the gaps beside it match the rest */
+    .item.ticket .prio { padding: 0 7px; margin: 0 -7px; }
+    .tag.pick::after { content: ''; position: absolute; inset: 0; }
+    /* 0165: every other tag's tap area is an invisible 44 by 44 px box centred on it, and the gaps between tags are
+       wide enough that no two tap areas overlap */
+    .tag:not(.pick) { position: relative; }
+    .tag:not(.pick)::after { content: ''; position: absolute; inset: min(0px, calc((100% - 44px) / 2)); }
+    .tag-row, #full-ticket .top .tags { gap: 18px; }
+    .prio-menu button { min-width: 44px; min-height: 44px; }
+    .set-ready, .full-open { min-width: 44px; min-height: 44px; }
+    /* 0164: each id reads as running text, on the line's baseline with its comma straight after it. Its tap area is
+       at least 44 px each way, but its negative margins give back what it reaches past the text, so nothing moves. */
+    .goto { display: inline-block; vertical-align: baseline; line-height: 16px; min-height: 44px; padding: 14px 8px; margin: -14px -8px; }
+    /* A note on several lines has them closer together than that, so each id's text, and the band of its own line,
+       sit above every tap area in the note: a tap there reaches that id, not one on the line above or below. */
+    .item .checks, .act { isolation: isolate; }
+    .goto > span { position: relative; z-index: 1; }
+    .goto > span::before { content: ''; position: absolute; inset: -1px -6px; } /* not into the next id's: a comma and a space away */
+
+    /* Queue: the top row is at least 44 px high */
+    .q .top { min-height: 44px; }
+    /* 0190: the line under a queue row's top, such as a ready ticket's Queued line, starts below the 7.5 px its tags'
+       tap areas reach past them, as that line sits above those tap areas */
+    .q .top + .act { margin-top: 8px; }
+    /* 0224: a linked id's tap area in that line reaches 14 px up, past those 8 px, so the tags are above it: a tap
+       anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
+    .q .top .tag:not(.pick) { z-index: 1; }
+    .q .full-open { min-height: 44px; }
+    .q .stop-build, .q .back-to-plan, .q .go-with, .foreman-ask .ask-reply { min-width: 44px; min-height: 44px; }
+    .resume .copy { min-width: 44px; min-height: 44px; }
+
+    /* Shipped */
+    .more-stats { min-width: 44px; min-height: 44px; }
+    td .title-link { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
+    td .full-open { min-height: 44px; }
+
+    /* The full ticket and review pack */
+    #full-ticket .close, #full-ticket .ship, #full-ticket .ask-changes, #doc-view .close, #doc-view .ship, #doc-view .ask-changes, #foreman .close, #settings .close { min-width: 44px; min-height: 44px; }
     #full-ticket .md summary, #doc-view .md summary { min-height: 44px; padding-top: 12px; }
   }
 </style>
