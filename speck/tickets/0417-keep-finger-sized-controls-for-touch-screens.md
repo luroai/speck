@@ -38,7 +38,7 @@ Controls are finger-sized on touch screens only, so a narrow pane used with a mo
 ## Notes
 - Asked for by the user on 2026-10-23: the panel is used mostly in a thin side pane, and its tickets are too tall there.
 - The 44 px rules are in the `@media (max-width: 699.98px)` block in `templates/panel.html` (0140, 0161).
-- Unverified: Playwright's `hasTouch` makes `(pointer: coarse)` match in Chromium (not checked here; check before relying on it in a test).
+- Checked 2026-10-23: turning on touch emulation over DevTools (`Emulation.setTouchEmulationEnabled`, which Playwright's `hasTouch` uses) makes `(pointer: coarse)` match in the installed headless Chromium. Without it, headless Chromium matches neither `(pointer: fine)` nor `(pointer: coarse)`, and `Emulation.setEmulatedMedia` can't emulate `pointer`. Playwright itself isn't installed here: the tests use the DevTools call directly.
 - Waits for 0416: both change `templates/panel.html`.
 
 ## In plain words
