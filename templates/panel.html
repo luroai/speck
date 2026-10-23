@@ -74,10 +74,10 @@
   /* 0413: the top of the panel is speck's screen in its dark frame, as the design's console (without its keys or the text
      under the screen). The frame's title row has speck's name in the dot-matrix lettering, the project and base branch
      cut short with "…", and Settings at its right end. The screen under it shows the Foreman's word and speck. */
-  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(12px + env(safe-area-inset-top)) clamp(16px, calc(16px + (100vw - 700px) * .04), 24px) 12px; border-bottom: .5px solid var(--line); background: var(--bg); }
+  header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(8px + env(safe-area-inset-top)) 16px 8px; border-bottom: .5px solid var(--line); background: var(--bg); }
   .bezel { box-sizing: border-box; max-width: 520px; margin: 0 auto; padding: 5px 7px 7px; color: var(--bezel-ink); background: var(--bezel); border: 2px solid var(--bezel); }
   .bezel.needs { border-color: var(--bad); } /* the Foreman's word is "Needs you <n>" */
-  .bezel .print { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 0 6px 2px; }
+  .bezel .print { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 0 4px 2px; }
   .bezel .name { flex: none; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 20px; line-height: 1; color: var(--bezel-ink); }
   .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 "Zen Kaku Gothic New", "Noto Sans JP", system-ui, sans-serif; color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bezel .repo code { font-size: inherit; color: inherit; }
@@ -90,21 +90,23 @@
   .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
 
   /* 0410: the page is the height of the screen and never scrolls. Under the header, Plan, Build and Shipped are tabs,
-     one lane open at a time, and only the open lane's list scrolls. */
+     one lane open at a time, and only the open lane's list scrolls. 0418: one column at every width, 720 px wide and
+     centred on a wider window, with no border round a lane: its tickets sit directly under the tabs. */
   html, body { height: 100%; overflow: hidden; }
   body { display: flex; flex-direction: column; height: 100dvh; }
   header, .offline, .restart, .run-error, .tabs { flex: none; }
-  .tabs { display: flex; gap: 4px; padding: 12px 24px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .tab { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; min-width: 0; margin-bottom: -.5px; padding: 8px 14px; font: inherit; color: var(--muted); background: transparent; border: .5px solid transparent; border-bottom-color: var(--line); cursor: pointer; text-align: left; }
+  header, .offline, .restart, .run-error, .tabs, main { box-sizing: border-box; width: 100%; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .tabs { display: flex; gap: 2px; padding: 8px 16px 0; border-bottom: .5px solid var(--line); background: var(--bg); }
+  .tab { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; column-gap: 8px; min-width: 0; margin-bottom: -.5px; padding: 6px 10px; font: inherit; color: var(--muted); background: transparent; border: .5px solid transparent; border-bottom-color: var(--line); cursor: pointer; text-align: left; }
   .tab:hover { color: var(--text); }
   .tab[aria-selected="true"] { color: var(--text); background: var(--panel); border-color: var(--line); border-bottom-color: var(--panel); }
   .tab .tab-name { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: .01em; }
   .tab .n, .tab .needs { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
   .tab .needs { color: var(--bad); }
   .tab .needs:empty { display: none; }
-  main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 20px 24px calc(20px + env(safe-area-inset-bottom)); }
+  main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 0 env(safe-area-inset-bottom); }
   section { background: var(--panel); border: .5px solid var(--line); }
-  main > section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  main > section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; border: 0; }
   main > section[hidden] { display: none; }
   .lane-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .sh { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border-bottom: .5px solid var(--line); }
@@ -144,7 +146,7 @@
 
   /* Shaping */
   /* 0151: each item is a card of its own, with space between cards */
-  #shaping { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  #shaping { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #shaping .empty { padding: 0 4px; }
   .item { padding: 10px 14px; border: 1px solid var(--line); }
   .head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; cursor: pointer; }
@@ -173,7 +175,7 @@
   /* Queue */
   /* 0155: each ticket is a card of its own, laid out as a Plan ticket. 0167: only a ticket waiting for you or in trouble
      is coloured, by its border and background (below the highlights, so they win) */
-  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #queue .empty { padding: 0 4px; }
   .q { padding: 10px 14px; border: 1px solid var(--line); }
   .q .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 0; align-items: baseline; cursor: pointer; }
@@ -234,6 +236,13 @@
   .resume .cmd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 3px 8px; user-select: all; overflow-wrap: anywhere; }
   .resume .copy { font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: none; border: .5px solid var(--line); padding: 1px 8px; cursor: pointer; white-space: nowrap; }
   .resume .copy:hover { color: var(--text); }
+  /* 0418: in the lanes, the narrow layout at every width: a Plan item's readiness under its details, and a resume command
+     that wraps. Elsewhere these keep their own layout. */
+  main .sh { flex-wrap: wrap; align-items: center; }
+  main .detail { grid-template-columns: minmax(0, 1fr); }
+  main .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
+  main .resume { flex-wrap: wrap; }
+  main .resume .cmd { min-width: 0; }
   .q .tag.high { color: var(--bad); border-color: var(--bad); }
   .next { color: var(--ok); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; border: .5px solid var(--ok); padding: 0 5px; }
 
@@ -241,7 +250,7 @@
   /* 0157: the stats a grid of tiles of equal size, each number over its label and the tickets its median covers, and
      each shipped ticket a card of its own, laid out as a Plan ticket */
   .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: .5px; background: var(--line); border-bottom: .5px solid var(--line-soft); }
-  .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 12px; background: var(--panel); }
+  .stat { display: flex; flex-direction: column; min-width: 0; padding: 8px 6px; background: var(--panel); }
   .stat .num { font-family: "Shippori Mincho", "Noto Serif JP", Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1.3; }
   .stat .label { font-size: 13px; line-height: 1.4; color: var(--muted); }
   .stat .count { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--faint); }
@@ -253,7 +262,7 @@
   #shipped .figline { flex: 1 1 auto; min-width: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #shipped .details { flex: none; margin-left: auto; }
   section.shipped table { display: block; }
-  #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+  #shipped { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #shipped .empty { padding: 0 4px; }
   #shipped tr { display: block; padding: 10px 14px; border: 1px solid var(--line); }
   #shipped td { display: block; padding: 0; border: 0; }
@@ -314,11 +323,11 @@
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .looks, #settings .looks [role="radio"] + [role="radio"] { border-width: 1px; } }
   #settings .switch-row p.bad { margin: 4px 0 0; color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
   #settings .switch-row p.bad[hidden] { display: none; }
-  .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .run-error { font-size: 12px; color: var(--bad); padding: 6px 16px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
   .run-error[hidden] { display: none; }
-  .offline { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
+  .offline { font-size: 12px; color: var(--bad); padding: 6px 16px; border-bottom: .5px solid var(--line); background: var(--bad-bg); }
   .offline[hidden] { display: none; }
-  .restart { font-size: 12px; color: var(--warn); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--raise); }
+  .restart { font-size: 12px; color: var(--warn); padding: 6px 16px; border-bottom: .5px solid var(--line); background: var(--raise); }
   .restart[hidden] { display: none; }
   .question, .title { white-space: pre-wrap; overflow-wrap: anywhere; }
   .ready div { overflow-wrap: anywhere; }
@@ -578,33 +587,17 @@
 
   /* 0140: a phone screen. One column, nothing past the right edge and labels kept on one line. Wider screens are
      unchanged. 0417: the 44 px tap areas are in the touch screen rules below, so a narrow pane used with a mouse keeps
-     compact controls. */
+     compact controls. 0418: the panel's own layout is the same at every width, so these are for Settings and the full
+     ticket only, and for anything outside the lanes that shares a lane's class names. */
   @media (max-width: 699.98px) {
-    header { padding: calc(8px + env(safe-area-inset-top)) 16px 8px; } /* 0413: the screen's frame, as wide as the page allows */
-    .bezel .print { padding-bottom: 4px; }
     #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
     #settings .looks [role="radio"] { padding: 0 2px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px */
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
-    .run-error, .offline, .restart { padding: 6px 16px; }
-
-    main { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
-    .tabs { padding: 8px 16px 0; gap: 2px; }
-    .tab { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; padding: 6px 10px; } /* each name on the top line, its count under it */
     .sh { flex-wrap: wrap; align-items: center; }
-
-    /* Shaping */
-    #shaping { padding: 6px; }
     .detail { grid-template-columns: minmax(0, 1fr); }
     .ready { border-left: 0; padding-left: 0; border-top: .5px solid var(--line-soft); padding-top: 8px; }
-
-    /* Queue */
-    #queue { padding: 6px; }
     .resume { flex-wrap: wrap; }
     .resume .cmd { min-width: 0; }
-
-    /* Shipped: the stats three to a row (0162), with room for the first three labels on two lines */
-    .stat { padding: 8px 6px; }
-    #shipped { padding: 6px; }
 
     /* The full ticket and review pack */
     /* 0158: each table row is a block, its heading row hidden (but still copied) and each cell labelled with its heading */
