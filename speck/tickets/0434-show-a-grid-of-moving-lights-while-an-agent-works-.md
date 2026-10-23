@@ -1,7 +1,7 @@
 ---
 id: "0434"
 title: Show each collapsed ticket as two single lines                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -17,11 +17,12 @@ created: 2026-10-23
 started: "2026-10-23T19:48:52.766Z"
 blocked_at: ""
 waited_seconds: 1637
+approved: "2026-10-23T20:56:16.426Z"
 
 ---
 # 0434 · Show each collapsed ticket as two single lines
 
-**Status:** 🔨 building
+**Status:** 👍 approved
 
 ## Problem
 Collapsed tickets are taller and busier than they need to be. A ticket being built starts its details line with a stage sentence such as `Writing tests and code`, then its stage, its time, its priority, size and risk. On a phone each item is a finger-sized box, so the line wraps over three rows. A shipping ticket shows two unlabelled times (`Shipping · 01:08 · 20:12`), and a long title wraps over two lines.
@@ -62,9 +63,15 @@ Changes what you'd notice: yes
 Clear winner: no
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 An open Build ticket's priority opens an explanatory tooltip, not the menu required by AC3.; F2 The phone test excludes the states that violate AC5.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 690,245
+- Elapsed since build started: 67 min
+- Changed lines: 108 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - Fit a closed card's stage and time on a phone: speck/ideas/2026-10-23-fit-a-closed-card-s-stage-and-time-on-a-phone.md
