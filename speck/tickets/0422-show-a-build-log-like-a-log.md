@@ -42,6 +42,7 @@ The build log reads like a log: times in a column of their own, each kind of ent
 - The lines come from `readableLog` in `scripts/build-log.mjs` (0291, 0340, 0341, 0342). The panel shows them with `logText` and `showLog` in `templates/panel.html`.
 - Builds alongside 0420, 0421 and 0423 (the user, 2026-10-23): each changes a different part of `templates/panel.html`. This one changes the log's rendering and styles. `.q .log` sits a few lines from 0421's `.q .stop-build`, so the second of the two to ship may need a merge round.
 - Failing before this build: none
+- Self-check: the log's own notes (No log yet. and the like) start at the left edge rather than past the time column; turned off the browser's scroll anchoring on the log so dropping rows at the top keeps its scroll place as before. Two existing browser tests (0052) selected text in the box's single text node and one fake-page check (0361) counted nodes by their own text: both now find the line's text node, checking the same thing.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
