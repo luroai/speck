@@ -24,7 +24,7 @@ export const PROVIDER_SCRIPT = fileURLToPath(import.meta.url);
 // Set in a provider build's environment, naming the provider, so a reviewer it starts can be given back its own.
 export const PROVIDER_BUILD = 'SPECK_PROVIDER_BUILD';
 // The project's settings only, not the user's or local ones, and no MCP servers or claude.ai connectors.
-const CLAUDE_FLAGS = ['--setting-sources=project', '--strict-mcp-config'];
+export const CLAUDE_FLAGS = ['--setting-sources=project', '--strict-mcp-config'];
 // speck's own variables that would sign Claude Code in to Anthropic or a cloud that serves Claude, or point it at another
 // address or Claude Code folder.
 const SIGN_IN = /^(ANTHROPIC_|CLAUDE_CODE_(?!DISABLE_BACKGROUND_TASKS$)|CLAUDE_CONFIG_DIR$|AWS_BEARER_TOKEN_BEDROCK$|CLOUD_ML_REGION$|VERTEX_REGION_)/;

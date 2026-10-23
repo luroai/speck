@@ -44,6 +44,7 @@ The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek
 - Start from `foremanArgv` in `scripts/foreman-agent.mjs`, whose Claude Code command already limits the Foreman to reading and to speck and read-only git commands, adding `--bare`.
 - Waits for 0391.
 - Failing before this build: none
+- Self-check: made the docs name deepseek as a Foreman agent (README, brief, config template) with a test of those facts, and made the no-key test independent of whether Claude Code is installed on the machine running it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
