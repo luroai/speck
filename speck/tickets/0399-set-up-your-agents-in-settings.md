@@ -1,7 +1,7 @@
 ---
 id: "0399"
 title: "Set up your agents in Settings"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-18-find-the-agents-and-models-on-this-machine.
 after: ["0397","0398"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:34:29.683Z"
+approved: "2026-10-23T10:47:03.107Z"
 
 ---
 # 0399 · Set up your agents in Settings
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 There's nowhere in Settings to see which agents you have, add one, or give an API provider its key, apart from the DeepSeek key field 0393 added.
@@ -52,9 +53,14 @@ To see it, open Settings and look under Auto-build, then press "Add an agent". T
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 206,601
+- Elapsed since build started: 13 min
+- Changed lines: 336 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - Skipped, as it duplicates 0400: the builder, reviewer and Foreman lists still offer agents that aren't yours.
