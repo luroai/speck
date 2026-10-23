@@ -46,6 +46,8 @@ speck is ready to be released as 0.13.1.
 - Checked 2026-10-22: `package.json` is `0.12.0` until 0375 ships `0.13.0`. 0346 prepared the 0.10.3 patch the same way.
 - Relies on nothing outside this repo.
 - Failing before this build: none
+- Self-check: dropped an unbacked claim from the release notes that a running `speck run` keeps the old code until restarted. `test/release-0375.test.mjs`'s checks of the current version now follow `package.json`, and its figures check covers only the figures 0.13.0 was built from, as 0360 did for 0346.
+- Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
