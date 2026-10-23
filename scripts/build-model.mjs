@@ -3,6 +3,8 @@
 // speck run starts with its own command are given it as -m <value> (codex-build.mjs), and Cursor builds as --model
 // <value> (cursor-build.mjs).
 
+import { PROVIDERS, findProvider } from './providers.mjs';
+
 // The build_command that starts Claude Code builds, as speck/config.yml has it when speck sets it up.
 export const DEFAULT_BUILD_COMMAND = 'claude -p "/speck-build {id}" --session-id {session} --output-format stream-json --verbose --dangerously-skip-permissions';
 
@@ -24,8 +26,16 @@ export const codexBuilds = cfg => cfg?.builder === 'codex' && typeof cfg.build_c
 // 0290: true when speck run builds with its own Cursor command: builder cursor, and build_command set blank.
 export const cursorBuilds = cfg => cfg?.builder === 'cursor' && typeof cfg.build_command === 'string' && !cfg.build_command.trim();
 
-// 0290: the agent speck run's own command builds with, 'codex' or 'cursor', or null when build_command is used.
-export const ownBuilder = cfg => (codexBuilds(cfg) ? 'codex' : cursorBuilds(cfg) ? 'cursor' : null);
+// 0391: the model provider speck run builds with, through Claude Code with the provider's own command: builder names
+// one, such as deepseek, and build_command is set blank. null otherwise.
+export const providerBuilds = (cfg, providers = PROVIDERS) => {
+  const p = typeof cfg?.builder === 'string' ? findProvider(cfg.builder, providers) : null;
+  return p && p.name === cfg.builder && typeof cfg.build_command === 'string' && !cfg.build_command.trim() ? p : null;
+};
+
+// 0290: the agent speck run's own command builds with, 'codex' or 'cursor' (0391: or a model provider's name), or null
+// when build_command is used.
+export const ownBuilder = cfg => (codexBuilds(cfg) ? 'codex' : cursorBuilds(cfg) ? 'cursor' : providerBuilds(cfg)?.name ?? null);
 
 // build_command's words with `--model <builder_model>` added at the end when the builder is claude and builder_model
 // is set, replacing any --model the command already gives. Otherwise the words exactly as they are.
@@ -40,5 +50,6 @@ export function withBuilderModel(words, cfg) {
 export function builderModelNote(cfg) {
   const model = modelOf(cfg);
   if (!model || cfg.builder === 'claude' || ownBuilder(cfg)) return null; // 0289, 0290: speck's own commands pass it
+  if (providerBuilds({ ...cfg, build_command: '' }) && buildsEachTicket(cfg.build_command ?? '')) return null; // 0391: as a provider's own does
   return `builder_model (${model}) is only passed to Claude Code builds, and the builder is ${String(cfg.builder ?? '') || 'not set'}, so builds start without it.`;
 }

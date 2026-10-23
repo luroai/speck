@@ -32,21 +32,32 @@ export function providerReady(repo, p, providers = PROVIDERS) {
   return key;
 }
 
+// 0391: the folder provider `p`'s Claude Code keeps its sessions in, in the repo's ignored cache, only its owner's.
+export function providerDir(repo, p) {
+  const dir = sharedCacheDir(repo, `provider-${p.name}`);
+  fs.chmodSync(dir, 0o700);
+  return dir;
+}
+
+// 0391: what points Claude Code at provider `p`, with `key`, on `model`, for a reviewer or a build.
+export const providerVars = (p, key, model) => ({
+  ANTHROPIC_BASE_URL: p.address, ANTHROPIC_API_KEY: key,
+  // Every model Claude Code would pick by itself is the provider's, so no request names one only Anthropic has.
+  ANTHROPIC_MODEL: model, ANTHROPIC_SMALL_FAST_MODEL: model,
+  ANTHROPIC_DEFAULT_OPUS_MODEL: model, ANTHROPIC_DEFAULT_SONNET_MODEL: model, ANTHROPIC_DEFAULT_HAIKU_MODEL: model,
+  // No telemetry, error reports, update checks or other requests to Anthropic.
+  CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1', DISABLE_AUTOUPDATER: '1',
+});
+
 // The environment provider `p`'s reviewer runs with, on `model`, from speck's own `from`.
 export function providerEnv(repo, p, key, model, from = process.env) {
-  const home = sharedCacheDir(repo, `provider-${p.name}`);
-  fs.chmodSync(home, 0o700);
+  const home = providerDir(repo, p);
   const env = {};
   for (const k of KEEP) if (typeof from[k] === 'string') env[k] = from[k];
   for (const k of Object.keys(from)) if (/^LC_/.test(k)) env[k] = from[k];
   return {
     ...env,
     HOME: home, XDG_CONFIG_HOME: path.join(home, '.config'), CLAUDE_CONFIG_DIR: path.join(home, '.claude'),
-    ANTHROPIC_BASE_URL: p.address, ANTHROPIC_API_KEY: key,
-    // Every model Claude Code would pick by itself is the provider's, so no request names one only Anthropic has.
-    ANTHROPIC_MODEL: model, ANTHROPIC_SMALL_FAST_MODEL: model,
-    ANTHROPIC_DEFAULT_OPUS_MODEL: model, ANTHROPIC_DEFAULT_SONNET_MODEL: model, ANTHROPIC_DEFAULT_HAIKU_MODEL: model,
-    // No telemetry, error reports, update checks or other requests to Anthropic.
-    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1', DISABLE_TELEMETRY: '1', DISABLE_ERROR_REPORTING: '1', DISABLE_AUTOUPDATER: '1',
+    ...providerVars(p, key, model),
   };
 }

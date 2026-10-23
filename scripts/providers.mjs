@@ -11,3 +11,6 @@ export const PROVIDERS = Object.freeze([
 export function findProvider(name, providers = PROVIDERS) {
   return typeof name === 'string' ? providers.find(p => p.name === name.toLowerCase()) ?? null : null;
 }
+
+// 0391: the name provider `name` is written with, such as DeepSeek, when `name` is exactly one's; null otherwise.
+export const providerLabel = (name, providers = PROVIDERS) => (findProvider(name, providers)?.name === name ? findProvider(name, providers).label : null);
