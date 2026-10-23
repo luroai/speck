@@ -18,8 +18,10 @@ export const yourAgentsFile = repo => path.join(path.dirname(machineConfigFile(r
 const CLI_AGENTS = ['claude', 'codex', 'cursor'];
 const knownIds = providers => [...CLI_AGENTS, ...providers.map(p => p.name)];
 
-// This machine's list, as agent ids speck knows, in speck's order, or null when it has none.
+// This machine's list, as agent ids speck knows, in speck's order, or null when it has none. `repo` is null outside a
+// speck project, where there's no list or key to read.
 export function readYourAgents(repo, { providers = PROVIDERS } = {}) {
+  if (repo === null) return null;
   const file = yourAgentsFile(repo);
   let text;
   try { text = fs.readFileSync(file, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
@@ -41,7 +43,7 @@ function writeYourAgents(repo, ids, providers) {
 // from findAgents, providers with whether this machine has their key, and the models speck runs them on.
 function everyAgent(repo, { find = findAgents, models = true, providers = PROVIDERS } = {}) {
   const agents = find({ models }).agents.map(a => ({ ...a, ready: a.installed === true && a.signed_in === true }));
-  const keys = Object.fromEntries(keysStatus(repo, { providers }).map(k => [k.name, k.set]));
+  const keys = repo === null ? {} : Object.fromEntries(keysStatus(repo, { providers }).map(k => [k.name, k.set]));
   const provs = providers.map(p => ({ id: p.name, name: p.label, key_set: keys[p.name] === true, ready: keys[p.name] === true,
     ...(keys[p.name] ? {} : { why: `${p.label} has no API key on this machine: set one with speck keys set ${p.name}.` }),
     models: models ? p.models.map(m => ({ name: m, display_name: null, description: null })) : [] }));
@@ -131,14 +133,18 @@ const USAGE = 'Usage: speck agents [--json], to see every agent speck knows, spe
 
 // `speck agents [--json]`, `speck agents add <agent>` and `speck agents remove <agent>`.
 export function cmdAgents(args, opts = {}) {
-  const repo = findRepoRoot(), [sub, name, ...rest] = args;
+  const [sub, name, ...rest] = args;
   if (sub === 'add' || sub === 'remove') {
     if (!name || rest.length) throw new SpeckError(USAGE);
+    const repo = findRepoRoot();
     console.log(sub === 'add' ? addAgent(repo, name, opts) : removeAgent(repo, name, loadConfig(repo), opts));
     return;
   }
   const json = args.length === 1 && sub === '--json';
   if (args.length && !json) throw new SpeckError(USAGE);
+  // Before speck is set up, as setup asks, it still lists every agent, none with a key or a list.
+  let repo = null;
+  try { repo = findRepoRoot(); } catch (e) { if (!(e instanceof SpeckError)) throw e; }
   const report = agentsReport(repo, opts);
   console.log(json ? JSON.stringify(report, null, 2) : reportLines(report));
 }
