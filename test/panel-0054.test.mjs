@@ -171,7 +171,7 @@ test('0054 AC2-AC5: in a real browser, the pane opens, keeps a selection through
     await b.drag(await b.js(charAt('#full-ticket ol li', 0)), await b.js(charAt('#full-ticket ol li', 13)));
     assert.equal(await sel(), 'Export button', 'the drag selected text');
     assert.ok(await b.js(`document.querySelector('${item}').classList.contains('open')`), 'the ticket stays open');
-    const refreshed = async what => { await b.js(`window.seen = document.getElementById('run').lastChild`); await b.until(`document.getElementById('run').lastChild !== window.seen`, what); };
+    const refreshed = async what => { await b.js(`window.seen = window.drawn || 0; if (!window.drawWatch) (window.drawWatch = new MutationObserver(() => { window.drawn = (window.drawn || 0) + 1; })).observe(document.getElementById('bezel'), { attributes: true }); true`); await b.until(`(window.drawn || 0) > window.seen`, what); }; // 0413: each redraw sets the frame of speck's screen, which stays between them
     await refreshed('a refresh'); await refreshed('a second refresh');
     assert.equal(await sel(), 'Export button', 'kept through refreshes');
     await b.js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
