@@ -11,6 +11,7 @@ import { offeredModels } from './agents.mjs';
 import { sameModelProblem } from './same-model.mjs';
 import { FIXING } from './foreman.mjs';
 import { FOREMAN_AGENTS } from './foreman-agent.mjs';
+import { PROVIDERS } from './providers.mjs';
 import { SHIP_MODES } from './pull-request.mjs';
 
 const USAGE = 'Usage: speck config set <key> <value>, which saves your own settings for this machine only, speck config set --repo <key> <value> to change speck/config.yml\'s, speck config set --machine <key> "" to remove this machine\'s value, speck config set builder <name> [--replace] to switch the builder, or speck config show [--json] to see the main settings.';
@@ -56,8 +57,9 @@ export function checkConfigValue(key, value) {
       throw new SpeckError(`${key} must be blank or test file names separated by spaces or commas, without quotes, # or brackets in a name (got ${JSON.stringify(value)}).`);
     return parts.length ? [...new Set(parts)] : '';
   }
-  if (kind === 'agent' && value !== '' && !FOREMAN_AGENTS.includes(value)) // 0287
-    throw new SpeckError(`${key} must be blank or one of ${FOREMAN_AGENTS.join(', ')} (got ${JSON.stringify(value)}).`);
+  const agents = [...FOREMAN_AGENTS, ...PROVIDERS.map(p => p.name)]; // 0392: or a model provider's name
+  if (kind === 'agent' && value !== '' && !agents.includes(value)) // 0287
+    throw new SpeckError(`${key} must be blank or one of ${agents.join(', ')} (got ${JSON.stringify(value)}).`);
   if (kind === 'shipmode' && !SHIP_MODES.includes(value)) // 0295
     throw new SpeckError(`${key} must be ${SHIP_MODES.join(' or ')} (got ${JSON.stringify(value)}).`);
   if (kind === 'fixing' && !FIXING.includes(value)) // 0286
