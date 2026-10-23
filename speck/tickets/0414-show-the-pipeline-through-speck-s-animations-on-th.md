@@ -1,7 +1,7 @@
 ---
 id: "0414"
 title: "Show the pipeline through speck's animations on the screen"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T15:09:04.633Z"
 ---
 # 0414 · Show the pipeline through speck's animations on the screen
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 After 0413, speck sits on the screen in the same idle animation whatever the pipeline is doing. A new ticket, a ship or a question looks the same as nothing happening.
@@ -58,7 +58,7 @@ speck, the Foreman, plays an animation for each thing that happens in the pipeli
 - The animations are the ones in console.html in https://claude.ai/artifact/R5CQDZJfMZ2rYcTmZK1B8z and `templates/lcd.js`: the landing page's states (`STATES`, whose `building` is the laptop), the panel's `ship`, `wait` and `bad` poses (`PANEL`), and the mock's new clipboard pose (`watch` in console.html). "One push" is one 3.2-second loop of `PANEL.ship`.
 - Waits for 0413: both change `templates/panel.html`.
 - Failing before this build: none
-- Self-check: capped the events waiting to play at the latest 8, so a tab hidden for hours doesn't replay every event since (test added); the brief's line on the screen now says what speck shows.
+- Self-check: the brief's line on the screen now says what speck shows.
 - The screen is 72 dots tall rather than 64 (0413's layout), to fit the caption's row under speck, as the console mock has it.
 - 0413's test that speck idles whatever the word now checks only that speck is cast: 0414 replaces that behaviour.
 
@@ -73,3 +73,81 @@ speck, the Foreman, plays an animation for each thing that happens in the pipeli
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "251c7b92d63d38206cfeaae4ff71ff6faadc469e",
+    "session": "fresh",
+    "thread_id": "01a16955-b6b5-7782-9f1b-4aec72a0ccc5",
+    "builder_response": "- Tests run: test/panel-0414.test.mjs test/panel-0413.test.mjs\n- Round 1. Notes for the reviewer:\n  - templates/lcd.js is pinned byte for byte by existing tests (0302, 0308, 0320), so the mock's clipboard pose (`watch`) and the event logic live in templates/panel.html, as they do in the console mock.\n  - The screen grows from 160 × 64 to 160 × 72 dots, as in the console mock, to give the caption a row under speck. The Screen always draws each frame; reduced motion holds the cast (still poses) and the word, while captions still change.\n  - 0413's AC2 test asserted speck idles whatever the word; 0414 replaces that, so that one assertion now only checks speck is cast.\n  - Pictures of the screen in both looks are with the review pack.\n",
+    "seconds": 63,
+    "usage": {
+      "input_tokens": 226538,
+      "cached_input_tokens": 175488,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1028,
+      "reasoning_output_tokens": 210
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T15:17:29.787Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: noteBoard detects new and changed drafts; speckNow applies the 30-second writing window. The two AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "noteBoard queues the specified poses and captions; speckNow applies 3.2-second shipping and 6-second event durations. The AC2 event tests passed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "speckRests maps the Foreman's word to the required poses, chooses a fixed idle mood and implements the nap. The AC3 status, idle and build-stage tests passed."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "noteBoard discards queued events beyond eight and deduplicates simultaneous events by caption. The final AC4 test explicitly expects two of ten observed shipping completions to be dropped, contrary to playing all events sequentially."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "screenFrame renders captions in a fixed row and screen.cast.still holds poses under reduced motion. The AC5 caption-fit and reduced-motion tests passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Observed events can disappear without playing. noteBoard drops the oldest queued event after eight, even on a visible page. Its caption deduplication also collapses a ticket becoming blocked and the Foreman asking about that same ticket in the same update. Criterion 4 requires both animations to play sequentially; it provides no exception for these cases. The new queue-limit test enshrines the contrary behaviour.",
+        "suggested_fix": "Preserve each distinct observed event until it plays, removing the queue truncation and caption-based deduplication. Replace the dropping-events test with coverage that all queued events play, including simultaneous blocked and Foreman-question events for one ticket.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The animations, captions, status poses and reduced-motion behaviour are covered by passing tests. However, the implementation silently skips some events instead of showing each in turn. Fix event delivery before presenting this for merge."
+  }
+}
+```
+
+</details>
