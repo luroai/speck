@@ -1,7 +1,7 @@
 ---
 id: "0398"
 title: "Keep a list of your agents for this machine"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T10:00:15.944Z"
 ---
 # 0398 · Keep a list of your agents for this machine
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Settings offers every agent speck knows, whether or not it's set up here. DeepSeek appears as a choice before any API key is added, and Claude Code, Codex and Cursor appear whether or not they're installed.
@@ -55,3 +55,89 @@ speck keeps a list of the agents you've set up on this machine, and setup fills 
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "772f4c734f8c89f4b8446d151595950f08fa6b40",
+    "session": "fresh",
+    "thread_id": "01a16838-d62a-73f0-9e39-4fafdf6dc498",
+    "builder_response": "- Tests run: test/agents-0398.test.mjs test/agents-0288.test.mjs test/agents-0388.test.mjs test/agents-0123.test.mjs test/keys-0389.test.mjs test/detect-0086.test.mjs test/windows-0091.test.mjs test/setup-0088.test.mjs (plus the commands.checks files speck test runs itself)\n- Notes: `speck agents --json` keeps `agents` as Claude Code, Codex and Cursor (0288's tests read it) and adds `providers` and `list`, with `yours` on each entry. init fills the list only when it runs its checks (`--skip-checks` skips it, as it skips doctor). Adding an agent that is installed but signed out is allowed, with a note on how to sign in: the criterion refuses only agents that aren't installed.\n",
+    "seconds": 48,
+    "usage": {
+      "input_tokens": 220426,
+      "cached_input_tokens": 167296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 980,
+      "reasoning_output_tokens": 63
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T10:06:05.469Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/your-agents.mjs stores agents.json beside machine settings and reports CLI agents and providers. Passing AC1 tests cover persistence, ignored git state, readiness, membership and models."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "addAgent, removeAgent and rolesUsing implement changes and refusals. Passing AC2 tests exercise missing installations, missing keys and protected roles."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "cmdInit calls fillLine, with passing tests for initial discovery and preserving an existing list. However, skills/speck-setup/SKILL.md skips init when speck is already installed and never explicitly fills a missing list in that path."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "yourAgents and agentsReport fall back to readyIds without persisting. The passing AC4 test exercises discovery before a list exists and later availability."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README's 'Your agents' paragraph explains membership, storage, discovery and add/remove commands. Reported tests: 207 passed, zero failed, three skipped. Added documentation assertions check command and file names only."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "skills/speck-setup/SKILL.md",
+        "issue": "Setup does not create the list for an existing speck installation on a machine without one. Section 2 runs init only when speck is absent; section 5 merely describes what init previously did. Existing ready agents therefore remain an implicit fallback rather than being saved as criterion 3 requires.",
+        "suggested_fix": "Add an explicit setup step that detects a missing list, saves every ready agent and keyed provider, and reports those added, while preserving an existing list. Add coverage for the existing-installation path.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/your-agents.mjs",
+        "issue": "cmdAgents now unconditionally calls findRepoRoot, so listing agents fails before speck is initialised. Previously this worked without a speck config, and the setup skill still explicitly offers the npx agents --json command before installation.",
+        "suggested_fix": "Preserve agent discovery outside an initialised speck project, with sensible membership and provider-key reporting when no project exists. Test listing from a directory without speck/config.yml.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The list, commands and initial discovery are implemented and the reported tests pass. Two setup gaps remain: an existing installation does not save its first list, and listing agents before installation now fails."
+  }
+}
+```
+
+</details>
