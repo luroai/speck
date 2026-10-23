@@ -53,9 +53,10 @@ test('0168 AC1: each in-flight card has a row under its title with the sentence 
     assert.ok(top.children.indexOf(rows[0]) > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
     const text = rows[0];
     assert.equal(text.className, stage ? 'progress' : 'progress ship-line');
-    const shown = text.children.map(n => [n.className.split(' ')[0], n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
-    assert.deepEqual(shown, [['say', sentence], stage ? ['stage', stage] : ['ship-at', ' · MM:SS']], `${id}: the sentence and the stage, or the ship's time (0201)`);
-    assert.equal(top.children[top.children.length - 1].className, 'sub', `${id}: the timer is still last in the top row`);
+    const shown = text.children.filter(n => n.className && n.className !== 'sep').map(n => [n.className.split(' ')[0], n.textContent.replace(/\d\d:\d\d$/, 'MM:SS')]);
+    assert.deepEqual(shown.slice(0, 2), [['say', sentence], stage ? ['stage', stage] : ['ship-at', 'MM:SS']], `${id}: the sentence and the stage, or the ship's time (0201)`);
+    // 0419: then the timer and the tags, on the same line
+    assert.deepEqual(shown.slice(2).map(([c]) => c), ['sub', 'tag', 'tag', 'tag'], `${id}: the timer, then the tags`);
     assert.equal(p.all(top).filter(n => /\b(enso|orbit|speck|dots|dot)\b/.test(n.className || '')).length, 0, `${id}: no ensō, speck or stage dots`);
   }
   assert.doesNotMatch(page(), /\.enso\b|\.orbit\b|\.dot\.now|@keyframes orbit/, 'the ensō and the dots are gone from the page');

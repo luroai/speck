@@ -11,12 +11,9 @@ const refresh = async p => { p.timers.shift()(); await p.settle(); };
 const nodes = (p, row, cls) => p.all(row).filter(n => new RegExp(`\\b${cls}\\b`).test(n.className || ''));
 const shaping = (p, id) => items(p).find(n => p.all(n).some(x => x.className === 'id' && x._text === id));
 const queued = (p, id) => queueRows(p).find(n => p.all(n).some(x => x.className === 'id' && x._text === id));
-const idRow = (p, row) => p.all(row).find(n => n.className === 'row'); // the queue's row with the id, the title and the tags
-const tagRow = (p, row) => p.all(row).find(n => /\btag-row\b/.test(n.className || '')); // a Plan ticket's row of tags (0151)
-// In the queue the icon comes right after the id. In Plan it ends the row of tags under the title (0151).
+const idRow = (p, row) => p.all(row).find(n => n.className === 'line'); // the ticket's title line, with its id and title
+// 0419: in Plan and in the queue the icon comes right after the id, on the title line.
 const iconOf = (p, row) => {
-  const tags = tagRow(p, row);
-  if (tags) return tags.children.find(c => /\b(chain|lock)\b/.test(c.className || '')) || null;
   const r = idRow(p, row);
   return r.children[1] && /\b(chain|lock)\b/.test(r.children[1].className) ? r.children[1] : null;
 };
@@ -46,7 +43,7 @@ test('0041 AC1: a ticket that starts a chain shows a chain icon after its id and
   await p.settle();
   const s = shaping(p, '0001');
   const icon = iconOf(p, s);
-  assert.ok(icon && /\bchain\b/.test(icon.className), 'Shaping: a chain icon at the end of the tags');
+  assert.ok(icon && /\bchain\b/.test(icon.className), 'Shaping: a chain icon after its id');
   assert.ok(nodes(p, s, 'checks')[0].textContent.includes('unlocks 0002, 0003'), 'Shaping: unlocks the unfinished tickets that list it, in JSON order');
   assert.ok(!nodes(p, s, 'checks')[0].textContent.includes('0004'), 'a done ticket waiting on it does not count');
   assert.ok(!nodes(p, s, 'checks')[0].textContent.includes('0005'), 'a cancelled one does not count either');
@@ -73,11 +70,11 @@ test('0041 AC2: a waiting ticket shows a dimmed padlock after its id, with "wait
   const p = fakePage([chained()]);
   await p.settle();
   const s = shaping(p, '0003');
-  assert.ok(/\block\b/.test(iconOf(p, s).className), 'Shaping: a padlock at the end of the tags');
-  assert.ok(nodes(p, s, 'checks')[0].textContent.includes('waiting on 0001, 0099'), 'Shaping: waiting on its ids');
+  assert.ok(/\block\b/.test(iconOf(p, s).className), 'Shaping: a padlock after its id');
+  assert.ok(nodes(p, s, 'checks')[0].textContent.includes('after 0001, 0099'), 'Shaping: after its ids (0419)');
   const q = queued(p, '0007');
   assert.ok(/\block\b/.test(iconOf(p, q).className), 'queue: a padlock right after the id');
-  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · waiting on 0006', 'queue: the text it already shows');
+  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · waiting on 0006 · P2 · S · low', 'queue: the text it already shows, then its tags (0419)');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0009')).className), 'waiting on an in-flight ticket');
   assert.match(rule('.lock'), /color:\s*var\(--faint\)/, 'the padlock is dimmed');
 });
@@ -89,7 +86,7 @@ test('0041 AC3: a ticket with neither shows no icon, and each icon says what it 
   assert.equal(nodes(p, shaping(p, '0010'), 'chain').length + nodes(p, shaping(p, '0010'), 'lock').length, 0);
   assert.equal(iconOf(p, queued(p, '0008')), null, 'in-flight tickets show no icon');
   assert.ok(!nodes(p, shaping(p, '0010'), 'checks')[0].textContent.includes('unlocks'));
-  assert.ok(!nodes(p, shaping(p, '0010'), 'checks')[0].textContent.includes('waiting on'));
+  assert.ok(!nodes(p, shaping(p, '0010'), 'checks')[0].textContent.includes('after'));
   assert.equal(iconOf(p, shaping(p, '0001')).title, 'Starts a chain: unlocks 0002, 0003');
   assert.equal(iconOf(p, queued(p, '0006')).title, 'Starts a chain: unlocks 0007');
   assert.equal(iconOf(p, shaping(p, '0003')).title, 'Waiting on 0001, 0099');
@@ -110,7 +107,7 @@ test('0041 AC4: when the chain\'s first ticket is done, the next refresh takes t
   const q = queued(p, '0002');
   assert.ok(/\bchain\b/.test(iconOf(p, q).className), 'it starts the chain now');
   assert.equal(iconOf(p, q).title, 'Starts a chain: unlocks 0003');
-  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · unlocks 0003');
+  assert.equal(nodes(p, q, 'act')[0].textContent, 'Queued · unlocks 0003 · P2 · S · low');
   assert.equal(nodes(p, q, 'lock').length, 0, 'no padlock');
   assert.ok(/\block\b/.test(iconOf(p, shaping(p, '0003')).className), 'the next one still waits');
 
@@ -214,7 +211,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
     assert.equal(await b.js(`getComputedStyle(document.querySelector('#queue .q .chain')).color`), 'rgb(61, 61, 58)', 'the muted colour (0167)');
     assert.ok(await b.js(`document.querySelector('#queue .q .chain').getBoundingClientRect().width > 0`), 'the icon takes up room');
     assert.equal(await b.js(`document.querySelector('#shaping .item .lock').title`), 'Waiting on 0001');
-    assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('waiting on 0001')`));
+    assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('after 0001')`));
     await b.js(openLane('plan')); // 0410
     await b.move(await centre('#shaping .item .title'));
     await b.until(`document.querySelector('#queue .q').classList.contains('hl')`, 'the chain to light up');

@@ -63,10 +63,10 @@ test('0416 AC1: the card\'s text starts at its left edge, where the tile was', a
     assert.ok(prog, `${t.id}: its progress row`);
     assert.ok(/\bsay\b/.test(prog.children[0].className), `${t.id}: the sentence comes first, with nothing before it`);
   }
-  // The row has a single column, in the top row's first column, which starts at the card's left padding.
-  const rule = /\.q \.top \.progress \{([^}]*)\}/.exec(css());
+  // The row is one line of text from the card's left padding (0419: as Plan's details line).
+  const rule = /\.q \.top \.progress, \.q \.top \.act \{([^}]*)\}/.exec(css());
   assert.ok(rule, 'a rule for the progress row');
-  assert.match(rule[1], /grid-area: 3 \/ 1;/);
+  assert.match(rule[1], /display: block;/);
   assert.doesNotMatch(rule[1], /grid-template-columns|padding-left|margin-left/, 'no column or gap left for a tile');
 });
 

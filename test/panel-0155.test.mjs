@@ -141,18 +141,18 @@ const LAYOUT = id => `(() => {
     if (same) { same.left = Math.min(same.left, r.left); same.right = Math.max(same.right, r.right); }
     else lines.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   }
-  const sub = card.querySelector('.top .sub'), progress = card.querySelector('.top .progress');
+  const sub = card.querySelector('.top .sub'), progress = card.querySelector('.top .progress'), act = card.querySelector('.top .act');
   const under = [...card.children].filter(n => !n.classList.contains('top'));
   return { left, right, idSize: getComputedStyle(idN).fontSize, titleSize: ts.fontSize, id: rect(idN), lines,
     cut: t.scrollWidth > t.clientWidth + 0.5 || t.scrollHeight > t.clientHeight + 0.5 || ts.textOverflow === 'ellipsis' || lines.some(l => l.left < box.left || l.right > box.right + 0.5),
-    sub: sub.textContent ? rect(sub) : null, progress: progress ? rect(progress) : null, line: rect(card.querySelector('.top .line')),
+    sub: sub && sub.textContent ? rect(sub) : null, progress: progress ? rect(progress) : null, act: act ? rect(act) : null, line: rect(card.querySelector('.top .line')),
     tags: [...card.querySelectorAll('.top .tag')].map(n => ({ text: n.textContent, ...rect(n) })),
     under: under.map(n => ({ what: n.className, button: n.tagName === 'BUTTON', first: n === under.find(x => x.tagName === 'BUTTON'), ...rect(n) })),
     firstButton: (() => { const bs = under.filter(n => n.tagName === 'BUTTON'); return bs.length ? rect(bs[0]) : null; })() };
 })()`;
 
 for (const width of [375, 699, 700, 1000, 1280]) {
-  test(`0155 AC3: at ${width} px, a card has its id (14 px) and title (17 px) on one row, its tags on a row of their own, then the rest (since 0168 its progress, in words only since 0416, with the timer at the right of its row), all from its left padding`, skip, async () => {
+  test(`0155 AC3: at ${width} px, a card has its id (14 px) and title (17 px) on one row, then (0419) one details line with its progress or Queued line, its timer and its tags, then the rest, all from its left padding`, skip, async () => {
     await withPanel(async b => {
       for (const id of Object.keys(STATES)) await open(b, id);
       for (const id of Object.keys(STATES)) {
@@ -169,29 +169,24 @@ for (const width of [375, 699, 700, 1000, 1280]) {
           assert.ok(line.left >= l.id.right, `${id}: a title line starts under the id`);
         }
         const titleBottom = Math.max(...l.lines.map(x => x.bottom)), titleRight = Math.max(...l.lines.map(x => x.right));
-        // A ticket in flight has its progress under the tags (0168), from the card's left padding (where its builder badge
-        // was until 0416), with the timer at the right of its row, at the card's right padding; a ready one has neither.
+        // 0419: under the title, one details line from the card's left padding: a ticket in flight's progress (0168),
+        // with its timer in it, or a ready one's Queued line, with no timer; then the tags, in the same line.
         // The title has the full width.
         assert.ok(Math.abs(l.line.right - l.right) < 1, `${id}: the title's row ends at ${l.line.right}, not the card's right padding at ${l.right}`);
+        const details = STATES[id] === 'ready' ? l.act : l.progress;
+        assert.ok(details, `${id}: no details line`);
+        assert.ok(Math.abs(details.left - l.left) < 0.5, `${id}: the details line starts at ${details.left}, not the card's left padding at ${l.left}`);
+        assert.ok(details.top >= titleBottom - 0.5, `${id}: the details line is under the title`);
+        const inside = r => r.left >= details.left - 0.5 && r.right <= details.right + 0.5 && r.top >= details.top - 0.5 && r.bottom <= details.bottom + 0.5;
         if (STATES[id] === 'ready') assert.ok(l.sub === null && l.progress === null, `${id}: a ready ticket has no timer`);
-        else {
-          assert.ok(l.sub && l.progress, `${id}: no timer`);
-          assert.ok(Math.abs(l.progress.left - l.left) < 0.5, `${id}: the progress starts at ${l.progress.left}, not the card's left padding at ${l.left}`);
-          assert.ok(l.sub.top < l.progress.bottom && l.sub.bottom > l.progress.top, `${id}: the timer is on the progress's row`);
-          assert.ok(Math.abs(l.sub.right - l.right) < 1, `${id}: the timer ends at ${l.sub.right}, not the card's right padding at ${l.right}`);
-        }
-        // The tags: on a row of their own under the title, all the same height, the first at the left padding.
+        else assert.ok(l.sub && inside(l.sub), `${id}: the timer is in the details line`);
         assert.ok(l.tags.length >= 3, `${id}: ${l.tags.length} tags`);
-        assert.ok(Math.abs(l.tags[0].left - l.left) < 0.5, `${id}: the tags start at ${l.tags[0].left}, not the card's left padding at ${l.left}`);
         for (const t of l.tags) {
-          assert.ok(t.top >= titleBottom - 0.5, `${id}: ${t.text} is beside the title, not under it`);
+          assert.ok(inside(t), `${id}: ${t.text} is in the details line`);
           assert.ok(Math.abs(t.height - l.tags[0].height) < 0.5, `${id}: ${t.text} is ${t.height} px high, ${l.tags[0].text} ${l.tags[0].height} px`);
-          assert.ok(Math.abs(t.top - l.tags[0].top) < 0.5, `${id}: ${t.text} is on another row from ${l.tags[0].text}`);
         }
         // Then everything under the top row (the bar went into it in 0156), starting at the left padding: no empty column on the left.
-        const tagsBottom = Math.max(...l.tags.map(t => t.bottom));
-        if (l.progress) assert.ok(l.progress.top >= tagsBottom - 0.5 && l.under[0].top >= l.progress.bottom - 0.5, `${id}: the progress is between the tags and the rest`);
-        assert.ok(l.under[0].top >= tagsBottom - 0.5, `${id}: ${l.under[0].what} is not under the tags`);
+        assert.ok(l.under[0].top >= details.bottom - 0.5, `${id}: ${l.under[0].what} is not under the details line`);
         for (const u of l.under) {
           if (u.button && !u.first) continue; // beside the first button
           assert.ok(Math.abs(u.left - l.left) < 0.5, `${id}: ${u.what} starts at ${u.left}, not the card's left padding at ${l.left}`);
