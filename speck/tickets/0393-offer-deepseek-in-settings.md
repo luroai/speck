@@ -15,7 +15,7 @@ source: "speck/ideas/done/2026-10-18-use-a-model-provider-through-your-own-api-k
 after: ["0392","0387"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T08:16:16.005Z"
-approved: "2026-10-23T08:26:49.886Z"
+approved: "2026-10-23T08:33:10.954Z"
 
 ---
 # 0393 · Offer DeepSeek in Settings
@@ -59,13 +59,14 @@ Worth keeping an eye on: if Claude Code isn't installed, DeepSeek isn't offered 
 
 ## Review log
 Round 1 (codex): approve.
+Round 2 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 1
+- Review rounds: 2, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 194,018
-- Elapsed since build started: 11 min
-- Changed lines: 249 (limit 5000)
+- Reviewer tokens: 573,309
+- Elapsed since build started: 17 min
+- Changed lines: 254 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 Follow-ups:
 - speck doctor checks a DeepSeek builder or reviewer but not a DeepSeek Foreman: saved to the inbox as `speck/ideas/2026-10-23-check-the-foreman-s-model-provider-in-speck-doctor.md`.
@@ -134,6 +135,73 @@ Follow-ups:
     "findings": [],
     "escalation_question": "",
     "summary": "Settings now offers DeepSeek for building, reviewing and Foreman work, with its models and a machine-only API key field. Key saving keeps secrets out of responses and commits. Missing keys and required software are explained. The relevant tests pass, and I found no blocking issues."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5a6b99c10a49ff409290d88e6c8ef850afd50401",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a167dd-a7d4-78f2-ba00-a05d316c3865",
+    "builder_response": "- Tests run: test/panel-0277.test.mjs test/settings-provider-0393.test.mjs test/panel-0258.test.mjs test/foreman-agent-0287.test.mjs test/builder-switch-0293.test.mjs test/settings-models-0369.test.mjs (plus the commands.checks files speck test adds). Also ran the 17 other real-browser Settings test files (panel-0136, 0140, 0150, 0160, 0161, 0163, 0268, 0273, 0274, 0281, 0309, 0364, 0365, 0371, 0372, 0373, 0385): 297 pass, 0 fail.\n- Handed back by speck run's ship queue: 0277 AC1–AC5 failed on the ticket as it would land. Merging main changed nothing (main is still 8f78a570, already in the branch), so the cause was this ticket's own change.\n- Why: the API key box was always in the view as a `.sgroup`, empty and hidden while no provider is chosen. 0277's real-browser check reads every `.sgroup`'s `h4`, and the empty box has none, so it threw.\n- Fix (templates/panel.html, drawKeys and keyRow): the box has the `sgroup` class only while it shows (the CSS hides `.keys[hidden]`). Its row now has an info button and explanation through settingInfo, like every other setting, so it follows 0277's layout rule when it shows. drawKeys applies the view's tip state, so the new explanation starts hidden.\n- New test in test/settings-provider-0393.test.mjs: the box is a group only while it shows, its row has an info button, and the explanation starts hidden.\n- Pictures taken again, light and dark, as the key row now has an info button.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 377971,
+      "cached_input_tokens": 258432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1320,
+      "reasoning_output_tokens": 84
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T08:33:06.532Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/settings.mjs provides registry-based role choices and models; templates/panel.html displays provider labels and models. All three 0393 AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "panelKeyRequest saves through the machine-only key store and returns only status. keyRow and saveKey keep saved keys out of fields and clear successful submissions. All AC2 tests passed, including the new group visibility and info-button regression test."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "keyRow explains that a missing key prevents running; readyReviewers reports missing Claude Code, including for an already selected provider. Both 0393 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Provider choices, labels, models and key fields derive from the registry. The passing 0393 AC4 test exercises these with its own TestCo provider."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The fresh recorded run reports 164 passed, zero failed and three skipped, including panel-0277. drawKeys now excludes the empty hidden box from Settings groups and gives visible key rows the standard info control. The builder also reports 297 passing real-browser Settings tests."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The Settings layout regression found during shipping is fixed, with a regression test added. DeepSeek choices, models and private key saving still meet the ticket’s requirements. The relevant tests pass, and there are no blocking findings."
   }
 }
 ```
