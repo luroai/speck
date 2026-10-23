@@ -471,7 +471,8 @@ test('0033 AC5: the Ideas list shows every idea not yet ticketed (0056), and cli
   const list = items(p);
   const titles = list.map(n => top(n).children[0].textContent);
   assert.deepEqual(titles.map(t => t.replace(/^idea/, '')), ['Fresh', 'No status']);
-  assert.ok(list[0].textContent.includes('idea') && list[1].textContent.includes('no status'), 'each with its status');
+  // 0435: under each, when it was captured, and its status only when that isn't idea
+  assert.deepEqual(list.map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).textContent), ['No capture date', 'No capture date']);
   assert.ok(!list[1].textContent.includes('Just'), 'closed by default');
   click(top(list[1]));
   assert.ok(items(p)[1].textContent.includes('Just <i>text</i>.'), 'the note, as text');

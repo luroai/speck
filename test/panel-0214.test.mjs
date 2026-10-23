@@ -21,10 +21,10 @@ const STATE = {
 // ----- AC2 and AC4: the cards' parts, without a browser -----
 
 const lineOf = item => top(item).children[0];
-const VIEWS = [['ideas', 1, 'idea'], ['inbox', 2, 'inbox']];
+const VIEWS = [['ideas', 1], ['inbox', 2]];
 
-for (const [view, at, label] of VIEWS) {
-  test(`0214 AC2: in ${view}, a card's label and title share one line, the label first, as a ticket's id and title do`, async () => {
+for (const [view, at] of VIEWS) {
+  test(`0214 AC2: in ${view}, a card's title is on a line like a ticket's id and title, with no label before it since 0435`, async () => {
     const p = fakePage([JSON.parse(JSON.stringify(STATE))]);
     await p.settle();
     const ticketLine = lineOf(items(p)[0]);
@@ -35,19 +35,18 @@ for (const [view, at, label] of VIEWS) {
     for (const card of cards) {
       const line = lineOf(card);
       assert.equal(line.className, ticketLine.className, 'the same line as a ticket card');
-      assert.deepEqual(line.children.map(n => n.className), ['id', 'title']);
-      assert.equal(line.children[0].textContent, label);
+      assert.deepEqual(line.children.map(n => n.className), ['title']);
     }
-    assert.equal(lineOf(cards[0]).children[1].textContent, LONG);
+    assert.equal(lineOf(cards[0]).children[0].textContent, LONG);
   });
 
-  test(`0214 AC4: in ${view}, a card still opens and closes, and the row under the title keeps its ${view === 'ideas' ? 'status' : 'from ticket'} and path`, async () => {
+  test(`0214 AC4: in ${view}, a card still opens and closes, and the row under the title keeps its ${view === 'ideas' ? 'status' : 'from ticket'}, without the path since 0435`, async () => {
     const p = fakePage([JSON.parse(JSON.stringify(STATE))]);
     await p.settle();
     click(toggles(p)[at]);
     const checks = items(p).map(n => top(n).children.find(c => /\bchecks\b/.test(c.className)).children.map(c => c.textContent));
-    if (view === 'ideas') assert.deepEqual(checks, [['new', 'speck/ideas/2026-10-15-a-long-idea.md'], ['new', 'speck/ideas/2026-10-15-short.md']]);
-    else assert.deepEqual(checks, [['from 0139', 'speck/ideas/2026-10-15-a-long-follow-up.md'], ['from 0140', 'speck/ideas/2026-10-15-a-follow-up.md']]);
+    if (view === 'ideas') assert.deepEqual(checks, [['No capture date · new'], ['No capture date · new']]);
+    else assert.deepEqual(checks, [['From 0139 · No capture date'], ['From 0140 · No capture date']]);
     click(top(items(p)[0]));
     assert.match(items(p)[0].className, /\bopen\b/);
     assert.match(items(p)[0].textContent, /Status: /);
@@ -85,14 +84,14 @@ const CARDS = `[...document.querySelectorAll('#shaping .item')].map(item => {
     if (same) { same.left = Math.min(same.left, r.left); same.right = Math.max(same.right, r.right); }
     else lines.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   }
-  const box = item.getBoundingClientRect(), idBox = id.getBoundingClientRect();
-  return { label: id.textContent, title: t.textContent, idSize: getComputedStyle(id).fontSize, titleSize: s.fontSize, lines,
-    id: { top: idBox.top, bottom: idBox.bottom, left: idBox.left, right: idBox.right },
+  const box = item.getBoundingClientRect(), idBox = id && id.getBoundingClientRect();
+  return { label: id && id.textContent, title: t.textContent, idSize: id && getComputedStyle(id).fontSize, titleSize: s.fontSize, lines,
+    id: id && { top: idBox.top, bottom: idBox.bottom, left: idBox.left, right: idBox.right },
     cut: t.scrollWidth > t.clientWidth + 0.5 || t.scrollHeight > t.clientHeight + 0.5 || s.textOverflow === 'ellipsis'
       || lines.some(l => l.left < box.left || l.right > box.right + 0.5 || l.bottom > box.bottom + 0.5) };
 })`;
 
-test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox labels are 14 px and titles 17 px, as a ticket\'s, never cut off, wrapping under the title', skip, async () => {
+test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox titles are 17 px, as a ticket\'s, never cut off when open, wrapping under the title (their labels gone since 0435)', skip, async () => {
   const r = panelRepo();
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
@@ -106,21 +105,21 @@ test('0214 AC1, AC3: at 375, 700 and 1,280 px, idea and inbox labels are 14 px a
       await b.js(openLane('plan')); // 0410
       const [ticket] = await b.js(CARDS);
       assert.deepEqual([ticket.idSize, ticket.titleSize], ['14px', '17px'], `${width} px: the ticket`);
-      for (const [view, , label] of VIEWS) {
+      for (const [view] of VIEWS) {
         await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`);
         await b.until(`!!document.querySelector('#shaping .item.${view === 'ideas' ? 'idea' : 'inbox'}')`, view);
+        // 0435: a closed card's title is cut to one line, so these are opened, where a title wraps
+        await b.js(`document.querySelectorAll('#shaping .item .head').forEach(h => h.click()), true`);
+        await b.until(`document.querySelectorAll('#shaping .item.open').length === 2`, `${view}, open`);
         const cards = await b.js(CARDS);
         assert.equal(cards.length, 2, `${width} px, ${view}`);
         for (const c of cards) {
           const where = `${width} px, ${view}, ${c.title.slice(0, 20)}`;
-          assert.equal(c.label, label, where);
-          assert.equal(c.idSize, ticket.idSize, `${where}: the label`);
+          assert.equal(c.label, null, `${where}: no label`);
           assert.equal(c.titleSize, ticket.titleSize, `${where}: the title`);
           assert.ok(!c.cut, `${where}: the title is cut off`);
           const [first] = c.lines;
-          assert.ok(first.top < c.id.bottom && first.bottom > c.id.top, `${where}: the title starts on the label's line`);
-          assert.ok(first.left >= c.id.right, `${where}: the label comes before the title`);
-          for (const l of c.lines) assert.ok(Math.abs(l.left - first.left) < 1 && l.left >= c.id.right, `${where}: a line starts at ${l.left}, not under the title's start at ${first.left}`);
+          for (const l of c.lines) assert.ok(Math.abs(l.left - first.left) < 1, `${where}: a line starts at ${l.left}, not under the title's start at ${first.left}`);
         }
         assert.ok(cards[0].lines.length >= 2, `${width} px, ${view}: the long title wraps`);
       }
