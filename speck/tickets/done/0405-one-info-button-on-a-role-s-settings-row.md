@@ -1,7 +1,7 @@
 ---
 id: "0405"
 title: "One info button on a role's Settings row"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0404"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T12:10:16.120Z"
 approved: "2026-10-23T12:17:07.011Z"
+finished: "2026-10-23T12:20:03.034Z"
 
 ---
 # 0405 · One info button on a role's Settings row
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 When a role's effort sits beside its model in Settings, that one row shows two info buttons: one for the role and one for the effort. Two "i" buttons on a single row is confusing.
