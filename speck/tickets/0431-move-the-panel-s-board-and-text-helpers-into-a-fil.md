@@ -1,7 +1,7 @@
 ---
 id: "0431"
 title: "Move the panel's model into a file of its own"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T22:39:34.526Z"
 ---
 # 0431 · Move the panel's model into a file of its own
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The page's model, the code that turns the board into what the page shows without touching the page, sits inside `templates/panel.html` between `---- model` and `---- end model`. Tests that run it on its own have to cut it out of the page first.
@@ -47,7 +47,7 @@ The page's model is in a file of its own, which tests load directly.
 - Waits for 0430: both change `templates/panel.html`, `scripts/panel.mjs` and `test/support/panel.mjs`.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Nothing looks or works differently in the panel. The part of the panel's page that turns the board into what you see now has a file of its own, so the page file is about 500 lines shorter. That helps builds that change the panel work in smaller files and get in each other's way less. To check it, open the panel and use it as usual. If the new file is edited while the panel is open, the page offers to reload, as it does when the page itself changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -57,3 +57,68 @@ The page's model is in a file of its own, which tests load directly.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none. A timing flake in test/run-switch-0301.test.mjs ("0301 AC3 self-check: a build that ends while the new code fails to start…") failed once in a related run and passed alone twice. It isn't changed by this ticket.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "01cb892f7400122c23fcc1c493999b0198b30901",
+    "session": "fresh",
+    "thread_id": "01a16af2-34fd-7a42-b192-03308b3eec77",
+    "builder_response": "- Tests run: `speck test --related test/panel-0431.test.mjs test/panel-0051.test.mjs test/pipeline-0415.test.mjs` (the ticket's own file, the existing test files it changed and the file of a test that failed in the last run, plus every test file naming a changed file: 279 files, 2571 tests).\n- One failure in that run, `0301 AC3 self-check: a build that ends while the new code fails to start…` in test/run-switch-0301.test.mjs, is a timing flake not touched by this change: it passed in the previous related run and passes run on its own twice (`node --test --test-name-pattern=… test/run-switch-0301.test.mjs`).\n- No pictures: nothing on the page looks different. The model is moved as it was, with only a short header comment and `'use strict'` added to the new file.\n- Notes on the change:\n  - The page loads `/panel-model.js` before `/lcd.js`, so 0302's check that `lcd.js` comes straight before the page's own script still holds.\n  - The page's stamp now covers the model file too, so a change to it makes an open page out of date.\n  - `fakePage` runs the model and then the page's script in one vm context, as a browser shares top-level declarations across classic scripts.\n  - test/pipeline-0415's browser test opens panel.html from its file, so it can't load `/panel-model.js`. It now puts the model in before the page's script, as 0430 made it do for the styles (AC4's exception for tests that read the moved code from panel.html).\n  - scripts/panel.mjs stays at 600 lines, the limit in 0078's check.\n",
+    "seconds": 36,
+    "usage": {
+      "input_tokens": 228842,
+      "cached_input_tokens": 165120,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1004,
+      "reasoning_output_tokens": 18
+    },
+    "tests": {
+      "failing": 1,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T22:47:36.720Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Verified the body of templates/panel-model.js exactly matches the former model section on main. templates/panel.html loads it before the other scripts. The 0431 AC1 test passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "scripts/panel.mjs serves the exact /panel-model.js path afresh as text/javascript and includes its contents in stampOf. Both 0431 AC2 tests passed, covering fresh reads, changed stamps, unknown paths and missing files. Existing reload-offer coverage includes test/panel-0413.test.mjs."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "test/support/panel.mjs model() reads panel-model.js directly; panelModel() evaluates it without a browser. test/panel.test.mjs uses that helper, and panel-0051.test.mjs now loads model() directly. Both 0431 AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The related run passed 2567 tests, including all six ticket tests. Its sole failure concerns run-switch timing in unchanged code; the builder reports two successful isolated reruns. The model body is unchanged, and affected page-test helpers preserve the shared script context."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The panel’s model has moved into its own file without changing its behaviour. The server reloads the file on each request and detects changes so open pages can offer a reload. Tests now load the model directly. No blocking issues found; the reported unrelated timing flake does not indicate a regression from this change."
+  }
+}
+```
+
+</details>
