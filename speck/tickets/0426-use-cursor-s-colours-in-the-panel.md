@@ -15,7 +15,7 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0421", "0422", "0424", "0425"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:33:19.486Z"
-approved: "2026-10-23T18:47:40.154Z"
+approved: "2026-10-23T18:53:32.012Z"
 
 ---
 # 0426 · Use Cursor's colours in the panel
@@ -64,13 +64,14 @@ The panel now uses Cursor's own colours, in both the light and the dark look, so
 ## Review log
 Round 1 (codex): changes requested: F1 The pull-request URL in the review pack receives no link colour rule.
 Round 2 (codex): approve.
+Round 3 (codex, merge round): approve.
 
 ## Delivery log
-- Review rounds: 2
+- Review rounds: 3, 1 of them a merge round
 - Reviewer: codex, model gpt-6.1-sol, effort default
-- Reviewer tokens: 867,596
-- Elapsed since build started: 14 min
-- Changed lines: 70 (limit 5000)
+- Reviewer tokens: 1,540,293
+- Elapsed since build started: 20 min
+- Changed lines: 69 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - speck/ideas/2026-10-23-tell-waiting-for-you-from-needs-you-at-a-glance.md: magenta and red are about 21° of hue apart in Cursor Light, so 0138's hue check now asks for 20° rather than 60°.
@@ -224,6 +225,82 @@ Round 2 (codex): approve.
     ],
     "escalation_question": "",
     "summary": "The panel now uses Cursor's light and dark colours while preserving speck's screen and title colours. The missed pull-request link is fixed, contrast checks pass, and no blocking concerns remain."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve · merge round</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "9289e7406da41972de426b11a80ad6ec1bc153e0",
+    "merge": true,
+    "session": "continued",
+    "thread_id": "01a16a15-3f04-7da1-a5bd-5417cb7c9543",
+    "builder_response": "- Tests run: test/panel-0426.test.mjs test/panel-0038.test.mjs test/type-0049.test.mjs test/panel-0161.test.mjs test/mockup-0126.test.mjs test/panel-0134.test.mjs test/panel-0136.test.mjs test/panel-0138.test.mjs test/panel-0147.test.mjs test/panel-0149.test.mjs test/icons-0305.test.mjs test/panel-0155.test.mjs test/panel-0167.test.mjs test/panel-0171.test.mjs test/panel-0213.test.mjs test/panel-0041.test.mjs test/panel-0055.test.mjs test/panel-0158.test.mjs test/panel-0418.test.mjs (also test/panel-0422.test.mjs separately: 114 pass)\n\nWhy this round: speck ship's full suite failed on two tests: \"0038 AC4: Inbox keeps a colour of its own…\" and \"0049 AC4: the bug tag has a colour of its own\". main was already merged (git merge main: already up to date), so both came from this ticket's change alone. I had missed these two files when looking for colour tests.\n- 0038 AC4 failed because --inbox (#88c0d0 dark) was the same value as the new --cyan token. Fix: dropped --cyan and set the self-check edge (.q.at-check) back to --inbox, as it was before 0426. --inbox is Cursor's own cyan in both looks, used for that edge and still checked at 3:1. 0171's STAGES and the 0426 tests follow.\n- 0049 AC4 failed because --bug equalled --bad (both the 7:1 shade of Cursor's red). I changed the code rather than the test: the bug tag now takes Cursor Light's orange (charts.orange, #DB704B, in Cursor's cursor-light.json; Cursor Dark has no orange), at the nearest HSL shade that reaches 7:1 on every surface: #86371b light, #e69d83 dark. It's 7:1 because bug tags also show in 12 px details lines. The 0134/0136 \"distinct colours\" checks no longer exempt the --bug/--bad pair, and the old-value literals in 0136 and 0147 follow. A new 0426 assertion checks that --bug isn't --bad.\n- The ticket's Delivery log note about shared tag colours is updated. The pictures still match: none of them shows a bug tag or a self-check edge.\n",
+    "seconds": 23,
+    "usage": {
+      "input_tokens": 670470,
+      "cached_input_tokens": 585728,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2227,
+      "reasoning_output_tokens": 247
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:53:29.751Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html retains the requested light and dark surface, text and input tokens. Passing 0426 AC1 tests check their values and use."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0426 AC2 tests verify muted colours and the nearest contrast-compliant grey alphas. The 0161 contrast checks also pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The self-check edge now uses --inbox, whose values remain the exact requested Cursor cyan in both looks. Passing 0426 and 0171 tests cover stage colours. Other specified states, links and focus colours remain correct; the bug tag keeps a separate contrast-compliant colour."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "LCD, frame and title colour tokens remain unchanged, verified by the passing 0426 AC4 test."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Light, dark and System coverage remains passing. Current output confirms 286 passed, zero failed and three skipped, including the previously missed 0038 and 0049 regression tests and the 0161 contrast checks."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:74",
+        "issue": "Pull-request links previously retained browser-default colours.",
+        "suggested_fix": "Completed: the global anchor rule applies the contrast-adjusted Cursor blue to normal and visited links, with regression coverage.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The ship-time fixes preserve the requested palette and restore the bug tag’s distinct colour. All targeted checks pass, including the two regressions found during shipping. No blocking concerns remain."
   }
 }
 ```
