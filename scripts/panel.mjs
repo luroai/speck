@@ -226,7 +226,7 @@ function codeHash() {
 
 // One server process: serves the panel page, /api/state and each ticket's build log and review pack to this machine only, plus the writes,
 // POST /api/tickets/<id>/ready, POST /api/tickets/<id>/draft, POST /api/tickets/<id>/priority/<n>, POST /api/tickets/<id>/stop, POST /api/tickets/<id>/recommendation, POST /api/foreman/<id>/answer or /dismiss, POST /api/tickets/<id>/ship, POST /api/tickets/<id>/changes, POST /api/keys/<provider> (0393), POST /api/agents/<agent>/add or /remove (0399), POST /api/providers (0401) and POST /api/run/on or /off. Every request reads the files afresh, the page
-// included, so a changed panel.html, panel.css (0430) or panel-model.js (0431) shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
+// included, so a changed panel.html, panel.css (0430), panel-model.js (0431) or panel-settings.js (0432) shows on a reload, except that /api/state requests share a reading of the board (0177), and /api/events tells each open page when the board changes (0187), after which /api/state gives it only what changed (0188), and sends it each build log it opens there as it's written (0189). It also watches the code, and when it changes, hands over to a
 // server on the new code (see cmdPanel).
 export async function panelServer() {
   const env = process.env;
@@ -253,10 +253,10 @@ export async function panelServer() {
   let stopping = false;
   let shipping = null; // the id of the ticket a Ship button is shipping, until speck ship has finished
   let switching = false; // true while the speck run switch is turning it on or off
-  const pageFile = path.join(TEMPLATES, 'panel.html'), stylesFile = path.join(TEMPLATES, 'panel.css'), modelFile = path.join(TEMPLATES, 'panel-model.js');
-  // 0285: the code a page was sent with: this server's code, the page file and, since 0430, the styles it loads, and since 0431
-  // its model. /api/state gives the stamp of the code now, so a page sent before any of them changed can say it's out of date.
-  const readOr = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } }, stampOf = html => crypto.createHash('sha256').update(running).update('\0').update(html).update('\0').update(readOr(stylesFile)).update('\0').update(readOr(modelFile)).digest('hex').slice(0, 16);
+  const pageFile = path.join(TEMPLATES, 'panel.html'), stylesFile = path.join(TEMPLATES, 'panel.css'), modelFile = path.join(TEMPLATES, 'panel-model.js'), settingsFile = path.join(TEMPLATES, 'panel-settings.js');
+  // 0285: the code a page was sent with: this server's code, the page file and, since 0430, the styles it loads, since 0431
+  // its model and since 0432 its Settings. /api/state gives the stamp of the code now, so a page sent before any of them changed can say it's out of date.
+  const readOr = f => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } }, stampOf = html => crypto.createHash('sha256').update(running).update('\0').update(html).update('\0').update(readOr(stylesFile)).update('\0').update(readOr(modelFile)).update('\0').update(readOr(settingsFile)).digest('hex').slice(0, 16);
   const page = () => { const html = fs.readFileSync(pageFile, 'utf8'); return html.replace('{{page}}', () => stampOf(html))
     .replace('{{repo}}', () => repoName).replace('{{base}}', () => base).replace('{{token}}', () => token); };
   const pageNow = () => { try { return { page: stampOf(fs.readFileSync(pageFile, 'utf8')) }; } catch { return {}; } };
@@ -456,8 +456,8 @@ export async function panelServer() {
       try { return send(res, 200, 'text/html', page()); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read the panel page, ${pageFile}: ${e.message}\nPut the file back, then reload.\n`); }
     }
-    // 0302: the design's LCD renderer, which draws the builder badges, served as it is. 0430, 0431: and the page's styles and model, read afresh as the page is.
-    if (where === '/lcd.js' || where === '/panel.css' || where === '/panel-model.js') {
+    // 0302: the design's LCD renderer, which draws the builder badges, served as it is. 0430, 0431, 0432: and the page's styles, model and Settings, read afresh as the page is.
+    if (where === '/lcd.js' || where === '/panel.css' || where === '/panel-model.js' || where === '/panel-settings.js') {
       try { return send(res, 200, where === '/panel.css' ? 'text/css' : 'text/javascript', fs.readFileSync(path.join(TEMPLATES, where.slice(1)))); }
       catch (e) { return send(res, 500, 'text/plain', `Couldn't read ${path.join(TEMPLATES, where.slice(1))}: ${e.message}\nPut the file back, then reload.\n`); }
     }
