@@ -1,7 +1,7 @@
 ---
 id: "0405"
 title: "One info button on a role's Settings row"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-one-info-button-on-a-role-s-settings-row.md
 after: ["0404"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T12:10:16.120Z"
+approved: "2026-10-23T12:17:07.011Z"
 
 ---
 # 0405 · One info button on a role's Settings row
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 When a role's effort sits beside its model in Settings, that one row shows two info buttons: one for the role and one for the effort. Two "i" buttons on a single row is confusing.
@@ -55,9 +56,14 @@ Worth a look: a very long explanation, such as the builder's in a narrow window,
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 141,607
+- Elapsed since build started: 7 min
+- Changed lines: 40 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups (known limits, no inbox notes):
   - An explanation taller than 60% of the view scrolls inside itself, but one opened by hovering closes as the pointer leaves the "i" button, so it can only be scrolled once clicked open.
