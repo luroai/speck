@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, full, round, shippedRows, queueRows } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, full, round, shippedRows, queueRows, openLane } from './support/panel.mjs';
 
 // ---------- 0162: declutter the panel on a phone ----------
 
@@ -45,17 +45,18 @@ test('0162 AC1: the three fixed hints are gone from the page', async () => {
 
 // ---------- AC2 ----------
 
-test('0162 AC2: with nothing in flight or ready, Build is its heading and "Nothing in flight or ready" on one line; a ready ticket brings its full layout back', async () => {
+// 0410: Build is a tab now, which says "Nothing in flight or ready" beside its name, and its lane says so too.
+test('0162 AC2: with nothing in flight or ready, Build says "Nothing in flight or ready"; a ready ticket brings its full layout back', async () => {
   const p = fakePage([STATE({ queue: false }), STATE(), STATE({ queue: false })]);
   await p.settle();
+  const empty = () => p.byId('queue').children.map(n => [n.className, n.textContent]);
   assert.equal(p.byId('queue-n').textContent, 'Nothing in flight or ready');
-  assert.equal(p.byId('queue').hidden, true, 'no empty block under the heading');
+  assert.deepEqual(empty(), [['empty', 'Nothing in flight or ready.']], 'the lane says so');
   await refresh(p);
-  assert.equal(p.byId('queue').hidden, false);
   assert.equal(p.byId('queue-n').textContent, '0 in flight · 1 queued');
   assert.equal(queueRows(p).length, 1);
   await refresh(p);
-  assert.equal(p.byId('queue').hidden, true, 'and back to one line once it has gone');
+  assert.deepEqual(empty(), [['empty', 'Nothing in flight or ready.']], 'and again once it has gone');
   assert.equal(p.byId('queue-n').textContent, 'Nothing in flight or ready');
 });
 
@@ -214,19 +215,24 @@ for (const width of [375, 1280]) {
     }, { width });
   });
 
-  test(`0162 AC2: at ${width} px an empty Build section is one line, its heading and the message`, skip, async () => {
+  // 0410: Build is a tab, open on load, its message in the tab under or beside its name, and in its lane.
+  test(`0162 AC2: at ${width} px an empty Build says "Nothing in flight or ready" in its tab and its lane`, skip, async () => {
     await withPanel(async b => {
-      const s = await b.js(`(() => { const sec = document.getElementById('queue').closest('section'), sh = sec.querySelector('.sh'), h2 = sh.querySelector('h2'), n = document.getElementById('queue-n');
-        const r = sec.getBoundingClientRect(), hr = h2.getBoundingClientRect(), nr = n.getBoundingClientRect();
-        return { section: r.height, sh: sh.getBoundingClientRect().height, sameLine: nr.top < hr.bottom && nr.bottom > hr.top, text: n.innerText }; })()`);
+      const s = await b.js(`(() => { const name = document.querySelector('#tab-build .tab-name'), n = document.getElementById('queue-n'), tab = document.getElementById('tab-build');
+        const t = tab.getBoundingClientRect(), nr = n.getBoundingClientRect();
+        return { text: n.innerText, inTab: nr.left >= t.left && nr.right <= t.right + 0.5 && nr.top >= t.top && nr.bottom <= t.bottom + 0.5, name: name.innerText,
+          lane: document.getElementById('queue').innerText, open: !document.getElementById('build-section').hidden }; })()`);
+      assert.equal(s.name, 'Build');
       assert.equal(s.text, 'Nothing in flight or ready');
-      assert.ok(s.sameLine, 'the message beside the heading');
-      assert.ok(s.section - s.sh <= 2.5, `the section is ${s.section} px, its header ${s.sh} px`); // only the section's own borders
+      assert.ok(s.inTab, 'the message is in the tab');
+      assert.ok(s.open, 'Build is open');
+      assert.equal(s.lane, 'Nothing in flight or ready.');
     }, { width, state: STATE({ queue: false }) });
   });
 
   test(`0162 AC3: at ${width} px three stat tiles show in one row, More stats under them shows the other three`, skip, async () => {
     await withPanel(async b => {
+      await b.js(openLane('shipped')); // 0410
       const shown = () => b.js(`[...document.querySelectorAll('section.shipped .stat')].filter(n => n.getBoundingClientRect().height > 0).map(n => { const r = n.getBoundingClientRect(); return { top: Math.round(r.top), bottom: r.bottom, label: n.querySelector('.label').textContent }; })`);
       const before = await shown();
       assert.deepEqual(before.map(t => t.label), ['shipped today', 'median minutes', 'median builder cost']);
@@ -244,6 +250,7 @@ for (const width of [375, 1280]) {
 
   test(`0162 AC4: at ${width} px a shipped card is compact until Details opens it`, skip, async () => {
     await withPanel(async b => {
+      await b.js(openLane('shipped')); // 0410
       const card = `[...document.querySelectorAll('#shipped tr')].find(n => n.querySelector('.id').textContent === '0401')`;
       const look = () => b.js(`(() => { const c = ${card}, r = c.getBoundingClientRect(), fl = c.querySelector('.figline'), d = c.querySelector('.details');
         const lh = parseFloat(getComputedStyle(fl).lineHeight) || parseFloat(getComputedStyle(fl).fontSize) * 1.5;
@@ -265,6 +272,7 @@ for (const width of [375, 1280]) {
 
   test(`0162 AC5: at ${width} px the gaps between a Plan card's tags are equal, beside the priority tag too`, skip, async () => {
     await withPanel(async b => {
+      await b.js(openLane('plan')); // 0410
       const tags = await b.js(`[...document.querySelector('#shaping .item').querySelectorAll('.head .tag')].map(n => { const r = n.getBoundingClientRect(); return { text: n.textContent, left: r.left, right: r.right }; })`);
       assert.deepEqual(tags.map(t => t.text), ['P1', 'M', 'high', 'bug']);
       const gaps = tags.slice(1).map((t, i) => t.left - tags[i].right);

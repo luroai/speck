@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, toggles, items, top, queueRows, stageOf, shippedRows, findChrome, browserPage, charAt } from './support/panel.mjs';
+import { T, fm, panelRepo, freePort, startPanel, stop, fakePage, full, idea, round, click, toggles, items, top, queueRows, stageOf, shippedRows, findChrome, browserPage, charAt, openLane } from './support/panel.mjs';
 
 // ---------- 0040: selected text in an open ticket or idea survives the refresh ----------
 
@@ -176,6 +176,7 @@ test('0040 AC1-AC5: in a real browser, selected text stays selected through refr
   try {
     const item = '#shaping .item';
     await b.until(`!!document.querySelector('${item} .title')`, 'the draft');
+    await b.js(openLane('plan')); // 0410
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .detail')`, 'the draft to open');
     await b.drag(await b.js(charAt(`${item} .detail p.text`, 0)), await b.js(charAt(`${item} .detail p.text`, 13)));

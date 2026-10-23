@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, fm, charAt, fakePage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, fm, charAt, fakePage, full, click, items, top, toggles, queueRows, page, panelModel, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
 
 // ---------- 0041: tickets that start a dependency chain, and tickets waiting on others ----------
 
@@ -215,6 +215,7 @@ test('0041 AC1, AC2 and AC5: in a real browser, the icons show and hovering ligh
     assert.ok(await b.js(`document.querySelector('#queue .q .chain').getBoundingClientRect().width > 0`), 'the icon takes up room');
     assert.equal(await b.js(`document.querySelector('#shaping .item .lock').title`), 'Waiting on 0001');
     assert.ok(await b.js(`[...document.querySelectorAll('#shaping .item')][0].textContent.includes('waiting on 0001')`));
+    await b.js(openLane('plan')); // 0410
     await b.move(await centre('#shaping .item .title'));
     await b.until(`document.querySelector('#queue .q').classList.contains('hl')`, 'the chain to light up');
     assert.doesNotMatch(await cls('#shaping .item:nth-child(2)'), /\b(hl|dim)\b/, 'the unlinked ticket is left as it is (0185)');
@@ -291,6 +292,7 @@ test('0041 review F1: in a real browser, text selected in an open ticket stays s
   const item = '#shaping .item:nth-child(1)';
   try {
     await b.until(`!!document.querySelector('${item} .chain')`, 'the chain icon on 0002');
+    await b.js(openLane('plan')); // 0410
     await b.js(`document.querySelector('${item} .title').click()`);
     await b.until(`!!document.querySelector('${item}.open .detail p.text')`, 'the draft to open');
     await b.drag(await b.js(charAt(`${item} .detail p.text`, 0)), await b.js(charAt(`${item} .detail p.text`, 20)));

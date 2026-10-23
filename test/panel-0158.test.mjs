@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, idea, round, queueRows } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, fakePage, T, idea, round, queueRows, openLane } from './support/panel.mjs';
 
 // ---------- 0158: stack review pack tables on a phone ----------
 
@@ -92,6 +92,7 @@ async function withPack(width, fn) {
       if (i >= 100) throw new Error('timed out waiting for the panel');
       await new Promise(res => setTimeout(res, 100));
     }
+    await b.js(openLane('plan')); // 0410: the idea's table is in Plan, beside the pane
     await b.js(`document.querySelector('#shaping-toggle .toggle.ideas').click()`);
     await b.until(`!!document.querySelector('#shaping .item .head')`, 'the idea');
     await b.js(`document.querySelector('#shaping .item .head').click()`);

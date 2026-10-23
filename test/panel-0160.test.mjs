@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, page, findChrome, browserPage } from './support/panel.mjs';
+import { T, full, fakePage, page, findChrome, browserPage, openLane } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 
 // ---------- 0160: keep the panel header on screen ----------
@@ -49,8 +49,10 @@ async function withPanel(fn, { width = 375, height = 640, insets = null, theme =
     await fn(b);
   } finally { await b.close(); }
 }
-// Scrolls the page and waits for the header to settle (a scroll event, then any fade).
-const scrollTo = async (b, y) => { await b.js(`scrollTo(0, ${y})`); await new Promise(r => setTimeout(r, 350)); };
+// Scrolls the page and waits for the header to settle (a scroll event, then any fade). 0410: the page itself never
+// scrolls, so it's Plan's list, the lane with the most on this board, that scrolls.
+const LIST = `document.getElementById('shaping')`;
+const scrollTo = async (b, y) => { await b.js(`${openLane('plan')} && (${LIST}.scrollTop = ${y})`); await new Promise(r => setTimeout(r, 350)); };
 const box = (b, sel) => b.js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, height: r.height }; })()`);
 // What the page shows at a point: 'header' when it's the header or anything in it.
 const at = (b, x, y) => b.js(`(() => { const n = document.elementFromPoint(${x}, ${y}); return !n ? null : n.closest('header') ? 'header' : n.closest('#full-ticket') ? 'pane' : n.tagName.toLowerCase(); })()`);
@@ -68,7 +70,7 @@ test('0160 AC1: the header stays at the top of the screen with a solid backgroun
 for (const width of [375, 1280]) {
   test(`0160 AC1: at ${width} px, scrolled down, the header is still at the top and content scrolls under it, never through it`, skip, () => withPanel(async b => {
     await scrollTo(b, 900);
-    assert.ok(await b.js('scrollY') > 500, 'the page scrolled');
+    assert.ok(await b.js(`${LIST}.scrollTop`) > 500, 'Plan\'s list scrolled');
     const h = await box(b, 'header');
     assert.equal(h.top, 0, 'the header is at the top of the screen');
     const look = await b.js(`(() => { const s = getComputedStyle(document.querySelector('header')); return { bg: s.backgroundColor, body: getComputedStyle(document.body).backgroundColor, line: s.borderBottomWidth, lineStyle: s.borderBottomStyle }; })()`);
@@ -142,7 +144,7 @@ test('0160 AC3: with a 47 px status bar, the slim header is at most 60 px plus t
 
 test('0160 AC3: slimming moves nothing on the page: a card stays where it was as the header changes', skip, () => withPanel(async b => {
   await scrollTo(b, 3);
-  const docTop = `document.querySelectorAll('#shaping .item')[6].getBoundingClientRect().top + scrollY`;
+  const docTop = `document.querySelectorAll('#shaping .item')[6].getBoundingClientRect().top + ${LIST}.scrollTop`;
   const first = await b.js(docTop);
   await scrollTo(b, 40);
   assert.equal(await b.js(docTop), first, 'its place on the page is the same, slim or not');
@@ -176,7 +178,7 @@ test('0160 AC4: the last card clears the home indicator', skip, () => withPanel(
   const pad = await b.js(`getComputedStyle(document.querySelector('main')).paddingBottom`);
   assert.equal(pad, `${16 + 34}px`, 'the page\'s bottom padding includes the inset');
   await scrollTo(b, 100000);
-  const last = await b.js(`(() => { const s = [...document.querySelectorAll('main > section')].at(-1).getBoundingClientRect(); return innerHeight - s.bottom; })()`);
+  const last = await b.js(`(() => { const s = [...document.querySelectorAll('main > section')].find(n => !n.hidden).getBoundingClientRect(); return innerHeight - s.bottom; })()`); // 0410: the open lane
   assert.ok(last >= 34, `scrolled to the end, the last card ends ${last} px above the bottom`);
 }, { insets: { top: 47, bottom: 34 } }));
 

@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, full, items, shippedRows, queueRows, findChrome, browserPage } from './support/panel.mjs';
+import { page, fm, good, panelRepo, freePort, startPanel, stop, fakePage, T, full, items, shippedRows, queueRows, findChrome, browserPage, openLane } from './support/panel.mjs';
 
 // ---------- 0141: keep a shipped ticket open when its title is tapped on a phone ----------
 
@@ -110,6 +110,7 @@ test('0141 AC1-AC4: in a real phone-sized browser, the title has no address, ope
   const panel = await startPanel(r.dir, ['--port', String(await freePort())]);
   const b = await browserPage('about:blank');
   const title = `document.querySelector('#shipped tr .title-link')`;
+  const LIST = `document.getElementById('shipped-list').scrollTop`;
   const opened = `!document.getElementById('full-ticket').hidden && document.querySelector('#full-ticket .id').textContent === document.querySelector('#shipped tr .id').textContent`;
   const close = () => b.js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
   const key = async (k, code, vk) => { for (const type of ['keyDown', 'keyUp']) await b.send('Input.dispatchKeyEvent', { type, key: k, code, windowsVirtualKeyCode: vk, ...(type === 'keyDown' ? { text: k === 'Enter' ? '\r' : k } : {}) }); };
@@ -120,6 +121,7 @@ test('0141 AC1-AC4: in a real phone-sized browser, the title has no address, ope
     await b.send('Page.navigate', { url: `http://127.0.0.1:${panel.port}/` });
     await b.until(`location.port === '${panel.port}' && !!${title}`, 'the Shipped row\'s title');
     await b.js(`window.__notReloaded = true`);
+    await b.js(openLane('shipped')); // 0410: and Shipped's list scrolls, not the page
     // AC1: no link, no address.
     const what = await b.js(`(() => { const t = ${title}; return { tag: t.tagName, href: t.getAttribute('href'), links: t.closest('tr').querySelectorAll('a').length }; })()`);
     assert.notEqual(what.tag, 'A', 'AC1: not a link');
@@ -135,7 +137,7 @@ test('0141 AC1-AC4: in a real phone-sized browser, the title has no address, ope
     assert.ok(look.width >= 43.5 && look.height >= 43.5, `AC3: a 44 px tap area (${look.width}x${look.height})`);
     // AC2: a tap, with the page scrolled down to the row, opens it without moving or reloading the page.
     await b.js(`${title}.scrollIntoView({ block: 'center' })`);
-    const scrolled = await b.js(`scrollY`);
+    const scrolled = await b.js(LIST);
     const [x, y] = await b.js(`(r => [r.left + r.width / 2, r.top + r.height / 2])(${title}.getBoundingClientRect())`);
     await b.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
     await b.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -143,7 +145,7 @@ test('0141 AC1-AC4: in a real phone-sized browser, the title has no address, ope
     await new Promise(res => setTimeout(res, 300));
     assert.ok(await b.js(`window.__notReloaded === true`), 'AC2: the page wasn\'t reloaded');
     assert.equal(await b.js(`location.hash`), '', 'AC2: the address stays the same');
-    assert.equal(await b.js(`scrollY`), scrolled, 'AC2: the page wasn\'t scrolled');
+    assert.equal(await b.js(LIST), scrolled, 'AC2: the page wasn\'t scrolled');
     assert.ok(await b.js(opened), 'AC2: and the ticket stays open');
     await close();
     // AC4: Tab reaches it, and Enter and Space open it.
@@ -152,10 +154,10 @@ test('0141 AC1-AC4: in a real phone-sized browser, the title has no address, ope
       let reached = false;
       for (let i = 0; i < 300 && !reached; i++) { await key('Tab', 'Tab', 9); reached = await b.js(`document.activeElement === ${title}`); }
       assert.ok(reached, 'AC4: Tab reaches the title');
-      const before = await b.js(`scrollY`);
+      const before = await b.js(LIST);
       await key(k, code, vk);
       await b.until(opened, `AC4: the pane opened with ${code}`);
-      assert.equal(await b.js(`scrollY`), before, `AC4: ${code} doesn't scroll the page`);
+      assert.equal(await b.js(LIST), before, `AC4: ${code} doesn't scroll the page`);
       assert.ok(await b.js(`window.__notReloaded === true`), 'AC4: the page wasn\'t reloaded');
       await close();
     }

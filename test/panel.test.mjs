@@ -219,7 +219,7 @@ test('0031 AC3: Shipped shows the 5 latest finished done tickets, newest first, 
 
 test('0031 AC3: the page has the mockup\'s areas, groups and dark style, without the sample banner or "later" buttons', () => {
   const html = page();
-  for (const text of ['<h2>Plan</h2>', '<h2>Build</h2>', '<h2>Shipped</h2>', 'waiting on '])
+  for (const text of ['<span class="tab-name">Plan</span>', '<span class="tab-name">Build</span>', '<span class="tab-name">Shipped</span>', 'waiting on ']) // 0410: the areas are tabs
     assert.ok(html.includes(text), text);
   assert.deepEqual(paletteProblems(html), [], 'the agreed colour palette');
   assert.match(html, /border-radius: 0 !important/, 'square corners');
@@ -489,7 +489,8 @@ test('0034 AC1: the queue is one list, in-flight tickets first, then ready ones,
     T('0007', 'reviewing', { rounds: [round(1, 1)] }), T('0008', 'done'), T('0009', 'cancelled')], ideas: [] };
   assert.deepEqual(model(state).queue.map(t => t.id), ['0002', '0004', '0006', '0007', '0001', '0005']);
   const html = page();
-  for (const h of ['Needs you', 'Running', 'Up next']) assert.ok(!html.includes(h), `no ${h} heading`);
+  // 0410: a heading would be text in the markup or a string in the script; the script does read the Foreman's "Needs you <n>".
+  for (const h of ['Needs you', 'Running', 'Up next']) assert.ok(!new RegExp(`>${h}<|['"\`]${h}['"\`]`).test(html), `no ${h} heading`);
   assert.ok(!/id="(needs|running|next)(-h)?"/.test(html), 'no group containers');
   const p = fakePage([state]);
   await p.settle();

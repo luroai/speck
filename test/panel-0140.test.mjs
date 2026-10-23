@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round, exitOf } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, round, exitOf, openLane } from './support/panel.mjs';
 
 // ---------- 0140: fit the panel to a phone screen ----------
 
@@ -92,7 +92,10 @@ const OVERFLOW = `(() => {
   const name = n => n.nodeType === 3 ? 'text "' + n.textContent.trim().slice(0, 30) + '" in ' + name(n.parentElement)
     : n.tagName.toLowerCase() + (n.id ? '#' + n.id : '') + (typeof n.className === 'string' && n.className ? '.' + n.className.trim().split(/\\s+/).join('.') : '');
   const pane = document.getElementById('full-ticket');
-  const clipped = n => { for (let p = n.parentElement; p && p !== document.body && p !== pane; p = p.parentElement) if (getComputedStyle(p).overflowX !== 'visible') return true; return false; };
+  // 0410: a lane's list scrolls up and down, which a browser makes clip sideways too, so it counts as reaching past the
+  // edge itself when it scrolls sideways, and what's in it is checked as before.
+  const clipped = n => { for (let p = n.parentElement; p && p !== document.body && p !== pane; p = p.parentElement) if (!p.classList.contains('lane-list') && getComputedStyle(p).overflowX !== 'visible') return true; return false; };
+  for (const l of document.querySelectorAll('.lane-list')) if (l.getClientRects().length && l.scrollWidth > l.clientWidth) out.push(name(l) + ' scrolls sideways: ' + l.scrollWidth + ' > ' + l.clientWidth);
   if (document.documentElement.scrollWidth > W) out.push('the page is ' + document.documentElement.scrollWidth + 'px wide');
   if (!pane.hidden && pane.scrollWidth > pane.clientWidth) out.push('the pane scrolls sideways: ' + pane.scrollWidth + ' > ' + pane.clientWidth);
   const roots = [document.querySelector('header'), document.querySelector('main'), pane].filter(n => n && n.getClientRects().length);
@@ -111,48 +114,61 @@ const OVERFLOW = `(() => {
   return out;
 })()`;
 
+// 0410: in each lane in turn while no pane covers them, as only the open lane shows.
+async function overflow(b) {
+  if (!(await b.js(`document.getElementById('full-ticket').hidden`))) return b.js(OVERFLOW);
+  const out = [];
+  for (const lane of ['plan', 'build', 'shipped']) { await b.js(openLane(lane)); await settle(b); out.push(...(await b.js(OVERFLOW)).map(o => `${lane}: ${o}`)); }
+  await b.js(openLane('build'));
+  return out;
+}
+
 for (const theme of ['light', 'dark']) {
   test(`0140 AC1: at 375 px in the ${theme} look, nothing reaches past the right edge, with every list, menu and pane open`, skip, async () => {
     await withPhone(async b => {
-      assert.deepEqual(await b.js(OVERFLOW), [], 'as first shown');
+      assert.deepEqual(await overflow(b), [], 'as first shown');
       await openAll(b);
       await openPrio(b);
       assert.ok(await b.js(`!!document.querySelector('.prio-menu')`), 'the priority menu is open');
-      assert.deepEqual(await b.js(OVERFLOW), [], 'tickets and builds open, priority menu open');
+      assert.deepEqual(await overflow(b), [], 'tickets and builds open, priority menu open');
       for (const view of ['ideas', 'inbox']) {
         await tab(b, view);
         await openAll(b);
-        assert.deepEqual(await b.js(OVERFLOW), [], `${view} open`);
+        assert.deepEqual(await overflow(b), [], `${view} open`);
       }
       await tab(b, 'tickets');
       await openFull(b);
-      assert.deepEqual(await b.js(OVERFLOW), [], 'the full ticket pane');
+      assert.deepEqual(await overflow(b), [], 'the full ticket pane');
       await closePane(b);
       await openPack(b);
       await b.js(`document.querySelector('#full-ticket details').open = true`);
       await settle(b);
-      assert.deepEqual(await b.js(OVERFLOW), [], 'the review pack pane');
+      assert.deepEqual(await overflow(b), [], 'the review pack pane');
     }, { theme });
   });
 }
 
+// 0410: Plan, Build and Shipped are tabs, so each lane is opened by its tab in turn, and Build is opened again after.
 const SECTIONS = `(() => {
   const main = document.querySelector('main'), s = getComputedStyle(main);
   const box = n => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width }; };
-  return { main: { left: main.getBoundingClientRect().left + parseFloat(s.paddingLeft), right: main.getBoundingClientRect().right - parseFloat(s.paddingRight) },
-    heads: [...main.querySelectorAll(':scope > section')].map(n => n.querySelector('h2').textContent),
-    boxes: [...main.querySelectorAll(':scope > section')].map(box) };
+  const heads = [], boxes = [];
+  for (const tab of document.querySelectorAll('#tabs .tab')) {
+    tab.click();
+    const open = [...main.querySelectorAll(':scope > section')].filter(n => !n.hidden);
+    heads.push(tab.querySelector('.tab-name').textContent + (open.length === 1 ? '' : ' with ' + open.length + ' lanes'));
+    boxes.push(box(open[0]));
+  }
+  document.getElementById('tab-build').click();
+  return { main: { left: main.getBoundingClientRect().left + parseFloat(s.paddingLeft), right: main.getBoundingClientRect().right - parseFloat(s.paddingRight) }, heads, boxes };
 })()`;
 
 for (const width of [375, 699]) {
-  test(`0140 AC2: at ${width} px, Plan, Build and Shipped are one full-width column, in that order`, skip, async () => {
+  test(`0140 AC2: at ${width} px, Plan, Build and Shipped are each full width, one at a time (0410)`, skip, async () => {
     await withPhone(async b => {
       const { main, heads, boxes } = await b.js(SECTIONS);
       assert.deepEqual(heads, ['Plan', 'Build', 'Shipped']);
-      for (const [i, x] of boxes.entries()) {
-        assert.ok(Math.abs(x.left - main.left) < 1 && Math.abs(x.right - main.right) < 1, `${heads[i]} spans main's width: ${JSON.stringify(x)} in ${JSON.stringify(main)}`);
-        if (i) assert.ok(x.top >= boxes[i - 1].bottom, `${heads[i]} is below ${heads[i - 1]}`);
-      }
+      for (const [i, x] of boxes.entries()) assert.ok(Math.abs(x.left - main.left) < 1 && Math.abs(x.right - main.right) < 1, `${heads[i]} spans main's width: ${JSON.stringify(x)} in ${JSON.stringify(main)}`);
     }, { width });
   });
 }
@@ -173,13 +189,11 @@ const DROP_NARROW = `(() => {
 })()`;
 
 for (const width of [700, 1280]) {
-  test(`0140 AC2: at ${width} px, the layout is two columns and exactly what it is without the phone rules`, skip, async () => {
+  test(`0140 AC2: at ${width} px, each lane is full width (0410: one at a time), and the layout is exactly what it is without the phone rules`, skip, async () => {
     await withPhone(async b => {
-      const { heads, boxes } = await b.js(SECTIONS);
+      const { main, heads, boxes } = await b.js(SECTIONS);
       assert.deepEqual(heads, ['Plan', 'Build', 'Shipped']);
-      const [plan, build, shipped] = boxes;
-      assert.ok(Math.abs(plan.top - build.top) < 1 && plan.right < build.left, 'Plan and Build side by side');
-      assert.ok(shipped.top > plan.bottom && Math.abs(shipped.left - plan.left) < 1 && Math.abs(shipped.right - build.right) < 1, 'Shipped below, across both');
+      for (const [i, x] of boxes.entries()) assert.ok(Math.abs(x.left - main.left) < 1 && Math.abs(x.right - main.right) < 1, `${heads[i]} spans main's width`);
       await openAll(b);
       await openPrio(b);
       // Everything holds still to be compared, the builder badges too (0168): dropping rules restarts an animation.
@@ -255,8 +269,16 @@ for (const width of [375, 699]) {
   test(`0140 AC4: at ${width} px, every button and clickable control is at least 44 by 44 px`, skip, async () => {
     await withPhone(async b => {
       const seen = new Set();
+      // 0410: in each lane in turn, while no pane covers them, as only the open lane shows
       const check = async when => {
-        const all = await b.js(CONTROLS);
+        // Pressing a tab closes an open priority menu, as any click does, so Plan comes last and its menu opens again.
+        const covered = !(await b.js(`document.getElementById('full-ticket').hidden`)), menu = await b.js(`!!document.querySelector('.prio-menu')`);
+        const all = [];
+        for (const lane of covered ? [null] : ['build', 'shipped', 'plan']) {
+          if (lane) await b.js(openLane(lane));
+          if (lane === 'plan' && menu) await openPrio(b);
+          all.push(...await b.js(CONTROLS));
+        }
         for (const c of all) seen.add(c.what.split(' ')[0]);
         const small = all.filter(c => c.width < 43.5 || c.height < 43.5).map(c => `${c.what} ${Math.round(c.width)}x${Math.round(c.height)}`);
         assert.deepEqual(small, [], when);
