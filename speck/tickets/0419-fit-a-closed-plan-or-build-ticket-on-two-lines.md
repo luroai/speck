@@ -43,6 +43,9 @@ A closed Plan or Build ticket is a title line and one line of details.
 - 64 px needs 0417's compact controls.
 - Waits for 0418: both change `templates/panel.html`.
 - Failing before this build: none
+- Self-check: a ticket missing its priority, size or risk, or its timer, leaves them out of its line with no empty part (new test); a wrapped line ends with its dot rather than starting with one, and breaks only between parts, a list of linked ids wrapping between its ids; removed two rules for the old tag row.
+- Built: the bug, fix and document tags and the chain icon stay. The tags follow the risk in the details line, as words; the icon follows the id. Tags in the line are inline text with a mouse, and keep their 44 px boxes on a touch screen (0417).
+- Known limit: at 420 px a details line longer than about 50 characters of 12 px text, such as a reviewing ticket's "Codex is reviewing · round 2 · Review 2 · 01:07 · P2 · S · low", wraps onto a second line, as AC1 and AC2 allow, and that card is then about 76 px tall. Shorter text (0161) or new wording (out of scope) would be needed to fit it.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

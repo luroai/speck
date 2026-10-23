@@ -30,7 +30,8 @@ function fake(tickets = TICKETS, { ship = () => ({ ok: true, status: 200, json: 
 const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className === 'id' && n._text === id));
 const topOf = row => row.children.find(n => n.className === 'top');
 const textOf = row => topOf(row).children.find(n => /^progress\b/.test(n.className));
-const lineOf = row => textOf(row).textContent; // the line under the title (beside the builder badge until 0416)
+// the line under the title (beside the builder badge until 0416), up to the build's timer and the tags that follow it since 0419
+const lineOf = row => textOf(row).children.filter(n => /^(say|stage|ship-at)\b/.test(n.className || '')).map(n => n.textContent).join(' · ');
 const count = (s, re) => (s.match(re) || []).length;
 const acts = (p, row) => p.all(row).filter(n => /\bact\b/.test(n.className || '')).map(n => n.textContent);
 
@@ -94,7 +95,7 @@ test('0201 AC4: cards at every other stage still show their sentence and step na
   for (const [id, [say, stage]] of Object.entries(expect)) {
     const text = textOf(rowOf(p, id));
     assert.equal(text.className, 'progress', id);
-    assert.deepEqual(text.children.map(n => [n.className.split(' ')[0], n.textContent]), [['say', say], ['stage', stage]], id);
+    assert.deepEqual(text.children.filter(n => /^(say|stage|ship-at)\b/.test(n.className || '')).map(n => [n.className.split(' ')[0], n.textContent]), [['say', say], ['stage', stage]], id);
   }
 });
 
@@ -103,8 +104,8 @@ test('0201 AC4: a shipping card\'s build time on the right is unchanged', async 
   await p.settle();
   const m = panelModel()({ tickets: TICKETS(), ideas: [] }).queue;
   for (const id of ['0801', '0802', '0803']) {
-    const t = m.find(x => x.id === id), sub = topOf(rowOf(p, id)).children.at(-1);
-    assert.equal(sub.className, 'sub', `${id}: the timer is still last in the top row`);
+    const t = m.find(x => x.id === id), sub = p.all(topOf(rowOf(p, id))).find(n => n.className === 'sub');
+    assert.ok(sub, `${id}: the timer is still in the top row`);
     assert.ok(t.counter, `${id}: it has a build time`);
     assert.equal(sub.textContent, t.counter, id);
   }

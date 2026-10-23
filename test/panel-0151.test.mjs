@@ -116,7 +116,7 @@ const TAGS = id => `(() => {
 })()`;
 
 for (const width of [375, 1280]) {
-  test(`0151 AC2: at ${width} px, the priority, size, risk and type tags sit on their own row under the title, in that order, all the same height`, skip, async () => {
+  test(`0151 AC2: at ${width} px, the priority, size, risk and type tags sit under the title (0419: in its details line), in that order, all the same height`, skip, async () => {
     await withPanel(async b => {
       for (const [id, want] of [['0201', ['P1', 'M', 'high', 'bug']], ['0202', ['P2', 'S', 'low']], ['0203', ['P2', 'S', 'low', 'fix']]]) {
         const { titleBottom, tags } = await b.js(TAGS(id));
@@ -164,14 +164,12 @@ for (const theme of ['light', 'dark']) {
 }
 
 for (const width of [375, 1280]) {
-  test(`0151 AC3: at ${width} px, the criteria count, lint result and waiting-on note sit under the tags`, skip, async () => {
+  test(`0151 AC3: at ${width} px, the criteria count, lint result and waiting-on note follow the tags, in the same line (0419)`, skip, async () => {
     await withPanel(async b => {
       const got = await b.js(`(() => { const item = ${ITEM('0202')}, checks = item.querySelector('.checks');
-        return { text: checks.textContent, top: checks.getBoundingClientRect().top, tags: Math.max(...[...item.querySelectorAll('.head .tag')].map(n => n.getBoundingClientRect().bottom)) }; })()`);
-      assert.match(got.text, /2 criteria/);
-      assert.match(got.text, /lint passes/);
-      assert.match(got.text, /waiting on 0201/);
-      assert.ok(got.top >= got.tags - 0.5, `the checks (${got.top}) are under the tags (${got.tags})`);
+        return { text: checks.textContent, tagsIn: [...item.querySelectorAll('.head .tag')].every(n => checks.contains(n)) }; })()`);
+      assert.match(got.text, /^P2 · S · low · 2 criteria · lint passes · after 0201$/);
+      assert.ok(got.tagsIn, 'the tags are in the same line');
     }, { width });
   });
 }

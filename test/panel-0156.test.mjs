@@ -48,7 +48,7 @@ test('0156 AC1: each in-flight ticket has its progress in its top row (in words 
   for (const t of TICKETS.filter(x => x.status !== 'ready')) {
     const row = rowOf(p, t.id), top = topOf(row);
     assert.equal(top.children.filter(n => classes(n)[0] === 'progress').length, 1, `${t.id}: one progress row in the top row`);
-    assert.ok(top.children.some(n => n.className === 'sub' && /\d\d:\d\d/.test(n.textContent)), `${t.id}: the timer`);
+    assert.ok(find(p, top, /^sub$/).some(n => /\d\d:\d\d/.test(n.textContent)), `${t.id}: the timer`); // 0419: in the progress line
     assert.equal(find(p, row, /\b(stages|enso|dots)\b/).length, 0, `${t.id}: no five-part bar, ensō or dots`);
   }
   for (const id of ['0409', '0410']) {
@@ -146,10 +146,11 @@ test('0156 AC4: the current stage\'s name follows the sentence (its five dots we
   const expect = { '0401': 'Build', '0402': 'Self-check', '0403': 'Review 2', '0404': 'Review', '0405': 'Ship', '0406': 'Build', '0407': 'Build' }; // 0408 ships, so it has no stage's name since 0201
   for (const [id, name] of Object.entries(expect)) {
     const text = find(p, rowOf(p, id), /^progress$/)[0];
-    assert.deepEqual(text.children.map(n => n.className.split(' ')[0]), ['say', 'stage'], `${id}: the sentence, then the stage`);
+    const parts = text.children.filter(n => n.className && n.className !== 'sep'); // 0419: separated by " · ", then the timer and the tags
+    assert.deepEqual(parts.slice(0, 2).map(n => n.className.split(' ')[0]), ['say', 'stage'], `${id}: the sentence, then the stage`);
     const tone = SAYS[id][1];
-    assert.equal(text.children[1].textContent, name, id);
-    assert.equal(text.children[1].className, tone ? `stage ${tone}` : 'stage', `${id}: in the state colour`);
+    assert.equal(parts[1].textContent, name, id);
+    assert.equal(parts[1].className, tone ? `stage ${tone}` : 'stage', `${id}: in the state colour`);
   }
 });
 
@@ -204,13 +205,13 @@ for (const theme of ['light', 'dark']) {
           // AC3: the sentence under the title, in the state colour or the text colour.
           assert.ok(l.say.top >= l.title.bottom - 0.5, `${id}: the sentence is under the title`);
           assert.equal(l.sayColor, tone ? tones[tone] : colour.text, `${id}: the sentence's colour`);
-          // AC4: the stage's name under the sentence, in the state colour. 0201: a shipping card has none, and how long
-          // its ship has run follows "Shipping" on the same line.
+          // AC4: the stage's name after the sentence (0419: on its line, or the next when it doesn't fit), in the state
+          // colour. 0201: a shipping card has none, and how long its ship has run follows "Shipping" on the same line.
           if (id === '0408') {
             assert.equal(l.stage, null, `${id}: no stage's name`);
             assert.ok(Math.abs(l.shipAt.top - l.say.top) < 2 && l.shipAt.left >= l.say.right - 0.5, `${id}: the ship's time on the sentence's line`);
           } else {
-            assert.ok(l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name is under the sentence`);
+            assert.ok((Math.abs(l.stage.top - l.say.top) < 2 && l.stage.left >= l.say.right - 0.5) || l.stage.top >= l.say.bottom - 0.5, `${id}: the stage's name follows the sentence`);
             assert.equal(l.stageColor, tones[tone], `${id}: the stage's colour`);
           }
           // AC5: everything in the card stays inside it.

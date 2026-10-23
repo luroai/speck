@@ -150,13 +150,16 @@ test('0161 AC3: no text is smaller than 12 px, and nothing is lighter than weigh
   assert.match(get(rules().find(r => r.sel === 'body' && get(r, 'font')), 'font'), /^400 13px/, 'running text is 400');
 });
 
+// 0419: a Plan or Build card's tags are words in its details line, not boxes.
+const IN_LINE = /\.(checks|progress|act) \.tag$/;
 test('0161 AC3: the tags are 14 px text in boxes at least 28 px tall, and only the one rule sizes them', () => {
   const rs = rules();
   const tag = rs.find(r => r.sel === '.tag');
   assert.equal(get(tag, 'font-size'), '14px');
   const border = Number((get(tag, 'border').match(/^([\d.]+)px/) || [])[1]);
   assert.ok(Number(get(tag, 'line-height').replace('px', '')) + 2 * border >= 28, 'line height and borders make 28 px');
-  for (const r of rs.filter(x => x !== tag && x.sel.split(',').some(s => /\.tag(?![\w-])/.test(lastCompound(s))))) {
+  const inLine = r => r.sel.split(',').every(s => IN_LINE.test(s.trim()));
+  for (const r of rs.filter(x => x !== tag && !inLine(x) && x.sel.split(',').some(s => /\.tag(?![\w-])/.test(lastCompound(s))))) {
     for (const k of ['font', 'font-size', 'line-height', 'height', 'min-height', 'max-height', 'padding']) {
       assert.equal(get(r, k), undefined, `${r.sel} changes the tag's ${k}`);
     }
@@ -272,7 +275,7 @@ const TEXTS = `(() => { ${LIB}
 // The edge of every control and card on show against what's next to it: each border side with a width, or its fill.
 const EDGES = `(() => { ${LIB}
   const out = [];
-  const sel = 'button:not(.goto):not(.prio-menu button), .tag, .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge
+  const sel = 'button:not(.goto):not(.prio-menu button), .tag:not(:is(.checks, .progress, .act) .tag), .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge. 0419: a card's tags are words
   for (const el of document.querySelectorAll(sel)) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el), next = behind(el.parentElement);
@@ -285,7 +288,8 @@ const EDGES = `(() => { ${LIB}
   }
   return out;
 })()`;
-const TAGS = `[...document.querySelectorAll('.tag')].filter(el => el.getClientRects().length).map(el => ({
+// 0419: the boxed tags, apart from a Plan or Build card's, which are words in its details line
+const TAGS = `[...document.querySelectorAll('.tag:not(:is(.checks, .progress, .act) .tag)')].filter(el => el.getClientRects().length).map(el => ({
   where: el.closest('#full-ticket') ? 'pane' : el.closest('#queue') ? 'build' : el.closest('#shaping') ? 'plan' : el.closest('#shipped') ? 'shipped' : 'other',
   text: el.textContent, size: parseFloat(getComputedStyle(el).fontSize), height: el.getBoundingClientRect().height }))`;
 
@@ -335,7 +339,7 @@ async function everyView(b, theme) {
   checkTexts(await b.js(TEXTS), `${theme}, the full ticket`);
   checkEdges(await b.js(EDGES), `${theme}, the full ticket`);
   tags.push(...(await b.js(TAGS)).filter(t => t.where === 'pane'));
-  for (const where of ['plan', 'build', 'pane', 'shipped']) assert.ok(tags.some(t => t.where === where), `${theme}: tags in ${where}`);
+  for (const where of ['pane', 'shipped']) assert.ok(tags.some(t => t.where === where), `${theme}: tags in ${where}`);
   for (const t of tags) {
     assert.equal(t.size, 14, `${theme}: the ${t.text} tag in ${t.where} is 14 px`);
     assert.ok(t.height >= 28, `${theme}: the ${t.text} tag in ${t.where} is ${t.height} px tall`);

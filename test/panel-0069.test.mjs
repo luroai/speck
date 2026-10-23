@@ -45,7 +45,7 @@ test('0069 AC1: the rest of the row shows as before: bar, counter, worktree path
   await p.settle();
   const a = rowOf(p, '0001');
   assert.ok(topOf(a).children.some(n => n.className === 'progress'), 'the progress, in the top row since 0156: in words only since 0416');
-  assert.match(topOf(a).children.find(n => n.className === 'sub').textContent, /^01:0\d$/, 'the counter in the top row');
+  assert.match(p.all(topOf(a)).find(n => n.className === 'sub').textContent, /^01:0\d$/, 'the counter in the top row');
   await open(p, '0001');
   assert.deepEqual(shape(rowOf(p, '0001')), ['top', 'act path', 'full-open', 'log']);
   assert.ok(rowOf(p, '0001').textContent.includes(`worktree ${WT}`));
@@ -93,11 +93,13 @@ test('0069 AC3: a ready ticket\'s Queued line is unchanged', async () => {
   const p = queuePage();
   await p.settle();
   const waiting = rowOf(p, '0005'), chain = rowOf(p, '0006');
-  assert.deepEqual(shape(waiting), ['top', 'act']);
-  assert.equal(waiting.children[1].textContent, 'Queued · waiting on 0006');
-  assert.equal(waiting.children[1].children[0].tagName, 'b');
-  assert.equal(chain.children[1].textContent, 'Queued · unlocks 0005');
+  // 0419: the Queued line is the top row's details line, followed by the ticket's tags
+  const queuedOf = row => row.children[0].children[1];
+  assert.deepEqual(shape(waiting), ['top']);
+  assert.equal(queuedOf(waiting).textContent, 'Queued · waiting on 0006 · P2 · S · low');
+  assert.equal(queuedOf(waiting).children[0].tagName, 'b');
+  assert.equal(queuedOf(chain).textContent, 'Queued · unlocks 0005 · P2 · S · low');
   const lone = fakePage([{ tickets: [T('0007', 'ready')], ideas: [] }]);
   await lone.settle();
-  assert.equal(queueRows(lone)[0].children[1].textContent, 'Queued');
+  assert.equal(queuedOf(queueRows(lone)[0]).textContent, 'Queued · P2 · S · low');
 });
