@@ -1,7 +1,7 @@
 ---
 id: "0419"
 title: "Fit a closed Plan or Build ticket on two lines"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0418"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T16:20:29.027Z"
+blocked_at: "2026-10-23T16:55:19.542Z"
 
 ---
 # 0419 · Fit a closed Plan or Build ticket on two lines
 
-**Status:** 🔍 reviewing
+**Status:** ⛔ blocked
 
 ## Problem
 A closed ticket in Plan or Build takes three or four rows: its title, a row of boxed tags, then its criteria and lint result, then what it waits on. In a narrow side pane that's 110–175 px per ticket, so only a few fit on screen.
@@ -51,7 +52,11 @@ A closed Plan or Build ticket is a title line and one line of details.
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
 
 ## Blocked question
-<!-- Filled in by speck only when status is blocked. -->
+At 420 px, a closed ticket whose details need two lines, such as one being reviewed, now fits in 64 px. But a ticket waiting on many others, say "after" followed by seven ticket numbers, needs three or more lines of details, and no layout keeps every number (each a link) and stays within 64 px. Should the 64 px limit cover only tickets whose details fit on two lines, so a rare long list makes its card taller (A)? Or should a long list be cut short when closed, such as "after 0501, 0502 and 5 more", with the full list in the open ticket (B)? Or should the details stop at two lines and hide the rest behind "…" (C)? I recommend A: it's rare, nothing is hidden, and B or C would add new wording or hide links.
+
+Recommended: A, the 64 px limit covers details on up to two lines
+Changes what you'd notice: yes
+Clear winner: yes
 
 ## Review log
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
@@ -131,6 +136,81 @@ A closed Plan or Build ticket is a title line and one line of details.
     ],
     "escalation_question": "",
     "summary": "The compact details lines work and preserve the existing interactions. However, reviewing tickets can still exceed the required height even with a short title. The passing test skips that known case, so the change needs another revision."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b8223553f440e1ea27843a0fb3def915ccd98562",
+    "session": "continued",
+    "thread_id": "01a169ac-5103-79f3-a5bd-143264c85fa6",
+    "builder_response": "- Tests run: test/panel-0419.test.mjs test/fix-0100.test.mjs test/panel-0041.test.mjs test/panel-0050.test.mjs test/panel-0053.test.mjs test/panel-0058.test.mjs test/panel-0069.test.mjs test/panel-0071.test.mjs test/panel-0145.test.mjs test/panel-0151.test.mjs test/panel-0155.test.mjs test/panel-0156.test.mjs test/panel-0161.test.mjs test/panel-0164.test.mjs test/panel-0165.test.mjs test/panel-0168.test.mjs test/panel-0190.test.mjs test/panel-0201.test.mjs test/panel-0224.test.mjs test/panel-0416.test.mjs test/type-0049.test.mjs test/panel-0162.test.mjs test/panel-0417.test.mjs test/panel-0418.test.mjs (and the commands.checks files, which speck test --files adds)\n- F1: fixed. The AC5 browser test (test/panel-0419.test.mjs) now applies the 64 px limit to every card whose title fits on one line, the reviewing card 0704 included. It checks that 0704's details wrap onto two lines, between their parts, and that 0704 is still no more than 64 px tall. In templates/panel.html, a Plan or Build card's padding is 6 px 10px, the title's line is 20 px with the id's line inside it, and the details lines are 14 px each in 12 px text. A card with one line of details is now about 48–50 px, and one with two lines 64 px (measured: 0703 50, 0704 64, 0705 48, 0706 48). A details line on three lines, such as a long list of linked ids, would still make the card taller; the ticket's Notes say so. Pictures retaken.\n",
+    "seconds": 25,
+    "usage": {
+      "input_tokens": 294427,
+      "cached_input_tokens": 226816,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1546,
+      "reasoning_output_tokens": 84
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T16:55:00.059Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "ticketHead() and detailsLine() retain the required Plan content and wrapping. The reported panel-0419 content and browser tests pass."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "progressOf() and queuedLine() retain the required Build content and order. The reported panel-0419 AC2 and missing-fields tests pass."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The interactions remain unchanged. Passing panel-0419 AC3 checks the priority menu, explanations and dependency links; existing 0224 tests cover navigation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "queueItem() retains content and controls below the header. The reported AC4 and existing queue tests pass."
+      },
+      {
+        "id": 5,
+        "status": "fail",
+        "evidence": "The browser test now checks reviewing card 0704 correctly and passes. However, templates/panel.html allows unlimited details wrapping, and the updated ticket Notes explicitly acknowledge that three lines of details exceed 64 px even with a one-line title."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:219",
+        "issue": "The fix covers two lines of details, but AC5 remains unmet for longer dependency lists. Details can wrap to three or more lines without any height constraint, exceeding 64 px despite a one-line title. The updated Notes acknowledge this remaining failure; AC5 contains no exception for long details.",
+        "suggested_fix": "Add a browser fixture with a short title and enough dependency ids to wrap the details onto at least three lines. Meet the height requirement while preserving the required content and links, or obtain an owner-approved amendment defining which cards the 64 px limit covers.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The reviewing card now fits within 64 px, and its test checks that honestly. Longer dependency lists still exceed the stated height limit, so the original finding is only partly fixed. The other criteria remain satisfied."
   }
 }
 ```
