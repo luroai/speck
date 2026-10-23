@@ -2,7 +2,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, badgeOf, findText } from './support/panel.mjs';
+import { page, panelModel, T, round, fakePage, queueRows, exitOf, isRed, stageOf, sayOf, findText } from './support/panel.mjs';
 
 const MESSAGE = 'speck ship refused: tests failed.';
 const purple = n => /\bto-ship\b/.test(n.className || '');
@@ -50,7 +50,7 @@ test('0138 AC1: an approved ticket whose build has exited is purple on its borde
   assert.match(a.className, /\bto-ship\b/);
   assert.equal(stageOf(a).textContent, 'Ship');
   assert.match(stageOf(a).className, /\bto-ship\b/);
-  assert.equal(badgeOf(a).className, 'badge wait', 'its builder waits for you with a purple flag (0168)');
+  assert.equal(sayOf(a).className, 'say to-ship', 'it waits for you, in purple (0416: with no badge)');
   const label = findText(p, a, 'Build finished without shipping');
   assert.ok(label, 'the label');
   const line = p.all(a).find(n => n.children && n.children.includes(label)) || p.all(a).find(n => n.textContent === 'Build finished without shipping' && n.className);
@@ -104,7 +104,7 @@ test('0138 AC3: blocked, stopped-before-finishing and stopped-unexpectedly ticke
   for (const row of all) {
     assert.match(row.className, /\bblocked\b/);
     assert.match(stageOf(row).className, /\bbad\b/);
-    assert.equal(badgeOf(row).className, 'badge bad', 'its builder needs you (0168)');
+    assert.equal(sayOf(row).className, 'say bad', 'it needs you, in its sentence (0416: with no badge)');
     assert.ok(!p.all(row).some(purple), 'nothing purple');
   }
   for (const [row, label] of [[all[1], 'Build stopped before finishing'], [all[2], 'Build stopped before finishing'], [all[3], 'Build stopped unexpectedly']])
