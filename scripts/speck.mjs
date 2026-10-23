@@ -544,11 +544,11 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck play <id>                     carry a paused build on from where it was paused
   speck stop <id>                     end a build speck run launched for good, and block its ticket
   speck diffstat                      changed lines against the size limit
-  speck test [--fresh]                run the test command, waiting for a turn if max_parallel_tests runs are going,
-                                      or reuse the result for the same code (--fresh: always run it)
+  speck test [--fresh]                run the test command in a turn, or reuse the result for the same code (--fresh: always run it)
   speck test --recorded               print the result recorded for the same code, without running any tests
   speck test --files <file>…          run only those test files with commands.test_files (blank: the whole suite)
                                       and the files commands.checks lists
+  speck test --related [<file>…]      the same, with every test file that names a file this branch changed
   speck review <id> [--tests=f] [--response=f]   run one review round; exits 12 if it's still running after 9 minutes
   speck review <id> --wait            wait up to 9 more minutes for the round that is running
   speck record <id> <verdict.json> [--reviewer=x] record a round from another reviewer

@@ -43,6 +43,7 @@ Before its first review round, a build also runs the existing tests that cover t
 - `speck test` is in `scripts/turns.mjs` (0239). The skill is `skills/speck-build/SKILL.md`; `.claude/skills/` links to it.
 - Waits for nothing: no open ticket changes these files.
 - Failing before this build: none
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
