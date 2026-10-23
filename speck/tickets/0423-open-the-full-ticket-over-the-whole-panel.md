@@ -12,7 +12,7 @@ reviewer: ""             # blank: the reviewer your settings give when each revi
 reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
 reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
-after: ["0422"] # ticket ids that must be done first
+after: [] # ticket ids that must be done first
 created: 2026-10-23
 
 ---
@@ -37,7 +37,7 @@ The full ticket, and a review pack, open over the whole panel, as Settings does.
 ## Notes
 - The user asked for this on 2026-10-23.
 - Today: `#full-ticket` in `templates/panel.html`. Settings' full view is `#settings` (0409).
-- Waits for 0422: both change `templates/panel.html`.
+- Builds alongside 0420, 0421 and 0422 (the user, 2026-10-23): each changes a different part of `templates/panel.html`. This one changes the full-ticket pane.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
