@@ -1,7 +1,7 @@
 ---
 id: "0392"
 title: "Run the Foreman on DeepSeek"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-18-use-a-model-provider-through-your-own-api-k
 after: ["0391"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T08:05:16.858Z"
+approved: "2026-10-23T08:13:12.714Z"
 
 ---
 # 0392 · Run the Foreman on DeepSeek
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek can't run the Foreman on it too.
@@ -57,9 +58,16 @@ Worth watching: Settings doesn't offer DeepSeek for the Foreman yet (that's the 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 The final documentation test requires exact prose, including "It runs on" and "or a model provider's name, such as deepseek", and a particular ordering of agent names.; F2 The new Foreman route uses providerBuildEnv, which retains credentials such as AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, GOOGLE_APPLICATION_CREDENTIALS and GH_TOKEN.
+Round 2 (codex): changes requested.
+Round 3 (codex): approve.
 
 ## Delivery log
+- Review rounds: 3
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 665,382
+- Elapsed since build started: 8 min
+- Changed lines: 108 (limit 5000)
 Follow-ups:
 - Inbox: speck/ideas/2026-10-23-look-into-a-stop-again-once-the-foreman-can-start.md — a stop the Foreman couldn't start on (no key, no Claude Code) counts as tried, so setting the key doesn't bring it back until new commits.
 - Skipped, covered by 0393: Settings' Foreman list doesn't offer deepseek yet, and its Foreman model list would read Codex's models while foreman is deepseek.
