@@ -1,7 +1,7 @@
 ---
 id: "0391"
 title: "Build with DeepSeek"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: "speck/ideas/done/2026-10-18-use-a-model-provider-through-your-own-api-key.md"               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0390"]                # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T07:46:10.236Z"
 
 ---
 # 0391 · Build with DeepSeek
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 speck run builds with Claude Code, Codex or Cursor. There's no way to build with a model from a provider you have an API key for, such as DeepSeek.
