@@ -42,6 +42,7 @@ A closed Plan or Build ticket is a title line and one line of details.
 - Asked for by the user on 2026-10-23: the panel is used mostly in a thin side pane, and its tickets are too tall there.
 - 64 px needs 0417's compact controls.
 - Waits for 0418: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
