@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { findRepoRoot } from './core.mjs';
 import { providerKey } from './keys.mjs';
 import { findProvider } from './providers.mjs';
-import { providerVars, providerDir } from './provider-review.mjs';
+import { providerVars, providerDir, KEEP } from './provider-review.mjs';
 import { DEFAULT_BUILD_COMMAND, modelOf } from './build-model.mjs';
 import { splitCommand } from './reviewers.mjs';
 
@@ -51,6 +51,21 @@ export function providerBuildEnv(repo, p, key, model, from = process.env) {
   return { ...env, [NO_BACKGROUND]: env[NO_BACKGROUND] ?? '1', CLAUDE_CONFIG_DIR: path.join(providerDir(repo, p), '.claude'), ...providerVars(p, key, model), [PROVIDER_BUILD]: p.name };
 }
 
+// 0392: the first word speck run gives this script for a provider's Foreman rather than a build.
+export const FOREMAN_MODE = '--foreman';
+// 0392: what a provider's Foreman keeps from speck's own environment besides KEEP: its home and git's name for you, so
+// `speck foreman` can commit its note, and its run's token. No other sign-in, token or key.
+const FOREMAN_KEEP = ['HOME', 'XDG_CONFIG_HOME', 'GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL', 'SPECK_FOREMAN_RUN'];
+
+// 0392: the environment provider `p`'s Foreman runs Claude Code with, on `model`, from speck's own `from`: only what it
+// needs to run, and the provider's address and key.
+export function providerForemanEnv(repo, p, key, model, from = process.env) {
+  const env = {};
+  for (const k of [...KEEP, ...FOREMAN_KEEP]) if (typeof from[k] === 'string') env[k] = from[k];
+  for (const k of Object.keys(from)) if (/^LC_/.test(k)) env[k] = from[k];
+  return { ...env, [NO_BACKGROUND]: '1', CLAUDE_CONFIG_DIR: path.join(providerDir(repo, p), '.claude'), ...providerVars(p, key, model) };
+}
+
 // `env` without what a provider build sets for its own Claude Code, for a reviewer it starts: unchanged outside one.
 export function withoutProviderBuild(env = process.env) {
   if (!env[PROVIDER_BUILD]) return env;
@@ -61,8 +76,9 @@ export function withoutProviderBuild(env = process.env) {
 }
 
 // Runs the build: reads the key, then Claude Code with the build's environment, ending as it ends. A stop sent to this
-// process alone is passed on to Claude Code.
-function main([name, address, ...words]) {
+// process alone is passed on to Claude Code. 0392: or, after FOREMAN_MODE, the Foreman, with the Foreman's environment.
+function main(args) {
+  const foreman = args[0] === FOREMAN_MODE, [name, address, ...words] = foreman ? args.slice(1) : args;
   const stop = message => { process.stderr.write(`${message}\n`); process.exit(2); };
   if (!name || !/^https?:\/\//.test(address ?? '') || !words.length) stop('speck run starts this with a model provider\'s name, its address and the command that runs Claude Code. Build the ticket with speck run, or resume it with the command speck run gives.');
   const known = findProvider(name);
@@ -72,13 +88,14 @@ function main([name, address, ...words]) {
     repo = findRepoRoot();
     key = providerKey(repo, name, { providers: [p] });
   } catch (e) { stop(e.message); }
-  if (!key) stop(`This machine has no ${p.label} API key, so the ${p.label} build can't run. Set one with \`speck keys set ${name}\`, then build the ticket again.`);
+  if (!key) stop(foreman ? `This machine has no ${p.label} API key, so the ${p.label} Foreman can't run. Set one with \`speck keys set ${name}\`.`
+    : `This machine has no ${p.label} API key, so the ${p.label} build can't run. Set one with \`speck keys set ${name}\`, then build the ticket again.`);
   const at = words.indexOf('--model');
   const model = (at >= 0 && words[at + 1]) || p.defaultModel || '';
-  const child = spawn(words[0], words.slice(1), { stdio: 'inherit', env: providerBuildEnv(repo, p, key, model) });
+  const child = spawn(words[0], words.slice(1), { stdio: 'inherit', env: (foreman ? providerForemanEnv : providerBuildEnv)(repo, p, key, model) });
   const pass = signal => () => { try { child.kill(signal); } catch { /* already gone */ } };
   for (const signal of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.on(signal, pass(signal));
-  child.on('error', e => stop(e.code === 'ENOENT' ? `${p.label} builds need Claude Code installed, as speck runs ${p.label}'s models through it. Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code).` : `Claude Code couldn't start (${e.message}).`));
+  child.on('error', e => stop(e.code === 'ENOENT' ? `${foreman ? `The ${p.label} Foreman needs` : `${p.label} builds need`} Claude Code installed, as speck runs ${p.label}'s models through it. Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code).` : `Claude Code couldn't start (${e.message}).`));
   child.on('exit', (code, signal) => {
     if (!signal) process.exit(code ?? 1);
     for (const s of ['SIGTERM', 'SIGINT', 'SIGHUP']) process.removeAllListeners(s);
