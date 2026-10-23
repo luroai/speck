@@ -7,7 +7,9 @@ import { sh, findTicket, worktreeList, parseTicket } from './core.mjs';
 import { splitCommand } from './reviewers.mjs';
 import { CODEX_RESUME_COMMAND } from './codex-build.mjs';
 import { cursorResumeCommand } from './cursor-build.mjs';
-import { ownBuilder } from './build-model.mjs';
+import { ownBuilder, configBuilder } from './build-model.mjs';
+import { providerNamed } from './provider-review.mjs';
+import { providerResumeCommand } from './provider-build.mjs';
 import { pidAlive } from './run-switch.mjs';
 import { sessionInUse } from './build-procs.mjs';
 
@@ -19,13 +21,17 @@ const shellWord = w => (/^[A-Za-z0-9\/._-]+$/.test(w) ? w : `'${w.replace(/'/g, 
 // The command that resumes a build's session by hand, {session} standing for it and {id} for its ticket: resume_command
 // in speck/config.yml, or the default if it isn't set. 0289: for a Codex build (`codex`, which speck run's own Codex
 // command builds), the Codex default, unless resume_command is set to something other than Claude Code's. 0290: the same
-// for a Cursor build (`cursor`), with Cursor's. `agent` is the agent that ran the build: by default, speck run's own.
+// for a Cursor build (`cursor`), with Cursor's, and 0391: for a model provider's build, such as `deepseek`, with the
+// provider's. `agent` is the agent that ran the build: by default, speck run's own.
 export function resumeCommandOf(cfg, agent = ownBuilder(cfg)) {
   const cmd = !Object.hasOwn(cfg, 'resume_command') ? null : typeof cfg.resume_command === 'string' ? cfg.resume_command.trim() : '';
   let first = '';
   try { first = splitCommand(cmd ?? '')[0] ?? ''; } catch { /* an unclosed quote: used as it is */ }
   if ((agent === 'codex' || agent === 'cursor') && (cmd === null || path.basename(first) === 'claude'))
     return agent === 'codex' ? CODEX_RESUME_COMMAND : cursorResumeCommand();
+  // 0391: a model provider's build, through the provider again, with its model
+  const p = typeof agent === 'string' ? providerNamed(agent) : null;
+  if (p && (cmd === null || path.basename(first) === 'claude')) return providerResumeCommand(configBuilder(cfg) === p.name ? cfg : {}, p);
   // 0312: a Claude Code build speck run started with its own command, while resume_command resumes another agent's
   if (agent === 'claude' && cmd && path.basename(first) !== 'claude') return DEFAULT_RESUME_COMMAND;
   return cmd ?? DEFAULT_RESUME_COMMAND;

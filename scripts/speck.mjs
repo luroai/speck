@@ -19,6 +19,7 @@ import { cmdShip, shipState, autoShipWhyNot } from './ship.mjs';
 import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs';
+import { providerLabel } from './providers.mjs';
 import { cmdAgents } from './agents.mjs';
 import { cmdConfig } from './config.mjs';
 import { cmdConfigShow } from './settings.mjs';
@@ -425,14 +426,13 @@ export function statusData(repo) {
   const entries = tickets.map(t => {
     const lint = lintTicket(t, cfg);
     const facts = questionFacts(contentLines(t.sections['blocked question'])); // 0283
-    const question = facts.question;
     const after = Array.isArray(t.fm.after) ? t.fm.after : [];
     const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
     const stop = inHand(t) ? buildStop(runs, t.fm.id) : null;
     return withForeman(t, fixing, { // 0317
       ...t.fm,
-      // 0388: the builder and reviewer it would use now: its own, or else the settings'
-      builder: ticketAgents(t.fm, cfg).builder,
+      // 0388: the builder and reviewer it would use now: its own, or else the settings'. 0391: a provider's, by its name
+      builder: ticketAgents(t.fm, cfg).builder, builder_label: providerLabel(ticketAgents(t.fm, cfg).builder),
       reviewer: ticketAgents(t.fm, cfg).reviewer,
       type: ticketType(t),
       task: ticketTask(t), // 0350
@@ -440,7 +440,7 @@ export function statusData(repo) {
       path: posix(path.relative(t.at || repo, t.file)),
       worktree: t.at || null,
       acceptance_criteria: criteriaText(t.sections['acceptance criteria']),
-      blocked_question: question || null,
+      blocked_question: facts.question || null,
       // 0283: the option the build recommends, whether any option changes what you'd notice, and whether it's a clear winner; null when unknown
       blocked_recommendation: facts.recommendation,
       blocked_noticeable: facts.noticeable,

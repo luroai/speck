@@ -19,7 +19,8 @@ import { saveForeman, switchingReady } from './foreman.mjs';
 import { prMode } from './pull-request.mjs';
 import { prQueue } from './pr-queue.mjs';
 import { buildEnv } from './build-env.mjs';
-import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND } from './build-model.mjs';
+import { withBuilderModel, builderModelNote, DEFAULT_BUILD_COMMAND, providerBuilds } from './build-model.mjs';
+import { providerStartWords } from './provider-build.mjs';
 import { launchPlan, ignoredBuildersNote } from './ticket-builder.mjs';
 import { pidAlive, codeHash, handedOver, codeSwitch, awaitGo } from './run-switch.mjs';
 import { claimResumed, sessionProcess, processTable, adoptedAs } from './seen-builds.mjs';
@@ -115,12 +116,14 @@ function runOn(worker) {
   const command = typeof cfg.build_command === 'string' ? cfg.build_command.trim() : '';
   const codex = codexBuilds(cfg); // 0289: builder codex with build_command blank builds with speck's own Codex command
   const cursor = cursorBuilds(cfg) ? cursorCli() : null; // 0290: and builder cursor with Cursor's CLI, found once
+  const provider = providerBuilds(cfg); // 0391: and a model provider, such as deepseek, through Claude Code
   const own = { codex: 'Codex', cursor: 'Cursor' }[cfg.builder];
-  if (!command && !codex && !cursor)
+  if (!command && !codex && !cursor && !provider)
     throw new SpeckError(`No build_command is set in speck/config.yml, so speck run has nothing to start builds with. Add, for example:\n  build_command: '${own ? '' : DEFAULT_BUILD_COMMAND}'${own ? `\nA blank build_command starts each build with ${own}.` : ''}`);
   let words;
   if (codex) words = codexStartWords(cfg);
   else if (cursor) words = cursorStartWords(cfg, cursor);
+  else if (provider) words = providerStartWords(cfg, provider);
   else try { words = splitCommand(command); } catch { throw new SpeckError(`build_command in speck/config.yml has a quote that isn't closed: ${command}`); }
   const mismatch = builderMismatch(cfg);
   if (mismatch) throw new SpeckError(`speck run won't start: ${mismatch.problem} ${mismatch.fix}`);
