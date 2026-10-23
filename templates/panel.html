@@ -81,19 +81,22 @@
   @font-face { font-family: "Doto"; src: url("/fonts/Doto.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
   /* 0413: the top of the panel is speck's screen in its dark frame, as the design's console (without its keys or the text
      under the screen). The frame's title row has speck's name in the dot-matrix lettering, the project and base branch
-     cut short with "…", and Settings at its right end. The screen under it shows the Foreman's word and speck. */
+     cut short with "…", and Settings at its right end. The screen under it shows the Foreman's word and speck. 0438: the
+     frame is as wide as the tabs and cards under it, the screen at most 520 px, centred in it, and a dot in speck's
+     vermilion, its eye's colour, sits before the title. */
   header { position: sticky; top: 0; z-index: 8; overflow-anchor: none; padding: calc(8px + env(safe-area-inset-top)) 16px 8px; border-bottom: .5px solid var(--line); background: var(--bg); }
-  .bezel { box-sizing: border-box; max-width: 520px; margin: 0 auto; padding: 5px 7px 7px; color: var(--bezel-ink); background: var(--bezel); border: 2px solid var(--bezel); }
+  .bezel { box-sizing: border-box; padding: 5px 7px 7px; color: var(--bezel-ink); background: var(--bezel); border: 2px solid var(--bezel); }
   .bezel.needs { border-color: var(--bad); } /* the Foreman's word is "Needs you <n>" */
   .bezel .print { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 0 4px 2px; }
-  .bezel .name { flex: none; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 20px; line-height: 1; color: var(--bezel-ink); }
+  .bezel .name { flex: none; display: inline-flex; align-items: center; gap: 6px; font-family: "Doto", ui-monospace, monospace; font-weight: 900; font-size: 20px; line-height: 1; color: var(--bezel-ink); }
+  .bezel .name::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--lcd-red); } /* decoration: no text, so a screen reader passes over it */
   .bezel .repo { flex: 1 1 auto; min-width: 0; text-align: right; font: 400 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif; color: var(--bezel-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bezel .repo code { font-size: inherit; color: inherit; }
   .bezel .settings-open { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: .5px solid var(--bezel-muted); background: transparent; color: var(--bezel-muted); cursor: pointer; }
   .bezel .settings-open:hover { border-color: var(--bezel-ink); color: var(--bezel-ink); }
   .bezel .settings-open svg { width: 15px; height: 15px; }
   .bezel :focus-visible { outline-color: var(--bezel-ink); }
-  .bezel .glass { position: relative; display: block; width: 100%; padding: 0; color: var(--lcd-ink); background: var(--lcd-bg); border: .5px solid var(--bezel-muted); cursor: pointer; }
+  .bezel .glass { position: relative; display: block; width: 100%; max-width: 520px; margin: 0 auto; padding: 0; overflow: hidden; color: var(--lcd-ink); background: var(--lcd-bg); border: .5px solid var(--bezel-muted); cursor: pointer; }
   .bezel .glass::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3); pointer-events: none; }
   .bezel .glass canvas { display: block; width: 100%; height: auto; aspect-ratio: 160 / 72; image-rendering: pixelated; }
 
@@ -650,13 +653,16 @@
   .shaping .md a { color: var(--run); }
 
   /* 0428: rounded corners as Cursor's: 8 px for a control, 12 px for a card, a box or a pop-up. The focus ring is an
-     outline, which follows them. speck's screen and its frame stay square, as the design's console is. */
+     outline, which follows them. 0438: speck's frame is a card's 12 px, and the screen's corners follow it: the frame's
+     less the 9 px between them, at least 4 px. The screen cuts what it draws to its corners. */
   button, input:not([type="checkbox"]):not([type="radio"]), select, textarea, .tag, .question-fact, .next, .prio-menu { border-radius: 8px; }
   .tab { border-radius: 8px 8px 0 0; } /* the open tab's top corners, and the others' */
   .item, .q, #shipped tr, .q .log, #settings .sgroup, #settings .switches, #settings-unsaved .box { border-radius: 12px; } /* the full ticket, a document and the pipeline log fill the window, so they stay square (0160) */
   .stats { border-radius: 12px; overflow: hidden; }
   #tag-tip, #settings .switch-row p.explain, #settings .setting p.explain { border-radius: 8px; } /* a tip, as small as a control */
-  .bezel, .bezel .glass, .bezel .glass::after { border-radius: 0; }
+  .bezel { border-radius: 12px; }
+  .bezel .glass { border-radius: 4px; }
+  .bezel .glass::after { border-radius: inherit; }
 
   /* The dark look, switched to in Settings. 0426: Cursor Dark's colours, made as the light look's are, from its text
      grey, #E4E4E4 */
