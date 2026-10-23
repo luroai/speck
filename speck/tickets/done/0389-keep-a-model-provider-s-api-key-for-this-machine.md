@@ -1,7 +1,7 @@
 ---
 id: "0389"
 title: "Keep a model provider's API key for this machine"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0380"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T07:26:14.303Z"
 approved: "2026-10-23T07:32:07.612Z"
+finished: "2026-10-23T07:34:52.227Z"
 
 ---
 # 0389 · Keep a model provider's API key for this machine
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 To build or review with a model provider such as DeepSeek, speck needs the provider's API key. A key is a secret: it must never be committed, shown, logged or seen by other processes.
