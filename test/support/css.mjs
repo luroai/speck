@@ -1,7 +1,7 @@
 // The panel's stylesheet as a list of rules, for tests that check which colours it uses where.
-import { page } from './panel.mjs';
+import { styles } from './panel.mjs';
 
-export const css = (html = page()) => (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+export const css = () => styles(); // 0430: from their own file
 
 // Each rule's selector, its declarations as [property, value] pairs and the at-rules it sits in, in the order they come.
 export function rules(text = css()) {

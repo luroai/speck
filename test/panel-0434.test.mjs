@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, round, fakePage, items, queueRows, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html } from './support/panel.mjs';
+import { T, full, round, fakePage, items, queueRows, shippedRows, click, stoppedClock, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, page as html, styles } from './support/panel.mjs';
 
 // ---------- 0434: each closed ticket is two single lines, with a grid of moving lights while an agent works ----------
 
@@ -58,7 +58,7 @@ test('0434 AC1: a ticket no agent is working on shows no grid', async () => {
   assert.ok(statusOf(card(p, '0906')).textContent.startsWith('Blocked · it has a question for you'), 'words instead');
 });
 
-const css = () => /<style>([\s\S]*?)<\/style>/.exec(html())[1].replace(/\/\*[\s\S]*?\*\//g, '');
+const css = () => styles().replace(/\/\*[\s\S]*?\*\//g, '');
 test('0434 AC1: the grid is no more than 14 px square, its lights move only with motion allowed, and held still some dots stay lit', () => {
   const style = css();
   const grid = /\.q \.top \.lights \{([^}]*)\}/.exec(style)[1];

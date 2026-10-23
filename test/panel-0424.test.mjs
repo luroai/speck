@@ -3,7 +3,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, page, full, click, items, top, queueRows, cssRules, cssValue } from './support/panel.mjs';
+import { fakePage, page, full, click, items, top, queueRows, cssRules, cssValue, styles } from './support/panel.mjs';
 
 const clone = s => JSON.parse(JSON.stringify(s));
 const board = () => ({ tickets: [full('0001', { title: 'A draft', type: 'bug', priority: 3, size: 'M', risk: 'high' }), full('0002', { title: 'Approved one', status: 'approved' })], ideas: [] });
@@ -44,7 +44,7 @@ const marginTop = sel => { const m = cssValue(cssRules(sel), 'margin'); assert.o
 const marginBottom = sel => { const m = cssValue(cssRules(sel), 'margin').split(/\s+/); return parseFloat(m[m.length === 4 ? 2 : 0]); };
 // Every font size a #full-ticket rule sets, outside media queries' tweaks to buttons.
 const allSizes = () => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\/\*[\s\S]*?\*\//g, '');
+  const css = styles().replace(/\/\*[\s\S]*?\*\//g, '');
   return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(m => /#full-ticket/.test(m[1])).flatMap(m => [...m[2].matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)].map(x => [m[1].trim(), parseFloat(x[1])]));
 };
 

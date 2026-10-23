@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fakePage, heldTimeouts, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { fakePage, heldTimeouts, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0371: a setting's explanation floats over its row, after a pause ----------
 
@@ -26,7 +26,7 @@ const shown = p => KEYS.filter(k => !tipOf(p, k).hidden);
 const fire = (n, type) => n.listeners[type]({ target: n, currentTarget: n, stopPropagation() {}, preventDefault() {} });
 
 test('0371 AC1: the explanation is taken out of the flow, floated just above its row and over what is there', async () => {
-  const css = page();
+  const css = styles();
   const rule = sel => (css.match(new RegExp(`${sel.replace(/[.]/g, '\\.')} \\{([^}]*)\\}`)) || [])[1] || '';
   assert.match(rule('#settings .setting'), /position: relative/, 'the row is what it floats from');
   const tip = rule('#settings .setting p.explain');

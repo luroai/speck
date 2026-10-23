@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, page, fakePage, queueRows, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { T, page, fakePage, queueRows, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 const TRUNCATED = "Earlier lines aren't shown: this is the last 200 lines of the log.";
 const LOG = [
@@ -37,7 +37,7 @@ test('0422 AC1: each entry\'s time is in a span of its own, with its text after 
   assert.equal(r[0].text, '12:00:01 Starting the build.\n');
   assert.equal(r[3].at, '12:00:02 ');
   assert.equal(r[1].at, '', 'a line with no time has no time span');
-  const css = (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1];
+  const css = styles();
   assert.match(css, /\.q \.log \.at \{[^}]*color: var\(--muted\)/, 'the time is muted');
 });
 
@@ -47,7 +47,7 @@ test('0422 AC2: tool calls, messages, failures and the cut-short note each have 
 });
 
 // Colours as in panel-0138: the vars each look gives, and WCAG contrast.
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const vars = block => new Map([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+)/g)].map(m => [m[1], m[2].trim()]));
 const light = () => vars((css().match(/:root \{([\s\S]*?)\}/) || [])[1] || '');
 const dark = () => vars([...css().matchAll(/:root\[data-theme="dark"\] \{([^}]*)\}/g)].map(m => m[1]).join(' '));

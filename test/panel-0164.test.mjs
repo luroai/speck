@@ -1,12 +1,12 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, fakePage, full, items, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, fakePage, full, items, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 
 // ---------- 0164: line up a ticket's dependency note ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 
 // 0001 (a draft) unlocks seven tickets, enough that its note wraps onto a line of its own on a phone; 0003 (a draft)
 // waits on 0001, and 0008 is a short draft whose "waiting on 0001" fits beside its criteria at every width.

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { T, panelRepo, freePort, startPanel, stop, page, fakePage, queueRows, click, findChrome, browserPage } from './support/panel.mjs';
+import { T, panelRepo, freePort, startPanel, stop, page, fakePage, queueRows, click, findChrome, browserPage, styles } from './support/panel.mjs';
 import { tickingSource } from './support/stream.mjs';
 
 // ---------- 0052: show a build's log growing as it runs ----------
@@ -174,7 +174,7 @@ test('0052 AC1: an open ticket that has left the queue is no longer asked for', 
 });
 
 test('0052 AC2: the box has a fixed height and its own scrollbar', () => {
-  const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+  const css = styles();
   const rule = css.match(/\.log\s*\{([^}]*)\}/)[1];
   assert.match(rule, /(^|[;\s])height:\s*[\d.]+(em|px|rem)/, 'a fixed height, not only a maximum');
   assert.match(rule, /overflow-y:\s*auto/);

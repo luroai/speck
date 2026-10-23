@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, switchPage, exitOf, round, page, queueRows } from './support/panel.mjs';
+import { T, switchPage, exitOf, round, page, queueRows, styles } from './support/panel.mjs';
 
 // ---------- 0199: the header button is only the Auto-build switch ----------
 
@@ -60,7 +60,7 @@ test('0199 AC2: it never names a ticket, a build step or that something needs yo
   }
   const js = page().match(/<script>([\s\S]*?)<\/script>/)[1];
   assert.doesNotMatch(js, /function runLabel\(/, 'nothing works out a ticket to name');
-  assert.doesNotMatch(page(), /\.run-state\.run-(wait|bad)\b/, 'no colour for a ticket waiting for you');
+  assert.doesNotMatch((page() + styles()), /\.run-state\.run-(wait|bad)\b/, 'no colour for a ticket waiting for you');
 });
 
 // 0364: the button has no builder now, whether any build or ship is at work or not.

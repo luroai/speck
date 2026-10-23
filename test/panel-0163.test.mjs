@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, switchPage, exitOf, round, page } from './support/panel.mjs';
+import { T, switchPage, exitOf, round, page, styles } from './support/panel.mjs';
 
 // ---------- 0163: the running build in the Auto-build button ----------
 
@@ -77,7 +77,7 @@ test('0163 AC2: when a build waits for you it still reads "Auto-build on", in th
     assert.equal(runOf(p).textContent, 'On', t.id);
     assert.doesNotMatch(runOf(p).className, /\brun-(bad|wait)\b/, t.id);
   }
-  assert.doesNotMatch(page(), /\.run-state\.run-(wait|bad)\b/);
+  assert.doesNotMatch((page() + styles()), /\.run-state\.run-(wait|bad)\b/);
 });
 
 // 0364: the builder has gone from the button too, so its label alone is in it, at work or not.
@@ -89,7 +89,7 @@ test('0163 AC3: no square and no builder: the label alone, whether a build is ru
     assert.equal(p.all(headerOf(p)).filter(n => /\blive\b/.test(n.className || '')).length, 0, 'no square');
     assert.equal(badgeIn(p), undefined, `${tickets.map(t => t.id)} ${run ? 'on' : 'off'} (${pose} before 0364): no builder`);
   }
-  assert.doesNotMatch(page(), /\.run-state \.mini \{/, 'no style for a builder in the button');
+  assert.doesNotMatch((page() + styles()), /\.run-state \.mini \{/, 'no style for a builder in the button');
 });
 
 // 0303: the builder is the LCD renderer's mini builder, so the drawing of it is checked in panel-0303.test.mjs.

@@ -1,11 +1,11 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
+import { page, panelRepo, freePort, startPanel, stop, findChrome, browserPage, styles } from './support/panel.mjs';
 
 // ---------- 0135: remove the numbers beside the panel's section headings ----------
 
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const staticHtml = () => page().replace(/<script>[\s\S]*?<\/script>/g, '').replace(/<style>[\s\S]*?<\/style>/g, '');
 // What each section header held before 0134: its heading, then its live count (or the Plan toggles) and its hint, which
 // 0162 removed.

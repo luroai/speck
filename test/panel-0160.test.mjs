@@ -1,14 +1,14 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { T, full, fakePage, page, findChrome, browserPage, openLane } from './support/panel.mjs';
+import { T, full, fakePage, page, findChrome, browserPage, openLane, styles } from './support/panel.mjs';
 import { sharedPanel } from './support/shared-panel.mjs';
 
 // ---------- 0160: keep the panel header on screen ----------
 
 const skip = { skip: findChrome() ? false : 'no Chromium found: set SPECK_TEST_CHROME to run it' };
 const head = () => page().match(/<head>([\s\S]*?)<\/head>/)[1];
-const css = () => (page().match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+const css = () => styles();
 const phoneCss = () => (css().match(/@media \(max-width: 699\.98px\) \{([\s\S]*)$/) || [])[1] || '';
 
 // Enough tickets for the page to scroll well past one screen, on a phone and on a desktop. 0001 unlocks 0002, so 0002's

@@ -42,6 +42,7 @@ The panel's styles are in a file of their own.
 - Install and update copy the whole `templates/` folder (`place` in `scripts/`), so a new file there reaches projects with no change.
 - The page's stamp (`stampOf` in `scripts/panel.mjs`) is worked out from `panel.html` alone today. `/lcd.js` and `/fonts/Doto.ttf` show how the server names each file it serves.
 - Failing before this build: none
+- Self-check: six tests that checked a style was gone by looking for it in panel.html now look in panel.css too, so they can't pass just because the styles moved; and two browser tests that open panel.html from its file, where /panel.css can't load, put the styles in from panel.css.
 - Waits for 0428, as 0426 to 0428 restyle the whole page and this moves every style, and for 0429, as both may change the same test files. Also waits for 0434 and 0435, which change the cards' styles, and 0436 and 0438, which change speck's screen.
 
 ## In plain words
