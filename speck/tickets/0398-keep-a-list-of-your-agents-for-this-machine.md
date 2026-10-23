@@ -41,6 +41,7 @@ speck keeps a list of the agents you've set up on this machine, and setup fills 
 - Checked 2026-10-23: `speck agents` (0288, `scripts/agents.mjs`) already reports whether Claude Code, Codex and Cursor are installed and signed in, and their models. API providers and their keys are in `scripts/providers.mjs` and `scripts/keys.mjs` (0389).
 - Keep the list beside this machine's settings from 0386.
 - Folds in `speck/ideas/done/2026-10-18-find-the-agents-and-models-on-this-machine.md`, as the user chose on 2026-10-23.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
