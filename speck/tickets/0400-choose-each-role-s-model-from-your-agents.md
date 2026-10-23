@@ -45,7 +45,9 @@ Each role picks one model from your agents' models.
 - Self-check: a model provider is still left out of each role's list while Claude Code isn't installed, saying why, as before; clearing this machine's value for a role clears its model's too, as one list holds both; the README's sentence about the separate lists now describes the one list.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+In Settings, the builder, the reviewer and the Foreman each have one list now, instead of a list of agents and a separate list of models. The list holds only the models of agents you've set up, grouped by agent, such as "Codex · GPT-6.1 Sol", with each agent's own default too. Picking one sets the agent and its model together, for your machine only. How hard it thinks (effort) appears beside the list only for Claude Code and Codex, which use it. The reviewer's list also has the Claude subagent, and the Foreman's has "the builder's agent".
+
+To see it, open Settings and look at builder, reviewer and Foreman. If a role uses an agent you've since removed, it says so and asks you to choose again. Worth keeping an eye on: with Cursor set up, the list is very long, and a model your agent doesn't list can no longer be typed in Settings.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -55,6 +57,11 @@ Each role picks one model from your agents' models.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Idea: speck/ideas/2026-10-23-make-a-long-model-list-easy-to-pick-from.md (Cursor's ~230 models make each list long).
+- Idea: speck/ideas/2026-10-23-choose-a-model-your-agent-doesn-t-list.md (no box to type an unlisted model any more).
+- Tidy-up: a Settings answer without `agent_models` (an older server, or Your agents unreadable) still draws the separate agent and model lists, so that code stays; it could go once nothing relies on it.
+- Known limit: Cursor's model names from its CLI carry odd spacing and zero-width characters, shown as Cursor gives them.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -136,6 +143,89 @@ Each role picks one model from your agents' models.
     ],
     "escalation_question": "",
     "summary": "The combined model lists work in the main flows, and all reported tests pass. Two settings bugs need fixing: cancelling a builder switch leaves the wrong model pending, and a machine-specific model choice can lose its Clear button."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "27eb9bea9fcf4fda32c1820918faab7f7dc6a57c",
+    "session": "continued",
+    "thread_id": "01a1686a-7b63-7491-9288-8d47a932d899",
+    "builder_response": "- Tests run: test/settings-roles-0400.test.mjs (with the commands.checks files). I also ran the 56 existing settings, panel-02xx/03xx and builder-* test files once, as the fixes touch shared code: 423 pass, 0 fail.\n- F1: fixed. sendSettings' cancel of a hand-set build_command replacement now drops the pending builder_model with the builder (withRoleModel('builder')), so the list goes back to claude|sonnet and Save is disabled. Test: \"0400 AC2 F1\".\n- F2: fixed. settingRow now treats a role as this machine's own when either its agent or its model is; the Clear button clears whichever of the two come from this machine (fromMachine), the list then shows the project's entry in words (roleCleared → disabled box), and the explanation names the project's and this machine's entries. Keep puts both back. Test: \"0400 AC2 F2\" (model-only override), and the earlier self-check test covers both overridden.\n",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 460944,
+      "cached_input_tokens": 395776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3051,
+      "reasoning_output_tokens": 238
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T11:02:51.749Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "settings.mjs yourModels and panel.html roleEntries provide grouped lists containing your agents' models and defaults. Passing AC1 tests cover filtering, labels and provider availability."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing AC2 tests cover combined machine saves and effort visibility. New F1/F2 regression tests cover cancellation and model-only clearing. Independent fake-page checks also passed cancellation, Clear, Keep and the clear-save payload."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "roleEntries supplies the Claude subagent under Claude Code and the builder's-agent Foreman entry. The passing AC3 test verifies their placement and blank Foreman saving."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "Passing AC4 tests exercise the server's same-model refusal, messages beside the combined control, and warnings asking users to replace agents no longer in their list."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The supplied round run reports 122 passed, 0 failed and 3 skipped. Existing tests were not weakened; both previous findings now have behavioural regression coverage."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Cancelling a builder switch previously left the newly chosen model pending.",
+        "suggested_fix": "Implemented: cancellation restores the agent and model together. The regression test and independent reproduction pass.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "A machine override of only the model previously lost its Clear button.",
+        "suggested_fix": "Implemented: the combined row exposes Clear when either component is overridden and clears applicable machine values. Clear, Keep and saving were independently verified.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Each role now offers one grouped list of your agents' models and saves the agent and model together. Both previously identified settings bugs are fixed and covered by regression tests. All criteria pass, with no blocking concerns remaining."
   }
 }
 ```
