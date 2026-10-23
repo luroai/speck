@@ -165,12 +165,9 @@
   .ready div.refused { white-space: pre-wrap; }
   /* 0151: a ticket's id and title on one line, a wrapped title's next line starting under the title, then its tags.
      0214: an idea's or inbox note's label and title too */
-  .item.ticket .head { column-gap: 0; } /* its right-hand column is empty: the title gets the whole width */
   .item .line { display: flex; align-items: baseline; gap: 8px; }
   .item .line .id { flex: none; font-size: 14px; }
   .item .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
-  .item.ticket .tag-row { grid-column: 1 / 2; }
-  .item.ticket .prio { display: inline-flex; }
 
   /* Queue */
   /* 0155: each ticket is a card of its own, laid out as a Plan ticket. 0167: only a ticket waiting for you or in trouble
@@ -178,13 +175,11 @@
   #queue { display: flex; flex-direction: column; gap: 8px; padding: 10px 16px; }
   #queue .empty { padding: 0 4px; }
   .q { padding: 10px 14px; border: 1px solid var(--line); }
-  .q .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 0; align-items: baseline; cursor: pointer; }
-  .q .top .line { grid-area: 1 / 1; display: flex; align-items: baseline; gap: 8px; }
+  .q .top { cursor: pointer; }
+  .q .top .line { display: flex; align-items: baseline; gap: 8px; }
   .q .top .line .id { flex: none; font-size: 14px; }
   .q .top .line .title { flex: 1 1 auto; min-width: 0; font-size: 17px; }
-  .q .top .sub { grid-area: 1 / 2; }
-  .q .top .sub:not(:empty) { margin-left: 12px; }
-  .q .top .tag-row { grid-area: 2 / 1 / 3 / 3; }
+  .q .top .sub { font-variant-numeric: tabular-nums; }
   .q .log { margin: 6px 0 4px; padding: 6px 10px; height: 24em; max-height: 24em; overflow-y: auto; background: var(--bg); border-left: 2px solid var(--line-soft);
     font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; }
   .q.wait { background: var(--raise); } /* 0161: set back by its fill, not faded, so its text keeps its contrast */
@@ -209,21 +204,28 @@
   .act { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--muted); }
   .act b { color: var(--text); font-weight: 400; }
   .act.to-ship { color: var(--idea); }
-  /* 0168: an in-flight ticket's progress, under its title and tags, which keep the card's full width: a sentence saying
-     what's happening and the current stage's name, with the timer at the right of that row. 0416: in words only, from
-     the card's left edge, with no builder badge. */
-  .q .top:has(> .progress) .line { grid-area: 1 / 1 / 2 / 3; }
-  .q .top .progress { grid-area: 3 / 1; display: grid; gap: 2px; min-width: 0; align-self: center; margin-top: 8px; }
-  .q .top:has(> .progress) .sub { grid-area: 3 / 2; align-self: center; }
-  .q .top .say { font-size: 13px; color: var(--text); }
-  .q .top .progress.ship-line { display: block; } /* 0201: "Shipping · 00:04" on one line */
-  .q .top .ship-at { font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums; }
-  .q .top + .act { margin-top: 6px; } /* a ready ticket's Queued line, with no bar above it now */
+  /* 0168: an in-flight ticket's progress, under its title: a sentence saying what's happening and the current stage's
+     name, then the timer. 0416: in words only, with no builder badge. */
+  .q .top .say { color: var(--text); }
+  .q .top .ship-at { color: var(--text); font-variant-numeric: tabular-nums; }
   .q .top .say.bad { color: var(--bad); }
   .q .top .say.to-ship { color: var(--idea); }
-  .q .top .stage { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--run); }
+  .q .top .stage { color: var(--run); }
   .q .top .stage.bad { color: var(--bad); }
   .q .top .stage.to-ship { color: var(--idea); }
+  /* 0419: a Plan or Build ticket is its title line and one details line, in smaller type, its parts separated by " · ".
+     Each part stays whole, so the line wraps between parts, and only when it doesn't fit; a list of linked ids too
+     long for a line wraps between its ids. */
+  .item.ticket, .q { padding: 6px 10px; }
+  .item.ticket .head { display: block; margin: -6px -10px; padding: 6px 10px; }
+  .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
+  .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
+  .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
+  .item.ticket .head .checks > :not(.ids), .q .top .progress > :not(.ids), .q .top .act > :not(.ids) { white-space: nowrap; }
+  .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; padding: 0; border: 0; line-height: inherit; vertical-align: baseline; } /* inline, as a box beside a dot would let the line break before the dot */
+  /* the spaces either side of a dot a little narrower than a whole character, so a line such as "Writing tests and code
+     · Build · 19:18 · P3 · M · low" fits a 420 px pane */
+  .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: -3px; }
   @media (prefers-reduced-motion: no-preference) {
     /* 0154: a ticket gone to from a linked id lights up, then fades back by itself */
     .item.flash, .q.flash { animation: flash 1.5s ease-out; }
@@ -647,12 +649,17 @@
     .goto > span { position: relative; z-index: 1; }
     .goto > span::before { content: ''; position: absolute; inset: -1px -6px; } /* not into the next id's: a comma and a space away */
 
+    /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' and linked
+       ids' tap areas in it stay apart */
+    .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
+    .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: 0; padding: 0 12px; }
+    .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
+    /* The priority's 44 px box takes no more room in the line than its two characters do */
+    .item.ticket .head .checks .prio { padding: 0; margin: 0 calc(1ch - 22px); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; }
+
     /* Queue: the top row is at least 44 px high */
     .q .top { min-height: 44px; }
-    /* 0190: the line under a queue row's top, such as a ready ticket's Queued line, starts below the 7.5 px its tags'
-       tap areas reach past them, as that line sits above those tap areas */
-    .q .top + .act { margin-top: 8px; }
-    /* 0224: a linked id's tap area in that line reaches 14 px up, past those 8 px, so the tags are above it: a tap
+    /* 0224: a linked id's tap area reaches past its text, so the tags beside it in the line (0419) are above it: a tap
        anywhere in a tag's tap area reaches the tag, and the id's own text is still clear of them */
     .q .top .tag:not(.pick) { z-index: 1; }
     .q .full-open { min-height: 44px; }
@@ -1239,6 +1246,19 @@ function chainIcon(t) {
   if (icon) icon.title = t.chain ? `Starts a chain: unlocks ${t.unlocks.join(', ')}` : `Waiting on ${t.waiting_on.join(', ')}`;
   return icon;
 }
+// 0419: a Plan or Build ticket's first line: its id, its chain icon when it has one (`icon`), then its title.
+const titleLine = (t, icon) => el('div', 'line', null, el('span', 'id', t.id), icon ? chainIcon(t) : null, el('span', 'title', t.title));
+// 0419: its second line, in smaller type: the parts separated by " · ", each kept whole, so the line breaks only at
+// the space after a dot, and only when it doesn't fit. The dot's span keeps the space before it, so a wrapped line
+// ends with the dot and the next starts with a part, and that space is outside it, so a line never starts with any
+// of the span's room.
+function detailsLine(cls, parts) {
+  const line = el('div', cls);
+  parts.filter(Boolean).forEach((p, i) => { if (i) { line.appendChild(el('span', 'sep', ' ·')); line.appendChild(document.createTextNode(' ')); } line.appendChild(p); });
+  return line;
+}
+// Its priority, size and risk, then a bug, fix or document tag, as words in the details line.
+const tagsOf = (t, pick) => [...fieldTags(t, pick), typeTag(t), taskTag(t)];
 // A "bug" tag for a bug ticket, a "fix" tag for a fix ticket (a broken base branch), or nothing.
 const typeTag = t => (t.type === 'bug' || t.type === 'fix'
   ? explained(el('span', `tag ${t.type}`, t.type), t.type === 'bug' ? 'Bug: fixes a defect' : 'Fix: fixes a broken main, built before anything else') : null);
@@ -1374,19 +1394,16 @@ function ticketItem(t) {
 }
 // A ticket's top row. When only its chain changes, through other tickets, a new top row replaces the old one and the
 // details stay on the page.
+// 0419: its details line is its priority, size and risk, its criteria and lint result, then the tickets it waits on
+// after "after", or those it unlocks when it starts a chain.
 function ticketHead(t) {
-  const head = el('div', 'head', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)), el('span'),
-    el('div', 'row tag-row', null, ...fieldTags(t, true), typeTag(t), taskTag(t), chainIcon(t)));
   const criteria = list(t.acceptance_criteria);
   const lint = t.lint || { errors: 0, warnings: 0 };
-  const checks = el('div', 'checks');
-  checks.appendChild(el('span', null, plural(criteria.length, 'criterion', 'criteria')));
-  if (lint.errors) checks.appendChild(check('bad', false, `lint: ${plural(lint.errors, 'error')}`));
-  else checks.appendChild(check('ok', true, 'lint passes'));
-  if (lint.warnings) checks.appendChild(check('warn', false, plural(lint.warnings, 'warning')));
-  if (t.chain) checks.appendChild(el('span', null, 'unlocks ', ...idLinks(t.unlocks)));
-  else if (t.waiting_on.length) checks.appendChild(el('span', null, 'waiting on ', ...idLinks(t.waiting_on)));
-  head.appendChild(checks);
+  const head = el('div', 'head', null, titleLine(t, true), detailsLine('checks', [...tagsOf(t, true),
+    el('span', null, plural(criteria.length, 'criterion', 'criteria')),
+    lint.errors ? check('bad', false, `lint: ${plural(lint.errors, 'error')}`) : check('ok', true, 'lint passes'),
+    lint.warnings ? check('warn', false, plural(lint.warnings, 'warning')) : null,
+    t.chain ? el('span', 'ids', 'unlocks ', ...idLinks(t.unlocks)) : t.waiting_on.length ? el('span', 'ids', 'after ', ...idLinks(t.waiting_on)) : null]));
   // Only the top row opens and closes it, so clicking or selecting text in the details leaves it open.
   head.addEventListener('click', () => flip(open, t.id));
   return head;
@@ -3283,17 +3300,14 @@ function queueItem(t) {
   const id = String(t.id), isOpen = openQueue.has(id), d = t.inFlight ? doing(t, t.shipping || shippingId === id) : null;
   const stage = d && !t.red && !t.to_ship ? stageOf(t, d) : null; // 0171: a running ticket's border shows its stage
   const cls = `q${t.red ? ' blocked' : t.to_ship ? ' to-ship' : stage ? ` at-${stage}` : !t.inFlight ? ' queued' : ''}${!t.inFlight && t.waiting_on.length ? ' wait' : ''}`;
-  // 0155: the id and title, the timer at the right of their row, then the tags on a row of their own, as in Plan.
-  const top = el('div', 'top', null, el('div', 'line', null, el('span', 'id', t.id), el('span', 'title', t.title)),
-    el('div', 'row tag-row', null, ...fieldTags(t, false), typeTag(t), taskTag(t), t.inFlight ? null : chainIcon(t)), el('span', 'sub', queueCounter(t)));
+  // 0419: the id and title, then one details line: what it's doing, or that it's queued, then its priority, size and risk.
+  const top = el('div', 'top', null, titleLine(t, !t.inFlight), t.inFlight ? progressOf(t, d) : queuedLine(t));
   // Only the top row opens and closes it, so clicking or selecting text in the log leaves it open. A click that ends
   // selecting text in the top row leaves it as it is too, so the selection stays.
   top.addEventListener('click', () => { if (typeof getSelection !== 'function' || getSelection().isCollapsed !== false) toggleLog(id); });
   const q = goable(el('div', `${cls}${isOpen ? ' open' : ''}`, null, top), t);
   if (!t.inFlight) hoverable(q, t); // tickets in flight are left as they are
-  else progressOf(top, t, d);
   if (!t.inFlight) {
-    q.appendChild(queuedLine(t));
     const ask = foremanAskOf(id); // 0318: a build that ended without starting it
     if (ask) q.appendChild(foremanAskBox(id, ask.question, 'card'));
     if (isOpen) {
@@ -3336,15 +3350,15 @@ function queueItem(t) {
   return q;
 }
 // 0168: an in-flight ticket's progress, under its title: what it's doing in a sentence and the current stage's name, in
-// words only since 0416. The timer stays last in the top row (0058); the grid puts it at the right of that row.
-// 0201: a shipping ticket says so once, followed on the same line by how long its ship has been running (0153), with no
-// stage's name.
-function progressOf(top, t, d) {
+// words only since 0416, then its timer (0058) and, since 0419, its priority, size and risk.
+// 0201: a shipping ticket says so once, followed by how long its ship has been running (0153), with no stage's name.
+function progressOf(t, d) {
   const tone = d.tone ? ` ${d.tone}` : '', now = t.steps.find(s => s.state === 'now');
-  const ships = d.sentence === 'Shipping';
-  top.insertBefore(el('div', ships ? 'progress ship-line' : 'progress', null, el('span', `say${tone}`, d.sentence),
-    ships ? (t.ship_counter !== null ? el('span', 'ship-at', ' · ', el('span', 'ship-time', t.ship_counter)) : null)
-      : now ? el('span', `stage${tone}`, now.label) : null), child(top, 'sub'));
+  const ships = d.sentence === 'Shipping', counter = queueCounter(t);
+  return detailsLine(ships ? 'progress ship-line' : 'progress', [el('span', `say${tone}`, d.sentence),
+    ships ? (t.ship_counter !== null ? el('span', 'ship-at', null, el('span', 'ship-time', t.ship_counter)) : null)
+      : now ? el('span', `stage${tone}`, now.label) : null,
+    counter ? el('span', 'sub', counter) : null, ...tagsOf(t, false)]);
 }
 // The design's LCD renderer, for speck's screen at the top of the panel (0413). 0416: the cards have no builder badges.
 const LCD = globalThis.SpeckLCD;
@@ -3620,8 +3634,10 @@ function setLogText(node, text) {
   setText(node, text);
 }
 const queueCounter = t => (t.counter !== null ? `${t.paused ? 'Paused · ' : ''}${t.counter}` : t.paused ? 'Paused' : '');
+// A ready ticket's details line (0419): Queued, the tickets it waits on or unlocks, then its priority, size and risk.
 function queuedLine(t) {
-  const line = el('div', 'act', null, el('b', null, 'Queued'), document.createTextNode(t.chain ? ' · unlocks ' : t.waiting_on.length ? ' · waiting on ' : ''), ...idLinks(noteIds(t)));
+  const note = t.chain ? 'unlocks ' : t.waiting_on.length ? 'waiting on ' : null;
+  const line = detailsLine('act', [el('b', null, 'Queued'), note ? el('span', 'ids', note, ...idLinks(noteIds(t))) : null, ...tagsOf(t, false)]);
   line.links = shownLinks(t).join(','); // which ids are buttons, as the text alone doesn't say
   return line;
 }
@@ -3645,20 +3661,23 @@ function setText(node, text) {
 const child = (node, cls) => [...node.children].find(n => n.className === cls); // children is an HTMLCollection, with no find
 // What a kept queue row shows from the clock or from other tickets, put right on its node: the counter, and for a
 // ready ticket its chain icon and Queued line. Only the parts that change are replaced.
+// An in-flight row's details line, and its counter (0419: in that line, when it has one).
+const progressLine = q => [...child(q, 'top').children].find(n => /^progress\b/.test(n.className)) || null;
+const counterOf = q => { const p = progressLine(q); return p ? child(p, 'sub') || null : null; };
 // A shipping row's time since its ship started (0153), beside its "Shipping" since 0201.
 const shipTime = q => child(child(child(child(q, 'top'), 'progress ship-line'), 'ship-at'), 'ship-time');
 function queueUpdate(q, t) {
-  const sub = child(child(q, 'top'), 'sub');
-  setText(sub, queueCounter(t));
+  const sub = counterOf(q);
+  if (sub) setText(sub, queueCounter(t));
   if (t.ship_counter !== null) setText(shipTime(q), t.ship_counter);
   if (t.inFlight) return;
-  const row = child(child(q, 'top'), 'row tag-row'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
+  const top = child(q, 'top'), row = child(top, 'line'), icon = chainIcon(t), old = child(row, 'chain') || child(row, 'lock');
   if (!old || !icon || old.className !== icon.className || old.title !== icon.title) {
-    if (icon) row.appendChild(icon); // the icon ends the row of tags
+    if (icon) row.insertBefore(icon, old || child(row, 'title')); // the icon comes right after the id
     if (old) row.removeChild(old);
   }
-  const act = child(q, 'act'), line = queuedLine(t);
-  if (act.textContent !== line.textContent || act.links !== line.links) { q.insertBefore(line, act); q.removeChild(act); }
+  const act = child(top, 'act'), line = queuedLine(t);
+  if (act.textContent !== line.textContent || act.links !== line.links) { top.insertBefore(line, act); top.removeChild(act); }
 }
 // The counters run on their own 1-second timer, apart from the state updates and render(), so they move on between updates.
 // Each tick puts only the counters right, and the timer is cleared once no in-flight ticket in the queue has a started.
@@ -3867,7 +3886,7 @@ function render() {
     foremanAskOf(t.id)?.question ?? null, askPending.get(String(t.id)) ?? null, askRefused.get(String(t.id)) ?? null], queueItem,
     { own: t => { const { counter, ship_counter, ...own } = ownData(t); return own; }, derived: t => [t.counter, t.ship_counter, t.chain, t.unlocks, shownLinks(t)], update: queueUpdate });
   fill('queue', rows, 'Nothing in flight or ready.');
-  startCounters(m.queue.flatMap((t, i) => [...(t.counter !== null && t.held_at === null ? [[child(child(rows[i], 'top'), 'sub'), t.since, !!t.paused]] : []),
+  startCounters(m.queue.flatMap((t, i) => [...(t.counter !== null && t.held_at === null && counterOf(rows[i]) ? [[counterOf(rows[i]), t.since, !!t.paused]] : []),
     ...(t.ship_counter !== null ? [[shipTime(rows[i]), t.ship_since, false]] : [])]));
   for (const [box, top] of logScroll) box.scrollTop = top === null ? box.scrollHeight : top;
   logScroll.clear();

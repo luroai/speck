@@ -53,8 +53,10 @@ const ROW = id => `(() => {
     return out; };
   const lineOf = rects => ({ left: Math.round(rects[0].left), bottom: Math.round(rects[0].bottom), lastBottom: Math.round(rects[rects.length - 1].bottom) });
   const checks = card.querySelector('.checks');
-  const parts = [...checks.children].map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, height: Math.round(n.getBoundingClientRect().height), ...lineOf(rectsOf(n)) }));
-  const note = [...checks.children].find(n => /^(unlocks|waiting on) /.test(n.textContent));
+  // 0419: the line starts with the ticket's tags, and " · " separates its parts
+  const parts = [...checks.children].filter(n => !n.matches('.sep, .tag, .prio')).map(n => ({ text: n.textContent, size: getComputedStyle(n).fontSize, height: Math.round(n.getBoundingClientRect().height),
+    boxLeft: Math.round(n.getClientRects()[0].left), ...lineOf(rectsOf(n)) }));
+  const note = [...checks.children].find(n => /^(unlocks|after) /.test(n.textContent));
   const pieces = note ? [...note.childNodes].map(c => ({ text: c.textContent, goto: c.nodeType === 1, size: c.nodeType === 1 ? getComputedStyle(c).fontSize : getComputedStyle(note).fontSize,
     box: c.nodeType === 1 ? (b => ({ top: Math.round(b.top), bottom: Math.round(b.bottom), left: Math.round(b.left), right: Math.round(b.right), height: Math.round(b.height) }))(c.getBoundingClientRect()) : null,
     ...(r => ({ textLeft: r[0].left, textRight: r[r.length - 1].right, textBottom: Math.round(r[0].bottom) }))(rectsOf(c)) })) : [];
@@ -65,20 +67,20 @@ const ROW = id => `(() => {
 
 for (const width of [1280, 375]) {
   for (const id of ['0001', '0008']) {
-    test(`0164 AC1: at ${width} px, ${id}'s dependency note shares the text size and baseline of "5 criteria", or starts its own line at the left edge`, skip, () => withBoard(async b => {
+    test(`0164 AC1: at ${width} px, ${id}'s dependency note shares the text size and baseline of the lint result, or starts its own line at the left edge`, skip, () => withBoard(async b => {
       const { parts, cardLeft } = await b.js(ROW(id));
       const [criteria, lint] = parts;
-      const note = parts.find(p => /^(unlocks|waiting on) /.test(p.text));
+      const note = parts.find(p => /^(unlocks|after) /.test(p.text));
       assert.ok(note, `found the note: ${JSON.stringify(parts)}`);
       assert.match(criteria.text, /criteria$/);
       assert.equal(lint.text, 'lint passes');
       for (const p of [lint, note]) assert.equal(p.size, criteria.size, `"${p.text}" is the size of "${criteria.text}"`);
-      assert.equal(lint.bottom, criteria.bottom, 'the lint result is on the line of the criteria');
-      assert.equal(criteria.left, cardLeft, 'the criteria start at the left edge');
-      if (note.bottom === criteria.bottom) assert.ok(note.left > lint.left, 'on the same line, after the lint result');
+      // 0419: after the tags on the details line, so a part that wraps starts the next line at the left edge
+      for (const p of [criteria, lint]) if (p.bottom > parts[0].bottom) assert.equal(p.boxLeft, cardLeft, `"${p.text}" starts its line at the left edge`);
+      if (note.bottom === lint.bottom) assert.ok(note.left > lint.left, 'on the same line, after the lint result');
       else {
-        assert.ok(note.bottom > criteria.bottom, `on a line of its own, under the criteria: ${JSON.stringify(parts)}`);
-        assert.equal(note.left, criteria.left, 'which starts at the left edge, not indented');
+        assert.ok(note.bottom > lint.bottom, `on a line of its own, under the lint result: ${JSON.stringify(parts)}`);
+        assert.equal(note.boxLeft, cardLeft, 'which starts at the left edge, not indented');
       }
       // Nothing in it pushes its line out.
       if (note.lastBottom === note.bottom) assert.ok(Math.abs(note.height - criteria.height) <= 1, `on one line, the note is ${note.height} px high, as "${criteria.text}" is ${criteria.height} px`);

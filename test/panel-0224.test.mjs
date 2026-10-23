@@ -31,13 +31,13 @@ const ROWS = `[...document.querySelectorAll('#queue .q')].map(q => {
     }
     return { text: n.textContent, misses };
   });
-  return { id: q.querySelector('.id').textContent, line: q.querySelector(':scope > .act').textContent, tags };
+  return { id: q.querySelector('.id').textContent, line: q.querySelector('.top .act').textContent, tags };
 })`;
 
-test('0224 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 px tap areas reaches its tag, with a linked id in the Queued line below', skip, async () => {
+test('0224 AC1: at 375 px, every point of each queued ticket\'s tags\' 44 by 44 px tap areas reaches its tag, with a linked id in the same Queued line (0419)', skip, async () => {
   await onPhone(async b => {
     const rows = await b.js(ROWS);
-    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued · unlocks 0205'], ['0205', 'Queued · waiting on 0204']]);
+    assert.deepEqual(rows.map(r => [r.id, r.line]), [['0204', 'Queued · unlocks 0205 · P0 · M · low · bug'], ['0205', 'Queued · waiting on 0204 · P1 · S · high · fix']]);
     for (const row of rows) {
       assert.equal(row.tags.length, 4, `${row.id}: its four tags`);
       for (const t of row.tags) assert.deepEqual(t.misses, [], `${row.id} ${t.text}: these points of its 44 px tap area miss it`);
@@ -87,13 +87,13 @@ test('0224 AC2: at 375 px, a tap on a linked id\'s text still goes to that ticke
   }, CHAINED);
 });
 
-test('0224 AC2: at 375 px, the space between a queued ticket\'s tags and its Queued line with a linked id is as before', skip, async () => {
+// 0419: the tags are in the Queued line, after the linked id, so the space that kept them apart is the " · " between them.
+test('0224 AC2: at 375 px, a queued ticket\'s linked id\'s text is clear of its first tag\'s tap area', skip, async () => {
   await onPhone(async b => {
     const gaps = await b.js(`[...document.querySelectorAll('#queue .q')].map(q => {
-      const tags = q.querySelector('.tag-row').getBoundingClientRect(), act = q.querySelector(':scope > .act').getBoundingClientRect();
-      return [q.querySelector('.id').textContent, Math.round((act.top - tags.bottom) * 100) / 100];
+      const id = q.querySelector('.act .goto span').getBoundingClientRect(), tag = q.querySelector('.act .tag').getBoundingClientRect();
+      return [q.querySelector('.id').textContent, tag.top < id.bottom && tag.bottom > id.top ? tag.left + tag.width / 2 - 22 - id.right : null];
     })`);
-    assert.deepEqual(gaps, [['0204', GAP], ['0205', GAP]]);
+    for (const [id, gap] of gaps) assert.ok(gap === null || gap >= 0, `${id}: the first tag's tap area reaches ${-gap} px into the linked id`);
   }, CHAINED);
 });
-const GAP = 8; // as measured before 0224: the 8 px 0190 gave it

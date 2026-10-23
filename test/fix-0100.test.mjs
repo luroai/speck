@@ -118,8 +118,8 @@ test('0100 AC4: the panel shows a fix tag beside a fix ticket\'s id in Shaping, 
   await p.settle();
   const idOf = row => p.all(row).find(n => n.className === 'id')._text;
   // 0151, 0155, 0157: in Plan, the queue and Shipped the fix tag comes last in the row under the title, after any
-  // priority, size and risk tags.
-  const lastTag = row => p.all(row).find(n => /\btag-row\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || '')).at(-1);
+  // priority, size and risk tags. 0419: in Plan and the queue, in the details line under the title.
+  const lastTag = row => p.all(row).find(n => /\b(tag-row|checks|progress|act)\b/.test(n.className || '')).children.filter(n => /\btag\b/.test(n.className || '')).at(-1);
   const anyFix = row => p.all(row).some(n => /\bfix\b/.test(n.className || ''));
   for (const [where, rows] of [['Shaping', items(p)], ['queue', queueRows(p)], ['Shipped', shippedRows(p)]]) {
     const fix = rows.find(r => ['0001', '0003', '0005'].includes(idOf(r)));

@@ -41,7 +41,7 @@ test('0058 AC1: each in-flight ticket with a started shows MM:SS in the row\'s r
   const c = clock(NOW);
   const p = fakePage([board()], { Date: c.Date });
   await p.settle();
-  const shown = id => subOf(p, id).textContent;
+  const shown = id => subOf(p, id)?.textContent ?? ''; // 0419: a row with no time has no counter in its details line
   assert.equal(shown('0001'), '00:07', 'building');
   assert.equal(shown('0002'), '07:42', 'reviewing');
   assert.equal(shown('0003'), '62:07', 'blocked');
@@ -49,9 +49,10 @@ test('0058 AC1: each in-flight ticket with a started shows MM:SS in the row\'s r
   assert.equal(shown('0005'), '', 'an unreadable started shows nothing');
   assert.equal(shown('0006'), '', 'no started shows nothing');
   assert.equal(shown('0007'), '', 'a ready ticket shows nothing');
-  // The counter is where the minutes were: the last thing in the row's top line.
-  const top = rowOf(p, '0001').children.find(n => n.className === 'top');
-  assert.equal(top.children[top.children.length - 1], subOf(p, '0001'));
+  // 0419: the counter is in the details line under the title, after the stage's name and before the tags.
+  const line = p.all(rowOf(p, '0001')).find(n => n.className === 'progress');
+  assert.ok(line.children.includes(subOf(p, '0001')));
+  assert.match(line.textContent, /^Writing tests and code · Build · 00:07 · P2 · S · low$/);
   assert.ok(!rowOf(p, '0001').textContent.includes('min'), 'no whole minutes are left');
 });
 
@@ -102,8 +103,8 @@ test('0058 AC3: the counter moves on once a second from its own timer, between p
   assert.equal(subOf(p, '0002').textContent, '07:43');
   assert.equal(subOf(p, '0003').textContent, '62:08');
   assert.equal(subOf(p, '0004').textContent, '00:31');
-  assert.equal(subOf(p, '0005').textContent, '');
-  assert.equal(subOf(p, '0007').textContent, '', 'a ready ticket still shows nothing');
+  assert.equal(subOf(p, '0005'), undefined);
+  assert.equal(subOf(p, '0007'), undefined, 'a ready ticket still shows nothing');
   const after = snap();
   assert.equal(after.length, before.length, 'no node added or taken out');
   for (let i = 0; i < before.length; i++) {
@@ -201,7 +202,7 @@ test('0058 AC3 and AC4: in a real browser the counter ticks between polls, and a
     assert.equal(await sel(), (await text()).slice(4), 'the selected digit is still selected, and updated');
     // From the title across the counter.
     await select('#queue .q .title', 2, sub, 5);
-    assert.match(await sel(), /^long build\s+S\s+low\s+Writing tests and code\s+Build\s+\d\d:\d\d$/); // what it's doing and its stage come before the timer since 0156
+    assert.match(await sel(), /^long build\s+Writing tests and code · Build · \d\d:\d\d$/); // what it's doing and its stage come before the timer since 0156, and the tags after it since 0419
     await next();
     const shown = await text();
     assert.ok((await sel()).startsWith('long build') && (await sel()).endsWith(shown), 'the selection across the title and counter stays, updated');
