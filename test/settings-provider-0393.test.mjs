@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fakePage, panelRepo, gitEnv } from './support/panel.mjs';
 import { openSettings, rowOf, controlOf, changeTo } from './support/settings.mjs';
+import { agentsBox, buttonIn } from './support/your-agents.mjs';
 import { panelSettings, settingsAnswer, agentModels, builderModels, reviewerModels, foremanModels, panelKeyRequest, panelSaveSettings, CLAUDE_MODELS } from '../scripts/settings.mjs';
 import { PROVIDERS } from '../scripts/providers.mjs';
 import { providerKey, saveProviderKey } from '../scripts/keys.mjs';
@@ -48,6 +49,9 @@ const row = (key, value, o = {}) => ({ key, value, default: false, explain: `Wha
 const EFFORTS = ['', 'low', 'medium', 'high', 'xhigh', 'max'];
 const providerRow = (p, o = {}) => ({ name: p.name, label: p.label, models: p.models.map(slug => ({ slug, display_name: null, description: slug === p.defaultModel ? `${p.label}'s default` : null })),
   default_model: p.defaultModel, key_set: false, ...o });
+// 0399: Your agents for `providers`: each provider, yours when its key is set.
+const yoursFor = providers => ({ list: false, agents: [...providers.map(p => ({ id: p.name, name: p.label, kind: 'provider', yours: p.key_set, ready: p.key_set, key_set: p.key_set, roles: [],
+    ...(p.key_set ? {} : { why: `${p.label} has no API key on this machine: set one with speck keys set ${p.name}.` }) }))] });
 // A view as the server gives it, with DeepSeek offered, and `providers` as given.
 const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', providers = [providerRow(PROVIDERS[0])] } = {}) => {
   const names = providers.map(p => p.name);
@@ -58,10 +62,12 @@ const view = ({ builder = 'claude', reviewer = 'codex', foreman = '', providers 
       row('reviewer_effort', '', { choices: EFFORTS })] },
     { title: 'Foreman', settings: [row('foreman', foreman, { choices: ['', 'claude', 'codex', 'cursor', ...names] }), row('foreman_model', '')] }],
   builder_models: { builder, models: CLAUDE_MODELS }, reviewer_models: { reviewer, models: [{ slug: 'gpt-new', efforts: ['low'] }] },
-  foreman_models: { foreman: 'claude', models: CLAUDE_MODELS }, claude_models: CLAUDE_MODELS, providers };
+  foreman_models: { foreman: 'claude', models: CLAUDE_MODELS }, claude_models: CLAUDE_MODELS, providers, your_agents: yoursFor(providers) };
 };
 const options = (p, key) => p.all(controlOf(p, key)).filter(n => n.tagName === 'option').map(o => ({ value: o.value, text: o.textContent }));
-const keyBox = p => p.all(p.byId('settings')).find(n => /\bkeys\b/.test(n.className || '') && n.tagName === 'section');
+// 0399: the key fields are in Your agents, a provider that isn't yours under Add an agent, opened with openAdd.
+const keyBox = agentsBox;
+const openAdd = p => { const b = buttonIn(p, agentsBox(p), 'Add an agent'); if (b) p.press(b); };
 const keyInput = (p, name) => p.all(keyBox(p)).find(n => n.tagName === 'input' && n.attrs?.['data-provider'] === name);
 const keyButton = (p, name) => p.all(keyBox(p)).find(n => n.tagName === 'button' && n.attrs?.['data-provider'] === name);
 const keyWords = p => (keyBox(p) && !keyBox(p).hidden ? keyBox(p).textContent : '');
@@ -119,28 +125,24 @@ test('0393 AC1: switching the builder to DeepSeek from the panel builds with Dee
   assert.equal(mine.builder_model, 'deepseek-v4-flash');
 });
 
-test('0393 AC2: while DeepSeek is chosen, Settings says whether this machine has its key, with an empty field to enter or replace it', async () => {
-  const none = keysPage(view());
-  await openSettings(none);
-  assert.equal(keyWords(none), '', 'no key field while no provider is chosen');
-  for (const [key, to] of [['builder', 'deepseek'], ['reviewer', 'deepseek'], ['foreman', 'deepseek']]) {
-    const p = keysPage(view());
-    await openSettings(p);
-    changeTo(p, key, to);
-    await p.settle();
-    assert.match(keyWords(p), /no DeepSeek API key/, key);
-    assert.equal(keyInput(p, 'deepseek').type, 'password');
-    assert.equal(keyInput(p, 'deepseek').value, '');
-  }
+test('0393 AC2 (0399 AC3): Settings says whether this machine has DeepSeek\'s key, with an empty field to enter or replace it', async () => {
+  const p = keysPage(view());
+  await openSettings(p);
+  openAdd(p);
+  assert.match(keyWords(p), /DeepSeekNo key/);
+  assert.match(keyWords(p), /Paste your DeepSeek API key to add it/);
+  assert.equal(keyInput(p, 'deepseek').type, 'password');
+  assert.equal(keyInput(p, 'deepseek').value, '');
   const set = keysPage(view({ reviewer: 'deepseek', providers: [providerRow(PROVIDERS[0], { key_set: true })] }));
   await openSettings(set);
-  assert.match(keyWords(set), /has a DeepSeek API key/);
+  assert.match(keyWords(set), /DeepSeekKey set/);
   assert.equal(keyInput(set, 'deepseek').value, '', 'a saved key is never shown');
 });
 
-test('0393 AC2: saving a key in Settings sends it once, in the body, and the page clears it and shows it as set', async () => {
+test('0393 AC2 (0399 AC3): saving a key in Settings sends it once, in the body, and the page clears it and says it\'s saved', async () => {
   const p = keysPage(view({ builder: 'deepseek' }), [{ ok: true, provider: 'deepseek', key_set: true }]);
   await openSettings(p);
+  openAdd(p);
   const input = keyInput(p, 'deepseek');
   input.value = KEY;
   input.listeners.input?.({ target: input });
@@ -152,7 +154,7 @@ test('0393 AC2: saving a key in Settings sends it once, in the body, and the pag
   assert.ok(!posts[0].url.includes(KEY), 'never in the address');
   assert.equal(JSON.parse(posts[0].body).key, KEY);
   assert.ok(posts[0].headers['X-Speck-Token']);
-  assert.match(keyWords(p), /has a DeepSeek API key/);
+  assert.match(keyWords(p), /Saved the DeepSeek API key/);
   assert.equal(keyInput(p, 'deepseek').value, '');
   assert.ok(!p.calls93.some(c => c.method === 'POST' && c.url.startsWith('/api/settings')), 'the settings aren\'t saved with it');
 });
@@ -185,12 +187,12 @@ test('0393 AC2: the server saves a key for this machine only, with no commit, an
   assert.equal(providerKey(r.dir, 'deepseek'), KEY);
 });
 
-test('0393 AC3: choosing DeepSeek with no key says the key is needed before it can run', async () => {
+test('0393 AC3 (0399 AC3): DeepSeek with no key is offered with its key field, saying it has none', async () => {
   const p = keysPage(view());
   await openSettings(p);
-  changeTo(p, 'builder', 'deepseek');
-  await p.settle();
-  assert.match(keyWords(p), /DeepSeek can't run until/);
+  openAdd(p);
+  assert.match(keyWords(p), /DeepSeekNo keyPaste your DeepSeek API key to add it/);
+  assert.ok(keyButton(p, 'deepseek'), 'a button to save it');
 });
 
 test('0393 AC3: the panel\'s checks say when Claude Code isn\'t installed, as speck doctor\'s do', async () => {
@@ -238,25 +240,17 @@ test('0393 AC4: any provider in speck\'s list appears in Settings the same way',
   changeTo(p, 'reviewer', 'testco');
   await p.settle();
   assert.deepEqual(options(p, 'reviewer_model').map(o => o.value), ['', 'tc-big', 'tc-small']);
-  assert.match(keyWords(p), /no TestCo API key/);
+  openAdd(p);
+  assert.match(keyWords(p), /TestCoNo keyPaste your TestCo API key to add it/);
   assert.equal(keyInput(p, 'testco').value, '');
 });
 
-test('0393 AC2: the key box is one of the view\'s groups only while it shows, and its row has an info button like every setting', async () => {
-  const p = keysPage(view());
+test('0393 AC2 (0399 AC3): the key field is in the provider\'s row in Your agents, one of the view\'s groups', async () => {
+  const p = keysPage(view({ providers: [providerRow(PROVIDERS[0], { key_set: true })] }));
   await openSettings(p);
-  const box = p.all(p.byId('settings')).find(n => /\bkeys\b/.test(n.className || ''));
-  assert.equal(box.hidden, true);
-  assert.doesNotMatch(box.className, /\bsgroup\b/, 'an empty, hidden box is no group');
-  changeTo(p, 'reviewer', 'deepseek');
-  await p.settle();
   assert.match(keyBox(p).className, /\bsgroup\b/);
-  const info = p.all(keyBox(p)).find(n => n.tagName === 'button' && /\binfo\b/.test(n.className || ''));
-  assert.ok(info, 'an info button');
-  assert.match(info.attrs['aria-label'], /DeepSeek API key/);
-  const tip = p.all(keyBox(p)).find(n => /\bexplain\b/.test(n.className || ''));
-  assert.equal(tip.hidden, true, 'its explanation shows only when asked for');
-  changeTo(p, 'reviewer', 'codex');
-  await p.settle();
-  assert.doesNotMatch(box.className, /\bsgroup\b/);
+  let row = keyInput(p, 'deepseek');
+  while (row && !/\bagent\b/.test(row.className || '')) row = row.parentNode;
+  assert.ok(row, 'in an agent\'s row');
+  assert.match(row.textContent, /^DeepSeek/);
 });

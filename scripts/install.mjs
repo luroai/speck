@@ -99,6 +99,9 @@ const BUILDERS = {
   gemini: ['Gemini CLI', 'gemini', 'Install it with `npm install -g @google/gemini-cli`: https://github.com/google-gemini/gemini-cli'],
 };
 
+// 0399: how to install agent `id` (claude, codex or cursor), in one line, or null for one speck can't say.
+export const installHint = id => (Object.hasOwn(BUILDERS, id) && id !== 'gemini' ? BUILDERS[id][2] : null);
+
 // 0290: the names Cursor's CLI is installed as: `agent`, and `cursor-agent`, which it was called before.
 export const CURSOR_CLIS = ['agent', 'cursor-agent'];
 
