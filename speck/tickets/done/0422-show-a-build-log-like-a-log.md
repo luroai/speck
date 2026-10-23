@@ -1,0 +1,214 @@
+---
+id: "0422"
+title: "Show a build log like a log"                # one outcome, no "and"
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
+size: M                  # S | M  (L is never ready; split it)
+risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
+task: code               # code | document (what the build makes: a code change or a document)
+type: ""                 # blank | bug (a ticket that fixes a defect) | fix (fixes a broken base branch, at priority 0)
+builder: ""              # blank: the builder your settings give when the build starts
+reviewer: ""             # blank: the reviewer your settings give when each review round starts
+reviewer_model: ""       # blank: your settings' reviewer_model (blank there too: the reviewer's default)
+reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low | medium | high | xhigh | max
+source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
+after: [] # ticket ids that must be done first
+created: 2026-10-23
+started: "2026-10-23T17:53:56.021Z"
+approved: "2026-10-23T18:03:55.902Z"
+finished: "2026-10-23T18:13:24.096Z"
+
+---
+# 0422 · Show a build log like a log
+
+**Status:** ✅ done
+
+## Problem
+The build log is how you see that a build is really moving, like watching the model work. But it's one block of plain monospace text: times, tool calls, the agent's messages and failures all look the same, and a long line that wraps starts again at the left edge, so it reads as a new entry.
+
+## Outcome
+The build log reads like a log: times in a column of their own, each kind of entry in its own colour, and wrapped lines indented under their entry.
+
+## Acceptance criteria
+1. Each entry's time (`HH:MM:SS`) is in a column of its own, in the muted colour, and the entry's text starts after it.
+2. Tool calls (lines starting `→`), the agent's messages, failures (`✗ exit code <n>` and `Build ended: …`) and speck's own note that earlier lines aren't shown each have a colour of their own. Each colour has a contrast of at least 4.5:1 against the log's background, in both the light and the dark look.
+3. When an entry's text wraps, and when an agent message runs over several lines, every line after the first starts where the entry's text starts, past the time column, so the entry reads as one block. A blank line between two messages shows as one gap.
+4. Selecting and copying the log still gives its plain text with the times, and the log keeps its scroll place through the refresh, as today.
+
+## Out of scope
+- What goes into the log (`scripts/build-log.mjs`).
+- The pipeline log (0415).
+
+## Notes
+- The user asked for this on 2026-10-23. It's what they use most to trust that work is moving.
+- The lines come from `readableLog` in `scripts/build-log.mjs` (0291, 0340, 0341, 0342). The panel shows them with `logText` and `showLog` in `templates/panel.html`.
+- Builds alongside 0420, 0421 and 0423 (the user, 2026-10-23): each changes a different part of `templates/panel.html`. This one changes the log's rendering and styles. `.q .log` sits a few lines from 0421's `.q .stop-build`, so the second of the two to ship may need a merge round.
+- Failing before this build: none
+- Self-check: the log's own notes (No log yet. and the like) start at the left edge rather than past the time column; turned off the browser's scroll anchoring on the log so dropping rows at the top keeps its scroll place as before. Two existing browser tests (0052) selected text in the box's single text node and one fake-page check (0361) counted nodes by their own text: both now find the line's text node, checking the same thing.
+
+## In plain words
+A build's log in the panel now reads like a log. Each line's time sits in a column of its own on the left, in a quieter colour, and the text starts after it. Tool calls are blue, the agent's own messages are in the main text colour, failures are red and the note saying earlier lines are hidden is amber, in both the light and the dark look. When a line is too long and wraps, or a message runs over several lines, the rest of it lines up under its first line instead of starting at the left edge, so each entry reads as one block.
+
+To see it, open a building ticket in the Build lane and watch its log. Selecting and copying the log still gives plain text with the times, and the log stays where you scrolled to while new lines arrive.
+
+Worth a look: output that isn't from the agent (a stray line a tool printed) has no time, so it starts in the text column and takes the message colour.
+
+## Blocked question
+<!-- Filled in by speck only when status is blocked. -->
+
+## Review log
+Round 1 (codex): changes requested: F1 setLogText removes and replaces the final row whenever that line grows.
+Round 2 (codex): approve.
+
+## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 373,073
+- Elapsed since build started: 10 min
+- Changed lines: 72 (limit 5000)
+<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups (Delivery log only, none to the inbox):
+  - Known limit: a line with no time that isn't a tool call or a failure (an agent message's later lines, the final result, or raw output from the build process) is shown as a message. A log with no times at all would show every line past an empty time column.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "21cb4f1e7675d84c3b3bba5de16c8eb33519a69b",
+    "session": "fresh",
+    "thread_id": "01a169ec-49ce-7253-86cc-e73cd9f99cb0",
+    "builder_response": "- Tests run: test/panel-0422.test.mjs test/panel-0052.test.mjs test/panel-0361.test.mjs\n- The log box now holds one block row per line (`logRow`), its time in a `.at` span and its text in a text node, with each row but the last ending in its newline, so the box's text is the log's plain text as before. `setLogText` works by lines: it adds new rows at the bottom, takes the fewest rows out at the top when the tail moves on, and makes only the last row again when that line grew, so a selection in other rows stays.\n- Two existing tests changed only to find the text they select or count, now that the text isn't one text node: test/panel-0052.test.mjs (two real-browser selections) and test/panel-0361.test.mjs (counting the node that holds the log's text). What they check is unchanged.\n- `.q .log` has `overflow-anchor: none`, so taking rows out at the top keeps the box's scroll place as it did with one text node (0052's real-browser test checks it).\n- Pictures of the open log in the light and dark looks are in the review pack.\n",
+    "seconds": 49,
+    "usage": {
+      "input_tokens": 140272,
+      "cached_input_tokens": 100352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1185,
+      "reasoning_output_tokens": 200
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:01:43.608Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html logRow and .at styles separate and mute timestamps. Passing 0422 browser test checks their position."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "logRow assigns distinct tool, msg, fail and note classes. Passing 0422 tests check classification and at least 4.5:1 contrast in both themes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0422 browser test measures wrapped text, message continuation alignment and a single blank-line gap."
+      },
+      {
+        "id": 4,
+        "status": "fail",
+        "evidence": "Copying and scroll preservation are tested, but setLogText replaces the final row when its text grows, destroying a selection in that row. The browser test selects an earlier, unchanged row."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "setLogText removes and replaces the final row whenever that line grows. Selecting text in the latest line therefore loses the selection on refresh, even when the selected characters remain unchanged. Previously, appendData preserved that text node and selection. A read-only reproduction confirmed that updating '12:00:01 working' to '12:00:01 working more' removes the original row and text node.",
+        "suggested_fix": "Update the existing final row's text node in place when its text grows. Add a browser regression test that selects existing characters in the final line, extends that line, and verifies the selection remains.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The timestamps, colours and wrapping meet the requirements, and the reported tests pass. One refresh regression needs fixing: selected text in the latest line loses its selection when that line grows, which can interrupt copying."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "aabe9a585a0e41bb06b602197a276d613247a99d",
+    "session": "continued",
+    "thread_id": "01a169ec-49ce-7253-86cc-e73cd9f99cb0",
+    "builder_response": "- Tests run: test/panel-0422.test.mjs test/panel-0052.test.mjs test/panel-0361.test.mjs test/panel-0189.test.mjs\n- F1: fixed. `setLogText` in templates/panel.html now grows the last row's own text node with `appendData` when that line grows and keeps its time and kind (`logParts` gives both), and adds its newline in place when lines follow. Only a grown line whose time or kind changes is made again. The real-browser test in test/panel-0422.test.mjs now selects characters in the last line, grows it through the page's own `setLogText`, and checks the selection stays, then adds a line after it and checks again; it fails on the round-1 code. The fake page's text nodes gained `appendData` (test/support/panel.mjs) so fake-page tests can take the same path.\n",
+    "seconds": 16,
+    "usage": {
+      "input_tokens": 229998,
+      "cached_input_tokens": 183808,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1618,
+      "reasoning_output_tokens": 200
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:03:45.380Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html logParts/logRow separate timestamps into muted .at spans. Passing 0422 browser test verifies the time column and text position."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "logParts assigns distinct tool, msg, fail and note classes. Passing 0422 tests verify classification, distinct colours and at least 4.5:1 contrast in both themes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "Passing 0422 browser test measures wrapped text and message continuation alignment, and verifies that a blank line occupies one gap."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "setLogText now uses appendData to preserve the final line's text node as it grows. Passing browser tests verify plain-text selection including times, scroll preservation, and selection preservation when the final line grows and another line follows."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Growing the final line previously replaced its row and destroyed a selection within it.",
+        "suggested_fix": "Implemented: append to the existing text node when the line retains its time and kind; browser regression coverage verifies selection preservation.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The log now has separate timestamps, readable colours and aligned wrapping while preserving copying and scrolling. The selection regression is fixed and covered by a passing browser test. All four criteria pass; no blocking concerns remain."
+  }
+}
+```
+
+</details>
