@@ -42,6 +42,7 @@ Each setting's explanation says where a change to it is saved, and the rows and 
 - This covers `speck/ideas/2026-10-22-keep-settings-still-when-a-setting-s-button-is-pressed.md`, whose buttons go here, which the user dropped on 2026-10-23.
 - Waits for 0396: both change Settings in `templates/panel.html`.
 - Failing before this build: none
+- Self-check: `speck config show` read its explanations from the panel's, so it would have printed the panel's "A change here is saved…" ending: it now keeps the plain explanation. The brief's Settings entry still described the "default" label, the per-row marks and the top line: updated.
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

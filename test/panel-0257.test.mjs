@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fakePage, deferred, page, panelRepo, freePort, startPanel, stop, request, post, tokenOf } from './support/panel.mjs';
-import { panelSettings, SETTING_GROUPS } from '../scripts/settings.mjs';
+import { panelSettings, SETTING_GROUPS, explainFully } from '../scripts/settings.mjs';
 
 // ---------- 0257: show speck's settings, explained, in the panel ----------
 
@@ -116,10 +116,9 @@ test('0257 AC2: the view shows each group in order, each setting\'s name and val
   assert.equal(valueOf('reviewer_model'), '""');
   assert.equal(valueOf('max_parallel_builds'), '4');
   assert.equal(valueOf('builder'), 'false');
+  // 0397: no row is marked "default"; its explanation says what speck uses when it isn't set.
   const flagged = key => p.all(row(key)).some(n => /\bdefault\b/.test(n.className || '') && n.textContent === 'default');
-  assert.equal(flagged('builder'), true, 'a default is labelled "default"');
-  assert.equal(flagged('auto_ship'), false, 'a value from the file isn\'t');
-  assert.equal(flagged('reviewer_model'), false, 'nor is a blank one from the file');
+  for (const key of ['builder', 'auto_ship', 'reviewer_model']) assert.equal(flagged(key), false, key);
 });
 
 test('0257 AC3: each setting has an explanation of one or two sentences, and the shipping ones say a ticket they cover is merged and pushed without waiting for you', () => {
@@ -134,7 +133,7 @@ test('0257 AC3: each setting has an explanation of one or two sentences, and the
   for (const k of ['auto_ship', 'auto_ship_risk']) assert.match(all.find(s => s.key === k).explain, /merged and pushed to the base branch without waiting for you/, k);
   // And the view shows them, from the server's answer.
   const s = byKey(panelSettings(repoWith('')));
-  for (const x of all) assert.equal(s[x.key].explain, x.explain);
+  for (const x of all) assert.equal(s[x.key].explain, explainFully(x)); // 0397: with where a change is saved
 });
 
 test('0257 AC3: the view shows each setting\'s explanation', async () => {
