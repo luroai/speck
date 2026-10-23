@@ -216,10 +216,11 @@
   /* 0419: a Plan or Build ticket is its title line and one details line, in smaller type, its parts separated by " · ".
      Each part stays whole, so the line wraps between parts, and only when it doesn't fit; a list of linked ids too
      long for a line wraps between its ids. */
-  .item.ticket, .q { padding: 8px 10px; }
-  .item.ticket .head { display: block; margin: -8px -10px; padding: 8px 10px; }
-  .item.ticket .line .title, .q .top .line .title { line-height: 22px; }
-  .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; margin-top: 2px; font-family: inherit; font-size: 12px; line-height: 16px; color: var(--muted); }
+  .item.ticket, .q { padding: 6px 10px; }
+  .item.ticket .head { display: block; margin: -6px -10px; padding: 6px 10px; }
+  .item.ticket .line .title, .q .top .line .title { line-height: 20px; }
+  .item.ticket .line .id, .q .top .line .id { line-height: 14px; } /* inside the title's line, which it then doesn't make taller */
+  .item.ticket .head .checks, .q .top .progress, .q .top .act { display: block; font-family: inherit; font-size: 12px; line-height: 14px; color: var(--muted); }
   .item.ticket .head .checks > :not(.ids), .q .top .progress > :not(.ids), .q .top .act > :not(.ids) { white-space: nowrap; }
   .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline; font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; padding: 0; border: 0; line-height: inherit; vertical-align: baseline; } /* inline, as a box beside a dot would let the line break before the dot */
   /* the spaces either side of a dot a little narrower than a whole character, so a line such as "Writing tests and code
@@ -650,7 +651,7 @@
 
     /* 0419: a card's details line is 44 px a line, and wide gaps either side of each " · ", so the tags' and linked
        ids' tap areas in it stay apart */
-    .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; margin-top: 0; }
+    .item.ticket .head .checks, .q .top .progress, .q .top .act { line-height: 44px; }
     .item.ticket .head .checks .sep, .q .top .progress .sep, .q .top .act .sep { letter-spacing: 0; padding: 0 12px; }
     .item.ticket .head .checks .tag, .q .top .progress .tag, .q .top .act .tag { display: inline-block; } /* a box, for its tap area */
     /* The priority's 44 px box takes no more room in the line than its two characters do */
