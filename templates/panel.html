@@ -411,6 +411,7 @@
   #settings .setting .setting .list { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; } /* its info button kept beside it */
   #settings .setting .setting .list .info { flex: none; }
   #settings .setting .setting .name { display: none; }
+  #settings .setting[hidden], #settings .setting .setting[hidden] { display: none; } /* 0400: an effort for an agent that takes none */
   #settings .setting .setting > p:not(.explain) { flex: 1 1 100%; margin: 0; }
   #settings .switch-row .name, #settings .setting .name, #settings .arow .name { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); } /* 0277: broken only where settingName allows */
   #settings .setting .value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--text); background: var(--raise); padding: 0 6px; overflow-wrap: anywhere; }
@@ -2035,7 +2036,8 @@ async function loadSettings() {
     next = res.ok && body && Array.isArray(body.groups) ? { state: 'ok', groups: body.groups, reviewer_models: body.reviewer_models ?? null,
       claude_models: body.claude_models ?? null, builder_models: body.builder_models ?? null, foreman_models: body.foreman_models ?? null,
       providers: Array.isArray(body.providers) ? body.providers.filter(x => x && typeof x.name === 'string' && typeof x.label === 'string') : [], // 0393
-      your_agents: body.your_agents !== null && typeof body.your_agents === 'object' ? body.your_agents : null } // 0399
+      your_agents: body.your_agents !== null && typeof body.your_agents === 'object' ? body.your_agents : null, // 0399
+      agent_models: Array.isArray(body.agent_models) ? body.agent_models : null } // 0400
       : { state: 'error', text: body && typeof body.error === 'string' && body.error ? body.error : `Couldn't read the settings (${res.status}).` };
   } catch { next = { state: 'error', text: "Couldn't reach speck panel to read the settings. Close this and try again." }; }
   if (mine !== settingsSeq || settingsView === null) return; // closed, or opened again, since
@@ -2129,7 +2131,7 @@ function renderSettings() {
   else {
     for (const g of settingsView.groups) {
       const rows = [];
-      for (const x of Array.isArray(g.settings) ? g.settings : []) rows.push(settingRow(x, settingTips.size));
+      for (const x of Array.isArray(g.settings) ? g.settings : []) if (!roleModelKey(x.key)) rows.push(settingRow(x, settingTips.size));
       pairSettings(rows); // 0381
       if (g.title === 'Foreman') { foremanRows = rows; continue; }
       // 0273: a box like the panel's sections, with a heading bar
@@ -2177,16 +2179,19 @@ function toggleGroup() {
 }
 // 0381: each agent's model, drawn in the agent's row: key → the agent's key.
 const SETTING_PAIRS = { builder_model: 'builder', reviewer_model: 'reviewer', foreman_model: 'foreman' };
+// 0400: with one list for each role, its effort is drawn beside it instead, and its model has no row.
+const ROLE_PAIRS = { reviewer_effort: 'reviewer', foreman_effort: 'foreman' };
+const settingPairs = () => yourModels() !== null ? ROLE_PAIRS : SETTING_PAIRS;
 // The agent whose row `key`'s model is drawn in, when the server put both in one group; otherwise null.
 function pairedWith(key) {
-  const agent = Object.hasOwn(SETTING_PAIRS, key) ? SETTING_PAIRS[key] : null;
+  const pairs = settingPairs(), agent = Object.hasOwn(pairs, key) ? pairs[key] : null;
   if (agent === null || settingsView === null || !Array.isArray(settingsView.groups)) return null;
   const keys = g => (Array.isArray(g.settings) ? g.settings : []).map(x => x.key);
   return settingsView.groups.some(g => keys(g).includes(key) && keys(g).includes(agent)) ? agent : null;
 }
 // Each model's row among a group's `rows`, as drawn, moved into its agent's row, beside the agent's control.
 function pairSettings(rows) {
-  for (const [key, agent] of Object.entries(SETTING_PAIRS)) {
+  for (const [key, agent] of Object.entries(settingPairs())) {
     const model = settingRowsDrawn.get(key), host = settingRowsDrawn.get(agent);
     if (!model || !host || !rows.includes(model.row) || !rows.includes(host.row) || pairedWith(key) === null) continue;
     rows.splice(rows.indexOf(model.row), 1);
@@ -2195,22 +2200,29 @@ function pairSettings(rows) {
 }
 // A setting's row, whose explanation is the view's `n`th. 0381: an agent's model's is drawn to sit in the agent's row.
 function settingRow(x, n) {
-  const edit = x.editable === true ? settingEditor(x) : null;
-  const mine = x.for_machine === true && x.from === 'machine' && !settingClear.has(x.key);
+  const role = yourModels() !== null && Object.hasOwn(ROLES, x.key) ? x.key : null; // 0400: a role's one list
+  const edit = x.editable === true ? (role !== null ? roleEditor(x) : settingEditor(x)) : null;
+  // 0400: a role's list holds its model too, so it's this machine's own when either is.
+  const own = withRoleModel(x.key).filter(k => settingRows().some(r => r.key === k && r.for_machine === true && r.from === 'machine'));
+  const cleared = own.length > 0 && own.every(k => settingClear.has(k)), mine = own.length > 0 && !cleared;
   // 0397: where a change is saved, and this machine's own value with its button, are said in the explanation, not marked.
-  const [info, tip] = settingInfo(x, n, mine ? machineLine(x) : x.for_machine === true && x.from === 'machine' && settingClear.has(x.key) ? clearLine(x) : null);
+  const [info, tip] = settingInfo(x, n, mine ? machineLine(x) : cleared ? clearLine(x) : null);
   const shown = edit ? edit : [el('code', 'value', settingValue(x.value))];
   const model = pairedWith(x.key) !== null, control = model ? null : el('div', 'control', null, ...shown);
   const row = el('div', model ? 'setting model' : 'setting', null,
     model ? el('span', 'pick', null, settingName(x.key), el('span', 'list', null, ...shown, info))
       : el('div', 'row', null, el('span', 'label', null, settingName(x.key), info), control),
-    ['reviewer', 'builder', 'foreman'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
+    role === null && ['reviewer', 'builder', 'foreman'].includes(x.key) && typeof x.missing === 'string' && x.missing ? el('p', null, x.missing) : null, // 0288, 0293, 0393
+    role !== null ? notYoursLine(role) : null, role !== null ? unlistedLine(role) : null, role !== null ? needsClaudeLine() : null, // 0400
     x.key === 'builder' ? builderSwitchLine(x) : null,
     x.key === 'reviewer_model' && modelsWhy() !== null ? el('p', null, modelsWhy()) : null,
     x.key === 'builder_model' && builderModelsWhy() !== null ? el('p', null, builderModelsWhy()) : null,
     x.key === 'foreman_model' && foremanModelsWhy() !== null ? el('p', null, foremanModelsWhy()) : null, // 0348
     settingRefused.has(x.key) ? el('p', 'bad', settingRefused.get(x.key)) : null,
+    // 0400: a refusal of the role's model, whose list is the role's own
+    role !== null && settingRefused.has(ROLES[role].model) && settingRefused.get(ROLES[role].model) !== settingRefused.get(x.key) ? el('p', 'bad', settingRefused.get(ROLES[role].model)) : null,
     tip);
+  if (yourModels() !== null && Object.hasOwn(ROLE_PAIRS, x.key) && !takesEffort(ROLE_PAIRS[x.key])) row.hidden = true; // 0400
   settingRowsDrawn.set(x.key, { row, n, control });
   return row;
 }
@@ -2238,7 +2250,7 @@ function redrawSettings(keys, kept = null) {
     }
     if (settingHover === key) settingHover = null; // its info button is a new one
     if (settingFocus === key) settingFocus = null;
-    for (const [m, agent] of Object.entries(SETTING_PAIRS)) { // 0381: an agent's row keeps its model's
+    for (const [m, agent] of Object.entries(settingPairs())) { // 0381: an agent's row keeps its model's
       const model = settingRowsDrawn.get(m);
       if (agent === key && model && drawn.control && model.row.parentNode === drawn.control) settingRowsDrawn.get(key).control.appendChild(model.row);
     }
@@ -2412,6 +2424,10 @@ function settingChosen(key) {
 // 0347: Cursor's have no `efforts` either: their names carry the effort, so reviewer_effort offers speck's own.
 // 0369: or those of codex or cursor chosen but not yet saved, read when it's chosen.
 function reviewerModelList() {
+  if (yourModels() !== null) { // 0400: the models of the reviewer's agent, as your agents list them
+    const a = yourAgent(settingChosen('reviewer'));
+    return a === null ? null : agentModelsOf(a).map(x => ({ slug: x.slug, efforts: Array.isArray(x.efforts) ? x.efforts.filter(e => typeof e === 'string') : null, ...modelWords(x) }));
+  }
   const m = settingsView !== null ? settingsView.reviewer_models : null, chosen = settingChosen('reviewer'), claude = ['claude', 'claude-subagent'].includes(chosen);
   const provider = settingProvider(chosen); // 0393: a model provider's, from speck's list
   const read = claude || provider ? null : modelsRead(m, 'reviewer', chosen);
@@ -2555,6 +2571,121 @@ function replacesCommand(changes) {
 }
 // A setting's value as its control writes it: "low,high" for a list.
 const settingNow = x => x.value === null || x.value === undefined ? '' : Array.isArray(x.value) ? x.value.join(',') : String(x.value);
+// 0400: each role's one list, made of your agents' models, grouped by agent, as "<agent> · <model>". Choosing an entry
+// sets the role's agent and model together. Its effort, for an agent that takes one, sits beside it.
+const ROLES = { builder: { model: 'builder_model', name: 'builder' }, reviewer: { model: 'reviewer_model', name: 'reviewer' }, foreman: { model: 'foreman_model', name: 'Foreman' } };
+// Your agents' models, as the server read them, or null when it didn't say: then each role keeps its agent and model lists.
+function yourModels() {
+  const list = settingsView !== null && settingsView.state === 'ok' && Array.isArray(settingsView.agent_models) ? settingsView.agent_models : null;
+  return list === null ? null : list.filter(a => a && typeof a.id === 'string' && typeof a.name === 'string');
+}
+const roleModelKey = key => yourModels() !== null && Object.values(ROLES).some(r => r.model === key);
+// The agent a role's value runs on: the Claude subagent is Claude Code's.
+const agentOfRole = id => id === 'claude-subagent' ? 'claude' : id;
+const yourAgent = id => (yourModels() || []).find(a => a.id === agentOfRole(id)) ?? null;
+const agentModelsOf = a => (Array.isArray(a.models) ? a.models : []).filter(m => m && typeof m.slug === 'string' && m.slug);
+const modelLabel = m => typeof m.display_name === 'string' && m.display_name ? m.display_name : m.slug;
+// Every agent speck knows, yours or not, from Your agents: for saying a role's agent isn't yours.
+const knownAgent = id => {
+  const all = settingsView !== null && settingsView.your_agents && Array.isArray(settingsView.your_agents.agents) ? settingsView.your_agents.agents : [];
+  return all.find(a => a && a.id === agentOfRole(id)) ?? null;
+};
+const agentLabel = id => yourAgent(id)?.name ?? knownAgent(id)?.name ?? builderName(id);
+// A setting's key, with its model's when it's a role whose list holds both.
+const withRoleModel = key => yourModels() !== null && Object.hasOwn(ROLES, key) ? [key, ROLES[key].model] : [key];
+const fromMachine = key => settingRows().some(r => r.key === key && r.for_machine === true && r.from === 'machine');
+// Whether Save clears this machine's values for `role`, leaving the project's.
+const roleCleared = role => { const own = withRoleModel(role).filter(fromMachine); return own.length > 0 && own.every(k => settingClear.has(k)); };
+// The project's value of `key`, under this machine's own.
+const projectValue = key => { const r = settingRows().find(x => x.key === key); return !r ? '' : r.for_machine === true && r.from === 'machine' ? settingNow({ value: r.repo_value }) : settingNow(r); };
+// The agent the Foreman runs on when it's left to the builder's, as foremanAgentChosen reads it.
+const buildersAgent = () => { const b = settingChosen('builder'); return ['codex', 'cursor'].includes(b) || settingProvider(b) !== null ? b : 'claude'; };
+// `role`'s entries: { group, value, label }, each value "<agent>|<model>", a blank model being the agent's own default.
+function roleEntries(role) {
+  const out = role === 'foreman' ? [{ group: null, value: '|', label: `The builder's agent, now ${agentLabel(buildersAgent())}` }] : [];
+  for (const a of yourModels().filter(a => !needsClaude(a.id))) {
+    out.push({ group: a.name, value: `${a.id}|`, label: `${a.name} · default` });
+    for (const m of agentModelsOf(a)) out.push({ group: a.name, value: `${a.id}|${m.slug}`, label: `${a.name} · ${modelLabel(m)}` });
+    if (role === 'reviewer' && a.id === 'claude') out.push({ group: a.name, value: 'claude-subagent|', label: `${a.name} · subagent in the builder's session` });
+  }
+  return out;
+}
+const roleValue = (role, of) => `${of(role)}|${of(ROLES[role].model)}`;
+// A value that isn't an entry, in words, as it's saved.
+function roleWords(role, value) {
+  const at = value.indexOf('|'), agent = value.slice(0, at), model = value.slice(at + 1);
+  const a = yourAgent(agent), m = a !== null ? agentModelsOf(a).find(x => x.slug === model) : undefined;
+  const who = agent === '' ? 'The builder\'s agent' : agent === 'claude-subagent' ? `${agentLabel(agent)} · subagent in the builder's session` : agentLabel(agent);
+  return `${who} · ${model === '' ? 'default' : m ? modelLabel(m) : model}`;
+}
+function roleEditor(x) {
+  const role = x.key;
+  if (roleCleared(role)) { // 0261: this machine's value goes on Save, leaving the project's
+    const shown = el('input', 'edit');
+    shown.type = 'text';
+    shown.value = roleWords(role, roleValue(role, projectValue));
+    shown.disabled = true;
+    shown.setAttribute('aria-label', role);
+    return [shown];
+  }
+  const entries = roleEntries(role), picked = roleValue(role, settingChosen);
+  const select = el('select', 'edit');
+  for (const v of [...new Set([roleValue(role, settingSaved), picked])].filter(v => !entries.some(e => e.value === v))) {
+    const o = el('option', null, `${roleWords(role, v)} (not offered)`);
+    o.value = v;
+    o.disabled = true;
+    select.appendChild(o);
+  }
+  let group = null, into = select;
+  for (const e of entries) {
+    if (e.group !== group) {
+      group = e.group;
+      into = select;
+      if (group !== null) { into = el('optgroup'); into.label = group; select.appendChild(into); }
+    }
+    const o = el('option', null, e.label);
+    o.value = e.value;
+    into.appendChild(o);
+  }
+  select.value = picked;
+  select.setAttribute('aria-label', role);
+  settingControls.set(role, select);
+  const choose = () => {
+    const v = String(select.value ?? ''), at = v.indexOf('|');
+    if (at < 0) return;
+    settingTyped.set(role, v.slice(0, at));
+    settingTyped.set(ROLES[role].model, v.slice(at + 1));
+    redrawSettings(ROLE_AFFECTS[role], role);
+  };
+  select.addEventListener('input', choose);
+  select.addEventListener('change', choose);
+  return [select];
+}
+// What a change to a role's list redraws: its own row, its effort, and the Foreman's, which can run on the builder's agent.
+const ROLE_AFFECTS = { builder: ['builder', 'foreman', 'foreman_effort'], reviewer: ['reviewer', 'reviewer_effort'], foreman: ['foreman', 'foreman_effort'] };
+// Whether the agent `role` runs on, as chosen, takes an effort: Claude Code and Codex do.
+function takesEffort(role) {
+  const agent = role === 'foreman' ? foremanAgentChosen() : agentOfRole(settingChosen(role)), a = yourAgent(agent);
+  return a !== null ? a.efforts === true : ['claude', 'codex'].includes(agent);
+}
+// A role whose agent, as chosen, is one speck knows but not one of yours says so.
+function notYoursLine(role) {
+  const agent = settingChosen(role);
+  if (agent === '' || yourAgent(agent) !== null || knownAgent(agent) === null) return null;
+  return el('p', 'bad', `${agentLabel(agent)} isn't one of your agents on this machine any more, so choose the ${ROLES[role].name}'s model again from the list.`);
+}
+// 0393: speck runs a model provider's models through Claude Code, so while Claude Code isn't installed none is offered.
+const needsClaude = id => settingProvider(id) !== null && knownAgent('claude') !== null && knownAgent('claude').installed === false;
+function needsClaudeLine() {
+  const left = (yourModels() || []).filter(a => needsClaude(a.id)).map(a => a.name);
+  return left.length ? el('p', null, `Not offered: ${left.join(', ')}, as speck runs ${left.length > 1 ? 'their' : 'its'} models through Claude Code, and Claude Code isn't installed.`) : null;
+}
+// Why only an agent's default is offered, while it's chosen: its models couldn't be read.
+function unlistedLine(role) {
+  const agent = role === 'foreman' ? foremanAgentChosen() : settingChosen(role), a = yourAgent(agent);
+  if (a === null || agentModelsOf(a).length || typeof a.why !== 'string' || !a.why) return null;
+  return el('p', null, `Only ${a.name}'s default is offered: ${a.why}`);
+}
 // 0399: the Your agents group's box, drawn afresh.
 function agentsGroup() {
   if (agentsBox === null) agentsBox = el('section', 'sgroup agents');
@@ -2715,14 +2846,21 @@ async function saveKey(a) {
 function machineLine(x) {
   const clear = el('button', 'save', 'Clear this machine\'s value');
   clear.type = 'button';
-  clear.addEventListener('click', () => { settingClear.add(x.key); settingTyped.delete(x.key); settingRefused.delete(x.key); keepSettingTip(x.key); renderSettings(); });
-  return el('span', 'line', null, el('span', null, `This is your machine's own value, used over the project's: ${settingValue(x.repo_value)}${x.default ? ', speck\'s default' : ''}.`), clear);
+  clear.addEventListener('click', () => {
+    for (const k of withRoleModel(x.key).filter(fromMachine)) settingClear.add(k);
+    for (const k of withRoleModel(x.key)) { settingTyped.delete(k); settingRefused.delete(k); }
+    keepSettingTip(x.key);
+    renderSettings();
+  });
+  const project = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, projectValue)) : `${settingValue(x.repo_value)}${x.default ? ', speck\'s default' : ''}`; // 0400
+  return el('span', 'line', null, el('span', null, `This is your machine's own value, used over the project's: ${project}.`), clear);
 }
 function clearLine(x) {
   const keep = el('button', 'save', 'Keep this machine\'s value');
   keep.type = 'button';
-  keep.addEventListener('click', () => { settingClear.delete(x.key); settingRefused.delete(x.key); keepSettingTip(x.key); renderSettings(); });
-  return el('span', 'line', null, el('span', null, `This machine's value, ${settingValue(x.value)}, is cleared when you save.`), keep);
+  keep.addEventListener('click', () => { for (const k of withRoleModel(x.key)) { settingClear.delete(k); settingRefused.delete(k); } keepSettingTip(x.key); renderSettings(); });
+  const value = withRoleModel(x.key).length > 1 ? roleWords(x.key, roleValue(x.key, settingSaved)) : settingValue(x.value); // 0400
+  return el('span', 'line', null, el('span', null, `This machine's value, ${value}, is cleared when you save.`), keep);
 }
 const keepSettingTip = key => { settingTip = key; settingTipKept = true; };
 const settingRows = () => settingsView !== null && Array.isArray(settingsView.groups)
@@ -2807,7 +2945,7 @@ async function sendSettings() {
   }
   const replacing = replacesCommand(changes);
   if (replacing !== null && (typeof confirm !== 'function' || !confirm(replacing.ask))) { // 0293: cancelled: the builder goes back as it was
-    settingTyped.delete('builder');
+    for (const k of withRoleModel('builder')) settingTyped.delete(k); // 0400: and the model chosen with it
     settingRefused.delete('builder');
     renderSettings();
     return;
