@@ -20,6 +20,11 @@ import { fixingOf } from './foreman.mjs';
 import { statusData } from './speck.mjs';
 import { askKey, dealtWith, readReplies, cmdForemanReply } from './foreman-answer.mjs';
 import { cursorCli, CURSOR_HEADLESS } from './cursor-build.mjs';
+import { PROVIDERS } from './providers.mjs';
+import { providerNamed } from './provider-review.mjs';
+import { PROVIDER_SCRIPT, CLAUDE_FLAGS, FOREMAN_MODE } from './provider-build.mjs';
+import { onPath } from './install.mjs';
+import { providerKey } from './keys.mjs';
 
 const CLI = fileURLToPath(new URL('./speck.mjs', import.meta.url));
 
@@ -39,9 +44,24 @@ export const ACTIONS = Object.freeze({
 const RECENT = 5; // how many of its actions the status detail shows
 
 // The agent the Foreman runs on: foreman when it's set, otherwise the builder when that's Codex or Cursor (0333),
-// otherwise Claude Code.
-export const foremanAgentOf = cfg => (FOREMAN_AGENTS.includes(cfg?.foreman) ? cfg.foreman
-  : ['codex', 'cursor'].includes(cfg?.builder) ? cfg.builder : 'claude');
+// otherwise Claude Code. 0392: or a model provider in `providers`, such as deepseek, set as foreman or as the builder.
+export const foremanAgentOf = (cfg, providers = PROVIDERS) => (FOREMAN_AGENTS.includes(cfg?.foreman) || providerNamed(cfg?.foreman, providers) ? cfg.foreman
+  : ['codex', 'cursor'].includes(cfg?.builder) || providerNamed(cfg?.builder, providers) ? cfg.builder : 'claude');
+// 0392: the model provider the Foreman runs on, or null.
+export const foremanProvider = (cfg, providers = PROVIDERS) => providerNamed(foremanAgentOf(cfg, providers), providers);
+// 0392: the agent the Foreman runs on as speck run names it: a provider by its label, such as DeepSeek.
+const agentLabel = (cfg, providers = PROVIDERS) => foremanProvider(cfg, providers)?.label ?? foremanAgentOf(cfg, providers);
+
+// 0392: why the Foreman can't start on a model provider now, in a sentence, or '' when it can or isn't on one.
+// `installed` says whether a command is on the PATH, so tests can stand in.
+export function foremanCantStart(repo, cfg, { providers = PROVIDERS, installed = onPath } = {}) {
+  const p = foremanProvider(cfg, providers);
+  if (!p) return '';
+  if (!installed('claude')) return `the ${p.label} Foreman needs Claude Code installed, as speck runs ${p.label}'s models through it (claude isn't on the PATH). Install Claude Code (https://claude.com/claude-code), or set foreman to another agent.`;
+  let key = '';
+  try { key = providerKey(repo, p.name, { providers }); } catch (e) { return e.message; }
+  return key ? '' : `this machine has no ${p.label} API key for the Foreman. Set one with \`speck keys set ${p.name}\`, or set foreman to another agent.`;
+}
 const textOf = v => (typeof v === 'string' ? v.trim() : '');
 const oneLine = v => textOf(v).replace(/\s+/g, ' ');
 const sentence = v => (/[.!?]$/.test(v) ? v : `${v}.`);
@@ -71,17 +91,25 @@ export function foremanBrief({ id, what, log, tail, agent = 'claude' }) {
 
 // The command that starts the agent with `brief`, on foreman_model and foreman_effort when they're set. Claude Code may
 // only read and run speck and read-only git commands; Codex has no such list, so it runs as Codex builds do. 0333: so
-// does Cursor, as `cli`, without foreman_effort, as Cursor's model names carry the effort.
-export function foremanArgv(cfg, brief, cli) {
-  const agent = foremanAgentOf(cfg), model = textOf(cfg?.foreman_model), effort = textOf(cfg?.foreman_effort);
+// does Cursor, as `cli`, without foreman_effort, as Cursor's model names carry the effort. 0392: a model provider's
+// Foreman runs Claude Code's, --bare and without foreman_effort, on foreman_model or else the provider's default model,
+// through provider-build.mjs, which reads this machine's key for it and gives Claude Code only what it needs to run and
+// the provider's address and key (providerForemanEnv).
+export function foremanArgv(cfg, brief, cli, providers = PROVIDERS) {
+  const agent = foremanAgentOf(cfg, providers), model = textOf(cfg?.foreman_model), effort = textOf(cfg?.foreman_effort);
+  const p = providerNamed(agent, providers);
+  if (p) return [process.execPath, PROVIDER_SCRIPT, FOREMAN_MODE, p.name, p.address, ...claudeArgv(brief, model || p.defaultModel, '', ['--bare', ...CLAUDE_FLAGS])];
   if (agent === 'cursor') return [cli ?? cursorCli(), ...CURSOR_HEADLESS, ...(model ? ['--model', model] : []), brief];
   if (agent === 'codex')
     return ['codex', 'exec', '--json', '--dangerously-bypass-approvals-and-sandbox', ...(model ? ['-m', model] : []),
       ...(effort ? ['-c', `model_reasoning_effort="${effort}"`] : []), brief];
-  return ['claude', '-p', brief, '--output-format', 'stream-json', '--verbose', '--permission-mode', 'dontAsk',
-    ...(model ? ['--model', model] : []), ...(effort ? ['--effort', effort] : []),
-    '--allowedTools', 'Read', 'Grep', 'Glob', 'Bash(node .speck/scripts/speck.mjs:*)', 'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)', 'Bash(git show:*)'];
+  return claudeArgv(brief, model, effort);
 }
+
+// Claude Code's Foreman command, `flags` first: it may only read and run speck and read-only git commands.
+const claudeArgv = (brief, model, effort, flags = []) => ['claude', ...flags, '-p', brief, '--output-format', 'stream-json', '--verbose', '--permission-mode', 'dontAsk',
+  ...(model ? ['--model', model] : []), ...(effort ? ['--effort', effort] : []),
+  '--allowedTools', 'Read', 'Grep', 'Glob', 'Bash(node .speck/scripts/speck.mjs:*)', 'Bash(git log:*)', 'Bash(git status:*)', 'Bash(git diff:*)', 'Bash(git show:*)'];
 
 // The subject of the commits `speck foreman` makes, which don't count as new commits on the ticket (kept in build-records).
 export { foremanSubject };
@@ -187,10 +215,11 @@ function spawnAgent(argv, cwd, log, env) {
 // speck run's side. stuck({ id, what, log }) takes a stop speck has no steps for; check(tickets), on each of its checks,
 // starts the agent for the next one waiting, at most one at a time, carries out what an agent that has ended asked for
 // and resumes builds it asked to, while a build slot is free. Each ticket is looked into at most once for the same
-// commits (codeKey). `ships` is speck run's ship queue, whose again(id) ships a ticket once more.
+// commits (codeKey). `ships` is speck run's ship queue, whose again(id) ships a ticket once more. 0392: `providers` are
+// the model providers speck knows, and `cantStart(cfg)` says why the Foreman can't start on one now.
 export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, running, startBuild, ships,
   start = spawnAgent, key = id => codeKey(repo, cfg, id), alive = pidAlive, say = console.log, persist = saveAgentState,
-  withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`) }) {
+  withToken = token => processesWithEnv(`SPECK_FOREMAN_RUN=${token}`), providers = PROVIDERS, cantStart = c => foremanCantStart(repo, c, { providers }) }) {
   let child = null; // the agent this speck run started: { token, exited }. While it runs, no other starts, whatever the record says
   const finished = new Set(); // the runs whose actions have been carried out, so a record that couldn't be saved doesn't repeat them
   const carried = new Set(); // 0318: the same for your answers to its questions
@@ -223,21 +252,23 @@ export function foremanAgentQueue({ repo, runs, readConfig, words, cfg, max, run
   };
 
   const launch = (s, c, next) => {
-    const token = crypto.randomUUID(), agent = foremanAgentOf(c);
+    const token = crypto.randomUUID(), agent = foremanAgentOf(c, providers), label = agentLabel(c, providers);
     const brief = foremanBrief({ id: next.id, what: next.what, log: next.log ? path.relative(repo, next.log) : 'its log', tail: next.log ? logTail(next.log) : '', agent });
-    const argv = foremanArgv(c, brief);
+    const argv = foremanArgv(c, brief, undefined, providers);
     // Reserved in the record before it starts, so a record that can't be saved starts nothing, and the agent's token is
     // there for `speck foreman` to check.
     s.queue = s.queue.slice(1);
     s.tried[next.id] = next.key;
     s.running = { id: next.id, token, pid: null, key: next.key, what: next.what, started: new Date().toISOString() };
     if (!save(s)) return;
+    const cant = cantStart(c); // 0392: a provider's without Claude Code or this machine's key for it
+    if (cant) { s.running = null; save(s); return say(`${next.id}: the Foreman couldn't start on ${label}: ${cant}`); }
     const started = start(argv, repo, path.join(runs(), LOG), { ...process.env, SPECK_FOREMAN_RUN: token });
-    if (started.error || !started.pid) { s.running = null; save(s); return say(`${next.id}: the Foreman couldn't start ${agent}: ${started.error || 'it has no process id'}.`); }
+    if (started.error || !started.pid) { s.running = null; save(s); return say(`${next.id}: the Foreman couldn't start ${label}: ${started.error || 'it has no process id'}.`); }
     child = { token, exited: started.exited };
     s.running = { ...s.running, pid: started.pid };
     save(s);
-    say(`${next.id}: the Foreman (${agent}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
+    say(`${next.id}: the Foreman (${label}) is looking into it. Log: ${path.relative(repo, path.join(runs(), LOG))}`);
   };
 
   const resume = (s, t) => {

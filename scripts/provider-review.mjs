@@ -14,7 +14,7 @@ import { PROVIDERS, findProvider } from './providers.mjs';
 
 // The only variables passed on from speck's own environment: what a program needs to run, and a proxy to reach the
 // provider through. Nothing that signs in to Anthropic, a cloud or Claude Code.
-const KEEP = ['PATH', 'LANG', 'LANGUAGE', 'TERM', 'TZ', 'TMPDIR', 'SHELL', 'USER', 'LOGNAME',
+export const KEEP = ['PATH', 'LANG', 'LANGUAGE', 'TERM', 'TZ', 'TMPDIR', 'SHELL', 'USER', 'LOGNAME',
   'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy', 'NODE_EXTRA_CA_CERTS', 'SSL_CERT_FILE', 'SSL_CERT_DIR'];
 
 // The provider called `name`, when it is one: matched exactly, as a reviewer name is.
