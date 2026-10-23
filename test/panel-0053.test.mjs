@@ -78,10 +78,10 @@ test('0053 AC4: everything else in the row stays where it is', async () => {
   assert.equal(c.children[2].textContent, 'Waiting for you. Answer the question, then run /speck-build 0003'); // 0069, 0317
   const waiting = rowOf(p, '0004');
   assert.deepEqual(shape(waiting), ['top']); // 0419: the Queued line is the top row's details line
-  assert.equal(topOf(waiting).children[1].textContent, 'Queued · waiting on 0005 · P2 · S · low');
+  assert.equal(topOf(waiting).children[1].textContent, 'Queued · waiting on 0005');
   assert.ok(p.all(topOf(waiting)).some(n => n.className === 'lock'), 'the padlock in the top row');
   const chain = rowOf(p, '0005');
-  assert.equal(topOf(chain).children[1].textContent, 'Queued · unlocks 0004 · P2 · S · low');
+  assert.equal(topOf(chain).children[1].textContent, 'Queued · unlocks 0004');
   assert.ok(p.all(topOf(chain)).some(n => n.className === 'chain'), 'the chain icon in the top row');
   // Opened, the rest keeps its place (0421: with no path line).
   await open(p, '0001');
