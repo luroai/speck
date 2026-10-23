@@ -1,7 +1,7 @@
 ---
 id: "0428"
 title: "Round the panel's corners as Cursor does"                # one outcome, no "and"
-status: blocked            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,12 +16,13 @@ after: ["0427"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T19:24:44.728Z"
 approved: "2026-10-23T19:37:46.175Z"
-blocked_at: "2026-10-23T19:42:40.751Z"
+blocked_at: ""
+waited_seconds: 76
 
 ---
 # 0428 · Round the panel's corners as Cursor does
 
-**Status:** ⛔ blocked
+**Status:** 🔨 building
 
 ## Problem
 Every corner in the panel is square: `* { border-radius: 0 !important; }` in `templates/panel.html`. Beside Cursor's rounded controls and panels, it looks like a different product.
@@ -46,6 +47,7 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 - Waits for 0427: both change `templates/panel.html`.
 - Failing before this build: none
 - Self-check: rounded the tag tip and Settings' explanations 8 px too, as small pop-ups, so none stays square beside the rest. Buttons left without a box of their own, each inside a box or not drawn as a button: the tabs, speck's screen, the switches, Appearance's three choices, the priority menu's numbers and the linked ids.
+- Went with the recommendation: A, keep the window-filling pop-ups square (chosen by the user in the panel, 2026-10-23 19:43 UTC).
 
 ## In plain words
 The panel's corners are rounded now, to sit better beside Cursor: buttons, boxes, menus and tags are slightly rounded, and ticket cards, the build log, the stats, Settings' groups and the big pop-ups more so. Every button now has a thin outline all round, including the small Full ticket, Review pack and Stop build buttons on an open ticket, and Plan's first toggle no longer loses its left edge. speck's screen and its dark frame stay square.
