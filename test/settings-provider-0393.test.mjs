@@ -241,3 +241,22 @@ test('0393 AC4: any provider in speck\'s list appears in Settings the same way',
   assert.match(keyWords(p), /no TestCo API key/);
   assert.equal(keyInput(p, 'testco').value, '');
 });
+
+test('0393 AC2: the key box is one of the view\'s groups only while it shows, and its row has an info button like every setting', async () => {
+  const p = keysPage(view());
+  await openSettings(p);
+  const box = p.all(p.byId('settings')).find(n => /\bkeys\b/.test(n.className || ''));
+  assert.equal(box.hidden, true);
+  assert.doesNotMatch(box.className, /\bsgroup\b/, 'an empty, hidden box is no group');
+  changeTo(p, 'reviewer', 'deepseek');
+  await p.settle();
+  assert.match(keyBox(p).className, /\bsgroup\b/);
+  const info = p.all(keyBox(p)).find(n => n.tagName === 'button' && /\binfo\b/.test(n.className || ''));
+  assert.ok(info, 'an info button');
+  assert.match(info.attrs['aria-label'], /DeepSeek API key/);
+  const tip = p.all(keyBox(p)).find(n => /\bexplain\b/.test(n.className || ''));
+  assert.equal(tip.hidden, true, 'its explanation shows only when asked for');
+  changeTo(p, 'reviewer', 'codex');
+  await p.settle();
+  assert.doesNotMatch(box.className, /\bsgroup\b/);
+});
