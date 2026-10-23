@@ -47,7 +47,11 @@ The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek
 - Self-check: made the docs name deepseek as a Foreman agent (README, brief, config template) with a test of those facts, and made the no-key test independent of whether Claude Code is installed on the machine running it.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The Foreman, which looks into work that stops for a reason speck has no steps for, can now run on DeepSeek. Set the Foreman to deepseek, or leave it blank while DeepSeek builds your tickets, and it uses DeepSeek's model (the one you name for the Foreman, or DeepSeek's default). It may only read and run speck's own commands and read-only git commands, as before, and it gets your DeepSeek key but no other sign-in or key on your machine.
+
+To see it, save a DeepSeek key with `speck keys set deepseek`, set the Foreman to deepseek, turn fixing on, and let a build stop unexpectedly: speck run says "the Foreman (DeepSeek) is looking into it". Without the key, or without Claude Code installed, it says why the Foreman couldn't start instead.
+
+Worth watching: Settings doesn't offer DeepSeek for the Foreman yet (that's the next ticket), and a stop the Foreman couldn't start on isn't looked into again until the ticket changes.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,7 +60,10 @@ The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek
 <!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
 
 ## Delivery log
-<!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- Inbox: speck/ideas/2026-10-23-look-into-a-stop-again-once-the-foreman-can-start.md — a stop the Foreman couldn't start on (no key, no Claude Code) counts as tried, so setting the key doesn't bring it back until new commits.
+- Skipped, covered by 0393: Settings' Foreman list doesn't offer deepseek yet, and its Foreman model list would read Codex's models while foreman is deepseek.
+- Known limit: if the key is removed between speck run's check and the Foreman starting, the launcher stops with its own message, which goes to the Foreman's log rather than speck run's output.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -221,6 +228,89 @@ The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek
     ],
     "escalation_question": "",
     "summary": "The functionality meets all five criteria, and the credential issue is fixed. One small test correction remains: the documentation check still depends on an ordinary word rather than just the documented facts."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 3 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 3,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "e6386d2e30dc11afaff071b7a17e7cea3418df7e",
+    "session": "continued",
+    "thread_id": "01a167ce-efff-7382-82b3-1a98e3fd5d27",
+    "builder_response": "- Tests run: test/foreman-provider-0392.test.mjs (plus the commands.checks files)\n- F1: fixed. The brief's passage is now found by the setting name `foreman_model` alone, with no other words.\n",
+    "seconds": 27,
+    "usage": {
+      "input_tokens": 329942,
+      "cached_input_tokens": 272768,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2359,
+      "reasoning_output_tokens": 163
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T08:12:50.350Z"
+  },
+  "verdict": {
+    "round": 3,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/foreman-agent.mjs: foremanArgv selects the configured or default provider model, omits effort and preserves the Foreman brief and action handling. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanArgv preserves Claude Foreman permissions with --bare; providerForemanEnv supplies an allowlisted environment and provider credentials. Both AC2 tests passed, including credential exclusion through the launcher."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanCantStart prevents startup with missing prerequisites and reports why. foremanAgentOf inherits a DeepSeek builder. The corresponding AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 test exercises an independent Acme provider through model selection, key lookup, launcher execution and queue naming."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "This round passed 117 tests with three skipped and no failures. The implementation is unchanged since round 2, whose broader targeted run also passed."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/foreman-provider-0392.test.mjs",
+        "issue": "Resolved: documentation checks now identify settings and provider names without requiring surrounding prose or list order.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/provider-build.mjs",
+        "issue": "Resolved: provider Foremen use a dedicated environment allowlist that excludes unrelated credentials, preserving existing builder behaviour.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "DeepSeek Foremen use the selected model, retain existing action restrictions and report missing prerequisites. Credential isolation and documentation tests are fixed. All criteria pass, with no blocking findings remaining."
   }
 }
 ```
