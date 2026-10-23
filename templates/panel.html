@@ -333,7 +333,6 @@
   #settings .looks [role="radio"]:hover { color: var(--text); }
   #settings .looks [role="radio"][aria-checked="true"] { color: var(--panel); background: var(--text); }
   @media (max-resolution: 1.99dppx), (-webkit-max-device-pixel-ratio: 1.99) { #settings .looks, #settings .looks [role="radio"] + [role="radio"] { border-width: 1px; } }
-  @media (max-width: 400px) { #settings .looks [role="radio"] { padding: 0 3px; font-size: 11px; } } /* on one line in the control's half of the row */
   #settings .switch-row p.bad { margin: 4px 0 0; color: var(--bad); white-space: pre-wrap; overflow-wrap: anywhere; }
   #settings .switch-row p.bad[hidden] { display: none; }
   .run-error { font-size: 12px; color: var(--bad); padding: 6px 24px; border-bottom: .5px solid var(--line); background: var(--bad-bg); white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -610,6 +609,7 @@
     .run-state .fixing { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* "Fixing on" gives way too, inside the button */
     .settings-open { width: 44px; height: 44px; }
     #settings .switch-row .info::after, #settings .setting .info::after { inset: -6px; } /* 0268: easier to tap. 0277: a 30 by 30 px target, the box as beside the controls */
+    #settings .looks [role="radio"] { padding: 0 2px; } /* 0412: System, Light and Dark on one line in the control's half of the row, down to 320 px */
     #settings .switch-row .row, #settings .setting .row, #settings .arow .row { --gap: 8px; } /* 0273: room for the names. 0281: the gap the left half's width allows for */
     .run-error, .offline, .restart { padding: 6px 16px; }
 
