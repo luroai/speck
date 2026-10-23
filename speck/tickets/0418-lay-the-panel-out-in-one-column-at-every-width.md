@@ -21,22 +21,22 @@ created: 2026-10-23
 **Status:** 📋 ready
 
 ## Problem
-The panel keeps a separate layout for wide windows, with its own rules, but it's used mostly in a narrow side pane, and since 0410 the lanes are tabs showing one list at a time. Each lane is also a box of boxes, with a border round the lane and another round each ticket, which takes width and height in a narrow pane.
+The panel keeps a separate layout for wide windows, with its own rules, but it's used mostly in a narrow side pane, and since 0410 the lanes are tabs showing one list at a time. Each lane also has a border of its own round its tickets' boxes, which takes width in a narrow pane and makes the tickets harder to pick out.
 
 ## Outcome
-The panel has one layout, a single column, at every width, and each lane is a plain list.
+The panel has one layout, a single column, at every width, and a lane has no border of its own round its tickets.
 
 ## Acceptance criteria
 1. At every window width from 320 px up, the panel shows one column: the screen at the top, the tabs, then the open lane's list. Nothing moves into a second column on a wide window.
 2. On a window wider than 720 px, the column is 720 px wide and centred. At 720 px or less, it fills the width.
-3. Each lane's tickets are one list with a thin line between them, with no border round the lane and none round each ticket. A ticket's tint or edge for its state (needs you, waiting for you, being built) still shows as today.
+3. A lane has no border round it: its tickets sit directly under the tabs. Each ticket keeps its own full border, as today, and its tint or edge for its state (needs you, waiting for you, being built) still shows as today.
 
 ## Out of scope
 - How tall each ticket is (0419, 0420).
 - Settings, the full ticket and other pop-ups.
 
 ## Notes
-- Asked for by the user on 2026-10-23: the panel is used mostly in a thin side pane, and its tickets are too tall there. A separate desktop layout isn't needed any more.
+- Asked for by the user on 2026-10-23: the panel is used mostly in a thin side pane, and its tickets are too tall there. A separate desktop layout isn't needed any more. Each ticket keeps its full box (the user, 2026-10-23).
 - Waits for 0417: both change `templates/panel.html`.
 
 ## In plain words
