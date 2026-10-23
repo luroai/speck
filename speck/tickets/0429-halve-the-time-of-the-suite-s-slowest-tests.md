@@ -55,7 +55,7 @@ The suite's ten slowest tests take half as long, still checking the same things.
 - After that run, for more margin: 0176 AC1 no longer runs `speck status` once before each three it times and throws it away, as the least of the three leaves the slower first run out anyway. It times as many runs as before, with the same 10% check: 7.1 s to 5.5 s on its own, and it's what holds 0176 up under load (19.2 s of its 24.4 s in the full run). Not measured in a second full run: the answer was to run it once.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The tests that held up every build and ship most are quicker now. In a full run of the test suite, the ten slowest took 82 seconds together, half the 163 they took before, and they still check the same things. Most of the time saved was waiting: the browser tests no longer wait 5 seconds for each refresh, and a few tests no longer sit through long time limits or ask the installed agents for their models. Nothing about speck itself changed, only its tests. To see it, look at how long a ship's test run takes. Keep an eye on it: the ten came in just under the target, and the time varies with how busy the machine is.
 
 ## Blocked question
 Criterion 1 can only be measured in a full run of the test suite, but builds may never run the whole suite (only shipping does), and the reviewer won't pass it on my measurements: the ten tests run on their own took 54 s, down from 122 s, and crowded together with other builds' tests they took 84 s. Should I (a) run the whole suite once in this build to measure the ten, as an exception to the rule, or (b) leave criterion 1 to be checked in the ship's own run, with the reviewer told so? I recommend (a): it's one run of about 3 minutes, and it gives the reviewer the number the criterion asks for. With (b), a ship that comes in over 82 s would go out anyway.
@@ -68,6 +68,10 @@ Clear winner: yes
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups:
+- 0060's touch swipes scroll nothing, even where the pane could scroll, so its touch checks pass whatever the page does: speck/ideas/2026-10-23-make-0060-s-touch-swipes-scroll-something.md.
+- `0193 AC1 AC4` failed once in the full run, reading a ticket file just as it moved into done/: speck/ideas/2026-10-23-fix-the-0193-ship-test-that-fails-by-chance.md.
+- The ten met the 82-second target only narrowly (81.7 s, before the last change to 0176). The remaining big ones are 0176 (its CPU timings of speck status under load), 0267 (it runs every test file that reads a document, checks-0272 the longest) and 0072 (a 5-second grace period). Known limits, not ideas.
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -131,6 +135,71 @@ Clear winner: yes
     ],
     "escalation_question": "",
     "summary": "The changes substantially reduce waiting while preserving the checks, and all tests run passed. Approval is held because the required combined time of at most 82 seconds in a whole-suite run has not yet been demonstrated."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "b316682b228b673b021bff4dccf63d37d2c80c60",
+    "session": "continued",
+    "thread_id": "01a16a23-0997-7932-b5bf-d7115fa4a2e7",
+    "builder_response": "- Tests run: test/panel-0050.test.mjs test/build-log-0176.test.mjs test/panel-0060.test.mjs test/docs-0267.test.mjs test/panel-0177.test.mjs test/panel-0257.test.mjs test/cancel.test.mjs test/panel-0040.test.mjs test/stop-0072.test.mjs test/panel-0159.test.mjs test/slow-tests-0429.test.mjs test/panel-0079.test.mjs test/panel-0206.test.mjs test/panel-0182.test.mjs test/flaky-0207.test.mjs (plus commands.checks).\n- F1: fixed. The user's side answered the blocked question (the Foreman, recorded in Notes): run the whole suite once to measure. I ran `npm test` once in this worktree, at commit 9c38bd5e plus the Foreman's Notes commit, so the same test code as round 1. The full TAP output is at /tmp/speck-0429-full-suite.tap. Each test's top-level `duration_ms`, summed: 0050 4.4 + 0176 24.4 + 0060 12.7 + 0267 13.1 + 0177 7.8 + 0257 0.8 + cancel 1.6 + 0040 3.3 + 0072 11.6 + 0159 2.1 = 81.7 s, at or under the 82 s criterion 1 asks for (163 s in 0418's run). The suite took 156 s, with other builds testing on the machine at the same time.\n- That run had one failure, `0193 AC1 AC4: speck run ships with speck ship --auto, and stopping it doesn't stop the ship`. It read a ticket file just after it had been moved (TypeError in test/support/ship.mjs statusIn). It passes three runs in a row on its own, and this ticket changes none of its files (test/run-0193.test.mjs, test/support/ship.mjs, test/support/run.mjs). I'll list it as a follow-up and not fix it here (out of scope: tests outside the ten).\n- For margin after that run: 0176 AC1 no longer runs `speck status` once before each three it times and throws it away. Each timing still keeps the least of three runs, and the least of three leaves the slower first run out anyway. Four alternated rounds, 12 timed runs per size and the `slow < fast * 1.1` assertion are unchanged, and test/slow-tests-0429.test.mjs checks them. AC1 alone: 7.1 s → 5.5 s. That AC1 was 19.2 s of 0176's 24.4 s in the full run. I didn't measure it in a second full run, since the answer was to run the suite once.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 269421,
+      "cached_input_tokens": 216064,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1696,
+      "reasoning_output_tokens": 135
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T19:07:43.722Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "Verified the ten named top-level durations in /tmp/speck-0429-full-suite.tap: they total 81,700.916313 ms, below 82 seconds. The subsequent 0176 change removes only discarded warm-up runs."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The ten retain their assertions and required real browsers, panels and processes. In test/build-log-0176.test.mjs, statusMs still takes the minimum of three measurements across four alternating rounds and retains slow < fast * 1.1. The current selected-file run passes."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "The current review run reports 228 passes and zero failures. The full run's 0193 failure comes from the unchanged statusIn helper looking for a ticket during its move; inspection of test/support/ship.mjs and test/run-0193.test.mjs supports the reported unrelated race. Whole-suite verification remains a shipping check."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "speck/tickets/0429-halve-the-time-of-the-suite-s-slowest-tests.md",
+        "issue": "The required whole-suite timing evidence was previously missing.",
+        "suggested_fix": "Completed: the retained full-run output demonstrates a combined duration of 81.701 seconds.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The ten slowest tests meet the target at 81.7 seconds while preserving their checks. The current review tests pass. One unrelated ticket-moving race appeared in the full run; the timing target has little margin."
   }
 }
 ```
