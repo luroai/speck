@@ -464,6 +464,10 @@ export async function browserPage(url) {
   return { js, until, loaded, drag, move, close, send, browser: c.send, pid: c.chrome.pid };
 }
 // 0410: the script that opens a lane's tab ('plan', 'build' or 'shipped') in a real browser, as only the open one shows.
+// 0427: in a real browser, whether the panel's interface font (system-ui) is a monospace there, as it is on a machine
+// with only the Liberation fonts: an i and an m are the same width only in one. Its bold titles are then wider than in a
+// proportional system font, and a long one can take a line more.
+export const MONO_UI = `(() => { const w = t => { const s = document.createElement('span'); s.style.font = '17px system-ui'; s.textContent = t; document.body.appendChild(s); const x = s.getBoundingClientRect().width; s.remove(); return x; }; return w('iiii') === w('mmmm'); })()`;
 export const openLane = lane => `document.getElementById('tab-${lane}').click(), true`;
 // The page point at a character offset in the first text node of the element a selector finds.
 export const charAt = (sel, offset) => `(() => { const t = document.querySelector(${JSON.stringify(sel)}).firstChild; const r = document.createRange();

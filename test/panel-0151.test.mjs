@@ -1,7 +1,7 @@
 import './support/tmp.mjs'; // first: sends every temporary folder into one per-run folder that is cleaned up
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, openLane } from './support/panel.mjs';
+import { panelRepo, freePort, startPanel, stop, findChrome, browserPage, T, full, idea, openLane, MONO_UI } from './support/panel.mjs';
 
 // ---------- 0151: each Plan ticket a clear card ----------
 
@@ -92,11 +92,12 @@ for (const [width, most] of [[375, 2], [699, 3], [700, 3], [1000, 3], [1279, 3],
     await withPanel(async b => {
       const titles = await b.js(TITLES);
       assert.deepEqual(titles.map(t => t.title), [LONGEST, LONG, 'Short']);
+      const lines = most + (await b.js(MONO_UI) ? 1 : 0); // 0427: a bold title in a monospace system font can take a line more
       for (const t of titles) {
         assert.equal(t.idSize, '14px', `${t.title}: the id`);
         assert.equal(t.titleSize, '17px', `${t.title}: the title`);
         assert.ok(!t.cut, `${t.title} is cut off`);
-        assert.ok(t.lines.length >= 1 && t.lines.length <= most, `${t.title} is on ${t.lines.length} lines`);
+        assert.ok(t.lines.length >= 1 && t.lines.length <= lines, `${t.title} is on ${t.lines.length} lines`);
         const [first] = t.lines;
         assert.ok(first.top < t.id.bottom && first.bottom > t.id.top, `${t.title} starts on the id's line`);
         for (const l of t.lines) {
