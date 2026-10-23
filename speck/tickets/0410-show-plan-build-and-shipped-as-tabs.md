@@ -45,6 +45,7 @@ Plan, Build and Shipped are three tabs under the header. One lane shows at a tim
 - Design reference: the tab row in console.html in the artifact above.
 - Changes `templates/panel.html`: the `<main>` grid of `#shaping-section`, `#build-section` and `section.shipped`, `goTo` and `returnFocus`.
 - Tests written for the old layout, which expect all three sections on screen at once, change with it.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
