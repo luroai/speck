@@ -20,7 +20,7 @@ import { cmdMergeCheck } from './merge-check.mjs';
 import { cmdDetect } from './detect.mjs';
 import { cmdKeys } from './keys.mjs';
 import { providerLabel } from './providers.mjs';
-import { cmdAgents } from './agents.mjs';
+import { cmdAgents } from './your-agents.mjs';
 import { cmdConfig } from './config.mjs';
 import { cmdConfigShow } from './settings.mjs';
 import { cmdTest } from './turns.mjs';
@@ -525,7 +525,7 @@ const HELP = `speck: Ship code you can't read, and still trust it.
   speck init                          set up speck in this repo, or update it (re-run any time)
   speck doctor                        check that Node.js, git, the builder and the reviewer are ready
   speck detect                        print what setup needs to know about this folder and machine, as JSON
-  speck agents [--json]               Claude Code, Codex and Cursor: whether each is installed and signed in, and its models
+  speck agents [--json]               every agent speck knows: whether it's yours, installed and signed in (or has its key), and its models; speck agents add|remove <agent> changes this machine's list of your agents
   speck new <title> [--source=path]   create the next numbered draft ticket
   speck lint <id>                     check a ticket against the size rules
   speck set <id> <field> <value>      update a ticket field (status ready runs lint first and commits the ticket; priority "" clears it)
