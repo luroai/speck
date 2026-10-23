@@ -1,7 +1,7 @@
 ---
 id: "0438"
 title: "Round speck's screen to match the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0436"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T22:14:37.602Z"
 approved: "2026-10-23T22:21:40.659Z"
+finished: "2026-10-23T22:24:42.837Z"
 
 ---
 # 0438 · Round speck's screen to match the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Since 0428, the panel's controls and cards have rounded corners, but speck's screen and its dark frame are still square. On a wide window, the frame is also narrower than the tabs and lanes under it (520 px against 720 px), so its edges don't line up with anything.
