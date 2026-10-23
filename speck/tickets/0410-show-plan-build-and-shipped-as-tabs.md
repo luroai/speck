@@ -49,7 +49,11 @@ Plan, Build and Shipped are three tabs under the header. One lane shows at a tim
 - Self-check: the tab row is now inert with the rest of the page while a pane covers it, so Tab can't reach it; an arrow key with Alt, Ctrl or Cmd held is left to the browser (Alt+Left goes back).
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+The panel now has three tabs under its header: Plan, Build and Shipped. Only one shows at a time, and Build opens first. The page itself no longer scrolls: the header and tabs stay put, and only the open tab's list moves. Build and Shipped show their counts in the tab, and while you're on Plan or Shipped, Build says how many things need you when the Foreman does.
+
+To see it, open the panel and switch tabs by clicking, or with the left and right arrow keys once a tab has the focus. Tapping a ticket's id in a "waiting on" note jumps to the tab holding that ticket. Each list keeps its place when you switch away and back.
+
+Worth a look: on a phone, a tab's count sits under its name, so the tab row is two lines high.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -59,6 +63,10 @@ Plan, Build and Shipped are three tabs under the header. One lane shows at a tim
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+Follow-ups (tidy-ups and known limits, no inbox notes):
+- The `.sh h2` style rule in the panel is unused now that the lane headings are the tabs' names; it could go.
+- The speck run error line (`.run-error`) isn't made inert with the rest of the page while a pane is open. That was already so before this ticket.
+- 26 older test files changed with the layout, mostly to open the lane they look at (`openLane` in `test/support/panel.mjs`).
 
 ## Review rounds
 <!-- Written by speck after each review round. Don't edit it by hand. -->
@@ -132,6 +140,81 @@ Plan, Build and Shipped are three tabs under the header. One lane shows at a tim
     ],
     "escalation_question": "",
     "summary": "The tabs, scrolling and focus navigation work, and the reported tests passed. One interaction needs fixing: following a ticket into another tab can temporarily hide the notice that Build needs your attention."
+  }
+}
+```
+
+</details>
+
+<details><summary>Round 2 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "156e82065556aae500826210764519f125e66b8f",
+    "session": "continued",
+    "thread_id": "01a16909-937f-78b2-878c-e9fbbe5c2b42",
+    "builder_response": "- Tests run: test/panel-0039.test.mjs test/panel-0040.test.mjs test/panel-0041.test.mjs test/panel-0050.test.mjs test/panel-0060.test.mjs test/panel-0134.test.mjs test/panel-0135.test.mjs test/panel-0137.test.mjs test/panel-0140.test.mjs test/panel-0141.test.mjs test/panel-0142.test.mjs test/panel-0151.test.mjs test/panel-0154.test.mjs test/panel-0157.test.mjs test/panel-0158.test.mjs test/panel-0160.test.mjs test/panel-0161.test.mjs test/panel-0162.test.mjs test/panel-0164.test.mjs test/panel-0165.test.mjs test/panel-0169.test.mjs test/panel-0214.test.mjs test/panel-0410.test.mjs test/panel.test.mjs \n- F1: fixed. Build's \"<n> needs you\" is now worked out in drawTabs() (templates/panel.html), from the Foreman's status in the current state, so every lane change through openTab() (a tab, an arrow key, Go to ticket or the focus going back) updates it straight away; render() calls drawTabs() in its place. The first drawTabs() call now comes after `let state`. New test \"0410 AC4 (review F1)\" goes to a Plan ticket with the Foreman reading \"Needs you 2\" and checks the indicator before any refresh, back to Build, then closes a full ticket whose focus goes back to Plan and checks it again.\n",
+    "seconds": 19,
+    "usage": {
+      "input_tokens": 359725,
+      "cached_input_tokens": 304896,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1780,
+      "reasoning_output_tokens": 189
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T13:55:34.096Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html defines three button tabs, defaults to Build, preserves counts and handles arrow navigation. Passing 0410 AC1 tests cover selection, counts and keyboard controls."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "The viewport flex layout and .lane-list overflow constrain scrolling to the open list. The passing 0410 AC2 browser test checks all lanes at widths from 320 to 1280 px."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "openTab() preserves lane scroll positions and refreshes retain openLane. Passing 0410 AC3 tests cover refreshes, reopening lanes and browser scroll preservation."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "drawTabs() now updates the needs indicator from current state on every lane change and refresh. Passing AC4 tests cover statuses, counts and immediate updates through ticket navigation and returning focus."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "goTo() and returnFocus() open the destination lane before scrolling or focusing. Passing 0410 AC5 tests cover highlighting, moved tickets and section fallback."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html",
+        "issue": "Ticket navigation and returning focus previously left Build's needs indicator stale until refresh.",
+        "suggested_fix": "Implemented: drawTabs() updates the indicator whenever the lane changes; the new AC4 regression test covers both affected paths.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Plan, Build and Shipped now work as tabs, with scrolling confined to each lane and positions preserved through refreshes. The attention notice now updates immediately during ticket navigation. All criteria pass; the reported run has 407 passing tests, three skipped and no failures."
   }
 }
 ```
