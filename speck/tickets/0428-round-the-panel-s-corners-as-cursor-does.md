@@ -39,9 +39,10 @@ The panel's controls, cards and pop-ups have rounded corners like Cursor's.
 
 ## Notes
 - The user asked for this on 2026-10-23: the panel is used mostly beside Cursor, at work and at home, and should look like part of it.
-- Unverified: Cursor's exact corner radii (no Cursor source or docs to check). 8 px and 12 px are estimated from the user's screenshot of Cursor on 2026-10-23 (its buttons about 8 px, its message bubble and input box about 10–12 px), and the user agreed to them.
+- Checked 2026-10-23: Cursor publishes no source or docs giving its corner radii, so nothing contradicts the estimate below. 8 px and 12 px are estimated from the user's screenshot of Cursor on 2026-10-23 (its buttons about 8 px, its message bubble and input box about 10–12 px), and the user agreed to them.
 - Criterion 3: 0421 left the open card's buttons with only an underline, which the user noticed on 2026-10-23. Plan's first toggle loses its left edge to `margin-left: -.5px` on `.toggle` since the lane's own border went (0418).
 - Waits for 0427: both change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
