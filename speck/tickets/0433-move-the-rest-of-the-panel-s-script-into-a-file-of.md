@@ -1,7 +1,7 @@
 ---
 id: "0433"
 title: "Move the rest of the panel's script into a file of its own"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0432"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T23:02:08.128Z"
+approved: "2026-10-23T23:13:50.785Z"
 
 ---
 # 0433 · Move the rest of the panel's script into a file of its own
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0430 to 0432, `templates/panel.html` still holds about 2,000 lines of the page's script: drawing the lanes, the cards, the full ticket, the logs and speck's screen.
@@ -54,9 +55,14 @@ Nothing changes in how the panel looks or works. Behind the scenes, the panel's 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 488,516
+- Elapsed since build started: 12 min
+- Changed lines: 4207 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
