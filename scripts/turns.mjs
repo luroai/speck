@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { SpeckError, sh, findRepoRoot, loadConfig, worktreeList } from './core.mjs';
 import { testRun, showRecordedRun } from './results.mjs';
+import { relatedTests, relatedReport } from './related.mjs';
 
 const POLL_MS = 500;
 const sleep = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -202,14 +203,25 @@ export function checkFiles(repo, cfg) {
 // those files (0113), from the repo root, taking a turn as a full run does (0239) but without a recorded result, as it
 // isn't a full run. `speck test
 // --recorded` runs no tests: it prints the result recorded for the same code, if any, and exits with its exit code (0238).
+// `speck test --related [<file>…]` runs, as --files does, the test files the branch's change affects (0437), with any
+// files it's given, after printing each one it chose and why. With none chosen and none given, it runs nothing.
 export function cmdTest(args) {
-  const files = args[0] === '--files' ? args.slice(1) : null;
+  const related = args[0] === '--related';
+  let files = args[0] === '--files' || related ? args.slice(1) : null;
   const fresh = args.length === 1 && args[0] === '--fresh';
   const recordedOnly = args.length === 1 && args[0] === '--recorded';
-  if (files && !files.length) throw new SpeckError('Usage: speck test --files <file>… (name at least one test file)');
-  if (args.length && !fresh && !recordedOnly && !files) throw new SpeckError('Usage: speck test [--fresh], speck test --recorded, or speck test --files <file>…');
+  if (files && !files.length && !related) throw new SpeckError('Usage: speck test --files <file>… (name at least one test file)');
+  if (args.length && !fresh && !recordedOnly && !files) throw new SpeckError('Usage: speck test [--fresh], speck test --recorded, or speck test --files <file>… (or --related [<file>…])');
+  const option = related && files.find(f => f.startsWith('--'));
+  if (option) throw new SpeckError(`Usage: speck test --related [<file>…] (got ${option}, which isn't a test file: name the files on their own). No tests were run.`);
   const repo = findRepoRoot();
   const cfg = loadConfig(repo);
+  if (related) {
+    const chosen = relatedTests(repo, cfg.base_branch);
+    console.log(relatedReport(chosen, cfg.base_branch));
+    if (!chosen.length && !files.length) return;
+    files = [...new Set([...files.map(f => path.resolve(f)), ...chosen.map(c => path.join(repo, c.test))])];
+  }
   const only = files && String(cfg.commands?.test_files || '').trim();
   const checks = files ? checkFiles(repo, cfg) : [];
   if (only) {
