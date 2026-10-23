@@ -79,7 +79,7 @@ for (const width of [375, 1280]) {
     assert.notEqual(look.line, '0px');
     assert.equal(look.lineStyle, 'solid');
     // Every point across the header shows the header, not a card scrolled under it.
-    for (const x of [2, width / 2, width - 20]) for (const y of [1, h.height / 2, h.height - 1]) assert.equal(await at(b, x, y), 'header', `(${x}, ${y})`);
+    for (const x of [h.left + 2, (h.left + h.right) / 2, h.right - 20]) for (const y of [1, h.height / 2, h.height - 1]) assert.equal(await at(b, x, y), 'header', `(${x}, ${y})`);
   }, { width }));
 }
 
@@ -90,9 +90,8 @@ test('0160 AC2: the page reaches behind the status bar, with a status bar style 
   assert.match(viewport, /viewport-fit=cover/);
   assert.match(head(), /<meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar">/);
   const rule = (css().match(/(?:^|\n)\s*header \{([^}]*)\}/) || [])[1] || '';
-  assert.match(rule, /padding:\s*calc\(12px \+ env\(safe-area-inset-top\)\)/); // 0413: around speck's screen's frame
-  const phone = (phoneCss().match(/(?:^|\n)\s*header \{([^}]*)\}/) || [])[1] || '';
-  assert.match(phone, /padding:\s*calc\(8px \+ env\(safe-area-inset-top\)\)/); // 0413: 8 px round the frame on a phone
+  assert.match(rule, /padding:\s*calc\(8px \+ env\(safe-area-inset-top\)\)/); // 0413: 8 px round speck's screen's frame. 0418: at every width
+  assert.doesNotMatch(phoneCss(), /(?:^|\n)\s*header \{/, '0418: no other header padding on a phone');
 });
 
 test('0160 AC2: the status bar style tag says black-translucent (light text) on the dark look and default (dark text) on the light one, set before the page is drawn and on each switch', skip, async () => {
@@ -138,7 +137,7 @@ test('0160 AC3: the fake page, which has no scrolling, still runs the page scrip
 
 test('0160 AC4: the last card clears the home indicator', skip, () => withPanel(async b => {
   const pad = await b.js(`getComputedStyle(document.querySelector('main')).paddingBottom`);
-  assert.equal(pad, `${16 + 34}px`, 'the page\'s bottom padding includes the inset');
+  assert.equal(pad, '34px', 'the page\'s bottom padding is the inset (0418: the open lane reaches down to it)');
   await scrollTo(b, 100000);
   const last = await b.js(`(() => { const s = [...document.querySelectorAll('main > section')].find(n => !n.hidden).getBoundingClientRect(); return innerHeight - s.bottom; })()`); // 0410: the open lane
   assert.ok(last >= 34, `scrolled to the end, the last card ends ${last} px above the bottom`);

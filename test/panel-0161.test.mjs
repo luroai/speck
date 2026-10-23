@@ -272,7 +272,7 @@ const TEXTS = `(() => { ${LIB}
 // The edge of every control and card on show against what's next to it: each border side with a width, or its fill.
 const EDGES = `(() => { ${LIB}
   const out = [];
-  const sel = 'button:not(.goto):not(.prio-menu button), .tag, .item, .q, #shipped tr, section, .prio-menu';
+  const sel = 'button:not(.goto):not(.prio-menu button), .tag, .item, .q, #shipped tr, section:not(main > section), .prio-menu'; // 0418: a lane has no edge
   for (const el of document.querySelectorAll(sel)) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el), next = behind(el.parentElement);

@@ -175,10 +175,10 @@ for (const theme of ['light', 'dark']) {
   test(`0167 AC1 AC5: in the ${theme} look, the sections and every card have the same plain border all round`, skip, async () => {
     await withPanel(async b => {
       const c = await colours(b);
-      for (const s of await b.js(LOOK('main > section'))) sameAllRound(s, c.line, `section ${s.cls}`);
+      for (const s of await b.js(LOOK('main > section'))) assert.ok(s.sides.every(([, w, st]) => w === 0 && st === 'none'), `section ${s.cls} has no border (0418)`);
       for (const view of ['tickets', 'ideas', 'inbox']) {
         await b.js(`document.querySelector('#shaping-toggle .toggle.${view}').click()`); await settle(b);
-        for (const s of await b.js(LOOK('#shaping-section'))) sameAllRound(s, c.line, `Plan showing ${view}`);
+        for (const s of await b.js(LOOK('#shaping-section'))) assert.ok(s.sides.every(([, w, st]) => w === 0 && st === 'none'), `Plan showing ${view} has no border (0418)`);
         const cards = await b.js(LOOK('#shaping .item'));
         assert.ok(cards.length >= 1, `${view}: some cards`);
         for (const card of cards) sameAllRound(card, c.line, `${view} ${card.id}`);
