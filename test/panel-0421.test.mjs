@@ -130,7 +130,7 @@ test('0421 AC2: with a mouse, an open card\'s buttons are small text buttons on 
       for (const x of got) assert.ok(x.height <= 28, `${id}: ${x.text} is ${x.height} px tall`);
       assert.ok(got.every(x => Math.abs(x.top - got[0].top) < 1), `${id}: on one line: ${JSON.stringify(got)}`);
       for (let k = 1; k < got.length; k++) assert.ok(got[k].left >= got[k - 1].right, `${id}: ${got[k].text} after ${got[k - 1].text}`);
-      for (const x of got) assert.deepEqual(x.box, ['0px', '0px', '0px'], `${id}: ${x.text} has no box around it`);
+      for (const x of got) assert.ok(x.box.every(w => parseFloat(w) > 0), `${id}: ${x.text} is boxed (0428): ${x.box}`);
     }
   } finally { await b.close(); await stop(panel); }
 });
