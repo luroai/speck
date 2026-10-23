@@ -1,7 +1,7 @@
 ---
 id: "0394"
 title: "Prepare release 0.14.0"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: "speck/ideas/done/2026-10-23-prepare-release-0-14-0.md"               # 
 after: ["0389","0390","0391","0392","0393"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T08:36:02.999Z"
+approved: "2026-10-23T08:39:30.937Z"
 
 ---
 # 0394 · Prepare release 0.14.0
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 0389 to 0393 let you build, review and run the Foreman with DeepSeek's models through your own API key, kept safely for your machine and set in Settings. Anyone following the setup prompt, or updating speck on another machine, gets 0.13.1 without them.
@@ -57,9 +58,14 @@ speck is ready to go out as version 0.14.0, a minor release that adds DeepSeek: 
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): approve.
 
 ## Delivery log
+- Review rounds: 1
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 212,399
+- Elapsed since build started: 3 min
+- Changed lines: 74 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups: none.
 
