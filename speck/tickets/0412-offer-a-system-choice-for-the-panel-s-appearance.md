@@ -42,6 +42,7 @@ Appearance offers System, Light and Dark, and System follows the computer's sett
 - Today: `lookSwitch` and `drawLook` in `templates/panel.html` (0396), and the `<head>` script that applies `speck-theme` from localStorage before the page is drawn (0136, 0372). With no stored choice it already follows the computer.
 - Asked for by the user on 2026-10-23, alongside the tabs (0410).
 - Waits for 0410 and 0411: all three change `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
