@@ -1,7 +1,7 @@
 ---
 id: "0427"
 title: "Use Cursor's fonts in the panel"                # one outcome, no "and"
-status: ready            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -14,11 +14,12 @@ reviewer_effort: ""      # blank: your settings' reviewer_effort. Otherwise low 
 source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0426"] # ticket ids that must be done first
 created: 2026-10-23
+started: "2026-10-23T18:57:11.441Z"
 
 ---
 # 0427 · Use Cursor's fonts in the panel
 
-**Status:** 📋 ready
+**Status:** 🔨 building
 
 ## Problem
 The panel names Zen Kaku Gothic New, Shippori Mincho and IBM Plex Mono, but doesn't load them, so each machine shows whatever it falls back to. Its serif headings and spaced capital labels don't look like Cursor beside it.
