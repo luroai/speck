@@ -43,6 +43,7 @@ Settings offers DeepSeek like any other agent, with its models and a field for i
 - Checked 2026-10-23: `claude --help` (2.1.301) says `--bare` takes Anthropic auth strictly from `ANTHROPIC_API_KEY` or an apiKeyHelper, and never reads OAuth or the keychain. It also skips hooks, plugins and CLAUDE.md discovery, but skills still resolve by `/skill-name`.
 - Builds on 0387's Save for your own settings and 0369's model lists (`agentModels` in `scripts/settings.mjs`).
 - Waits for 0392, and for 0387, which also changes Settings in `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
