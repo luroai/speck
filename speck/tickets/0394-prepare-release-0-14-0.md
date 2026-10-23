@@ -1,7 +1,7 @@
 ---
 id: "0394"
 title: "Prepare release 0.14.0"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T08:36:02.999Z"
 ---
 # 0394 · Prepare release 0.14.0
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 0389 to 0393 let you build, review and run the Foreman with DeepSeek's models through your own API key, kept safely for your machine and set in Settings. Anyone following the setup prompt, or updating speck on another machine, gets 0.13.1 without them.
@@ -51,7 +51,7 @@ speck is ready to be released as 0.14.0.
 - Pictures: none, because nothing anyone sees in the panel changes.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+speck is ready to go out as version 0.14.0, a minor release that adds DeepSeek: with your own DeepSeek API key, saved once on your computer, DeepSeek can build tickets, review them and run the Foreman, chosen from the command line or in Settings. The changelog, the release notes and the version shown everywhere now say 0.14.0, and the "Built with speck" figures in the README are up to date. Once it ships, check that the 0.14.0 release page appears on GitHub; if it doesn't, the ticket's notes say how to publish it by hand.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -61,3 +61,73 @@ speck is ready to be released as 0.14.0.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8d69af15b36d428f71e07d7cfca310af4cbf4b0f",
+    "session": "fresh",
+    "thread_id": "01a167e9-9a1f-7e83-b24a-1f17c589c07b",
+    "builder_response": "- Tests run: test/release-0394.test.mjs test/release-0380.test.mjs (plus the commands.checks files that speck test --files runs)\n- Earlier I also ran every test/release-*.test.mjs, test/readme-0250.test.mjs and test/docs-0267.test.mjs: all passed.\n- Shipped since v0.13.1: 0389, 0390, 0391, 0392 and 0393 (git log v0.13.1..main), all covered.\n- Built with speck figures worked out with test/support/figures.mjs at \"speck(0393): Offer DeepSeek in Settings\": 377 shipped, 16 cancelled, 12 minutes, 1 round, 188 in round 1.\n- test/release-0380.test.mjs's checks of the current version now follow package.json, and its figures check only the figures 0.13.1 was built from, as 0380 did for 0375.\n",
+    "seconds": 39,
+    "usage": {
+      "input_tokens": 211447,
+      "cached_input_tokens": 157440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 952,
+      "reasoning_output_tokens": 64
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T08:39:23.979Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "package.json names 0.14.0. Both AC1 tests in test/release-0394.test.mjs passed, including running speck init and checking its output."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "CHANGELOG.md adds 0.14.0 above 0.13.1; the diff leaves all older sections unchanged. Its key storage, reviewing, building, Foreman and Settings descriptions cover shipped tickets 0389–0393, verified against git history and those tickets."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "README.md and docs/brief.md status lines both say 0.14.0, a public preview. Both AC3 tests passed, including the unchanged latest-release setup prompt check."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "docs/releases/v0.14.0.md introduces the minor release, own-key providers and DeepSeek's tested status; describes the shipped features, per-project update command and upgrade effects; and links to the correct changelog anchor. It uses no person's name. All three AC4 tests passed."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "Independently recalculated current done-ticket figures: 377 shipped, 16 cancelled, 12 median minutes, 1 median review round and 188 first-round approvals, matching README.md. Both AC5 tests passed. The recorded targeted run has 131 passes, zero failures and three skips. Existing release tests were appropriately adapted for the new current release."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "The release version, changelog, release notes and status lines consistently describe 0.14.0. The notes cover the shipped DeepSeek features, and the recalculated project figures match the README. Relevant tests pass; no blocking issues found."
+  }
+}
+```
+
+</details>
