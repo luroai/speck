@@ -1,7 +1,7 @@
 ---
 id: "0414"
 title: "Show the pipeline through speck's animations on the screen"                # one outcome, no "and"
-status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -15,11 +15,12 @@ source: ""               # e.g. speck/ideas/2026-10-08-csv-export.md
 after: ["0413"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T15:09:04.633Z"
+approved: "2026-10-23T15:18:30.707Z"
 
 ---
 # 0414 · Show the pipeline through speck's animations on the screen
 
-**Status:** 🔍 reviewing
+**Status:** 👍 approved
 
 ## Problem
 After 0413, speck sits on the screen in the same idle animation whatever the pipeline is doing. A new ticket, a ship or a question looks the same as nothing happening.
@@ -73,9 +74,15 @@ Worth keeping an eye on: if the panel sits in a hidden tab for a long time, spec
 <!-- Filled in by speck only when status is blocked. -->
 
 ## Review log
-<!-- Filled in by speck: one line per round, with the verdict and the key findings. -->
+Round 1 (codex): changes requested: F1 Observed events can disappear without playing.
+Round 2 (codex): approve.
 
 ## Delivery log
+- Review rounds: 2
+- Reviewer: codex, model gpt-6.1-sol, effort default
+- Reviewer tokens: 565,944
+- Elapsed since build started: 9 min
+- Changed lines: 130 (limit 5000)
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
 - Follow-ups:
   - A panel left in a hidden tab replays every event it saw on return: speck/ideas/2026-10-23-skip-speck-s-events-from-while-the-panel-was-hidden.md.
