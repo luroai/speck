@@ -403,8 +403,7 @@
   /* It fades out over its 1.5 seconds (in the block for motion above), or stays still until they're up when the browser asks for reduced motion */
   @media (prefers-reduced-motion: reduce) { .item.flash, .q.flash { box-shadow: inset 0 0 0 2px var(--text); } }
 
-  /* The full ticket, in a side pane over the right of the page. While it's open, the page behind it holds still and a
-     backdrop over the rest of the page takes every click outside it. */
+  /* The full ticket, over the whole panel (0423). While it's open, the page behind it holds still, under a backdrop. */
   html.held { overflow: hidden; }
   #full-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }
   #full-backdrop[hidden] { display: none; }
@@ -416,7 +415,10 @@
   td .title-link { color: var(--text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; cursor: pointer; }
   td .title-link:hover { text-decoration-thickness: 2px; }
   td .full-open { margin: 0; padding: 0 8px; font-size: 12px; white-space: nowrap; }
-  #full-ticket { position: fixed; top: env(safe-area-inset-top); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); border-left: 1px solid var(--line); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px; box-shadow: -8px 0 24px rgba(20, 20, 19, .12); }
+  /* 0423: over the whole panel, as Settings is (0368), its text in a centred column at most 720 px wide. The room beside
+     the column is padding, so the Ship button and the rest line up with the text. The left side's is rounded down to a
+     whole pixel (0281), and the right side's up, so the column is never wider than 720 px. */
+  #full-ticket { position: fixed; inset: 0; overflow-y: auto; overscroll-behavior: contain; z-index: 10; background: var(--panel); padding: 0 max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); padding-left: max(16px, env(safe-area-inset-left), round(down, calc((100% - 720px) / 2), 1px)); padding-right: max(16px, env(safe-area-inset-right), round(up, calc((100% - 720px) / 2), 1px)); }
   #full-ticket[hidden] { display: none; }
   /* 0257: the Settings view, a side pane like the full ticket's, over its own backdrop */
   #settings-backdrop { position: fixed; inset: 0; z-index: 9; background: rgba(20, 20, 19, .2); touch-action: pinch-zoom; }
@@ -536,7 +538,7 @@
   /* 0379: each pop-up's top line, with its Close, stays at the top while the rest scrolls under it. The pop-up's own top
      padding, the room for a phone's notch, is in the line instead, so nothing shows through above it. Above a setting's
      explanation (z-index 2), which scrolls under it too. */
-  #doc-view .top, #foreman .top, #settings .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
+  #full-ticket .top, #doc-view .top, #foreman .top, #settings .top { position: sticky; top: 0; z-index: 3; background: var(--panel); padding-top: calc(12px + env(safe-area-inset-top)); }
   #full-ticket ol.criteria { padding-left: 18px; }
   #full-ticket ol.criteria > li { margin-bottom: 4px; }
   /* Each section's Markdown. Its headings rank below the section's own (h4) and are no taller than body text. */
@@ -613,7 +615,6 @@
   }
   :root[data-theme="dark"] #full-backdrop { background: rgba(0, 0, 0, .45); }
   :root[data-theme="dark"] #settings-backdrop { background: rgba(0, 0, 0, .45); }
-  :root[data-theme="dark"] #full-ticket { box-shadow: -8px 0 24px rgba(0, 0, 0, .5); }
   :root[data-theme="dark"] #settings-unsaved { background: rgba(0, 0, 0, .45); }
 
   /* 0140: a phone screen. One column, nothing past the right edge and labels kept on one line. Wider screens are

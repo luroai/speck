@@ -70,12 +70,11 @@ test('0136 AC2: the dark tints are dark enough for the dark --text to read on th
   }
 });
 
-test('0136 AC2: the full ticket pane\'s backdrop and shadow have dark counterparts', () => {
+test('0136 AC2: the full ticket pane\'s backdrop has a dark counterpart (0423: the pane, over the whole panel, has no shadow)', () => {
   const s = css();
   assert.match(s, /:root\[data-theme="dark"\] #full-backdrop \{ background: rgba\(/);
   assert.match(s, /:root\[data-theme="dark"\] #full-backdrop \{ background: rgba\(0, 0, 0, \.45\); \}/);
   assert.match(s, /\n {2}#full-backdrop \{[^}]*background: rgba\(20, 20, 19, \.2\);/);
-  assert.match(s, /:root\[data-theme="dark"\] #full-ticket \{ box-shadow: /);
 });
 
 test('0136 AC3: the first :root block still sets the light colours, and the colour check passes', () => {
