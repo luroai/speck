@@ -124,6 +124,16 @@ export function builderMismatch(cfg = {}) {
   };
 }
 
+// 0390, 0391: provider `p`'s checks, for the work it does (`builds` or `reviews`): speck runs its models through Claude
+// Code, with this machine's key for it.
+function providerChecks(repo, p, does) {
+  let keySet = false, why = '';
+  try { keySet = Boolean(providerKey(repo, p.name)); } catch (e) { why = ` ${e.message}`; }
+  return [check(`Claude Code (${p.label} ${does} need it installed)`, onPath('claude'),
+    `Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code): speck runs ${p.label}'s models through it.`),
+  check(`${p.label} API key for this machine (${does} tickets)`, keySet, `${why ? `${why.trim()} ` : ''}Set one with \`speck keys set ${p.name}\`.`)];
+}
+
 // `platform` is process.platform unless given, so tests can check what Windows sees.
 export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   const reviewer = cfg.reviewer || 'codex';
@@ -145,7 +155,8 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   if (Object.hasOwn(BUILDERS, builder)) {
     const [label, cmd, fix] = BUILDERS[builder];
     checks.push(check(`${label} (builds tickets)`, builder === 'cursor' ? CURSOR_CLIS.some(onPath) : onPath(cmd), fix));
-  } else checks.push({ name: `speck can't check builder "${builder}": it only knows ${Object.keys(BUILDERS).join(', ')}. Make sure it reads skills from .agents/skills/ or .claude/skills/.`, ok: true, info: true });
+  } else if (providerNamed(builder)) checks.push(...providerChecks(repo, providerNamed(builder), 'builds')); // 0391
+  else checks.push({ name: `speck can't check builder "${builder}": it only knows ${Object.keys(BUILDERS).join(', ')}. Make sure it reads skills from .agents/skills/ or .claude/skills/.`, ok: true, info: true });
   const mismatch = builderMismatch(cfg);
   if (mismatch) checks.push(check(`build_command matches the builder: ${mismatch.problem}`, false, mismatch.fix));
   // speck ships locally with git, so the GitHub CLI is only a convenience.
@@ -158,12 +169,7 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
       'Install Claude Code so `claude` is on your PATH, or set `reviewer: codex` in speck/config.yml.'));
   } else if (!(typeof command === 'string' && command.trim()) && providerNamed(reviewer)) {
     // 0390: speck runs a provider's models through Claude Code, with this machine's key for the provider.
-    const p = providerNamed(reviewer);
-    let keySet = false, why = '';
-    try { keySet = Boolean(providerKey(repo, p.name)); } catch (e) { why = ` ${e.message}`; }
-    checks.push(check(`Claude Code (${p.label} reviews need it installed)`, onPath('claude'),
-      `Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code): speck runs ${p.label}'s models through it.`),
-      check(`${p.label} API key for this machine (reviews tickets)`, keySet, `${why ? `${why.trim()} ` : ''}Set one with \`speck keys set ${p.name}\`.`));
+    checks.push(...providerChecks(repo, providerNamed(reviewer), 'reviews'));
   } else if (typeof command === 'string' && command.trim()) {
     let first = '';
     try { first = splitCommand(command)[0] || ''; } catch { /* an unclosed quote: reported as not found */ }

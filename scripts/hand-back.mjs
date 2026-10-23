@@ -10,6 +10,9 @@ import { claudeStartWords, configBuilder } from './ticket-builder.mjs';
 import { buildTicket } from './build-records.mjs';
 import { ticketRounds } from './core.mjs';
 import { changesPending } from './changes-asked.mjs';
+import { PROVIDERS } from './providers.mjs';
+import { providerNamed } from './provider-review.mjs';
+import { providerStartWords } from './provider-build.mjs';
 
 // What a killed build is told when speck run resumes it.
 const resumeMessage = (id, skill = '/speck-build') => `The build of ticket ${id} was stopped unexpectedly before it finished, and speck run has resumed it. Carry on with ${skill} ${id} from where you left off.`;
@@ -53,7 +56,8 @@ export const resumedRecord = ({ seen: _, ...rec }) => rec;
 // `codex exec resume`, once its session id has been read from its log; a Cursor build (0290) its chat with `agent -p
 // --resume`; a Claude Code build speck run started with its own command (0312) with that command; any other with
 // build_command (resumeArgv). 0312: builder_model is passed only when the build's agent is the configured builder.
-export function resumeFor(words, cfg, id, rec, message) {
+// 0391: a model provider's build (`providers`), with the provider's own command, through the provider again.
+export function resumeFor(words, cfg, id, rec, message, providers = PROVIDERS) {
   const session = typeof rec?.session === 'string' && rec.session ? rec.session : null;
   if (rec?.agent === 'cursor') {
     const argv = cursorResumeArgv(session, message ?? resumeMessage(id));
@@ -65,6 +69,8 @@ export function resumeFor(words, cfg, id, rec, message) {
     return argv ? { argv } : { argv: null, why: 'no session id has been read from its log yet, as Codex stopped before writing one' };
   }
   if (rec?.agent === 'claude') words = claudeStartWords(cfg);
+  const p = typeof rec?.agent === 'string' ? providerNamed(rec.agent, providers) : null;
+  if (p) words = providerStartWords(configBuilder(cfg) === p.name ? cfg : { ...cfg, builder_model: '' }, p);
   const argv = resumeArgv(words, id, session, message ?? resumeMessage(id));
   return argv ? { argv } : { argv: null, why: session ? 'build_command needs --session-id {session} and one word with {id} in it' : 'its run record has no session' };
 }
