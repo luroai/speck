@@ -5,6 +5,8 @@ import path from 'node:path';
 import { ROOT, TEMPLATES, SpeckError, sh, findRepoRoot, loadConfig, parseTicket, setField, syncHeader, ticketsDir, ticketDirs, ideasDir, doneIdeasDir, repoPath, findTicket, placeTicket, ticketRounds, ideaStatus } from './core.mjs';
 import { appendRounds, cacheDir } from './review.mjs';
 import { splitCommand } from './reviewers.mjs';
+import { providerNamed } from './provider-review.mjs';
+import { providerKey } from './keys.mjs';
 
 // ---------- install and doctor ----------
 
@@ -154,6 +156,14 @@ export function doctorChecks(repo, cfg = {}, platform = process.platform) {
   if (!(typeof command === 'string' && command.trim()) && reviewer === 'claude') {
     checks.push(check('Claude Code (reviews tickets)', onPath('claude'),
       'Install Claude Code so `claude` is on your PATH, or set `reviewer: codex` in speck/config.yml.'));
+  } else if (!(typeof command === 'string' && command.trim()) && providerNamed(reviewer)) {
+    // 0390: speck runs a provider's models through Claude Code, with this machine's key for the provider.
+    const p = providerNamed(reviewer);
+    let keySet = false, why = '';
+    try { keySet = Boolean(providerKey(repo, p.name)); } catch (e) { why = ` ${e.message}`; }
+    checks.push(check(`Claude Code (${p.label} reviews need it installed)`, onPath('claude'),
+      `Install Claude Code so \`claude\` is on your PATH (https://claude.com/claude-code): speck runs ${p.label}'s models through it.`),
+      check(`${p.label} API key for this machine (reviews tickets)`, keySet, `${why ? `${why.trim()} ` : ''}Set one with \`speck keys set ${p.name}\`.`));
   } else if (typeof command === 'string' && command.trim()) {
     let first = '';
     try { first = splitCommand(command)[0] || ''; } catch { /* an unclosed quote: reported as not found */ }

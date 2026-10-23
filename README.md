@@ -239,6 +239,8 @@ Claude Code needs no command: set `reviewer: claude` and speck runs it for you, 
 
 Cursor needs no command either: set `reviewer: cursor` and speck runs Cursor's CLI, `agent`, or `cursor-agent` when only that is installed, without a person in its read-only ask mode, with `--trust` so it doesn't stop at Cursor's Workspace Trust prompt in a folder it hasn't been told to trust. It runs on `reviewer_model`, or Cursor's own default when that's blank. Cursor's model names carry the effort, such as `claude-opus-5-5-high`, so `reviewer_effort` isn't passed. Later rounds carry on the same Cursor chat. A `command` of your own under `reviewer_options.cursor` replaces it, as the example above does.
 
+A model provider's models can review too, through your own API key for that provider. DeepSeek is tested: save this machine's key with `speck keys set deepseek`, which asks for it without showing it, then set `reviewer: deepseek`. It runs on `reviewer_model`, such as `deepseek-v4-flash`, or `deepseek-v4-pro` when that's blank, and `reviewer_effort` isn't passed. speck runs the provider's models through Claude Code, so Claude Code must be installed, but the reviewer gets only the provider's address and your key for it: it never sends a request to Anthropic, and it can't reach your Claude sign-in, your Claude Code settings or your connectors. It's read-only, as the Claude reviewer is, and later rounds resume the same session. DeepSeek is a family of its own, so it can review any builder's work.
+
 ## Repo layout
 
 This is where speck keeps its files in your repo.
