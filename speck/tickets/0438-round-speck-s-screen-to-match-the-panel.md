@@ -42,6 +42,7 @@ speck's screen and its frame have rounded corners like the rest of the panel, th
 - Criterion 5: the user asked on 2026-10-23 for a red dot before the title, as the console mock's frame has (`.print span:first-child::before` in console.html in https://claude.ai/artifact/R5CQDZJfMZ2rYcTmZK1B8z).
 - Today: `.bezel` (`max-width: 520px`, square) and `.glass` in `templates/panel.html`. 0428 kept the screen's corners deliberately; this changes that.
 - Waits for 0436: both change `templates/panel.html`. 0430 waits for it too, as 0430 moves every style.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
