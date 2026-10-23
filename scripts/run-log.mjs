@@ -4,9 +4,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// The latest RUN_LOG_LINES lines are shown, read from the last RUN_LOG_BYTES of the file at most.
+// The latest RUN_LOG_LINES lines are shown. The file is read back from its end, RUN_LOG_CHUNK bytes at a time, until
+// they're all there or it reaches the start, but never more than its last RUN_LOG_MAX bytes: a line cut off there
+// starts with "…".
 export const RUN_LOG_LINES = 200;
-const RUN_LOG_BYTES = 256 * 1024;
+export const RUN_LOG_MAX = 16 * 1024 * 1024;
+const RUN_LOG_CHUNK = 64 * 1024;
 const NOFOLLOW = fs.constants.O_NOFOLLOW || 0;
 
 const runLogFile = runs => path.join(runs, 'run.log');
@@ -31,13 +34,21 @@ export function runLogTail(runs) {
   try {
     const st = fs.fstatSync(fd);
     if (!st.isFile()) return none;
-    const from = Math.max(0, st.size - RUN_LOG_BYTES), buf = Buffer.alloc(st.size - from);
-    let got = 0;
-    while (got < buf.length) { const n = fs.readSync(fd, buf, got, buf.length - got, from + got); if (!n) break; got += n; }
-    const lines = buf.subarray(0, got).toString('utf8').split('\n').map(l => l.replace(/\r$/, ''));
-    if (from > 0) lines.shift(); // the first line read may be the end of a longer one
-    while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
-    return { lines: lines.slice(-RUN_LOG_LINES).reverse(), stamp: stampOf(st) };
+    const chunks = [], floor = Math.max(0, st.size - RUN_LOG_MAX);
+    let from = st.size, lines = [];
+    while (from > floor) {
+      const start = Math.max(floor, from - RUN_LOG_CHUNK), buf = Buffer.alloc(from - start);
+      let got = 0;
+      while (got < buf.length) { const n = fs.readSync(fd, buf, got, buf.length - got, start + got); if (!n) break; got += n; }
+      chunks.unshift(buf.subarray(0, got));
+      from = start;
+      lines = Buffer.concat(chunks).toString('utf8').split('\n').map(l => l.replace(/\r$/, ''));
+      while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+      if (lines.length > RUN_LOG_LINES) break; // the first may be part of a longer line, but the latest RUN_LOG_LINES are whole
+    }
+    if (lines.length > RUN_LOG_LINES) lines = lines.slice(-RUN_LOG_LINES);
+    else if (from > 0 && lines.length) lines[0] = `…${lines[0]}`; // cut off at RUN_LOG_MAX
+    return { lines: lines.reverse(), stamp: stampOf(st) };
   } finally { fs.closeSync(fd); }
 }
 
