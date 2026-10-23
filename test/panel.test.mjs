@@ -9,7 +9,7 @@ import http from 'node:http';
 import vm from 'node:vm';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, badgeOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems } from './support/panel.mjs';
+import { ROOT, CLI, env, fm, panelRepo, freePort, startPanel, stop, request, page, panelModel, T, round, fakePage, deferred, full, idea, click, toggles, items, queueRows, sayOf, stageOf, steps, post, tokenOf, readyPath, readyPanel, headOf, readT, button, shippedRows, startOfToday, exitOf, isRed, findText, top, paletteProblems } from './support/panel.mjs';
 
 test('0031 AC1: speck panel serves on 127.0.0.1 at the given port, prints the URL and keeps running', async () => {
   const r = panelRepo();
@@ -547,7 +547,7 @@ test('0034 AC2: the current stage (the bar before 0156, its dots before 0168) is
   assert.deepEqual(m.map(steps), [['done', 'done', 'now', '', ''], ['done', 'done', 'done', 'done', 'now'], ['', '', 'done', 'done', 'now'], ['done', '', 'done', 'done', 'now']]);
 });
 
-test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167), current stage and badge, with its question under it, and nothing else is red', async () => {
+test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167), current stage and sentence, with its question under it, and nothing else is red', async () => {
   const state = { tickets: [T('0001', 'blocked', { blocked_question: 'Split it or keep it?', self_check: 'x' }), T('0002', 'approved', { risk: 'high' }),
     T('0003', 'building', { risk: 'high' }), T('0004', 'reviewing'), T('0005', 'ready', { waiting_on: ['0001'] })], ideas: [] };
   assert.deepEqual(panelModel()(state).queue.map(t => t.red), [true, false, false, false, false]);
@@ -559,7 +559,7 @@ test('0034 AC3: a blocked ticket is red on its border (its left edge until 0167)
   const now = stageOf(rows[0]);
   assert.equal(now.textContent, 'Self-check');
   assert.match(now.className, /\bbad\b/); // and the sentence (0156)
-  assert.equal(badgeOf(rows[0]).className, 'badge bad', 'its badge (0168)');
+  assert.equal(sayOf(rows[0]).className, 'say bad', 'its sentence (0416: with no badge)');
   assert.ok(rows[0].textContent.includes('Split it or keep it?'));
   for (const r of rows.slice(1)) assert.ok(!p.all(r).some(red), `${r.textContent.slice(0, 4)} has nothing red`);
   const css = page().match(/<style>([\s\S]*?)<\/style>/)[1];
@@ -575,7 +575,7 @@ test('0034 AC4: a ready ticket shows Queued, and since 0156 no progress, plus wa
   await p.settle();
   const [a, b] = queueRows(p);
   assert.ok(a.textContent.includes('Queued'));
-  assert.equal(badgeOf(a), null, 'no badge (0168)');
+  assert.equal(sayOf(a), null, 'no sentence');
   assert.equal(stageOf(a), null, 'no stage');
   assert.deepEqual(panelModel()(state).queue[0].steps.map(s => s.label), ['Build', 'Self-check', 'Review 1', 'Approve', 'Ship'], 'AC2: Review <n> while it has rounds');
   assert.ok(!a.textContent.includes('waiting on'));
@@ -901,7 +901,7 @@ test('0035 AC3: with no done tickets, Shipped says nothing has shipped yet and s
 
 // ---------- 0045: flag a build that finished without shipping ----------
 
-test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its border (its left edge until 0167), current stage and badge, with the label and message as text', async () => {
+test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its border (its left edge until 0167), current stage and sentence, with the label and message as text', async () => {
   const message = 'Line one\n<b>not bold</b>\nShip refused.';
   const state = { tickets: [T('0001', 'approved', { rounds: [round(1, 1)], ...exitOf(message) }), T('0002', 'approved', { rounds: [round(1, 1)], build_exit: null })], ideas: [] };
   const m = panelModel()(state);
@@ -914,7 +914,7 @@ test('0045 AC3: an approved ticket with a build_exit is purple (0138) on its bor
   assert.match(a.className, /\bto-ship\b/);
   assert.equal(stageOf(a).textContent, 'Ship');
   assert.match(stageOf(a).className, /\bto-ship\b/);
-  assert.equal(badgeOf(a).className, 'badge wait', 'its badge waits for you (0168)');
+  assert.equal(sayOf(a).className, 'say to-ship', 'its sentence waits for you (0416: with no badge)');
   assert.ok(!p.all(a).some(isRed), 'nothing red');
   assert.ok(findText(p, a, 'Build finished without shipping'), 'the label');
   assert.ok(findText(p, a, message), 'the message, as one text node with the HTML left as text');
@@ -947,7 +947,7 @@ test('0045 AC4: a building or reviewing ticket with a build_exit says the build 
     assert.match(row.className, /\bblocked\b/);
     assert.equal(stageOf(row).textContent, step);
     assert.match(stageOf(row).className, /\bbad\b/);
-    assert.equal(badgeOf(row).className, 'badge bad');
+    assert.equal(sayOf(row).className, 'say bad');
     assert.ok(findText(p, row, 'Build stopped before finishing'));
     assert.ok(findText(p, row, msg));
     assert.ok(!row.textContent.includes('without shipping'));

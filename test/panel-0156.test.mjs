@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { T, fakePage, queueRows, exitOf, round, page, panelRepo, freePort, startPanel, stop, findChrome, browserPage } from './support/panel.mjs';
 
 // ---------- 0156: a running build's progress shown with the speck going round an ensō ----------
-// Since 0168 the builder badge stands in for the ensō and the stage dots (test/panel-0168.test.mjs); the sentence and the
-// current stage's name stay, beside the badge.
+// Since 0168 the builder badge stood in for the ensō and the stage dots (test/panel-0168.test.mjs); the sentence and the
+// current stage's name stayed, beside the badge. 0416: the badge has gone, and they stay in words only.
 
 const ago = s => new Date(Date.now() - s * 1000).toISOString();
 // One ticket in each state an in-flight card can be in, and two ready ones.
@@ -39,34 +39,35 @@ const rowOf = (p, id) => queueRows(p).find(r => p.all(r).some(n => n.className =
 const topOf = row => row.children.find(n => n.className === 'top');
 const find = (p, row, re) => p.all(row).filter(n => re.test(n.className || ''));
 const classes = n => (n.className || '').split(' ');
-const badgeIn = (p, row) => find(p, row, /^badge\b/)[0];
+// The stage a card's border shows while an agent is at work on it (0171), or null.
+const atStage = row => (classes(row).find(c => c.startsWith('at-')) || '').slice(3) || null;
 
-test('0156 AC1: each in-flight ticket has its progress in its top row (the builder badge since 0168), and no five-part bar', async () => {
+test('0156 AC1: each in-flight ticket has its progress in its top row (in words only since 0416), and no five-part bar', async () => {
   const p = fake();
   await p.settle();
   for (const t of TICKETS.filter(x => x.status !== 'ready')) {
     const row = rowOf(p, t.id), top = topOf(row);
-    assert.equal(top.children.filter(n => n.className === 'badgerow').length, 1, `${t.id}: one badge row in the top row`);
+    assert.equal(top.children.filter(n => classes(n)[0] === 'progress').length, 1, `${t.id}: one progress row in the top row`);
     assert.ok(top.children.some(n => n.className === 'sub' && /\d\d:\d\d/.test(n.textContent)), `${t.id}: the timer`);
     assert.equal(find(p, row, /\b(stages|enso|dots)\b/).length, 0, `${t.id}: no five-part bar, ensō or dots`);
   }
   for (const id of ['0409', '0410']) {
     const row = rowOf(p, id);
-    assert.equal(find(p, row, /\b(badge|badgerow|stages|say|stage)\b/).length, 0, `${id}: a ready ticket shows no progress`);
+    assert.equal(find(p, row, /\b(badge|progress|stages|say|stage)\b/).length, 0, `${id}: a ready ticket shows no progress`);
   }
   assert.doesNotMatch(page(), /\.stages\b|@keyframes sweep/, 'the old bar and its sweep are gone');
 });
 
-test('0156 AC2: the builder is at work (the speck moved until 0168) only while an agent is at work on the ticket', async () => {
+test('0156 AC2: the card shows the builder at work (the speck moved until 0168, the badge until 0416) only while an agent is at work on the ticket', async () => {
   const p = fake();
   await p.settle();
   for (const t of TICKETS.filter(x => x.status !== 'ready')) {
-    // At work: at the laptop, or since 0169 checking its own work or with the reviewer, and since 0172 shipping.
-    assert.equal(/^badge (type|check|review|ship)$/.test(badgeIn(p, rowOf(p, t.id)).className), MOVING.includes(t.id), `${t.id}: ${MOVING.includes(t.id) ? 'at work' : 'not at work'}`);
+    // At work: its border shows its stage (0171).
+    assert.equal(atStage(rowOf(p, t.id)) !== null, MOVING.includes(t.id), `${t.id}: ${MOVING.includes(t.id) ? 'at work' : 'not at work'}`);
   }
 });
 
-test('0156 AC2 and AC3: a ship the panel itself started puts the builder to work and says "Shipping" in the normal text colour', async () => {
+test('0156 AC2 and AC3: a ship the panel itself started says "Shipping" in the normal text colour (its badge went to work until 0416)', async () => {
   const tickets = [T('0405', 'approved', { started: ago(900), approved: ago(60), rounds: [round(1, 10)], ...exitOf('Done.') })]; // its build has exited
   const never = new Promise(() => {});
   const p = fakePage([], {
@@ -90,7 +91,6 @@ test('0156 AC2 and AC3: a ship the panel itself started puts the builder to work
   assert.equal(find(p, row, /\bsay\b/)[0].textContent, 'Shipping');
   assert.equal(find(p, row, /\bsay\b/)[0].className, 'say', 'no longer purple: it is at work, not waiting');
   assert.equal(find(p, row, /^stage\b/).length, 0, 'no stage\'s name while it ships (0201)');
-  assert.equal(badgeIn(p, row).className, 'badge ship', 'the builder is at work (0168), shipping (0172)');
 });
 
 test('0156 AC3: one plain sentence under the title says what is happening, in the card\'s state colour when it waits, is blocked or stopped', async () => {
@@ -101,7 +101,7 @@ test('0156 AC3: one plain sentence under the title says what is happening, in th
     assert.equal(say.length, 1, `${id}: one sentence`);
     assert.equal(say[0].textContent, text, id);
     assert.equal(say[0].className, tone ? `say ${tone}` : 'say', `${id}: its colour`);
-    assert.ok(top.children.findIndex(n => n.className === 'badgerow') > top.children.findIndex(n => n.className === 'line'), `${id}: under the title, beside the badge (0168)`);
+    assert.ok(top.children.findIndex(n => classes(n)[0] === 'progress') > top.children.findIndex(n => n.className === 'line'), `${id}: under the title`);
   }
   const css = page();
   assert.match(css, /\.say\.bad \{ color: var\(--bad\); \}/);
@@ -145,7 +145,7 @@ test('0156 AC4: the current stage\'s name follows the sentence (its five dots we
   await p.settle();
   const expect = { '0401': 'Build', '0402': 'Self-check', '0403': 'Review 2', '0404': 'Review', '0405': 'Ship', '0406': 'Build', '0407': 'Build' }; // 0408 ships, so it has no stage's name since 0201
   for (const [id, name] of Object.entries(expect)) {
-    const text = find(p, rowOf(p, id), /^badgetext$/)[0];
+    const text = find(p, rowOf(p, id), /^progress$/)[0];
     assert.deepEqual(text.children.map(n => n.className.split(' ')[0]), ['say', 'stage'], `${id}: the sentence, then the stage`);
     const tone = SAYS[id][1];
     assert.equal(text.children[1].textContent, name, id);
@@ -194,7 +194,7 @@ const LOOK = id => `(() => {
 
 for (const theme of ['light', 'dark']) {
   for (const width of [375, 1280]) {
-    test(`0156 AC3 to AC5: at ${width} px in the ${theme} look, the sentence and the stage's name (beside the badge since 0168) are laid out and coloured, with nothing overflowing`, skip, async () => {
+    test(`0156 AC3 to AC5: at ${width} px in the ${theme} look, the sentence and the stage's name (beside the badge from 0168 until 0416) are laid out and coloured, with nothing overflowing`, skip, async () => {
       await withPanel(async b => {
         const colour = {};
         for (const k of ['run', 'bad', 'idea', 'text']) colour[k] = await b.js(RGB(`var(--${k})`));
@@ -222,4 +222,5 @@ for (const theme of ['light', 'dark']) {
   }
 }
 
-// The speck's lap and the dot's pulse went in 0168: test/panel-0168.test.mjs checks that the badge moves only while it should.
+// The speck's lap and the dot's pulse went in 0168, and the badge that took their place in 0416: test/panel-0416.test.mjs
+// checks that no card moves.
