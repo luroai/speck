@@ -27,7 +27,7 @@ The panel names Zen Kaku Gothic New, Shippori Mincho and IBM Plex Mono, but does
 The panel's text uses the fonts Cursor's own interface uses, and its labels read like Cursor's.
 
 ## Acceptance criteria
-1. All the panel's text, except the `speck` dot-matrix title and speck's screen, uses `-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif`.
+1. All the panel's text, except the `speck` dot-matrix title and speck's screen, uses `-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif`. Body text, such as a ticket's stage sentence, a question, a message and Settings' explanations, is 14 px rather than today's 13 px.
 2. Text set in monospace today (ids, the build log, code and figures) uses `"SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace`.
 3. Headings, tab names and ticket titles, in a serif today, use the interface font at weight 600. The page no longer names Zen Kaku Gothic New, Shippori Mincho or IBM Plex Mono.
 4. Buttons and labels in spaced capitals today are in sentence case in the interface font, with no extra letter spacing, for example `Full ticket`, `More stats` and `Tickets · 4`.
@@ -40,6 +40,7 @@ The panel's text uses the fonts Cursor's own interface uses, and its labels read
 ## Notes
 - The user asked for this on 2026-10-23: the panel is used mostly beside Cursor, at work and at home, and should look like part of it.
 - Checked 2026-10-23: VS Code's interface font, which Cursor is built on, is `-apple-system, BlinkMacSystemFont` on macOS, `"Segoe WPC", "Segoe UI"` on Windows and `system-ui, "Ubuntu", "Droid Sans"` on Linux. Its interface monospace is `"SF Mono", Monaco, Menlo, Courier` on macOS, `Consolas, "Courier New"` on Windows and `"Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New"` on Linux (microsoft/vscode `src/vs/workbench/browser/media/style.css`).
+- 14 px: Cursor's text is about 14–15 px beside the panel's 13 px in the user's screenshot of 2026-10-23.
 - Unverified: that Cursor hasn't replaced VS Code's interface fonts in its own panels (no Cursor source or docs to check).
 - Waits for 0426: both change `templates/panel.html`.
 

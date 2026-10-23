@@ -32,8 +32,10 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
 3. State colours come from Cursor's theme, each at the nearest shade that meets 0161's contrast where Cursor's own doesn't:
    - needs you, a stopped build and the high-risk tag: Cursor's red (`#E34671` dark, `#CF2D56` light)
    - waiting for you: Cursor's magenta (`#B48EAD` dark, `#B8448B` light)
-   - passing checks: Cursor's green (`#70B489` dark, `#1F8A65` light)
-   - a ticket being built, links and the focus ring: Cursor's blue (`#81A1C1` dark, `#3C7CAB` light)
+   - passing checks, and a ticket's edge while it ships: Cursor's green (`#70B489` dark, `#1F8A65` light)
+   - links, the focus ring, and a ticket's edge while its tests and code are written: Cursor's blue (`#81A1C1` dark, `#3C7CAB` light)
+   - a ticket's edge during its self-check: Cursor's cyan (`#88C0D0` dark, `#4C7F8C` light)
+   - a ticket's edge during review: Cursor's yellow (`#D2943E` dark, `#A16900` light)
 4. speck's screen, its frame and the `speck` dot-matrix title keep their own colours.
 5. The light, dark and System looks all use these colours, and 0161's contrast test passes with them. No test that passed before this change fails, except checks of the old colour values, which are changed to match.
 
@@ -43,8 +45,9 @@ The panel uses Cursor's own light and dark theme colours, so it looks like part 
 
 ## Notes
 - The user asked for this on 2026-10-23: the panel is used mostly beside Cursor, at work and at home, and should look like part of it.
-- Checked 2026-10-23: Cursor Dark is editor `#181818`, sidebar and panel `#141414`, foreground `#E4E4E4EB`, sidebar text `#E4E4E48D`, borders `#E4E4E413`, input `#1c1c1c`, error `#E34671`, magenta `#B48EAD`, green `#70B489`, link `#81A1C1`. Cursor Light is editor `#FCFCFC`, sidebar `#F3F3F3`, foreground `#141414EB`, muted `#141414AD`, error `#CF2D56`, magenta `#B8448B`, green `#1F8A65`, link `#3C7CAB` (https://github.com/BioHazard786/cursor-theme-vscode (themes/cursor-dark.json and cursor-light.json, a copy of Cursor's built-in themes; Cursor Noir's listing gives the same #181818 and #141414)).
+- Checked 2026-10-23: Cursor Dark is editor `#181818`, sidebar and panel `#141414`, foreground `#E4E4E4EB`, sidebar text `#E4E4E48D`, borders `#E4E4E413`, input `#1c1c1c`, error `#E34671`, magenta `#B48EAD`, green `#70B489`, link `#81A1C1`, cyan `#88C0D0`, yellow `#D2943E`. Cursor Light is editor `#FCFCFC`, sidebar `#F3F3F3`, foreground `#141414EB`, muted `#141414AD`, error `#CF2D56`, magenta `#B8448B`, green `#1F8A65`, link `#3C7CAB`, cyan `#4C7F8C`, yellow `#A16900` (https://github.com/BioHazard786/cursor-theme-vscode (themes/cursor-dark.json and cursor-light.json, a copy of Cursor's built-in themes; Cursor Noir's listing gives the same #181818 and #141414)).
 - Cursor's own borders and muted text fall short of 0161: dark borders are 1.2:1 and dark muted text 5.1:1 against their backgrounds. Criterion 2 keeps 0161.
+- The stage edges are `.q.at-build`, `.at-check`, `.at-review` and `.at-ship` (0171). The user asked on 2026-10-23 for them to take Cursor's colours too, after seeing the old gold review edge beside Cursor.
 - Colour tokens are in `:root` and `:root[data-theme="dark"]` in `templates/panel.html`.
 - Waits for 0425: both change `templates/panel.html`.
 
