@@ -1,7 +1,7 @@
 ---
 id: "0426"
 title: "Use Cursor's colours in the panel"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0421", "0422", "0424", "0425"] # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T18:33:19.486Z"
 approved: "2026-10-23T18:53:32.012Z"
+finished: "2026-10-23T18:56:37.716Z"
 
 ---
 # 0426 · Use Cursor's colours in the panel
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 The panel's colours are its own warm "zen" palette. It's used mostly in a pane beside Cursor, where it looks like a different product.
