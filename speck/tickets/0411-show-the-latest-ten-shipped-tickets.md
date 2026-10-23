@@ -40,6 +40,8 @@ Shipped lists the latest ten finished tickets.
 - Five is set in two places that must agree: `SHIPPED_SHOWN` in `scripts/board-feed.mjs` and the `i < 5` filter on `shipped:` in `templates/panel.html`.
 - Waits for 0410: both change `templates/panel.html`.
 - Failing before this build: none
+- Existing tests that pinned five now pin ten: `test/panel.test.mjs` (0031 AC3), `test/panel-0178.test.mjs` (AC1, AC2 at 60 finished rather than 30, AC3) and `test/ship-0204.test.mjs` (AC1 with ten newer tickets).
+- Self-check: no changes
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->

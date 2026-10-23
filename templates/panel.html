@@ -900,7 +900,7 @@ function panelModel(state) {
   // Each median covers the done tickets that have its data: both times, at least one review round, reviewer tokens or
   // the builder's tokens or cost recorded.
   const stat = (values, round) => { const m = median(values); return { median: m === null ? null : round(m), count: values.length }; };
-  // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 5.
+  // Newest finished first; done tickets with no finished time keep their JSON order after those. Then the latest 10.
   const finished = done.filter(t => t.end !== null).sort((a, b) => b.end - a.end);
   return {
     drafts: tickets.filter(is('draft')).map(chain),
@@ -965,8 +965,8 @@ function panelModel(state) {
         shipping, ship_waiting, run_waiting, ship_since, ship_counter: ship_since !== null ? counter(now - ship_since) : null,
         since: inFlight && start !== null ? start + waited(t) : null, approved_at, held_at, counter: inFlight && start !== null ? counter((held_at ?? Date.now()) - start - waited(t)) : null };
     }),
-    // The latest 5, and any older one not pushed yet (0204).
-    shipped: [...finished, ...done.filter(t => t.end === null)].filter((t, i) => i < 5 || t.unpushed),
+    // The latest 10 (0411), as SHIPPED_SHOWN in scripts/board-feed.mjs, and any older one not pushed yet (0204).
+    shipped: [...finished, ...done.filter(t => t.end === null)].filter((t, i) => i < 10 || t.unpushed),
     shippedTotal: done.length,
     stats: {
       today: done.filter(t => t.end !== null && sameDay(new Date(t.end), new Date(now))).length,

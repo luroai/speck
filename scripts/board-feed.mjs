@@ -261,12 +261,12 @@ export function boardVersions() {
   };
 }
 
-// 0178: the board as the panel sends it. A finished ticket outside the Shipped list's latest five, which the page shows
+// 0178: the board as the panel sends it. A finished ticket outside the Shipped list's latest ten (0411), which the page shows
 // only in the Shipped figures, keeps only what those use: its id and status, its times, its builder's spend and, in place
 // of its review rounds, how many there were and the reviewer tokens of them all (review_total). A cancelled one, which the page doesn't show,
-// keeps its id and status. The latest five, picked as the page picks them, a ticket whose ship is still running and one
+// keeps its id and status. The latest ten, picked as the page picks them, a ticket whose ship is still running and one
 // merged but not pushed (0204) stay whole. `speck status --json` is unchanged.
-const SHIPPED_SHOWN = 5;
+const SHIPPED_SHOWN = 10; // 0411: ten, as the page's `shipped` list in templates/panel.html
 export function panelBoard(board) {
   if (!board || !Array.isArray(board.tickets)) return board;
   const time = v => { const n = typeof v === 'string' ? Date.parse(v) : NaN; return Number.isFinite(n) ? n : null; };
