@@ -97,7 +97,7 @@ test('0389 AC1: a blank key or one with spaces is refused without showing it', (
 
 test('0389 AC1: typed in a terminal, the key is not echoed, and echo is back on afterwards', { skip: !fs.existsSync('/usr/bin/python3') && 'needs python3 for a terminal' }, () => {
   const r = repo();
-  // A real terminal: python's pty runs the command, types the key once the prompt is shown, and prints all it saw.
+  // A real terminal: python's pty runs the command, types the key as soon as the prompt is shown, and prints all it saw.
   const py = `
 import os, pty, sys, select, time
 pid, fd = pty.fork()
@@ -112,7 +112,7 @@ while time.time() < end:
         if not chunk: break
         out += chunk
     if not typed and b'API key' in out:
-        time.sleep(0.2); os.write(fd, sys.argv[2].encode() + b'\\n'); typed = True
+        os.write(fd, sys.argv[2].encode() + b'\\n'); typed = True
 os.waitpid(pid, 0)
 sys.stdout.write(out.decode('utf8', 'replace'))
 `;
@@ -192,8 +192,8 @@ test('0389 AC4: a provider added to the list gets a key the same way', () => {
   assert.equal(mode(keysFile(r.dir)), 0o600);
 });
 
-test('0389 AC5: the README says where keys are kept, how to set and remove them, and that DeepSeek is tested', () => {
+test('0389 AC5: the README names where keys are kept, the commands that set and remove them, and DeepSeek', () => {
   const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  for (const fact of ['speck/.cache/machine/keys.json', 'speck keys set deepseek', 'speck keys remove deepseek', 'tested with speck so far: DeepSeek'])
+  for (const fact of ['speck/.cache/machine/keys.json', 'speck keys set deepseek', 'speck keys remove deepseek', 'DeepSeek'])
     assert.ok(readme.includes(fact), fact);
 });

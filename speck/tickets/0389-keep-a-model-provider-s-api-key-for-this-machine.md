@@ -1,7 +1,7 @@
 ---
 id: "0389"
 title: "Keep a model provider's API key for this machine"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: high               # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T07:26:14.303Z"
 ---
 # 0389 · Keep a model provider's API key for this machine
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 To build or review with a model provider such as DeepSeek, speck needs the provider's API key. A key is a secret: it must never be committed, shown, logged or seen by other processes.
@@ -59,3 +59,89 @@ This machine keeps an API key for each model provider speck knows, safely, and s
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "6c071c5c0ccecb11687f8e4eb3825a420d8f90a2",
+    "session": "fresh",
+    "thread_id": "01a167aa-fbb7-7b92-85e0-a1b492e3aab0",
+    "builder_response": "- Tests run: test/keys-0389.test.mjs (with the commands.checks files speck test --files adds)\n- The terminal test (AC1) runs the real CLI under a pty through python3, types the key and checks it isn't echoed and that echo is on afterwards. I checked it fails when stty -echo is taken out.\n- No visual change, so no pictures.\n",
+    "seconds": 40,
+    "usage": {
+      "input_tokens": 103637,
+      "cached_input_tokens": 63744,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 854,
+      "reasoning_output_tokens": 78
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T07:31:00.889Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "fail",
+        "evidence": "scripts/keys.mjs readKeyInput displays the prompt before spawning the shell that disables terminal echo. Input pasted immediately after the prompt can therefore be shown. Passing tests cover storage permissions, removal, unknown providers and normal terminal entry, but the terminal test waits 0.2 seconds before typing."
+      },
+      {
+        "id": 2,
+        "status": "fail",
+        "evidence": "keysStatus and writeKeys keep secrets out of normal output and other records, as covered by the passing AC2 test. However, readKeyInput's terminal timing window can expose the key on screen."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "keysFile uses machineConfigFile to resolve the main checkout. The passing AC3 test saves through a worktree and checks shared reads and removal."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "scripts/providers.mjs defines the single provider list with all required fields. Both passing AC4 tests check DeepSeek's definition and key storage for an injected additional provider."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "README's “Model providers' API keys” paragraph describes the storage location, set and remove commands, and DeepSeek as tested. Reported checks passed: 120 passed, zero failed, three skipped. The added documentation test nevertheless violates the review rules; see F2."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "scripts/keys.mjs:100",
+        "issue": "The secret-entry prompt appears before terminal echo is disabled. A user or terminal automation pasting as soon as the prompt appears can expose the key. The terminal test hides this window by sleeping for 0.2 seconds after seeing the prompt.",
+        "suggested_fix": "Disable echo successfully before displaying the prompt, retaining reliable restoration on exit. Update the terminal test to send input immediately upon seeing the prompt, without the artificial delay.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "test/keys-0389.test.mjs:197",
+        "issue": "The README test requires the exact prose “tested with speck so far: DeepSeek”. This checks document wording, explicitly prohibited by the review rules, and will fail on harmless editorial changes.",
+        "suggested_fix": "Remove the prose assertion and assess the tested-provider statement by review, as AC5 specifies. Assertions for command names and the storage path may remain.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Key storage, removal and sharing across worktrees are implemented and covered by passing tests. Two fixes are needed before approval: prevent a fast paste from exposing the key before terminal echo is disabled, and remove a test that locks README prose to exact wording."
+  }
+}
+```
+
+</details>

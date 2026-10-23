@@ -88,18 +88,16 @@ export function removeProviderKey(repo, name, { providers = PROVIDERS } = {}) {
   return true;
 }
 
-// In a terminal, a shell reads the line with echo off, and turns it back on however it ends, even on Ctrl-C. The key
-// comes back on its output, never on a command line: printf and read are the shell's own.
-export const READ_SILENTLY = 'trap \'stty echo 2>/dev/null\' EXIT INT TERM HUP; stty -echo || exit 3; IFS= read -r k; printf %s "$k"';
+// In a terminal, a shell turns echo off, only then shows the prompt ($1), reads the line, and turns echo back on however
+// it ends, even on Ctrl-C. The key comes back on its output, never on a command line: printf and read are the shell's own.
+export const READ_SILENTLY = 'trap \'stty echo 2>/dev/null\' EXIT INT TERM HUP; stty -echo || exit 3; printf %s "$1" >&2; IFS= read -r k; printf \'\\n\' >&2; printf %s "$k"';
 
 // The key from this process's input: typed or pasted in a terminal without being shown, or piped in.
 export function readKeyInput(label) {
   if (!isatty(0)) {
     try { return fs.readFileSync(0, 'utf8'); } catch { return ''; } // no input to read, such as a closed one: no key
   }
-  process.stderr.write(`${label} API key (it isn't shown as you type): `);
-  const r = spawnSync('sh', ['-c', READ_SILENTLY], { stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' });
-  process.stderr.write('\n');
+  const r = spawnSync('sh', ['-c', READ_SILENTLY, 'sh', `${label} API key (it isn't shown as you type): `], { stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' });
   if (r.status !== 0) throw new SpeckError(`Couldn't read the key without showing it, so nothing was saved. Pipe it in instead: speck keys set <provider> < <file>.`);
   return r.stdout;
 }
