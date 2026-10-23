@@ -1,7 +1,7 @@
 ---
 id: "0380"
 title: "Prepare release 0.13.1"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0375","0376","0377","0378","0379"]                # ticket ids that mus
 created: 2026-10-22
 started: "2026-10-23T00:04:00.884Z"
 approved: "2026-10-23T00:06:33.259Z"
+finished: "2026-10-23T00:09:15.591Z"
 
 ---
 # 0380 · Prepare release 0.13.1
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 0376 launches a stopped ticket again without restarting speck run, 0377 stops a chance failure handing a ticket back, 0378 makes doctor check a Cursor reviewer, and 0379 keeps a pop-up's Close button in view. Anyone following the setup prompt, or updating speck on another machine, gets 0.13.0 without them.
