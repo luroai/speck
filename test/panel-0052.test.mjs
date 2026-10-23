@@ -331,7 +331,8 @@ test('0052 AC1-AC5: in a real browser, the log grows by itself in a fixed box, f
 
     // AC3: scrolled up, it stays put and a selection there stays selected.
     await b.js(`${box}.scrollTop = 200`);
-    await b.js(`(() => { const t = ${box}.firstChild, at = t.data.indexOf('line 250'), r = document.createRange();
+    // 0422: the log is a row a line, each with its text in a text node.
+    await b.js(`(() => { const t = [...${box}.children].find(n => n.textContent === 'line 250\\n').firstChild, at = t.data.indexOf('line 250'), r = document.createRange();
       r.setStart(t, at); r.setEnd(t, at + 'line 250'.length); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
     assert.equal(await b.js('getSelection().toString()'), 'line 250');
     writeLog(r.dir, '0001', `${lines(310).join('\n')}\n`);
@@ -371,7 +372,7 @@ test('0052 AC3: in a real browser, a selection in repeated lines stays through u
     await b.until(`${row('0001')}`, 'the queue');
     await b.js(`${row('0001')}.querySelector('.top').click()`);
     await b.until(`(${box} || {}).textContent === 'working\\nworking'`, 'the log');
-    await b.js(`(() => { const t = ${box}.firstChild, r = document.createRange(); r.setStart(t, 0); r.setEnd(t, 7);
+    await b.js(`(() => { const t = ${box}.firstChild.firstChild, r = document.createRange(); r.setStart(t, 0); r.setEnd(t, 7);
       getSelection().removeAllRanges(); getSelection().addRange(r); window.mark = t; })()`);
     const selected = `getSelection().toString() === 'working' && getSelection().anchorNode === window.mark && getSelection().anchorOffset === 0`;
     // 0189: an unchanged log isn't asked for again or sent.
