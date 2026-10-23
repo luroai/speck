@@ -148,7 +148,7 @@ test('0368 AC4: the pop-up shows the groups, controls, this-machine choices and 
   for (const t of ['Shipping', 'How much runs at once', 'Ticket size limits', 'Foreman']) assert.ok(titles.includes(t), `the ${t} group`);
   assert.ok(p.all(pop(p)).some(n => n.tagName === 'select' || n.tagName === 'input'), 'controls');
   assert.ok(p.all(pop(p)).some(n => n.tagName === 'button' && /\bsave-all\b/.test(n.className || '')), 'Save');
-  assert.match(pop(p).textContent, /this machine/i);
+  assert.match(pop(p).textContent, /What max_parallel_builds does\./, '0397: where a change is saved is said in the explanation, not marked');
 });
 
 // ---------- AC2 and AC4: what the pop-up covers is shown in it ----------

@@ -299,7 +299,7 @@ test('0274 AC5: after a save the view shows the values as speck now reads them, 
   await q.settle();
   assert.deepEqual(asked(posted(q)[0]), { 'machine:max_parallel_builds': '' });
   assert.equal(controlOf(q, 'max_parallel_builds').value, '1');
-  assert.deepEqual(p.all(rowOf(q, 'max_parallel_builds')).filter(n => cls(n, 'default')).map(n => n.textContent), ['repo'], 'the repo\'s value now');
+  assert.ok(!p.all(rowOf(q, 'max_parallel_builds')).some(n => n.tagName === 'button' && /this machine's value/.test(n.textContent)), 'the repo\'s value now (0397: no mark)');
   assert.equal(saveButton(q).disabled, true);
 });
 
