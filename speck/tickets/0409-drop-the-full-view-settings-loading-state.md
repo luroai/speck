@@ -1,7 +1,7 @@
 ---
 id: "0409"
 title: "Drop the full-view Settings loading state"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T13:14:24.426Z"
 ---
 # 0409 · Drop the full-view Settings loading state
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 Opening Settings still shows "Loading the settings…" over the whole view, then "Loading your agents…" once the config has arrived. 0407 was meant to end the first wait; two loading phases are left.
@@ -46,7 +46,7 @@ Settings never shows the full-view "Loading the settings…" message. Only the i
 - Pictures: none, because the open view looks as before: only the loading frame before it is gone, which a picture can't show.
 
 ## In plain words
-<!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
+Settings no longer flashes a "Loading the settings…" screen. When you press Settings, it opens straight onto all its groups with your values filled in. Your agents and each role's model list still say they're loading in place, and fill in when the agents answer, without moving anything. To see it, press Settings in the panel: the first thing you see is the settings themselves. Worth knowing: the view now opens a moment after the press, once the config has been read, which is usually too quick to notice. If the panel couldn't answer at all, pressing Settings would seem to do nothing until it does.
 
 ## Blocked question
 <!-- Filled in by speck only when status is blocked. -->
@@ -56,3 +56,63 @@ Settings never shows the full-view "Loading the settings…" message. Only the i
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+- Follow-ups: none to the inbox. Known limit: while the quick config read is out, the only sign of the press is `aria-busy` on the Settings button; a slow or hung panel would make the press look ignored.
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · approve</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "5f661511ae0dac60b9dddc4a530fb6b11cd8fbc5",
+    "session": "fresh",
+    "thread_id": "01a168e9-c10a-75b0-a832-99adc9eee79e",
+    "builder_response": "- Tests run: test/settings-0409.test.mjs test/settings-0407.test.mjs test/panel-0257.test.mjs test/settings-0396.test.mjs test/foreman-0285.test.mjs\n- Round 1. Settings now opens once GET /api/settings?quick=1 has answered, so the first paint is the groups (or the read's error), never \"Loading the settings…\". The button is aria-busy meanwhile, and a second press while opening is ignored.\n- Three existing checks opened Settings into the removed full-view loading state, so criterion 3 lets them change: 0257's self-check (now: a press while opening reads once, and the answer is drawn as it came), 0285 AC3 (the settings answer is given rather than left pending) and 0396 AC1 (the rows first when the settings fail to load; while loading the view isn't open yet).\n- I also ran every test file that opens Settings (56 files) before this change to the three checks: only those three failed.\n",
+    "seconds": 26,
+    "usage": {
+      "input_tokens": 138748,
+      "cached_input_tokens": 96512,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 580,
+      "reasoning_output_tokens": 35
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T13:18:57.755Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "approve",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html: openSettings waits for the quick response before loadSettings opens and renders the view. The full-view loading branch is removed. Passing 0409 AC1 tests cover the first paint, repeated presses and read errors."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "Passing 0409 AC2 and existing 0407 AC2 tests exercise in-place loading for Your agents and all three role lists, then verify that catalogue updates preserve edits, scroll, controls and keyboard focus."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "loadSettings retains the current view during refresh and copies the last catalogues into the quick response. Passing 0409 AC3 tests cover Save refreshes. The recorded run has 161 passes, zero failures and three skips; the three adjusted older checks depended on the removed loading state."
+      }
+    ],
+    "findings": [],
+    "escalation_question": "",
+    "summary": "Settings now opens directly onto its groups and config values. Agent and model loading stays within the view, and saving keeps the previous lists visible during refresh. The tests support the requested behaviour, with no blocking concerns found."
+  }
+}
+```
+
+</details>
