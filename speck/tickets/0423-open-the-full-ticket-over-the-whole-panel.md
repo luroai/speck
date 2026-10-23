@@ -1,7 +1,7 @@
 ---
 id: "0423"
 title: "Open the full ticket over the whole panel"                # one outcome, no "and"
-status: building            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: reviewing            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: S                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -19,7 +19,7 @@ started: "2026-10-23T17:53:56.145Z"
 ---
 # 0423 · Open the full ticket over the whole panel
 
-**Status:** 🔨 building
+**Status:** 🔍 reviewing
 
 ## Problem
 The full ticket opens in a 480 px pane at the side of the panel. In a narrow side pane it covers the page anyway, and on a wider window it squeezes a long document into a strip.
@@ -53,3 +53,71 @@ The full ticket, and a review pack, open over the whole panel, as Settings does.
 
 ## Delivery log
 <!-- Filled in by speck: attempts, review rounds, wall time, cost. -->
+
+## Review rounds
+<!-- Written by speck after each review round. Don't edit it by hand. -->
+
+<details><summary>Round 1 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 1,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "a0d30c8b0e248b3728f995f94205cd7b5f7ef817",
+    "session": "fresh",
+    "thread_id": "01a169eb-6655-77a2-9e75-fa99c9a81182",
+    "builder_response": "- Tests run: test/panel-0423.test.mjs test/panel-0053.test.mjs test/panel-0051.test.mjs test/pack-0362.test.mjs test/pack-0363.test.mjs test/panel-0054.test.mjs test/panel-0137.test.mjs test/panel-0073.test.mjs test/panel-0147.test.mjs test/panel-0138.test.mjs test/panel-0141.test.mjs test/panel-0162.test.mjs test/panel-0160.test.mjs test/panel-0140.test.mjs test/panel-0142.test.mjs test/panel-0153.test.mjs test/panel-0213.test.mjs test/panel-0155.test.mjs test/panel-0062.test.mjs test/panel-0165.test.mjs test/panel-0133.test.mjs test/panel-0366.test.mjs test/panel-0063.test.mjs test/panel-0158.test.mjs test/panel-0361.test.mjs test/panel-focus-0326.test.mjs test/panel-0417.test.mjs test/panel-0368.test.mjs test/panel-0134.test.mjs test/panel-0136.test.mjs test/panel-0201.test.mjs test/panel-0060.test.mjs test/panel.test.mjs test/panel-0161.test.mjs test/panel-0411.test.mjs test/release-0367.test.mjs test/panel-0061.test.mjs test/panel-0143.test.mjs test/panel-0132.test.mjs test/panel-0357.test.mjs test/panel-0156.test.mjs test/panel-0157.test.mjs test/panel-0199.test.mjs test/panel-0410.test.mjs test/panel-0151.test.mjs test/pictures-0294.test.mjs test/pull-request-0295.test.mjs \n- Round 1. The change is CSS only, in templates/panel.html: #full-ticket is now position: fixed; inset: 0, as #settings is, with its text in a centred column at most 720 px wide made by the pane's left and right padding (so the Ship button and other inline buttons in a review pack line up with the text too), each side rounded down to a whole pixel and at least 16 px. Its .top joins the sticky top-line rule shared with Settings, the document view and the Foreman's view. The dark look's side-pane shadow is gone.\n- Older tests changed because they checked the side pane itself: 0060 (a click beside the pane closing it: there's no beside now, so it checks the pane covers the ticket row behind it and that Close leaves the page where it was), 0136 (the dark shadow), and 0160 AC2/AC4 (the pane's own box starting below the status bar: now the sticky top line fills that room, as Settings' does, and the checks are that the Close button and the line's text sit below it and that nothing but the pane's empty margin or its top line shows there).\n- Pictures checked in headless Chromium at 1280 x 800: the pane is 1280 x 800 and its top line is 720 px wide from x = 280.\n",
+    "seconds": 35,
+    "usage": {
+      "input_tokens": 139955,
+      "cached_input_tokens": 109568,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 848,
+      "reasoning_output_tokens": 141
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T18:00:32.543Z"
+  },
+  "verdict": {
+    "round": 1,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "templates/panel.html sets #full-ticket to position: fixed; inset: 0. Passing panel-0423 tests check the layout rule and exercise both Full ticket and Review pack opening."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "templates/panel.html includes #full-ticket .top in the shared sticky header rule. Passing panel-0423 tests check that rule and exercise Close, Escape and focus restoration; panel-0160 checks safe-area positioning."
+      },
+      {
+        "id": 3,
+        "status": "fail",
+        "evidence": "templates/panel.html:392 rounds both side paddings down. At a 1281 px viewport, each padding is 280 px, leaving a 721 px text column. The passing AC3 test checks the formula's presence rather than its resulting width."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "templates/panel.html:392",
+        "issue": "The text column exceeds the required 720 px maximum at odd window widths: 1281 − 280 − 280 = 721 px.",
+        "suggested_fix": "Constrain the content to max-width: 720px, or adjust the padding calculation so rounding cannot enlarge it. Update the AC3 test to check the resulting width at both even and odd viewport widths.",
+        "state": "open"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "Full tickets and review packs now cover the panel, with a sticky title row and working close controls. The reported tests pass, but the width calculation allows the text column to exceed its specified maximum by one pixel at odd window widths. Fix that calculation before approval."
+  }
+}
+```
+
+</details>
