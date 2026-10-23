@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { fakePage, page, T, PAGE, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage, styles } from './support/panel.mjs';
+import { fakePage, page, T, PAGE, panelRepo, cliCopy, startPanel, stop, freePort, request, findChrome, browserPage, styles, model } from './support/panel.mjs';
 import { openStream } from './support/stream.mjs';
 import { foremanView } from '../scripts/foreman.mjs';
 import { runLogTail, runLogStamp, RUN_LOG_LINES } from '../scripts/run-log.mjs';
@@ -348,6 +348,8 @@ test('0415 AC5: in a real browser at 320 px wide, the open pop-up doesn\'t scrol
   try {
     await b.send('Page.enable');
     await b.send('Page.addScriptToEvaluateOnNewDocument', { source: FAKE(board, { lines: [long, 'speck run: watching'], stamp: '1' }) });
+    // 0431: a page opened from its file can't load /panel-model.js either, so its model is put in, before the page's script, from its own file.
+    await b.send('Page.addScriptToEvaluateOnNewDocument', { source: model() });
     await b.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 640, deviceScaleFactor: 1, mobile: true });
     const url = pathToFileURL(PAGE).href;
     await b.send('Page.navigate', { url });
