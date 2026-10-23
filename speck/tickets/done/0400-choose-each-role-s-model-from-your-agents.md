@@ -1,7 +1,7 @@
 ---
 id: "0400"
 title: "Choose each role's model from your agents"                # one outcome, no "and"
-status: approved            # draft | ready | building | reviewing | blocked | approved | done | cancelled
+status: done            # draft | ready | building | reviewing | blocked | approved | done | cancelled
 priority: 3              # 1 (highest) to 5, or 0 on a fix ticket
 size: M                  # S | M  (L is never ready; split it)
 risk: low                # low | high (auth, payments, data deletion, migrations, infra, secrets)
@@ -16,11 +16,12 @@ after: ["0399"]                # ticket ids that must be done first
 created: 2026-10-23
 started: "2026-10-23T10:50:07.524Z"
 approved: "2026-10-23T11:03:13.682Z"
+finished: "2026-10-23T11:06:10.330Z"
 
 ---
 # 0400 · Choose each role's model from your agents
 
-**Status:** 👍 approved
+**Status:** ✅ done
 
 ## Problem
 Builder, Reviewer and Foreman each have an agent list and a separate model list, which offer agents you haven't set up and make you choose twice.
