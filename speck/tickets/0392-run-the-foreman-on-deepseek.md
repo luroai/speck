@@ -143,3 +143,86 @@ The Foreman runs on Claude Code, Codex or Cursor. Someone building with DeepSeek
 ```
 
 </details>
+
+<details><summary>Round 2 · codex · changes_requested</summary>
+
+```json
+{
+  "meta": {
+    "round": 2,
+    "reviewer": "codex",
+    "reviewer_model": "gpt-6.1-sol",
+    "reviewer_effort": "default",
+    "reviewed_sha": "8b42fe51220b777d646cfcaaf6352d1a91acbce6",
+    "session": "continued",
+    "thread_id": "01a167ce-efff-7382-82b3-1a98e3fd5d27",
+    "builder_response": "- Tests run: test/foreman-provider-0392.test.mjs test/readme-0250.test.mjs test/brief-0225.test.mjs test/review-0280.test.mjs test/run-cursor-0290.test.mjs test/run-codex-0289.test.mjs test/foreman-cursor-0333.test.mjs test/foreman-agent-0287.test.mjs test/settings-foreman-0348.test.mjs test/run-provider-0391.test.mjs test/review-provider-0390.test.mjs (plus the commands.checks files)\n- F1: fixed. The docs test now only checks that the README paragraph and the brief's table row naming the Foreman's settings mention deepseek, and that the template's foreman line does, with no wording or order.\n- F2: fixed. A provider's Foreman is started as `provider-build.mjs --foreman <name> <address> …` (FOREMAN_MODE), and gets providerForemanEnv: an allowlist of the reviewer's KEEP variables (PATH, locale, proxy, certificates), LC_*, HOME and XDG_CONFIG_HOME, git's name and email variables (so `speck foreman` can commit its note as the user) and SPECK_FOREMAN_RUN, plus its own CLAUDE_CONFIG_DIR and the provider's vars. The build's environment (providerBuildEnv) is unchanged. The AC2 test seeds AWS, Google, GitHub, OpenAI, Cursor, npm, GIT_ASKPASS and speck's panel token and checks none reaches Claude Code, and that PATH, HOME and git identity do. HOME is kept so git finds the user's identity and config; --bare means Claude Code reads no OAuth or keychain sign-in from it, and its Claude Code folder is its own.\n",
+    "seconds": 29,
+    "usage": {
+      "input_tokens": 217688,
+      "cached_input_tokens": 162944,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1720,
+      "reasoning_output_tokens": 163
+    },
+    "tests": {
+      "failing": 0,
+      "second_try": []
+    },
+    "saved_at": "2026-10-23T08:12:08.331Z"
+  },
+  "verdict": {
+    "round": 2,
+    "verdict": "changes_requested",
+    "criteria": [
+      {
+        "id": 1,
+        "status": "pass",
+        "evidence": "scripts/foreman-agent.mjs: foremanArgv selects foreman_model or the provider default, omits effort and preserves the existing Foreman brief and action handling. Both AC1 tests passed."
+      },
+      {
+        "id": 2,
+        "status": "pass",
+        "evidence": "foremanArgv preserves Claude Foreman permissions and adds --bare. scripts/provider-build.mjs now selects providerForemanEnv, which allowlists runtime and identity variables. The passing AC2 launcher test verifies unrelated credentials are removed."
+      },
+      {
+        "id": 3,
+        "status": "pass",
+        "evidence": "foremanCantStart and queue launch prevent startup and explain missing prerequisites. foremanAgentOf inherits the DeepSeek builder. The corresponding AC3 tests passed."
+      },
+      {
+        "id": 4,
+        "status": "pass",
+        "evidence": "The passing AC4 test supplies Acme as an independent provider and exercises model selection, key lookup, launcher execution and queue naming."
+      },
+      {
+        "id": 5,
+        "status": "pass",
+        "evidence": "The reported targeted run passed 209 tests, skipped three and had no failures, including existing Foreman, provider builder and provider reviewer tests."
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "severity": "blocking",
+        "file": "test/foreman-provider-0392.test.mjs",
+        "issue": "The documentation test still requires prose: the brief lookup uses '`foreman_fixing` of'. Removing or rephrasing 'of' would fail the test even if every setting and provider fact remained correct. The review rules explicitly prohibit tests of exact documentation wording.",
+        "suggested_fix": "Use only the setting name '`foreman_fixing`' to locate the relevant passage, without requiring ' of'.",
+        "state": "open"
+      },
+      {
+        "id": "F2",
+        "severity": "blocking",
+        "file": "scripts/provider-build.mjs",
+        "issue": "Resolved: provider Foremen now use a dedicated environment allowlist rather than inheriting unrelated credentials. Existing builder environment behaviour is preserved.",
+        "suggested_fix": "No further change required.",
+        "state": "resolved"
+      }
+    ],
+    "escalation_question": "",
+    "summary": "The functionality meets all five criteria, and the credential issue is fixed. One small test correction remains: the documentation check still depends on an ordinary word rather than just the documented facts."
+  }
+}
+```
+
+</details>
