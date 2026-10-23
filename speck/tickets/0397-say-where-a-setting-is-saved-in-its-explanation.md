@@ -41,6 +41,7 @@ Each setting's explanation says where a change to it is saved, and the rows and 
 - Checked 2026-10-23: the marks come from `span.default` in each row in `templates/panel.html` (0261, 0273), and the paragraph from the text beginning "What speck uses now" (0387).
 - This covers `speck/ideas/2026-10-22-keep-settings-still-when-a-setting-s-button-is-pressed.md`, whose buttons go here, which the user dropped on 2026-10-23.
 - Waits for 0396: both change Settings in `templates/panel.html`.
+- Failing before this build: none
 
 ## In plain words
 <!-- Filled in by the builder before approval: the change for someone who doesn't read code. -->
