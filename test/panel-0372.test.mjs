@@ -30,11 +30,11 @@ async function lookPage({ theme = 'light', withSetLook = true, storage } = {}) {
   await openSettings(p);
   return { p, root, stored, looks };
 }
-// The look's switch in the Settings view (0396: Appearance's switch, on for dark), and what it shows.
+// The look's control in the Settings view (0412: System, Light and Dark), and the one it shows chosen.
 const lookList = p => p.all(p.byId('settings')).find(n => n.id === 'look');
-const shows = c => (c.attrs['aria-checked'] === 'true' ? 'dark' : 'light');
-// A look picked: the switch pressed when it shows the other one.
-const pick = (p, look) => { const c = lookList(p); if (shows(c) !== look) p.press(c); };
+const shows = c => c.children.find(b => b.attrs['aria-checked'] === 'true').id.replace('look-', '');
+// A look picked.
+const pick = (p, look) => p.press(lookList(p).children.find(b => b.id === `look-${look}`));
 
 test('0372 AC1: the header has no light/dark button, and Settings and the notice board stay', () => {
   const h = header();
@@ -54,13 +54,15 @@ test('0372 AC1: the build skill sends picture-taking to the look in Settings, no
   assert.match(skill, /the look in Settings/);
 });
 
-test('0372 AC2: Settings has a look row offering light and dark, showing the look the page has', async () => {
+// 0412: it shows the choice, System until one is made, rather than the look the page has.
+test('0372 AC2: Settings has a look row offering light and dark', async () => {
   for (const theme of ['light', 'dark']) {
     const { p } = await lookPage({ theme });
     const c = lookList(p);
-    assert.ok(c, 'a switch for the look (0396)');
-    assert.equal(c.attrs.role, 'switch');
-    assert.equal(shows(c), theme, `it shows ${theme}`);
+    assert.ok(c, 'a control for the look');
+    assert.equal(c.attrs.role, 'radiogroup');
+    assert.deepEqual(c.children.map(b => b.textContent), ['System', 'Light', 'Dark']);
+    assert.equal(shows(c), 'system', 'nothing chosen yet');
   }
 });
 
@@ -92,13 +94,13 @@ test('0372 AC2: the <head> script\'s setLook keeps an open list showing the look
   assert.deepEqual(shown, ['dark']);
 });
 
-// 0396: a switch offers only light or dark, so a look that is neither shows as light and a press picks dark.
+// 0412: a look that is neither shows System, and Dark picks dark.
 test('0372 AC2: a value that is neither light nor dark changes nothing', async () => {
   const { p, root, stored, looks } = await lookPage({ theme: '__proto__' });
-  assert.equal(shows(lookList(p)), 'light');
+  assert.equal(shows(lookList(p)), 'system');
   assert.deepEqual(looks, []);
   assert.deepEqual(stored, []);
-  p.press(lookList(p));
+  pick(p, 'dark');
   assert.equal(root.dataset.theme, 'dark');
   assert.deepEqual(stored, [['speck-theme', 'dark']]);
 });
@@ -197,9 +199,9 @@ test('0372 AC2: in a real browser, choosing dark in Settings switches the page, 
   await b.js(`localStorage.removeItem('speck-theme'); document.documentElement.dataset.theme = 'light'; true`);
   const light = await b.js(bg);
   await b.js(`document.getElementById('settings-open').click()`);
-  await b.until(`!!document.getElementById('look')`, 'the look switch');
-  assert.equal(await b.js(`document.getElementById('look').getAttribute('aria-checked')`), 'false');
-  await b.js(`document.getElementById('look').click(), true`);
+  await b.until(`!!document.getElementById('look')`, 'the look\'s choices');
+  assert.equal(await b.js(`document.getElementById('look-dark').getAttribute('aria-checked')`), 'false');
+  await b.js(`document.getElementById('look-dark').click(), true`);
   assert.equal(await b.js(`document.documentElement.dataset.theme`), 'dark');
   assert.notEqual(await b.js(bg), light, 'the page looks different');
   assert.equal(await b.js(`localStorage.getItem('speck-theme')`), 'dark');
@@ -208,11 +210,11 @@ test('0372 AC2: in a real browser, choosing dark in Settings switches the page, 
   await b.js(`localStorage.removeItem('speck-theme'); true`);
 }, 1200));
 
-test('0372 AC2: Settings opens on a page whose root has no dataset, showing light', async () => {
+test('0372 AC2: Settings opens on a page whose root has no dataset, showing System (0412)', async () => {
   const p = settingsPage([VIEW()], [], { scrollX: 0, scrollY: 0, scrollTo() {} });
   p.document.documentElement = { classList: { toggle() {} } };
   p.document.querySelectorAll = () => [];
   await p.settle();
   await openSettings(p);
-  assert.equal(shows(p.all(p.byId('settings')).find(n => n.id === 'look')), 'light');
+  assert.equal(shows(p.all(p.byId('settings')).find(n => n.id === 'look')), 'system');
 });
